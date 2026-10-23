@@ -31,32 +31,10 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D574 — THE COPY-FAMILY REMAINDER + THE BUNDLE A RIDER: SEVEN PRINTINGS, FIVE TEXTS ──
-//
-//   Team Rocket's Persian ex  sv10-150 / sv10-219 / svp-218  "Haughty Order"        (index 0)
-//   Slowking                  sv07-058                       "Seek Inspiration"     (index 0)
-//   Malamar                   sv06.5-034                     "Colluding Tentacles"  (index 0) — a REGISTRY row
-//   Sableye                   sv05-107                       "Damage Collection"    (index 1)
-//   Alakazam                  sv06-082                       "Strange Hacking"      (index 0)
-//
-// Every printing on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Texts,
-// stats and costs off tcgdex (the audit's card JSON), 2026-10-04. Rulings (decisions.md D574, every
-// one ⚠️ UNRULED, each with its reversal there):
-//   R-HO1  Haughty Order's SHUFFLE is taken AT the park, before the copied attack resolves (§2).
-//   R-HO2 / R-SI1  the choice is made AFTER the flip-lock and Confusion coins — the asymmetry with
-//          D573's R-CP8 (declaration time) is the printed order: nothing to choose from until the
-//          cards are revealed / milled (§2, §3).
-//   R-CP3 / R-CP4 extended to an OUT-OF-PLAY source: copy-family attacks are never offered, and a
-//          copied attack's printed gate is enforced through a PHANTOM one-card body (§2).
-//   R-SB1  Sableye moves counters only from the opponent's Bench to their Active (§5).
-//   R-AK1  Alakazam's LOOP BOUND: an engine-written budget (the counters on the board when the op
-//          starts), ≥ 1 counter per round, the ref-less answer ends the loop (§5).
-//   R-AK2  §11: a shielded body is neither a source nor a destination (§5).
-//   R-MA1  Malamar's gate fails SILENTLY — no ATTACK_FAILED row (§4).
-// The rollback: both new parks read INERT under 0.457 (§6), so MATCH_RECORD_VERSION STAYS 37.
 
 const PERSIANS = ["sv10-150", "sv10-219", "svp-218"] as const;
 const PERSIAN = PERSIANS[0];
@@ -94,12 +72,8 @@ const STRANGE_HACKING =
 const STRANGE_HACKING_TAIL =
   "You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.";
 const FOUL_PLAY = "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.";
-/** A REAL gate clause in front of a REAL built body (the D573 suite's witness). */
 const GATED_TEXT =
   "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.";
-/** A REAL corpus sentence held by a RECORDED REFUSAL (Mr. Mime `sv05-063` "Look-Alike Show", D445) —
-    the anti-laundering witness, outside every family the D574 pricing round ranks (asserted in §1).
-    (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
 const UNREAD_TEXT =
   "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
@@ -275,7 +249,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [PERSIANS[0]]: 1,
   [PERSIANS[1]]: 1,
@@ -303,18 +276,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -726,7 +687,6 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
         reveal: true,
         actor: "p1",
       });
-      // R-HO1 — the shuffle is taken AT the park: the rng stepped and the deck kept its cards.
       expect(parked.state.rngState).not.toBe(before.rngState);
       expect([...parked.state.players.p2.deck].sort()).toEqual([...before.players.p2.deck].sort());
       expect(all(parked.events, "ATTACK_DECLARED")[0]).not.toHaveProperty("as");
@@ -757,7 +717,6 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
       ]);
       expect(oppActiveDamage(done.state)).toBe(60);
       expect(turnPassed(done.state)).toBe(true);
-      // 🛑 ONE declaration, ONE epilogue, ONE stamp.
       expect(
         all([...parked.events, ...second.events, ...done.events], "ATTACK_DECLARED"),
       ).toHaveLength(1);
@@ -779,7 +738,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(lines).toContain("p1: Team Rocket's Persian ex's Haughty Order became Smash");
   });
 
-  it("🛑 the DECLINE: the attack ends having copied nothing — no ATTACK_COPY_RESOLVED, no damage, the turn passes", () => {
+  it("the DECLINE: the attack ends having copied nothing — no ATTACK_COPY_RESOLVED, no damage, the turn passes", () => {
     const parked = run(stackTop(armed(PERSIAN), "p2", [TARGET], 9), declare(PERSIAN));
     const { state, events } = run(parked.state, no);
     expect(types(events)).not.toContain("ATTACK_COPY_RESOLVED");
@@ -798,7 +757,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(oppActiveDamage(state)).toBe(60);
   });
 
-  it("🛑 R-CP3 — copy-family attacks revealed are never offered (Persian ex's Haughty Order, Slowking's Seek Inspiration); a Rule Box is NOT a bar here", () => {
+  it("R-CP3 — copy-family attacks revealed are never offered (Persian ex's Haughty Order, Slowking's Seek Inspiration); a Rule Box is NOT a bar here", () => {
     const parked = run(
       stackTop(armed(PERSIAN), "p2", [PERSIANS[1], SLOWKING], 8),
       declare(PERSIAN),
@@ -843,7 +802,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(shown?.kind === "chooseAttack" ? shown.candidates.length : -1).toBe(2);
   });
 
-  it("🛑 R-CP4 — a revealed attack whose printed gate bars the COPIER now is not offered (the phantom body)", () => {
+  it("R-CP4 — a revealed attack whose printed gate bars the COPIER now is not offered (the phantom body)", () => {
     // p1 went second and this is its first turn: GATED_TEXT bars the copier.
     const parked = run(stackTop(armed(PERSIAN), "p2", [GATED, SOLO], 8), declare(PERSIAN));
     const { state, events } = run(parked.state, yes);
@@ -863,7 +822,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     });
   });
 
-  it("🛑 anti-laundering — a revealed UNBUILT attack copied still reports ITSELF", () => {
+  it("anti-laundering — a revealed UNBUILT attack copied still reports ITSELF", () => {
     const parked = run(stackTop(armed(PERSIAN), "p2", [UNREAD], 9), declare(PERSIAN));
     const { events } = run(parked.state, yes);
     expect(all(events, "ATTACK_EFFECT_SKIPPED")[0]).toMatchObject({ effect: UNREAD_TEXT });
@@ -912,7 +871,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(state.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 a CONFUSED tails reveals nothing and shuffles nothing (R-HO2: the coin comes first)", () => {
+  it("a CONFUSED tails reveals nothing and shuffles nothing (R-HO2: the coin comes first)", () => {
     const board = stackTop(armed(PERSIAN), "p2", [TARGET], 9);
     const confused = withFaces(
       withBody(board, "p1", "active", (p) => ({
@@ -943,7 +902,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     );
   });
 
-  it("🛑 a FLIP-LOCK tails reveals nothing either", () => {
+  it("a FLIP-LOCK tails reveals nothing either", () => {
     const board = stackTop(armed(PERSIAN), "p2", [TARGET], 9);
     const locked = withFaces(
       withBody(board, "p1", "active", (p) => ({ ...p, attackFlipLockTurn: board.turn })),
@@ -954,7 +913,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(types(events)).not.toContain("DECK_TOP_REVEALED");
   });
 
-  it("🛑 the resumed half flips NO coin again (a Confused copier's heads is not re-flipped at the answer)", () => {
+  it("the resumed half flips NO coin again (a Confused copier's heads is not re-flipped at the answer)", () => {
     const board = stackTop(armed(PERSIAN), "p2", [TARGET], 9);
     const confused = withFaces(
       withBody(board, "p1", "active", (p) => ({
@@ -971,7 +930,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(oppActiveDamage(done.state)).toBe(60);
   });
 
-  it("🛑 the resumed half flips NO flip-lock coin again (a heads lock is not re-flipped at the answer)", () => {
+  it("the resumed half flips NO flip-lock coin again (a heads lock is not re-flipped at the answer)", () => {
     const board = stackTop(armed(PERSIAN), "p2", [TARGET], 9);
     const locked = withFaces(
       withBody(board, "p1", "active", (p) => ({ ...p, attackFlipLockTurn: board.turn })),
@@ -984,7 +943,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(oppActiveDamage(done.state)).toBe(60);
   });
 
-  it("🛑 the answer RE-VALIDATES the SOURCE ZONE: a milled card that has left the discard pile is PHASE_DESYNC", () => {
+  it("the answer RE-VALIDATES the SOURCE ZONE: a milled card that has left the discard pile is PHASE_DESYNC", () => {
     const parked = run(stackTop(armed(SLOWKING), "p1", [TARGET]), declare(SLOWKING));
     const side = parked.state.players.p1;
     const milled = side.discard[side.discard.length - 1] ?? "";
@@ -1003,7 +962,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(run(parked.state, pickAttack(1)).state.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 the answer RE-VALIDATES: the copier swapped out is PHASE_DESYNC; an index the prompt did not offer is refused", () => {
+  it("the answer RE-VALIDATES: the copier swapped out is PHASE_DESYNC; an index the prompt did not offer is refused", () => {
     const parked = run(
       stackTop(armed(PERSIAN, [PERSIANS[1]]), "p2", [TARGET], 9),
       declare(PERSIAN),
@@ -1025,7 +984,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     expect(refused(swapped, pickAttack(1)).code).toBe("PHASE_DESYNC");
   });
 
-  it("🛑 Haughty Order reveals a Malamar: Colluding Tentacles reads the COPIER's Xerosic (none → nothing; played → gust + 120)", () => {
+  it("Haughty Order reveals a Malamar: Colluding Tentacles reads the COPIER's Xerosic (none → nothing; played → gust + 120)", () => {
     const without = chain(stackTop(armed(PERSIAN, [], FILLER, [SOLO]), "p2", [MALAMAR], 9), [
       declare(PERSIAN),
       yes,
@@ -1058,7 +1017,7 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 a Rule Box Pokémon milled offers nothing (the printed bar); the same body without one would", () => {
+  it("a Rule Box Pokémon milled offers nothing (the printed bar); the same body without one would", () => {
     const board = stackTop(armed(SLOWKING), "p1", [TESTMON_EX]);
     const { state, events } = run(board, declare(SLOWKING));
     expect(types(events)).not.toContain("ATTACK_COPY_RESOLVED");
@@ -1086,7 +1045,7 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
     expect(oppActiveDamage(twin.state)).toBe(90);
   });
 
-  it("🛑 ONE usable attack: re-entered INLINE — one result carrying BOTH halves, no park", () => {
+  it("ONE usable attack: re-entered INLINE — one result carrying BOTH halves, no park", () => {
     const { state, events } = run(stackTop(armed(SLOWKING), "p1", [SOLO]), declare(SLOWKING));
     expect(types(events).slice(0, 3)).toEqual([
       "ATTACK_DECLARED",
@@ -1104,7 +1063,7 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
     expect(bodyAt(state, "p1", "active").usedAttack).toMatchObject({ name: "Seek Inspiration" });
   });
 
-  it("🛑 R-CP3 — a milled Slowking offers only Super Psy Bolt (Seek Inspiration is a copy): forced, 120", () => {
+  it("R-CP3 — a milled Slowking offers only Super Psy Bolt (Seek Inspiration is a copy): forced, 120", () => {
     const { state, events } = run(stackTop(armed(SLOWKING), "p1", [SLOWKING]), declare(SLOWKING));
     expect(all(events, "ATTACK_COPY_RESOLVED")[0]).toMatchObject({ as: "Super Psy Bolt" });
     expect(oppActiveDamage(state)).toBe(120);
@@ -1149,7 +1108,7 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 a CONFUSED tails mills nothing", () => {
+  it("a CONFUSED tails mills nothing", () => {
     const board = stackTop(armed(SLOWKING), "p1", [SOLO]);
     const confused = withFaces(
       withBody(board, "p1", "active", (p) => ({
@@ -1163,7 +1122,7 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
     expect(state.players.p1.deck[0]).toBe(board.players.p1.deck[0]);
   });
 
-  it("🛑 a copied attack that ITSELF PARKS: a milled Sableye's Damage Collection runs the loop", () => {
+  it("a copied attack that ITSELF PARKS: a milled Sableye's Damage Collection runs the loop", () => {
     const board = damaged(
       stackTop(armed(SLOWKING, [], FILLER, [SOLO]), "p1", [SABLEYE]),
       "p2",
@@ -1230,7 +1189,7 @@ describe("D574 §4 — Malamar Colluding Tentacles (a registry row, R-MA1)", () 
     expect(oppActiveDamage(state)).toBe(0);
   });
 
-  it("🛑 Foul Play copying Colluding Tentacles reads the COPIER's seat (site 4 runs the SOURCE card's row)", () => {
+  it("Foul Play copying Colluding Tentacles reads the COPIER's seat (site 4 runs the SOURCE card's row)", () => {
     const parked = run(armed(ZOROARK, [], MALAMAR, [SOLO]), declare(ZOROARK));
     const without = run(parked.state, pickAttack(0));
     expect(all(without.events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Colluding Tentacles" });
@@ -1339,7 +1298,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 R-AK2 — Sableye into a §11-shielded Active (Mist Energy): no destination, so no source, and ONE refusal row", () => {
+  it("R-AK2 — Sableye into a §11-shielded Active (Mist Energy): no destination, so no source, and ONE refusal row", () => {
     const board = attach(sableye([[SOLO, 30]]), "p2", "active", [MIST]);
     const { state, events } = run(board, declare(SABLEYE));
     expect(types(events)).not.toContain("EFFECT_PENDING");
@@ -1378,7 +1337,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 R-AK1 — the LOOP BOUND stops an A → B → A cycle: two counters, two rounds, then no third question", () => {
+  it("R-AK1 — the LOOP BOUND stops an A → B → A cycle: two counters, two rounds, then no third question", () => {
     const board = damaged(armed(ALAKAZAM, [], FILLER, [SOLO]), "p2", "active", 20);
     const parked = run(board, declare(ALAKAZAM));
     expect(prompt(parked.state)).toMatchObject({ upTo: 2, candidates: [p2Ref("active")] });
@@ -1395,7 +1354,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     expect(turnPassed(r2.state)).toBe(true);
   });
 
-  it("🛑 R-AK2 — a Bench-shielded body (Curious Tea Party) is neither source nor destination; its refusal is announced ONCE", () => {
+  it("R-AK2 — a Bench-shielded body (Curious Tea Party) is neither source nor destination; its refusal is announced ONCE", () => {
     const board = damaged(
       damaged(armed(ALAKAZAM, [], FILLER, [TEAPARTY, SOLO]), "p2", "active", 20),
       "p2",
@@ -1406,13 +1365,12 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     expect(all(parked.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
     expect(prompt(parked.state)).toMatchObject({ candidates: [p2Ref("active")] });
     const r1 = run(parked.state, pickOpp("active", 1));
-    // The only unshielded OTHER body is SOLO (bench 1): forced; no second refusal row.
     expect(bodyAt(r1.state, "p2", 1).damage).toBe(10);
     expect(bodyAt(r1.state, "p2", 0).damage).toBe(30);
     expect(all(r1.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
   });
 
-  it("🛑 R-AK2 — NO counters on their board: a zero budget ends the op BEFORE the shield is asked, so no refusal row for a move that could never happen", () => {
+  it("R-AK2 — NO counters on their board: a zero budget ends the op BEFORE the shield is asked, so no refusal row for a move that could never happen", () => {
     const board = armed(ALAKAZAM, [], FILLER, [TEAPARTY, SOLO]);
     const { state, events } = run(board, declare(ALAKAZAM));
     expect(bodyAt(state, "p2", "active").conditions.rotation).toBe("confused");
@@ -1421,7 +1379,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 a counter move that reaches HP is a Knock Out BY THE ATTACK: the attacker takes the Prize (the Cofagrigus precedent)", () => {
+  it("a counter move that reaches HP is a Knock Out BY THE ATTACK: the attacker takes the Prize (the Cofagrigus precedent)", () => {
     const board = damaged(armed(ALAKAZAM, [], FILLER, [FRAIL]), "p2", "active", 60);
     const parked = run(board, declare(ALAKAZAM));
     const frailUid = bodyAt(board, "p2", 0).stack[0];
@@ -1451,7 +1409,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
     }
   });
 
-  it("🛑 a JSON round-trip of each parked state resolves identically", () => {
+  it("a JSON round-trip of each parked state resolves identically", () => {
     for (const [parked, action] of [
       [run(confirmPark().state, yes).state, pickAttack(1)],
       [seekPark().state, pickAttack(1)],
@@ -1482,7 +1440,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
     return rolled;
   }
 
-  it("🛑 Haughty Order's park under 0.457 is an INERT whiff — the decline's board exactly, never PHASE_DESYNC", () => {
+  it("Haughty Order's park under 0.457 is an INERT whiff — the decline's board exactly, never PHASE_DESYNC", () => {
     const parked = confirmPark().state;
     const phase = parked.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -1500,7 +1458,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
     expect(JSON.stringify(rolled2.state)).toBe(JSON.stringify(declined.state));
   });
 
-  it("🛑 Seek Inspiration's park under 0.457 is an INERT whiff — the milled card stays milled, nothing is copied", () => {
+  it("Seek Inspiration's park under 0.457 is an INERT whiff — the milled card stays milled, nothing is copied", () => {
     const parked = seekPark().state;
     const rolled = rolledBack(parked, { kind: "attack", index: 1 });
     expect(types(rolled.events)).not.toContain("ATTACK_COPY_RESOLVED");
@@ -1512,7 +1470,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
     });
   });
 
-  it("🛑 the loop's park under 0.457 (an op name it does not know) moves NOTHING and ends the attack", () => {
+  it("the loop's park under 0.457 (an op name it does not know) moves NOTHING and ends the attack", () => {
     const parked = loopPark().state;
     const rolled = rolledBack(parked, { kind: "pokemon", ref: p2Ref(0), take: 2 }, true);
     expect(types(rolled.events)).not.toContain("COUNTERS_PLACED");

@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { startOAuth } from "./startOAuth";
 
-// The probe's three outcomes. The redirect case can't be exercised against
-// wrangler dev until real provider secrets exist, so it's pinned here to the
-// fetch spec shape (`redirect: "manual"` cross-origin → an opaqueredirect
-// with status 0); the 503 case matches what the local api actually serves.
-
 afterEach(() => {
   vi.unstubAllGlobals();
 });

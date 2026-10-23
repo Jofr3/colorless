@@ -1,9 +1,3 @@
-// Pure-logic suite (node env): real games driven through the engine's public
-// API + its test fixtures, REDACTED for each seat. redactGame is the
-// authoritative server-side hidden-information filter (P4) — these tests pin its
-// contract card-for-card and, above all, that no opponent-private card ever
-// crosses into a viewer's snapshot.
-
 import { describe, expect, it } from "vitest";
 import {
   EMPTY_CARD_ID,
@@ -168,10 +162,6 @@ describe("redactGame — the opponent's side is redacted", () => {
     expect(game.board.opponent.prizesRemaining).toBe(4);
     expect(game.board.you.deckCount).toBe(state.players.p1.deck.length);
     expect(game.board.opponent.deckCount).toBe(state.players.p2.deck.length);
-    // Nowhere in the snapshot is a prize/deck uid or card id exposed.
-    // (🆕🆕🆕 D548: *"counts only"* in this title holds for FACE-DOWN prizes only — a prize
-    // Crescent Purge turned face up rides `faceUpPrizes` with its card. No Purge runs here,
-    // so both lists are empty and the claim is exact on this board.)
     const ids = new Set(allIds(game));
     for (const uid of [...state.players.p2.prizes, ...state.players.p2.deck]) {
       expect(ids.has(uid)).toBe(false);
@@ -183,7 +173,6 @@ describe("redactGame — the opponent's side is redacted", () => {
     const game = redactGame(state, "p1");
     const oppActive = game.board.opponent.active;
     if (oppActive === null) throw new Error("expected opponent active");
-    // Public: real uid, real identity, a battle row.
     expect(oppActive.cardId).not.toBe(HIDDEN_CARD_ID);
     expect(oppActive.id).toBe(state.players.p2.active?.stack.at(-1));
     expect(oppActive.battle).not.toBeUndefined();
@@ -198,7 +187,7 @@ describe("redactGame — the setup hidden-information barrier", () => {
     if (oppActive === null) throw new Error("expected opponent active");
     expect(oppActive.cardId).toBe(HIDDEN_CARD_ID);
     expect(oppActive.id).toBe("opponent-active-hidden");
-    expect(oppActive.battle).toBeUndefined(); // a battle row would leak the printed HP
+    expect(oppActive.battle).toBeUndefined();
     expect(oppActive.attached).toBeUndefined();
     expect(game.board.opponent.bench).toEqual([
       expect.objectContaining({ cardId: HIDDEN_CARD_ID, id: "opponent-bench-0-hidden" }),
@@ -310,15 +299,11 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
       kind: "turn:action",
       attacks: [],
       retreat: { cost: 1, can: false },
-      // fix-basic-1 has no ability; MIXED_DECK's fix-item is unauthored, so no
-      // playable-trainer row either (a Tool/unauthored Trainer is never offered),
-      // and no Rare Candy in that deck at all.
       abilities: [],
       trainers: [],
       rareCandy: [],
-      // D210 — no Stadium is in play in this fixture, so the §7.3 offer is null.
       stadiumAbility: null,
-      discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
+      discardable: [],
     });
   });
 
@@ -409,13 +394,8 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
       abilities: [],
       trainers: [],
       rareCandy: [],
-      // D210 — and no §7.3 Stadium offer either: it is the acting seat's alone,
-      // exactly like `retreat`. (Null here for two independent reasons — the
-      // viewer is not the actor AND no Stadium is in play — which is why the
-      // discriminating version of this claim lives in
-      // `redactStadiumAbility.test.ts`, with a Stadium actually on the board.)
       stadiumAbility: null,
-      discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
+      discardable: [],
     });
   });
 
@@ -437,10 +417,6 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
   });
 });
 
-// The online turn HUD (increment 2b-ii) also renders a retreat control off the
-// redacted phase, so the redactor computes the cost + a `can` gate server-side
-// over the full state the wire withholds. These pin it the way GameHud's
-// TurnPanel computes `canRetreat`.
 describe("redactGame — turn:action retreat option (the online HUD's retreat gate)", () => {
   /** turnOneState with `energy`-many deck cards moved onto p1's Active — the
       attach a fixture otherwise can't express (mirrors the attachment test above). */
@@ -498,11 +474,6 @@ describe("redactGame — turn:action retreat option (the online HUD's retreat ga
   });
 });
 
-// The online turn HUD (increment 3b) renders activated-Ability + non-Stadium
-// Trainer buttons off the redacted phase, so the redactor folds each option's
-// playability server-side over the full state the wire withholds (the own hand,
-// prize counts, the Stadium owner) EXACTLY the way GameHud's usableAbilities /
-// playableTrainers do — and emits them ONLY to the acting viewer.
 describe("redactGame — turn:action ability options (increment 3b)", () => {
   /** p2 first → p1's turn 2, with Chien-Pao ex (its activated "Shivery Chill")
       surgically forced as p1's Active (the ABILITY_DECK's fixture ability card). */
@@ -538,10 +509,6 @@ describe("redactGame — turn:action ability options (increment 3b)", () => {
   });
 
   it("greys an activeOnly ability sitting on the Bench (self-evident, no reason)", () => {
-    // A second Chien-Pao ex benched: Shivery Chill is Active-only, so its Bench
-    // copy is a disabled row with no tooltip (the §9 gate is self-evident). It
-    // lands at Bench index 1 — setActiveFromDeck displaced the opening Active to
-    // Bench 0 first.
     let state = driveSetup(3, { p1: ABILITY_DECK, p2: ABILITY_DECK }, { first: "p2" });
     state = setActiveFromDeck(state, "p1", "sv02-061");
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -590,10 +557,6 @@ function rareCandyHand(state: GameState): [GameState, string] {
   return [next, handUid(next, "p1", "fix-stage2")];
 }
 
-// The non-Stadium Trainer half of increment 3b — the acting viewer's Item/
-// Supporter hand cards, deduped, each with folded playability. Stadiums are
-// excluded (the board drag); Rare Candy is included but FLAGGED (3b-ii), its row
-// opening the dialog the next block's pairings feed.
 describe("redactGame — turn:action trainer options (increment 3b)", () => {
   it("lists Item/Supporter hand cards with folded playability + greying reasons", () => {
     // p1's turn 2 (Supporters legal), p2 with no Bench: Professor's Research is a
@@ -622,8 +585,6 @@ describe("redactGame — turn:action trainer options (increment 3b)", () => {
   });
 
   it("disables a Supporter on the §4 first turn (self-evident, no reason)", () => {
-    // p1 goes first: turn 1 is p1's, so a Supporter is banned — a greyed row with
-    // no tooltip (the §4 timing needs none).
     let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" });
     state = handFromDeck(state, "p1", "sv01-189", 1);
     const phase = redactGame(state, "p1").phase;
@@ -682,20 +643,12 @@ describe("redactGame — turn:action trainer options (increment 3b)", () => {
   });
 });
 
-// The Rare Candy pairings behind that flagged row (increment 3b-ii) — the wire
-// mirror of the engine's own `rareCandyOptions`, folded server-side so the online
-// dialog can never offer an illegal Basic/Stage-2 pair, and emitted to the acting
-// viewer alone.
 describe("redactGame — turn:action Rare Candy options (increment 3b-ii)", () => {
   it("lists a legal pairing: the Basic's spot + uid + the matching Stage 2 in hand", () => {
     const [state, stage2Uid] = rareCandyHand(rareCandyBoard());
     const phase = redactGame(state, "p1").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action");
     const option = phase.rareCandy.find((o) => o.target.spot === "active");
-    // The seatless target the `rareCandy` action dispatches back, the Basic's
-    // display identity, and the Stage 2 that skips fix-stage1 (the fixture line
-    // is fix-basic-1 → fix-stage1 → fix-stage2 — the bridge need only be in the
-    // pool, which is exactly the chain check the client cannot run).
     expect(option?.basicUid).toBe(activeUid(state, "p1"));
     expect(option?.basicName).toBe("fix-basic-1");
     expect(option?.stage2).toContainEqual({ uid: stage2Uid, name: "fix-stage2" });
@@ -714,10 +667,6 @@ describe("redactGame — turn:action Rare Candy options (increment 3b-ii)", () =
   });
 
   it("offers nothing on the §4 first turn, and greys the row to match", () => {
-    // p1 goes first, so turn 1 is theirs and Rare Candy is banned (§4/§7.1). The
-    // engine's own `rareCandyOptions` returns [] there — so the wire list is empty
-    // AND the row is disabled (with no tooltip: the timing is self-evident, the
-    // local row's choice). An empty list behind a LIT row would be a dead dialog.
     const [state] = rareCandyHand(
       driveSetup(
         4,
@@ -754,11 +703,6 @@ describe("redactGame — turn:action Rare Candy options (increment 3b-ii)", () =
   });
 });
 
-// The online effect:choose dialog (increment 2b-iii-a) reads the redacted prompt
-// off the phase, which the redactor sends ONLY to the seat that must answer it —
-// a prompt's candidates can be the controller's private deck cards, so the raw
-// prompt must never reach the other viewer. These pin that answerer gate the way
-// phaseViewOf withholds the local projection's decision.
 describe("redactGame — the effect:choose prompt (answerer-only)", () => {
   // The redactor never reads `cont`, so a minimal (unrelated) continuation
   // stands in — this synthesizes the phase over a real board, like the gameOver
@@ -889,19 +833,10 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
     expect(opp.phase.prompt).toBeNull();
     const oppIds = new Set(allIds(opp));
     for (const uid of deckUids) expect(oppIds.has(uid)).toBe(false);
-    // 🆕 D457 — `oneTarget` is ABSENT on this prompt, and absence is asserted
-    // rather than assumed: the key has exactly two inhabitants on the wire
-    // (`true` and missing), so a mirror that wrote `false` would be spelling
-    // "no constraint" a second way.
     expect(phase.prompt).not.toHaveProperty("oneTarget", true);
   });
 
-  it("🆕 D457 — carries attachCards.oneTarget through to the controller, and only to them", () => {
-    // The printed *"attach them to 1 of your Pokémon"*: the constraint is on the
-    // ANSWER, so the client that composes the answer has to be told. Without this
-    // mirror the online dialog offers a second body and the SERVER refuses the
-    // result — a dialog contradicting its own validator, which is the failure the
-    // `maxPerTarget` mirror above exists to prevent one key over.
+  it("D457 — carries attachCards.oneTarget through to the controller, and only to them", () => {
     const base = turnOneState();
     const deckUids = base.players.p1.deck.slice(0, 2);
     const state: GameState = {
@@ -928,9 +863,6 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
       throw new Error("expected an attachCards prompt");
     }
     expect(phase.prompt.oneTarget).toBe(true);
-    // ⚠️ AND IT DOES NOT DRAG THE SIBLING KEY WITH IT — a mirror that wrote both
-    // from one source would cap the batch at one CARD as well as one BODY, which
-    // is `max: 1` and not what the card prints.
     expect(phase.prompt.maxPerTarget).toBeUndefined();
     // The opponent still sees nothing at all: a constraint is not a leak channel.
     const opp = redactGame(state, "p2");
@@ -939,12 +871,6 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
   });
 });
 
-// The online effect:choose dialogs (increment 2b-iii-b) render the PUBLIC-REF
-// family — choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy —
-// whose candidates are in-play refs and attached-Energy uids already public on
-// the board. The redactor passes them through as FRESH copies (no alias), still
-// gated answerer-only. Unlike mayDraw these are CONTROLLER-answered, so the
-// prompt reaches the controller (phase.seat) and is withheld from the opponent.
 describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)", () => {
   const CONT: EffectContinuation = {
     pendingOp: { op: "opponentMayDraw", count: 1 },
@@ -998,13 +924,7 @@ describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)
     expect(promptFor(prompt, "p1")).toEqual(prompt);
   });
 
-  it("🆕 D441 — passes a moveEnergy prompt's FLOOR through, and its absence too", () => {
-    // Both shapes, for `anySource`'s reason exactly: the field is OPTIONAL, so the
-    // arm above pins that a prompt WITHOUT it round-trips byte-identically (no
-    // `min: undefined` appearing on either side), and this one pins that a prompt
-    // WITH it does not silently lose it — which would hand the online player a
-    // "Move none" button on Castform's printed "Move all Energy" and let the wire
-    // validator accept the empty answer. D358's defect on the other prompt.
+  it("D441 — passes a moveEnergy prompt's FLOOR through, and its absence too", () => {
     const prompt: EffectPrompt = {
       kind: "moveEnergy",
       movable: [
@@ -1032,17 +952,7 @@ describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)
     expect(promptFor(prompt, "p1")).toEqual(prompt);
   });
 
-  it("🆕 D543 — …and with the OTHER TWO scopes, which no rung crossed before", () => {
-    // 🛑 **THE RUNG ABOVE IS TRUE AND IS LEFT EXACTLY AS IT WAS.** It pins
-    // `{ kind: "total", count: 1 }`, and that case never broke. What it could not
-    // see — and what let D543's Part-0 defect ship — is that it was the ONLY scope
-    // any rung ever crossed: `redactedScopeOf` was a two-arm ternary whose `else`
-    // swallowed `upTo` into `{ kind: "each" }`, and a suite that only ever sends
-    // `total` cannot tell an `else` branch from an arm. So this is an ADDITION
-    // beside it, not an inversion of it.
-    // ⚠️ **AND `each` IS DRIVEN TOO, DELIBERATELY**, even though it was the value the
-    // broken ternary happened to return: without it, a fix that mapped everything to
-    // `upTo` would be just as green as the defect it replaced.
+  it("D543 — …and with the OTHER TWO scopes, which no rung crossed before", () => {
     const offers = [
       { uid: "e1", from: P2_ACTIVE },
       { uid: "e2", from: P1_ACTIVE },
@@ -1063,7 +973,7 @@ describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)
     expect(promptFor(upTo, "p1")).toEqual(upTo);
   });
 
-  it("🆕 D543 — passes a discardTools prompt through with its `upTo` scope", () => {
+  it("D543 — passes a discardTools prompt through with its `upTo` scope", () => {
     const prompt: EffectPrompt = {
       kind: "discardTools",
       discardable: [
@@ -1162,11 +1072,6 @@ describe("redactGame — the SPECTATOR view (3c-vii)", () => {
   });
 
   it("withholds EVERY turn:action affordance, including on the actor's own side", () => {
-    // The actor lists name cards in a HAND: leaking them would undo the hand
-    // redaction above. One `actor = null` gate covers all five, so the next
-    // affordance added is withheld by default.
-    // A board with real affordances to withhold: p1 on turn 2 holding a
-    // Supporter (the trainer-options fixture from 3b).
     let state = driveSetup(1, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     state = handFromDeck(state, "p1", "sv01-189", 1);
@@ -1184,11 +1089,8 @@ describe("redactGame — the SPECTATOR view (3c-vii)", () => {
       abilities: [],
       trainers: [],
       rareCandy: [],
-      // D210 — the §7.3 Stadium offer rides the SAME `actor = null` spectator
-      // gate, which is the point of that gate: an affordance added to this arm is
-      // withheld by default rather than by someone remembering to withhold it.
       stadiumAbility: null,
-      discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
+      discardable: [],
     });
   });
 

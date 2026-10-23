@@ -13,24 +13,8 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B04 (Items) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B04"), each driven
-// on a real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.effect`, byte for byte below):
-//   §1 Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091` — mark-G (and
-//      undated `mfb`) reprints with no registry row, refused as TRAINER_NOT_SIMULATED although
-//      `legal_standard_effective = 1` since 714256b3 (same print_key as an authored twin).
-//   §2 Poké Pad `30th-126`, Switch `30th-127`, Ultra Ball `30th-128` — `legal_standard = 1`, but the
-//      catalog row has `effect = NULL` (tcgdex prints no text for them), so no registry row named
-//      them. The play is fixed here; the missing face text is catalog data (deferred, see the doc).
-//   §3 Rare Candy with no copy of the Stage 1 in either deck — DEFERRED (pool builders); this pins
-//      the documented gap and the bridge it needs, so the deferral is measured, not asserted.
-//   §4 Hole-Digging Shovel `me03-074` with an empty deck: "Discard the top 2 cards of your deck."
-//      can do nothing (deck size is public, ruling/284), so the Item is refused like Night
-//      Stretcher with an empty discard.
 
 const RARE_CANDY_TEXT =
   "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn.";
@@ -44,7 +28,6 @@ const SWITCH_IDS = ["sv01-194", "sv03.5-206", "mfb-34", "30th-127"] as const;
 const ULTRA_BALL_IDS = ["sv01-196", "sv04.5-091", "30th-128"] as const;
 const POKE_PAD_IDS = ["me02.5-198", "30th-126"] as const;
 const SHOVEL = "me03-074";
-/** The three `30th` printings whose catalog row carries `effect = NULL` (measured 2026-10-19). */
 const TEXTLESS = new Set(["30th-126", "30th-127", "30th-128"]);
 
 const ABRA = "b04-abra";
@@ -107,11 +90,6 @@ function deck(withStage1: boolean): string[] {
   });
 }
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup with P1 first, then P1's SECOND turn (turn 3 — Rare Candy's "first turn" ban is past).
     `pool` is the engine `cardPool`; its keys beyond the decks' ids are what §3 varies. */
 function p1Turn(pool: Record<string, Card>, withStage1 = true): GameState {
@@ -144,7 +122,6 @@ function p1Turn(pool: Record<string, Card>, withStage1 = true): GameState {
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);
-  // Hands and discards back into the deck; six `fix-energy` make each prize row.
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
     const pile = [...side.deck, ...side.hand, ...side.prizes, ...side.discard];

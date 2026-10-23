@@ -23,50 +23,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.66.0 → 0.67.0 — the SECOND wave of the conditional flat attack-damage bonus
-// (D116): four more printed clauses onto D115's machinery, which is unchanged.
-//
-// D115 built the shape ("If <clause>, this attack does N more damage." → a 0-or-1
-// INDICATOR folded through the existing additive `per × count`) and mapped four
-// clauses. This slice adds four more table rows and four new `BoardCondition`
-// members — no new regex, no new arithmetic, no new event field:
-//
-//   • `yourActiveDamaged`                  — Talonflame sv02-030 "Fiery Breeze"
-//                                            (70+, +90); Darmanitan sv03-035
-//                                            "Damage Counterpunch" (60+, +60)
-//   • `yourBenchDamaged`                   — Tyranitar ex sv03-066 (+ the
-//                                            byte-identical sv03-211) "Lightning
-//                                            Rampage" (150+, +100)
-//   • `opponentActivePoisoned`             — Seviper sv01-128 "Venoshock" (60+,
-//                                            +120), and Paldean Clodsire sv03-129
-//                                            off the same row (not fixtured)
-//   • `opponentActiveHasSpecialCondition`  — Sableye sv02-136 "Unseen Claw"
-//                                            (20+, +70), the pool's only printing
-//
-// Eleven printings across seven distinct cards, on ZERO registry rows — every one
-// of them simulates straight off its printed sentence, which is why the verbatim
-// guard below is load-bearing rather than decorative.
-//
-// THE DESIGN CALL this suite exists to pin: Talonflame and Darmanitan print the
-// pronoun "this Pokémon", and that pronoun is resolved to the ATTACKER'S ACTIVE in
-// the CLAUSE TABLE (effects.ts), not inside `conditionHolds`. The union member is
-// therefore named for what it READS — `yourActiveDamaged` — because
-// `BoardCondition` is shared with `trainerPlayableIf` (a play gate evaluated with
-// no attack in flight) and with the HUD, where a self-pronoun has no referent at
-// all. The visible consequence, asserted at the bottom of this file: the member's
-// `conditionNote` says "your Active Pokémon", never "this Pokémon".
-//
-// The other trap the family sets is LEXICAL. `yourActiveDamaged`'s clause and
-// D115's `opponentActiveDamaged` differ by exactly one printed word ("already"),
-// and `opponentActivePoisoned`'s clause is one pronoun away from Okidogi ex's
-// self-Poison twin (UNMAPPED when this suite was written; D117 mapped it onto the
-// SELF member `yourActivePoisoned`). Both discriminators get their own case.
-
-/** The five printed sentences, pinned here and asserted char-for-char against
-    FIXTURE_POOL below. These cards derive off text — not one carries a registry
-    row (see the ZERO-rows block) — so the sentence IS the wiring: a drifted
-    apostrophe or a lookalike é does not fail loudly, it silently un-simulates the
-    card at the exact moment the clause would have paid off. */
 const FIERY_BREEZE =
   "If this Pokémon has any damage counters on it, this attack does 90 more damage.";
 const DAMAGE_COUNTERPUNCH =
@@ -78,28 +34,14 @@ const VENOSHOCK =
 const UNSEEN_CLAW =
   "If your opponent's Active Pokémon is affected by a Special Condition, this attack does 70 more damage.";
 
-/** The three companion sentences on the same five cards — none of them is this
-    family, and each is doing a specific job in the suite: Clutch is the DERIVED
-    PROGRAM that proves the two derivers stay index-keyed on one card, and the two
-    status setters let the board arm its own clause without a surgery. */
 const CLUTCH = "During your opponent's next turn, the Defending Pokémon can't retreat.";
 const SPIT_POISON = "Your opponent's Active Pokémon is now Poisoned.";
 const NIGHT_EYES = "Your opponent's Active Pokémon is now Asleep.";
 
 const CLAUSES = [FIERY_BREEZE, DAMAGE_COUNTERPUNCH, LIGHTNING_RAMPAGE, VENOSHOCK, UNSEEN_CLAW];
 
-/** The five card ids, in the order the table maps them. Keyed by ID everywhere in
-    this file on purpose: sv01-128 Seviper and D115's sv02-137 Seviper are the SAME
-    PRINTED NAME on two different cards with two different clauses, so any
-    assertion that went by `name` would be reading whichever one it happened to
-    find. */
 const CARD_IDS = ["sv02-030", "sv03-035", "sv03-066", "sv01-128", "sv02-136"] as const;
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it.
-    Counting by code point is the same number and needs no ambient type. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -116,15 +58,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4) — with BOTH Active spots
-    pinned to a neutral 200 HP fix-bigbody. Pinning is what keeps every assertion
-    seed-independent: CONDITION_CLAUSE_DECK carries Seviper and Sableye, two BASICS
-    that could otherwise be the dealt starter, and fix-bigbody is simultaneously
-    the arithmetically clean defender (Colorless, no Weakness, no Resistance) every
-    damage number below is measured against and the clean BENCH body Lightning
-    Rampage reads. Each displaced starter lands on its own bench, so both seats
-    open with a non-empty, UNDAMAGED bench — the `yourBenchDamaged` negative. */
 function board(seed: number): GameState {
   let state = driveSetup(
     seed,
@@ -137,29 +70,16 @@ function board(seed: number): GameState {
   return state;
 }
 
-/** `board`, then handed over to P2 — P1 passes into P2's turn 3, which is equally
-    unrestricted. Two of these clauses are SEAT-RELATIVE reads of the attacker's
-    own board (`yourActiveDamaged`, `yourBenchDamaged`), and a P1-only suite cannot
-    tell "reads the attacker's side" apart from "reads p1's side". */
 function boardP2(seed: number): GameState {
   return mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
 }
 
-/** Pay a printed cost symbol-for-symbol onto `seat`'s Active — typed Energy for
-    the typed symbols, plain {C} (fix-energy) for the Colorless ones, rather than
-    leaning on a typed card to cover both. Must run AFTER the attacker is fielded
-    (attachFromDeck attaches to whatever is in the Active Spot). */
 function pay(state: GameState, seat: Seat, spec: [string, number][]): GameState {
   let next = state;
   for (const [id, count] of spec) next = attachFromDeck(next, seat, id, count);
   return next;
 }
 
-/** TEST SURGERY: empty `seat`'s Bench, parking every card in the discard so each
-    uid stays in exactly one zone. The `yourBenchDamaged` edge that no reachable
-    board presents — `board` always leaves a displaced starter benched — and the
-    one that separates "some benched Pokémon is damaged" from a vacuous
-    every()-style read over an empty list. */
 function clearBench(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
   return {
@@ -178,11 +98,6 @@ function clearBench(state: GameState, seat: Seat): GameState {
   };
 }
 
-/** TEST SURGERY: empty `seat`'s Active Spot, parking its cards in the discard.
-    The live attack gate guarantees a Defending Pokémon, so no board reachable
-    through `attack` can present a null Active — only a direct `conditionHolds`
-    call finds this edge, and all three of the new Active-reading members have to
-    answer FALSE rather than throw. */
 function clearActive(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
   const active = side.active;
@@ -239,10 +154,6 @@ function sableye(state: GameState, seat: Seat): GameState {
 
 describe("the printed sentences — the fixture-text-verbatim guard", () => {
   it("matches FIXTURE_POOL char-for-char on all five cards", () => {
-    // These cards derive off text, so this is not decoration: it is the assertion
-    // that the fixture row and the clause TABLE still agree on every byte. A
-    // one-character drift here does not throw — it drops the card back onto the
-    // loud ATTACK_EFFECT_SKIPPED path and silently stops paying the bonus.
     expect(FIXTURE_POOL["sv02-030"]?.attacks?.[1]?.effect).toBe(FIERY_BREEZE);
     expect(FIXTURE_POOL["sv03-035"]?.attacks?.[0]?.effect).toBe(DAMAGE_COUNTERPUNCH);
     expect(FIXTURE_POOL["sv03-066"]?.attacks?.[1]?.effect).toBe(LIGHTNING_RAMPAGE);
@@ -274,12 +185,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("carries ASCII apostrophes and precomposed U+00E9 — the byte facts, checked programmatically", () => {
-    // Asserted by CONSTRUCTION rather than by eye: the two characters a re-ingest
-    // drifts on are INVISIBLE in a diff. U+2019 (the typographic apostrophe) and
-    // "e" + U+0301 (the decomposed e-acute) both render identically to the real
-    // thing and both miss the table's `Map.get` by a mile. The two probes are
-    // spelled as \u escapes on purpose — a literal here would be exactly as
-    // unreadable as the drift it is hunting.
     const CURLY_APOSTROPHE = "\u2019";
     const COMBINING_ACUTE = "e\u0301";
     for (const text of CLAUSES) {
@@ -299,29 +204,17 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("pins each clause's UTF-8 byte length", () => {
-    // The e-acute is the one character that changes the BYTE length without
-    // changing the visible one, so the encoded length is the single number that
-    // catches a decomposition drift on its own. (Talonflame and Darmanitan tie at
-    // 80 because "90" and "60" are both two digits.)
     expect(utf8Bytes(FIERY_BREEZE)).toBe(80);
     expect(utf8Bytes(DAMAGE_COUNTERPUNCH)).toBe(80);
     expect(utf8Bytes(LIGHTNING_RAMPAGE)).toBe(92);
     expect(utf8Bytes(VENOSHOCK)).toBe(81);
     expect(utf8Bytes(UNSEEN_CLAW)).toBe(103);
-    // Every clause is EXACTLY one byte over its character count: one precomposed
-    // U+00E9 each (2 bytes), and every other character — the apostrophes included —
-    // ASCII. A decomposed accent adds a character AND a byte (81/82 here); a curly
-    // apostrophe keeps the character count and adds two (80/83). Neither survives
-    // this equality, which is why it is pinned alongside the absolute numbers.
     for (const text of CLAUSES) expect(utf8Bytes(text)).toBe(text.length + 1);
   });
 });
 
 describe("deriveAttackDamageBonus — the four NEW clauses", () => {
   it("reads Fiery Breeze as yourActiveDamaged — the printed pronoun, resolved in the TABLE", () => {
-    // "this Pokémon" is resolved to the ATTACKER'S ACTIVE by the clause table, so
-    // the member that comes out is named for what it reads, not for how it was
-    // printed. That naming is the whole D116 call (see the header).
     expect(deriveAttackDamageBonus(FIERY_BREEZE)).toEqual({
       per: 90,
       count: { kind: "boardCondition", cond: { kind: "yourActiveDamaged" } },
@@ -364,10 +257,6 @@ describe("deriveAttackDamageBonus — the four NEW clauses", () => {
   });
 
   it("keeps the 'already' discriminator — one word apart, two different members", () => {
-    // THE lexical trap of this family. D115's opponent-facing clause and D116's
-    // self-facing one are the same English sentence but for the pronoun and the
-    // word "already"; a substring-matching table would collapse them and score
-    // Talonflame's +90 off the DEFENDER's damage.
     expect(deriveAttackDamageBonus(FIERY_BREEZE)?.count).toEqual({
       kind: "boardCondition",
       cond: { kind: "yourActiveDamaged" },
@@ -382,11 +271,6 @@ describe("deriveAttackDamageBonus — the four NEW clauses", () => {
 
 describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
   it("reads Okidogi ex's SELF-Poison twin as the OTHER member, not this one", () => {
-    // Okidogi ex sv06.5-036/-082/-090 "Chain-Crazed", 3 printings — UNMAPPED when
-    // this suite was written (it was the file's near-miss witness) and mapped by
-    // D117 onto `yourActivePoisoned`. It stays here as the LEXICAL discriminator
-    // it always was: one pronoun apart from Venoshock's row, opposite boards. The
-    // failure this guards against is a row keyed loosely enough to swallow both.
     expect(
       deriveAttackDamageBonus("If this Pokémon is Poisoned, this attack does 130 more damage.")
         ?.count,
@@ -398,16 +282,6 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
   });
 
   it("refuses Lucario's last-turn-KO clause — a well-formed sentence, an unmapped condition", () => {
-    // Lucario sv01-114 "Avenging Knuckle", printed text (verified verbatim
-    // against the local D1 — the attack's NAME is "Avenging Knuckle", not "Aura
-    // Sphere"). The sentence matches the
-    // family's shape perfectly; only the CLAUSE misses the table, which is exactly
-    // the fall-through the `Map.get` guard exists to protect. It reads what
-    // happened on the PREVIOUS turn, state the model does not keep.
-    //
-    // (This case used to point at Sylveon swsh10.5-035's Dragon clause, which
-    // D120 mapped via the type TEMPLATE — re-pointed rather than deleted, since
-    // the fall-through needs a live witness.)
     expect(
       deriveAttackDamageBonus(
         "If any of your {F} Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 120 more damage.",
@@ -416,30 +290,12 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
   });
 
   it("refuses the damage-PLACEMENT sentences that merely CONTAIN a mapped clause", () => {
-    // Yveltal sv06.5-035 "Cruel Arrow"-family and Vespiquen ex sv03-096 both print
-    // "…that has any damage counters on it" as a TARGET FILTER on a `Put N damage
-    // counters` sentence. The substring is there; the sentence is not this shape.
-    // The whole-sentence anchor (^If … more damage\.$) is the only thing excluding
-    // them, and a table that searched for its keys anywhere in the text would turn
-    // both into a flat damage bonus.
     const yveltal =
       "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.";
     const vespiquen =
       "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.";
     expect(deriveAttackDamageBonus(yveltal)).toBeNull();
     expect(deriveAttackDamageBonus(vespiquen)).toBeNull();
-    // 🆕🆕🆕 **D450 CORRECTED THE PARAGRAPH THAT USED TO SIT HERE, AND THE CORRECTION IS
-    // THE POINT.** It read: *"NEITHER derives to a program on the op path today either.
-    // The `Put N damage counters on EACH …` spread with a per-target filter is an
-    // unbuilt shape, so both cards stay wholly on the loud skipped path."* That was
-    // TRUE when written and is now half false: `deriveAttackEffect` claims the first of
-    // the two through arm 23f (`counterEachAll` with `side: "opponent"` and D437's
-    // `damagedOnly` rider). The SECOND — the Bench-scoped spelling — is still unread and
-    // carries **0 Standard-legal printings**, so it is refused by the anchor and by the
-    // population both. ⚠️ **THIS RUNG'S OWN CLAIM IS UNTOUCHED BY EITHER FACT**: it is
-    // about `deriveAttackDamageBonus`, and a sentence that reaches a DIFFERENT reader
-    // has not reached this one. Stated as an inequality of READERS rather than deleted,
-    // which is what keeps the disjointness assertion doing its job.
     expect(deriveAttackDamageBonus(yveltal)).toBeNull();
     expect(deriveAttackEffect(yveltal)?.[0]?.op).toBe("counterEachAll");
     expect(deriveAttackEffect(vespiquen)).toBeNull();
@@ -465,9 +321,6 @@ describe("the two derivers stay disjoint, and stay INDEX-KEYED", () => {
   });
 
   it("Talonflame carries a derived PROGRAM at index 0 and a derived SCALING at index 1", () => {
-    // One card, both derivers, neither leaking into the other's slot. Index 0's
-    // Clutch is D112's retreat-LOCK rider, which `deriveAttackEffect` owns outright;
-    // index 1 is this slice's clause, which `deriveAttackDamageBonus` owns outright.
     const clutch = FIXTURE_POOL["sv02-030"]?.attacks?.[0]?.effect ?? "";
     const fieryBreeze = FIXTURE_POOL["sv02-030"]?.attacks?.[1]?.effect ?? "";
     expect(deriveAttackEffect(clutch)).toEqual([{ op: "preventRetreat" }]);
@@ -499,14 +352,9 @@ describe("the two derivers stay disjoint, and stay INDEX-KEYED", () => {
 
 describe("ZERO registry rows — the whole slice is text", () => {
   it("gives none of the five cards a registry program", () => {
-    // The claim the header makes, asserted. If any of these ever grows a row, the
-    // registry would win (`programFor(id)?.attack?.[index] ?? derive`) and every
-    // damage number below would keep passing while testing nothing about the text.
     for (const id of CARD_IDS) {
       expect(programFor(id)).toBeUndefined();
     }
-    // sv03-211 is Tyranitar ex's second printing — byte-identical rules text, no
-    // fixture of its own, and equally rowless. Named here so the pair stays visible.
     expect(programFor("sv03-211")).toBeUndefined();
   });
 });
@@ -535,10 +383,6 @@ describe("Talonflame 'Fiery Breeze' — yourActiveDamaged, read off the ATTACKER
   });
 
   it("is the ATTACKER's side — damage on the DEFENDER's Active scores nothing", () => {
-    // THE asymmetry, and the case that catches a seat-swapped read: the identical
-    // 10 counters, on the wrong side of the board. A `yourActiveDamaged` wired to
-    // `otherSeat(seat)` would be D115's `opponentActiveDamaged` wearing this name,
-    // and would score 160 here.
     const state = setDamage(talonflame(board(3), "p1"), "p2", 10);
     expect(state.players.p1.active?.damage).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
@@ -666,17 +510,6 @@ describe("Seviper sv01-128 'Venoshock' — opponentActivePoisoned", () => {
   });
 
   it("is armed by the GAME, not by a surgery — Spit Poison one turn, Venoshock the next", () => {
-    // The end-to-end case: no `setConditions` anywhere. Seviper's own index-0 Spit
-    // Poison (a derived `applyStatus` op that deals NO damage) sets the condition
-    // its index-1 reads two turns later, so the clause is proved against a board the
-    // engine built for itself.
-    //
-    // The arithmetic has to account for §13.1: the Checkup runs between EVERY pair
-    // of turns and ticks Poison on both Actives, so P2's fix-bigbody takes 10 when
-    // P1's attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and another 10 when P2 passes back — 20 already on
-    // it before Venoshock is even declared. That is accounted for, not worked
-    // around: the DAMAGE_DEALT is still exactly 60 + 120, and 20 + 180 = 200 is
-    // precisely fix-bigbody's HP, so the hit is also lethal.
     let state = seviper(board(14), "p1");
     const poisonRun = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // Spit Poison deals nothing itself — the only damage in its events is §13.1's.
@@ -738,10 +571,6 @@ describe("Sableye 'Unseen Claw' — opponentActiveHasSpecialCondition, ANY one o
   });
 
   it("the PAIRING: on ONE Asleep board Unseen Claw fires and Venoshock does not", () => {
-    // The two clauses are nested (Poisoned ⊂ affected by a Special Condition), and
-    // this is the board that proves they are not aliases of each other. Both
-    // attackers are built off the SAME `asleep` state, so nothing but the clause
-    // differs between the two runs.
     const asleep = setConditions(board(20), "p2", { rotation: "asleep" });
     expect(conditionHolds(asleep, "p1", { kind: "opponentActiveHasSpecialCondition" })).toBe(true);
     expect(conditionHolds(asleep, "p1", { kind: "opponentActivePoisoned" })).toBe(false);
@@ -758,11 +587,6 @@ describe("Sableye 'Unseen Claw' — opponentActiveHasSpecialCondition, ANY one o
 
 describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
   it("doubles (base + scaled), not base alone: (150 + 100) × 2 = 500", () => {
-    // Tyranitar ex is typed {L} (its {F} attack cost is irrelevant to W/R — the
-    // multiplier reads the attacking POKÉMON's type) and Talonflame is Weakness
-    // Lightning ×2, so the whole folded number is what doubles. A fold placed AFTER
-    // Weakness would give 150×2 + 100 = 400. Talonflame's printed Fighting −30
-    // resistance never fires: the attacker is not a Fighting Pokémon.
     const state = setBenchDamage(
       setActiveFromDeck(tyranitarEx(board(21), "p1"), "p2", "sv02-030"),
       "p1",
@@ -795,12 +619,6 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
 
 describe("ATTACK_EFFECT_SKIPPED never fires — in EITHER direction", () => {
   it("simulates the sentence whether or not the clause holds, on all four cards", () => {
-    // The point of the whole family: before D115 every leading-`If` print fell onto
-    // the loud skipped path with its "+" marker unsimulated. Now the flag rides
-    // `scaling !== null` — the sentence being RECOGNISED — so a false clause is a
-    // simulated 0, not an unsimulated unknown. Asserted for the true AND the false
-    // board of each card, because a flag wired to the clause's VALUE instead of its
-    // recognition would only show up on one of the two.
     const cases: { build: (seed: number) => GameState; index: number; arm: boolean }[] = [
       { build: (s) => talonflame(board(s), "p1"), index: 1, arm: false },
       { build: (s) => setDamage(talonflame(board(s), "p1"), "p1", 10), index: 1, arm: true },
@@ -839,8 +657,6 @@ describe("conditionHolds / conditionNote — the four NEW members, directly", ()
     expect(conditionHolds(clean, "p1", { kind: "yourActiveDamaged" })).toBe(false);
     expect(conditionHolds(clean, "p2", { kind: "yourActiveDamaged" })).toBe(false);
 
-    // Damage on P1's Active is P1's OWN condition — the exact opposite scoping to
-    // D115's `opponentActiveDamaged`, which the same board answers the other way.
     const hurt = setDamage(clean, "p1", 10);
     expect(conditionHolds(hurt, "p1", { kind: "yourActiveDamaged" })).toBe(true);
     expect(conditionHolds(hurt, "p2", { kind: "yourActiveDamaged" })).toBe(false);
@@ -966,17 +782,12 @@ describe("conditionHolds / conditionNote — the four NEW members, directly", ()
   });
 
   it("drops the printed pronoun — yourActiveDamaged's note never says 'this Pokémon'", () => {
-    // THE D116 point, asserted where it is visible. The clause table resolved "this
-    // Pokémon" to the attacker's Active; the note is read off the BOARD by a play
-    // gate or a HUD tooltip, where there is no attack in flight and the pronoun has
-    // no referent at all. So the note names the SPOT.
     const note = conditionNote({ kind: "yourActiveDamaged" });
     expect(note).not.toContain("this Pokémon");
     expect(note).not.toContain("This Pokémon");
     expect(note).toContain("your Active Pokémon");
     // The printed sentence it came from DOES say it — the two really do differ.
     expect(FIERY_BREEZE).toContain("this Pokémon");
-    // And it is not simply D115's opponent-facing note wearing a new name.
     expect(note).not.toBe(conditionNote({ kind: "opponentActiveDamaged" }));
   });
 });

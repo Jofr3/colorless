@@ -22,20 +22,8 @@ import {
   deckOf,
   mustApply,
   setActiveFromDeck,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D559 — THE ABILITY BUNDLE, PART 1: THE WEAKNESS REWRITE AND THE TWO BUILT LEGAL LOCKS ──
-//
-//   Lillie's Clefairy ex  sv09-056 / -173 / -184 / svp-195   "Fairy Zone"
-//   Flutter Mane          sv05-078 / sv08.5-043 / svp-097    "Midnight Fluttering"
-//   Gastrodon             sv08-107                           "Sticky Bind"
-//
-// Part 2 (Orthworm ex, Maractus, Klinklang, Regirock) is `abilityRecoilArmorD559.test.ts`;
-// this file also carries the §1 registry rows for all seven objects. Every board rides a
-// LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270): the seven printed cards
-// transcribed from the tcgdex JSON (2026-09-26) plus `d559-*` demonstrators. Fairy Zone is
-// driven at BOTH Weakness sites on SEPARATE boards (D432's reason: two expressions in two
-// files). Readings R-FZ1..R-FZ4 and R-LK1: docs/decisions.md D559.
 
 const LILLIE = ["sv09-056", "sv09-173", "sv09-184", "svp-195"] as const;
 const FLUTTER = ["sv05-078", "sv08.5-043", "svp-097"] as const;
@@ -115,11 +103,11 @@ const ATTACKS = [STRIKE, PICK_OFF, CLEAN, SHRED];
 const [I_STRIKE, I_PICK, I_CLEAN, I_SHRED] = [0, 1, 2, 3];
 
 const PSY = "d559-psy"; // a {P} attacker — the type Fairy Zone names
-const NORM = "d559-norm"; // a {C} attacker — the type D552's retype names
+const NORM = "d559-norm";
 const GRASSY = "d559-grassy"; // a {G} attacker — the printed Weakness the rewrite REPLACES
-const DRAGON = "d559-dragon"; // a {N} body printing NO Weakness (most SV Dragons)
-const DRAGON_GRASS = "d559-dragon-grass"; // a {N} body printing ×2 {G}
-const DRAGON_RES = "d559-dragon-res"; // a {N} body printing −30 {P} Resistance
+const DRAGON = "d559-dragon";
+const DRAGON_GRASS = "d559-dragon-grass";
+const DRAGON_RES = "d559-dragon-res";
 const WALL = "d559-wall"; // a {C} body — the non-Dragon control
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -284,7 +272,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [LILLIE[0]]: 1,
   [LILLIE[1]]: 1,
@@ -313,11 +300,6 @@ const DECK = deckOf({
   "fix-metal-energy": 6,
   "fix-energy": 25,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -440,7 +422,6 @@ function patchActive(state: GameState, seat: Seat, patch: Partial<InPlayPokemon>
     players: { ...state.players, [seat]: { ...side, active: { ...body(state, seat), ...patch } } },
   };
 }
-/** D552's retype, constructed live on THIS turn (R-FZ1's board). */
 const retyped = (state: GameState, seat: Seat = "p2") =>
   patchActive(state, seat, { weaknessRetype: { turn: state.turn, type: "Colorless" } });
 
@@ -513,14 +494,6 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
     expect(new Set(ids.map((id) => programFor(id))).size).toBe(7);
   });
 
-  // 🆕🆕🆕 D569 (D539): ~~sv08-096 Flutter Mane is not keyed~~ WITHDRAWN for that one id — it
-  // is keyed now by its ATTACK, "Perplexing Transfer" (`PERPLEXING_TRANSFER`, the Paradox
-  // unlock), and still carries NO Ability program: the look-alike claim this rung makes (no
-  // D559 Ability row) stays true and is pinned on the key set instead.
-  // 🆕🆕🆕 D572 (D539): ~~sv07-101 Klinklang is not keyed~~ WITHDRAWN for that id — it is keyed
-  // now by its IN-HAND Ability, "Emergency Rotation" (`EMERGENCY_ROTATION`, the NEW
-  // `benchFromHand`), and still carries NO Gear Coating row: the look-alike claim (no D559
-  // `passive` row) stays true and is pinned on the key set instead, as D569 did for Flutter Mane.
   it("the LOOK-ALIKES are not keyed: sv08-096 Flutter Mane (no Ability row — D569 keys its attack), sv10.5b-008/-093 Maractus, sv07-101 Klinklang (no Gear Coating row — D572 keys its in-hand Ability)", () => {
     for (const id of ["sv10.5b-008", "sv10.5b-093"]) {
       expect(programFor(id), id).toBeUndefined();
@@ -532,7 +505,7 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D559 §2 — Fairy Zone at the MAIN HIT (attack.ts): R-FZ4, the granted ×2", () => {
-  it("🛑 R-FZ4: a Dragon printing NO Weakness takes ×2 from a {P} attacker → 100", () => {
+  it("R-FZ4: a Dragon printing NO Weakness takes ×2 from a {P} attacker → 100", () => {
     expect(dealtBy(table(PSY, [LILLIE[0]], DRAGON), I_STRIKE)).toBe(100);
   });
   it("…the same board without Lillie's Clefairy ex: not weak → 50", () => {
@@ -547,14 +520,14 @@ describe("D559 §2 — Fairy Zone at the MAIN HIT (attack.ts): R-FZ4, the grante
   it("Resistance is untouched: (50 × 2) − 30 = 70 on a {P}-resistant Dragon", () => {
     expect(dealtBy(table(PSY, [LILLIE[3]], DRAGON_RES), I_STRIKE)).toBe(70);
   });
-  it("🛑 the rewrite REPLACES the printed entry: a ×2 {G} Dragon is no longer {G}-weak → 50…", () => {
+  it("the rewrite REPLACES the printed entry: a ×2 {G} Dragon is no longer {G}-weak → 50…", () => {
     expect(dealtBy(table(GRASSY, [LILLIE[0]], DRAGON_GRASS), I_STRIKE)).toBe(50);
     expect(dealtBy(table(GRASSY, [], DRAGON_GRASS), I_STRIKE)).toBe(100);
   });
   it("…and is {P}-weak instead → 100", () => {
     expect(dealtBy(table(PSY, [LILLIE[0]], DRAGON_GRASS), I_STRIKE)).toBe(100);
   });
-  it("🛑 Fairy Zone on the DEFENDER's own side does nothing (\"your opponent's\") → 50", () => {
+  it("Fairy Zone on the DEFENDER's own side does nothing (\"your opponent's\") → 50", () => {
     expect(dealtBy(table(PSY, [], DRAGON, [LILLIE[0]]), I_STRIKE)).toBe(50);
   });
   it("an ACTIVE Clefairy is a source too (no zone clause) — at the scan", () => {
@@ -567,25 +540,20 @@ describe("D559 §2 — Fairy Zone at the MAIN HIT (attack.ts): R-FZ4, the grante
 });
 
 describe("D559 §3 — the null paths win (R-FZ2), suppression drops it (R-FZ3), the retype re-points it (R-FZ1)", () => {
-  it("🛑 R-FZ2 (UNRULED): Blooming Garden on the defender's side — no Weakness → 50", () => {
+  it("R-FZ2 (UNRULED): Blooming Garden on the defender's side — no Weakness → 50", () => {
     expect(dealtBy(table(PSY, [LILLIE[0]], DRAGON, [FLORGES]), I_STRIKE)).toBe(50);
   });
-  it("🛑 R-FZ2: D432's installed no-Weakness bar (constructed) → 50", () => {
+  it("R-FZ2: D432's installed no-Weakness bar (constructed) → 50", () => {
     const state = table(PSY, [LILLIE[0]], DRAGON);
     expect(dealtBy(patchActive(state, "p2", { noWeaknessTurn: state.turn }), I_STRIKE)).toBe(50);
   });
-  // Not UNRULED and not fixture-only: the attack's own sentence governs whatever its type,
-  // and it is reachable in Standard — Team Rocket's Hypno sv10-080 "Bench Manipulation"
-  // prints it at the main hit (derived as `damageSuppression.weakness`), Sigilyph
-  // sv10.5w-038/-121 "Telekinesis" at the snipe (`ignoreWR`). Clean Strike carries the
-  // same sentence on a flat 50 so the Weakness step is the only variable.
-  it('🛑 R-FZ2: "isn\'t affected by Weakness or Resistance" → 50', () => {
+  it('R-FZ2: "isn\'t affected by Weakness or Resistance" → 50', () => {
     expect(dealtBy(table(PSY, [LILLIE[0]], DRAGON), I_CLEAN)).toBe(50);
   });
-  it("🛑 R-FZ3: \"isn't affected by any effects on your opponent's Active Pokémon\" drops the rewrite → 50", () => {
+  it("R-FZ3: \"isn't affected by any effects on your opponent's Active Pokémon\" drops the rewrite → 50", () => {
     expect(dealtBy(table(PSY, [LILLIE[0]], DRAGON), I_SHRED)).toBe(50);
   });
-  it("🛑 R-FZ1 (UNRULED, main hit): rewrite first, THEN the retype — {C}×2: a {C} attacker 100…", () => {
+  it("R-FZ1 (UNRULED, main hit): rewrite first, THEN the retype — {C}×2: a {C} attacker 100…", () => {
     expect(dealtBy(retyped(table(NORM, [LILLIE[0]], DRAGON)), I_STRIKE)).toBe(100);
   });
   it("…and the {P} attacker is NOT weak any more → 50", () => {
@@ -612,7 +580,7 @@ describe("D559 §3 — the null paths win (R-FZ2), suppression drops it (R-FZ3),
 });
 
 describe("D559 §4 — Fairy Zone at the SNIPE SITE (`snipeActive`), on its OWN board", () => {
-  it("🛑 a chosen 30 onto the Dragon Active is ×2 → 60", () => {
+  it("a chosen 30 onto the Dragon Active is ×2 → 60", () => {
     expect(snipedActive(table(PSY, [LILLIE[0]], DRAGON, [WALL]))).toBe(60);
   });
   it("…without Lillie's Clefairy ex → 30", () => {
@@ -621,7 +589,7 @@ describe("D559 §4 — Fairy Zone at the SNIPE SITE (`snipeActive`), on its OWN 
   it("…Lillie's Clefairy ex on the DEFENDER's side → 30", () => {
     expect(snipedActive(table(PSY, [], DRAGON, [LILLIE[1]]))).toBe(30);
   });
-  it("🛑 R-FZ1 (UNRULED, snipe): the retype re-points the rewrite — {C} 60, {P} 30", () => {
+  it("R-FZ1 (UNRULED, snipe): the retype re-points the rewrite — {C} 60, {P} 30", () => {
     expect(snipedActive(retyped(table(NORM, [LILLIE[0]], DRAGON, [WALL])))).toBe(60);
     expect(snipedActive(retyped(table(PSY, [LILLIE[0]], DRAGON, [WALL])))).toBe(30);
   });
@@ -640,15 +608,15 @@ describe("D559 §5 — Midnight Fluttering: the opponent's ACTIVE, from the Acti
     expect(locked.has(uidOf(state, "p1", 0))).toBe(false); // side "opponent": not its own side
     expect(locked.size).toBe(1);
   });
-  it("🛑 a BENCHED Flutter Mane locks nothing (requiresActive)", () => {
+  it("a BENCHED Flutter Mane locks nothing (requiresActive)", () => {
     const state = table(PSY, [FLUTTER[0]], TINKATON);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it("🛑 the mirror: two Active Flutter Mane both keep Midnight Fluttering (the exemption by name)", () => {
+  it("the mirror: two Active Flutter Mane both keep Midnight Fluttering (the exemption by name)", () => {
     const state = table(FLUTTER[0], [], FLUTTER[1]);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it("🛑 the ACTIVATED read site: an Active Tinkaton opposite Flutter Mane refuses ABILITY_DISABLED", () => {
+  it("the ACTIVATED read site: an Active Tinkaton opposite Flutter Mane refuses ABILITY_DISABLED", () => {
     const state = table(TINKATON, [], FLUTTER[0]);
     const result = applyAction(state, {
       type: "useAbility",
@@ -670,7 +638,7 @@ describe("D559 §5 — Midnight Fluttering: the opponent's ACTIVE, from the Acti
     });
     expect(result.ok).toBe(true);
   });
-  it("🛑 the PASSIVE read site: an opposing Active Flutter Mane silences an Active Orthworm ex, Maractus and Regirock", () => {
+  it("the PASSIVE read site: an opposing Active Flutter Mane silences an Active Orthworm ex, Maractus and Regirock", () => {
     const withMetal = (s: GameState) => attachFromDeck(s, "p1", "fix-metal-energy", 2);
     const orthOn = withMetal(table(ORTHWORM[0], [], FLUTTER[0]));
     const orthOff = withMetal(table(ORTHWORM[0], [], WALL));
@@ -685,7 +653,7 @@ describe("D559 §5 — Midnight Fluttering: the opponent's ACTIVE, from the Acti
     expect(passivesOf(rockOff, body(rockOff, "p1")).damageReductionAfterWR).toBe(30);
     expect(passivesOf(rockOn, body(rockOn, "p1")).damageReductionAfterWR).toBe(0);
   });
-  it("🛑 …and an Active Lillie's Clefairy ex: Fairy Zone is OFF (the scan's §9 gate)", () => {
+  it("…and an Active Lillie's Clefairy ex: Fairy Zone is OFF (the scan's §9 gate)", () => {
     const on = table(LILLIE[0], [], FLUTTER[0]);
     expect(disabledAbilityUids(on).has(uidOf(on, "p1"))).toBe(true);
     expect(seatWeaknessRewrite(on, "p2", cardOf(DRAGON))).toBeNull();
@@ -715,11 +683,11 @@ describe("D559 §6 — Sticky Bind: from the Bench, BENCHED Stage 2 Pokémon, bo
     expect(locked.has(uidOf(state, "p1", 0))).toBe(false); // Gastrodon itself (a Stage 1)
     expect(locked.size).toBe(2);
   });
-  it("🛑 an ACTIVE Gastrodon locks nothing (sourceOnBench)", () => {
+  it("an ACTIVE Gastrodon locks nothing (sourceOnBench)", () => {
     const state = table(GASTRODON, [KLINKLANG[0]], WALL, [SERPERIOR]);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it("🛑 the ACTIVATED read site: a benched Stage 2 Tinkaton refuses ABILITY_DISABLED…", () => {
+  it("the ACTIVATED read site: a benched Stage 2 Tinkaton refuses ABILITY_DISABLED…", () => {
     const state = table(PSY, [TINKATON], WALL, [GASTRODON]);
     const result = applyAction(state, {
       type: "useAbility",
@@ -741,13 +709,13 @@ describe("D559 §6 — Sticky Bind: from the Bench, BENCHED Stage 2 Pokémon, bo
     });
     expect(result.ok).toBe(true);
   });
-  it("🛑 a benched Serperior ex loses Regal Cheer — end to end, from the OPPONENT's Bench", () => {
+  it("a benched Serperior ex loses Regal Cheer — end to end, from the OPPONENT's Bench", () => {
     expect(dealtBy(table(PSY, [SERPERIOR], WALL), I_STRIKE)).toBe(70); // 50 + 20
     expect(dealtBy(table(PSY, [SERPERIOR], WALL, [GASTRODON]), I_STRIKE)).toBe(50);
     const locked = table(PSY, [SERPERIOR], WALL, [GASTRODON]);
     expect(seatPreWRDamageBonus(locked, "p1", cardOf(PSY))).toBe(0);
   });
-  it("🛑 a benched Klinklang under a benched Gastrodon loses Gear Coating; an ACTIVE one keeps it", () => {
+  it("a benched Klinklang under a benched Gastrodon loses Gear Coating; an ACTIVE one keeps it", () => {
     const metalActive = (s: GameState) => attachFromDeck(s, "p1", "fix-metal-energy", 1);
     const benched = metalActive(table(PSY, [KLINKLANG[0], GASTRODON], WALL));
     expect(seatDamageReduction(benched, body(benched, "p1"), "all", "p2")).toBe(0);
@@ -768,8 +736,8 @@ describe("D559 §6 — Sticky Bind: from the Bench, BENCHED Stage 2 Pokémon, bo
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), pinned on rotated Klefki (🆕🆕🆕 D571: STRATIFIED now, R-LK2 — a MUTUAL pair still stays both-on)", () => {
-  it("🛑 Klefki (Active) vs Flutter Mane (Active): each silences the other, and BOTH auras still bite", () => {
+describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), pinned on rotated Klefki ( D571: STRATIFIED now, R-LK2 — a MUTUAL pair still stays both-on)", () => {
+  it("Klefki (Active) vs Flutter Mane (Active): each silences the other, and BOTH auras still bite", () => {
     const state = table(KLEFKI, [LILLIE[0]], FLUTTER[0], [LILLIE[1]]);
     const locked = disabledAbilityUids(state);
     expect(locked.has(uidOf(state, "p2"))).toBe(true); // Klefki's lock on the Basic Flutter Mane
@@ -783,17 +751,7 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
     const state = table(FLUTTER[0], [GASTRODON], FLUTTER[1], [GASTRODON]);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it('🆕🆕🆕 D571 — the tripwire FIRED: Iron Thorns ex "Initialization" is BUILT (and the stratified pass with it, `ironThornsD571.test.ts`); Team Rocket\'s Watchtower is BUILT (D566) and silences neither built lock source', () => {
-    // Iron Thorns ex "Initialization" (Active-sourced; Rule Box bodies except Future
-    // Pokémon) is a legal lock whose source an Active Flutter Mane silences from across
-    // the table — by the rules its lock then switches off. 🆕🆕🆕 D571 (D539): this rung was
-    // titled "⚠️ R-LK1 holds only while Iron Thorns ex stays unbuilt — tripwire: it carries
-    // no program" and asserted `programFor(id)` UNDEFINED on all three ids. D571 built the
-    // lock AND the owed fixpoint (continuous.ts `disabledAbilityUids`, R-LK2 ⚠️ UNRULED), so
-    // the loop is INVERTED to the positive rung below and the one-way board is driven in
-    // `ironThornsD571.test.ts` §2. Team Rocket's Watchtower (a Stadium over {C} bodies)
-    // silences no built lock source ({P} Flutter Mane, {F} Gastrodon, {L} Iron Thorns ex),
-    // and is pinned beside it.
+  it('D571 — the tripwire FIRED: Iron Thorns ex "Initialization" is BUILT (and the stratified pass with it, `ironThornsD571.test.ts`); Team Rocket\'s Watchtower is BUILT (D566) and silences neither built lock source', () => {
     for (const id of ["sv06-077", "sv06-196", "sv08.5-032"]) {
       expect(programFor(id)?.passive?.disableAbilities).toEqual({
         side: "both",
@@ -802,9 +760,6 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
         exemptBanner: "Future",
       });
     }
-    // 🆕🆕🆕 D566 — INVERTED: the Watchtower is BUILT (a Stadium lock, which no lock can
-    // silence), and with it in play NEITHER legal Pokémon lock source is silenced — both
-    // are off {C} — so R-LK1 still holds. Driven on the pair board above.
     expect(programFor("sv10-180")?.stadium?.disableAbilities).toEqual({
       side: "both",
       targetType: "Colorless",

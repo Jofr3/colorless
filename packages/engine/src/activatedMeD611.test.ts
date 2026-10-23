@@ -19,19 +19,8 @@ import {
   setBenchDamage,
   specialEnergy,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D611 — WP21: THE REST OF THE `me` ACTIVATED ABILITIES, plus Dragonair (a WP20b drop) ──
-//
-// 9 printed texts / 17 `me` printings on nine new registry objects. Every id and text measured on the
-// LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was keyed
-// anywhere in the tree before this slice (Dragonair was pinned UNKEYED by D602). None prints "You can't
-// use more than 1 … Ability each turn", so every lock is per Pokémon (`true`). New pieces:
-// `payFromHand.swapWithTop`, `evolveFromDeck.fromHand` + `recordAs`, the op `countersOnRecordedBody`,
-// the `BoardCondition` `notYourFirstTurn` and `requiresEnergyType: "any"`. Readings R-EG1, R-SE1, R-SE2
-// (UNRULED) are pinned in §6 / §9. Dropped and named: Larry's Komala `me02.5-175` "Lethargic Charge"
-// (an Active-only target AND a which-Energy-card choice — two pieces; §11 pins it unkeyed) [🆕🆕🆕 D628 (D539):
-// BUILT at D628 (A1); §11 now pins the key].
 
 const NIGHTTIME_MANEUVERS =
   "Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it.";
@@ -61,11 +50,10 @@ const TALONFLAME = ["me03-014", "me03-091"] as const;
 const VIVILLON = "me03-009";
 const PHANTUMP = "me04-038";
 const DRAGONAIR = "me02.5-151";
-const KOMALA = "me02.5-175"; // Larry's Komala "Lethargic Charge" — dropped, stays unkeyed [🆕🆕🆕 D628 (D539): keyed at D628]
+const KOMALA = "me02.5-175";
 const TREVENANT = "me04-039"; // Stage 1, evolves from Phantump, 130 HP
 const TREVENANT_SV = "sv06-013"; // Stage 1, evolves from Phantump, 120 HP
 
-/** [Ability name, the keyed printings, the printed text, `activeOnly`, `benchOnly`]. */
 const ABILITIES: readonly (readonly [string, readonly string[], string, boolean, boolean])[] = [
   ["Nighttime Maneuvers", CROBAT, NIGHTTIME_MANEUVERS, true, false],
   ["Sinister Surge", TOXTRICITY, SINISTER_SURGE, false, false],
@@ -340,14 +328,6 @@ const DECK = deckOf({
   [FILLER]: 26,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then `endTurns` more turn ends (3 → P1's turn 4, 1 → P1's FIRST turn); both
-    hands back into the decks and the Prizes swapped out for filler, so every named card is
-    findable (D602's `p1Turn`). */
 function p1Turn(endTurns = 3): GameState {
   const created = createGame({ seed: 6111, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -619,7 +599,7 @@ describe("D611 §6 — Evidence Gathering: switch a card from your hand with the
     expect(done.state.players.p1.deck[0]).toBe(state.players.p1.hand[0]);
   });
 
-  it("refused with an empty hand, and with an empty deck (R-EG1 ⚠️ UNRULED: no top card to switch with)", () => {
+  it("refused with an empty hand, and with an empty deck (R-EG1 UNRULED: no top card to switch with)", () => {
     const empty = refusal(use(table({ bench: [GUMSHOOS[0]] }), "Evidence Gathering", bench(0)));
     expect(empty.code).toBe("ABILITY_COST_UNMET");
     expect(empty.message).toContain("switch a card from your hand with the top card of your deck");
@@ -690,9 +670,7 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
     ]);
   });
 
-  it("evolves under a stamped Evolution Jammer bar (R-SE3 ⚠️ UNRULED: the Ability is not a play from the hand)", () => {
-    // Bronzong `sv05-069` "Evolution Jammer" stamps `handPlayLockedTurn.evolve`; the hand
-    // evolve of `turn.ts` asks `pokemonPlayBarred`, this op does not (as Rare Candy, R-SE2).
+  it("evolves under a stamped Evolution Jammer bar (R-SE3 UNRULED: the Ability is not a play from the hand)", () => {
     const base = table({ bench: [PHANTUMP], hand: [TREVENANT] });
     const state: GameState = {
       ...base,
@@ -738,7 +716,7 @@ describe("D611 §9 — Spiteful Evolution: a card from the hand onto this Phantu
     expect(banned.message).toContain("it is not your first turn");
   });
 
-  it("R-SE1 ⚠️ UNRULED: a Phantump put into play THIS turn evolves (only the first-turn ban is printed)", () => {
+  it("R-SE1 UNRULED: a Phantump put into play THIS turn evolves (only the first-turn ban is printed)", () => {
     const state = table({ bench: [PHANTUMP], hand: [TREVENANT] });
     const fresh = {
       ...state,
@@ -791,8 +769,8 @@ describe("D611 §10 — Evolutionary Guidance: any Energy attached; an Evolution
   });
 });
 
-describe("D611 §11 — Lethargic Charge is dropped and named (🆕🆕🆕 D628 (D539): WITHDRAWN — BUILT at D628)", () => {
-  it("Larry's Komala `me02.5-175` stays unkeyed: an Active-only target AND a which-Energy-card choice (two pieces) (🆕🆕🆕 D628 (D539): WITHDRAWN — both pieces built, `attachFromHand` `one` + `activeOnly`; onBenchMoveMeD628.test.ts §4)", () => {
+describe("D611 §11 — Lethargic Charge is dropped and named ( D628 (D539): WITHDRAWN — BUILT at D628)", () => {
+  it("Larry's Komala `me02.5-175` stays unkeyed: an Active-only target AND a which-Energy-card choice (two pieces) ( D628 (D539): WITHDRAWN — both pieces built, `attachFromHand` `one` + `activeOnly`; onBenchMoveMeD628.test.ts §4)", () => {
     expect(programFor(KOMALA)?.abilities?.[0]?.name).toBe("Lethargic Charge");
   });
 });

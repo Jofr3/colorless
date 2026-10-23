@@ -17,21 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice `EffectContext.sourceUid` — the ADVERSARIAL companion to
-// sourceUid.test.ts. That file pins the headline (a benched Pawmot feeds
-// ITSELF); this one pins the resolutions a wrong `sourceRef` would get right on
-// every board that file builds:
-//
-//   • "this Pokémon" is the board TOP, not stack membership — a source EVOLVED
-//     OVER is a different Pokémon, and a lookup that scanned whole stacks (or
-//     matched the stack's BASE card) passes every un-evolved board;
-//   • the ref carries the source's REAL bench index — every board in the main
-//     suite benches Pawmot at index 0, where `index` and a hard-coded 0 agree;
-//   • the offer's one row is honest about WHICH prints back it — both Basic {L}
-//     ids must actually sit in the deck for "the collapse crosses ids" to be a
-//     tested claim rather than a comment;
-//   • the degenerate decks (empty, all-{L}) whiff/settle without touching D14.
-
 const SEED = 20260722;
 
 const PAWMOT = "sv01-076";
@@ -116,13 +101,6 @@ function deckUids(state: GameState, cardId: string): string[] {
 
 describe("'this Pokémon' is the board TOP, not the stack", () => {
   it("a source EVOLVED OVER whiffs — the buried uid is a different Pokémon now", () => {
-    // Surgery: push a deck card on top of the benched Pawmot's stack, so the
-    // Pawmot uid is still IN PLAY (stack membership) but no longer the TOP. A
-    // sourceRef that scanned whole stacks — or matched the stack's BASE card —
-    // still finds it and attaches; the top-uid rule whiffs into the shuffle.
-    // Unreachable through actions today (nothing evolves from Pawmot, and the
-    // park admits only resolveEffect), so driven through runProgram like the
-    // main suite's empty-source pair.
     const base = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const pawmotUid = benchTopUid(base, "p1", 0);
     const side = base.players.p1;
@@ -217,10 +195,6 @@ describe("the source ref carries the REAL bench index", () => {
   });
 
   it("TWO Pawmots: the SECOND one's use targets the second, and the first still has its turn", () => {
-    // A lookup that matched by catalog ID instead of uid returns the FIRST
-    // Pawmot on every one-Pawmot board — this is the board that tells them
-    // apart. And §9's once-per-turn is per POKÉMON (usedKey is uid-scoped):
-    // spending B's use leaves A's intact.
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT, PAWMOT]);
     const { state: parked } = useElectrogenesis(state, 1);
     const prompt = promptOf(parked);
@@ -236,9 +210,6 @@ describe("the source ref carries the REAL bench index", () => {
 
 describe("the offer — what actually backs its one row", () => {
   it("BOTH Basic {L} prints sit in the deck when the collapse offers one row", () => {
-    // The main suite's collapse test asserts one row over "ten Basic {L} under
-    // two catalog ids" — a claim about the DECK it never checks. Pin it: with
-    // this seed both prints are really there, so one row IS a cross-id collapse.
     const state = withBoard(board(), PAWMOT, []);
     expect(deckUids(state, L_ENERGY).length).toBeGreaterThan(0);
     expect(deckUids(state, L_ENERGY_ALT).length).toBeGreaterThan(0);

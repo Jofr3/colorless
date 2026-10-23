@@ -13,21 +13,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.51.0 → 0.52.0 — the `onDamagedByAttack` PARKING reactive-trigger (P3-M5, D101):
-// Klawf ex sv03-120 "Counterattacking Pincer" — "If this Pokémon is in the Active
-// Spot and is damaged by an attack from your opponent's Pokémon (even if this
-// Pokémon is Knocked Out), discard an Energy from the Attacking Pokémon."
-//
-// The card that made the D99 `onDamagedByAttack` trigger PARK. Its reactive
-// program is a `discardEnergy from:"opponentActive"` (Mawile's op) run under the
-// DAMAGED seat, so `opponentActive` reaches the ATTACKER's Active — and the
-// DEFENDER chooses which Energy. That choice parks DURING the opponent's turn:
-// attack.ts stages it as a `damagedTrigger` behind the attackEpilogue, and
-// flow.ts `runDamagedTrigger` folds it through settleProgram with `resumeTail`
-// under the DAMAGED seat (the koTrigger routing) — so the DEFENDER is the
-// answerer, the attacker still owns the turn (koParkActiveSeat), and finishAttack
-// (KO sweep + turn end) [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] resumes after the pick.
-
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
 
@@ -53,10 +38,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** P1 fields fix-attacker with TWO different Energy (Colorless pays Bite, Fire is
-    the second candidate that makes the discard a real CHOICE); P2 fields Klawf ex.
-    setActiveFromDeck displaces each setup Active (fix-bigbody) to the bench, so a
-    KO always has a body to promote into. */
 function fight(seed: number): GameState {
   let state = setActiveFromDeck(board(seed), "p1", "fix-attacker");
   state = attachFromDeck(state, "p1", "fix-energy", 1); // Colorless — pays Bite's {C}
@@ -190,7 +171,6 @@ describe("Counterattacking Pincer — 'even if this Pokémon is Knocked Out'", (
     expect(find(resolved, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: klawf });
     const order = types(resolved);
     expect(order.indexOf("ENERGY_DISCARDED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
-    // …and Klawf ex is a rule-box ex, so the attacker is owed 2 Prizes (§8.1, D93).
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 2 });
   });
 });

@@ -22,19 +22,8 @@ import {
   setPrizes,
   toDeckTop,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D588 — WP22: TRAINER PARAMETERS II ──
-//
-// 17 `me` Trainer printings / 8 printed texts, each a built program (or a derived sentence) at the
-// printed parameter, plus ONE new rider (`AttachTargetRiders.stage2Only`, Rosa's Encouragement).
-// Measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07,
-// `legal_standard = 1` on every row. No `me` row is a fixture, so the printed bytes are carried
-// HERE. Driven on the real ids in a LOCAL `cardPool` (D275), so no `fix-*` key is owed. Pokémon
-// Center Lady `me01-123` is NOT keyed (its "it recovers from all Special Conditions" needs a
-// `healChosen` rider on the healed body — vocabulary beyond the brief); §12 pins it unbuilt.
-// 🆕🆕🆕 D617 (D539): "§12 pins it unbuilt" is WITHDRAWN — D617 built it (`healChosen.recoverHealed`), and §12
-// now pins that program.
 
 const CANARI = "me02.5-185";
 const LILLIE = "me01-119";
@@ -243,16 +232,9 @@ const DECK = deckOf({
   "fix-water-energy": 6,
   "fix-fire-energy": 9,
   "fix-psychic-energy": 6,
-  "fix-energy": 6, // the prize row (p1Turn), so every card the boards pull stays in the deck
+  "fix-energy": 6,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup, then P1's own turn (P2 went first and passed); both hands emptied into the deck and the
-    six `fix-energy` cards made each prize row. The surgery never depends on the deal. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 5888, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -458,8 +440,6 @@ describe("D588 §6 — Rosa's Encouragement: behind on Prizes, up to 2 Basic Ene
     expect(p.candidates).toEqual([bench(1)]);
     expect(p.upTo).toBe(2);
     expect(p.note).toBe("Attach up to 2 Energy to which of your Stage 2 Pokémon?");
-    // 🆕 Card revision B01 — {R} + {W} {W} are unlike Energy, so the target answer asks WHICH cards
-    // (min = max = the take); the answer is what lands. `revisionB01.test.ts` §2 drives the rest.
     const asked = mustApply(parked, pick(bench(1))).state;
     expect(prompt(asked)).toMatchObject({ kind: "chooseCards", min: 2, max: 2, dest: "attach" });
     const waters = asked.players.p1.discard.filter((u) => idOf(asked, u) === "fix-water-energy");
@@ -597,11 +577,10 @@ describe("D588 §11 — `stage2Only` reads the printed stage word, not the chain
   });
 });
 
-describe("D588 §12 — the ids: real `me` ids in a LOCAL pool; Pokémon Center Lady ~~stays unbuilt~~ (🆕🆕🆕 D617 (D539): WITHDRAWN — built at D617, not by this slice)", () => {
-  it("no D588 Trainer or body reached `FIXTURE_POOL`, and `me01-123` ~~has no program~~ is not one of this slice's objects (🆕🆕🆕 D617: keyed on `POKEMON_CENTER_LADY`)", () => {
+describe("D588 §12 — the ids: real `me` ids in a LOCAL pool; Pokémon Center Lady ~~stays unbuilt~~ ( D617 (D539): WITHDRAWN — built at D617, not by this slice)", () => {
+  it("no D588 Trainer or body reached `FIXTURE_POOL`, and `me01-123` ~~has no program~~ is not one of this slice's objects ( D617: keyed on `POKEMON_CENTER_LADY`)", () => {
     for (const id of Object.keys(LOCAL)) expect(FIXTURE_POOL[id], id).toBeUndefined();
     for (const id of ME_IDS) expect(/^me/.test(id), id).toBe(true);
-    // 🆕🆕🆕 D617 — `healChosen` 60 with the D617 rider `recoverHealed` (supportersMeD617.test.ts).
     expect(programFor(CENTER_LADY)).toEqual({
       trainer: [{ op: "healChosen", amount: 60, recoverHealed: true }],
     });

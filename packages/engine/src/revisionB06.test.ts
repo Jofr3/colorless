@@ -14,19 +14,8 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B06 (Items) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B06"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect`,
-// byte for byte below):
-//   §1 Poké Vital A `sv06.5-062` — its second sentence, "This card can't be put into your hand or
-//      deck from the discard pile.", had no reader: Dedenne `sv08-087` "Electromagnetic Sonar"
-//      ("Put a Trainer card from your discard pile into your hand.") offered it and took it back.
-//      The sentence is now a card-borne pile lock (`CardProgram.discardPileLocked`) that every
-//      discard → hand / deck retrieval offer drops. Neutralization Zone `sv06.5-060` prints the SAME
-//      sentence and carries the same lock.
 
 const VITAL_TEXT =
   "Heal 150 damage from 1 of your Pokémon.\n\nThis card can't be put into your hand or deck from the discard pile.";
@@ -75,13 +64,6 @@ const DECK = deckOf({
   "fix-energy": 23, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 606, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

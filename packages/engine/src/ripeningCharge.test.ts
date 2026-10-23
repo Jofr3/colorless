@@ -20,85 +20,12 @@ import {
   types,
 } from "./testFixtures";
 
-// D249 — RIPENING CHARGE (Hydrapple ex), THE CONSUMER `attachEnergyFrom.healTarget`
-// WAS BUILT FOR, AND THE FIRST REGISTRY PROGRAM ON THIS BRANCH WHOSE WHOLE COST IS
-// ONE OBJECT.
-//
-// "Once during your turn, you may attach a Basic {G} Energy card from your hand to
-// 1 of your Pokémon. If you attached Energy to a Pokémon in this way, heal 30
-// damage from that Pokémon."
-//
-// ⚠️ **THE ABILITY HALF OF BACKLOG ROW 12, AND THE SENTENCE THAT PAGE RANKS AS THE
-// CHEAPEST SINGLE PROGRAM LEFT IN THE POOL.** The count was re-derived against the
-// remote D1 `colorless` on 2026-08-07 on the SHAPE rather than on the row's four
-// ids — `LIKE '%if you attached energy to a pok%in this way%'`, `legal_standard = 1`,
-// swept across all three text columns with `json_each` and GROUPED BY SENTENCE. It
-// returns exactly four printings for this sentence (`sv07-014`/`-156`/`-167`/
-// `sv08.5-011`), which is the row's figure to the digit — the SIXTEENTH row running
-// to survive re-derivation.
-//
-// ⚠️ **AND THE WIDENING FOUND TWO OTHER SENTENCES, BOTH FALSE POSITIVES, BOTH WORTH
-// NAMING** (the rule is that the widening's job is to find the OTHER tails, and it
-// is priced as a CHECK rather than as printings):
-//   1. The **8-printing Teal Dance group** (`svp-166` + 7) — same clause, same
-//      energy type, `draw a card` where this prints the heal, and `to this Pokémon`
-//      where this prints `to 1 of your Pokémon`. BUILT at D221.
-//   2. A **3-printing ATTACK** (`sv06.5-036`/`-082`/`-090`) — *"Search your deck
-//      for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then,
-//      shuffle your deck. If you attached Energy to a Pokémon in this way, this
-//      Pokémon is now Poisoned."* A different SOURCE ZONE (deck), a different op
-//      (`attachFromDeck`) and a STATUS tail, in a different COLUMN. It shares the
-//      §9.2-flavoured antecedent and nothing else — which is exactly the kind of
-//      thing an id-scoped query can never show you.
-//
-// 🛑 **THE PRESCRIBED REMEDY WAS WRONG AND THE COUNT WAS RIGHT, WHICH IS THE
-// FINDING.** Both `coverage-backlog-legal.md`'s row-12 cell and this repo's own
-// `legalNonAttackPrograms.test.ts` `DROPPED` row priced this sentence at
-// "`attachEnergyFrom.recordAs` (D190 named it for Teal Dance) AND a heal that reads
-// the recorded TARGET rather than a slot's cards." Neither half is what it costs:
-//   • `recordAs` is NOT needed. The tail is not a §9.2 gate at all.
-//   • The heal does not read a record. `attachEnergyFrom.healTarget` (D236) is a
-//     RIDER on the op that already holds the chosen `ref`, and D236's own field doc
-//     said the NUMBER arm was "driven at the op level, where its consumer will be".
-// The blocker the `needs` string identified was real — `EffectRecord` files card
-// uids, not board refs — and the remedy it drew from that was a §9.2 shape the
-// engine had already routed around. **A `needs` string can be right about the
-// obstacle and wrong about the road**, which is the fourth failure mode found on
-// that table (after the wrong CARD, the already-built PIECE, and the piece built at
-// a coarser grain).
-//
-// ⚠️ WHAT THIS SUITE CAN AND CANNOT PUT RED, SAID UP FRONT (the guard rule):
-// * Dropping `healTarget` from the row turns the heal off — every heal case below
-//   goes red on the damage figure AND on the missing `HEALED` event.
-// * Changing `30` to Teal Dance's neighbouring shape (`"all"`) is caught by the
-//   PARTIAL-heal case: a body on 50 damage must land on 20, not on 0.
-// * Adding `toSelf: true` — the neighbouring row's REAL value — stops the park. The
-//   park is asserted directly (a `choosePokemon` prompt with three rows) and the
-//   BENCH case attaches to a body that is not the source, which `toSelf` cannot do.
-// * `oncePerTurn: false` is caught by the `ABILITY_ALREADY_USED` case; and the
-//   stamp being keyed by BODY rather than by CARD is asserted with TWO copies of
-//   the demonstrator in play, which is the one thing four identical printings on
-//   one board could disagree with the print about.
-
-/** The four Standard-legal printings, re-queried against the remote D1 `colorless`
-    on 2026-08-07 on the SENTENCE and not on these ids. */
 const RIPENING_IDS = ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"] as const;
 
-/** The printed sentence, byte for byte, from the D1 row rather than from a
-    paraphrase (D183's class). */
 const RIPENING_TEXT =
   "Once during your turn, you may attach a Basic {G} Energy card from your hand to 1 of your Pokémon. If you attached Energy to a Pokémon in this way, heal 30 damage from that Pokémon.";
 
-// ── The demonstrator pool. `fix-ripening` is a SYNTHETIC body carrying the real
-//    program: a fixture id naming a real printing must appear in
-//    `catalogManifest.ts`, which is generated off a local sqlite this clone does
-//    not have and which holds none of `sv07` / `sv08.5` anyway. D190's idiom,
-//    D190's reason, and `fix-tealdance`'s precedent one row over. ──
-
 const LOCAL_CARDS: Record<string, Card> = {
-  /** fix-ripening — a {G} Basic with the activated Ability and nothing else. HP
-      is 330, the printing's own: every heal case below sets damage by surgery and
-      a smaller body would cap the figures rather than the heal doing it. */
   "fix-ripening": battler("fix-ripening", {
     name: "fix-ripening",
     types: ["Grass"],
@@ -110,11 +37,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** ⚠️ REUSED, NOT WRITTEN — the FIXTURE_POOL sweep first (D196). `fix-bramble` is
-    a {G} Basic with no Ability, and `fix-titan` (340 HP, Colorless) is the
-    NON-{G} body that proves this attach has no type rider on its TARGET: the
-    printed "1 of your Pokémon" narrows nothing, so a Colorless titan is a legal
-    destination for a Grass Energy. */
 const DECK = deckOf({
   "fix-ripening": 4,
   "fix-bramble": 4,
@@ -215,8 +137,6 @@ describe("D249 — the registry rows", () => {
     for (const id of RIPENING_IDS) {
       expect(programFor(id), `${id} left Ripening Charge`).toBe(first);
     }
-    // A duplicated id in the list would make the count lie about the coverage
-    // this slice bought, which is the ONE number a reader carries away from it.
     expect(new Set(RIPENING_IDS).size).toBe(4);
     expect(programFor("fix-ripening"), "the demonstrator is not Ripening Charge").toBe(first);
   });
@@ -242,10 +162,6 @@ describe("D249 — the registry rows", () => {
   });
 
   it("carries NEITHER `toSelf` NOR `recordAs` — the two fields the near-twin needs and this one must not have", () => {
-    // ⚠️ THE MISTAKE AN AUTHOR ACTUALLY MAKES: Teal Dance is one row up in this
-    // file, one clause apart in the print, and carries BOTH. `toSelf` would
-    // delete the printed choice ("1 of your Pokémon"); `recordAs` would file
-    // ENERGY uids for a gate this program does not have.
     const op = programFor("sv07-014")?.abilities?.[0]?.program?.[0];
     expect(op?.op).toBe("attachEnergyFrom");
     expect(op, "Ripening Charge gained a self target").not.toHaveProperty("toSelf");
@@ -255,8 +171,6 @@ describe("D249 — the registry rows", () => {
 
   it("does NOT share an object with Teal Dance, and leaves Teal Dance's own fields alone", () => {
     expect(programFor("sv07-014")).not.toBe(programFor("svp-166"));
-    // And the reverse leak: `healTarget` on Teal Dance would silently give eight
-    // printings a heal they do not print.
     const teal = programFor("svp-166")?.abilities?.[0]?.program?.[0];
     expect(teal, "Teal Dance gained a heal").not.toHaveProperty("healTarget");
     expect(teal).toHaveProperty("toSelf", true);
@@ -284,8 +198,6 @@ describe("Ripening Charge — driven through the real engine", () => {
 
   it("attaches to the CHOSEN Benched body and heals 30 from IT — not from the source, not from the Active", () => {
     let state = twoBodyBoard(2);
-    // Damage on BOTH bodies, different amounts: a heal that hit the wrong one
-    // would still emit a HEALED row, so the discriminator is WHICH figure moved.
     state = setDamage(state, "p1", 70);
     state = setBenchDamage(state, "p1", 0, 50);
     const [grass] = grassUidsInHand(state);
@@ -322,9 +234,6 @@ describe("Ripening Charge — driven through the real engine", () => {
   });
 
   it("heals EXACTLY 30, not all — the printed number, and the clamp below it", () => {
-    // ⚠️ THE ASSERTION THAT SEPARATES `healTarget: 30` FROM `healTarget: "all"`,
-    // which is the OTHER authored value of this field and lives on three attack
-    // printings. 50 damage must land on 20; "all" would land on 0.
     let state = twoBodyBoard(4);
     state = setDamage(state, "p1", 50);
     deepFreeze(state);
@@ -390,10 +299,6 @@ describe("Ripening Charge — driven through the real engine", () => {
   });
 
   it("is REFUSED with no Basic {G} in hand — `programPlayable` gates the attach, so the heal is never had for free", () => {
-    // ⚠️ THE READ SITE PRICED AT NON-ZERO AND DRIVEN. `programPlayable`'s
-    // `attachEnergyFrom` arm is LIVE for an Ability (it is not for an attack),
-    // and it is what keeps a whiffed activation from spending the once-per-turn
-    // stamp on nothing.
     let state = twoBodyBoard(8);
     state = grassInHand(state, 0);
     // A hand FULL of Energy that is not Basic {G}: the refusal is about the TYPE,
@@ -408,12 +313,6 @@ describe("Ripening Charge — driven through the real engine", () => {
   });
 
   it("is ONCE PER TURN — and the stamp is keyed by BODY, so a SECOND copy still charges", () => {
-    // 🛑 THE CLAUSE THIS SLICE'S HANDOFF NAMED AS MOST LIKELY TO COST AN ENGINE
-    // FIELD, DRIVEN RATHER THAN REASONED. Four identical printings can all be in
-    // one deck, and two can be in play at once. `cardplay.ts` stamps
-    // `${uid}:${ability.name}` — the BODY — so the second copy is a second use,
-    // which is the print. A card-keyed stamp would refuse it and no other test
-    // in this repo would notice.
     let state = twoBodyBoard(9);
     state = benchFromDeck(state, "p1", "fix-ripening");
     state = grassInHand(state, 3);

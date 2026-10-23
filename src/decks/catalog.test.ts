@@ -53,8 +53,7 @@ describe("toBuilderCard", () => {
     expect(special.subtype).toBe("Special Energy");
   });
 
-  it("🆕 D628 (finding 0b): an Energy's subtype is the ENGINE's Basic / Special answer, so a 'Normal'-tagged Special Energy is capped at 4", () => {
-    // Ignition Energy `me02-124` as the LOCAL D1 stores it (2026-10-10): tagged "Normal", printing rules text.
+  it("D628 (finding 0b): an Energy's subtype is the ENGINE's Basic / Special answer, so a 'Normal'-tagged Special Energy is capped at 4", () => {
     const ignition: Card = {
       ...brief({ category: "Energy", stage: null, types: null, hp: null, energyType: "Normal" }),
       id: "me02-124",
@@ -146,9 +145,6 @@ describe("kindOptions", () => {
   });
 
   it("offers nothing at all when facets are unavailable — the rail hides the section", () => {
-    // Before D198 this degraded to the hardcoded ["EX", "Mega"] pair: chips
-    // that survived a failed /facets fetch because they were client-side
-    // regexes. One of them ("Mega") matched zero cards in the live catalog.
     expect(kindOptions("Pokémon", null)).toEqual([]);
     expect(kindOptions("Trainer", null)).toEqual([]);
   });
@@ -166,11 +162,7 @@ describe("suffixOptions", () => {
     expect(suffixOptions("Energy", FACETS)).toEqual([]);
   });
 
-  it("⚠️ IS EMPTY FOR THE LIVE CATALOG — the whole degradation story", () => {
-    // `cards.suffix` is NULL on all 3,786 production rows until an ingest
-    // fills it, so /facets serves `suffixes: []`. No chips ⇒ the filter is
-    // unreachable from the UI ⇒ no query can return the empty page that D197
-    // refused to ship. Same for a failed/pending facets fetch.
+  it("IS EMPTY FOR THE LIVE CATALOG — the whole degradation story", () => {
     expect(suffixOptions("Pokémon", { ...FACETS, suffixes: [] })).toEqual([]);
     expect(suffixOptions("Pokémon", null)).toEqual([]);
   });
@@ -258,10 +250,6 @@ describe("filtersToCardsQuery", () => {
   });
 
   it("sends rule-box markers as their OWN dimension, alongside the kind chips", () => {
-    // The pre-D198 behaviour for this selection was to send NOTHING — the
-    // whole kind dimension came off the wire so a client-side name regex
-    // could re-apply it per page, which is what emptied the pages. Now both
-    // dimensions ride along and AND server-side: a Basic that is also an ex.
     const query = filtersToCardsQuery(
       f({ supertype: "Pokémon", subtypes: ["Basic"], suffixes: ["ex"] }),
       DEFAULT_FORMAT,

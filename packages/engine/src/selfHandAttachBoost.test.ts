@@ -17,40 +17,6 @@ import { runProgram } from "./interpreter";
 import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
 import { makeInPlay } from "./types";
 
-// 0.435.0 → 0.436.0 — 🆕🆕🆕 D552: THE PRE-DAMAGE SELF ATTACH BEHIND A MULTIPLIER HEAD.
-//
-// ── THE PRINTED SENTENCE ─────────────────────────────────────────────────────
-//   `censusAttackCorpus.ts` FILE LINE 569 (leading count column 1) — "This attack does 30
-//     damage for each {W} Energy attached to this Pokémon. Before doing damage, you may
-//     attach any number of Basic {W} Energy cards from your hand to this Pokémon."
-//                                                                       **1 printing**
-//
-// D503 REFUSED IT, AND ITS REFUSAL WAS A MEASUREMENT OF ONE ROUTE: the shipped pre-damage
-// hook runs after the §8.5 scaling fold is fixed and cannot park, so an attach there is never
-// counted. D552 builds it by ORDER rather than by that hook — D402/D403's shape: the hit is
-// dealt from INSIDE the program, AFTER the attach parks and resolves:
-//
-//   [ { op: "attachFromHand", filter: Basic {W}, toSelf: true, recordAs: "moved" },
-//     { op: "damageDefender", base: <head at declaration>, per: 30, count: "moved" } ]
-//
-// so the dealt number is `30 × (W at declaration + W attached)` — the head multiplier on the
-// POST-attach board, as ONE §8.5 pass (Weakness and Resistance once, on the sum).
-//
-// ── THE :569 RULINGS A1–A3 (docs/decisions.md D552; :629's are R1–R5) ─────────────────────────────────────
-//   A1 — attach-then-damage inside the program; `base` is the DECLARATION-TIME head.
-//   A2 — the printed marker is ASSUMED "30×" (the demonstrator declares it): for this member
-//        the printed base is UNUSED, so only a "+" marker on the real card would change it.
-//   A3 — the hit is dealt from inside the program (DAMAGE_DEALT after the attach, through
-//        `snipeActive`), D402/D403's fidelity; the NAMED boost (D155) is not folded there —
-//        pre-existing, stated rather than fixed here.
-//
-// ⚠️ **THE REAL CARD IS UNMEASURED.** No REAL card id resolves: no `registry.ts` or
-// `catalogManifest.ts` row prints the sentence (`git grep`). Its only `testFixtures.ts`
-// carrier is the DECLARED sweep fixture `fix-tideattach` (index 0), added by this slice for
-// the `FIXTURE_POOL` sweeps and unused here; the board rides a FILE-LOCAL DECLARED
-// `d552-tide` (D425) in its own 60-card deck (D270), `damage: "30×"`.
-
-/** THE SENTENCE — §1 asserts it IS a corpus row, never trusting the literal. */
 const PRINTED =
   "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.";
 const HEAD = "This attack does 30 damage for each {W} Energy attached to this Pokémon.";
@@ -59,7 +25,6 @@ const TAIL =
 const MEMBER = { kind: "selfHandAttach", per: 30, energyType: "Water" } as const;
 
 type Reader = (text: string) => unknown;
-/** Every reader that claims `text`, BY NAME, off the module surface (D417/D418). */
 function claimants(text: string): string[] {
   return attackReaderSurface().filter((name) => {
     const read = (effects as unknown as Record<string, Reader | undefined>)[name];
@@ -79,8 +44,8 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
     expect(`${HEAD} ${TAIL}`).toBe(PRINTED);
   });
 
-  it("🛑 `deriveAttackDiscardScaledBoost` owns it by VALUE, and it is the ONLY claimant of the thirteen", () => {
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+  it("`deriveAttackDiscardScaledBoost` owns it by VALUE, and it is the ONLY claimant of the thirteen", () => {
+    expect(attackReaderSurface()).toHaveLength(14);
     expect(deriveAttackDiscardScaledBoost(PRINTED)).toEqual(MEMBER);
     expect(claimants(PRINTED)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
@@ -88,11 +53,10 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
     expect(splitAttackTrailingClause(PRINTED)).toBeNull();
   });
 
-  it("🛑 NEGATIVE CONTROLS: the multiplier, `deriveAttackEffect` and `deriveAttackPreDamage` still refuse the WHOLE", () => {
+  it("NEGATIVE CONTROLS: the multiplier, `deriveAttackEffect` and `deriveAttackPreDamage` still refuse the WHOLE", () => {
     expect(deriveAttackDamageMultiplier(PRINTED)).toBeNull();
     expect(deriveAttackEffect(PRINTED)).toBeNull();
     expect(deriveAttackPreDamage(PRINTED)).toBeNull();
-    // …the HEAD alone is still the multiplier's, byte for byte (D438: name the owner).
     expect(claimants(HEAD)).toEqual(["deriveAttackDamageMultiplier"]);
     expect(deriveAttackDamageMultiplier(HEAD)).toEqual({
       per: 30,
@@ -100,7 +64,7 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
     });
   });
 
-  it("🛑 THE TAIL TRIPWIRE STAYS: no reader claims the printed tail alone (D503 §4)", () => {
+  it("THE TAIL TRIPWIRE STAYS: no reader claims the printed tail alone (D503 §4)", () => {
     expect(deriveAttackEffect(TAIL)).toBeNull();
     expect(claimants(TAIL)).toEqual([]);
   });
@@ -149,7 +113,7 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D552 §2 — attach, THEN damage, and the damage reads what the attach filed", () => {
-  it("🛑 the assembled program, pinned by value — `base` is whatever the caller hands in", () => {
+  it("the assembled program, pinned by value — `base` is whatever the caller hands in", () => {
     expect(discardScaledBoostProgram(MEMBER, 60)).toEqual([
       {
         op: "attachFromHand",
@@ -170,14 +134,6 @@ describe("D552 §2 — attach, THEN damage, and the damage reads what the attach
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. A file-local pool (D414/D452): the board's cards are local; the slice's one
-// `FIXTURE_POOL` addition, `fix-tideattach`, is a sweep carrier this suite does not use.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** The declared demonstrator (D425): a {W} body printing the sentence, "30×" (R2's
-    assumption, declared), and the HEAD alone at index 1 — the shipped multiplier, used to
-    evaluate the head on a board by the engine's own path. */
 const TIDE = "d552-tide";
 const WALL = "d552-wall";
 /** ×2 AND −30 to {W}: the target on which one hit and two hits differ. */
@@ -216,8 +172,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const CARD_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** SIXTY cards (D270). `fix-special` is FIXTURE_POOL's Special Energy — a non-Basic the
-    offer must exclude. */
 const LOCAL_DECK = deckOf({
   [TIDE]: 6,
   [WALL]: 4,
@@ -359,9 +313,6 @@ function benchN(state: GameState, seat: Seat, cardId: string, count: number): Ga
   return next;
 }
 
-/** THE BOARD: P1's `d552-tide` with `onSelf` {W} attached (one of them pays the {C}
-    cost), a hand of `water` Basic {W} plus two decoys that must NOT be offered (a Basic
-    {R} and `fix-special`), two Benched bodies that must NOT be targets; P2's `target`. */
 function board(
   seed: number,
   {
@@ -415,14 +366,14 @@ const dealtTo = (state: GameState, seat: Seat): number => state.players[seat].ac
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D552 §3 — the offer is THIS Pokémon and the hand's Basic {W}, nothing else", () => {
-  it("🛑 it PARKS, the sole target is the attacker, and Bench bodies are NOT offered", () => {
+  it("it PARKS, the sole target is the attacker, and Bench bodies are NOT offered", () => {
     const { state } = act(board(1), surge);
     const { prompt } = parked(state);
     expect(prompt.targets).toEqual([SELF]);
     expect(state.players.p1.bench).toHaveLength(2);
   });
 
-  it("🛑 the candidates are exactly the hand's Basic {W} — the Basic {R} and the Special Energy are excluded", () => {
+  it("the candidates are exactly the hand's Basic {W} — the Basic {R} and the Special Energy are excluded", () => {
     const start = board(1);
     const { state } = act(start, surge);
     const { prompt } = parked(state);
@@ -443,7 +394,7 @@ describe("D552 §3 — the offer is THIS Pokémon and the hand's Basic {W}, noth
     );
   });
 
-  it("🛑 NOTHING is dealt before the answer — the base is not dealt pre-program as well", () => {
+  it("NOTHING is dealt before the answer — the base is not dealt pre-program as well", () => {
     const { state, events } = act(board(1), surge);
     parked(state);
     expect(rowsOf(events, "DAMAGE_DEALT")).toEqual([]);
@@ -457,7 +408,7 @@ describe("D552 §3 — the offer is THIS Pokémon and the hand's Basic {W}, noth
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D552 §4 — 30 × (W at declaration + W attached), dealt ONCE", () => {
-  it("🛑 2 {W} on self + attach 5 → 210 (D503's figure), and the Energy stays attached", () => {
+  it("2 {W} on self + attach 5 → 210 (D503's figure), and the Energy stays attached", () => {
     const { state } = act(board(1), surge);
     const { prompt } = parked(state);
     const done = resolve(state, prompt.candidates);
@@ -466,7 +417,7 @@ describe("D552 §4 — 30 × (W at declaration + W attached), dealt ONCE", () =>
     expect(done.state.players.p1.active?.energy).toHaveLength(7);
   });
 
-  it("🛑 …and 210 IS the shipped head multiplier evaluated on the POST-attach board", () => {
+  it("…and 210 IS the shipped head multiplier evaluated on the POST-attach board", () => {
     // The head is attack index 1 (`HEAD` alone, "30×" — `deriveAttackDamageMultiplier`'s
     // own path). Same seed, the same five {W} moved onto the body by hand BEFORE declaring.
     let state = board(1);
@@ -498,7 +449,7 @@ describe("D552 §4 — 30 × (W at declaration + W attached), dealt ONCE", () =>
     }
   });
 
-  it("🛑 DECLINE → 60, the declaration-time head, with nothing moved", () => {
+  it("DECLINE → 60, the declaration-time head, with nothing moved", () => {
     const { state } = act(board(1), surge);
     const done = resolve(state, []);
     expect(dealtTo(done.state, "p2")).toBe(60);
@@ -506,7 +457,7 @@ describe("D552 §4 — 30 × (W at declaration + W attached), dealt ONCE", () =>
     expect(rowsOf(done.events, "ENERGY_ATTACHED")).toEqual([]);
   });
 
-  it("🛑 EMPTY HAND of Basic {W} → 60 with NO park", () => {
+  it("EMPTY HAND of Basic {W} → 60 with NO park", () => {
     const { state, events } = act(board(1, { water: 0 }), surge);
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(dealtTo(state, "p2")).toBe(60);
@@ -526,21 +477,21 @@ describe("D552 §4 — 30 × (W at declaration + W attached), dealt ONCE", () =>
     }
   });
 
-  it("🛑 the declaration-time head counts {W} ONLY — a {R} on the attacker is not a term: 2 {W} + 1 {R}, attach 1 → 90", () => {
+  it("the declaration-time head counts {W} ONLY — a {R} on the attacker is not a term: 2 {W} + 1 {R}, attach 1 → 90", () => {
     const { state } = act(board(1, { fireOnSelf: 1 }), surge);
     const done = resolve(state, parked(state).prompt.candidates.slice(0, 1));
     expect(done.state.players.p1.active?.energy).toHaveLength(4);
     expect(dealtTo(done.state, "p2")).toBe(90);
   });
 
-  it("🛑 Weakness AND Resistance are applied ONCE, to the sum — (60 + 30) × 2 − 30 = 150, not two hits (120)", () => {
+  it("Weakness AND Resistance are applied ONCE, to the sum — (60 + 30) × 2 − 30 = 150, not two hits (120)", () => {
     const { state } = act(board(1, { target: WEAK_RESISTANT }), surge);
     const done = resolve(state, parked(state).prompt.candidates.slice(0, 1));
     expect(rowsOf(done.events, "DAMAGE_DEALT").map((e) => e.dealt)).toEqual([150]);
     expect(dealtTo(done.state, "p2")).toBe(150);
   });
 
-  it("🛑 ENERGY_ATTACHED comes BEFORE DAMAGE_DEALT", () => {
+  it("ENERGY_ATTACHED comes BEFORE DAMAGE_DEALT", () => {
     const { state } = act(board(1), surge);
     const done = resolve(state, parked(state).prompt.candidates.slice(0, 2));
     const types = done.events.map((e) => e.type);
@@ -557,7 +508,7 @@ describe("D552 §4 — 30 × (W at declaration + W attached), dealt ONCE", () =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D552 §5 — the parked record round-trips byte-equal, and a rollback DROPS a live damage term", () => {
-  it("🛑 the park's address is `phase.cont.pendingOp` + `rest`, and it carries both new keys and the declaration-time base", () => {
+  it("the park's address is `phase.cont.pendingOp` + `rest`, and it carries both new keys and the declaration-time base", () => {
     const { state } = act(board(1), surge);
     const { phase } = parked(state);
     expect(phase.cont.pendingOp).toEqual({
@@ -569,7 +520,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     expect(phase.cont.rest[0]).toEqual({ op: "damageDefender", base: 60, per: 30, count: "moved" });
   });
 
-  it("🛑 a record parked mid-attach round-trips BYTE-EQUAL and resolves identically", () => {
+  it("a record parked mid-attach round-trips BYTE-EQUAL and resolves identically", () => {
     const { state } = act(board(1), surge);
     const wire = JSON.stringify(state);
     const revived = JSON.parse(wire) as GameState;
@@ -581,17 +532,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     expect(dealtTo(b.state, "p2")).toBe(210);
   });
 
-  it("🛑 ROLLBACK, DRIVEN: the v33 apply arm (no `recordMoved`) deals 60 while the five Energy stay attached", () => {
-    // HEAD's (9f4ec316) `attachFromHand` apply arm is
-    //   `attachFromZoneApply(state, choice.assignments, "hand", ctx, events).state`
-    // — it never files `recordAs`. On a v34 record parked here, that deploy therefore
-    // attaches and files NOTHING, and the `damageDefender` in `rest` counts an empty
-    // slot. Driven through THIS engine by removing the key the v33 arm ignores: the
-    // parked op without `recordAs` is exactly what that arm computes. A dropped LIVE
-    // damage term (150 of 210), detectable in the bytes and NOT inert on the board —
-    // D456's second clause fails, so `MATCH_RECORD_VERSION` 33 → 34 (THE SEVENTH
-    // POSITION, apps/api/src/lobby/match.ts). The red-capable proof inside the engine is
-    // the mutant `D552-hand-apply-drops-the-record`.
+  it("ROLLBACK, DRIVEN: the v33 apply arm (no `recordMoved`) deals 60 while the five Energy stay attached", () => {
     const { state } = act(board(1), surge);
     const { phase } = parked(state);
     const { recordAs: _dropped, ...v33Op } = phase.cont.pendingOp as Extract<
@@ -624,9 +565,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     expect(rowsOf(events, "DAMAGE_DEALT").map((e) => e.dealt)).toEqual([60]);
   });
 
-  it("⚠️ CONSTRUCTED: a `recordGate` on `moved` behind the hand attach gets its clause (`recordSlotOf` enrols the op)", () => {
-    // No printing pairs the attach with an "If you do," consequent (D206's silent omission
-    // is what this pins). The program is CONSTRUCTED and labelled so (D440).
+  it("CONSTRUCTED: a `recordGate` on `moved` behind the hand attach gets its clause (`recordSlotOf` enrols the op)", () => {
     const start = board(1);
     const tide = start.players.p1.active;
     if (tide === null) throw new Error("no Active");

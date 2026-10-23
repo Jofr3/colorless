@@ -19,12 +19,6 @@ import {
   types,
 } from "./testFixtures";
 
-// Evolution (§10) — the first M4 slice. fix-basic-1 → fix-stage1 → fix-stage2
-// is the test line (testFixtures). Boards pin p1's Active (and p2's) to a
-// fix-basic-1 so a fix-stage1 in hand always has a legal target; setup
-// Pokémon carry turnPlayed 0, so they are evolvable from turn 3 (p1) / turn 4
-// (p2) on — past the §4 first-turn ban.
-
 // Seed chosen by scan: p1 opens with enough fix-basic-1 to place an Active
 // and two benched copies (the benched-evolution board's requirement).
 const SEED = 4;

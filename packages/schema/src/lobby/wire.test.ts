@@ -14,12 +14,6 @@ import {
   lobbySnapshotSchema,
 } from "./wire";
 
-// The real assertions here are the compile-time `…MatchesType` proofs in
-// wire.ts — if a schema drifts from its types.ts shape this file stops
-// compiling. The runtime cases below pin the validation behavior the Durable
-// Object depends on: what parses, what's refused, and that unknown keys are
-// stripped rather than forwarded.
-
 const SNAPSHOT: LobbySnapshot = {
   code: "ABCD",
   phase: "selecting",
@@ -59,7 +53,7 @@ const MATCH_GAME: RedactedGame = {
     trainers: [],
     rareCandy: [],
     stadiumAbility: null,
-    discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
+    discardable: [],
   },
   board: {
     stadium: null,
@@ -77,7 +71,7 @@ const MATCH_GAME: RedactedGame = {
       active: null,
       bench: [],
       prizesRemaining: 6,
-      faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
+      faceUpPrizes: [],
       deckCount: 53,
       discard: [],
     },
@@ -95,7 +89,7 @@ const MATCH_GAME: RedactedGame = {
       active: null,
       bench: [],
       prizesRemaining: 6,
-      faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
+      faceUpPrizes: [],
       deckCount: 53,
       discard: [],
     },
@@ -105,7 +99,6 @@ const MATCH_GAME: RedactedGame = {
   outcome: null,
 };
 
-/** A seat-keyed game log — one action row and a turn divider. */
 const MATCH_LOG: SeatLogEntry[] = [
   { kind: "action", who: "p1", elapsed: "+00:00", segments: [{ text: "drew 7 cards" }] },
   { kind: "turn", turn: 1 },

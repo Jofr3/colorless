@@ -3,28 +3,11 @@ import { describe, expect, it } from "vitest";
 import { benchLimitForIds, benchLimitOf, benchTrimStages } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction, createGame, phaseViewOf } from "./index";
-import type { GameAction, GameState, PokemonRef, Seat } from "./index";
+import type { GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard } from "./testFixtures";
+import { FIXTURE_POOL, battler, deckOf, trainerCard, must, mustApply as run } from "./testFixtures";
 import { isBenchIndex } from "./turn";
 import { BENCH_CEILING, BENCH_MAX, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D577 — AREA ZERO UNDERDEPTHS ×3: A PER-SEAT BENCH OF 8, AND THE TRIM BACK TO 5 ──
-//
-//   Area Zero Underdepths  sv07-131, sv07-174, sv08.5-094  (Stadium)
-//
-// *"Each player who has any Tera Pokémon in play can have up to 8 Pokémon on their Bench. If a player
-// no longer has any Tera Pokémon in play, that player discards Pokémon from their Bench until they have
-// 5. When this card leaves play, both players discard Pokémon from their Bench until they have 5, and
-// the player who played this card discards first."*
-//
-// R-AZ1 (per seat), R-AZ2 (the settle-point state check), R-AZ3 (owner first on leave), R-AZ4 (the
-// Bench OWNER answers, on the non-turn seat too), R-AZ5 (whole stacks, no Knock Out, no Prize), R-AZ6
-// (behind the sweep's prize / promotion), R-AZ7 (an in-program leave queues at the FRONT), R-AZ8 (setup
-// stays 5) — decisions.md D576 (d) and D577. Every producer is driven: the mid-turn sweep (evolve, an
-// Item bounce, a Stadium REPLACEMENT, a Stadium-discarding Item), `finishAttack` (a Knock Out, and a
-// Stadium-discarding attack), and `runCheckup`. Real ids on a LOCAL pool (D275); the Tera read is the
-// banner table's, keyed by id, so the Tera bodies here wear real Tera ids.
 
 const UNDERDEPTHS = "sv07-131";
 const UNDERDEPTHS_2 = "sv07-174";
@@ -168,7 +151,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [UNDERDEPTHS]: 1,
   [UNDERDEPTHS_2]: 1,
@@ -189,18 +171,6 @@ const DECK = deckOf({
   [FILLER]: 20,
   "fix-energy": 13,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** Setup with p2 going first; returns p1's turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -520,7 +490,6 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
     expect(state.players.p1.bench).toHaveLength(5);
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(state.pending).toEqual([]);
-    // R-AZ5 — no Knock Out, no Prize.
     expect(
       [...first.events, ...second.events].some(
         (e) => e.type === "KNOCKED_OUT" || e.type === "PRIZES_OWED",

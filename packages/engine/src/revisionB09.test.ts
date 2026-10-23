@@ -13,21 +13,11 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B09 (Stadiums) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B09"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect`,
-// byte for byte below):
-//   §1 Paradise Resort `svp-045` — the mark-G promo had no registry row and was refused as
-//      TRAINER_NOT_SIMULATED, although it is `legal_standard_effective = 1` since 714256b3:
-//      `legal_standard = 0`, print_key `f6d5263097478251`, shared with the authored `svp-150`,
-//      `svp-224` and `mep-092` (B05's `mfb-33` Potion defect, on a Stadium).
 
 const PARADISE_TEXT =
   "The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less.";
-/** Every Paradise Resort printing on the local D1 (measured 2026-10-19), the authored twin first. */
 const PARADISE_IDS = ["svp-150", "svp-224", "mep-092", "svp-045"] as const;
 
 const PSYDUCK = "mep-007";
@@ -75,13 +65,6 @@ const DECK = deckOf({
   "fix-energy": 36, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 909, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

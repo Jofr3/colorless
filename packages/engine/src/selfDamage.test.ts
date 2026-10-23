@@ -17,20 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 — `damageSelf` + the TWO-seat attack epilogue (the D42 debt, paid).
-//
-// Skeledirge sv01-038 "Blazing Shout" does 190 to the defender and then "This
-// Pokémon also does 30 damage to itself." — the engine's FIRST attack that
-// damages its OWN board. The recoil is a DERIVED effect (effects.ts reads the
-// printed sentence, no registry row), placed flat as COUNTERS_PLACED source
-// "self" (the confusion self-hit's model — OUTSIDE the §8.5 W/R pipeline).
-//
-// finishAttack's KO sweep widened from the single defender seat to BOTH, in
-// [defender, attacker] order so §8.1's "the player whose turn it is takes their
-// Prizes first" holds and a self-KO prizes to the DEFENDER. That widening is
-// what makes the §14 double-KO tie reachable from the attack path for the first
-// time; collectKnockOuts' existing speculative guard owns it.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -45,10 +31,6 @@ function p1Turn2(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-/** P1 fields Skeledirge energied for Blazing Shout ({R}{R}{C}) and P2 fields
-    `defenderId`. Each bench is reset to EXACTLY one fix-basic-1 so a KO promotes
-    a lone body (auto-resolved), keeping the prize/promotion sequence
-    deterministic. */
 function matchup(seed: number, defenderId: string): GameState {
   let state = p1Turn2(seed);
   state = setActiveFromDeck(state, "p1", "sv01-038");
@@ -84,12 +66,6 @@ describe("damageSelf — the derived recoil op", () => {
 
   it("refuses the near-misses — the anchors are load-bearing, both of them", () => {
     for (const text of [
-      // ~~The printed "also" is required: a pure-recoil variant (none in sv01–03)
-      // stays on the loud skipped path rather than being guessed.~~ WITHDRAWN at
-      // D592: Miraidon `mep-082` "Thunder" prints "This Pokémon does 30 damage to
-      // itself." on a 90-damage attack — the same rule as the "also" sentence — and
-      // `normaliseMeWording` reads it as that sentence (asserted below this list).
-      // A different subject / a different destination is a different card.
       "This attack does 30 damage to itself.",
       "This Pokémon also does 30 damage to each of your opponent's Benched Pokémon.",
       // A printed 0 is not a real card — left loud, not derived to a no-op.
@@ -106,7 +82,6 @@ describe("damageSelf — the derived recoil op", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    // 🆕🆕🆕 D592 — the "also"-less whole sentence derives to the "also" program.
     expect(deriveAttackEffect("This Pokémon does 30 damage to itself.")).toEqual([
       { op: "damageSelf", amount: 30 },
     ]);
@@ -223,9 +198,6 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
   });
 
   it("is a §14 TIE when the double KO takes BOTH players' last prize", () => {
-    // Both one prize from victory: the defender KO would win it for p1 and the
-    // self-KO would win it for p2 at the same instant. This is the §14 tie
-    // reachable from the attack path for the first time (D42).
     let state = matchup(4, "fix-victim");
     state = setDamage(state, "p1", 150);
     state = setPrizes(state, "p1", 1);
@@ -248,10 +220,6 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
   });
 
   it("LOSES the attacker (§14.2) when the recoil KOs its LAST Pokémon", () => {
-    // Skeledirge is p1's only Pokémon (empty bench) and one hit from death; the
-    // recoil finishes it. The defender (200 HP) survives, so this is a pure
-    // self-KO — newly reachable through an attack. p2 takes its prize for the
-    // KO, then p1 cannot promote → p1 loses by an empty board (§14.2).
     let state = matchup(6, "fix-bigbody");
     state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
     state = setDamage(state, "p1", 150);

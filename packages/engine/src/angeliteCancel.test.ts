@@ -39,124 +39,21 @@ import {
   deckOf,
   deepFreeze,
   setActiveFromDeck,
+  must,
 } from "./testFixtures";
 
-// 0.300.0 → 0.301.0 — 🆕🆕 D396: THE ANGELITE CANCEL.
-//
-// Sylveon ex `sv08-086` / `sv08.5-041` / `sv08.5-156` idx **1** "Angelite"
-// ({W}{L}{P}, NO printed damage):
-//   *"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all
-//    attached cards into your opponent's deck. If 1 of your Pokémon used Angelite
-//    during your last turn, this attack can't be used."*
-//   — **3 legal printings on ONE byte-identical `attacks_json`**, the biggest
-//   single row in the `during your last turn` family.
-//
-// ── WHAT SHIPS ───────────────────────────────────────────────────────────────
-// **ONE `BoardCondition` member** (`yourPokemonUsedAttackLastTurn { attack }`),
-// **its two exhaustive-switch arms**, and **ONE registry program on THREE ids**.
-// ZERO new state, ops, events, error codes, prompt kinds, choice kinds, readers,
-// regexes, clause-table rows, `CardFilter` members, `redact.ts` bytes or
-// `packages/schema` bytes; **`MATCH_RECORD_VERSION` STAYS 25** (§6).
-//
-// ── 🛑 THE CONSEQUENT WAS PRICED WRONG BY THE HANDOFF, AND IT WAS RE-CHECKED ──
-//
-// D394's handoff called *"this attack can't be used"* a THIRD consequent shape.
-// It is the PASSIVE VOICE of D281's `barredIf`, built since 0.195.0 and spelled
-// *"…you can't use this attack during your first turn"* on Terapagos ex's seven
-// printings: both bar the index while the condition HOLDS. §1 measures both
-// spellings on the committed corpus rather than asserting the equivalence.
-//
-// ── 🛑 THE SHAPE QUESTION, SETTLED FROM THE CATALOG BEFORE A LINE WAS WRITTEN ──
-//
-// *"Is `1 of your Pokémon` a SECOND MEMBER or a `zone?: "inPlay"` FIELD on D394's
-// `yourActiveUsedAttackLastTurn`?"* — settled **MEMBER**, and it is the first
-// SUBJECT widening D391's rule (*a comparand is a shape and takes a member; a
-// filter the delegate already accepts is a field*) has been asked about. The
-// deciding half is the DELEGATE clause, not the comparand one: D391's field was
-// cheap because `countAttachedEnergy` had taken exactly that filter since D128,
-// while `usedAttackOnYourLastTurn` takes ONE `InPlayPokemon` and cannot take a
-// zone — so the walk lives in the arm and a field buys a BRANCH inside it.
-//
-// ⚠️ **ONE MEASUREMENT POINTED THE OTHER WAY AND IS RECORDED RATHER THAN
-// DROPPED**: the note IS one interpolation slot here (*"your Active Pokémon used
-// X…"* / *"1 of your Pokémon used X…"* share a skeleton), so D389's *"a second
-// SENTENCE, not a second SLOT"* arithmetic — what carried D392 — does NOT
-// transfer. It loses to the delegate clause, to the site arithmetic (a member
-// edits ZERO of the sibling's 12 executable sites; a field rewrites the
-// `conditionHolds` arm whole) and to the polarity argument below.
-//
-// 🛑 **AND AN OPTIONAL FIELD FAILS IN BOTH DIRECTIONS AT ONCE ON *THIS* FIELD.** A
-// row forgetting `zone` silently gets the ACTIVE-only read: under Angelite's
-// `barredIf` that is TOO LOOSE (the cancel does not bite and an illegal
-// declaration is accepted — §3), under Miltank `sv08.5-081`'s `onlyIf` the
-// identical omission would be TOO STRICT. One silent default cannot serve both
-// polarities of the field these conditions feed.
-//
-// ── WHAT THIS SUITE EXISTS TO PIN ────────────────────────────────────────────
-//
-// 1. 🛑 **THE SUBJECT WIDENING, ON THE BOARD THAT SEPARATES THE TWO READINGS.**
-//    §3: Sylveon ex A uses "Angelite" and leaves the Active Spot; Sylveon ex B
-//    declares "Angelite" on the next of your turns. The printed clause bars it and
-//    an ACTIVE-only read does not. Driven through a REAL `retreat` as well as
-//    through surgery, so the board is reachable in play and not only in a fixture.
-// 2. 🛑 **THE SECOND NON-ZERO GATE INDEX, ON THE OPPOSITE GEOMETRY TO D395's.**
-//    Miltank's gate is at 1 and names index 0; Angelite's gate is at 1 and names
-//    index **1** — it bars ITSELF. So an index-blind read fails DIFFERENTLY here:
-//    it bars "Magical Charm", the attack the card is otherwise played for. §2.
-// 3. 🛑 **NO SPLIT IS AUTHORED, AND THE PROOF IS AN IDENTITY RATHER THAN A
-//    DIFFERENCE.** The clause is TRAILING and `splitAttackGateClause` is
-//    `^`-anchored; §5 asserts the gated body and its UNGATED twin report the
-//    *same* `ATTACK_EFFECT_SKIPPED` — which is D395's assertion inverted, and the
-//    honest answer, because all nine readers refuse the stripped body too (§1).
-//    🆕🆕🆕 **[D541 — WITHDRAWN. A split IS authored: `splitAttackGateClause` now
-//    keys `ATTACK_GATE_CLAUSES` at the TRAILING end too, this clause is its fifth
-//    row, and `CHOOSE_SHUFFLE_CHOSEN` / `returnBenchedChosen` claims the stripped
-//    body. §1's rung is INVERTED in place and §5's identity is re-pointed onto the
-//    half of it that survives.]**
-//
-// ── 🆕🆕🆕 D541 — THE DIVISION OF LABOUR WITH `angeliteChosenShuffle.test.ts` ──
-// This file is **the GATE half** and stays so: the `BoardCondition` member, the
-// index key, the §9 payability mirrors, the report, and `MATCH_RECORD_VERSION` 25.
-// `angeliteChosenShuffle.test.ts` is **the BODY half**: the anchor, the trailing
-// SPLIT branch and its tripwire, the `returnBenchedChosen` op on a real board, the
-// §11 shield at the park, and the census arithmetic. They meet at exactly two
-// seams and both are asserted on BOTH sides rather than in one place: §1's
-// inverted rung here and §2 there agree about what the splitter answers; §7 there
-// pins `registry === derived` for the three ids this file's §1 pins the registry
-// row on. ⚠️ **EXTENDING THIS FILE WAS THE ALTERNATIVE AND WAS DECLINED**: its 869
-// lines are all about a gate that ships alone, and the body half needs its own
-// 60-card demonstrator deck (D270) and its own board fixtures; folding them
-// together would have made the largest suite in this family harder to read for no
-// shared setup at all.
-// 4. **§9 DOES NOT REACH THIS FIELD**, and both payability projections agree per
-//    index. §4.
-
-/** THE PRINTED SENTENCE, byte for byte off the committed corpus. */
 const ANGELITE =
   "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.";
 
-/** The same printed text with the trailing gate clause removed — the string a
-    TRAILING splitter would hand the readers. Spelled out here rather than sliced
-    off `ANGELITE`, so §1's "every reader refuses it" is a claim about a sentence
-    somebody read rather than about a substring an expression produced. */
 const ANGELITE_BODY =
   "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck.";
 
-/** 🆕🆕🆕 D541 — the TRAILING gate clause alone, byte for byte, spelled out for the
-    same reason `ANGELITE_BODY` is: §1's inverted rung asserts what the splitter
-    RETURNS, and a clause sliced off `ANGELITE` by an expression would make that an
-    assertion about the expression. `ANGELITE_CLAUSE + " " + ANGELITE_BODY` is
-    deliberately NOT how `ANGELITE` is built here — the concatenation is checked in
-    `angeliteChosenShuffle.test.ts` §2 against the LIVE corpus row instead. */
 const ANGELITE_CLAUSE =
   "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.";
 
-/** Index 0's printed text, which DOES resolve (`weakenDefenderAttacks`) — the
-    reason the card is played, and the row an index-blind gate takes away. */
 const MAGICAL_CHARM =
   "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance).";
 
-/** The nine live readers, run as one — `censusAtHead.test.ts`'s set. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -166,22 +63,10 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
-  // 🆕🆕 D419 — the THREE readers this list never had (D381, D403, D417), written
-  // in NAME order rather than in landing order because the guard below diffs a
-  // SORTED list against the module surface.
-  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
-  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
-  // `];`, and appending moves that anchor without a character of it changing —
-  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
   deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
-  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-  // array's LAST entries plus its closing bracket, and appending moves that anchor
-  // without a character of it changing.
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackBonusConsequent,
 ];
@@ -190,29 +75,8 @@ const SYLVEON = "sv08-086";
 const SYLVEON_PRE = "sv08.5-041";
 const SYLVEON_SIR = "sv08.5-156";
 
-/** 🛑 THE ATTRIBUTION CONTROL, and the suite is vacuous without it: the SAME two
-    attacks and the SAME printed bytes on a body with NO registry row. Every "the
-    cancel bites" line below passes on a build that refuses all attacks, and §5's
-    "no split fired" line passes on a build that splits nothing anywhere — this
-    body is the only thing that tells those apart from the real behaviour. */
 const UNGATED_TWIN = "fix-angelite-ungated";
 
-/** Sylveon ex `sv08-086`, transcribed WHOLE off the printing (D306/D146: a fixture
-    that claims to BE the printing gets every scalar re-read, not only the ones the
-    assertions touch) — the 270 HP, the {P} type, the Stage 1 from Eevee, the ×2 {M}
-    weakness, the retreat 2, and BOTH attacks at their printed indices with their
-    printed costs, damage and effect text. Re-read field by field off tcgdex on
-    2026-08-22, and IDENTICAL on all three ids.
-
-    ⚠️ **THE `ex` RULE BOX IS OMITTED BECAUSE THERE IS NO COLUMN FOR IT**, not
-    because it was skipped: tcgdex prints `"suffix": "ex"` and the persisted catalog
-    `Card` carries no `suffix` field at all (D207's finding, one banner over) — the
-    engine reads the rule box out of the printed NAME, which this fixture carries
-    verbatim.
-
-    ⚠️ **INDEX 1 HAS NO `damage` KEY AT ALL**, which is printed rather than
-    forgotten: "Angelite" deals none, so every §3 board below can be wound on for
-    turns without a Knock Out changing the question. */
 function sylveon(id: string): Card {
   return battler(id, {
     name: "Sylveon ex",
@@ -240,23 +104,11 @@ function sylveon(id: string): Card {
 
 const LOCAL_CARDS: Record<string, Card> = {
   [SYLVEON]: sylveon(SYLVEON),
-  // Byte-identical to the row above except for the id, which is exactly what makes
-  // it a control: the ONLY difference between the two bodies is that one is
-  // represented in the registry and the other is not.
   [UNGATED_TWIN]: sylveon(UNGATED_TWIN),
 };
 
-/** D275's idiom: a LOCAL pool, so nothing lands in `FIXTURE_POOL`. Neither `sv08`
-    nor `sv08.5` is one of `CATALOG_MANIFEST`'s six sets, so a shared-pool body
-    would have owed a `fix-*` demonstrator key here as well — the key is the SET,
-    not the surface. */
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The suite's own deck (D270: a seeded suite gets one). `fix-titan` is 340 HP with
-    NO attacks, so it survives two "Magical Charm"s and can never take a turn of its
-    own — nothing here can move a damage number or end a game except the two attacks
-    under test. The three typed Energies pay both printed costs: {P} + {C}{C} for
-    index 0 and {W}{L}{P} for index 1, from the same three cards. */
 const ANGELITE_DECK = deckOf({
   [SYLVEON]: 8,
   [UNGATED_TWIN]: 6,
@@ -268,16 +120,8 @@ const ANGELITE_DECK = deckOf({
   "fix-psychic-energy": 10,
 });
 
-/** Four seeds, so nothing below rests on one shuffle (D270). */
 const SEEDS = [6011, 6029, 6037, 6047] as const;
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** D275's `localSetup` with the FIRST PLAYER as a parameter, so every assertion
-    below can be made from both seats under both assignments. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({
     seed,
@@ -332,12 +176,6 @@ function passTurns(state: GameState, count: number): GameState {
   return next;
 }
 
-/** Wind the board on until it is `seat`'s turn to act and the counter has reached
-    `minTurn`. ⚠️ **THE DEFAULT IS 3 AND IT IS LOAD-BEARING**: §4 bans the
-    going-first player from attacking on turn 1, and a board that hit that ban would
-    report `FIRST_TURN_ATTACK` where this file reads `ATTACK_PREVENTED` — a refusal
-    for the wrong reason, which is exactly what `declare` returning a CODE rather
-    than a boolean exists to catch. */
 function untilTurnOf(state: GameState, seat: Seat, minTurn = 3): GameState {
   let next = state;
   for (let i = 0; i < 12; i += 1) {
@@ -363,24 +201,12 @@ function declareEvents(state: GameState, seat: Seat, index: number): readonly Ga
   return result.events;
 }
 
-/** The wire projection's own answer for the same row — the payability mirror. */
 function wirePlayable(state: GameState, seat: Seat, index: number): boolean | undefined {
   const phase = redactGame(state, seat).phase;
   if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
   return phase.attacks.find((a) => a.index === index)?.playable;
 }
 
-/** 🆕🆕🆕 **D541 — ANSWER ANGELITE'S PICK IF IT PARKED.** Until D541 built
-    `returnBenchedChosen`, `deriveAttackEffect` returned `null` for this row and a
-    declaration resolved to NOTHING, so every board here could wind straight on. The op
-    now asks a `choosePokemonMulti`, and §8.6 CLAMPS it to the one body `board()` puts on
-    the other Bench (`ptcg-rules.md:333` — *"with fewer legal targets than the number,
-    you choose as many as you can"*; the printed sentence carries no *"If you can't, this
-    attack does nothing"* rider, so a short Bench shuffles what there is rather than
-    cancelling the attack). The answer is READ OFF THE PROMPT rather than retyped, so
-    this file stays a GATE suite: what the body DOES is `angeliteChosenShuffle.test.ts`
-    §4's subject, and these boards only have to get past the park to reach the next
-    turn. */
 function settleAngelitePark(state: GameState, seat: Seat): GameState {
   if (state.phase.kind !== "effect:choose") return state;
   const prompt = state.phase.prompt;
@@ -405,44 +231,20 @@ function afterAngelite(seed: number, first: Seat, seat: Seat, activeId: string):
   return untilTurnOf(after, seat, start.turn + 1);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. The census, the consequent, and the "no split" measurement.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and the split that buys THREE (D541)", () => {
-  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
-    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
-    // it could sit short of the module indefinitely — which is precisely the state
-    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
-    // D418. A guard in another file guards that file's copy alone.
-    //
-    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
-    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
-    // off the MODULE surface, so no edit here can move a census number again. What
-    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
-    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
-    // module and from this list in the SAME commit, and the figures would then move
-    // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 the corpus holds the sentence ONCE at THREE printings, and no reader takes it", () => {
+  it("the corpus holds the sentence ONCE at THREE printings, and no reader takes it", () => {
     const rows = legalAttackCorpus().filter(([, text]) => text === ANGELITE);
     expect(rows.length).toBe(1);
     expect(rows.reduce((sum, [units]) => sum + units, 0)).toBe(3);
-    // 🛑 REFUSED WHOLE, which is what makes the gate the only thing accounting for
-    // the clause — if a reader ever takes this string, something is double-counting.
     expect(resolvedByAnyReader(ANGELITE)).toBe(false);
   });
 
-  it("🛑 the CONSEQUENT is `barredIf`'s, in the passive voice — both spellings measured", () => {
-    // D394's handoff priced *"this attack can't be used"* as a THIRD consequent
-    // shape the union does not spell. It is Terapagos ex's clause with the subject
-    // and object swapped, and the corpus is where that is settled rather than in
-    // prose: two sentences, one shape, and the polarity token serves both.
+  it("the CONSEQUENT is `barredIf`'s, in the passive voice — both spellings measured", () => {
     const passive = legalAttackCorpus().filter(([, t]) => t.includes("this attack can't be used"));
     expect(passive.length).toBe(1);
     expect(passive.reduce((sum, [units]) => sum + units, 0)).toBe(3);
@@ -451,27 +253,12 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     expect(active.reduce((sum, [units]) => sum + units, 0)).toBe(7);
     // …and the two really are disjoint sentences, so the 3 and the 7 do not overlap.
     expect(passive[0]?.[1]).not.toBe(active[0]?.[1]);
-    // The corpus-wide family this row is the biggest member of.
     const family = legalAttackCorpus().filter(([, t]) => t.includes("during your last turn"));
     expect(family.length).toBe(5);
     expect(family.reduce((sum, [units]) => sum + units, 0)).toBe(7);
   });
 
-  it("🆕🆕🆕 D541 — THE SPLIT IS AUTHORED AFTER ALL, and this rung is INVERTED rather than deleted", () => {
-    // 🛑 **THE WHOLE OF THIS RUNG USED TO ASSERT THE OPPOSITE, AND IT WAS RIGHT.**
-    // It read *"NO SPLIT IS AUTHORED, and the reason is that a trailing one would
-    // buy ZERO"*, and its premise was RE-CONFIRMED at D541's own head before a byte
-    // moved: every one of the 13 live readers still refused the stripped body. It
-    // went false JOINTLY with D541's arm — the stripper alone would still have
-    // bought nothing — which is why it is INVERTED in place (D178/D418) rather than
-    // deleted, and why the file it belongs to keeps its name. The BODY half of this
-    // printing is `angeliteChosenShuffle.test.ts`'s from here on; see this file's
-    // header for the division of labour.
-    //
-    // ① The splitter DOES claim this string now, at the TRAILING end. It is no
-    //    longer a leading-clause matcher: the same closed literal list is keyed at
-    //    both ends, and `ATTACK_GATE_CLAUSES` carries Angelite's clause as its
-    //    fifth row.
+  it("D541 — THE SPLIT IS AUTHORED AFTER ALL, and this rung is INVERTED rather than deleted", () => {
     expect(splitAttackGateClause(ANGELITE)).toEqual({
       clause: ANGELITE_CLAUSE,
       body: ANGELITE_BODY,
@@ -485,41 +272,23 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     //    this rung that did NOT invert. It is what says the split is idempotent:
     //    splitting the body again answers `null`, so nothing can be stripped twice.
     expect(splitAttackGateClause(ANGELITE_BODY)).toBeNull();
-    // 🛑 THE ATTRIBUTION CONTROL, KEPT AND STILL LOAD-BEARING IN THE NEW DIRECTION.
-    // It used to guard two `false`s against a build where every reader is broken;
-    // it now guards the `true` above against a build where some reader claims
-    // EVERYTHING (`resolvedByAnyReader`'s own `undefined !== null` failure mode).
     expect(resolvedByAnyReader(MAGICAL_CHARM)).toBe(true);
     expect(deriveAttackEffect(MAGICAL_CHARM)).toEqual([
       { op: "weakenDefenderAttacks", amount: 100 },
     ]);
-    // ④ …and the gate corpus STEPS 6/14 → 7/17, which is what says this slice DID
-    //    add an `ATTACK_GATE_CLAUSES` row — the exact inversion of the sentence
-    //    that used to sit here. Driven off the module, never retyped.
     const gated = legalAttackCorpus().filter(([, t]) => splitAttackGateClause(t) !== null);
-    expect(gated.length).toBe(9); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate corpus's sentences, 7 → 9 (D541's step 6 → 7 is the comment above, kept as history).)
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate corpus's printings, 17 → 19.)
+    expect(gated.length).toBe(9);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19);
     expect(gated.some(([, t]) => t === ANGELITE)).toBe(true);
-    // ⑤ …and the RAW row is still claimed by NO reader whole, which is the half of
-    //    the old rung that survives untouched: the printing resolves through the
-    //    SPLIT summand, not the reader summand, and the two must not double-count.
     expect(resolvedByAnyReader(ANGELITE)).toBe(false);
   });
 
-  it("🛑 THREE ids, ONE program object, and the gate is at index 1 — D281's reprint idiom", () => {
+  it("THREE ids, ONE program object, and the gate is at index 1 — D281's reprint idiom", () => {
     const program = programFor(SYLVEON);
     expect(program).toBeDefined();
-    // By OBJECT IDENTITY, not by deep equality: Terapagos ex's treatment, which is
-    // what a byte-identical `attacks_json` across a reprint group earns. Illumise
-    // and Scream Tail ex print ONE clause on TWO cards and are deliberately two
-    // consts; this is one card printed three times.
     expect(programFor(SYLVEON_PRE)).toBe(program);
     expect(programFor(SYLVEON_SIR)).toBe(program);
-    // ZERO new state: this row authors no `attack` program, no `abilities`, no
-    // `passive` — the whole surface is the gate.
     expect(Object.keys(program ?? {})).toEqual(["attackGate"]);
-    // 🛑 THE KEY IS THE ASSERTION, and it is `["1"]` on a card whose OTHER attack is
-    // the one the player buys the card for.
     expect(Object.keys(program?.attackGate ?? {})).toEqual(["1"]);
     expect(program?.attackGate?.[1]).toEqual({
       kind: "barredIf",
@@ -527,12 +296,7 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     });
   });
 
-  it("🛑 the clause NAMES the attack it is printed ON — the self-barring geometry", () => {
-    // 🛑 THE DIFFERENCE FROM D395, AND IT IS WHAT MAKES THESE THREE PRINTINGS A
-    // SECOND TEST OF THE INDEX KEY RATHER THAN A REPEAT OF THE FIRST. Miltank's gate
-    // sits at index 1 and names index 0, so an index-blind read produces a DEADLOCK;
-    // Angelite's gate sits at index 1 and names index 1, so an index-blind read
-    // instead confiscates index 0 — the attack that actually deals damage.
+  it("the clause NAMES the attack it is printed ON — the self-barring geometry", () => {
     const attacks = POOL[SYLVEON]?.attacks ?? [];
     expect(attacks).toHaveLength(2);
     expect(attacks[0]?.name).toBe("Magical Charm");
@@ -553,45 +317,21 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     expect(attackGateOf(state, body, 0)).toBeUndefined();
     expect(attackGateOf(state, body, 99)).toBeUndefined();
     expect(attackGateOf(state, body, -1)).toBeUndefined();
-    // 🆕🆕🆕 **D541 — THE TWIN IS NO LONGER UNGATED, AND THIS RUNG IS INVERTED
-    // RATHER THAN DELETED.** It used to read `toBeUndefined()`. `attackGateOf` is
-    // `registry ?? timingGateFromAttackText` (D444), and D541 put Angelite's clause
-    // into `ATTACK_GATE_CLAUSES` — so a body printing these bytes with NO registry
-    // row now DERIVES the gate. That is the whole point of the slice and it is the
-    // only place in the repo where the derived gate is OBSERVABLE, because
-    // `SYLVEON`'s registry row wins on all three real ids.
     const twin = board(SEEDS[0], "p1", "p1", UNGATED_TWIN);
     expect(programFor(UNGATED_TWIN)).toBeUndefined();
     expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toEqual({
       kind: "barredIf",
       condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
     });
-    // 🛑 **THE ATTRIBUTION CONTROL THIS RUNG USED TO BE, REBUILT AT THE INDEX SEAM.**
-    // The old control said "only a registry row gates"; that is false from D541 on,
-    // so the replacement says the derivation is CLAUSE-keyed and not BODY-keyed: the
-    // same body at index 0 prints text with no clause in it and carries no gate.
-    // Without this line the assertion above is green on a build that gates every
-    // attack on every body.
     expect(attackGateOf(twin, activeOf(twin, "p1"), 0)).toBeUndefined();
-    // …and the two producers AGREE, which is what makes keeping the registry row
-    // defence-in-depth rather than a second source of truth (see
-    // `angeliteChosenShuffle.test.ts` §7, which pins this for all three real ids).
     expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toEqual(
       programFor(SYLVEON)?.attackGate?.[1],
     );
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. 🛑 THE INDEX — asserted on the row the cancel must NOT reach, first.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D396 §2 — the row an INDEX-BLIND read confiscates", () => {
-  it("🛑 idx 0 'Magical Charm' is LIVE on the very board where idx 1 is cancelled", () => {
-    // 🛑 THE FIRST ASSERTION IN THE FILE ABOUT THE ENGINE IS THE ONE ABOUT THE ROW
-    // THE GATE MUST NOT REACH — D278/D279's standing lesson. An index-blind read
-    // (`Object.values(attackGate)[0]`, or a per-BODY flag) is green on every "the
-    // cancel bites" line below and takes 160 damage a turn away from the card.
+  it("idx 0 'Magical Charm' is LIVE on the very board where idx 1 is cancelled", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         for (const seed of SEEDS) {
@@ -603,11 +343,7 @@ describe("D396 §2 — the row an INDEX-BLIND read confiscates", () => {
     }
   });
 
-  it("🛑 …and a row authored at index 0 is the OTHER defect — both rows must stay live fresh", () => {
-    // The authoring-side mistake, whose symptom is the mirror of the reader-side
-    // one: a gate keyed `0` cancels "Magical Charm" and leaves "Angelite"
-    // unconditionally legal. It is told apart from the row above by the FRESH board,
-    // where nothing has used Angelite and BOTH rows must be declarable.
+  it("…and a row authored at index 0 is the OTHER defect — both rows must stay live fresh", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         for (const seed of SEEDS) {
@@ -619,9 +355,7 @@ describe("D396 §2 — the row an INDEX-BLIND read confiscates", () => {
     }
   });
 
-  it("🛑 and the WIRE greys exactly one of the two rows — the per-index projection", () => {
-    // The quiet direction: a greyed row is never clicked, so nobody reports it. A
-    // body-wide `banned` term is green on the engine half above and wrong here.
+  it("and the WIRE greys exactly one of the two rows — the per-index projection", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         const state = afterAngelite(SEEDS[0], first, seat, SYLVEON);
@@ -640,16 +374,11 @@ describe("D396 §2 — the row an INDEX-BLIND read confiscates", () => {
     expect(result.error.message).toContain(
       "it cannot be used while 1 of your Pokémon used Angelite during your last turn",
     );
-    // …and the note comes from the ONE reader that knows the polarity, not from a
-    // second switch at the call site (D131).
     const gate = attackTimingBlocked(state, "p1", activeOf(state, "p1"), 1);
     expect(gate).toBeDefined();
     expect(gate === undefined ? "" : attackTimingNote(gate)).toBe(
       "it cannot be used while 1 of your Pokémon used Angelite during your last turn",
     );
-    // 🛑 AND THE NOTE IS THE PRINTED CLAUSE WITH NOTHING RESOLVED, which is the
-    // family's first — every sibling arm rewrites a "this Pokémon" pronoun (D116)
-    // and this printed subject carries none.
     expect(conditionNote({ kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" })).toBe(
       "1 of your Pokémon used Angelite during your last turn",
     );
@@ -664,10 +393,6 @@ describe("D396 §2 — the row an INDEX-BLIND read confiscates", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. 🛑 THE SUBJECT WIDENING — the board an ACTIVE-ONLY read gets wrong.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the board that separates them", () => {
   it("the ACTIVE case, from both seats and under both assignments — the easy half", () => {
     for (const first of ["p1", "p2"] as const) {
@@ -681,13 +406,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
     }
   });
 
-  it("🛑 THE BENCH CASE — a SECOND Sylveon ex is cancelled by the FIRST one's history", () => {
-    // 🛑 THE ASSERTION THIS SLICE EXISTS FOR, and the one an ACTIVE-only reading is
-    // green on everywhere else. Sylveon ex A uses "Angelite"; A leaves the Active
-    // Spot and Sylveon ex B is promoted; B declares "Angelite" on the next of the
-    // player's own turns. The printed clause bars it — A is 1 of your Pokémon and it
-    // used Angelite during your last turn — and B's own `usedAttack` is `null`, so
-    // `yourActiveUsedAttackLastTurn` answers FALSE and lets the declaration through.
+  it("THE BENCH CASE — a SECOND Sylveon ex is cancelled by the FIRST one's history", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         for (const seed of SEEDS) {
@@ -711,7 +430,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
     }
   });
 
-  it("🛑 …and the same board reached through a REAL retreat, not surgery", () => {
+  it("…and the same board reached through a REAL retreat, not surgery", () => {
     // The board above is built with `setActiveFromDeck`, which is test surgery. This
     // one is built out of printed rules only — a §11 retreat paying the printed cost
     // of 2 — so the case is reachable in an actual game and not merely in a fixture.
@@ -744,11 +463,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
     }
   });
 
-  it("🛑 the window has a BACK EDGE — one more of your own turns and the cancel lifts", () => {
-    // A cancel that read "has ever used Angelite" is green on every board above. The
-    // printed word is "LAST turn": one own turn further on, the record is two of the
-    // player's turns old and the attack is legal again — from the BENCHED body too,
-    // which is the half a widened member could get wrong on its own.
+  it("the window has a BACK EDGE — one more of your own turns and the cancel lifts", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         const used = afterAngelite(SEEDS[0], first, seat, SYLVEON);
@@ -761,7 +476,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
     }
   });
 
-  it("🛑 the OPPONENT's Angelite does not cancel yours — the possessive is read", () => {
+  it("the OPPONENT's Angelite does not cancel yours — the possessive is read", () => {
     // "1 of YOUR Pokémon". A seat-blind walk is green on every board above, because
     // every one of them stamps the asking seat's own body.
     for (const seat of ["p1", "p2"] as const) {
@@ -787,7 +502,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
     }
   });
 
-  it("🛑 a DIFFERENT attack's history does not cancel Angelite — the NAME is read", () => {
+  it("a DIFFERENT attack's history does not cancel Angelite — the NAME is read", () => {
     // Drop the name test and "Magical Charm" cancels "Angelite". Both halves of the
     // helper are load-bearing and they fail on different boards; this is the other.
     for (const seat of ["p1", "p2"] as const) {
@@ -805,7 +520,7 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D396 §4 — the §9 rule, and the payability mirrors", () => {
-  it("🛑 a live Klefki Ability-lock changes NOTHING on either side of the cancel", () => {
+  it("a live Klefki Ability-lock changes NOTHING on either side of the cancel", () => {
     // The INVERSE of `PassiveEffects.attackFirstTurnExempt`'s rule: §9 locks
     // ABILITIES, and every clause in `attackGate` is printed as ATTACK text. Driven
     // under a live lock rather than argued.
@@ -853,33 +568,14 @@ describe("D396 §4 — the §9 rule, and the payability mirrors", () => {
         }
       }
     }
-    // THE ATTRIBUTION CONTROLS, both directions: the sweep really ran, and it found
-    // live rows as well as refused ones. Without the second, this whole `it` passes
-    // on a build that refuses every attack in the game.
-    // 2 assignments × 2 seats × 4 seeds × 2 boards × 2 rows.
     expect(compared).toBe(64);
     expect(legalRows).toBeGreaterThan(0);
     expect(legalRows).toBeLessThan(compared);
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. 🛑 NO SPLIT — and the proof is an IDENTITY with the ungated twin.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D396 §5 — the report, which is the SAME on the gated body and on the twin", () => {
-  it("🆕🆕🆕 D541 — the declaration reports NOTHING now, and the IDENTITY between the two bodies SURVIVES", () => {
-    // 🛑 **THE SHAPE OF THIS RUNG IS UNTOUCHED AND ITS VALUE IS INVERTED — WHICH IS
-    // WHY IT IS THE RIGHT RUNG.** It used to assert that BOTH bodies filed exactly
-    // ONE `ATTACK_EFFECT_SKIPPED` naming the WHOLE printed sentence, because no
-    // split was authored and the printed text reached the readers whole. D541
-    // authored the split and the body: `splitAttackGateClause` takes the trailing
-    // clause off at the §8 seam and `deriveAttackEffect` claims what is left, so
-    // NEITHER body skips anything any more.
-    // ⚠️ **THE IDENTITY IS THE MEASUREMENT, NOT THE NUMBER**, and it still says
-    // exactly what it said: a slice that split on one body and not the other would
-    // break it, in either direction. It now says "gate AND body", where it used to
-    // say "gate only".
+  it("D541 — the declaration reports NOTHING now, and the IDENTITY between the two bodies SURVIVES", () => {
     const gated = untilTurnOf(board(SEEDS[0], "p1", "p1", SYLVEON), "p1");
     const gatedSkipped = declareEvents(gated, "p1", 1).filter(
       (e) => e.type === "ATTACK_EFFECT_SKIPPED",
@@ -891,26 +587,11 @@ describe("D396 §5 — the report, which is the SAME on the gated body and on th
       (e) => e.type === "ATTACK_EFFECT_SKIPPED",
     );
     expect(twinSkipped).toHaveLength(0);
-    // 🛑 THE ATTRIBUTION CONTROL FOR TWO ZEROES (D318's finding-one): two empty
-    // filters are green on a build that files no events at all, so the accounting is
-    // asserted POSITIVELY as well — the body the split hands the readers derives,
-    // and it derives to the op this slice built.
     expect(splitAttackGateClause(ANGELITE)?.body).toBe(ANGELITE_BODY);
     expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([{ op: "returnBenchedChosen", count: 2 }]);
   });
 
-  it("🆕🆕🆕 D541 — the twin is CANCELLED TOO now, because the printed TEXT gates it (INVERTED)", () => {
-    // 🛑 **THIS RUNG USED TO SAY THE OPPOSITE AND IT WAS THE FILE'S ATTRIBUTION
-    // CONTROL.** *"the printed TEXT gates nothing, and it must not — only a registry
-    // row does"* was true when written, went false at **D444** for the LEADING
-    // clause family, and goes false HERE for this clause the moment D541 adds its
-    // row to `ATTACK_GATE_CLAUSES`. It is inverted in place rather than deleted
-    // (D178/D418) because the board it drives is the same board and the reading is
-    // the interesting half.
-    // ⚠️ **AND THE CONTROL IT PROVIDED IS REBUILT RATHER THAN LOST** — see §1, where
-    // the twin's index 0 is asserted UNGATED on the same body. The question this
-    // file answers is no longer "does the text gate?" (it does) but "is the gate
-    // CLAUSE-keyed and INDEX-keyed?", which is what §2 has always driven.
+  it("D541 — the twin is CANCELLED TOO now, because the printed TEXT gates it (INVERTED)", () => {
     for (const seat of ["p1", "p2"] as const) {
       const state = afterAngelite(SEEDS[0], "p1", seat, UNGATED_TWIN);
       expect(declare(state, seat, 1), seat).toBe("ATTACK_PREVENTED");
@@ -936,12 +617,6 @@ describe("D396 §5 — the report, which is the SAME on the gated body and on th
 
 describe("D396 §6 — MATCH_RECORD_VERSION stays 25, and the reason is measured", () => {
   it("the slice persists NOTHING a v25 record could be missing", () => {
-    // ⚠️ THE CONSTANT ITSELF LIVES IN `apps/api/src/lobby/match.ts` and its tie is
-    // held there (`match.test.ts`), so this file cannot import it and does not
-    // pretend to. What it CAN do is drive the three reasons the number does not
-    // move, which is the half a constant-equality assertion could never give.
-    // ① the value carries no `EffectOp`, so it cannot ride a parked continuation
-    //    into a record (D281's own sweep, re-run on the new row);
     const gate = programFor(SYLVEON)?.attackGate?.[1];
     expect(JSON.stringify(gate ?? {}).includes('"op":')).toBe(false);
     // ② the member is a WIDENING no v25 record can contain, because the only card
@@ -951,8 +626,6 @@ describe("D396 §6 — MATCH_RECORD_VERSION stays 25, and the reason is measured
       kind: "barredIf",
       condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
     });
-    // ③ and the stamp it READS has been a REQUIRED `InPlayPokemon` field since
-    //    D394's own bump, so a v25 record already carries it on every body.
     const state = afterAngelite(SEEDS[0], "p1", "p1", SYLVEON);
     expect(activeOf(state, "p1").usedAttack).toEqual({ name: "Angelite", turn: state.turn - 2 });
     for (const body of state.players.p1.bench) {
@@ -961,9 +634,6 @@ describe("D396 §6 — MATCH_RECORD_VERSION stays 25, and the reason is measured
   });
 
   it("no `fix-*` demonstrator reached the shared pool — the census control", () => {
-    // D275's idiom, asserted by id in both directions: this suite's bodies are
-    // LOCAL, so `FIXTURE_POOL` is untouched and `registryCardIds()` moves by exactly
-    // the THREE real catalog ids the registry row is keyed on.
     for (const id of [SYLVEON, SYLVEON_PRE, SYLVEON_SIR, UNGATED_TWIN]) {
       expect(FIXTURE_POOL[id], id).toBeUndefined();
     }

@@ -24,102 +24,10 @@ import {
 } from "./testFixtures";
 import { koedDuringOpponentsLastTurn, koedMarksOnOpponentsLastTurn } from "./types";
 
-// D326 — WHICH POKÉMON WAS KNOCKED OUT, AND HOW. THE SECOND MECHANISM D271
-// PRICED, DECLINED AND WROTE DOWN THE REASON FOR.
-//
-// THE TWO SENTENCES. Both narrow the KO SET that D271's gate reads, and neither
-// can be answered from a turn number:
-//
-//   · *"You can use this card only if any of your **Team Rocket's** Pokémon were
-//     Knocked Out during your opponent's last turn. / Each player shuffles their
-//     hand into their deck. Then, you draw 5 cards, and your opponent draws 3
-//     cards."* — Team Rocket's Archer `sv10-170` / `sv10-223` (Supporter, 2
-//     Standard-legal printings, byte-identical `effect`).
-//   · *"If any of your Pokémon were Knocked Out **by damage from an attack**
-//     during your opponent's last turn, this attack does {N} more damage."* —
-//     Iron Leaves `sv06-019` (+60), Revavroom `sv06-125` (+90), Alolan Marowak
-//     `sv09-057` (+90), Terrakion `sv10.5w-054` / `sv10.5w-135` (+80), and
-//     Ethan's Pinsir `sv10-001` (+100), which prints BOTH narrowings at once.
-//
-// 🛑 **ARCHER WAS THE OLDEST UNPRICED ROW ON `docs/progress.md` AND NO SESSION
-// HAD EVER READ ITS TEXT.** Five consecutive handoffs carried it as "2 printings,
-// STILL unpriced against the registry"; the sentence above was pulled off the
-// remote D1 by D326 before a line was written, which is the only reason the
-// `owner` half was priced at one field instead of re-declined for a fourth time.
-//
-// 🛑 **AND THE SIX ATTACK PRINTINGS WERE INVISIBLE TO THE CENSUS THAT PRICED
-// THIS FAMILY.** D271 swept `%were Knocked Out during%` over all three text
-// columns, got 8 printings, and named all 8. The literal cannot see these six,
-// because *"by damage from an attack"* sits between the verb and the *"during"*.
-// The bare-noun sweep `%Pokémon were Knocked Out%` at `legal_standard = 1`
-// returns **14**, and the difference set is exactly these six. **A WIDER
-// SPELLING OF THE SAME LITERAL WOULD NOT HAVE FOUND THEM; A SHORTER NOUN DID.**
-//
-// ── WHAT IS NEW, AND WHY IT IS ONE FIELD RATHER THAN TWO ─────────────────────
-//
-// D271 recorded that `lastKoTurn` answers *when* a seat lost a Pokémon and
-// deliberately never *which*, and that an owner prefix "would want the stamp to
-// become a per-body record". That was re-read against `flow.ts` at D326 rather
-// than inherited — the write site still stamps `state.turn` and nothing else —
-// and the per-body record is what this slice adds: `GameState.lastKoMarks`, a
-// list CO-STAMPED with `lastKoTurn` rather than a second clock.
-//
-// ✅ **NO SECOND WINDOW, SO NO SECOND WAY TO BE WRONG ABOUT IT.** The list
-// carries no turn of its own: `knockOut` restarts it when a Knock Out lands on a
-// turn later than the one already stamped and appends otherwise, so the marks
-// belong to `lastKoTurn`'s turn BY CONSTRUCTION. D271's best property survives
-// intact — there is still no boundary write, and nothing clears anything.
-//
-// ✅ **AND THE READER CANNOT DISAGREE WITH D271's.** `koedMarksOnOpponentsLastTurn`
-// asks `koedDuringOpponentsLastTurn` FIRST and returns an EMPTY list when the
-// window is shut, so a narrowed gate is TRUE on a strict SUBSET of the boards
-// the bare gate is true on. That is a property of the code and not of the tests,
-// and §5 below drives it anyway.
-//
-// ✅ **TWO OPTIONAL FIELDS ON ONE MEMBER, AND ONE CARD SETTLES THAT.** Ethan's
-// Pinsir prints the owner prefix AND the cause in one clause. Two `BoardCondition`
-// members could not have spelled the conjunction; two optional keys on D271's
-// member spell it by leaving both set.
-//
-// ✅ **`byAttack` IS NOT A NEW DISCRIMINATION.** `collectKnockOuts` has taken
-// `attackerSeat` since D164 and it is passed by `finishAttack` ALONE — the
-// Checkup and the mid-turn sweep deliberately omit it — so the funnel already
-// knew. Threading it into `knockOut` is the whole of the plumbing.
-//
-// ── THE HAZARDS THIS SUITE IS SHAPED AROUND ─────────────────────────────────
-//
-// 🛑 **A NARROWING THAT NARROWS NOTHING IS GREEN AND DEAD.** The cheapest wrong
-// build reuses D271's bare gate for all eight printings and passes every test
-// that only ever Knocks a Pokémon Out with an attack. §3 exists for exactly that:
-// it Knocks a Pokémon Out with CHECKUP POISON and asserts the bare gate TRUE and
-// the narrowed gate FALSE **on the same state, in the same breath**. A board that
-// never poisons anything cannot tell the two builds apart.
-//
-// 🛑 **AND SO IS AN OWNER TEST THAT ALWAYS SAYS YES.** §2 KOs a NON-prefixed body
-// and a prefixed one on boards identical in every other respect, and reads the
-// gate on both — a build that ignored `owner` passes the accept and fails the
-// refuse, and a build that hard-coded "Team Rocket" passes both and fails §4's
-// Ethan row.
-//
-// ⚠️ **A ONE-SIDED READ IS VACUOUS ON A PER-SEAT HISTORY** (D271's rule, and it
-// applies to the marks exactly as it applied to the stamp): the seat that SCORED
-// the Knock Out and the seat that LOST the Pokémon are different, so every
-// assertion below reads BOTH seats.
-
-// ── the local pool (FIXTURE_POOL is left untouched — D190's idiom) ───────────
-
 const LOCAL_CARDS: Record<string, Card> = {
-  // The victim bodies. All 30 HP so `fix-sniper`'s Spread Shot Knocks any of them
-  // Out in one hit, and all three differ ONLY in the printed NAME — which is the
-  // only thing an owner prefix is a test on, so nothing else can be doing the
-  // work when the gate tells them apart.
   "fix-rocket-victim": battler("fix-rocket-victim", { hp: 30, name: "Team Rocket's Victim" }),
   "fix-ethan-victim": battler("fix-ethan-victim", { hp: 30, name: "Ethan's Victim" }),
   "fix-plain-victim": battler("fix-plain-victim", { hp: 30, name: "Plain Victim" }),
-  // ⚠️ A NEAR-MISS ON PURPOSE. "Team Rocketeer's Sneasel" starts with the whole
-  // of "Team Rocket" and is NOT a Team Rocket's Pokémon. `ownerPokemon` matches
-  // `${owner}'s ` WITH the possessive and the trailing space, and this fixture is
-  // what makes that trailing byte observable rather than decorative.
   "fix-nearmiss-victim": battler("fix-nearmiss-victim", {
     hp: 30,
     name: "Team Rocketeer's Sneasel",
@@ -138,8 +46,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN seeded deck (D270's rule). Sized for `who: "both"` at 5/3 off a
-    freshly reshuffled pile on BOTH sides, plus the four victim bodies. */
 const OWNER_KO_DECK = deckOf({
   "fix-archer": 4,
   "fix-stamp": 4,
@@ -181,13 +87,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** P2 to move on turn 2 with a loaded `fix-sniper`, facing a P1 Active that is
-    `victim` (30 HP, one Spread Shot from gone).
-
-    ⚠️ P2 ACTS AND P1 PLAYS THE CARD, which is D271's arrangement and its reason:
-    the seat that LOSES the Pokémon is the one the gate is about, so a build that
-    marked the ATTACKER's seat reads back as "P2 may play Archer" and no
-    one-sided board would notice. */
 function sniperOnP2(seed: number, victim: string, p1Bench: string[] = ["fix-basic-1"]): GameState {
   let state = localSetup(seed, "p1");
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
@@ -264,8 +163,6 @@ describe("GameState.lastKoMarks — the co-stamped record", () => {
   it("starts EMPTY on both seats, and empty is not null", () => {
     const state = localSetup(3, "p1");
     expect(state.lastKoMarks).toEqual({ p1: [], p2: [] });
-    // Both seats in one breath (D271's rule): a field keyed on the wrong seat is
-    // invisible on a board where only one player is ever hit.
     expect(koedMarksOnOpponentsLastTurn(state, "p1")).toEqual([]);
     expect(koedMarksOnOpponentsLastTurn(state, "p2")).toEqual([]);
   });
@@ -275,8 +172,6 @@ describe("GameState.lastKoMarks — the co-stamped record", () => {
     expect(koed.lastKoMarks.p1).toHaveLength(1);
     const mark = koed.lastKoMarks.p1[0];
     if (mark === undefined) throw new Error("unreachable");
-    // The PRINTED NAME, not the fixture id — an owner prefix is a test on the
-    // name, and storing the id would have made the whole slice unspellable.
     expect(mark.name).toBe("Team Rocket's Victim");
     expect(mark.byAttack).toBe(true);
     expect(mark.uid).toEqual(expect.any(String));
@@ -302,18 +197,8 @@ describe("GameState.lastKoMarks — the co-stamped record", () => {
   });
 
   it("APPENDS a second body lost on the SAME turn — the Active and the Bench together", () => {
-    // Spread Shot hits the Active for 30 and every Benched Pokémon for 20; a
-    // 30 HP body on the Bench is not lethal at 20, so the bench half is set up by
-    // giving P1 a SECOND 30 HP body and letting the attack's own bench damage
-    // finish it after a first hit. Simpler: two KOs in one batch via the Active
-    // plus a pre-damaged bench body is what `fix-sniper` already does — so this
-    // asserts the LIST GREW, which a single-slot field could never do.
     const koed = koedByAttack(3, "fix-rocket-victim");
     const marks = koed.lastKoMarks.p1;
-    // At least the Active. The point of the assertion is that the shape is a
-    // LIST and the reader returns all of it — a scalar "last name" field would
-    // have answered Archer correctly on every board in this file and still been
-    // the wrong shape for a sentence that says "ANY of your … Pokémon".
     expect(Array.isArray(marks)).toBe(true);
     expect(marks.length).toBeGreaterThanOrEqual(1);
     expect(marks.every((m) => typeof m.name === "string" && typeof m.byAttack === "boolean")).toBe(
@@ -325,10 +210,6 @@ describe("GameState.lastKoMarks — the co-stamped record", () => {
     // P1 loses a Team Rocket's body on turn 2 …
     const first = koedByAttack(3, "fix-rocket-victim");
     expect(first.lastKoMarks.p1.map((m) => m.name)).toEqual(["Team Rocket's Victim"]);
-    // … then a PLAIN one later. The list must hold the plain body ALONE: a build
-    // that appended unconditionally would still hold the Rocket mark and would
-    // answer Archer TRUE on a turn where no Team Rocket's Pokémon died at all —
-    // the exact false positive an accumulating list buys.
     let later = must(applyAction(first, { type: "endTurn", seat: "p1" })); // P2's turn 4
     later = setActiveFromDeck(later, "p2", "fix-sniper");
     later = attachFromDeck(later, "p2", "fix-energy", 1);
@@ -352,9 +233,6 @@ describe("owner — the KO set narrowed to an owner-prefixed subgroup", () => {
     for (const seed of SEEDS) {
       const rocket = koedByAttack(seed, "fix-rocket-victim");
       const plain = koedByAttack(seed, "fix-plain-victim");
-      // The BARE gate cannot tell these two boards apart. That is the whole
-      // content of the narrowing, and asserting it here is what stops a build
-      // that quietly reuses D271's member from passing this file.
       expect(koedDuringOpponentsLastTurn(rocket, "p1")).toBe(true);
       expect(koedDuringOpponentsLastTurn(plain, "p1")).toBe(true);
       expect(conditionHolds(rocket, "p1", ROCKET)).toBe(true);
@@ -365,7 +243,7 @@ describe("owner — the KO set narrowed to an owner-prefixed subgroup", () => {
     }
   });
 
-  it("🛑 refuses a NEAR-MISS name — the possessive and its trailing space are load-bearing", () => {
+  it("refuses a NEAR-MISS name — the possessive and its trailing space are load-bearing", () => {
     // "Team Rocketeer's Sneasel" starts with "Team Rocket". A prefix test written
     // without the `'s ` — the obvious simplification, and the one a reader
     // skimming `ownerPokemon` would make — answers TRUE here.
@@ -376,10 +254,6 @@ describe("owner — the KO set narrowed to an owner-prefixed subgroup", () => {
   });
 
   it("is FALSE once the window closes, even though the marks still name a Team Rocket's body", () => {
-    // The marks are NOT cleared at end of turn — that is the design. So the only
-    // thing keeping this false is the reader asking the window question first,
-    // and a build that filtered `state.lastKoMarks` directly passes every other
-    // test in this section and fails this one.
     const koed = koedByAttack(3, "fix-rocket-victim");
     expect(conditionHolds(koed, "p1", ROCKET)).toBe(true);
     const later = must(applyAction(koed, { type: "endTurn", seat: "p1" })); // P2's turn 4
@@ -411,19 +285,14 @@ describe("byAttack — 'by damage from an attack', told apart from a Checkup Kno
     return settle(must(applyAction(state, { type: "endTurn", seat: "p2" })));
   }
 
-  it("🛑 the bare gate is TRUE and the narrowed gate is FALSE on a CHECKUP Knock Out — same state, same breath", () => {
+  it("the bare gate is TRUE and the narrowed gate is FALSE on a CHECKUP Knock Out — same state, same breath", () => {
     const poisoned = koedByPoison(3, "fix-plain-victim");
     // The body really did leave play during P2's turn …
     expect(poisoned.lastKoTurn.p1).toBe(2);
     expect(poisoned.lastKoMarks.p1[0]?.name).toBe("Plain Victim");
     expect(poisoned.lastKoMarks.p1[0]?.byAttack).toBe(false);
-    // … so Unfair Stamp and Hassel may still be played (D271's three printings
-    // are untouched by this slice) …
     expect(koedDuringOpponentsLastTurn(poisoned, "p1")).toBe(true);
     expect(conditionHolds(poisoned, "p1", BARE)).toBe(true);
-    // … and the revenge attacks get NOTHING. A build that reused D271's member
-    // for the six attack printings scores +60 to +100 off a burn or a poison, and
-    // every test in this file that KOs with an attack passes it.
     expect(conditionHolds(poisoned, "p1", BY_ATTACK)).toBe(false);
   });
 
@@ -441,7 +310,6 @@ describe("byAttack — 'by damage from an attack', told apart from a Checkup Kno
 
 describe("owner AND byAttack together — Ethan's Pinsir's clause", () => {
   it("needs BOTH, and each of the three failing boards fails for its own reason", () => {
-    // ✅ both: an Ethan's body, lost to an attack.
     const both = koedByAttack(3, "fix-ethan-victim");
     expect(conditionHolds(both, "p1", ETHAN_BY_ATTACK)).toBe(true);
     // ✗ wrong owner, right cause.
@@ -534,9 +402,6 @@ describe("Team Rocket's Archer sv10-170/-223 — the gate plus the printed 5/3",
   });
 
   it("is REFUSED when a PLAIN Pokémon died and ACCEPTED when a Team Rocket's one did", () => {
-    // Same seed, same deck, same card, one difference: the NAME of the body that
-    // left play. A gate wired to D271's bare member passes the accept and fails
-    // the refuse; a gate wired to a constant fails one of the two.
     const plain = koedByAttack(3, "fix-plain-victim");
     const refused = play(plain, "p1", "fix-archer");
     expect(refused.ok).toBe(false);
@@ -550,17 +415,10 @@ describe("Team Rocket's Archer sv10-170/-223 — the gate plus the printed 5/3",
     expect(play(rocket, "p1", "fix-archer").ok).toBe(true);
   });
 
-  it("🛑 draws 5 to the controller and THREE to the opponent — the one number that separates it from Unfair Stamp", () => {
-    // ⚠️ **BOTH HANDS IN ONE BREATH, ON THE SAME BOARD, FOR BOTH CARDS.** Archer
-    // and Unfair Stamp print the same second half at 5/3 and 5/2. The
-    // controller's hand is 5 either way, so ONLY the opponent's hand tells them
-    // apart, and a suite that read the controller's alone would pass on a build
-    // that gave Archer the Stamp's program.
+  it("draws 5 to the controller and THREE to the opponent — the one number that separates it from Unfair Stamp", () => {
     for (const seed of SEEDS) {
       const rocket = koedByAttack(seed, "fix-rocket-victim");
       const before = { p1: rocket.players.p1.hand.length, p2: rocket.players.p2.hand.length };
-      // Not vacuous (D268's guard): both hands must hold something first, or
-      // "your hand went back" proves nothing.
       expect(before.p1).toBeGreaterThan(0);
       expect(before.p2).toBeGreaterThan(0);
 
@@ -584,13 +442,7 @@ describe("Team Rocket's Archer sv10-170/-223 — the gate plus the printed 5/3",
 // ── 8. The record — driven, not asserted ────────────────────────────────────
 
 describe("MATCH_RECORD_VERSION — the derivation, driven by a replay", () => {
-  it("🛑 a version-18 state cannot replay this gate — the soft landing is not on offer", () => {
-    // THE QUESTION `MATCH_RECORD_VERSION` ASKS: "can the PREVIOUS deploy's RECORD
-    // hold the new TYPE". `MatchRecord.state` persists `GameState` whole and
-    // `readMatchRecord` deliberately does NOT re-validate it — the version gate is
-    // what decides compatibility — so the only honest answer is to BUILD the
-    // previous deploy's shape and replay it. D271's case on the neighbouring
-    // field, one field over: a NEW REQUIRED key on `GameState` itself.
+  it("a version-18 state cannot replay this gate — the soft landing is not on offer", () => {
     const koed = koedByAttack(3, "fix-rocket-victim");
     expect(play(koed, "p1", "fix-archer").ok).toBe(true);
 
@@ -599,9 +451,6 @@ describe("MATCH_RECORD_VERSION — the derivation, driven by a replay", () => {
     // biome-ignore lint/performance/noDelete: reproducing a persisted shape requires the key to be ABSENT, not undefined.
     delete legacy.lastKoMarks;
     expect("lastKoMarks" in legacy).toBe(false);
-    // `lastKoTurn` SURVIVES — a v18 deploy wrote it, which is what makes this a
-    // genuine v18 record rather than a v13 one, and what makes the throw below
-    // attributable to THIS slice's key and not to D271's.
     expect("lastKoTurn" in legacy).toBe(true);
 
     // AND IT DOES NOT LAND SOFTLY. The reader INDEXES the record before it
@@ -615,24 +464,7 @@ describe("MATCH_RECORD_VERSION — the derivation, driven by a replay", () => {
   });
 });
 
-// ── 9. The clause table — the six attack printings' own half ────────────────
-
 describe("CONDITIONAL_DAMAGE_CLAUSES — the revenge clause maps to the NARROWED condition", () => {
-  // 🛑 THIS SECTION IS A REPAIR, AND THE DEFECT IT REPAIRS IS WORTH RECORDING.
-  // The `--decision D326` probe ran twelve mutants and eleven died. The survivor
-  // struck `byAttack: true` off the clause table's plain row — keying the five
-  // plain revenge printings on D271's BARE gate — and NOTHING in this file saw
-  // it, because §3 drives the CONDITION and §7 drives the CARD, and no test
-  // connected the printed SENTENCE to the condition it resolves to. The census
-  // could not see it either: the clause text is unchanged, so the sentence count,
-  // the printing count and `BUILT.attack` are byte-identical on the mutant.
-  //
-  // ⚠️ **REACHING IS NOT THE SAME AS DRIVING.** The table row was reached by the
-  // corpus sweep — that is what made `BUILT.attack` move by six — and it was
-  // still free to map to the wrong condition. The repair is a DRIVER, not a
-  // relaxation of the mutant: the two assertions below pin the mapping, and §3
-  // already pins what the mapped condition DOES, so the pair covers the sentence
-  // end to end.
   const PLAIN =
     "If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 90 more damage.";
   const ETHAN =
@@ -646,9 +478,6 @@ describe("CONDITIONAL_DAMAGE_CLAUSES — the revenge clause maps to the NARROWED
       per: 90,
       count: { kind: "boardCondition", cond: BY_ATTACK },
     });
-    // 🛑 AND THE BARE CONDITION IS NOT WHAT COMES BACK. Spelled as its own
-    // assertion rather than left to `toEqual`'s bookkeeping, because this is the
-    // distinction the whole section exists for.
     expect(deriveAttackDamageBonus(PLAIN)?.count).not.toEqual({
       kind: "boardCondition",
       cond: BARE,
@@ -662,11 +491,7 @@ describe("CONDITIONAL_DAMAGE_CLAUSES — the revenge clause maps to the NARROWED
     });
   });
 
-  it("🛑 the OWNER-LESS and CAUSE-LESS spellings resolve to NOTHING — the anchor is the whole sentence", () => {
-    // D271's own printed sentence is a Trainer/Ability gate and is NOT a damage
-    // bonus, so it must not reach this table at all; and a sentence that drops
-    // the cause phrase is text the game does not print. Both refused, which is
-    // what keeps the six printings' summand disjoint from the gate family's.
+  it("the OWNER-LESS and CAUSE-LESS spellings resolve to NOTHING — the anchor is the whole sentence", () => {
     expect(
       deriveAttackDamageBonus(
         "If any of your Pokémon were Knocked Out during your opponent's last turn, this attack does 90 more damage.",

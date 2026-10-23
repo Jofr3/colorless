@@ -1,10 +1,3 @@
-// Deck/folder route behavior that doesn't need a real D1 (the catalog/auth
-// routes.test.ts pattern): body validation runs BEFORE the session gate and
-// any DB access, and every endpoint 401s a cookie-less request without
-// touching D1 (DB stays undefined — any touch would throw a 500, so the
-// asserted status IS the proof of ordering). The full CRUD paths run against
-// the real local D1 via `wrangler dev` — see docs §6.
-
 import { describe, expect, it } from "vitest";
 import type { Env } from "../env";
 import app from "../index";

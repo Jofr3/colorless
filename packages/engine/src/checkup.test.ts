@@ -19,11 +19,6 @@ import {
   types,
 } from "./testFixtures";
 
-// Special Conditions (§12) and the Pokémon Checkup (§13). Seeds found by
-// deterministic scan: none of the deck pairs below mulligan, so the rng
-// state after driveSetup — and with it the faces of the next coin flips —
-// depends on the seed alone. The next flips are:
-//   seed 2 → heads, heads   seed 10 → tails, tails   seed 6 → heads, tails
 const HEADS = 2;
 const TAILS = 10;
 const HEADS_THEN_TAILS = 6;
@@ -746,18 +741,6 @@ describe("derived attack effects in play (effects.ts)", () => {
   });
 
   it("still flags underivable text loudly — ATTACK_EFFECT_SKIPPED as before", () => {
-    // Both scaling readers DERIVE (fix-attacker's Rage self-counters, 0.34.0;
-    // Charizard's Prize "+", 0.35.0), so the "+"-modifier-skip witness has to be a
-    // printing no reader answers.
-    //
-    // ⚠️ RE-HOMED IN 0.126.0 (D196). Entei "Blaze Ball" held this from 0.35.0 until
-    // `energyOnSelf` made the Energy-attached-to-itself count a real count source.
-    // It is now Pachirisu sv01-068 "Everyone Discharge", which stays flagged for two
-    // independent reasons — a TWO-SENTENCE printing against whole-sentence-anchored
-    // readers, and a TYPED count of BODIES that no `DamageCountSource` member
-    // answers. A Basic fielded by surgery, energied for its {L}{C} cost with
-    // Lightning (Fire cannot pay the {L}); fix-bigbody (200 HP) survives the base 10
-    // so the KO tail stays out of the way.
     let board = driveSetup(
       HEADS,
       { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK },
@@ -840,89 +823,13 @@ describe("deriveAttackEffect (effects.ts)", () => {
   });
 
   it("refuses self-paralysis — the §13.4 clear would wrongly cure it at once", () => {
-    // Official timing (ptcg-rules.md §12/§13.4): paralysis recovers at the
-    // Checkup after its owner's next turn — only if Paralyzed since the
-    // BEGINNING of that turn. Self-paralysis applied at the owner's own
-    // turn's end must survive the immediately-following Checkup, which the
-    // engine's unconditional ended-seat clear cannot honor yet, so the
-    // deriver keeps the sentence on the loud ATTACK_EFFECT_SKIPPED path.
     expect(deriveAttackEffect("This Pokémon is now Paralyzed.")).toBeNull();
   });
 
   it("returns null for anything but the exact sentences", () => {
     for (const text of [
-      // Real prints whose EXTRA mechanics are unbuilt — deriving just the poison
-      // would silently drop the rest, so nothing derives. (Paldean Clodsire's
-      // "…that Pokémon can't retreat" USED to sit here; D112 built its second
-      // clause, so it now derives to poison + preventRetreat — retreatLock.test.)
-      //
-      // 🆕🆕 D424 — sv03-010's "Flip a coin. If heads, …is now Paralyzed and
-      // Poisoned." USED to sit here too, for the same reason one line up: the
-      // two-status pair was the unbuilt extra. `FLIP_DEFENDER_STATUS_PAIR` builds
-      // it, so the entry was RE-POINTED rather than dropped — onto the two rows of
-      // the same legal column that are STILL a real print with an unbuilt extra,
-      // so this list keeps the discrimination it had. Both would go RED under a
-      // loosened pair anchor (a dropped `\.$`, or an Oxford-comma third slot),
-      // which is exactly what the deleted entry used to catch.
-      // 🆕🆕 **D478 — RE-POINTED, AND THE OLD ENTRY'S STATED REASON WAS FALSE FROM THE DAY
-      // IT WAS WRITTEN.** This slot held *"Flip a coin. If heads, …is now Paralyzed and
-      // Poisoned. If tails, …is now Confused."* (corpus FILE LINE 263, 2 printings) with the
-      // note *"coinFlipGate has no tails branch"*. It has carried `otherwise` since **D269**,
-      // and `deriveAttackEffect` arm 6d has EMITTED a two-armed gate since **D416** — so the
-      // mechanism was never what refused the row; an anchor and an arm were. D478 built it.
-      //
-      // D418's question, answered rather than skipped: the OLD entry caught a drift of
-      // `FLIP_DEFENDER_STATUS_PAIR` that dropped its `\.$`, claimed line 263 and silently
-      // threw the tails branch away. **That drift is still caught, and by VALUE rather than
-      // by nullity** — arm 2b runs BEFORE arm 2b-bis, so the drifted anchor claims the
-      // sentence first and emits the HEADS arm alone, which `flipStatusHeadsTails.test.ts`
-      // §2's program equality reddens on (and `D478-pair-anchor-drift-eats-the-tails-branch`
-      // pins). A `toBeNull` could never have distinguished *heads-only* from *both arms*;
-      // the equality does, so the discrimination moved and grew.
-      //
-      // The slot itself is re-pointed onto the ONE remaining printed heads/tails compound in
-      // the whole 640-row column (corpus FILE LINE 268, 2 printings, measured in
-      // `flipStatusHeadsTails.test.ts` §3): its tails branch is *"this attack does
-      // nothing"*, an attack-level CANCEL that resolves at the §8 declaration seam and that
-      // `deriveAttackEffect` has no place to put — a blocker in a different SEAM rather than
-      // in this reader's vocabulary, which is why it cannot be built by widening any anchor
-      // here. ⚠️ It is load-bearing in three files now; a successor who builds it owes the
-      // re-point (D467).
-      "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.", // corpus FILE LINE 268 — the column's last printed heads/tails compound
-      // 🆕🆕 D462 — this slot held the THREE-status Oxford list, which
-      // `DEFENDER_STATUS_TRIPLE` now BUILDS. RE-POINTED rather than dropped (D418),
-      // onto corpus FILE LINE 264 — the same legal column, still a real print with an
-      // unbuilt extra, and the near miss BOTH the flip anchor and the two list anchors
-      // refuse: a comma sits where `FLIP_DEFENDER_NOW`'s `\.$` wants a period, and
-      // `(${STATUS_WORDS})` admits neither the comma nor the verb that follows it.
-      //
-      // 🆕🆕 **D464 — RE-POINTED A SECOND TIME, AND THE REASON IN THE PARAGRAPH ABOVE WAS
-      // TWO-THIRDS WRONG.** `FLIP_DEFENDER_STATUS_THEN_DISCARD` now BUILDS corpus line 264,
-      // so the entry had to move again — and re-deriving it showed that only the
-      // `FLIP_DEFENDER_NOW` half of D462's reason was ever true. MEASURED over all 640
-      // rows: neither list anchor can reach line 264 under ANY single-axis loosening
-      // (`DEFENDER_STATUS_TRIPLE` demands a SECOND comma that line never prints, and its
-      // `^Your opponent` prefix refuses the flip clause besides). Dropping
-      // `FLIP_DEFENDER_NOW`'s `\.$`, by contrast, took it from 2 rows / 29 printings to
-      // 6 / 35 — which is the drift this list exists to catch.
-      //
-      // So the slot is re-pointed onto the set that probe actually NAMES: the THREE real
-      // printings `DEFENDER_NOW`'s own `\.$` refuses, each a real print with an unbuilt
-      // extra, each 1 printing. Drop that `\.$` and all three are claimed with their
-      // second clause silently thrown away — the exact defect the deleted entry was
-      // believed to guard, now pointed at the anchor that has it.
-      // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
-      // (The sibling two lines below still carries the `\.$` claim, unchanged.)
-      // 🆕🆕🆕 D574 — FILE LINE 686's TAIL is built (`moveCountersOpponentAnyWay`) and the compound
-      // composes behind the Confusion head; the WHOLE string still derives null here, so it stays.
-      "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.", // corpus FILE LINE 686 — same drift, same anchor
-      // 🆕🆕🆕 D575 — corpus FILE LINE 690 (Glimmora "Corrosive Shards") LEFT THIS LIST, removed rather
-      // than shortened silently (D501's move): it is claimed WHOLE by its own anchor
-      // (`POISON_AND_BAR_HAND_ATTACH`), so `deriveAttackEffect` no longer returns null on it — pinned
-      // positively below. `DEFENDER_NOW`'s `\.$` still refuses it (`defenderStatusPair.test.ts` §2).
-      // 🆕🆕🆕 D605 — `sv01-010`'s "Flip a coin. If heads, choose a Special Condition. …" LEFT THIS LIST,
-      // removed rather than shortened silently (D501's move): arm 46b claims it WHOLE (the sixth
-      // `COIN_GATED_CONSEQUENTS` row, Grafaiai `me01-092`'s print) — `coinRestMeD605.test.ts` §1.
+      "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+      "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
       "The Defending Pokémon is now Asleep.", // old-era phrasing
       "Flip a coin. If tails, your opponent's Active Pokémon is now Asleep.",
       "Your opponent's Active Pokémon is now Asleep", // no period
@@ -933,7 +840,6 @@ describe("deriveAttackEffect (effects.ts)", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    // 🆕🆕🆕 D575 — the row that left, claimed WHOLE as a two-op program (the Poison, then the bar).
     expect(
       deriveAttackEffect(
         "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",

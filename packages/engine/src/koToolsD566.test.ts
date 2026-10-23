@@ -13,26 +13,11 @@ import {
   deckOf,
   setActiveFromDeck,
   trainerCard,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import { koHolderToolTriggersOf, koToolTriggersOf } from "./triggers";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D566 — THE TRAINER BUNDLE, HALF TWO: THE KO-MOMENT TOOLS AND POWERGLASS ──
-//
-//   Heavy Baton     sv05-151               Tool  "If the Pokémon this card is attached to has a Retreat Cost of
-//                                                 exactly 4, is in the Active Spot, and is Knocked Out by damage
-//                                                 from an attack from your opponent's Pokémon, move up to 3 Basic
-//                                                 Energy cards from that Pokémon to your Benched Pokémon in any way
-//                                                 you like."
-//   Amulet of Hope  sv08-162               Tool  "If the Pokémon this card is attached to is Knocked Out by damage
-//                                                 from an attack from your opponent's Pokémon, search your deck for
-//                                                 up to 3 cards and put them into your hand. Then, shuffle your deck."
-//   Powerglass      sv06.5-063 / -097      Tool  "At the end of your turn (after your attack), if the Pokémon this
-//                                                 card is attached to is in the Active Spot, you may attach a Basic
-//                                                 Energy card from your discard pile to it."
-//
-// Driven on the REAL ids on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Texts off tcgdex (the
-// audit's card JSON), 2026-09-28. Readings: docs/decisions.md D566 (R-HB, R-AH, R-PG).
 
 const HEAVY_BATON = "sv05-151";
 const AMULET = "sv08-162";
@@ -113,7 +98,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [HEAVY_BATON]: 2,
   [AMULET]: 2,
@@ -133,18 +117,6 @@ const DECK = deckOf({
   [ENERGY]: 14,
   [FILLER]: 22,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -401,7 +373,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     return state;
   }
 
-  it("🛑 Retreat 4, Active, KO'd by Bite: the move PARKS for p2 — the dying Active's three Energy, both Bench bodies, `anyDest`, up to 3", () => {
+  it("Retreat 4, Active, KO'd by Bite: the move PARKS for p2 — the dying Active's three Energy, both Bench bodies, `anyDest`, up to 3", () => {
     const state = baton();
     const energy = bodyAt(state, "p2", "active").energy;
     const after = run(state, attack(0)).state;
@@ -417,7 +389,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     expect(phase.prompt.anyDest).toBe(true);
   });
 
-  it("🛑 answered 2 + 1 across the Bench: the Energy lands, THEN the KO takes the body (nothing moved is discarded)", () => {
+  it("answered 2 + 1 across the Bench: the Energy lands, THEN the KO takes the body (nothing moved is discarded)", () => {
     const state = baton();
     const [a, b, c] = bodyAt(state, "p2", "active").energy as [string, string, string];
     const after = run(state, attack(0)).state;
@@ -457,7 +429,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     );
   });
 
-  it("🛑 Retreat 3 and Retreat 5: NOT exactly 4 — no park, the Energy is discarded with the body", () => {
+  it("Retreat 3 and Retreat 5: NOT exactly 4 — no park, the Energy is discarded with the body", () => {
     for (const victim of [THREE, FIVE]) {
       const { state, events } = drain(run(baton(victim), attack(0)));
       expect(state.phase.kind, victim).not.toBe("effect:choose");
@@ -465,7 +437,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     }
   });
 
-  it("🛑 R-HB (UNRULED): the EFFECTIVE cost — printed 3 under Calamitous Wasteland (+1) is 4 and FIRES; printed 4 under Beach Court (-1) is 3 and does NOT", () => {
+  it("R-HB (UNRULED): the EFFECTIVE cost — printed 3 under Calamitous Wasteland (+1) is 4 and FIRES; printed 4 under Beach Court (-1) is 3 and does NOT", () => {
     const wasteland = run(stadium(baton(THREE), "p1", WASTELAND), attack(0)).state;
     expect(parked(wasteland).prompt.kind).toBe("moveEnergy");
     const court = drain(run(stadium(baton(HEAVY), "p1", BEACH_COURT), attack(0)));
@@ -486,7 +458,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     expect(after.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 the scan: the KO'd body's Heavy Baton answers the SELF timing; an Exp. Share on it would NOT (THE KO'D BODY IS SKIPPED for the ally timing)", () => {
+  it("the scan: the KO'd body's Heavy Baton answers the SELF timing; an Exp. Share on it would NOT (THE KO'D BODY IS SKIPPED for the ally timing)", () => {
     const state = baton();
     const koed = bodyAt(state, "p2", "active").stack.at(-1) as string;
     expect(koToolTriggersOf(state, "p2", koed).map((e) => e.ability.name)).toEqual(["Heavy Baton"]);
@@ -496,7 +468,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
     expect(koToolTriggersOf(share, "p2", shareKoed)).toEqual([]);
   });
 
-  it("🛑 FIRST MATCH ONLY (a stated limitation): Heavy Baton on the dying Active precedes an Exp. Share on the Bench, and only the Baton asks", () => {
+  it("FIRST MATCH ONLY (a stated limitation): Heavy Baton on the dying Active precedes an Exp. Share on the Bench, and only the Baton asks", () => {
     let state = baton();
     state = attach(state, "p2", 0, EXP_SHARE, "tools");
     const koed = bodyAt(state, "p2", "active").stack.at(-1) as string;
@@ -546,7 +518,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     return { phase, prompt: phase.prompt };
   };
 
-  it("🛑 an ACTIVE KO'd by an attack: PRIZES → the Amulet's search (p2, up to 3, any card, NOT revealed) → PROMOTION", () => {
+  it("an ACTIVE KO'd by an attack: PRIZES → the Amulet's search (p2, up to 3, any card, NOT revealed) → PROMOTION", () => {
     const state = amulet();
     const { state: after, events } = drain(run(state, attack(0)));
     expect(all(events, "PRIZES_TAKEN").length + all(events, "PRIZES_OWED").length).toBeGreaterThan(
@@ -583,14 +555,14 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(kinds.indexOf("takePrizes")).toBeLessThan(kinds.indexOf("koTrigger"));
   });
 
-  it("🛑 a BENCH body KO'd by the attack's snipe fires it too (Active OR Bench)", () => {
+  it("a BENCH body KO'd by the attack's snipe fires it too (Active OR Bench)", () => {
     let state = field({ victim: FILLER, bench: [FRAIL, FILLER], seed: 5685 });
     state = attach(state, "p2", 0, AMULET, "tools");
     const { state: after } = drain(run(state, attack(1)));
     expect(searchPark(after).phase.seat).toBe("p2");
   });
 
-  it("🛑 TWO Amulets in one batch (Active and Bench, one Spread Shot): TWO searches, one after the other", () => {
+  it("TWO Amulets in one batch (Active and Bench, one Spread Shot): TWO searches, one after the other", () => {
     const state = amulet({ amuletOn: ["active", 0], seed: 5686 });
     const first = drain(run(state, attack(1))).state;
     expect(first.pending.filter((stage) => stage.kind === "koTrigger")).toHaveLength(1);
@@ -604,7 +576,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(done.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 a CHECKUP KO does not fire it (no attack)", () => {
+  it("a CHECKUP KO does not fire it (no attack)", () => {
     let state = amulet({ seed: 5687 });
     state = withBody(state, "p2", "active", (p) => ({
       ...p,
@@ -616,7 +588,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(after.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 a MID-TURN KO does not fire it (the sweep passes no attacker)", () => {
+  it("a MID-TURN KO does not fire it (the sweep passes no attacker)", () => {
     let state = amulet({ seed: 5688 });
     state = withBody(state, "p2", "active", (p) => ({ ...p, damage: 900 }));
     const events: GameEvent[] = [];
@@ -626,7 +598,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(result.state.pending.some((stage) => stage.kind === "koTrigger")).toBe(false);
   });
 
-  it("🛑 an OWN-RECOIL KO does not fire it (the attacker's own body — not \"your opponent's Pokémon\")", () => {
+  it("an OWN-RECOIL KO does not fire it (the attacker's own body — not \"your opponent's Pokémon\")", () => {
     let state = field({ attacker: GLASS_ATTACKER, victim: FILLER, seed: 5689 });
     state = attach(state, "p1", "active", AMULET, "tools");
     const { state: after, events } = drain(run(state, attack(0)));
@@ -634,7 +606,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     expect(after.phase.kind).not.toBe("effect:choose");
   });
 
-  it('🛑 a KO WITHOUT DAMAGE (Doom\'s "it is Knocked Out") does not fire it ("by damage from an attack")', () => {
+  it('a KO WITHOUT DAMAGE (Doom\'s "it is Knocked Out") does not fire it ("by damage from an attack")', () => {
     const state = amulet({ seed: 5690 });
     const { state: after, events } = drain(
       run(
@@ -676,7 +648,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
     return energyInDiscard ? toDiscard(state, "p1", ENERGY) : state;
   }
 
-  it("🛑 a turn ended with no attack: p1 is asked BEFORE `TURN_ENDED`, and answering attaches the discard Energy to the Active", () => {
+  it("a turn ended with no attack: p1 is asked BEFORE `TURN_ENDED`, and answering attaches the discard Energy to the Active", () => {
     const state = glass();
     const energy = state.players.p1.discard.find((u) => state.cardIdByUid[u] === ENERGY) as string;
     const { state: after, events } = run(state, { type: "endTurn", seat: "p1" });
@@ -702,7 +674,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
     expect(all(declined.events, "TURN_ENDED")).toHaveLength(1);
   });
 
-  it("🛑 after an ATTACK too — the Bite resolves, then Powerglass asks, then the turn ends", () => {
+  it("after an ATTACK too — the Bite resolves, then Powerglass asks, then the turn ends", () => {
     const after = drain(run(glass(5695), attack(3))).state;
     expect(parked(after).seat).toBe("p1");
     const done = run(after, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } });
@@ -731,7 +703,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
     expect(run(state, { type: "endTurn", seat: "p1" }).state.phase.kind).toBe("turn:action");
   });
 
-  it("🛑 ORDER, pinned: Powerglass asks BEFORE Amarys's end-of-turn discard (moot — it moves no hand card)", () => {
+  it("ORDER, pinned: Powerglass asks BEFORE Amarys's end-of-turn discard (moot — it moves no hand card)", () => {
     let state = glass(5699);
     state = setHand(state, "p1", [FILLER, FILLER, FILLER, FILLER, FILLER]);
     state = { ...state, allowances: { ...state.allowances, endOfTurnHandDiscard: 5 } };

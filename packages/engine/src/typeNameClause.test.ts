@@ -23,79 +23,15 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.70.0 → 0.71.0 — TYPE and NAME (D120). D115 built the shape ("If <clause>,
-// this attack does N more damage." → a 0-or-1 INDICATOR folded through the
-// existing additive `per × count`), D116 added the pronoun rule, D117 a third
-// wave of literal rows, D118 the first parameterised member and the second
-// resolution pass, D119 the clauses that read no Pokémon at all. This slice adds
-// no arithmetic, no op, no event and no registry row — two printings, two cards,
-// two clauses:
-//
-//   • `opponentActiveHasType { type }` — Sylveon swsh10.5-035 "Wonder Flash"
-//     (+90, `Dragon`), matched by an anchored TEMPLATE.
-//   • `yourBenchHasNamed { name }`     — Falinks sv02-119 "Reckless Charge
-//     Together" (+90, `Falinks`), matched by a LITERAL table row.
-//
-// THE ONE CALL THIS SUITE EXISTS TO PIN, and everything else here serves it:
-//
-//   BOTH SENTENCES VARY ON EXACTLY ONE TOKEN, AND THEY GET OPPOSITE TREATMENTS.
-//   The discriminator is NOT the printing count (each is a singleton) and NOT
-//   D119's "how many things vary" — it is whether the varying token has a CLOSED
-//   VOCABULARY TO BE REJECTED AGAINST.
-//
-//   A type name has one: `POKEMON_TYPES` is eleven words, so an unresolvable
-//   token falls through and the clause stays LOUD on its ATTACK_EFFECT_SKIPPED
-//   row. That is what keeps the pattern off "is a Basic Pokémon" — a real print
-//   (Houndoom ex sv03-134) on another skeleton — and off anything else that ever
-//   fills the slot. Eleven words also means the template covers the other ten
-//   types for free, which a literal row could not.
-//
-//   A card NAME has none. `^(.+) is on your Bench$` has nothing to reject
-//   against: it would read "a Pokémon with an Ability is on your Bench" as a card
-//   CALLED "a Pokémon with an Ability" and answer FALSE forever, with no failure
-//   anywhere. Wrong-with-no-failure is the one outcome this family refuses, so
-//   the name clause is one row per printing — and the pool prints one (Flamigo
-//   sv03-185 prints the identical clause under a DIFFERENT consequent, which this
-//   skeleton never reaches).
-//
-// The two halves are asserted against each other throughout: the ten CONSTRUCTED
-// type sentences that resolve, the two that must not, and the four name-shaped
-// sentences that must not.
-
-/** The two printed sentences, pinned here and asserted char-for-char against
-    FIXTURE_POOL below. Neither card carries an authored attack (see the ZERO-rows
-    block), so the sentence IS the wiring: a drifted character does not fail
-    loudly, it silently un-simulates the card at the exact moment the clause would
-    have paid off. */
 const WONDER_FLASH =
   "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.";
 const RECKLESS_CHARGE = "If Falinks is on your Bench, this attack does 90 more damage.";
 
-/** Sylveon's index-0 companion, kept verbatim. 🛑 **D231 BUILT IT, AND THIS
-    COMMENT USED TO SAY "a REAL unbuilt sentence … that no deriver owns".** It was
-    true when D120 wrote it and stopped being true the moment `deriveAttackEffect`
-    learned the deck-search-into-hand family: this is one of that family's ROTATED
-    printings, read for free by an arm authored for 28 legal ones (D187's "an arm
-    transfers across sets"). So the ATTACK_EFFECT_SKIPPED contrast this file
-    depended on has been RE-HOMED rather than deleted — see the section at the
-    bottom — and the disjointness claim below now reads the other way round.
-    Falinks' own index 0 ("Headbutt") is a bare 20 with no `effect` key at all —
-    the other kind of companion, and the other kind of silence. */
 const SOUVENIR =
   "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck.";
 
-/** Every id this pair covers. Keyed by ID everywhere in this file: several other
-    cards in the pool print these exact words in a different frame (see the
-    near-miss blocks), so an assertion that went by `name` would be reading
-    whichever card it found — and "Falinks" is a card NAME this slice makes
-    load-bearing, which makes the distinction sharper here than anywhere. */
 const CARD_IDS = ["swsh10.5-035", "sv02-119"] as const;
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it.
-    Counting by code point is the same number and needs no ambient type. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -112,31 +48,10 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** The clause sentence at an arbitrary bonus, built the way the pool builds it —
-    the constructor behind every CONSTRUCTED type case below. 50 rather than 90 on
-    purpose: the printed Dragon sentence is +90, so a fold that hard-coded the
-    printing's amount would survive a same-amount probe. */
 function typeClause(token: string, per = 50): string {
   return `If your opponent's Active Pokémon is a ${token} Pokémon, this attack does ${per} more damage.`;
 }
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4) — with BOTH Active spots
-    pinned to a neutral 200 HP fix-bigbody.
-
-    THE PIN IS BY NAME (`active:`), not by whatever Basic the deal put first in
-    hand, and that is load-bearing HERE in a way it is not in the sibling suites:
-    `setActiveFromDeck` displaces the sitting Active onto the BENCH, which is the
-    exact zone this slice's second clause reads. A deal-dependent starter would
-    make "is a Falinks on your Bench" a deal-dependent question. With the pin, the
-    bench under every attacker below is exactly `[fix-bigbody]` — one body, of a
-    known name that is not "Falinks" — and every Falinks that reaches it got there
-    because a case put it there.
-
-    fix-bigbody is also the arithmetically clean defender (200 HP, COLORLESS, no
-    Weakness, no Resistance) every damage number here is measured against, and its
-    Colorless typing is a real negative for the type clause rather than an absent
-    field. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -146,33 +61,16 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** `board`, then handed over to P2 — P1 passes into P2's turn 3, which is equally
-    unrestricted. BOTH clauses in this slice are seat-asymmetric (one reads the
-    opponent's Active, one reads your own Bench), and a P1-only suite cannot tell
-    "reads the opponent's side" apart from "reads p2's side". */
 function boardP2(seed: number): GameState {
   return mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
 }
 
-/** Pay a printed cost onto `seat`'s Active. No Energy in this cast ARMS anything
-    — unlike D118's, neither clause here can be touched by an attachment — so the
-    typed Energy paying the Colorless symbols (legal, §8.2) costs the suite
-    nothing, and each attacker is deliberately paid out of BOTH Energy lines: one
-    card of its own printed type and two of the other for the {C} symbols. That
-    keeps the demand on any one line at two cards, which matters because a seat's
-    opening hand and Prize row hold 13 of its 60 before any surgery runs. Must run
-    AFTER the attacker is fielded (attachFromDeck attaches to the Active Spot). */
 function pay(state: GameState, seat: Seat, spec: [string, number][]): GameState {
   let next = state;
   for (const [id, count] of spec) next = attachFromDeck(next, seat, id, count);
   return next;
 }
 
-/** Sylveon — one {P} for Souvenir's bare {P} at index 0, and the three together
-    buy Wonder Flash's {C}{C}{C} at index 1. A Stage 1 (from Eevee) placed by
-    SURGERY, exactly as publicCount.test.ts places Krokorok: the clause is about
-    the DEFENDER, so evolving a real Eevee would add a chain to the deck and prove
-    nothing this suite is about. */
 function sylveon(state: GameState, seat: Seat): GameState {
   return pay(setActiveFromDeck(state, seat, "swsh10.5-035"), seat, [
     ["fix-psychic-energy", 1],
@@ -190,18 +88,12 @@ function falinks(state: GameState, seat: Seat): GameState {
   ]);
 }
 
-/** The seat's opposite. Spelled once here rather than imported, because both of
-    this slice's members are seat-relative and every board case names a side. */
 function other(seat: Seat): Seat {
   return seat === "p1" ? "p2" : "p1";
 }
 
 describe("the printed sentences — the fixture-text-verbatim guard", () => {
   it("matches FIXTURE_POOL char-for-char on both printings", () => {
-    // Not decoration: this is the assertion that the fixture rows and the clause
-    // resolver still agree on every byte. A one-character drift does not throw —
-    // it drops the card back onto the loud ATTACK_EFFECT_SKIPPED path and
-    // silently stops paying the bonus.
     expect(FIXTURE_POOL["swsh10.5-035"]?.attacks?.[1]?.effect).toBe(WONDER_FLASH);
     expect(FIXTURE_POOL["sv02-119"]?.attacks?.[1]?.effect).toBe(RECKLESS_CHARGE);
     // The printed "+" markers — what tells the pipeline a scaling clause is
@@ -216,10 +108,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("matches the companion rows too — one loud sentence and one empty one", () => {
-    // Sylveon's index 0 is a REAL unbuilt attack kept verbatim and carrying NO
-    // `damage` key; Falinks' index 0 omits `effect` ENTIRELY (not an empty string
-    // — the catalog row has no key). Both would break a case silently if a
-    // fixture edit moved them.
     expect(FIXTURE_POOL["swsh10.5-035"]?.attacks?.[0]?.effect).toBe(SOUVENIR);
     expect(FIXTURE_POOL["swsh10.5-035"]?.attacks?.[0]?.name).toBe("Souvenir");
     expect(FIXTURE_POOL["swsh10.5-035"]?.attacks?.[0]?.damage).toBeUndefined();
@@ -261,11 +149,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("pins Wonder Flash's BYTES — two precomposed é and one ASCII apostrophe", () => {
-    // The characters a re-ingest drifts on are INVISIBLE in a diff, so they are
-    // asserted by construction and by OFFSET. A lookalike é (e + U+0301) or a
-    // curly apostrophe would silently un-map the clause — and this sentence is
-    // matched by a TEMPLATE whose anchor spells both characters, so the failure
-    // would land on the pattern rather than on a table row.
     const CURLY_APOSTROPHE = "’";
     expect(WONDER_FLASH.length).toBe(87);
     expect(utf8Bytes(WONDER_FLASH)).toBe(89);
@@ -287,17 +170,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("ACCEPTS the U+2019 spelling of Wonder Flash's `opponent's` — the template's class", () => {
-    // The byte-pin above says a curly apostrophe "would silently un-map the clause".
-    // Until the D135 review that was literally true, and it was a defect rather than
-    // a fact worth pinning: `OPPONENT_ACTIVE_TYPE_CLAUSE` spelled the possessive
-    // straight-only while every sibling regex reading the SAME noun phrase carries
-    // `['’]` — a class that effects.ts documents as existing precisely "so a
-    // re-ingest changing only punctuation cannot silently un-derive" the sentence.
-    //
-    // Both assertions belong here. The BYTES pin says what the catalog holds today
-    // (ASCII, U+0027); this says the reader does not DEPEND on that. Pinning only
-    // the first mistakes a property of the current ingest for a property of the
-    // engine — and the whole point of the class is to survive an ingest that changes.
     const CURLY_APOSTROPHE = "’";
     const curly = WONDER_FLASH.replace("'", CURLY_APOSTROPHE);
     expect(curly).toContain(CURLY_APOSTROPHE); // the rewrite actually fired
@@ -313,10 +185,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("pins Reckless Charge Together's bytes — PURE ASCII, no é and no apostrophe", () => {
-    // The other half of the pair, and the opposite byte profile: this clause names
-    // no Pokémon and no possessive, so it is one byte per character throughout.
-    // That is a fact worth pinning rather than shrugging at — it is the reason a
-    // literal TABLE KEY (rather than a pattern spelling é) is enough here.
     const CURLY_APOSTROPHE = "’";
     expect(RECKLESS_CHARGE.length).toBe(61);
     expect(utf8Bytes(RECKLESS_CHARGE)).toBe(61);
@@ -351,9 +219,6 @@ describe("deriveAttackDamageBonus — the TYPE clause and the NAME clause", () =
   });
 
   it("takes N from the SENTENCE and the token from the CLAUSE", () => {
-    // Both printings happen to be +90, which is exactly the coincidence a
-    // constructed probe has to break: a fold that hard-coded either printing's
-    // amount survives every same-amount case in this file.
     expect(deriveAttackDamageBonus(typeClause("Water", 30))?.per).toBe(30);
     expect(deriveAttackDamageBonus(typeClause("Water", 30))?.count).toEqual({
       kind: "boardCondition",
@@ -365,10 +230,6 @@ describe("deriveAttackDamageBonus — the TYPE clause and the NAME clause", () =
 
 describe("the TEMPLATE — eleven type words, and nothing else", () => {
   it("resolves EVERY member of POKEMON_TYPES", () => {
-    // Ten of the eleven are CONSTRUCTED: the pool prints this sentence exactly
-    // once, with `Dragon`. They are asserted all the same, because that coverage
-    // is the entire argument for a template over a literal row — the day a Fire or
-    // a Water printing lands it must cost nothing, and this loop is what says so.
     for (const type of POKEMON_TYPES) {
       expect(deriveAttackDamageBonus(typeClause(type))).toEqual({
         per: 50,
@@ -379,41 +240,16 @@ describe("the TEMPLATE — eleven type words, and nothing else", () => {
   });
 
   it("REJECTS a non-type token — the real trap is 'a Basic Pokémon'", () => {
-    // THE case this vocabulary exists for. Houndoom ex sv03-134 "Evil Claw" prints
-    // "If the Defending Pokémon is a Basic Pokémon, it can't attack during your
-    // opponent's next turn." — the same "is a … Pokémon" reading on another
-    // skeleton. An open `(.+)` with no vocabulary behind it would capture `Basic`,
-    // build a condition for a type that does not exist, and answer FALSE forever
-    // with no failure anywhere. It resolves to nothing instead.
-    //
-    // ⚠️ RE-POINTED AT D148, NOT DELETED, AND THE CLAIM GOT SHARPER RATHER THAN
-    // WEAKER. Until 0.96.0 the note here ended "…so the sentence keeps its loud
-    // ATTACK_EFFECT_SKIPPED row"; D148 MAPPED that sentence, on its own anchor,
-    // to a `conditionGate { cond: { kind: "opponentActiveIsBasic" } }`. So the
-    // failure this line guards against is no longer "an unread card" but the
-    // worse one: TWO readers claiming one printed clause, where the damage family
-    // would silently build `opponentActiveHasType` for a type named "Basic" and
-    // answer false forever beside a lock that works. The token still resolves to
-    // nothing HERE, and that is exactly what keeps the two readings disjoint.
     expect(deriveAttackDamageBonus(typeClause("Basic"))).toBeNull();
     // A bogus token, for the same reason from the other direction: the map is a
     // closed list, not a shape check.
     expect(deriveAttackDamageBonus(typeClause("Sparkle"))).toBeNull();
-    // …and the near-misses around the real vocabulary: a lowercase type, a
-    // pluralised one, a Special-Energy class word, and the two-word rule-box
-    // phrase the D117 row owns.
     for (const token of ["dragon", "DRAGON", "Dragons", "Special", "Pokémon ex", "Basic Fire"]) {
       expect(deriveAttackDamageBonus(typeClause(token))).toBeNull();
     }
   });
 
   it("leaves 'an Evolution Pokémon' on its LITERAL row — the article decides", () => {
-    // The template's article is hard-coded to "a" (all eleven type names begin
-    // with a consonant), so the Evolution sentence cannot even reach the pattern —
-    // and it would not matter if it could, because `boardConditionForClause` runs
-    // the literal table FIRST and D117's row already owns it. Both halves are
-    // asserted: the real sentence maps to the EVOLUTION member, and the same
-    // sentence with the template's article maps to nothing at all.
     expect(
       deriveAttackDamageBonus(
         "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 50 more damage.",
@@ -442,15 +278,9 @@ describe("the TEMPLATE — eleven type words, and nothing else", () => {
 describe("the LITERAL row — a card NAME has no vocabulary, so it gets no template", () => {
   it("maps the one printed sentence, and nothing that merely looks like it", () => {
     expect(deriveAttackDamageBonus(RECKLESS_CHARGE)).not.toBeNull();
-    // The row is keyed on the whole printed clause, capital included.
     expect(
       deriveAttackDamageBonus("If falinks is on your Bench, this attack does 90 more damage."),
     ).toBeNull();
-    // A REAL card name in the same shape, and still null. Flamigo sv03-185
-    // "Synchronized Feathers" prints "If Flamigo is on your Bench, this attack
-    // ALSO does 60 damage to 1 of your opponent's Benched Pokémon." — the clause
-    // word for word, under a different CONSEQUENT, so it never reaches this
-    // skeleton. The row is per-printing, and this is what per-printing means.
     expect(
       deriveAttackDamageBonus("If Flamigo is on your Bench, this attack does 90 more damage."),
     ).toBeNull();
@@ -462,14 +292,6 @@ describe("the LITERAL row — a card NAME has no vocabulary, so it gets no templ
   });
 
   it("THE NO-OPEN-TEMPLATE PROOF: a noun phrase in the name slot resolves to nothing", () => {
-    // The slice's thesis, stated as an assertion. `^(.+) is on your Bench$` would
-    // read the noun phrase below as a card CALLED "a Pokémon with an Ability",
-    // build `{ kind: "yourBenchHasNamed", name: "a Pokémon with an Ability" }`,
-    // and answer FALSE on every board forever — no throw, no skipped row, no
-    // symptom. That is the one failure mode this family refuses, and it is why the
-    // NAME clause is a literal row while the TYPE clause one describe block up is
-    // a template: the type token has eleven words to be rejected against, and a
-    // card name has nothing at all.
     expect(
       deriveAttackDamageBonus(
         "If a Pokémon with an Ability is on your Bench, this attack does 90 more damage.",
@@ -507,16 +329,7 @@ describe("the derivers stay disjoint, and stay INDEX-KEYED", () => {
     }
   });
 
-  it("🛑 Souvenir is BUILT as of D231 — and the two DAMAGE paths still refuse it", () => {
-    // ⚠️ THIS ROW USED TO ASSERT THE OPPOSITE, AND IT WENT RED ON D231's AUTHOR,
-    // which is exactly what it was written for: D120 checked "no deriver owns it"
-    // rather than assuming it, precisely so that the day one did, this file would
-    // say so instead of quietly asserting a falsehood elsewhere.
-    //
-    // The sentence is a ROTATED printing of the deck-search-into-hand family
-    // (`swsh10.5` is 0 of 88 legal), read for free by an arm authored for 28 legal
-    // ones — D187's "an arm transfers across sets; a registry row does not",
-    // demonstrated on a card that predates the arm by a hundred slices.
+  it("Souvenir is BUILT as of D231 — and the two DAMAGE paths still refuse it", () => {
     expect(deriveAttackEffect(SOUVENIR)).toEqual([
       { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 2 },
       { op: "shuffleDeck" },
@@ -532,11 +345,6 @@ describe("the derivers stay disjoint, and stay INDEX-KEYED", () => {
   });
 
   it("keys on the INDEX: neither card's index 0 derives a damage bonus", () => {
-    // Still true after D231 — index 0 now derives an OP, which is a different
-    // deriver and a different field on the attack.
-    // Falinks' index 0 has no `effect` key at all, so there is no text to derive
-    // from; Sylveon's is real text that derives to nothing. Two different kinds of
-    // negative on the same index, which is why the board cases below name theirs.
     expect(deriveAttackDamageBonus(SOUVENIR)).toBeNull();
     expect(FIXTURE_POOL["sv02-119"]?.attacks?.[0]?.effect).toBeUndefined();
   });
@@ -544,13 +352,6 @@ describe("the derivers stay disjoint, and stay INDEX-KEYED", () => {
 
 describe("ZERO registry rows — every damage number below is text", () => {
   it("gives neither id an authored attack program", () => {
-    // attack.ts resolves an attack as `programFor(id)?.attack?.[index] ?? derive`,
-    // so a single authored ATTACK row would WIN and every damage number below
-    // would keep passing while testing nothing about the printed sentence. The
-    // load-bearing assertion is therefore on `?.attack` and not on `programFor`
-    // itself (D118's correction: a card can carry an abilities-only row and still
-    // derive all of its attacks). Today both are undefined; only the first would
-    // have to stay that way.
     for (const id of CARD_IDS) {
       expect(programFor(id)?.attack).toBeUndefined();
       expect(programFor(id)).toBeUndefined();
@@ -628,10 +429,6 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
   });
 
   it("BENCH ONLY: the attacking Falinks does not count ITSELF", () => {
-    // The printed word is "Bench", and the Active Spot is deliberately excluded
-    // (exactly as `yourBenchDamaged` excludes it). The attacker IS a Falinks in
-    // every case in this block, so a member that consulted the Active as well
-    // would score the bonus on EVERY one of them — including the control above.
     const state = falinks(board(12), "p1");
     expect(state.players.p1.active).not.toBeNull();
     expect(
@@ -673,10 +470,6 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
 
 describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
   it("doubles (base + scaled), not base alone: (70 + 90) × 2 = 320", () => {
-    // Falinks is the right attacker for this case precisely because its clause is
-    // DEFENDER-INDEPENDENT: the Bench arms the bonus and the defender's Weakness
-    // doubles it, so the two layers cannot be mistaken for one another. A fold
-    // placed AFTER Weakness would give 70 × 2 + 90 = 230.
     let state = setActiveFromDeck(board(20), "p2", "fix-fighting-weak");
     state = benchFromDeck(falinks(state, "p1"), "p1", "sv02-119");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
@@ -702,10 +495,6 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
 
 describe("ATTACK_EFFECT_SKIPPED — never on either clause, ALWAYS on the unbuilt sibling", () => {
   it("simulates both sentences whether or not the clause holds", () => {
-    // The flag rides `scaling !== null` — the sentence being RECOGNISED — so a
-    // false clause is a simulated 0, not an unsimulated unknown. Asserted for the
-    // TRUE and the FALSE board of each card, because a flag wired to the clause's
-    // VALUE would only show up on one of the two.
     const cases: { build: (seed: number) => GameState; arm: boolean }[] = [
       { build: (s) => sylveon(board(s), "p1"), arm: false },
       { build: (s) => sylveon(setActiveFromDeck(board(s), "p2", "sv03-161"), "p1"), arm: true },
@@ -721,15 +510,7 @@ describe("ATTACK_EFFECT_SKIPPED — never on either clause, ALWAYS on the unbuil
     }
   });
 
-  it("🛑 the loud control RE-HOMED at D231 — Souvenir now SIMULATES", () => {
-    // ⚠️ THIS TEST WENT RED ON D231, AND THE FAILURE IS THE FINDING: the "unbuilt
-    // sibling" this whole section leaned on was BUILT by an arm authored three
-    // months later for a different family. A contrast that rides on a card being
-    // unreadable has an expiry date nobody writes down — which is the same defect
-    // class as a vacuous guard, one step round.
-    //
-    // Half 1: Sylveon's index 0 no longer skips. It PARKS, because the sentence is
-    // now a program.
+  it("the loud control RE-HOMED at D231 — Souvenir now SIMULATES", () => {
     const state = sylveon(board(35), "p1");
     const built = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(built.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -739,15 +520,6 @@ describe("ATTACK_EFFECT_SKIPPED — never on either clause, ALWAYS on the unbuil
   });
 
   it("…and the flag is NOT DEAD — a still-unbuilt sentence on its own board", () => {
-    // Half 2, and the reason the row above is not just a deletion: "no skipped
-    // row" is only a claim about the clause if the flag can still fire at all.
-    // `fix-statuser`'s "Lullaby" prints "The Defending Pokémon is now Asleep." —
-    // §9's third-person phrasing that no deriver owns (the built family says "Your
-    // opponent's Active Pokémon is now …") — and it costs nothing, so no Energy
-    // surgery is needed.
-    //
-    // ⚠️ ITS OWN DECK, DELIBERATELY: adding a line to TYPE_NAME_DECK would move
-    // `deckOf` order and reshuffle every seed-pinned board in this file.
     const own = deckOf({ "fix-statuser": 12, "fix-bigbody": 30, "fix-energy": 18 });
     const setup = driveSetup(
       70,
@@ -805,9 +577,6 @@ describe("conditionHolds / conditionNote — the two members, directly", () => {
   });
 
   it("is FALSE on an empty Active Spot and on an empty Bench", () => {
-    // Both members read a Pokémon, so unlike D119's counting cluster an empty
-    // board is a real edge for them: no Active is not a Dragon, and no Bench holds
-    // no Falinks. Asserted by emptying BOTH sides.
     const state = board(42);
     const bare: GameState = {
       ...state,
@@ -826,12 +595,6 @@ describe("conditionHolds / conditionNote — the two members, directly", () => {
   });
 
   it("answers FALSE for a card whose `types` is NULL — the `?? []` guard", () => {
-    // `Card.types` is null on every Trainer and every Energy, and the member reads
-    // `(card.types ?? []).includes(...)`. A Trainer in the Active Spot is not
-    // reachable in a real game, so this is asserted by SURGERY: a Basic Energy
-    // card from the deck is put in the spot, which is illegal-shaped on purpose
-    // and is the only way to exercise the guard at all. Without the `?? []` this
-    // would throw rather than answer.
     const state = setActiveFromDeck(board(43), "p2", "fix-psychic-energy");
     expect(FIXTURE_POOL["fix-psychic-energy"]?.types).toBeNull();
     for (const type of POKEMON_TYPES) {
@@ -840,11 +603,6 @@ describe("conditionHolds / conditionNote — the two members, directly", () => {
   });
 
   it("ROUND-TRIPS to the printed clause — both notes need nothing dropped", () => {
-    // Several notes in this family drop something the printed text carries: a
-    // pronoun with no referent on the board (D116/D117), or the timing word
-    // "already" (D115). These two name no pronoun and no timing, so each note IS
-    // the printed clause — and both are built from the parameter rather than
-    // returned as a literal.
     expect(conditionNote(DRAGON)).toBe("your opponent's Active Pokémon is a Dragon Pokémon");
     expect(conditionNote(BENCHED_FALINKS)).toBe("Falinks is on your Bench");
     for (const clause of [WONDER_FLASH, RECKLESS_CHARGE]) {
@@ -869,9 +627,6 @@ describe("conditionHolds / conditionNote — the two members, directly", () => {
     expect(conditionNote({ kind: "yourBenchHasNamed", name: "Flamigo" })).toBe(
       "Flamigo is on your Bench",
     );
-    // …and THAT note does NOT round-trip, which is the literal row's whole point:
-    // the note is generated from the member, the resolver is keyed per printing,
-    // and only the printed sentence has a row.
     expect(
       deriveAttackDamageBonus(
         `If ${conditionNote({ kind: "yourBenchHasNamed", name: "Flamigo" })}, this attack does 90 more damage.`,
@@ -908,8 +663,6 @@ describe("POKEMON_TYPES is canonical — the vocabulary the template rejects aga
     }
     const pokemonTypes: readonly string[] = POKEMON_TYPES;
     for (const type of seen) expect(pokemonTypes).toContain(type);
-    // And the pool really does exercise the wheel rather than one corner of it —
-    // including Dragon, which no fixture carried before this slice added Drampa.
     expect(seen.has("Dragon")).toBe(true);
     expect(seen.has("Colorless")).toBe(true);
     expect(seen.size).toBeGreaterThanOrEqual(10);

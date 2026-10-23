@@ -13,87 +13,9 @@ import {
   handUid,
   setActiveFromDeck,
   setDamage,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// D319 — THE OPPONENT-ACTION TRIGGER: A SCAN DIRECTION, NOT A TIMING.
-//
-// THE TWO SENTENCES, transcribed off the remote D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-10 rather than copied from
-// a census bullet — D318's cheapest habit, and the reason the third bullet below
-// says something the handoff did not:
-//
-//   "Whenever your opponent plays a Pokémon from their hand to evolve 1 of their
-//    Pokémon, put 4 damage counters on that Pokémon. The effect of Darkest
-//    Impulse doesn't stack."
-//        — Team Rocket's Ampharos `sv10-074` "Darkest Impulse", 1 legal printing,
-//          Stage 2, evolves from Team Rocket's Flaaffy.
-//   "Whenever your opponent attaches an Energy card from their hand to 1 of their
-//    Pokémon, put 2 damage counters on that Pokémon."
-//        — Gengar ex `sv05-104`/`-193` "Gnawing Curse", 2 legal printings.
-//
-// ── THE FAMILY BOUNDARY, RE-RUN AT MULTIPLE WIDTHS AND FROM BOTH SIDES ───────
-//
-// 🛑 **THE HANDOFF PRICED THE ATTACH VERB AT ZERO AND IT IS TWO LEGAL PRINTINGS.**
-// It named Minun `sv04-061`/`-194` "Buddy Pulse" (`legal_standard = 0`) as the
-// rotated twin that made this a FAMILY, and it is — but Buddy Pulse is *"If you
-// have Plusle in play,"* + **Gnawing Curse** + the stacking clause, and the
-// LEGAL member of that pair is Gengar ex, which no handoff had ever named.
-// **A price can be right about a family and wrong about which of its members is
-// standing** (D316's finding, arriving from the cheaper direction).
-//
-// The census, remote D1, all 3,786 rows, one row per column (D283's
-// compound-SELECT limit), `SUM(legal_standard)` alongside:
-//
-//     predicate                                    attacks  abilities  effect
-//     instr(col, "Whenever your opponent")            0        8 (8)      0
-//     instr(col, "your opponent plays a Pokémon")     0        1 (1)      0
-//     instr(col, "on that Pokémon")                  15 (7)   11 (3)     1 (0)
-//     instr(col, "1 of their Pokémon")                —        5 (3)      —
-//     instr(col, "Each time your opponent")           —        0          —
-//     instr(col, "When your opponent")                —        1 (1)      —
-//
-// ⚠️ **THE ANTECEDENT SIDE IS WIDER THAN THE FAMILY AND THE CONSEQUENT SIDE IS
-// EXACTLY IT.** All EIGHT `"Whenever your opponent"` rows are legal, and five of
-// them are two other mechanisms: Magcargo `sv05-029` "Lava Zone" (*"…Active
-// Pokémon moves to the Bench during their turn, their new Active Pokémon is now
-// Burned"* — a third verb with a Special Condition consequent, and the only one
-// of the eight whose subject is not a card played from hand) and the ALREADY
-// BUILT Trainer-shield pair Fraxure `sv06.5-045`/`-077` + Cetitan ex
-// `sv10-065`/`-210`, which are `preventDamage` passives and not triggers at all.
-// The `"on that Pokémon"` reading returns the three legal printings this file
-// builds and nothing else — the other eight rows are Gardevoir ex ×6 (a
-// SELF-inflicted counter on your own attach, no opponent in the sentence) and
-// Minun ×2. **So the family is 2 of 2 legal sentences / 3 of 3 legal printings,
-// and it CLOSES here.**
-//
-// ── WHY IT IS A DIRECTION AND NOT A SEVENTH TIMING ──────────────────────────
-//
-// `TriggerTiming` already spells both MOMENTS these sentences watch — an evolve
-// (`onEvolve`, since M4 slice 6) and, after this slice, an attach
-// (`onEnergyAttach`). What no member of it spells is WHOSE action, because every
-// timing before D319 is a property of the body the event happened TO and is
-// found by reading that body's own top card. These two are printed on a card
-// across the table. So `opponentAction` rides the ABILITY, `triggersOf`
-// partitions on it, and `runWatchedTriggers` sweeps the other seat's board.
-//
-// ── THE FOUR WAYS A BUILD OF THIS PASSES A SUITE IT SHOULD FAIL ─────────────
-//
-// ⚠️ **A DIRECTION-BLIND SCAN PUTS FOUR COUNTERS ON THE AMPHAROS ITSELF.** It is
-// a Stage 2 carrying an `onEvolve` row, so the SELF scan finds it the moment its
-// own controller evolves Flaaffy into it. §3 drives exactly that play.
-//
-// ⚠️ **A SCAN HUNG ON `evolveOnto` FIRES ON A DECK-SOURCED EVOLVE**, which the
-// printed *"from their hand"* forbids. §4 evolves out of the DECK on the same
-// board and requires zero counters.
-//
-// ⚠️ **A `doesNotStack` READ AS A DEFAULT IS GREEN ON AMPHAROS AND WRONG ON
-// GENGAR.** Gnawing Curse does not print the clause. §7 puts two of each on one
-// board and requires 4 counters from the pair that stacks and 4 (not 8) from the
-// pair that does not — the two rows are each other's control.
-//
-// ⚠️ **A SUBJECT KEYED ON THE ACTION'S TARGET IS WRONG THE MOMENT JET ENERGY
-// SWITCHES THE BODY.** §8 attaches Jet Energy `sv02-190` to a BENCHED Pokémon,
-// which promotes it, and requires the counters to follow the body.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The printed strings, byte-exact off the D1 rows.
@@ -103,9 +25,6 @@ const DARKEST_IMPULSE_TEXT =
   "Whenever your opponent plays a Pokémon from their hand to evolve 1 of their Pokémon, put 4 damage counters on that Pokémon. The effect of Darkest Impulse doesn't stack.";
 const GNAWING_CURSE_TEXT =
   "Whenever your opponent attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon.";
-/** The ROTATED spelling, pinned so the family's boundary stays checkable: it is
-    Gnawing Curse with a board condition in front and the stacking clause behind,
-    and `legal_standard = 0` is the only reason it is not a row. */
 const BUDDY_PULSE_TEXT =
   "If you have Plusle in play, whenever your opponent attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon. The effect of Buddy Pulse doesn't stack.";
 
@@ -128,15 +47,7 @@ const PLAIN = "fix-watch-plain";
 const DIGGER = "fix-watch-digger";
 const DIGGER_TEXT =
   "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon. Then, shuffle your deck.";
-/** A Stage 1 with LESS effective HP than the Basic it evolves from — §8.1's
-    "a Bravery Charm's Basic-only +50 dropping off" board, built out of printed HP
-    instead of a Tool so it needs no second mechanism. Evolving onto a body already
-    carrying 50 damage Knocks it Out ON PLACEMENT, which is the one board on which
-    the order of the two KO checks in `placeEvolution` is observable. */
 const FRAIL = "fix-watch-frail";
-
-// ── the local pool (FIXTURE_POOL is left untouched — D275's idiom, and neither
-// `sv05` nor `sv10` is one of `catalogManifest`'s six manifest sets) ──────────
 
 function ampharos(id: string): Card {
   return battler(id, {
@@ -200,7 +111,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** This suite's own seeded deck (D270's rule). */
 const WATCH_DECK = deckOf({
   [AMPHAROS]: 4,
   [GENGAR]: 4,
@@ -215,22 +125,7 @@ const WATCH_DECK = deckOf({
   "fix-psychic-energy": 12,
 });
 
-/** Three seeds, so nothing below rests on one shuffle (D270). */
 const SEEDS = [8311, 8317, 8329] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: WATCH_DECK, p2: WATCH_DECK }, cardPool: POOL });
@@ -257,14 +152,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** `watcher` holds `watcherIds` (Active first, then Bench); the ACTOR holds a
-    plain Basic Active and a plain Basic on the Bench, with the Stage 1 and an
-    Energy in hand.
-
-    ⚠️ THE ACTOR'S BENCH BODY IS LOAD-BEARING TWICE — §14.2 makes an empty Bench a
-    LOSS the moment an Active leaves, and `benchFromDeck` stamps `turnPlayed: 0`,
-    which is what keeps §10's "came into play this turn" ban off every evolve
-    below. A refusal here must be the rule under test. */
 function board(seed: number, first: Seat, watcher: Seat, watcherIds: readonly string[]): GameState {
   let state = localSetup(seed, first);
   const actor = watcher === "p1" ? "p2" : "p1";
@@ -346,27 +233,14 @@ describe("D319 — the opponent-action trigger", () => {
     expect(impulse?.opponentAction).toBe(true);
     expect(impulse?.doesNotStack).toBe(true);
     expect(impulse?.program).toEqual([{ op: "damageSubject", amount: 40 }]);
-    // ⚠️ NOT `optional` — the printed sentence has no "you may", and this is the
-    // one trigger in the registry whose consequent is a DOWNSIDE for the seat
-    // being asked, so the auto-fire note's "every representative is pure upside"
-    // must not be read as covering it.
-    // 🆕🆕🆕 D560 CORRECTION (D539): "the one trigger in the registry whose consequent
-    // is a DOWNSIDE" and the quoted auto-fire note are WITHDRAWN (see
-    // `TriggeredAbility.optional`'s doc). Rapid Vernier, Snow Sink, Wafting Heal and
-    // Time to Chow Down are downside triggers too, and they carry their decline on an
-    // inner `optional` op. This row stays a downside trigger with NO "you may" (as
-    // Lava Zone is), so this expect is unchanged.
     expect(impulse?.optional).toBeUndefined();
 
     const curse = programFor(GENGAR)?.triggered?.[0];
     expect(curse?.name).toBe("Gnawing Curse");
     expect(curse?.trigger).toBe("onEnergyAttach");
     expect(curse?.opponentAction).toBe(true);
-    // 🛑 THE ABSENCE IS THE CLAIM — Gnawing Curse does not print the clause, and
-    // §7 drives what that costs the board.
     expect(curse?.doesNotStack).toBeUndefined();
     expect(curse?.program).toEqual([{ op: "damageSubject", amount: 20 }]);
-    // The reprint is the SAME row object, keyed twice (D313's idiom).
     expect(programFor(GENGAR_REPRINT)).toBe(programFor(GENGAR));
 
     // The counters differ and the direction does not — the whole difference
@@ -429,8 +303,6 @@ describe("D319 — the opponent-action trigger", () => {
       if (!result.ok) return;
       expect(damageAt(result.state, "p1", 1)).toBe(0);
       expect(triggeredNames(result.events)).toEqual([]);
-      // And the Ampharos really is in play and really does carry the row — so the
-      // zero above is a refusal and not a board that never held the card.
       expect(result.state.cardIdByUid[result.state.players.p1.bench[1]?.stack.at(-1) ?? ""]).toBe(
         AMPHAROS,
       );
@@ -439,10 +311,6 @@ describe("D319 — the opponent-action trigger", () => {
 
   it("§4 a DECK-sourced evolve does not fire it — the printed 'from their hand'", () => {
     for (const seed of SEEDS) {
-      // The actor's Active is a Digger whose text-derived attack evolves a body out
-      // of the DECK. That route calls `evolveOnto` directly, one rung below
-      // `placeEvolution`, so the source-zone clause is answered by WHERE the scan
-      // sits — this rung is what says so.
       let state = board(seed, "p1", "p1", [AMPHAROS]);
       state = setActiveFromDeck(state, "p2", DIGGER);
       state = turnOf(state, "p2");
@@ -478,10 +346,6 @@ describe("D319 — the opponent-action trigger", () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.events.some((e) => e.type === "KNOCKED_OUT")).toBe(true);
-      // §8.1 — the sweep stages the Prize as a DECISION (the watcher picks), so it
-      // is the PHASE that is asserted rather than a prize count that has not moved
-      // yet: the seat being asked is the one whose Ability placed the counters, and
-      // the actor's turn is queued to resume behind it.
       expect(result.state.phase.kind).toBe("ko:takePrizes");
       if (result.state.phase.kind !== "ko:takePrizes") return;
       expect(result.state.phase.seat).toBe("p1");
@@ -542,20 +406,6 @@ describe("D319 — the opponent-action trigger", () => {
 
   it("§5b a body Knocked Out BY EVOLVING is never watched — the ORDER of the two KO checks", () => {
     for (const seed of SEEDS) {
-      // \u{1F6D1} THE ROW THIS RUNG EXISTS FOR IS `D306-evolve-ko-reads-the-pre-evolution-body`,
-      // AND D319's OWN ADDITION IS WHAT BROKE IT. `placeEvolution` has carried a
-      // §8.1 check since D306 — evolution can LOWER effective max HP, so a
-      // carried-damage body can die the instant it evolves — and D319 put a SECOND
-      // KO sweep after the opponent scan. The second one catches the same lethal
-      // body, so the first one's absence stopped being observable as a KO and the
-      // pre-existing mutant SURVIVED the full sweep. **An addition broke a row it
-      // never touched** (D317's finding, from a third direction).
-      //
-      // What still separates them is what the printed rules separate: a Pokémon
-      // Knocked Out ON PLACEMENT has left play, so the opponent's trigger has
-      // nothing to put counters on and must not fire at all. That is asserted
-      // here, on a board that has a watcher — which is what the two-check order
-      // means and what no KO-outcome assertion can see.
       let state = board(seed, "p1", "p1", [AMPHAROS]);
       state = handFromDeck(state, "p2", FRAIL, 1);
       state = turnOf(state, "p2");
@@ -572,10 +422,6 @@ describe("D319 — the opponent-action trigger", () => {
 
   it("§9 the attach half's direction — a Gengar's OWN controller attaching fires nothing", () => {
     for (const seed of SEEDS) {
-      // §3's twin on the other verb, and it is not a formality: the two halves are
-      // gated by ONE field on ONE partition, so a build that read the direction in
-      // the evolve scan and forgot it in the attach scan is green on everything
-      // above. The Gengar's own seat attaches an Energy to its own Bench.
       let state = board(seed, "p1", "p1", [GENGAR]);
       state = handFromDeck(state, "p1", "fix-psychic-energy", 1);
       state = turnOf(state, "p1");

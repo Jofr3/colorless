@@ -16,44 +16,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.349.0 → 0.350.0 — 🆕🆕🆕 **D448: A COUNT SOURCE ON THE SNIPE'S OWN AMOUNT.**
-//
-// *"This attack does {20|30} damage to 1 of your opponent's Pokémon **for each Energy
-// attached to this Pokémon**. (Don't apply Weakness and Resistance for Benched
-// Pokémon.)"* — `censusAttackCorpus.ts` lines **552** and **570**, **2 sentences / 3
-// legal printings**. Claimed WHOLE by `deriveAttackEffect`'s arm 6d through ONE
-// widening of the SHIPPED anchor `CHOSEN_ANY_TARGET` and ONE new optional op field,
-// `damageChosen.perEnergyOnSelf`.
-//
-// 🛑 **THE WORK ORDER'S PREMISE DID NOT SURVIVE, AND IT IS THE MOST USEFUL THING THIS
-// FILE RECORDS.** It said a `DamageCountSource` "folds into the attack's own damage in
-// attack.ts's §8.5 pipeline" and that a snipe's amount cannot carry a count today, so
-// this slice would be *"a fold reaching a new consumer, or a second parallel fold"*.
-// **The second, parallel fold has existed since Wo-Chien "Covetous Ivy"**:
-// `snipeAmount` (interpreter.ts) multiplies `damageChosen.amount` by a board fact and
-// has done so at both call sites — the inline run and the resumed pick — for dozens of
-// decisions. This slice gives that fold its SECOND inhabitant. It builds no fold.
-//
-// ⚠️ **AND THE TWO FOLDS CANNOT BE MERGED HERE, WHICH IS A COST AND NOT A PREFERENCE.**
-// `scaledAttackDamage` lives in `attack.ts`, which imports `interpreter.ts` — reaching
-// it from the interpreter is a cycle — and its signature takes the attack's printed
-// `cost`, which `EffectContext` does not carry (`extraEnergyUnitsBeyondCost` is the
-// member that needs it). So the snipe's fold speaks the OP's riders, and the price of
-// collapsing those riders into one `DamageCountSource` field is written out beside
-// `perEnergyOnSelf` in `effects.ts`, with the trigger that overturns the refusal.
-//
-// 🛑 **§8.5 IS NOT SKIPPED AND THAT IS DRIVEN RATHER THAN REASONED (§4).** The scaling
-// happens in `snipeAmount` BEFORE `placeSnipe` is called, so everything downstream is
-// byte-identical to the unscaled path: an Active pick still runs `snipeActive`'s full
-// Weakness/Resistance/shield/§11 pipeline, and a Bench pick still stays flat. The board
-// below reads 60 on the Bench and 120 on the Active FROM ONE OP ON ONE BOARD.
-//
-// ⚠️ **THE GROUP INDEX SHIFTED, D447's TRAP.** The printed count clause sits BETWEEN the
-// noun and the period, so D437's append-after-the-parens trick is unavailable:
-// `ignoreWR` moved from group 3 to group 4 and the number word from 4 to 5. §2 keeps
-// Umbreon `sv03-130` and both count-2 spellings as live regression rungs, because
-// neither the compiler nor a type sees a `match[n]`.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -66,8 +28,6 @@ const SCALED_20 =
   "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const SCALED_30 =
   "This attack does 30 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
-/** The ONE-AXIS control: `SCALED_20` with the count clause deleted, which is the
-    shipped bare any-target snipe this reader has claimed since 0.38.0. */
 const PLAIN_20 =
   "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
@@ -98,43 +58,19 @@ function scaled(
   return state;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — the population: what is claimed, measured off the committed column.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the two printed sentences, and what they cost the residue", () => {
   it("both are in the legal attack column at the printing counts this slice claims", () => {
-    // ⚠️ A brief's printing count is a FLOOR until it is read off the corpus (D445).
-    // Read here rather than quoted: 2 + 1 = the 3 printings every census note names.
     const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     expect(rows.get(SCALED_20)).toBe(2);
     expect(rows.get(SCALED_30)).toBe(1);
-    // …and the one-axis control is a REAL printed sentence too, which is what makes it
-    // a control rather than an invented near-miss (D183: author against printed bytes).
-    // ⚠️ It is corpus line **553**, sitting immediately BELOW line 552 in the sorted
-    // column: the two differ by exactly the clause this slice reads, and the diff of
-    // this file therefore reads as one sentence with a rider rather than as two.
     expect(rows.get(PLAIN_20)).toBe(1);
   });
 
   it("all three resolve through the reader SURFACE, and the surface did not grow", () => {
-    // Asked of the surface rather than of one reader — D447's correction to its own
-    // first draft. The arm sits inside `deriveAttackEffect`; no fourteenth reader.
     for (const s of [SCALED_20, SCALED_30, PLAIN_20]) expect(resolvedByAnyReader(s), s).toBe(true);
   });
 
-  it("🛑 the scaled family is CLOSED at these two, and the rest is refused BY NAME", () => {
-    // The loosest plausible shape for "a chosen-target hit whose amount scales":
-    // every corpus sentence carrying BOTH `for each` and `damage to `. Ten sentences.
-    // 🛑 **WHAT THIS PATTERN CANNOT SEE, MEASURED RATHER THAN GUESSED — AND IT MISSES
-    // ONE.** A hit spelled with COUNTERS says *"put N damage counters on"* where this
-    // family says *"does N damage to"*, and the column prints exactly such a scaled
-    // chosen-target hit at corpus line 412, **3 printings** — the largest single
-    // printing count in the whole scaled-snipe class and invisible to the grep above.
-    // It is named in (d) below. The other spelling asked for, *"times the number of"*,
-    // returns ZERO rows over all 640 and is the one negative that holds.
-    // ⚠️ This is D310's rule with a family in place of a catalog: **ask the census
-    // twice, once with the columns widened and once with the literal shortened.**
+  it("the scaled family is CLOSED at these two, and the rest is refused BY NAME", () => {
     const family = legalAttackCorpus().filter(
       // /i on the head, because ONE member spells it "For each …" at the start of the
       // sentence — a case-sensitive `includes` reports NINE and silently drops it.
@@ -142,70 +78,7 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     );
     expect(family).toHaveLength(10);
     const unbuilt = family.filter(([, t]) => !resolvedByAnyReader(t)).map(([, t]) => t);
-    // 🆕🛑 **D465 — EIGHT → SEVEN, AND THE ROW THAT LEFT WAS NEVER A MEMBER OF THIS
-    // FAMILY AT ALL.** This is the SECOND thing the grep above cannot see, and it is
-    // the opposite failure from the one already recorded: that block says the pattern
-    // MISSES a real member (corpus line 412, spelled with counters). This one says it
-    // OVER-INCLUDES a non-member — `t.includes("damage to ")` matches *"damage to
-    // ITSELF"*, so corpus line 500, a RECOIL on the attacker's own body, has been
-    // sitting in this "chosen-target hit" population since the rung was written.
-    // ⚠️ **RE-POINTED, NOT DELETED (D418), AND NOT MERELY DECREMENTED.** A count that
-    // silently steps 8 → 7 records that something left and says nothing about WHAT;
-    // the two assertions below name it, pin what it derives to, and pin the ONE fact
-    // that makes it a non-member — its op is `damageSelf`, not `damageChosen`, so
-    // nothing about it bears on whether the scaled CHOSEN-hit family is closed.
-    // ⚠️ **AND THE DISCRIMINATION IS SHARPER THAN THE COUNT IT REPLACES**: the old
-    // `toHaveLength(8)` could not tell "D465 built the self-hit" from "a reader
-    // widened past the count clause and ate a chosen-target row". The pair below can —
-    // it goes red on the second and stays green only on the first.
-    // 🆕🛑 **D489 — SEVEN → SIX, AND THE ROW THAT LEFT WAS THE ONE THIS RUNG'S FIRST
-    // BULLET REFUSED ON THE REFERENT.** Re-pointed rather than decremented, on the same
-    // reasoning D465 used one line up: a count that steps 7 → 6 records that something
-    // left and says nothing about WHAT, and cannot tell "D489 built the hand discard"
-    // from "a reader widened past the count clause and ate a chosen-target row". The
-    // pair below names the row, pins the op it derives to, and keeps every other
-    // refusal in this rung intact (D438: name what now owns it and keep the refusals).
-    // 🆕🛑 **D505 — SIX → FIVE, AND THE ROW THAT LEFT IS THE ONE BULLET (c)
-    // REFUSED ON THE OP.** Re-pointed rather than decremented, for the third time in this
-    // rung and on the same reasoning: a count that steps 6 → 5 records that something left
-    // and says nothing about WHAT, and cannot tell *"D505 gave `spreadDamage` the rider"*
-    // from *"a reader widened past the count clause and ate a chosen-target row"*. The pair
-    // under (c) names the row and pins the op and the rider it derives to.
-    // 🆕🛑 **D530 — FIVE → FOUR, AND THE ROW THAT LEFT IS THE ONE BULLET (b) REFUSED ON THE
-    // "ARITY OF THE FOLD".** Re-pointed rather than decremented, for the fourth time in this rung
-    // and on the same reasoning: a count that steps 5 → 4 records that something left and says
-    // nothing about WHAT, and cannot tell *"D530 gave `damageChosen` a per-target rider"* from
-    // *"a reader widened past the count clause and ate a chosen-target row"*. Bullet (b) below
-    // names the row and pins the op and the rider it derives to.
-    // 🆕🛑 **D535 — FOUR → THREE, AND THE ROW THAT LEFT IS THE PICK-WITH-REPLACEMENT SNIPE, WHICH
-    // THIS GREP SEES ONLY BY ACCIDENT.** Re-pointed rather than decremented, for the FIFTH time in
-    // this rung and on the same reasoning: a count that steps 4 → 3 records that something left and
-    // says nothing about WHAT, and cannot tell *"D535 built the six-park snipe"* from *"a reader
-    // widened past the count clause and ate a chosen-target row"*. ⚠️ **AND THE ACCIDENT IS WORTH
-    // NAMING (D465's over-inclusion finding, one row over)**: this sentence's *"For each"* does NOT
-    // scale an amount at all — it counts the PICKS already made, which is why the program is SIX ops
-    // at a FLAT `amount: 20` and carries none of this family's riders. Bullet (f) names the row and
-    // pins the op AND the absence of every scaling rider, which is what discriminates.
-    // 🆕🛑 **D539 — THREE → TWO, AND THE ROW THAT LEFT IS THE NAMED-BODY COMPOUND.**
-    // Re-pointed rather than decremented, for the SIXTH time in this rung and on the same
-    // reasoning: a count that steps 3 → 2 records that something left and says nothing about
-    // WHAT, and cannot tell *"D539 claimed corpus FILE LINE 595 with a whole-compound
-    // anchor"* from *"a reader widened past the count clause and ate a chosen-target row"*.
-    // The pair below names the row and pins the op AND the `target` member it derives to,
-    // which is the fact that makes it this family's newest member rather than a stray.
-    // 🆕🛑 **D550 — TWO → ONE, AND THE ROW THAT LEFT IS THE OPPONENT-FLIPPED PER-TAILS SNIPE,
-    // WHICH THIS GREP SEES BY ITS FOLD ("for each tails") AND ITS VICTIM ("damage to your
-    // opponent's Active").** Re-pointed rather than decremented, for the SEVENTH time in this
-    // rung and on the same reasoning: a count that steps 2 → 1 cannot tell *"D550 built corpus
-    // FILE LINE 669 through a coin member"* from *"a reader widened past the count clause and ate
-    // a chosen-target row"*. Bullet (h) names the row and pins the TWO owners by value — and
-    // neither is `deriveAttackEffect`, so no `damageChosen` op is involved: the hit is the main
-    // hit, folded at the flip site. The one row left is not a chosen-target hit either (a
-    // Prize-count `+` bonus with a self-recoil tail).
     expect(unbuilt).toHaveLength(1);
-    // (h) THE OPPONENT-FLIPPED PER-TAILS SNIPE — corpus FILE LINE 669, 1 printing, BUILT at
-    //     D550 by `deriveAttackCoinFlip` (`opponentPerTails` over `opponentBench`) and
-    //     `deriveAttackDamageSuppression`'s third compound arm, off ONE anchor.
     const OPPONENT_BENCH_TAILS =
       "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.";
     expect(family.map(([, t]) => t)).toContain(OPPONENT_BENCH_TAILS);
@@ -220,10 +93,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       resistance: true,
     });
     expect(deriveAttackEffect(OPPONENT_BENCH_TAILS)).toBeNull();
-    // (g) THE NAMED-BODY MULTIPLIER + OWN-SIDE SPREAD — corpus FILE LINE 595, 2 printings,
-    //     BUILT at D539. It is a real member of this family: a chosen-target hit whose
-    //     amount comes off a `for each` fold — and the FIRST one aimed at the ATTACKER's
-    //     OWN side, ACTIVE INCLUDED, which is the `target` member this rung pins.
     const NAMED_BODIES_COMPOUND =
       "This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     expect(family.map(([, t]) => t)).toContain(NAMED_BODIES_COMPOUND);
@@ -232,8 +101,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect(namedOp?.op).toBe("damageChosen");
     expect((namedOp as { target?: string } | undefined)?.target).toBe("yourAny");
     expect((namedOp as { count?: unknown } | undefined)?.count).toBe("all");
-    // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
-    //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
     const SELF_RECOIL_SCALED =
       "This Pokémon also does 10 damage to itself for each damage counter on it.";
     expect(family.map(([, t]) => t)).toContain(SELF_RECOIL_SCALED);
@@ -243,28 +110,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect(deriveAttackEffect(SELF_RECOIL_SCALED)).toEqual([
       { op: "damageSelf", amount: 10, perDamageCounterOnSelf: true },
     ]);
-    // (a) THE DISCARD-COUNT HEAD — corpus line 138, 2 printings. **BUILT AT D489.**
-    //
-    //     🛑 **THE REFUSAL THIS BULLET CARRIED IS CORRECTED IN PLACE AND DATED (D442),
-    //     NOT DELETED, BECAUSE IT WAS FALSE ON THE DAY IT WAS WRITTEN AND SAYING SO IS
-    //     THE FINDING.** It read: *"…counts a quantity the sentence's OWN HEAD produced.
-    //     That is a CROSS-CLAUSE REFERENCE, not a board fact: `snipeAmount` is handed
-    //     `(op, state, ctx)` and there is no state field, no `EffectSlot` and no
-    //     `EffectContext` key that carries 'how many cards the previous op moved'."*
-    //     The premise is right and the conclusion does not follow (D450/D451's shape):
-    //     the quantity does not have to travel through `state` or `EffectContext` at
-    //     all, because the run's §9.2 `EffectRecord` already carries it and **both of
-    //     `snipeAmount`'s call sites already had that record in scope** — `stepOp` takes
-    //     it as a parameter and `applyChoice` takes it as a parameter. The whole channel
-    //     was a fourth argument. ⚠️ **The bullet was scoped to the FUNCTION'S SIGNATURE
-    //     and read as a statement about the ENGINE** — D456's rule verbatim, one file
-    //     over.
-    //
-    //     🛑 **AND THE CLAIM IS RE-POINTED ONTO THE OP RATHER THAN ONTO
-    //     `.not.toBeNull()`** (D438's polarity rule, D465's move in this same file): a
-    //     bare "it now resolves" is TRUE under a reader widened to swallow the whole
-    //     column, which is exactly the build the surrounding refusals exist to forbid.
-    //     What discriminates is the SLOT — the rider names the address the head files.
     const HAND_SCALED_SNIPE =
       "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     expect(family.map(([, t]) => t)).toContain(HAND_SCALED_SNIPE);
@@ -288,28 +133,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
         perRecorded: "discarded",
       },
     ]);
-    // (b) THE TARGET-DEPENDENT COUNT — corpus line 551, 1 printing. **BUILT AT D530.**
-    //
-    //     🛑 **THE REFUSAL THIS BULLET CARRIED WAS TRUE IN ITS PREMISE AND WRONG IN ITS
-    //     CONCLUSION, AND IT IS CORRECTED IN PLACE AND DATED (D442) RATHER THAN DELETED.**
-    //     It read: *"…for each damage counter on THAT Pokémon counts on the body the player
-    //     has not chosen yet, so the multiplier is unknown when `stepOp` builds the prompt
-    //     … A per-TARGET amount would make `snipeAmount(op, state, ctx)` a function of a
-    //     fourth argument that does not exist until `applyChoice`, and would make the
-    //     prompt unable to quote itself. Refused on the ARITY OF THE FOLD."* Every clause of
-    //     that describes the PARK site, and the park site is not where damage is dealt.
-    //     **The fourth argument EXISTS at BOTH sites that deal damage**: `candidates[]` at
-    //     `stepOp`'s forced branch (a one-body Bench) and `choice.refs` at `applyChoice`
-    //     (the answered park) — and at each the fold is called PER REF, so every pick reads
-    //     ITS OWN counters. What the park site cannot know it does not pretend to: the
-    //     caption quotes the printed RULE — *"(20 damage for each damage counter on it)"* —
-    //     rather than a number, which is D489's `handCostPhrase` precedent one op over, and
-    //     the §4 rungs below ("the caption and the damage cannot disagree") stay true for
-    //     the riders they drive, because THOSE riders fold before the park.
-    //
-    //     🛑 **RE-POINTED ONTO THE OP AND THE RIDER, NOT ONTO `.not.toBeNull()`** (D438's
-    //     polarity rule, and this rung's own move at (a), (c) and (d)): what discriminates
-    //     is the RIDER, and the FLAT sibling beside it, which must NOT have gained one.
     const TARGET_COUNTER_SNIPE =
       "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     expect(family.map(([, t]) => t)).toContain(TARGET_COUNTER_SNIPE);
@@ -325,9 +148,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
         perDamageCounterOnTarget: true,
       },
     ]);
-    // …and the FLAT `1 of` twin (arm 6c's shape, constructed at this amount) is UNMOVED and
-    // carries no rider — the control that keeps the assertion above a statement about the
-    // clause rather than about the anchor (D424).
     expect(
       deriveAttackEffect(
         "This attack does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -342,28 +162,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
         deals: true,
       },
     ]);
-    // (c) THE SPREAD TWIN — corpus line 517, 3 printings, the largest unbuilt printing
-    //     count in the whole bench family. **BUILT AT D505.**
-    //
-    //     🛑 **THE REFUSAL THIS BULLET CARRIED WAS TRUE IN ITS PREMISE AND WRONG IN ITS
-    //     CONCLUSION, AND IT IS CORRECTED IN PLACE AND DATED (D442) RATHER THAN DELETED.**
-    //     It read: *"Its op is `spreadDamage`, which is `{target, amount}` and carries NO
-    //     scaling field at all and no park to hang one on; `perTakenPrize` and
-    //     `perEnergyOnSelf` are `damageChosen` riders and do not transfer."* Every clause
-    //     of that was a true description of the head it was written at. What does not
-    //     follow is *"and so the row is blocked"* (D450/D451's shape, and this rung's
-    //     third instance of it): a rider does not have to TRANSFER, it has to be SPELLED
-    //     on the second op — and `snipeAmount` takes a STRUCTURAL parameter
-    //     (`{ amount; perTakenPrize?; perEnergyOnSelf?; perRecorded? }`), so the fold
-    //     accepted the widened op UNCHANGED. ⚠️ **AND "no park to hang one on" READ A
-    //     PERSISTENCE FACT AS AN EXPRESSIVENESS ONE**: not parking is exactly what made
-    //     the rider FREE of `MATCH_RECORD_VERSION`, not what made it impossible.
-    //
-    //     🛑 **RE-POINTED ONTO THE OP AND THE RIDER, NOT ONTO `.not.toBeNull()`** (D438's
-    //     polarity rule, and this rung's own move at (a) and (d)): a bare *"it now
-    //     resolves"* is TRUE under a reader widened to swallow the whole column. What
-    //     discriminates is the RIDER — and the FLAT sibling beside it, which must NOT
-    //     have gained one.
     const SPREAD_SCALED =
       "This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     expect(family.map(([, t]) => t)).toContain(SPREAD_SCALED);
@@ -371,59 +169,11 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect(deriveAttackEffect(SPREAD_SCALED)).toEqual([
       { op: "spreadDamage", target: "opponentBench", amount: 10, perTakenPrize: true },
     ]);
-    // …and the FLAT twin one corpus line down is UNMOVED and carries no rider, which is
-    // the control that keeps the assertion above a statement about the clause rather than
-    // about the anchor (D424).
     expect(
       deriveAttackEffect(
         "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
     ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 10 }]);
-    // (d) THE COUNTER-SPELLED SCALED SNIPE — corpus line 412, 3 printings, the member
-    //     the family grep above cannot see and the largest single printing count in
-    //     the whole scaled-chosen-hit class. Its OP is this one (`damageChosen`, arity
-    //     1, `opponentAny`, `deals` absent because counters are the printed unit) and
-    //     its count IS a `DamageCountSource` this engine already ships
-    //     (`cardsInDiscardPile` with a typed Basic Energy filter).
-    //     It was refused THREE ways over at D448: (i) NO ANCHOR CLAIMS THE VERB AT ALL —
-    //     the *unscaled* twin one line below it, corpus line 413, at 1 printing, was
-    //     unbuilt too; (ii) the count needs a PAYLOAD no boolean rider can carry; (iii)
-    //     the tail *"Then, shuffle those Energy cards into your deck."* shuffles back the
-    //     very cards the count read — a second mechanism at a different seam (D442).
-    //     🆕🛑 **D449 — THIS RUNG WAS BUILT TO REDDEN THE DAY THE VERB BECAME READABLE,
-    //     AND IT DID: reason (i) IS SPENT.** `deriveAttackEffect` claims the unscaled
-    //     twin through arm 23b. **RE-POINTED, NOT DELETED** (D418), and re-pointed onto
-    //     the two reasons that survive — which is why the assertions below now say the
-    //     twin is BUILT and the scaled row is not, rather than saying both are unread.
-    //     ⚠️ **THE DISCRIMINATION THE OLD CLAIM PROVIDED IS KEPT AND SHARPENED**: the
-    //     old pair could only say "nobody reads either"; the new pair says "the reader
-    //     stops exactly at the count clause", which goes red on a reader that widened
-    //     past it — a state the old assertion could not distinguish from correctness.
-    //     ⚠️ **AND THE NEW EXPIRY DATE IS THE TAIL RATHER THAN THE VERB**: the head
-    //     ALONE and the tail ALONE are both asserted unread here, so a slice that builds
-    //     either one reddens this rung and re-asks the collapse's price.
-    //     🆕🛑 **D538 — THAT EXPIRY DATE FIRED AND REASONS (ii) AND (iii) ARE BOTH SPENT.
-    //     ALL THREE OF THIS BULLET'S REASONS ARE NOW GONE, IN THE ORDER THE BULLET
-    //     PREDICTED, AND THE RUNG IS RE-POINTED ONTO THE POSITIVE RATHER THAN DELETED
-    //     (D418).** (ii) the PAYLOAD count is carried and not collapsed — arm 23b-bis
-    //     emits `damageChosen { perDiscardPileCard: <a typed Basic Energy CardFilter> }`,
-    //     the fifth rider and the first that is a payload rather than a flag; (iii) the
-    //     tail is read as `discardPileRetrieval { filter, dest: "deck", max: "all" }`
-    //     plus `shuffleDeck`, with the SAME filter object the head counted, so the
-    //     *"second mechanism at a different seam"* turned out to be crossable by binding
-    //     one filter once.
-    //     ⚠️ **AND THE DISCRIMINATION IS KEPT AND SHARPENED AGAIN, WHICH IS THE WHOLE
-    //     REASON THIS BULLET IS RE-POINTED AND NOT REMOVED.** The old pair said *"the
-    //     reader stops exactly at the count clause"*; the new pair says *"the reader
-    //     takes the WHOLE sentence and NEITHER HALF ALONE"* — so the two half-sentence
-    //     nullities below SURVIVE UNCHANGED and are now the load-bearing half: they
-    //     redden on a reader split into a head arm and a tail arm, a build this rung
-    //     could not previously tell from the shipped one.
-    //     🛑 **THE COLLAPSE IS STILL REFUSED**, and this rung no longer has an expiry
-    //     date pointing at it: `perDiscardPileCard` is a NARROW rider beside
-    //     `perRecorded`, not the general `scale?: DamageCountSource` the block in
-    //     effects.ts prices at 24 sites / 10 files — which now buys 0 FURTHER printings,
-    //     because the 3 it would once have unlocked are shipped.
     const COUNTER_SCALED =
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
     const COUNTER_PLAIN = "Put 2 damage counters on 1 of your opponent's Pokémon.";
@@ -431,9 +181,6 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect(rows2.get(COUNTER_SCALED)).toBe(3);
     expect(rows2.get(COUNTER_PLAIN)).toBe(1);
     expect(resolvedByAnyReader(COUNTER_SCALED)).toBe(true);
-    // 🆕 D538 — was `false`. The positive is named as a PROGRAM rather than as a bare
-    // "it resolves" (D438's polarity rule, this rung's move at (a)–(d)): three ops, the
-    // rider present on the first and the SAME filter on the second.
     expect(deriveAttackEffect(COUNTER_SCALED)).toEqual([
       {
         op: "damageChosen",
@@ -451,38 +198,18 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       },
       { op: "shuffleDeck" },
     ]);
-    // …and the SCALED row is not the PLAIN one: the rider is the whole difference at the
-    // first op, and the plain row still carries no rider at all.
     expect(deriveAttackEffect(COUNTER_SCALED)).not.toEqual(deriveAttackEffect(COUNTER_PLAIN));
     expect(deriveAttackEffect(COUNTER_PLAIN)?.[0]).not.toHaveProperty("perDiscardPileCard");
-    // 🆕 D449 — was `false`; the twin is BUILT, and it derives to the op this whole
-    // family would have to scale, which is what makes the refusal above a PRICE and no
-    // longer a blockage.
     expect(resolvedByAnyReader(COUNTER_PLAIN)).toBe(true);
     expect(deriveAttackEffect(COUNTER_PLAIN)).toEqual([
       { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack" },
     ]);
-    // the two halves of the scaled row, each unread on its own — reason (iii), executable
     expect(
       deriveAttackEffect(
         "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile.",
       ),
     ).toBeNull();
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
-    // (f) THE PICK-WITH-REPLACEMENT SNIPE — corpus FILE LINE 81, 2 printings. **BUILT AT D535.**
-    //
-    //     🛑 **NOT A REFUSAL THIS RUNG EVER CARRIED, AND THAT IS THE POINT.** It was never listed
-    //     under (a)–(e) because it is a THIRD kind of member: the grep's `/for each/i` matches
-    //     *"For each time you chose a Pokémon"* and `includes("damage to ")` matches *"do 20 damage
-    //     to it"*, but neither clause scales an amount — the *"for each"* counts PICKS, not a board
-    //     quantity. D465's over-inclusion finding, in a second flavour: the pattern admits a row
-    //     whose arithmetic lives in the LENGTH of the program rather than in the amount of one op.
-    //
-    //     🛑 **RE-POINTED ONTO THE OP AND ONTO THE ABSENCE OF EVERY RIDER** (D438's polarity rule,
-    //     this rung's move at (a)–(d)): a bare *"it now resolves"* would be true under a reader
-    //     widened to swallow the column. What discriminates is that the six ops are FLAT — no
-    //     `perRecorded`, no `perDamageCounterOnTarget`, no `perEnergyOnSelf`, no `perTakenPrize` —
-    //     so nothing about this row bears on whether the SCALED chosen-hit family is closed.
     const PICK_WITH_REPLACEMENT =
       "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance.";
     expect(family.map(([, t]) => t)).toContain(PICK_WITH_REPLACEMENT);
@@ -498,11 +225,8 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       source: "attack",
       deals: true,
       ignoreWR: true,
-      wrOnly: true, // 🆕🆕🆕 D622 — the bare tail: W/R only (R-AM2 retired)
+      wrOnly: true,
     });
-    // …and the RIDER-FREE claim, driven rather than eyeballed: the key set is EXACTLY these
-    // seven, so a scaling rider added later reddens this line by name. [🆕🆕🆕 D622 (D539):
-    // ~~"seven"~~ — eight: `wrOnly` is not a scaling rider, it splits the W/R tail's two forms.]
     expect(Object.keys(SIX?.[0] ?? {}).sort()).toEqual([
       "amount",
       "count",
@@ -546,11 +270,7 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     ]);
   });
 
-  it("🛑 the ONE-AXIS control: deleting the clause gives the shipped BARE op, unchanged", () => {
-    // D399's rule — a near-miss proves nothing about a guard it never reaches — read
-    // from the other side: this is the resolving sentence with ONE clause removed, and
-    // the op it yields is byte-identical to the one this arm has returned since D400.
-    // So the rider, and not the anchor or the arity or the target, is what moved.
+  it("the ONE-AXIS control: deleting the clause gives the shipped BARE op, unchanged", () => {
     expect(deriveAttackEffect(PLAIN_20)).toEqual([
       {
         op: "damageChosen",
@@ -563,11 +283,7 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     ]);
   });
 
-  it("🛑 the group shift did NOT lose `ignoreWR` — Umbreon and both count-2 spellings", () => {
-    // ⚠️ THE REGRESSION THIS SLICE WAS MOST LIKELY TO SHIP. The count clause took group
-    // 3, so the W/R tail is group 4 and the number word group 5. Nothing types a
-    // `match[n]`, so these three rungs are the only thing between the widening and a
-    // silently-restored Weakness on the one sentence printed to remove it.
+  it("the group shift did NOT lose `ignoreWR` — Umbreon and both count-2 spellings", () => {
     expect(
       deriveAttackEffect(
         "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
@@ -608,11 +324,7 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
     ).toBeNull();
   });
 
-  it("🛑 the UNPRINTED PAIR is refused LOUDLY rather than resolved on one rider", () => {
-    // The anchor structurally admits a sentence carrying BOTH the count clause and the
-    // W/R tail; the legal column prints ZERO of them, so resolving one would be
-    // authoring rather than reading (D190b). It falls to `ATTACK_EFFECT_SKIPPED`
-    // exactly as a printed 0 and a disagreeing number word already do.
+  it("the UNPRINTED PAIR is refused LOUDLY rather than resolved on one rider", () => {
     expect(
       deriveAttackEffect(
         "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. This attack's damage isn't affected by Weakness or Resistance.",
@@ -629,20 +341,11 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
   });
 
   it("the near-misses, each the resolving sentence with ONE token changed", () => {
-    // Every refused string here is `SCALED_20` with a single edit, and its unflipped
-    // twin is asserted to resolve in the same `it` — D400's discipline, inherited.
     const pairs: readonly (readonly [string, string, string])[] = [
       // a printed 0 amount buys nothing, the shipped guard, unmoved by the new group
       ["a printed 0 amount", SCALED_20.replace("does 20", "does 0"), SCALED_20],
       // a printed 0 arity parks nobody — the second positivity guard, also unmoved
       ["a printed 0 arity", SCALED_20.replace("to 1 of", "to 0 of"), SCALED_20],
-      // the TYPED spelling is deliberately NOT admitted: zero legal printings carry it,
-      // so a `(?:(.+) )?` group here would resolve a sentence nobody prints (D190b).
-      // [🆕🆕🆕 D629 (D539): WITHDRAWN — the `me` column prints it twice (Bug's Cannon, Hydro Jet), and
-      // the literal `CHOSEN_ANY_TARGET_PER_TYPED_ENERGY` reads it with the NEW `perTypedEnergyOnSelf`
-      // (this anchor still refuses it); the pair is asserted read below the loop.]
-      // the count clause must name THIS Pokémon; the board-wide zone is the DEFENDER
-      // fold's spelling and has no printing on a chosen-target hit at all
       [
         "the board-wide zone",
         SCALED_20.replace("attached to this Pokémon", "attached to all of your Pokémon"),
@@ -664,7 +367,6 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
       expect(deriveAttackEffect(refused), `REFUSED: ${why}`).toBeNull();
       expect(deriveAttackEffect(admitted), `ADMITTED beside ${why}`).not.toBeNull();
     }
-    // 🆕🆕🆕 D629 — the typed spelling is read, by its own anchor, as the typed rider.
     expect(
       deriveAttackEffect(SCALED_20.replace("for each Energy", "for each {L} Energy"))?.[0],
     ).toMatchObject({
@@ -678,19 +380,7 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — a new optional rider on a PERSISTED op, and the record version does not move", () => {
-  it("🛑 the version PREDICTION, driven over the SERIALIZED BYTES in both directions", () => {
-    // 🛑 **WHICH OF THE TWO SITUATIONS THIS IS, ASKED RATHER THAN INHERITED.** It is NOT
-    // "the type is unpersisted": `damageChosen` PARKS — this very op parks whenever the
-    // opponent fields anything at all, because `opponentAny` offers the Active plus the
-    // Bench and `count` is 1 — so the literal genuinely rides
-    // `GameState.phase.cont.pendingOp` into a stored match record. It is the OTHER
-    // situation: a WIDENING, where every value a v29 deploy could have written still
-    // means exactly what it meant.
-    //
-    // **DIRECTION 1 — every byte string a v29 deploy could have written is unchanged.**
-    // No v29 record carries this key, and its ABSENCE has one meaning before and after:
-    // an unscaled hit. Driven through JSON rather than asserted on the object, because
-    // the claim is about BYTES.
+  it("the version PREDICTION, driven over the SERIALIZED BYTES in both directions", () => {
     const preSlice = [
       '{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack","deals":true}',
       '{"op":"damageChosen","target":"opponentBench","amount":40,"count":1,"source":"attack","deals":true,"perTakenPrize":true}',
@@ -700,33 +390,18 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
       expect(JSON.stringify(revived)).toBe(bytes); // no key gained, none lost, order kept
     }
     expect(JSON.parse(preSlice[0] as string)).toEqual(deriveAttackEffect(PLAIN_20)?.[0]);
-    // ⚠️ AND THE SIBLING RIDER IS THE ONE THAT PROVES THIS IS A WIDENING RATHER THAN A
-    // RENAME. `perTakenPrize` was NOT re-spelled — the second byte string above still
-    // derives from its own printed sentence — which is exactly the half D435 says is
-    // not free. A collapse into one `DamageCountSource` field would have failed here.
     expect(
       deriveAttackEffect(
         "This attack does 40 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
       )?.[0],
     ).toEqual(JSON.parse(preSlice[1] as string));
 
-    // **DIRECTION 2 — the NEW value cannot appear in any record an older deploy wrote,
-    // and this deploy round-trips it byte for byte.** D125's widening test: the key's
-    // presence AND its absence both still mean what the writer said, and the new value
-    // is unreachable backwards.
     const fresh = deriveAttackEffect(SCALED_20)?.[0];
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack","deals":true,"perEnergyOnSelf":true}',
     );
     expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
 
-    // **DIRECTION 3 — a v29 record that LOSES the key degrades LOUDLY ENOUGH, which is
-    // D421's criterion applied rather than copied.** A dropped rider makes the snipe
-    // deal `amount` where the card prints `amount × N`, i.e. a strictly SMALLER number
-    // that is off by a factor the board can read — not a plausible neighbouring
-    // behaviour. ⚠️ It IS invisible at exactly one Energy, which is the same exposure
-    // `perTakenPrize` has carried at one taken Prize since Covetous Ivy shipped; stated
-    // rather than claimed away, and it is why §4 drives the fold at THREE.
     const dropped = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "perEnergyOnSelf" ? undefined : v)),
     ) as EffectOp;
@@ -739,7 +414,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — the amount scales, and every step the unscaled snipe honours is honoured", () => {
-  it("🛑 the multiplier is the ATTACHED ENERGY COUNT — 1 → 20, 3 → 60, on one sentence", () => {
+  it("the multiplier is the ATTACHED ENERGY COUNT — 1 → 20, 3 → 60, on one sentence", () => {
     // The lone Active is the only candidate, so the count-1 snipe auto-takes and the
     // number in DAMAGE_DEALT is the whole measurement. ×2 Lightning doubles it, so the
     // pair below reads 40 and 120 — and the RATIO is 3, which is the fold.
@@ -764,12 +439,6 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       index: IDX.scaled30,
     });
     expect(find(heavy.events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 180 });
-    // 🛑 AND THE COUNT IS **CARDS, NOT A TYPE** — the printed clause is untyped and
-    // `countAttachedEnergy` counts cards. TWO {L} plus ONE Colorless is still THREE, so
-    // the same 60. ⚠️ On an all-{L} board this rung and the one two lines up are the
-    // SAME NUMBER, which is why the deck carries a second Energy print: a build that
-    // passed a TYPE — `SELF_ENERGY_MULTIPLY`'s shape, one reader over, and the nearest
-    // wrong edit — would read 2 here and 3 above, and only THIS board can tell them apart.
     const mixed = mustApply(scaled(11, { energy: 2, plain: 1 }), {
       type: "attack",
       seat: "p1",
@@ -778,11 +447,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
     expect(find(mixed.events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 120 });
   });
 
-  it("🛑 the CONTROL on the same body does NOT scale — index 2 stays at the printed 20", () => {
-    // The one-axis control driven on a BOARD rather than only through the reader: same
-    // fixture, same three Energy, same target, clause deleted → 20 × 2 = 40 and not 120.
-    // Without this rung "the damage was 120" is equally consistent with a build that
-    // scales every any-target snipe.
+  it("the CONTROL on the same body does NOT scale — index 2 stays at the printed 20", () => {
     const { events } = mustApply(scaled(4, { energy: 3 }), {
       type: "attack",
       seat: "p1",
@@ -791,13 +456,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 40 });
   });
 
-  it("🛑 §8.5 IS RUN ON THE ACTIVE PICK AND NOT ON THE BENCH PICK — one op, one board", () => {
-    // The question the work order said to DRIVE rather than reason about. The SAME
-    // scaled op, the SAME 60, on two bodies of the SAME card: the Active takes
-    // Weakness (60 × 2 = 120) and the Benched one stays flat at 60, with `weakness`
-    // and `resistance` reported null there. That is `placeSnipe`'s split — `snipeActive`
-    // on the Active arm, the local flat pipeline on the Bench arm — and the scaled
-    // amount reaches both, because `snipeAmount` folds BEFORE `placeSnipe` is called.
+  it("§8.5 IS RUN ON THE ACTIVE PICK AND NOT ON THE BENCH PICK — one op, one board", () => {
     const state = scaled(5, { energy: 3, benched: ["fix-lightning-weak"] });
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: IDX.scaled20 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -805,9 +464,6 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
     if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
     expect(prompt.candidates[0]).toMatchObject({ seat: "p2", spot: { spot: "active" } });
     expect(prompt.candidates[1]).toMatchObject({ seat: "p2", spot: { spot: "bench", index: 0 } });
-    // 🛑 THE CAPTION QUOTES THE FOLDED AMOUNT, not the printed one. `snipeNote` is
-    // handed `snipeAmount`'s result, so a dialog can never contradict the damage it is
-    // about to do — the rule that also makes the target-dependent sentence (§1) refusable.
     expect(prompt.note).toContain("60 damage each");
     expect(prompt.note).toContain("of your opponent's Pokémon");
     // the BENCH pick — flat, W/R absent by construction (§8.5)
@@ -838,12 +494,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
     expect(activeHit.state.players.p2.bench[0]?.damage).toBe(0);
   });
 
-  it("🛑 the fold is re-run at the PICK and agrees with the one the prompt quoted", () => {
-    // `applyChoice`'s `damageChosen` arm recomputes `snipeAmount` from state rather
-    // than carrying the number across the park. That is the shipped design (its own
-    // comment says the count is unchanged because no KO intervenes) and this rider
-    // adds a SECOND thing that could have changed — an attachment — so the claim is
-    // driven: the parked prompt's caption and the resumed hit name the same 60.
+  it("the fold is re-run at the PICK and agrees with the one the prompt quoted", () => {
     const state = scaled(6, { energy: 3, benched: ["fix-lightning-weak"] });
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: IDX.scaled20 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -866,17 +517,12 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
   });
 
   it("the ATTACKER's own pre-W/R bonus still lands INSIDE the fold's result", () => {
-    // Vitality Band's +10 is an effect on the ATTACKER, so `snipeActive` adds it after
-    // the scale and before Weakness: (20 × 2 + 10) × 2 = 100, not (20 + 10) × 2 × 2.
-    // The rung exists because "the bonus was applied to the printed amount instead of
-    // the folded one" is a defect no single-Energy board can see.
     let state = scaled(7, { energy: 2 });
     state = handFromDeck(state, "p1", "sv01-197", 1);
     const band = handUid(state, "p1", "sv01-197");
     state = must(
       applyAction(state, { type: "attachTool", seat: "p1", uid: band, target: { spot: "active" } }),
     );
-    // ⚠️ the Tool is an Energy-free attachment, so the count is still 2: 20 × 2 = 40.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: IDX.scaled20 });
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({
       base: 40,
@@ -914,23 +560,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — a zero multiplier, and the honest reachability answer", () => {
-  it("🛑 the 0 doctrine is SHARED with `perTakenPrize` and is NOT a candidate question", () => {
-    // ⚠️ `parkOrForce`'s doctrine (0 candidates silent, 1 forced, ≥2 park) is about
-    // CANDIDATES; this is about the AMOUNT, and `damageChosen` does not use
-    // `parkOrForce` at all. `stepOp`'s own answer is stronger than a silent no-op: the
-    // `amount <= 0` guard sits BEFORE the park is built, so a zero-scaled snipe asks
-    // NOTHING — no prompt, no dialog, no decision the player then discovers was empty.
-    // `placeSnipe` guards a second time on the resumed path. This slice adds neither
-    // guard; it inherits both, which is why the rider is free at this seam.
-    //
-    // 🛑 AND THE HONEST HALF: a zero is UNREACHABLE for these two printings, so no rung
-    // here drives one and none pretends to. §8 pays an attack's cost from Energy
-    // attached to the Active, so a costed attack has at least one Energy card on it
-    // when its program runs; `countAttachedEnergy` counts CARDS, so the multiplier is
-    // ≥ 1 by the time `snipeAmount` is asked. Writing a 0-Energy board would need a
-    // free-cost printing of this sentence, which the catalog does not have — the
-    // vacuous guard `conventions.md` says to leave out rather than test around.
-    // What IS driven is that the minimum is 1 and that it is the printed amount:
+  it("the 0 doctrine is SHARED with `perTakenPrize` and is NOT a candidate question", () => {
     const { events } = mustApply(scaled(10, { energy: 1 }), {
       type: "attack",
       seat: "p1",

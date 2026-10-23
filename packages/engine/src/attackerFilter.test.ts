@@ -26,60 +26,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.105.0 → the ALWAYS-ON ATTACKER FILTERS (P3-M5 long tail, D159) — the half of
-// §D146's census that never reaches an attack:
-//
-//   "This Pokémon can't be Burned. Prevent all damage done to this Pokémon by
-//    attacks from your opponent's {R} Pokémon."   (Dachsbun sv01-099)
-//   "Prevent all damage done to this Pokémon by attacks from your opponent's {L}
-//    Pokémon."                          (Bellibolt sv03-078 / -201, 2 printings)
-//   "As long as this Pokémon is in the Active Spot, prevent all damage done to
-//    your Benched Pokémon by attacks from your opponent's Pokémon."
-//                                                  (Thundurus sv03-070)
-//   "Prevent all damage done to Pokémon that don't have a Rule Box (both yours
-//    and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon
-//    V."                       (Neutralization Zone sv06.5-060, Stadium/ACE SPEC)
-//
-// ⚠️ FIVE PRINTINGS, NOT SIX, AND THE LIST'S OWN COUNT IS WHERE THE MISS IS. Every
-// remainder list since D146 prices this item at "6 printings / 4 sentences". Six
-// is §D146's census figure and it is RIGHT — the local D1 returns exactly six rows
-// for "prevent all damage … by attacks from" outside `attacks_json` — but one of
-// the six is MIMIKYU sv02-097 "Safeguard", simulated since 0.58.0. The unbuilt
-// remainder was always five. The sentence count (4) is exact.
-//
-// ⚠️ TWO POPULATIONS, SWEPT SEPARATELY (D156's rule). The local D1 as it stands is
-// 890 rows / 5 sets (sv01 258, sv02 279, sv03 230, sv06.5 99, sve 24) and is blind
-// to the 88 `swsh10.5` rows it lost; `FIXTURE_POOL` still fields 12 of those cards
-// and is the only surviving copy of them. Both were queried. The D1 returns the
-// six rows above; the pool prints NEITHER sentence on any fixture, `swsh10.5`
-// included, and held none of these five cards before this slice. So "five" is
-// exact against today's D1 and a FLOOR against the 76 lost rows no population can
-// see — said rather than left to a reader to infer.
-//
-// ⚠️ AND SEE D160/D162. The 890 / 5 above is the OUTAGE-WINDOW catalog and is left
-// standing as the population this slice actually queried; D160 re-ingested
-// `swsh10.5` (978 rows / 6 sets) and D162 re-ran this census against the restored
-// catalog — `LIKE '%by attacks from%'` outside `attacks_json` still returns SIX
-// rows, the restored set contributing ZERO. The floor above is also the TOTAL.
-//
-// ⚠️ THREE MECHANISMS, NOT ONE PREDICATE WITH A PARAMETER, AND THE READ SITES ARE
-// THE GROUND (D155's rule: "it reads better" is never one). All four sentences
-// prevent damage; what they do NOT share is who the rule belongs to, which decides
-// three separate things at the sites:
-//
-//   |                    | Dachsbun / Bellibolt | Thundurus          | the Stadium |
-//   |--------------------|----------------------|--------------------|-------------|
-//   | source of the rule | the damaged body     | its side's ACTIVE  | no Pokémon  |
-//   | rides              | `passivesOf`         | a dedicated scan   | `stadiumEffectsOf` |
-//   | §9 Ability-lock    | SUPPRESSES it        | SUPPRESSES it      | CANNOT reach it |
-//   | Feint Attack       | NULLS it             | leaves it standing | leaves it standing |
-//
-// A shared record would have to be paid by a consumer that refuses it: `passivesOf`
-// folds the HOLDER's own catalog row and could never have answered for a body it
-// is not, and a §9 gate that reached the Stadium would be false about a card that
-// is not an Ability. The `ignoreWR` column is the one that is DRIVEN against
-// itself, on one attack, below.
-
 /** The four printed sentences, byte-for-byte off the local D1 rows. */
 const WELL_BAKED_BODY =
   "This Pokémon can't be Burned. Prevent all damage done to this Pokémon by attacks from your opponent's {R} Pokémon.";
@@ -90,8 +36,6 @@ const ADVERSE_WEATHER =
 const NEUTRALIZATION_ZONE =
   "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.";
 
-/** One seed for the whole suite: nothing in this family flips a coin, so a seed
-    table would describe a shuffle rather than a rule (D143's move). */
 const SEED = 11;
 
 function find<T extends GameEvent["type"]>(
@@ -108,8 +52,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** Every attacker this suite declares, with the printed INDEX and the energy its
-    cost needs — read off the local D1 per printing (D144's rule, D146's names). */
 const ATTACKERS = {
   "fix-attacker": { index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // FIRE "Bite" (30)
   "sv02-063": { index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // Pikachu ex — LIGHTNING "Pika Punch" (30)
@@ -129,11 +71,6 @@ function cardOf(attacker: keyof typeof ATTACKERS): string {
   return attacker === "fix-attacker-ex-bite" ? "fix-attacker-ex" : attacker;
 }
 
-/** `by` opens, passes, and then the OTHER seat plays turn 2 — so the attacking
-    seat carries no §4 first-turn restriction. The attacker goes on `by`'s
-    opponent's… no: the attacker goes on the seat that is about to play. Both
-    bodies are placed by surgery, because every clause in this family is read off
-    the CURRENT board at damage time. */
 function board(attacker: keyof typeof ATTACKERS, defender: string, by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -194,11 +131,6 @@ function rowFor(events: GameEvent[], uid: string | undefined) {
 
 describe("the printed data — re-queried, not inherited", () => {
   it("carries every NAME, printed Ability and printed attack verbatim", () => {
-    // ⚠️ D146's rule at its sharpest: verify by QUERY, never by recognition. Five
-    // ids, five names, and each is a card this repo had never fielded before —
-    // sv01-099 really is Dachsbun (a PSYCHIC Stage 1 from Fidough, not the Fire
-    // body its {R} clause invites you to expect), sv03-070 really is Thundurus,
-    // and sv06.5-060 really is Neutralization Zone.
     expect(FIXTURE_POOL["sv01-099"]).toMatchObject({
       name: "Dachsbun",
       stage: "Stage1",
@@ -247,33 +179,11 @@ describe("the printed data — re-queried, not inherited", () => {
     });
   });
 
-  it("⚠️ ONE of the two LOUD clauses has since been BUILT — RE-POINTED, not deleted", () => {
-    // Dachsbun printed a status IMMUNITY ahead of its prevention and the Stadium
-    // prints a discard-pile retrieval restriction after its. When this case was
-    // written NEITHER was authored, and the pin below read
-    // `{ preventDamageFromType: "Fire" }` on purpose: it was the line that made
-    // "the immunity is unbuilt" checkable rather than a claim in a comment.
-    //
-    // ⚠️ D172 BUILT THE FIRST ONE (`PassiveEffects.statusImmunity`, read once at
-    // interpreter.ts `applyStatus`), so this pin went red exactly as designed and
-    // is RE-POINTED at what exists now. A pin that goes red on the slice it was
-    // written for is the pin working. The Stadium's clause is untouched: it still
-    // has one sibling (Poké Vital A sv06.5-062) and NO reader anywhere in the
-    // engine, so its half of this case is unchanged.
-    //
-    // What the TEXT half pins is unchanged too — that the printed string is still
-    // on the card, so a future census greps a fixture that says what the printing
-    // says (D156's omission failure mode, applied to a CLAUSE).
+  it("ONE of the two LOUD clauses has since been BUILT — RE-POINTED, not deleted", () => {
     expect(FIXTURE_POOL["sv01-099"]?.abilities?.[0]?.effect).toContain("can't be Burned.");
     expect(FIXTURE_POOL["sv06.5-060"]?.effect).toContain(
       "can't be put into your hand or deck from the discard pile.",
     );
-    // Dachsbun now carries BOTH clauses on two fields — the §12 one is not this
-    // suite's and is driven in statusImmunity.test.ts.
-    // ⚠️ RE-POINTED A SECOND TIME AT D174, WHICH IS THE POINT OF A LOUD PIN. The
-    // §12 field WIDENED from a scalar to a list the day a third printing named
-    // three conditions; this line is the neighbouring family noticing, which is
-    // exactly what D159 wrote it to do. The §8.5 half is byte-identical.
     expect(programFor("sv01-099")?.passive).toEqual({
       statusImmunities: ["burned"],
       preventDamageFromType: "Fire",
@@ -283,12 +193,8 @@ describe("the printed data — re-queried, not inherited", () => {
   });
 
   it("AUTHORS all five printings on THREE programs, and the reprint shares one", () => {
-    // Dachsbun's object gained a §12 field at D172; the §8.5 clause this suite is
-    // about is read through `preventDamageFromType` and is unchanged.
     expect(programFor("sv01-099")?.passive?.preventDamageFromType).toBe("Fire");
     expect(programFor("sv03-078")?.passive).toEqual({ preventDamageFromType: "Lightning" });
-    // The second printing is the same OBJECT, which is what "keyed by id, not by
-    // body" means in practice (D121's warrant, met by the card).
     expect(programFor("sv03-201")?.passive).toBe(programFor("sv03-078")?.passive);
     expect(programFor("sv03-070")?.passive).toEqual({ preventBenchDamageWhileActive: true });
     expect(programFor("sv06.5-060")?.stadium).toEqual({ preventDamageToNoRuleBoxFromExV: true });
@@ -300,16 +206,9 @@ describe("the printed data — re-queried, not inherited", () => {
   });
 
   it("…and all four sentences STAY LOUD as attack text", () => {
-    // The deriver never sees an Ability or a Stadium string, and must not learn to:
-    // an always-on aura derived into a one-shot op would install a one-turn stamp
-    // onto whoever declared the attack. D151's re-pointed witness, widened.
     for (const text of [WELL_BAKED_BODY, INSULATOR, ADVERSE_WEATHER, NEUTRALIZATION_ZONE]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    // The DURATED cousin — D146's own attacker-FILTERED printing, the closest
-    // sentence in the whole catalog to the two above — still derives. So the
-    // family's taxonomy is unchanged by the always-on half landing, and neither
-    // sentence reaches the other's reader (D151's control, re-pointed).
     expect(
       deriveAttackEffect(
         "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
@@ -318,8 +217,6 @@ describe("the printed data — re-queried, not inherited", () => {
   });
 
   it("is the WHOLE mapped set — the census, swept out of the pool rather than listed", () => {
-    // D145's move: discover the producers from the registry instead of naming
-    // them, so a sixth row added without a case fails HERE.
     const typed = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.passive?.preventDamageFromType !== undefined,
     );
@@ -328,21 +225,10 @@ describe("the printed data — re-queried, not inherited", () => {
       (id) => programFor(id)?.passive?.preventBenchDamageWhileActive === true,
     );
     expect(benchShield).toEqual(["sv03-070"]);
-    // ⚠️ D254 — THE SECOND FIELD ON THE SAME SCAN, SWEPT SEPARATELY AND NOT FOLDED
-    // INTO THE LINE ABOVE. `benchShieldedFromDamage` now reads two fields, and the
-    // whole point of them being two is that their SOURCE clauses disagree: a sweep
-    // that unioned them here would go green on a build that had merged them, which
-    // is the exact mistake the field split exists to prevent.
     const seatBenchShield = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.passive?.preventBenchDamageAndEffects === true,
     );
     expect(seatBenchShield).toEqual(["fix-spherical"]);
-    // ⚠️ D256 — THE THIRD FIELD ON THE SAME SCAN, SWEPT SEPARATELY FOR D254's REASON
-    // ONE STEP FURTHER ON. The three fields differ on a 3-vector of printed clauses
-    // (SOURCE / HALF / TARGET) and no two of them agree on all three, so a sweep
-    // that unioned any pair here would go green on a build that had merged them.
-    // This one is the only member whose TARGET clause carries a conjunct beyond
-    // "your Benched Pokémon" — `hasRuleBox` NEGATED on the body being damaged.
     const noRuleBoxBenchShield = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.passive?.preventBenchDamageNoRuleBox === true,
     );
@@ -351,18 +237,7 @@ describe("the printed data — re-queried, not inherited", () => {
       (id) => programFor(id)?.stadium?.preventDamageToNoRuleBoxFromExV === true,
     );
     expect(stadium).toEqual(["sv06.5-060"]);
-    // ⚠️ AND THE SIXTH ROW OF §D146's CENSUS IS THE ONE ALREADY BUILT — asserted
-    // beside them, because the remainder list's "6 printings" counts it and this
-    // is the line that says so.
     expect(programFor("sv02-097")?.passive).toEqual({ preventDamageFromExV: true });
-    // 🛑 D255 — THE ALWAYS-ON RULE-BOX-CLASS GATE, SWEPT HERE PRECISELY BECAUSE IT
-    // IS THE ONE FIELD IN THE ENGINE A READER OF *THIS FILE* IS MOST LIKELY TO
-    // CONFUSE WITH ITS SUBJECT. `AttackBlock.fromClass` (effects.ts `AttackerClass`)
-    // is a §11 INSTALLATION whose axes are stage + a printed type EXCLUSION;
-    // `PassiveEffects.preventDamageFromAttackerClasses` (cards.ts
-    // `PreventedAttackerClass`) is a continuous AURA whose axes are stage + a
-    // printed rule-box SUFFIX. Two records, one shared word, no shared reader — and
-    // a build that merged them would go green everywhere else in this suite.
     const suffixClass = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.passive?.preventDamageFromAttackerClass !== undefined,
     );
@@ -415,11 +290,7 @@ describe("the type filter at the four damage sites", () => {
     expect(row?.prevented).toBeUndefined();
   });
 
-  it("⚠️ …AND THE TWO PRINTINGS ARE EACH OTHER'S NEGATIVE CASE", () => {
-    // The same two attackers, the other protector, and both verdicts invert. That
-    // pair is what makes "the token is read" observable rather than argued: a
-    // build that ignored the token and prevented on any aura would pass one of
-    // these four cases and fail the other three.
+  it("…AND THE TWO PRINTINGS ARE EACH OTHER'S NEGATIVE CASE", () => {
     const matched = swing(board("sv02-063", "sv03-078"), "sv02-063");
     expect(find(matched.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
 
@@ -434,10 +305,6 @@ describe("the type filter at the four damage sites", () => {
   });
 
   it("spreadDamage: it protects a BENCHED holder too (no Active-Spot clause)", () => {
-    // Neither printing carries "As long as this Pokémon is in the Active Spot",
-    // so the aura travels with the body — Safeguard's reading, re-driven for the
-    // type gate. fix-sniper is FIRE, so Dachsbun's clause matches and Bellibolt's
-    // (on the same bench, same swing) declines: ONE board, both verdicts.
     let state = board("fix-sniper", "fix-bigbody");
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "sv01-099");
@@ -566,16 +433,6 @@ describe("benchShieldedFromDamage — the same-seat cross-body scan", () => {
   });
 
   it("it filters no attacker IDENTITY — an ex spread is nulled by the same shield", () => {
-    // Adverse Weather's object is "your opponent's Pokémon", i.e. every attacker
-    // there is. This is the case that says the sentence narrows the PROTECTED side
-    // and nothing else, which is why the scan takes no `attacker` argument.
-    // (🆕🆕🆕 D576 (D539): the old title's ~~"it filters NO ATTACKER"~~ and
-    // ~~"i.e. every attacker there is"~~ / ~~"narrows the PROTECTED side and nothing
-    // else"~~ are WITHDRAWN — FALSE since D425: the `"yourBench"` spread (D425) and
-    // the own-Bench snipe (D447) are attacks by the holder's OWN side, so the print
-    // narrows the attacker by SEAT. What this case pins stands — an ex attacker
-    // (attacker IDENTITY) is not filtered; the scan's missing seat test is
-    // decisions.md D576 (g) ⑵, not fixed here.)
     const state = shieldBoard("fix-attacker-ex", ["fix-titan"]);
     const titanUid = state.players.p2.bench[0]?.stack.at(-1);
     const { events } = swing(state, "fix-attacker-ex");
@@ -640,12 +497,7 @@ describe("Neutralization Zone — the Stadium", () => {
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
   });
 
-  it("⚠️ A VMAX ATTACKER IS LET THROUGH — the board that separates the two predicates", () => {
-    // The card names ex and V, so the ATTACKING side is `isExOrV` and not
-    // `hasRuleBox`: "Bigmon VMAX" has a rule box and is neither. Every other
-    // rule-box body answers the two predicates the same way, which makes this the
-    // single case that says which one the sentence means — D107's reading, and
-    // D117's Ceruledge assertion, re-run on the other end of the attack.
+  it("A VMAX ATTACKER IS LET THROUGH — the board that separates the two predicates", () => {
     const state = withStadium(board("fix-attacker-vmax", "fix-bigbody"));
     const { events } = swing(state, "fix-attacker-vmax");
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
@@ -657,13 +509,7 @@ describe("Neutralization Zone — the Stadium", () => {
     expect(stadiumPreventsDamage(state, target, FIXTURE_POOL["fix-attacker-ex"])).toBe(true);
   });
 
-  it("⚠️ IT PROTECTS BOTH BOARDS — AND STOPS THE SEAT THAT PLAYED IT", () => {
-    // "both yours and your opponent's", and the only prevention in the engine with
-    // no seat to derive. P2 plays the Stadium on its OWN turn and then swings its
-    // own ex into P1's no-Rule-Box Active — and its own card nulls its own attack.
-    // That is the strongest form of the claim and the direction a seat-derived read
-    // would get exactly backwards; every case above it has the Stadium protecting
-    // the seat that did NOT play it.
+  it("IT PROTECTS BOTH BOARDS — AND STOPS THE SEAT THAT PLAYED IT", () => {
     const state = withStadium(board("fix-attacker-ex-bite", "fix-bigbody", "p2"), "p2");
     const { events } = swing(state, "fix-attacker-ex-bite", "p2");
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
@@ -720,13 +566,7 @@ describe("Neutralization Zone — the Stadium", () => {
 // The ON-TARGET / OFF-TARGET split, driven against itself.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ `ignoreWR` — the one clause that tells the three mechanisms apart", () => {
-  // Umbreon "Feint Attack": "This attack's damage isn't affected by Weakness or
-  // Resistance, or by any effects on that Pokémon." The clause scopes THE TARGET,
-  // so it reaches a prevention whose source IS the target and no other. D151 read
-  // it this way for a subtraction; these three cases are the same reading applied
-  // to a prevention, driven off ONE printed attack with only the board moving.
-
+describe("`ignoreWR` — the one clause that tells the three mechanisms apart", () => {
   it("ON-TARGET: Feint Attack goes THROUGH a benched Bellibolt's own {L} filter", () => {
     // fix-feint is LIGHTNING, so Insulator matches — and is nulled anyway, because
     // it is an effect on the very Pokémon the clause names.
@@ -751,10 +591,6 @@ describe("⚠️ `ignoreWR` — the one clause that tells the three mechanisms a
   });
 
   it("OFF-TARGET: the same Feint Attack is STOPPED DEAD by Thundurus's shield", () => {
-    // Identical declaration, identical arm, and the pick takes 0. The aura's source
-    // is the pick's own side's ACTIVE — a different body — so "any effects on that
-    // Pokémon" does not reach it. This is the pair that makes the ON-TARGET /
-    // OFF-TARGET split observable rather than argued.
     let state = board("fix-feint", "sv03-070");
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "fix-titan");
@@ -763,10 +599,6 @@ describe("⚠️ `ignoreWR` — the one clause that tells the three mechanisms a
   });
 
   it("OFF-TARGET: and so is it by the Stadium, at snipeActive", () => {
-    // Fezandipiti ex is an ex and prints no `ignoreWR`, so this arm needs the other
-    // half of the argument stated directly: the Stadium is an effect on the shared
-    // ZONE and on no Pokémon, so no clause about "that Pokémon" can reach it. The
-    // scan is asked with the target in hand.
     const state = withStadium(clearBench(board("fix-feint", "fix-bigbody"), "p2"));
     const target = state.players.p2.active;
     if (target === null) throw new Error("board");
@@ -799,20 +631,7 @@ describe("⚠️ `ignoreWR` — the one clause that tells the three mechanisms a
 // §9 — the Ability-lock reaches two of the three, and cannot reach the third.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the STADIUM standing", () => {
-  // Ting-Lu ex "Cursed Land": "As long as this Pokémon is in the Active Spot, your
-  // opponent's Pokémon in play that have any damage counters on them have no
-  // Abilities, except for Pokémon ex." Ting-Lu is ALSO an ex — which is the only
-  // reason this board exists at all: every Ability-lock in the registry is
-  // Active-gated on its SOURCE, so the locking body has to be the attacking body,
-  // and Ting-Lu is the one lock whose own attack can trigger a prevention.
-  // (🆕🆕🆕 D559 CORRECTION (D539): "every Ability-lock … is Active-gated" is WITHDRAWN —
-  // Gastrodon "Sticky Bind" is BENCH-sourced; it reaches only BENCHED Stage 2 bodies, so
-  // this board's reading is unaffected. "the locking body has to be the attacking body"
-  // is WITHDRAWN too — a DEFENDING Active Flutter Mane `sv05-078` locks the attacker —
-  // and Ting-Lu stays the one lock whose own attack can trigger this Stadium's
-  // prevention: Flutter Mane is not an ex, so the Stadium never sees its "Hex Hurl".)
-
+describe("THE §9 PAIR — a lock silences the ABILITIES and leaves the STADIUM standing", () => {
   it("the lock switches Dachsbun's own aura off — and the Stadium prevents anyway", () => {
     const armed = withStadium(board("sv02-127", "sv01-099"));
     const locked = withDamage(armed, "p2", 10);
@@ -842,16 +661,6 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
   });
 
   it("the lock reaches Thundurus's shield too, at the scan", () => {
-    // ⚠️ AND THIS ONE CANNOT BE DRIVEN END TO END BY ANY BOARD THIS POOL PRINTS,
-    // which is worth writing down rather than working around. The shield only
-    // shows on BENCH damage; every §9 lock source must occupy its own side's
-    // ACTIVE spot (🆕🆕🆕 D559 CORRECTION (D539): WITHDRAWN — Gastrodon is BENCH-sourced,
-    // but it reaches only benched Stage 2 bodies and Thundurus's shield source is an
-    // Active Basic; Flutter Mane's "Hex Hurl" PLACES counters) and no locking body in the registry has an attack that deals
-    // DAMAGE to the opposing Bench (Ting-Lu's "Land Scoop" places COUNTERS, which
-    // no prevention touches — D138/D139). So the gate is asserted on a real,
-    // legal board with the lock live, and the end-to-end drive waits for a
-    // printing that does not exist yet.
     let state = withDamage(board("sv02-127", "sv03-070"), "p2", 10);
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "fix-titan");
@@ -880,7 +689,6 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the log — rendered under BOTH seats and READ, not copied", () => {
-  /** Render every non-turn row as "<who>: <text>". */
   function render(
     state: GameState,
     events: GameEvent[],
@@ -896,13 +704,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
       .join("\n");
   }
 
-  it("⚠️ THE FLAG HAS EXISTED SINCE 0.58.0 AND NOTHING RENDERED IT — it does now", () => {
-    // Found by rendering the row, not by reading the code. `DAMAGE_DEALT.prevented`
-    // has been emitted since Mimikyu's Safeguard and the log line read only
-    // "dealt 0 damage to <name>" — indistinguishable from an attack that does
-    // nothing, which is the exact failure mode ATTACK_EFFECT_PREVENTED exists to
-    // avoid one field away. This slice takes the ways a hit can be nulled from two
-    // to five, and three of the five are invisible on the damaged card itself.
+  it("THE FLAG HAS EXISTED SINCE 0.58.0 AND NOTHING RENDERED IT — it does now", () => {
     const { state, events } = swing(board("fix-attacker", "sv01-099"), "fix-attacker");
     const line = render(state, events, { p1: "Ember", p2: "Wren" });
     expect(line).toContain("dealt 0 damage to");
@@ -910,28 +712,15 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
   });
 
   it("the row is filed under the ATTACKER's seat, and the wording is true there", () => {
-    // ⚠️ THE VOICE QUESTION, ASKED RATHER THAN INHERITED. `DAMAGE_DEALT.seat` owns
-    // the DAMAGED Pokémon (D136's finding 1) — but this is the one event in the
-    // family whose ROW is filed under `otherSeat(seat)`, the attacker. So a crumb
-    // naming an owner ("your Pokémon is protected"), a turn, or a SOURCE would be
-    // spoken from the wrong chair — and the source is unknowable here anyway, five
-    // rules now setting one flag the event deliberately does not discriminate.
-    // "· prevented" is a bare statement about the damage: true from either chair.
     const { state, events } = swing(board("fix-attacker", "sv01-099"), "fix-attacker");
     const row = find(events, "DAMAGE_DEALT");
-    expect(row?.seat).toBe("p2"); // the victim's seat, per the event's contract…
-    // …and the LOG row is P1's, which is exactly the inversion the wording must
-    // survive. The Pokémon named in the row is still the victim's.
+    expect(row?.seat).toBe("p2");
     expect(render(state, events, { p1: "Ember", p2: "Wren" })).toContain(
       "p1: dealt 0 damage to Dachsbun · prevented",
     );
   });
 
   it("…and it reads identically with the seats swapped", () => {
-    // The Stadium is the only prevention here that can fire for either player, so
-    // it is the one that can put the same crumb under both seats. Here P2 attacks
-    // and P1 owns the protected body: the row moves to P2 and the crumb is
-    // unchanged, which is what "honest under both seats" has to mean.
     const state = withStadium(board("fix-attacker-ex-bite", "fix-bigbody", "p2"), "p2");
     const swung = swing(state, "fix-attacker-ex-bite", "p2");
     expect(find(swung.events, "DAMAGE_DEALT")?.seat).toBe("p1");
@@ -941,7 +730,6 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
   });
 
   it("a hit that was NOT prevented carries no crumb", () => {
-    // Loudness is owed to a rule that FIRED, not to one that declined (D140).
     const { state, events } = swing(board("sv02-063", "sv01-099"), "sv02-063");
     expect(render(state, events, { p1: "Ember", p2: "Wren" })).not.toContain("· prevented");
   });
@@ -956,7 +744,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
         {
           type: "DAMAGE_DEALT",
           seat: "p2",
-          by: "p1", // 🆕🆕 D425 — the dealer, required on this row since the own-side spread.
+          by: "p1",
           uid: "u",
           base: 50,
           weakness: null,

@@ -13,17 +13,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice — MULTI-attach + endsTurn, authoring Koraidon ex "Dino Cry": "Once
-// during your turn, you may attach up to 2 Basic {F} Energy cards from your
-// discard pile to your Basic {F} Pokémon in any way you like. If you use this
-// Ability, your turn ends." Two ideas:
-//   • multi-attach ("up to 2 in any way") is just TWO attachEnergyFrom ops — the
-//     interpreter parks on each target in turn; a second op with no {F} left
-//     no-ops (so it attaches min(2, available));
-//   • `AbilityProgram.endsTurn` folds the turn end (flow.ts settleProgram) once
-//     the program completes — threaded across both parks.
-// Targets are the controller's own Basic {F} Pokémon (targetType + basicOnly).
-
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const DINO_CRY = {
   type: "useAbility",
@@ -32,9 +21,6 @@ const DINO_CRY = {
   abilityName: "Dino Cry",
 } as const;
 
-/** Open P1's turn 2 with Koraidon ex as their Active and an EMPTY bench, so each
-    test places exactly the {F}/non-{F} target set it needs (the sniperVs pattern
-    — clearing the bench keeps the target census deterministic across seeds). */
 function koraiBoard(seed: number): GameState {
   let state = driveSetup(seed, { p1: KORAIDON_DECK, p2: KORAIDON_DECK }, { first: "p2" });
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
@@ -100,15 +86,6 @@ describe("Koraidon ex — Dino Cry (attachEnergyFrom multi + endsTurn)", () => {
   });
 
   it("with a single {F} in the discard, attaches 1 and STILL ends the turn", () => {
-    // 🆕🛑 D360 — THE PREMISE MOVED AND THE CLAIM DID NOT. This board used to be
-    // described as a FORCED attach: one candidate, so `parkOrForce` auto-applied
-    // under the M1 no-choice rule and the whole Ability resolved in one action.
-    // The op is `declinable` now, and **a declinable pick over ONE candidate still
-    // ASKS** (D358 §3) — it has two answers over one body. So the route changed
-    // from zero parks to one, and the discriminator moved to where it is still
-    // sharp: what this test pins is that AVAILABILITY still bounds the program (a
-    // second op with no {F} left no-ops) and that `endsTurn` survives the short
-    // program. Both are unchanged.
     let state = koraiBoard(3); // Koraidon is the ONLY Basic {F} (empty bench)
     state = discardFromDeck(state, "p1", "fix-fighting-energy", 1);
     const parked = mustApply(state, DINO_CRY).state;
@@ -129,14 +106,7 @@ describe("Koraidon ex — Dino Cry (attachEnergyFrom multi + endsTurn)", () => {
     expect(done.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🆕 D360 — the printed MIDDLE answer: take ONE of two and leave the other in the pile", () => {
-    // 🛑 THE ANSWER THIS ROW COULD NOT GIVE FOR 155 DECISIONS. "up to 2 … in any
-    // way you like" printed {0, 1, 2}; the engine reached {0, 2}. The zero was
-    // always there — an activated "you may" is declined by not using the Ability
-    // (§9.1) — but the ONE was unreachable on a full pile, because the second op
-    // forced. **The printed "up to" was being spent against AVAILABILITY and never
-    // against the player's WILL**, which is what this row's own doc used to say
-    // out loud (*"the second no-ops if a single {F} was in the discard"*).
+  it("D360 — the printed MIDDLE answer: take ONE of two and leave the other in the pile", () => {
     let state = koraiBoard(5);
     state = benchFromDeck(state, "p1", "fix-fighting-1"); // a second Basic {F} target
     state = discardFromDeck(state, "p1", "fix-fighting-energy", 2); // TWO available
@@ -167,11 +137,7 @@ describe("Koraidon ex — Dino Cry (attachEnergyFrom multi + endsTurn)", () => {
     expect(done.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🆕 D360 — declining BOTH is the printed ZERO, and the turn still ends", () => {
-    // The zero was already reachable by not using the Ability at all; this asserts
-    // the OTHER route to it, which is the one the flag opens — and that it costs
-    // the player their turn either way, because `endsTurn` is on the ABILITY and
-    // not on the attach.
+  it("D360 — declining BOTH is the printed ZERO, and the turn still ends", () => {
     let state = koraiBoard(6);
     state = benchFromDeck(state, "p1", "fix-fighting-1");
     state = discardFromDeck(state, "p1", "fix-fighting-energy", 2);

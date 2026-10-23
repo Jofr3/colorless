@@ -6,25 +6,10 @@ import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 import { programFor } from "./registry";
 import { battler, trainerCard } from "./testFixtures";
 
-// ── 🆕 D581 — A TRAINER'S PRINTED POKÉMON FACE, NOW IN THE CATALOG ──
-//
-// Until D581 `apps/api/src/ingest/map.ts` built every Trainer row from a base that nulled `hp`,
-// `abilitiesJson` and `attacksJson`, so a catalog `Card` for a Trainer never carried them — and
-// two engine predicates leaned on that as a CATEGORY test: `hasPrintedAbility` ("a Trainer's
-// catalog row carries `null` there") and `attacksOf` ("[] for Trainers/Energy"). D581 widened
-// the Trainer branch (the user's decision (2) after D580): an Antique Fossil's row now carries
-// `hp: 60` and its Ability, a Technical Machine's (and Core Memory's) its attack. So both
-// predicates ask the category, and the two engine tables that hand-wrote those faces are gone —
-// the fossil face reads the row's Ability (fossils.ts) and the Tool section of the attack menu
-// reads the Tool card's own `attacks` (continuous.ts `attackMenuOf`; `technicalMachines.ts` is
-// deleted). Every face below is read off `CATALOG_MANIFEST.trainerFaces` — the local D1,
-// measured by `scripts/catalog-manifest.ts`.
-
 const COVER = "sv07-129";
 const TM = "sv08-188";
 const CORE_MEMORY = "me03-070";
 
-/** A Trainer row exactly as the catalog hands it since D581: its printed face included. */
 function catalogRow(id: string, trainerType: string): Card {
   const face = M.trainerFaces[id];
   if (face === undefined) throw new Error(`no catalog face for ${id}`);
@@ -46,7 +31,7 @@ describe("D581 §1 — the catalog's Trainer faces, measured", () => {
     expect(faces.filter((f) => (f.attacks ?? []).length > 0)).toHaveLength(7);
   });
 
-  it("the Standard-legal ones are the four BUILT fossils, TM Fluorite, and five UNBUILT `me` faces (🆕🆕🆕 D620 (D539): four — Core Memory is built at D620) (🆕🆕🆕 D637 (D539): none — the four `me` fossils are built at D637)", () => {
+  it("the Standard-legal ones are the four BUILT fossils, TM Fluorite, and five UNBUILT `me` faces ( D620 (D539): four — Core Memory is built at D620) ( D637 (D539): none — the four `me` fossils are built at D637)", () => {
     const legal = Object.entries(M.trainerFaces)
       .filter(([, f]) => f.legal)
       .map(([id]) => id)
@@ -64,9 +49,7 @@ describe("D581 §1 — the catalog's Trainer faces, measured", () => {
       "sv10.5w-079",
     ]);
     for (const id of legal) {
-      // 🆕🆕🆕 D637 — every legal face is built now: the `sv` ones, Core Memory (D620) and the four `me` fossils.
       const built = true;
-      // 🆕🆕🆕 D620 — Core Memory is keyed (WP26's `toolAttacksHolder`); its face is not a fossil's.
       expect(programFor(id) !== undefined, id).toBe(built || id === CORE_MEMORY);
       // A 60-HP face is a fossil's, and it is a `FOSSIL_IDS` id; Core Memory (no HP) is not.
       expect(FOSSIL_IDS.has(id), id).toBe(M.trainerFaces[id]?.hp === 60);

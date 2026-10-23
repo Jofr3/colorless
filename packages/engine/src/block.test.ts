@@ -22,38 +22,9 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.63.0 → 0.64.0 — Snorlax swsh10.5-055 "Block" (P3-M5 long tail, D113): "As
-// long as this Pokémon is in the Active Spot, your opponent's Active Pokémon
-// can't retreat."
-//
-// The L3 shape of the retreat-LOCK seam D112 opened, and the ONLY
-// continuous-Ability retreat lock in the ingested pool (one printing, no
-// reprint). What it turns on:
-//
-//   • it shares nothing with D112's two attack riders but the effect. There is no
-//     turn duration, so it rides neither `InPlayPokemon.retreatBlocked` nor the
-//     `preventRetreat` op — it is a bare passive flag read LIVE, and it lapses the
-//     instant either end leaves the Active Spot;
-//   • BOTH ends are Active-scoped, which is the exact inverse of its neighbour
-//     Trap Territory (D111): that sentence scopes only the TARGET, so a BENCHED
-//     Spidops ex still surcharges — this one opens with "As long as this Pokémon
-//     is in the Active Spot", so a benched Snorlax blocks nothing;
-//   • a block is NOT a cost. It is read at the retreat gate, never folded into
-//     `effectiveRetreatCost`: the printed cost stands, there is simply no legal
-//     retreat to spend it on;
-//   • and Snorlax is a BASIC — so this is the aura family's FIRST assertable §9
-//     POSITIVE. Klefki's Basic-only "Mischievous Lock" could never reach Stage 1
-//     Clefable ex (D108) or Spidops ex (D111); it reaches Snorlax.
-
 const ABILITY_TEXT =
   "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat.";
 
-/** Setup on P1's open turn with BOTH Active spots pinned: the blocked body
-    (fix-retreat2, retreat 2) on P1, a neutral fix-bigbody on P2. Pinning P2 too
-    keeps the "no aura in play" control seed-independent — BLOCK_DECK is 4/4
-    Snorlax/Klefki, either of which the mulligan-free starter could otherwise be,
-    and both carry Abilities this suite reads. Each displaced starter lands on its
-    own bench, which is what a retreat then promotes. */
 function board(seed: number, p1Body = "fix-retreat2"): GameState {
   let state = driveSetup(seed, { p1: BLOCK_DECK, p2: BLOCK_DECK }, { first: "p1" });
   state = setActiveFromDeck(state, "p1", p1Body);
@@ -86,8 +57,6 @@ function retreatOnWire(state: GameState) {
   return phase.retreat;
 }
 
-/** TEST SURGERY: raise D112's turn-scoped flag on `seat`'s Active, so the two
-    provenances of the same refusal can be composed on one board. */
 function withRetreatBlocked(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
   const active = activeOf(state, seat);
@@ -168,10 +137,6 @@ describe("Block — who imposes it, and on whom", () => {
   });
 
   it("is gated through disabledAbilityUids (§9) — the family's FIRST positive", () => {
-    // Klefki "Mischievous Lock" narrows to BASIC Pokémon on BOTH sides while it is
-    // Active. Lunar Zone (Stage 1) and Trap Territory (Stage 1) could only ever
-    // record the negative; Snorlax is a Basic, so the lock really lands — and the
-    // blocked Pokémon is the Klefki doing the locking.
     const state = setActiveFromDeck(board(5, "sv01-096"), "p2", "swsh10.5-055");
     const sourceUid = state.players.p2.active?.stack.at(-1);
     if (sourceUid === undefined) throw new Error("p2 has no Active");
@@ -197,8 +162,6 @@ describe("Block — a block is not a cost", () => {
   });
 
   it("shows on the wire as `can: false` with the cost unchanged", () => {
-    // No new wire field: RedactedRetreat stays { cost, can }, and the client is
-    // told it cannot retreat, not why (the D112 rule).
     const bare = attachFromDeck(board(7), "p1", "fix-energy", 2);
     expect(retreatOnWire(bare)).toEqual({ cost: 2, can: true });
 
@@ -234,8 +197,6 @@ describe("Block — the §11 retreat gate", () => {
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("STATUS_APPLIED");
-    // Nothing was written onto the blocked Pokémon: the aura is read live off
-    // both Active spots, so it is neither a §12 condition nor D112's flag.
     expect(activeOf(state, "p1").conditions.rotation).toBe("none");
     expect(activeOf(state, "p1").retreatBlocked).toBe(false);
     expect(done.players.p2.active?.damage).toBe(30);

@@ -30,22 +30,10 @@ import {
   setDamage,
   setPrizes,
   trainerCard,
+  must,
 } from "./testFixtures";
 import { koToolTriggersOf } from "./triggers";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D562 — THE TWO STADIUMS: JAMMING TOWER AND FESTIVAL GROUNDS ──
-//
-//   Jamming Tower     sv06-153 / sv10-243    Stadium  Pokémon Tools (both sides) have no effect
-//   Festival Grounds  sv06-149 / sv08.5-108  Stadium  Energy-carrying Pokémon (both sides): no Special Conditions
-//
-// Jamming Tower is `StadiumEffects.toolsHaveNoEffect`, read by ONE function (continuous.ts
-// `toolsInEffect`) that every Tool EFFECT walk goes through while every Tool COUNT read stays
-// on the raw list (R-JT). Festival Grounds is `StadiumEffects.statusShieldIfEnergyAttached`,
-// the refusal at `applyStatus` and the recovery at `recoverStatuses`, which `playStadium` now
-// also calls (R-FG). Both driven BOTH WAYS on the REAL ids, on a LOCAL `cardPool` (D275) in the
-// suite's OWN 60-card deck (D270). The consumable Tools are `toolsD562.test.ts`.
-// docs/decisions.md D562.
 
 const JAMMING = ["sv06-153", "sv10-243"] as const;
 const FESTIVAL = ["sv06-149", "sv08.5-108"] as const;
@@ -139,7 +127,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [JAMMING[0]]: 1,
   [JAMMING[1]]: 1,
@@ -156,11 +143,6 @@ const DECK = deckOf({
   "fix-sturdy": 2,
   "fix-energy": 21,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -314,7 +296,7 @@ describe("D562 stadiums §1 — the prints, and the registry rows that map them"
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, every Tool COUNT stands (R-JT)", () => {
-  it("🛑 `toolsInEffect` is the raw list without it and EMPTY under it — for BOTH seats", () => {
+  it("`toolsInEffect` is the raw list without it and EMPTY under it — for BOTH seats", () => {
     const board = table({ tool: AIR_BALLOON, oppTool: AIR_BALLOON });
     for (const seat of ["p1", "p2"] as const) {
       expect(toolsInEffect(board, active(board, seat))).toEqual(active(board, seat).tools);
@@ -322,7 +304,7 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     }
   });
 
-  it("🛑 Hero's Cape: +100 HP (passivesOf's Tool source) → none; the holder's OWN printed passive stands", () => {
+  it("Hero's Cape: +100 HP (passivesOf's Tool source) → none; the holder's OWN printed passive stands", () => {
     const board = table({ oppActive: "fix-sturdy", oppTool: HEROS_CAPE });
     const jammed = stadium(board, JAMMING[1]);
     expect(effectiveMaxHp(board, active(board, "p2"))).toBe(220);
@@ -330,13 +312,13 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     expect(passivesOf(jammed, active(jammed, "p2")).survivesKoAtFullHp).toBe(true);
   });
 
-  it("🛑 PLAYING it Knocks Out a body Hero's Cape was holding up (playStadium's mid-turn sweep)", () => {
+  it("PLAYING it Knocks Out a body Hero's Cape was holding up (playStadium's mid-turn sweep)", () => {
     const board = setDamage(table({ oppTool: HEROS_CAPE }), "p2", 150);
     const { events } = play(board, JAMMING[0]);
     expect(all(events, "KNOCKED_OUT").map((e) => e.seat)).toEqual(["p2"]);
   });
 
-  it("🛑 Air Balloon's {C}{C} and Rescue Board's free retreat stop", () => {
+  it("Air Balloon's {C}{C} and Rescue Board's free retreat stop", () => {
     const balloon = table({ tool: AIR_BALLOON, active: WALL });
     expect(effectiveRetreatCost(balloon, active(balloon, "p1"))).toBe(1);
     const jammedBalloon = stadium(balloon, JAMMING[0]);
@@ -347,7 +329,7 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     expect(effectiveRetreatCost(jammedRescue, active(jammedRescue, "p1"))).toBe(3);
   });
 
-  it("🛑 Counter Gain's {C} and Gravity Gemstone's {C} stop", () => {
+  it("Counter Gain's {C} and Gravity Gemstone's {C} stop", () => {
     const gain = setPrizes(table({ tool: COUNTER_GAIN }), "p2", 3);
     expect(toolAttackCostDiscount(gain, active(gain, "p1"))).toBe(1);
     const jammedGain = stadium(gain, JAMMING[0]);
@@ -358,7 +340,7 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     expect(activeRetreatSurcharge(jammedStone, active(jammedStone, "p1"))).toBe(0);
   });
 
-  it("🛑 a Tool's on-KO trigger (Exp. Share) is silenced too — the scan is no longer ungated", () => {
+  it("a Tool's on-KO trigger (Exp. Share) is silenced too — the scan is no longer ungated", () => {
     let board = table();
     board = benchFromDeck(ensureInDeck(board, "p2", WALL), "p2", WALL);
     board = attachToolFromDeck(ensureInDeck(board, "p2", EXP_SHARE), "p2", 0, EXP_SHARE);
@@ -367,7 +349,7 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     expect(koToolTriggersOf(stadium(board, JAMMING[0]), "p2", koed)).toEqual([]);
   });
 
-  it("🛑 R-JT — the COUNT reads stand: tools in play, the Active-has-a-Tool condition, and the §7.4 one-Tool cap", () => {
+  it("R-JT — the COUNT reads stand: tools in play, the Active-has-a-Tool condition, and the §7.4 one-Tool cap", () => {
     const board = stadium(table({ tool: AIR_BALLOON, oppTool: AIR_BALLOON }), JAMMING[0]);
     expect(countToolsInPlay(board, "p1")).toBe(1);
     expect(conditionHolds(board, "p1", { kind: "yourActiveHasToolAttached" })).toBe(true);
@@ -380,7 +362,7 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
     );
   });
 
-  it("🛑 replaced by another Stadium, the Tools work again (a live read, nothing stamped)", () => {
+  it("replaced by another Stadium, the Tools work again (a live read, nothing stamped)", () => {
     const board = stadium(table({ tool: AIR_BALLOON, active: WALL }), JAMMING[0]);
     expect(effectiveRetreatCost(board, active(board, "p1"))).toBe(3);
     const { state } = play(board, FESTIVAL[0]);
@@ -390,7 +372,7 @@ describe("D562 stadiums §2 — Jamming Tower: every Tool EFFECT walk stops, eve
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, both boards (R-FG)", () => {
-  it('🛑 "can\'t be affected": an opposing Active WITH Energy refuses the condition (one STATUS_PREVENTED)', () => {
+  it('"can\'t be affected": an opposing Active WITH Energy refuses the condition (one STATUS_PREVENTED)', () => {
     const board = stadium(table({ oppEnergy: 1 }), FESTIVAL[0]);
     const { state, events } = swing(board, CONFUSE);
     expect(all(events, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([
@@ -400,21 +382,21 @@ describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, 
     expect(active(state, "p2").conditions.rotation).toBe("none");
   });
 
-  it('🛑 WITHOUT Energy the condition lands — "that has any Energy attached"', () => {
+  it('WITHOUT Energy the condition lands — "that has any Energy attached"', () => {
     const { events } = swing(stadium(table(), FESTIVAL[0]), TOXIC);
     expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([
       ["p2", "poisoned"],
     ]);
   });
 
-  it("🛑 \"both yours and your opponent's\" — the attacker's OWN self-inflicted Sleep is refused too", () => {
+  it("\"both yours and your opponent's\" — the attacker's OWN self-inflicted Sleep is refused too", () => {
     const { events } = swing(stadium(table(), FESTIVAL[0], "p2"), REST);
     expect(all(events, "STATUS_PREVENTED").map((e) => [e.seat, e.status])).toEqual([
       ["p1", "asleep"],
     ]);
   });
 
-  it('🛑 "recovers from ALL" — PLAYING it clears every condition on each Energy-carrying Active, both boards', () => {
+  it('"recovers from ALL" — PLAYING it clears every condition on each Energy-carrying Active, both boards', () => {
     let board = table({ oppEnergy: 1 });
     board = setConditions(board, "p2", { poisonDamage: 10, burned: true, rotation: "asleep" });
     board = setConditions(board, "p1", { rotation: "confused" });
@@ -431,14 +413,14 @@ describe("D562 stadiums §3 — Festival Grounds: the refusal and the recovery, 
     });
   });
 
-  it("🛑 a body WITHOUT Energy keeps its conditions when it is played", () => {
+  it("a body WITHOUT Energy keeps its conditions when it is played", () => {
     const board = setConditions(table({ energy: 0 }), "p1", { burned: true });
     const { state, events } = play(board, FESTIVAL[0]);
     expect(all(events, "STATUS_CLEARED")).toEqual([]);
     expect(active(state, "p1").conditions.burned).toBe(true);
   });
 
-  it("🛑 an Energy ATTACHED while it is in play cures the body at once (the §6.2 moment)", () => {
+  it("an Energy ATTACHED while it is in play cures the body at once (the §6.2 moment)", () => {
     let board = stadium(
       setConditions(table({ energy: 0 }), "p1", { poisonDamage: 10 }),
       FESTIVAL[0],

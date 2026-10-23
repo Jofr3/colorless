@@ -18,53 +18,6 @@ import {
   types,
 } from "./testFixtures";
 
-// D221 — TEAL DANCE (Teal Mask Ogerpon ex), and the TWO FIELDS D190 REFUSED TO
-// BUILD IT WITHOUT.
-//
-// "Once during your turn, you may attach a Basic {G} Energy card from your hand
-// to this Pokémon. If you attached Energy to a Pokémon in this way, draw a card."
-//
-// ⚠️ **THE TOP ROW OF THE RANKED BACKLOG, AND THE FIRST TIME A CENSUS'S "ZERO
-// ENGINE CODE" PRICE HAS BEEN PAID TWICE.**
-// `docs/reference/coverage-backlog-legal.md` (D219) ranks this **8 Standard-legal
-// printings for "1 registry program, aliased 8 ways. Zero engine code."** — the
-// best printings-per-edit row left in the file. D190 took it as a Tier-1
-// candidate, **DROPPED it**, and named the exact two pieces the census had
-// asserted rather than measured (`registryOnlyPrograms.test.ts`'s `DROPPED`):
-//
-//   1. **A SELF TARGET.** The op's target riders were `targetType` / `basicOnly`
-//      / `ownerPokemon` / `benchOnly`, and every one of them picks out a CLASS of
-//      the controller's own Pokémon. On a board with two {G} bodies —
-//      `fix-bramble` beside the Ogerpon below — `targetType: "Grass"` offers BOTH
-//      and lets the player attach to the wrong one. "This Pokémon" is a UID
-//      question, and `ctx.sourceUid` is the only thing that answers it.
-//   2. **A `recordAs` SLOT.** The op recorded NOTHING, so the §9.2 `recordGate`
-//      the second sentence needs had nothing to read.
-//
-// Both landed here, both on `attachEnergyFrom`, and `toSelf` is deliberately the
-// SAME field name and the SAME reader (`sourceRef`) `attachFromDeck.toSelf`
-// already used for Pawmot's "Electrogenesis" — one spelling of "this Pokémon"
-// across both attach routes rather than two that can drift.
-//
-// ⚠️ WHAT THIS SUITE CAN AND CANNOT PUT RED, SAID UP FRONT (the guard rule):
-// * Replacing `sourceRef(state, ctx)` with `attachEnergyTargets(...)` — the
-//   pre-D221 line, and the mistake an author actually makes — turns the boards
-//   below RED TWICE: they hold TWO eligible bodies, so the op would PARK instead
-//   of resolving, and the bench test would attach to the wrong one.
-// * Deleting the `recordMoved` call turns the draw off: the gate reads an empty
-//   slot and the card does half of what it prints.
-// * The gate's FALSE arm is NOT reachable from the action path, and that is
-//   asserted rather than asserted around — `programPlayable` refuses the
-//   activation outright when no Basic {G} is in hand (`NO_LEGAL_TARGET`), which
-//   is the only way the attach can whiff. ⚠️ SO NO BOARD BELOW DISTINGUISHES THE
-//   GATED DRAW FROM AN UNCONDITIONAL ONE: hoisting the draw out of the gate is
-//   killed by the DECLARATION snapshot (the exact-authoring test) and by nothing
-//   else. That mutant was written as a declared `equivalent` SURVIVOR, the
-//   harness returned STALE-SURVIVOR, and the row now stands as killed with the
-//   caveat attached — a verdict that says nothing about behaviour.
-
-/** The eight Standard-legal printings, from `coverage-backlog-legal.md`'s own
-    enumeration (D219, measured against the remote D1 on 2026-08-04). */
 const TEAL_DANCE_IDS = [
   "svp-166",
   "sv06-025",
@@ -76,16 +29,8 @@ const TEAL_DANCE_IDS = [
   "sv08.5-177",
 ] as const;
 
-/** The printed sentence, byte for byte — authored against the print rather than
-    against a paraphrase (D183's class). */
 const TEAL_DANCE_TEXT =
   "Once during your turn, you may attach a Basic {G} Energy card from your hand to this Pokémon. If you attached Energy to a Pokémon in this way, draw a card.";
-
-// ── The demonstrator pool. `fix-tealdance` is a SYNTHETIC body carrying the real
-//    program: a fixture id naming a real printing must appear in
-//    `catalogManifest.ts`, which is generated off a local sqlite this clone does
-//    not have and which measures a 978-row / 6-set catalog holding none of
-//    `svp` / `sv06` / `sv08.5` anyway. D190's idiom, D190's reason. ──
 
 const LOCAL_CARDS: Record<string, Card> = {
   /** fix-tealdance — a {G} Basic with the activated Ability and nothing else.
@@ -101,10 +46,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** ⚠️ `fix-bramble` IS THE LOAD-BEARING FIXTURE HERE AND IT IS REUSED, NOT
-    WRITTEN — the FIXTURE_POOL sweep first (D196). It is a {G} Basic with no
-    Ability of its own, which is exactly the second eligible body a CLASS rider
-    would have offered and a UID target must not. */
 const DECK = deckOf({
   "fix-tealdance": 4,
   "fix-bramble": 4,
@@ -185,8 +126,6 @@ describe("D221 — the registry rows", () => {
     for (const id of TEAL_DANCE_IDS) {
       expect(programFor(id), `${id} left Teal Dance`).toBe(first);
     }
-    // A duplicated id in the list would make the count lie about the coverage
-    // this slice bought, which is the ONE number a reader carries away from it.
     expect(new Set(TEAL_DANCE_IDS).size).toBe(8);
     expect(programFor("fix-tealdance"), "the demonstrator is not Teal Dance").toBe(first);
   });
@@ -221,11 +160,6 @@ describe("D221 — the registry rows", () => {
   });
 
   it("does NOT share an object with the attach-from-hand neighbours, and leaves them unmarked", () => {
-    // ⚠️ THE MISTAKE AN AUTHOR ACTUALLY MAKES: Quaquaval's "Energy Carnival" and
-    // Baxcalibur's "Super Cold" are the same op from the same zone, and the
-    // reprint idiom says byte-identical text SHARES the object. These sentences
-    // are NOT byte-identical — a type, a self target and a second sentence apart
-    // — so sharing would silently move two other cards.
     expect(programFor("sv06-025")).not.toBe(programFor("sv01-054"));
     expect(programFor("sv06-025")).not.toBe(programFor("sv02-060"));
     // And the new fields are NOT on them: "1 of your Pokémon" is a CHOICE, and a
@@ -246,10 +180,6 @@ describe("Teal Dance — driven through the real engine", () => {
     expect(POOL["fix-bramble"]?.types).toContain("Grass");
     expect(POOL["fix-tealdance"]?.types).toContain("Grass");
 
-    // `setActiveFromDeck` DISPLACES the seated Active onto the Bench, so the
-    // Bench is emptied after it: bench[0] must be the {G} body this test is about
-    // and not whichever Basic the setup happened to seat (D213's class — a row
-    // that reads right for the wrong reason).
     let state = setActiveFromDeck(board(1), "p1", "fix-tealdance");
     state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-bramble");
     state = grassInHand(state, 1);
@@ -314,11 +244,6 @@ describe("Teal Dance — driven through the real engine", () => {
   });
 
   it("is REFUSED with no Basic {G} in hand — so the gate's FALSE arm is unreachable, and the draw can never be had for free", () => {
-    // ⚠️ THIS IS THE UNREACHABILITY PROOF, not a nicety. `programPlayable`
-    // refuses the activation when the source zone holds no matching Energy, and
-    // that is the ONLY way this attach can whiff — which is why hoisting the
-    // draw out of the gate is an EQUIVALENT mutant and is declared as one rather
-    // than tested around (D205's rule).
     let state = setActiveFromDeck(board(4), "p1", "fix-tealdance");
     state = grassInHand(state, 0);
     // A hand FULL of Energy that is not Basic {G}: the refusal is about the TYPE,

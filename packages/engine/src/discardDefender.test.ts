@@ -13,55 +13,13 @@ import {
   deckOf,
   setActiveFromDeck,
   specialEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 🆕🆕🆕 D536 — THE BODY THAT LEAVES PLAY WITHOUT BEING KNOCKED OUT.
-//
-// `censusAttackCorpus.ts` **FILE LINE 100** — *"Discard a Team Rocket's Energy from
-// this Pokémon. If you do, discard your opponent's Active Pokémon and all attached
-// cards."* — **1 sentence / 3 legal printings** (`legalAttackCorpus()` index 47,
-// leading count column `3`; Moltres ex `sv10-031` / `sv10-208` / `sv10-229`).
-//
-// ⚠️ **THE CARD IDS ARE RESOLVED ON THIS CHECKOUT AND ARE USED AS IDS** — recorded at
-// `ownerPrefix.test.ts` (the DROPPED row this slice retires) and in `effects.ts`'s
-// `returnBenched` block — but the printed BASE DAMAGE is NOT, so the number is driven
-// on a FILE-LOCAL DECLARED demonstrator, `d536-moltres`, in D534's `d534-inkay` and
-// D535's `d535-sniper` shape (D425: state unresolved, never invent).
-//
-// engine 0.420.0 → 0.421.0. ONE new anchor, ONE new arm (44c), ONE new FIELD-FREE
-// `EffectOp` member (`discardDefender`) and ONE new interpreter writer. `MATCH_RECORD_
-// VERSION` HELD at **30**, and it is held by ONE condition, not three: a new op MEMBER
-// is D125's WIDENING (no v30 deploy could write the byte `{"op":"discardDefender"}`,
-// and every byte a v30 deploy DID write still means what it meant).
-// 🛑 **THE OTHER TWO CONDITIONS THIS SUITE ONCE LISTED ARE CORRECTED, NOT DELETED
-// (D466 step 3).** *"The op never parks, so nothing it produces can reach
-// `phase.cont`"* is FALSE of the printed program: the COST parks on the reprint board
-// (§9), so the consequent rides `EffectContinuation.rest` into the persisted record —
-// D450's SECOND DOOR, measured in §10 rather than argued. And *"FIELD-FREE, so no
-// persisted union gains a member"* was wrong in its own terms — `EffectOp` IS a
-// persisted union and it just gained `discardDefender`, which is condition (1). What
-// FIELD-FREE buys is narrower and is stated that way: none of the op's OWN fields is a
-// persisted union that could gain a member, and there is no field name to rename.
-//
-// 🛑 **THE ORDERING CALL THIS SUITE OWES A RUNG (§6).** A defender left lethally
-// damaged by this attack's own printed base is DISCARDED, not Knocked Out — no Prize,
-// no `KNOCKED_OUT`, no `koRecoilOf`, no `byAttackFor` mark — and NOT ONE LINE OF CODE
-// BUYS IT (§8 checks Knock Outs LAST; `collectKnockOuts` → `planPrizes` is
-// `finishAttack`'s EPILOGUE, so a body removed DURING the program is never in the
-// batch; D435 shipped and drove the same verdict for its delayed-discard payload).
-// FREE IN CODE IS NOT FREE IN TESTS: a reading disclosed only in prose survives its
-// own deletion in silence, which is exactly the debt D535 carried forward. §6 is the
-// rung, and `D536-op-knocks-out-instead-of-discarding` is the mutant that proves the
-// decision was MADE rather than assumed.
-// ─────────────────────────────────────────────────────────────────────────────
 
 const PRINTED =
   "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.";
 
-/** The catalog's byte for the cost card. ⚠️ NOT the anchor's `['’]` class: the
-    filter's `name` is compared against `Card.name` by `matchesFilter`'s `byName` arm,
-    so what matters here is the CARD's apostrophe and not the PRINT's. */
 const TR_ENERGY_NAME = "Team Rocket's Energy";
 
 const PROGRAM: EffectOp[] = [
@@ -106,9 +64,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     types: ["Fire"],
     attacks: [
-      // ⚠️ 100 IS THIS FILE'S DECLARATION AND NOT A PRINTING'S — the base damage of
-      // the real Moltres ex is unresolved here (D425). Everything §6 asserts is
-      // about the ORDER of the discard and the KO check, not about the number.
       { cost: ["Colorless", "Colorless"], name: "Rocket Blaze", damage: 100, effect: PRINTED },
       // THE CONTROL, one index over: the SAME attacker, the SAME cost, the SAME
       // declared 100 and NO effect text — so §6's verdict is a claim about the op
@@ -172,20 +127,6 @@ const DECK = deckOf({
   [VENGEFUL]: 2,
   [FILLER]: 14,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
 
 function localSetup(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -278,8 +219,6 @@ function underStack(state: GameState, seat: Seat, cardId: string): GameState {
   };
 }
 
-/** p1's turn; `d536-moltres` Active and fuelled with `energies`; p2's Active is
-    `oppActive` and its Bench is exactly `bench`. */
 function board(
   seed: number,
   opts: {
@@ -312,20 +251,18 @@ const cardIdsIn = (state: GameState, uids: readonly string[]): string[] =>
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §1 — the CENSUS: the population this slice claims, measured", () => {
-  it("🛑 `legalAttackCorpus()` INDEX 47 is this row — the ordinal the brief names, read rather than retyped", () => {
+  it("`legalAttackCorpus()` INDEX 47 is this row — the ordinal the brief names, read rather than retyped", () => {
     expect(legalAttackCorpus()[47]).toEqual([3, PRINTED]);
   });
 
-  it("🛑 the whole-corpus `discard your opponent's Active` family is THIS ROW AND ONLY THIS ROW", () => {
-    // The population MEASURED, not impressioned: if a set ever prints a second
-    // member of this family, this rung reddens before the anchor silently misses it.
+  it("the whole-corpus `discard your opponent's Active` family is THIS ROW AND ONLY THIS ROW", () => {
     const family = legalAttackCorpus().filter(([, s]) =>
       /discard your opponent['’]s Active/i.test(s),
     );
     expect(family).toEqual([[3, PRINTED]]);
   });
 
-  it("🛑 the `Team Rocket's Energy` NOUN appears in the legal attack column twice, and the OTHER one is the bonus clause `trEnergyBonus` already reads", () => {
+  it("the `Team Rocket's Energy` NOUN appears in the legal attack column twice, and the OTHER one is the bonus clause `trEnergyBonus` already reads", () => {
     const mentions = legalAttackCorpus().filter(([, s]) => s.includes(TR_ENERGY_NAME));
     expect(mentions).toHaveLength(2);
     expect(mentions.filter(([, s]) => s === PRINTED)).toEqual([[3, PRINTED]]);
@@ -338,43 +275,41 @@ describe("D536 §1 — the CENSUS: the population this slice claims, measured", 
     expect(deriveAttackEffect(other)).toBeNull();
   });
 
-  it("🛑 the row is now RESOLVED BY A READER — the census's own predicate, which is what retires the `ownerPrefix` DROPPED row", () => {
+  it("the row is now RESOLVED BY A READER — the census's own predicate, which is what retires the `ownerPrefix` DROPPED row", () => {
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §2 — the ANCHOR: head, tail, both apostrophe slots, case", () => {
-  it("🛑 claims the printed sentence and derives a program", () => {
+  it("claims the printed sentence and derives a program", () => {
     expect(deriveAttackEffect(PRINTED)).not.toBeNull();
   });
 
-  it("🛑 BOTH apostrophe slots take the TYPOGRAPHIC form, driven with EQUALITY against the straight one", () => {
+  it("BOTH apostrophe slots take the TYPOGRAPHIC form, driven with EQUALITY against the straight one", () => {
     const rocket = PRINTED.replace("Rocket's", "Rocket’s");
     const opponent = PRINTED.replace("opponent's", "opponent’s");
     const both = rocket.replace("opponent's", "opponent’s");
     expect(rocket).not.toBe(PRINTED);
     expect(opponent).not.toBe(PRINTED);
-    // EQUALITY, not "not null": a class on one slot only is an anchor that reads half
-    // a typographic printing, and two `not.toBeNull()`s could not tell them apart.
     expect(deriveAttackEffect(rocket)).toEqual(PROGRAM);
     expect(deriveAttackEffect(opponent)).toEqual(PROGRAM);
     expect(deriveAttackEffect(both)).toEqual(PROGRAM);
   });
 
-  it("🛑 anchored at BOTH ends — a head or a tail is refused", () => {
+  it("anchored at BOTH ends — a head or a tail is refused", () => {
     expect(deriveAttackEffect(`This attack does 100 damage. ${PRINTED}`)).toBeNull();
     expect(deriveAttackEffect(`${PRINTED} Then, draw a card.`)).toBeNull();
     // …and the leading/trailing whitespace `deriveAttackEffect` trims is NOT a head.
     expect(deriveAttackEffect(`  ${PRINTED}  `)).toEqual(PROGRAM);
   });
 
-  it("🛑 NO `/i` — the printed capitalisation is the sentence", () => {
+  it("NO `/i` — the printed capitalisation is the sentence", () => {
     expect(deriveAttackEffect(PRINTED.toLowerCase())).toBeNull();
     expect(deriveAttackEffect(PRINTED.toUpperCase())).toBeNull();
   });
 
-  it("🛑 near misses, ONE axis each (D427)", () => {
+  it("near misses, ONE axis each (D427)", () => {
     const misses = [
       // the NOUN
       PRINTED.replace("Team Rocket's Energy", "Special Energy"),
@@ -397,19 +332,16 @@ describe("D536 §2 — the ANCHOR: head, tail, both apostrophe slots, case", () 
     }
   });
 
-  it("🛑 ONE all-640 predicate LOOSER than the anchor (D425): every row opening `Discard a` that this arm claims is this row", () => {
+  it("ONE all-640 predicate LOOSER than the anchor (D425): every row opening `Discard a` that this arm claims is this row", () => {
     const loose = legalAttackCorpus().filter(([, s]) => s.startsWith("Discard a"));
     expect(loose.length).toBeGreaterThan(1);
-    // ⚠️ THE OP IS NOT TOP-LEVEL: it is the gate's `then`, so a `some` over the
-    // program's own members finds nothing. The predicate reads the WHOLE derived
-    // program, which is also what makes it looser than the anchor.
     const mine = loose.filter(([, s]) =>
       JSON.stringify(deriveAttackEffect(s) ?? []).includes('"discardDefender"'),
     );
     expect(mine).toEqual([[3, PRINTED]]);
   });
 
-  it("🛑 and NO row in the whole 640 derives `discardDefender` except this one", () => {
+  it("and NO row in the whole 640 derives `discardDefender` except this one", () => {
     const all = legalAttackCorpus().filter(([, s]) =>
       (deriveAttackEffect(s) ?? []).some(
         (op) => op.op === "discardDefender" || JSON.stringify(op).includes('"discardDefender"'),
@@ -421,12 +353,12 @@ describe("D536 §2 — the ANCHOR: head, tail, both apostrophe slots, case", () 
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`", () => {
-  it("🛑 EXACTLY the two-op program, byte for byte", () => {
+  it("EXACTLY the two-op program, byte for byte", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
     expect(deriveAttackEffect(PRINTED)).toHaveLength(2);
   });
 
-  it("🛑 the COST carries NO `count` — absent is the printed article `a`, not a default (D426)", () => {
+  it("the COST carries NO `count` — absent is the printed article `a`, not a default (D426)", () => {
     const cost = (deriveAttackEffect(PRINTED) ?? [])[0] as Record<string, unknown>;
     expect(Object.keys(cost).sort()).toEqual(["filter", "from", "op", "recordAs"]);
     expect("count" in cost).toBe(false);
@@ -440,15 +372,12 @@ describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`
     ]);
   });
 
-  it("🛑 the GATE reads `discarded`, which is the FIRST shipped `recordGate` on that slot", () => {
+  it("the GATE reads `discarded`, which is the FIRST shipped `recordGate` on that slot", () => {
     const gate = (deriveAttackEffect(PRINTED) ?? [])[1] as Record<string, unknown>;
     expect(gate.op).toBe("recordGate");
     expect(gate.slot).toBe("discarded");
     expect(gate.then).toEqual([{ op: "discardDefender" }]);
     expect("otherwise" in gate).toBe(false);
-    // ⚠️ A STRUCTURAL CLAIM ABOUT A POPULATION, so it is MEASURED and will go stale
-    // like a count (D535's own unforecast finding): every OTHER `recordGate` this
-    // file authors reads `paid` or `moved`.
     const slots = legalAttackCorpus()
       .flatMap(([, s]) => deriveAttackEffect(s) ?? [])
       .filter((op): op is Extract<EffectOp, { op: "recordGate" }> => op.op === "recordGate")
@@ -457,7 +386,7 @@ describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`
     expect(slots.filter((s) => s === "discarded")).toHaveLength(1);
   });
 
-  it("🛑 the FILTER is `byName` at the CATALOG's straight apostrophe, and the fixture's name agrees LIVE", () => {
+  it("the FILTER is `byName` at the CATALOG's straight apostrophe, and the fixture's name agrees LIVE", () => {
     const cost = (deriveAttackEffect(PRINTED) ?? [])[0] as {
       filter: { kind: string; name: string };
     };
@@ -475,7 +404,7 @@ describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §4 — the COST: one Team Rocket's Energy, and nothing else", () => {
-  it("🛑 the TR Energy comes off the attacker and the PLAIN Energy SURVIVES", () => {
+  it("the TR Energy comes off the attacker and the PLAIN Energy SURVIVES", () => {
     const start = board(SEED, { energies: [TR_ENERGY, PLAIN_ENERGY] });
     const { state } = attack(start);
     const active = state.players.p1.active;
@@ -484,7 +413,7 @@ describe("D536 §4 — the COST: one Team Rocket's Energy, and nothing else", ()
     expect(cardIdsIn(state, state.players.p1.discard)).toEqual([TR_ENERGY]);
   });
 
-  it("🛑 a card whose name CONTAINS the noun is NOT the cost — the `byName` equality, on a board", () => {
+  it("a card whose name CONTAINS the noun is NOT the cost — the `byName` equality, on a board", () => {
     const start = board(SEED, { energies: [NOT_TR_ENERGY, PLAIN_ENERGY] });
     const { state } = attack(start);
     // No Team Rocket's Energy attached ⇒ empty slot ⇒ nothing discarded at all.
@@ -495,7 +424,7 @@ describe("D536 §4 — the COST: one Team Rocket's Energy, and nothing else", ()
     expect(state.players.p2.active).not.toBeNull();
   });
 
-  it("🛑 exactly ONE comes off a board carrying TWO — the printed article, driven", () => {
+  it("exactly ONE comes off a board carrying TWO — the printed article, driven", () => {
     const start = board(SEED, { energies: [TR_ENERGY, TR_ENERGY] });
     const { state } = attack(start);
     expect(cardIdsIn(state, state.players.p1.active?.energy ?? [])).toEqual([TR_ENERGY]);
@@ -505,7 +434,7 @@ describe("D536 §4 — the COST: one Team Rocket's Energy, and nothing else", ()
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §5 — the WHIFF: no Team Rocket's Energy ⇒ the §9.2 gate does not hold", () => {
-  it("🛑 the defender is STILL ON THE BOARD and the printed damage still landed", () => {
+  it("the defender is STILL ON THE BOARD and the printed damage still landed", () => {
     const start = board(SEED, { energies: [PLAIN_ENERGY, PLAIN_ENERGY] });
     const { state, events } = attack(start);
     expect(state.players.p2.active).not.toBeNull();
@@ -516,17 +445,13 @@ describe("D536 §5 — the WHIFF: no Team Rocket's Energy ⇒ the §9.2 gate doe
     expect(state.players.p1.discard).toHaveLength(0);
   });
 
-  it("🛑 …and the SAME board WITH the Energy discards it, which is what makes the whiff a claim about the gate", () => {
+  it("…and the SAME board WITH the Energy discards it, which is what makes the whiff a claim about the gate", () => {
     const start = board(SEED, { energies: [TR_ENERGY, PLAIN_ENERGY] });
     const { state } = attack(start);
     expect(state.players.p2.active).toBeNull();
   });
 
-  it("🛑 the whiff is symmetric — p2 attacking p1 whiffs the same way", () => {
-    // The op reads `otherSeat(ctx.seat)`, so the seat is not baked in. Driven from the
-    // other side of the table rather than argued.
-    // ⚠️ p2 GOES FIRST in `localSetup`, and §5.2 bars the first player's FIRST-turn
-    // attack — so the mirror runs on p2's SECOND turn, two `endTurn`s in.
+  it("the whiff is symmetric — p2 attacking p1 whiffs the same way", () => {
     const mirror = (energies: readonly string[]): GameState => {
       let state = localSetup(SEED);
       state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -561,13 +486,13 @@ describe("D536 §5 — the WHIFF: no Team Rocket's Energy ⇒ the §9.2 gate doe
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D536 §6 — 🛑 THE ORDERING: a lethally damaged defender is DISCARDED, not Knocked Out", () => {
+describe("D536 §6 — THE ORDERING: a lethally damaged defender is DISCARDED, not Knocked Out", () => {
   /** `TINY` has 60 HP and the demonstrator's declared base is 100, so the defender
       is LETHALLY DAMAGED before the program's second op runs. */
   const lethalBoard = (energies: readonly string[]) =>
     board(SEED, { oppActive: TINY, bench: [BENCHY, FILLER], energies });
 
-  it("🛑 NO Prize is taken — the attacker's prizes are UNCHANGED", () => {
+  it("NO Prize is taken — the attacker's prizes are UNCHANGED", () => {
     const start = lethalBoard([TR_ENERGY, PLAIN_ENERGY]);
     const before = start.players.p1.prizes.length;
     const { state } = attack(start);
@@ -575,7 +500,7 @@ describe("D536 §6 — 🛑 THE ORDERING: a lethally damaged defender is DISCARD
     expect(state.players.p1.prizes).toHaveLength(6);
   });
 
-  it("🛑 NO `KNOCKED_OUT` and NO `PRIZES_OWED` event — a `POKEMON_RETURNED{dest:'discard'}` instead", () => {
+  it("NO `KNOCKED_OUT` and NO `PRIZES_OWED` event — a `POKEMON_RETURNED{dest:'discard'}` instead", () => {
     const { events } = attack(lethalBoard([TR_ENERGY, PLAIN_ENERGY]));
     expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(0);
     expect(events.filter((e) => e.type === "PRIZES_OWED")).toHaveLength(0);
@@ -584,7 +509,7 @@ describe("D536 §6 — 🛑 THE ORDERING: a lethally damaged defender is DISCARD
     expect(returned[0]).toMatchObject({ seat: "p2", actor: "p1", dest: "discard" });
   });
 
-  it("🛑 THE CONTROL, one attack index over: the SAME 100 on the SAME board with NO effect text DOES pay the Prize", () => {
+  it("THE CONTROL, one attack index over: the SAME 100 on the SAME board with NO effect text DOES pay the Prize", () => {
     const { state, events } = attack(lethalBoard([TR_ENERGY, PLAIN_ENERGY]), 1);
     expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(1);
     // …and the TR Energy is still attached, because attack 1 has no effect at all.
@@ -593,7 +518,7 @@ describe("D536 §6 — 🛑 THE ORDERING: a lethally damaged defender is DISCARD
     );
   });
 
-  it("🛑 a Vengeful Punch `sv03-197` on the DISCARDED defender pays NO `koRecoilOf` — the half a prose-only reading would have lost", () => {
+  it("a Vengeful Punch `sv03-197` on the DISCARDED defender pays NO `koRecoilOf` — the half a prose-only reading would have lost", () => {
     let start = lethalBoard([TR_ENERGY, PLAIN_ENERGY]);
     start = tool(start, "p2", VENGEFUL);
     const { state } = attack(start);
@@ -601,14 +526,14 @@ describe("D536 §6 — 🛑 THE ORDERING: a lethally damaged defender is DISCARD
     expect(state.players.p1.active?.damage).toBe(0);
   });
 
-  it("🛑 THE CONTROL for the recoil: the SAME Tool, the SAME board, the ordinary damage Knock Out one index over PAYS 40", () => {
+  it("THE CONTROL for the recoil: the SAME Tool, the SAME board, the ordinary damage Knock Out one index over PAYS 40", () => {
     let start = lethalBoard([TR_ENERGY, PLAIN_ENERGY]);
     start = tool(start, "p2", VENGEFUL);
     const { state } = attack(start, 1);
     expect(state.players.p1.active?.damage).toBe(40);
   });
 
-  it("🛑 no `koByEffect` marker is stamped anywhere — the body left play, it was never made lethal BY AN EFFECT", () => {
+  it("no `koByEffect` marker is stamped anywhere — the body left play, it was never made lethal BY AN EFFECT", () => {
     const { state } = attack(lethalBoard([TR_ENERGY, PLAIN_ENERGY]));
     const markers = [
       ...(state.players.p2.active === null ? [] : state.players.p2.active.markers),
@@ -620,7 +545,7 @@ describe("D536 §6 — 🛑 THE ORDERING: a lethally damaged defender is DISCARD
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §7 — the BOARD: the spot, the pile, the stack and the promotion", () => {
-  it("🛑 the opponent's Active spot is EMPTY and every attached card is in the OPPONENT'S OWN pile, in §2 order", () => {
+  it("the opponent's Active spot is EMPTY and every attached card is in the OPPONENT'S OWN pile, in §2 order", () => {
     let start = board(SEED, { oppActive: WALL, bench: [BENCHY, FILLER] });
     start = underStack(start, "p2", STAGE1);
     start = fuel(start, "p2", [PLAIN_ENERGY]);
@@ -638,7 +563,7 @@ describe("D536 §7 — the BOARD: the spot, the pile, the stack and the promotio
     expect(returned).toMatchObject({ uid: body?.stack.at(-1), uids: expected });
   });
 
-  it("🛑 a `promote` stage is queued for p2 IN FRONT OF the turn tail", () => {
+  it("a `promote` stage is queued for p2 IN FRONT OF the turn tail", () => {
     const { state } = attack(board(SEED, { oppActive: WALL, bench: [BENCHY, FILLER] }));
     const kinds = state.pending.map((s) => s.kind);
     expect(kinds).toContain("promote");
@@ -649,14 +574,14 @@ describe("D536 §7 — the BOARD: the spot, the pile, the stack and the promotio
     expect(tail).toBeGreaterThan(promote);
   });
 
-  it("🛑 a Bench of ONE auto-resolves — the promotion is total, and it is §8.1's and not this op's", () => {
+  it("a Bench of ONE auto-resolves — the promotion is total, and it is §8.1's and not this op's", () => {
     const { state } = attack(board(SEED, { oppActive: WALL, bench: [BENCHY] }));
     expect(state.players.p2.active).not.toBeNull();
     expect(state.cardIdByUid[state.players.p2.active?.stack.at(-1) ?? ""]).toBe(BENCHY);
     expect(state.players.p2.bench).toHaveLength(0);
   });
 
-  it("🛑 §14.2 — an opponent with an EMPTY Bench LOSES", () => {
+  it("§14.2 — an opponent with an EMPTY Bench LOSES", () => {
     const { state } = attack(board(SEED, { oppActive: WALL, bench: [] }));
     expect(state.phase.kind).toBe("gameOver");
     if (state.phase.kind !== "gameOver") return;
@@ -666,7 +591,7 @@ describe("D536 §7 — the BOARD: the spot, the pile, the stack and the promotio
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §8 — §11: the op is refused WHOLE, and the printed cost stays paid", () => {
-  it("🛑 a `prevent all effects of attacks` defender keeps its body, and the refusal is ANNOUNCED", () => {
+  it("a `prevent all effects of attacks` defender keeps its body, and the refusal is ANNOUNCED", () => {
     const start = board(SEED, { oppActive: UNAWARE, bench: [BENCHY, FILLER] });
     const { state, events } = attack(start);
     expect(state.players.p2.active).not.toBeNull();
@@ -675,14 +600,14 @@ describe("D536 §8 — §11: the op is refused WHOLE, and the printed cost stays
     expect(events.filter((e) => e.type === "POKEMON_RETURNED")).toHaveLength(0);
   });
 
-  it("🛑 …and the Energy cost is STILL PAID — the printed cost does not un-pay because the consequent was refused", () => {
+  it("…and the Energy cost is STILL PAID — the printed cost does not un-pay because the consequent was refused", () => {
     const start = board(SEED, { oppActive: UNAWARE, bench: [BENCHY, FILLER] });
     const { state } = attack(start);
     expect(cardIdsIn(state, state.players.p1.discard)).toEqual([TR_ENERGY]);
     expect(cardIdsIn(state, state.players.p1.active?.energy ?? [])).toEqual([PLAIN_ENERGY]);
   });
 
-  it("🛑 §11 is a GUARD and not a filter — the SAME shield on the SAME board takes the DAMAGE (damage is not an effect)", () => {
+  it("§11 is a GUARD and not a filter — the SAME shield on the SAME board takes the DAMAGE (damage is not an effect)", () => {
     const start = board(SEED, { oppActive: UNAWARE, bench: [BENCHY, FILLER] });
     const { state } = attack(start);
     expect(state.players.p2.active?.damage).toBe(100);
@@ -691,39 +616,21 @@ describe("D536 §8 — §11: the op is refused WHOLE, and the printed cost stays
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an OWED one", () => {
-  it("🛑 TWO COPIES OF THE SAME PRINT do not park — one interchangeability class, forced", () => {
+  it("TWO COPIES OF THE SAME PRINT do not park — one interchangeability class, forced", () => {
     const start = board(SEED, { energies: [TR_ENERGY, TR_ENERGY, PLAIN_ENERGY] });
     const { state } = attack(start);
-    // ⚠️ THIS RUNG HOLDS ON THE *IDS*, NOT ON THE NAME, and the difference is the
-    // whole finding of §9 (corrected in place, D466 step 3; the price's own words
-    // are kept at `effects.ts`'s doc block as history). Both copies here are the
-    // SAME printed id, so `interchangeableCandidates` — which keys on
-    // `card:${id}` — sees ONE class, cap 1, and `forcedDiscards`' `"total"` arm
-    // auto-resolves at `discardable.length <= count`: no prompt at all.
-    // 🛑 THE SLICE'S PRICE GENERALISED THAT TO THE NAME — "`Team Rocket's Energy`
-    // has ONE printed id, so it can never park" — and the catalog says otherwise:
-    // `sv10-182` is REPRINTED as `me2pt5-217`. The rung TWO below PARKS on that
-    // board, which is why the ≈10-line describer contingency is not a contingency
-    // at all but OWED and SHIPPED — one `describeBranch` case and, measured,
-    // ZERO `describeCondition` bytes (pinned at the end of this section).
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(state.players.p2.active).toBeNull();
   });
 
-  it("🛑 …and a board carrying TWO DIFFERENT prints of Energy still does not park, because only one of them matches", () => {
+  it("…and a board carrying TWO DIFFERENT prints of Energy still does not park, because only one of them matches", () => {
     const start = board(SEED, { energies: [TR_ENERGY, NOT_TR_ENERGY, PLAIN_ENERGY] });
     const { state } = attack(start);
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(cardIdsIn(state, state.players.p1.discard)).toEqual([TR_ENERGY]);
   });
 
-  it("🛑 THE MEASUREMENT THE PRICE GOT WRONG: a SECOND PRINTED ID under the SAME NAME MAKES IT PARK — and the catalog HAS one", () => {
-    // 🛑 THE SLICE'S OWN PRICE ARGUED THIS COULD NOT HAPPEN, on the premise that
-    // `Team Rocket's Energy` has ONE printed id. `index.ts` records the opposite in
-    // its own words — `sv10-182`, **reprinted `me2pt5-217`** — so the premise was
-    // false when it was written, and the ≈10-line describer contingency it priced
-    // as a contingency is OWED. This rung is what turned the argument into a
-    // measurement (D446: a predicted SHAPE is not the measurement that predicted it).
+  it("THE MEASUREMENT THE PRICE GOT WRONG: a SECOND PRINTED ID under the SAME NAME MAKES IT PARK — and the catalog HAS one", () => {
     const start = board(SEED, { energies: [TR_ENERGY, TR_ENERGY_REPRINT, PLAIN_ENERGY] });
     const { state } = attack(start);
     expect(POOL[TR_ENERGY_REPRINT]?.name).toBe(TR_ENERGY_NAME);
@@ -736,7 +643,7 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
     expect(state.players.p2.active).not.toBeNull();
   });
 
-  it("🛑 the PARKED CAPTION carries the printed consequent — D515's defect, driven byte for byte", () => {
+  it("the PARKED CAPTION carries the printed consequent — D515's defect, driven byte for byte", () => {
     const start = board(SEED, { energies: [TR_ENERGY, TR_ENERGY_REPRINT, PLAIN_ENERGY] });
     const { state } = attack(start);
     if (state.phase.kind !== "effect:choose") throw new Error(`not parked: ${state.phase.kind}`);
@@ -749,7 +656,7 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
     );
   });
 
-  it("🛑 …and the answer RESOLVES the gate: picking the matching Energy discards the defender", () => {
+  it("…and the answer RESOLVES the gate: picking the matching Energy discards the defender", () => {
     const start = board(SEED, { energies: [TR_ENERGY, TR_ENERGY_REPRINT, PLAIN_ENERGY] });
     const parked = attack(start).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
@@ -775,46 +682,20 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §10 — the PERSISTED bytes, both directions", () => {
-  it("🛑 the op is FIELD-FREE — `Object.keys` as a LITERAL key set", () => {
+  it("the op is FIELD-FREE — `Object.keys` as a LITERAL key set", () => {
     const gate = (deriveAttackEffect(PRINTED) ?? [])[1] as { then: EffectOp[] };
     const op = gate.then[0] as Record<string, unknown>;
     expect(Object.keys(op)).toEqual(["op"]);
     expect(op).toEqual({ op: "discardDefender" });
   });
 
-  it("🛑 the op ITSELF never parks — no new `PendingStage` inhabitant, no new `EffectPrompt` value, and on a NON-PARKING board nothing new reaches `phase.cont`", () => {
-    // ⚠️ **THE SCOPE IS THE CLAIM** (D423). This rung was titled *"the op NEVER PARKS,
-    // so nothing new can reach `phase.cont` — asserted on the whole printed run"* and
-    // that title was FALSE of the printed run: `board()`'s default fuel is ONE
-    // interchangeability class of Team Rocket's Energy, so the COST is forced and this
-    // particular run never parks. What is measured here is exactly that — the op adds
-    // no `PendingStage` inhabitant and no `EffectPrompt` value of its own, and on a
-    // NON-PARKING board no continuation is written at all. The printed program on the
-    // REPRINT board says something different, and the rung below measures it.
+  it("the op ITSELF never parks — no new `PendingStage` inhabitant, no new `EffectPrompt` value, and on a NON-PARKING board nothing new reaches `phase.cont`", () => {
     const { state } = attack(board(SEED, { oppActive: WALL, bench: [BENCHY, FILLER] }));
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(JSON.stringify(state)).not.toContain("discardDefender");
   });
 
-  it("🛑 …and D450's SECOND DOOR IS OPEN: the PARKED run writes `discardDefender` into `phase.cont.rest` — and 30 still holds, on condition (1) ALONE", () => {
-    // 🛑 **THE CORRECTION, RECORDED RATHER THAN QUIETLY MADE (D466 step 3)** — and it
-    // is §9's finding arriving a SECOND time: the cost parks, so the consequent is
-    // PERSISTED. `docs/conventions.md` (D450): *"`rest` is the second door and it is
-    // the one that gets forgotten … an op that never parks is still persisted if any
-    // shipped program places it behind one. So 'does this op park?' is not the
-    // question. The question is 'can any producer put this op into a written
-    // continuation?'"* — and THIS program is that producer. The serialized alphabet
-    // DOES grow: `{"op":"discardDefender"}` reaches
-    // `MatchRecord.state.phase.cont.rest` on the very board §9 drives.
-    //
-    // ✅ **AND `MATCH_RECORD_VERSION` 30 STILL HOLDS — on condition (1) ALONE, D125's
-    // WIDENING**, which is `discardStadium`'s recorded precedent (`effects.ts`) and
-    // `scheduleDiscard`'s: no v30 deploy could WRITE that byte, because no v30 deploy
-    // had the member; and every byte string a v30 deploy DID write still means exactly
-    // what it meant. `recordGate.then` is typed `EffectOp[]` and could already hold
-    // this member the day v30 was written. The version answer never depended on the
-    // reachability half — which is why the half that was wrong is corrected here
-    // instead of being paid for with a bump.
+  it("…and D450's SECOND DOOR IS OPEN: the PARKED run writes `discardDefender` into `phase.cont.rest` — and 30 still holds, on condition (1) ALONE", () => {
     const start = board(SEED, { energies: [TR_ENERGY, TR_ENERGY_REPRINT, PLAIN_ENERGY] });
     const { state } = attack(start);
     const phase = state.phase;

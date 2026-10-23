@@ -20,29 +20,8 @@ import {
   trainerCard,
   typedEnergy,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D554 — NINE DECK-SEARCH TRAINERS, 15 PRINTINGS, ZERO VOCABULARY ────────
-//
-// The 2026-09-25 coverage audit's "deck-search variants" cluster, the part every op,
-// filter, rider and gate of which already ships. One registry object per printed
-// text (D199), reprints share it:
-//
-//   Hilda                      sv10.5w-084/-164/-171  Supporter  also: Evolution + Energy
-//   Colress's Tenacity         sv06.5-057/-087        Supporter  also: Stadium + Energy
-//   Cyrano                     sv08-170/-230          Supporter  up to 3 Pokémon ex
-//   Hyper Aroma                sv06-152               Item (ACE) up to 3 Stage 1 Pokémon
-//   Team Rocket's Transceiver  sv10-178               Item       a "Team Rocket" Supporter
-//   Energy Search Pro          sv08-176               Item (ACE) any number, different types
-//   Precious Trolley           sv08-185               Item (ACE) any number of Basics → Bench
-//   Boxed Order                sv05-143               Item       up to 2 Items, YOUR TURN ENDS
-//   Cassiopeia                 sv06.5-056/-086/-094   Supporter  only as the last card; 2 cards
-//
-// Real ids on a LOCAL `cardPool` (D275), no `fix-*` demonstrator. The Team Rocket
-// negatives ride D510's shared fixtures (`fix-trsupporter`, `fix-trgrunt` — positives;
-// `fix-trtransceiver` — the program-free Item that shares the real card's NAME, the
-// head-noun control). Every program is driven playTrainer → effect:choose →
-// resolveEffect.
 
 const HILDA_TEXT =
   "Search your deck for an Evolution Pokémon and an Energy card, reveal them, and put them into your hand. Then, shuffle your deck.";
@@ -168,11 +147,6 @@ const DECK = deckOf({
   [TR_GRUNT]: 2,
   [TR_ITEM]: 2,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 const isBasic = (id: string) => POOL[id]?.category === "Pokemon" && POOL[id]?.stage === "Basic";
 
@@ -594,7 +568,6 @@ describe("D554 §3 — Hilda and Colress's Tenacity: one of each noun, declinabl
       [sorted(evo), 1],
       [sorted(energy), 1],
     ]);
-    // anyEnergy includes Special Energy (D554 reading); a Basic Pokémon is not an Evolution.
     expect(prompt.candidates.some((u) => state.cardIdByUid[u] === SPECIAL)).toBe(true);
     expect(prompt.candidates.some((u) => state.cardIdByUid[u] === FILLER)).toBe(false);
   });
@@ -743,8 +716,6 @@ describe("D554 §6 — Energy Search Pro: any number, one per type", () => {
     const fire = deckUids(before, (id) => id === FIRE);
     const water = deckUids(before, (id) => id === WATER);
     expect(sorted(prompt.candidates)).toEqual(sorted([...fire, ...water]));
-    // D514's standing shape: "any" resolves against the group's own matches, so the
-    // ceiling is the Basic Energy COUNT, not the TYPE count — the caps bound the answer.
     expect(prompt.max).toBe(fire.length + water.length);
     expect(prompt.max).toBeGreaterThan(2);
     // One cell per TYPE the deck holds (the cells follow deck order), each capped at 1.
@@ -793,7 +764,7 @@ describe("D554 §7 — Precious Trolley: any number of Basics, clamped to the Be
     expect(searched !== undefined && "reveal" in searched).toBe(false);
   });
 
-  it("🛑 on a FULL Bench it is still PLAYABLE, parks nothing, and the shuffle runs (Nest Ball doctrine)", () => {
+  it("on a FULL Bench it is still PLAYABLE, parks nothing, and the shuffle runs (Nest Ball doctrine)", () => {
     const prep = (s: GameState) => {
       let out = s;
       for (let i = 0; i < 5; i++) out = benchFromDeck(out, "p1", FILLER);

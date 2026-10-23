@@ -6,26 +6,7 @@ import { CATALOG_MANIFEST as M } from "./catalogManifest";
 import type { GameState } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard } from "./testFixtures";
-
-// ── 🆕🆕🆕 D582 — THE MEGA EVOLUTION SERIE'S REPRINT-ALIAS TIER ──
-//
-// D190's idiom on the `me` serie: a `me` printing whose text is ALREADY built on a registry id
-// is keyed to that id's program OBJECT (`toBe`, never a copy), with no new op, field or object.
-// Measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07: every
-// `legal_standard = 1` row of `serie_id = 'me'` joined against every registry id's own row —
-//
-//   • "face"    — a Trainer / Special Energy whose whole printed face is the twin's: `effect`,
-//                 `trainer_type`, `energy_type`, `hp`, `abilities_json`, `attacks_json`, and the
-//                 ACE SPEC rarity. 56 rows (54 Trainers, 2 Special Energy).
-//   • "pokemon" — a Pokémon whose `abilities_json` is the twin's (Ability NAMES and texts), whose
-//                 attacks at every index the twin's program authors are the twin's, and whose
-//                 program names no Ability but the printed one. 32.
-//   • "text"    — a Pokémon whose one Ability prints the twin's TEXT under another NAME, kept only
-//                 where the twin's program is a bare `passive` that names no Ability. 11.
-//
-// The printed bytes live in the LOCAL D1 and in this table's provenance; no `me` row is a fixture
-// (the manifest's fixture slice is the six-set one), so this file pins the RELATION and the counts.
+import { FIXTURE_POOL, battler, deckOf, trainerCard, must } from "./testFixtures";
 
 /** [me id, twin id, tier, printed name] — the twin is the WARRANT. */
 const ALIASES: readonly (readonly [string, string, "face" | "pokemon" | "text", string])[] = [
@@ -130,28 +111,8 @@ const ALIASES: readonly (readonly [string, string, "face" | "pokemon" | "text", 
   ["30th-033", "sv06-020", "text", "Pikachu"],
 ];
 
-/** The `me` printings that print a built TEXT and were deliberately NOT aliased, with why. */
-const NOT_ALIASED: readonly (readonly [string, string])[] = [
-  // The twin's program NAMES its Ability, so the alias would log the wrong name: a renamed copy.
-  // [🆕🆕🆕 D584: ~~Cinccino ex `me04-073` / `-105` / `-119`~~ and ~~Turtonator `me03-017`~~ are KEYED at
-  // D584 on the renamed copies `SMOOTH_COAT` / `SHELL_SPIKES` (reprintAliasMeD584.test.ts).]
-  // The twin's TEXT and Ability name match, but the twin's program does not: Heatran `sv06-123`
-  // ("Incandescent Body") is a D190 alias of Armarouge's SCORCHING_ARMOR, which logs "Scorching
-  // Armor" (`triggered[0].name`). The defect is inherited from D190; D582 does not copy it further.
-  // [🆕🆕🆕 D584: ~~Numel `me02.5-027` / `-223`~~ are KEYED at D584 on `INCANDESCENT_BODY`, and
-  // Heatran moved there too — the defect is fixed.]
-  // The face differs in `energy_type`: tcgdex tags the `me` row Normal, the `sv` twin Special.
-  // [🆕🆕🆕 D583 (D539): ~~Team Rocket's Energy `me02.5-217`~~ is ALIASED at D583 — cards.ts reads a Special
-  // Energy off its printed text, so the tag no longer separates the faces (specialEnergyTagD583.test.ts §4).]
-  // A registry ATTACK sentence at another INDEX under another attack NAME: a new object each.
-  // [🆕🆕🆕 D593: ~~Drifblim `mep-006`~~, ~~Meowth ex `me03-062` / `-107` / `-121`~~ and ~~Emolga
-  // `me04-030`~~ are KEYED at D593 on the new `BALLOON_RETURN` / `TUCK_TAIL` / `SKY_RETURN` (Fade Out's
-  // op at each printed index; clauseRowsMeD593.test.ts). Meowth ex's Last-Ditch Catch is still unbuilt. [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)]]
-  // [🆕🆕🆕 D584: ~~Drifloon `30th-073` / `-136`~~ (Float Up idx 0 ~ Gholdengo's Surf Back idx 1) are
-  // KEYED at D584 on the new `FLOAT_UP` (Surf Back's ops at index 0).]
-];
+const NOT_ALIASED: readonly (readonly [string, string])[] = [];
 
-/** 🆕🆕🆕 D584 — the `me` ids the D584 tier 2 keys (reprintAliasMeD584.test.ts pins each one). */
 const KEYED_AT_D584 = [
   "me02.5-213",
   "me02.5-264",
@@ -173,7 +134,6 @@ const KEYED_AT_D584 = [
   "30th-136",
 ];
 
-/** 🆕🆕🆕 D585 — the `me` ids WP19's parameter copies key (paramCopiesMeD585.test.ts pins each one). */
 const KEYED_AT_D585 = [
   "me03-024",
   "me03-092",
@@ -196,10 +156,8 @@ const KEYED_AT_D585 = [
   "mep-075",
 ];
 
-/** 🆕🆕🆕 D586 — the `me` ids WP03 keys: Carbink "Double Type" (conditionRowsMeD586.test.ts pins the face). */
 const KEYED_AT_D586 = ["me02.5-117", "me02.5-242"];
 
-/** 🆕🆕🆕 D587 — the `me` ids WP04 keys: nine Trainer texts (trainerParamsMeD587.test.ts pins each face). */
 const KEYED_AT_D587 = [
   "me02-094",
   "me03-117",
@@ -222,7 +180,6 @@ const KEYED_AT_D587 = [
   "me01-126",
 ];
 
-/** 🆕🆕🆕 D588 — the `me` ids WP22 keys: eight Trainer texts (trainerParamsMeD588.test.ts pins each face). */
 const KEYED_AT_D588 = [
   "me02.5-185",
   "me02.5-257",
@@ -243,10 +200,8 @@ const KEYED_AT_D588 = [
   "me03-078",
 ];
 
-/** 🆕🆕🆕 D589 — the `me` ids WP08 keys: Mega Greninja ex ×5 "Mortal Shuriken" (optionalCostMeD589.test.ts pins the program). */
 const KEYED_AT_D589 = ["mep-081", "me04-022", "me04-100", "me04-116", "me04-122"];
 
-/** 🆕🆕🆕 D590 — the `me` ids WP05 keys: 13 on-evolve Ability printings (onEvolveMeD590.test.ts pins the programs). */
 const KEYED_AT_D590 = [
   "me01-056",
   "mep-003",
@@ -263,7 +218,6 @@ const KEYED_AT_D590 = [
   "me01-097",
 ];
 
-/** 🆕🆕🆕 D591 — the `me` ids WP20a keys: 19 activated Ability printings (activatedMeD591.test.ts pins the programs). */
 const KEYED_AT_D591 = [
   "me01-104",
   "me01-164",
@@ -286,26 +240,20 @@ const KEYED_AT_D591 = [
   "mep-074",
 ];
 
-/** 🆕🆕🆕 D593 — the `me` ids WP07 keys: "Fade Out" ×5 under three printed names (clauseRowsMeD593.test.ts). */
 const KEYED_AT_D593 = ["mep-006", "me03-062", "me03-107", "me03-121", "me04-030"];
 
-/** 🆕🆕🆕 D594 — the `me` ids WP33a keys: Luxio "Fighting Roar" and Chesnaught "Needly Armor" (conditionRowsMeD594.test.ts). */
 const KEYED_AT_D594 = ["me03-027", "me04-007"];
 
-/** 🆕🆕🆕 D597 — the `me` ids WP29 keys: the "[R]" Mega Charizard X ex "Inferno X" (discardScaledMeD597.test.ts). */
 const KEYED_AT_D597 = ["mep-023", "mep-029"];
 
-/** 🆕🆕🆕 D598 — the `me` ids WP32 keys: six KO / damage-taken Abilities (koAbilitiesMeD598.test.ts). */
 const KEYED_AT_D598 = [
   ...["me02-056", "me02.5-125", "me02.5-269", "me02.5-284", "mep-073"],
   ...["me02.5-116", "me02.5-268", "me02.5-283", "me05-041"],
   ...["me01-061", "me01-144", "me03-050", "me02.5-143"],
 ];
 
-/** 🆕🆕🆕 D599 — the `me` ids WP24a keys: Anthea & Concordia ×2 and Emma ×2 (supportersMeD599.test.ts). */
 const KEYED_AT_D599 = ["me02.5-182", "me02.5-254", "me04-077", "me04-107"];
 
-/** 🆕🆕🆕 D602 — the `me` ids WP20b keys: 9 activated Ability printings (activatedMeD602.test.ts pins the programs). */
 const KEYED_AT_D602 = [
   "me05-070",
   "me05-095",
@@ -318,7 +266,6 @@ const KEYED_AT_D602 = [
   "30th-105",
 ];
 
-/** 🆕🆕🆕 D603 — the `me` ids WP11 keys: 11 Mega-gated printings (megaGatedMeD603.test.ts pins the programs). */
 const KEYED_AT_D603 = [
   "mep-024",
   "me02-018",
@@ -333,7 +280,6 @@ const KEYED_AT_D603 = [
   "me05-079",
 ];
 
-/** 🆕🆕🆕 D604 — the `me` ids WP18 keys: the 8 typed Special Energies (typedSpecialEnergyMeD604.test.ts pins the programs). */
 const KEYED_AT_D604 = [
   "me03-086",
   "me03-087",
@@ -345,7 +291,6 @@ const KEYED_AT_D604 = [
   "me05-084",
 ];
 
-/** 🆕🆕🆕 D606 — the `me` ids WP25a keys: the 9 Stadiums (stadiumsMeD606.test.ts pins the programs). */
 const KEYED_AT_D606 = [
   "me04-080",
   "me04-111",
@@ -358,38 +303,25 @@ const KEYED_AT_D606 = [
   "mep-120",
 ];
 
-/** 🆕🆕🆕 D608 — the `30th` ids WP30 keys: Photon Bullets ×3, Stealthy Slash ×2 (snipeSpreadMeD608.test.ts). */
 const KEYED_AT_D608 = ["30th-064", "30th-151", "30th-157", "30th-021", "30th-148"];
 
-/** 🆕🆕🆕 D612 — the attack-only keys WP06's normaliser retires: Inferno X (`KEYED_AT_D597`) and the
-    two Stealthy Slash of `KEYED_AT_D608` (cardTextD612.test.ts). */
 const RETIRED_AT_D612 = ["mep-023", "mep-029", "30th-021", "30th-148"];
 
-/** 🆕🆕🆕 D625 — the `me` ids T1 keys: Special Red Card ×2, Jumbo Ice Cream ×2, Dark Bell ×2, Wally's Compassion ×3,
-    Blowtorch ×2, Great Haul Net, Strange Timepiece (trainersMeD625.test.ts). */
 const KEYED_AT_D625 = [
   ...["me04-082", "me04-113", "me02-091", "me04-109", "me05-075", "me05-106"],
   ...["me01-132", "me01-176", "me01-186", "me02-086", "me02-117", "me04-078", "me01-128"],
 ];
 
-/** 🆕🆕🆕 D626 — the `me` ids K1 keys: Flygon ×3, Miraidon ×2, Gengar ex ×2, Adversity Policy
-    (koTriggerRestMeD626.test.ts). */
 const KEYED_AT_D626 = [
   ...["mep-016", "me02-053", "me02-101", "mep-082", "me05-028", "30th-090", "30th-154", "me04-074"],
 ];
 
-/** 🆕🆕🆕 D627 — the `me` ids H1 keys: Poltchageist, Sinistcha, Shuppet, Banette "Hide 'n' Sneak"
-    (hideNSneakMeD627.test.ts). */
 const KEYED_AT_D627 = ["me05-005", "me05-006", "me05-033", "me05-034"];
 
-/** 🆕🆕🆕 D628 — the NEW `me` keys A1 adds: Latios "Lustrous Assist" and Larry's Komala "Lethargic Charge"
-    (onBenchMoveMeD628.test.ts). Meowth ex ×3 "Last-Ditch Catch" rides `KEYED_AT_D593`'s keys. */
 const KEYED_AT_D628 = ["me01-101", "me02.5-175"];
 
-/** 🆕🆕🆕 D630 — the `me` ids M1 keys: Iron Defender ×2 (persistedRecordsMeD630.test.ts). */
 const KEYED_AT_D630 = ["me01-118", "me05-110"];
 
-/** 🆕🆕🆕 D631 — the `me` / `30th` ids P1 keys (passiveRestMeD631.test.ts). */
 const KEYED_AT_D631 = [
   "mep-085",
   "me05-062",
@@ -402,67 +334,46 @@ const KEYED_AT_D631 = [
   "30th-119",
 ];
 
-/** 🆕🆕🆕 D632 — the `me` ids D1 keys: Damp ×5 (dampD632.test.ts). */
 const KEYED_AT_D632 = ["me02.5-039", "me02.5-040", "me02.5-226", "mep-007", "mep-008"];
 
-/** 🆕🆕🆕 D635 — the `me` id F1 keys: Fossil Quarry (fossilQuarryD635.test.ts). */
 const KEYED_AT_D635 = ["me05-076"];
 
-/** 🆕🆕🆕 D636 — the `me` ids L1 + Clawitzer keys: Clawitzer ×2 (nextTurnLocksD636.test.ts). */
 const KEYED_AT_D636 = ["me01-038", "me01-141"];
 
-/** 🆕🆕🆕 D637 — the four `me` Antique Fossils (antiqueFossilsMeD637.test.ts). */
 const KEYED_AT_D637 = ["me03-068", "me03-069", "me05-072", "me05-073"];
 
-/** 🆕🆕🆕 D638 — Mew ex ×3 "Memory Helix" (copyBorrowedMeD638.test.ts). */
 const KEYED_AT_D638 = ["30th-066", "30th-152", "30th-158"];
-/** 🆕🆕🆕 D641 — Lt. Surge's Bargain ×3 (opponentAnsweredMeD641.test.ts). */
 const KEYED_AT_D641 = ["me01-120", "me01-170", "me01-185"];
-/** 🆕🆕🆕 D642 — Spiritomb ×2, Wishiwashi and the three Z1 Stadiums (stadiumWatchedMeD642.test.ts). */
 const KEYED_AT_D642 = ["me01-087", "me01-148", "30th-022", "me01-127", "me02-088", "me04-075"];
-/** 🆕🆕🆕 D643 — Rotom ex ×3 "Multi Adapter" (multiAdapterMeD643.test.ts). */
 const KEYED_AT_D643 = ["me02-029", "me02-111", "me02-126"];
-/** 🆕🆕🆕 D644 — Cinderace, Patrat, Illumise, Ferrothorn and Transformation Tome (ruleHooksMeD644.test.ts). */
 const KEYED_AT_D644 = ["me01-028", "me04-070", "30th-004", "me04-063", "me04-083"];
-/** 🆕🆕🆕 D645 — the last one-offs' 4 Ability keys (Wild Growth ×2, Slimy Sliding ×2). */
 const KEYED_AT_D645 = ["me01-010", "mep-001", "me04-068", "mep-077"];
-/** 🆕🆕🆕 D646 — the Backtrack Badge Tool key. */
 const KEYED_AT_D646 = ["me05-074"];
-/** 🆕 Card revision B04 — the three text-less `30th` Items (catalog `effect = NULL`), keyed on their
-    cards' shipped objects: Poké Pad `30th-126`, Switch `30th-127`, Ultra Ball `30th-128`. */
 const KEYED_AT_B04 = ["30th-126", "30th-127", "30th-128"];
 
-/** 🆕🆕🆕 D621 — the `me` ids WP24c + WP23 key: Gladion's Final Battle ×3, Premium Power Pro ×3, Acerola's
-    Mischief ×4, Roxie's Performance ×3, Dawn ×3 (sideStateMeD621.test.ts). */
 const KEYED_AT_D621 = [
   ...["me05-077", "me05-108", "me05-118", "me01-124", "me01-174", "me02.5-199"],
   ...["me01-113", "me01-165", "me01-183", "me02.5-180", "me04-081", "me04-112", "me04-121"],
   ...["me02-087", "me02-118", "me02-129"],
 ];
 
-/** 🆕🆕🆕 D620 — the `me` ids WP26 keys: Light Ball, Punk Helmet ×2, Team Rocket's Hypnotizer, Core Memory,
-    Tremendous Bomb ×2 (prizesToolsMeD620.test.ts). */
 const KEYED_AT_D620 = [
   ...["me02.5-191", "me02-092", "me02-121", "me02.5-206"],
   ...["me03-070", "me05-082", "me05-113"],
 ];
 
-/** 🆕🆕🆕 D619 — the `me` ids WP12 / WP15 key: Sacred Charm ×2, Thick Scale, Dewgong ×2, Heliolisk ×2
-    (attackerClassMeD619.test.ts). */
 const KEYED_AT_D619 = [
   ...["me02-093", "me02-122", "me02.5-211"],
   ...["me02-022", "me02-097"],
   ...["me02.5-064", "me02.5-229"],
 ];
 
-/** 🆕🆕🆕 D618 — the `me` ids WP25b keys: 8 Stadium printings (stadiumsMeD618.test.ts). */
 const KEYED_AT_D618 = [
   ...["me02-085", "me02-116"],
   ...["me01-122", "me01-172", "me02.5-194"],
   ...["me01-117", "me02.5-188", "me03-109"],
 ];
 
-/** 🆕🆕🆕 D617 — the `me` ids WP24b keys: 11 Supporter printings (supportersMeD617.test.ts). */
 const KEYED_AT_D617 = [
   "me01-123",
   "me04-076",
@@ -477,10 +388,8 @@ const KEYED_AT_D617 = [
   "me03-112",
 ];
 
-/** 🆕🆕🆕 D614 — the `me` ids WP37b keys: Mega Clefable ex ×4 "Luminous Wing" (abilityShieldMeD614.test.ts). */
 const KEYED_AT_D614 = ["mep-072", "me03-031", "me03-103", "me03-119"];
 
-/** 🆕🆕🆕 D611 — the `me` ids WP21 (+ Dragonair) keys: 17 activated Ability printings (activatedMeD611.test.ts). */
 const KEYED_AT_D611 = [
   ...[
     "me04-051",
@@ -505,7 +414,6 @@ const KEYED_AT_D611 = [
   ],
 ];
 
-/** 🆕🆕🆕 D610 — the `me` ids WP37a keys: 16 Ability / trigger / passive printings (onMoveHpMeD610.test.ts). */
 const KEYED_AT_D610 = [
   ...[
     "me01-003",
@@ -611,99 +519,52 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys; 🆕🆕🆕 D598: plus the 13 WP32 Ability keys; 🆕🆕🆕 D599: plus the 4 WP24a Supporter keys; 🆕🆕🆕 D602: plus the 9 WP20b activated Ability keys; 🆕🆕🆕 D603: plus the 11 WP11 Mega-gated keys; 🆕🆕🆕 D604: plus the 8 WP18 typed Special Energy keys; 🆕🆕🆕 D606: plus the 9 WP25a Stadium keys; 🆕🆕🆕 D608: plus the 5 WP30 `30th` attack keys; 🆕🆕🆕 D610: plus the 16 WP37a keys; 🆕🆕🆕 D611: plus the 17 WP21 keys; 🆕🆕🆕 D612: minus the 4 retired attack keys; 🆕🆕🆕 D614: plus the 4 WP37b keys; 🆕🆕🆕 D617: plus the 11 WP24b Supporter keys; 🆕🆕🆕 D618: plus the 8 WP25b Stadium keys; 🆕🆕🆕 D619: plus the 7 WP12 / WP15 keys; 🆕🆕🆕 D620: plus the 7 WP26 Tool keys; 🆕🆕🆕 D621: plus the 16 WP24c + WP23 Trainer keys; 🆕🆕🆕 D625: plus the 13 T1 Trainer keys; 🆕🆕🆕 D626: plus the 8 K1 keys; 🆕🆕🆕 D627: plus the 4 H1 keys; 🆕🆕🆕 D628: plus the 2 new A1 keys; 🆕🆕🆕 D630: plus the 2 M1 Trainer keys; 🆕🆕🆕 D631: plus the 9 P1 keys; 🆕🆕🆕 D632: plus the 5 D1 Damp keys; 🆕🆕🆕 D635: plus the F1 Fossil Quarry key; 🆕🆕🆕 D636: plus the 2 Clawitzer keys; 🆕🆕🆕 D637: plus the 4 `me` Antique Fossil keys; 🆕🆕🆕 D638: plus the 3 X1 Memory Helix keys; 🆕🆕🆕 D641: plus the 3 Y1b Lt. Surge's Bargain keys; 🆕🆕🆕 D642: plus the 6 Z1 + K2 keys; 🆕🆕🆕 D643: plus the 3 Y1a Rotom ex keys; 🆕🆕🆕 D644: plus the 5 Y1e keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it ( D583: plus Team Rocket's Energy `me02.5-217`; D584: plus the 18 tier-2 keys; D585: plus the 19 WP19 keys; D586: plus Carbink ×2; D587: plus the 19 WP04 Trainer keys; D588: plus the 17 WP22 Trainer keys; D589: plus Mega Greninja ex ×5; D590: plus the 13 WP05 on-evolve keys; D591: plus the 19 WP20a activated Ability keys; D593: plus the 5 WP07 Fade Out keys; D594: plus the 2 WP33a Ability keys; D597: plus the 2 WP29 Inferno X keys; D598: plus the 13 WP32 Ability keys; D599: plus the 4 WP24a Supporter keys; D602: plus the 9 WP20b activated Ability keys; D603: plus the 11 WP11 Mega-gated keys; D604: plus the 8 WP18 typed Special Energy keys; D606: plus the 9 WP25a Stadium keys; D608: plus the 5 WP30 `30th` attack keys; D610: plus the 16 WP37a keys; D611: plus the 17 WP21 keys; D612: minus the 4 retired attack keys; D614: plus the 4 WP37b keys; D617: plus the 11 WP24b Supporter keys; D618: plus the 8 WP25b Stadium keys; D619: plus the 7 WP12 / WP15 keys; D620: plus the 7 WP26 Tool keys; D621: plus the 16 WP24c + WP23 Trainer keys; D625: plus the 13 T1 Trainer keys; D626: plus the 8 K1 keys; D627: plus the 4 H1 keys; D628: plus the 2 new A1 keys; D630: plus the 2 M1 Trainer keys; D631: plus the 9 P1 keys; D632: plus the 5 D1 Damp keys; D635: plus the F1 Fossil Quarry key; D636: plus the 2 Clawitzer keys; D637: plus the 4 `me` Antique Fossil keys; D638: plus the 3 X1 Memory Helix keys; D641: plus the 3 Y1b Lt. Surge's Bargain keys; D642: plus the 6 Z1 + K2 keys; D643: plus the 3 Y1a Rotom ex keys; D644: plus the 5 Y1e keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
-    // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
-    // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
     expect(KEYED_AT_D584).toHaveLength(18);
-    // 🆕🆕🆕 D585 — and WP19's 19 parameter-copy keys (`KEYED_AT_D585`).
     expect(KEYED_AT_D585).toHaveLength(19);
-    // 🆕🆕🆕 D586 — and WP03's Carbink ×2 (`KEYED_AT_D586`).
     expect(KEYED_AT_D586).toHaveLength(2);
-    // 🆕🆕🆕 D587 — and WP04's 19 Trainer keys (`KEYED_AT_D587`).
     expect(KEYED_AT_D587).toHaveLength(19);
-    // 🆕🆕🆕 D588 — and WP22's 17 Trainer keys (`KEYED_AT_D588`).
     expect(KEYED_AT_D588).toHaveLength(17);
-    // 🆕🆕🆕 D589 — and WP08's Mega Greninja ex ×5 (`KEYED_AT_D589`).
     expect(KEYED_AT_D589).toHaveLength(5);
-    // 🆕🆕🆕 D590 — and WP05's 13 on-evolve keys (`KEYED_AT_D590`).
     expect(KEYED_AT_D590).toHaveLength(13);
-    // 🆕🆕🆕 D591 — and WP20a's 19 activated Ability keys (`KEYED_AT_D591`).
     expect(KEYED_AT_D591).toHaveLength(19);
-    // 🆕🆕🆕 D593 — and WP07's 5 attack-only Fade Out keys (`KEYED_AT_D593`).
     expect(KEYED_AT_D593).toHaveLength(5);
-    // 🆕🆕🆕 D594 — and WP33a's 2 Ability keys (`KEYED_AT_D594`).
     expect(KEYED_AT_D594).toHaveLength(2);
-    // 🆕🆕🆕 D597 — and WP29's 2 attack-only Inferno X keys (`KEYED_AT_D597`).
     expect(KEYED_AT_D597).toHaveLength(2);
-    // 🆕🆕🆕 D598 — and WP32's 13 Ability keys (`KEYED_AT_D598`).
     expect(KEYED_AT_D598).toHaveLength(13);
-    // 🆕🆕🆕 D599 — and WP24a's 4 Supporter keys (`KEYED_AT_D599`).
     expect(KEYED_AT_D599).toHaveLength(4);
-    // 🆕🆕🆕 D602 — and WP20b's 9 activated Ability keys (`KEYED_AT_D602`).
     expect(KEYED_AT_D602).toHaveLength(9);
-    // 🆕🆕🆕 D603 — and WP11's 11 Mega-gated keys (`KEYED_AT_D603`).
     expect(KEYED_AT_D603).toHaveLength(11);
-    // 🆕🆕🆕 D604 — and WP18's 8 typed Special Energy keys (`KEYED_AT_D604`).
     expect(KEYED_AT_D604).toHaveLength(8);
-    // 🆕🆕🆕 D606 — and WP25a's 9 Stadium keys (`KEYED_AT_D606`).
     expect(KEYED_AT_D606).toHaveLength(9);
-    // 🆕🆕🆕 D608 — and WP30's 5 attack-only `30th` keys (`KEYED_AT_D608`).
     expect(KEYED_AT_D608).toHaveLength(5);
-    // 🆕🆕🆕 D610 — and WP37a's 16 Ability / trigger / passive keys (`KEYED_AT_D610`).
     expect(KEYED_AT_D610).toHaveLength(16);
-    // 🆕🆕🆕 D611 — and WP21's 17 activated Ability keys (`KEYED_AT_D611`).
     expect(KEYED_AT_D611).toHaveLength(17);
-    // 🆕🆕🆕 D612 — minus the four attack-only keys WP06 retires (`RETIRED_AT_D612`): Inferno X ×2 and
-    // Stealthy Slash ×2, whose normalised text a reader builds.
     expect(RETIRED_AT_D612).toHaveLength(4);
-    // 🆕🆕🆕 D614 — and WP37b's 4 passive keys (`KEYED_AT_D614`).
     expect(KEYED_AT_D614).toHaveLength(4);
-    // 🆕🆕🆕 D617 — and WP24b's 11 Supporter keys (`KEYED_AT_D617`).
     expect(KEYED_AT_D617).toHaveLength(11);
-    // 🆕🆕🆕 D618 — and WP25b's 8 Stadium keys (`KEYED_AT_D618`).
     expect(KEYED_AT_D618).toHaveLength(8);
-    // 🆕🆕🆕 D619 — and WP12 / WP15's 7 keys (`KEYED_AT_D619`).
     expect(KEYED_AT_D619).toHaveLength(7);
-    // 🆕🆕🆕 D620 — and WP26's 7 Tool keys (`KEYED_AT_D620`).
     expect(KEYED_AT_D620).toHaveLength(7);
-    // 🆕🆕🆕 D621 — and WP24c + WP23's 16 Trainer keys (`KEYED_AT_D621`).
     expect(KEYED_AT_D621).toHaveLength(16);
-    // 🆕🆕🆕 D625 — and T1's 13 Trainer keys (`KEYED_AT_D625`).
     expect(KEYED_AT_D625).toHaveLength(13);
-    // 🆕🆕🆕 D626 — and K1's 8 keys (`KEYED_AT_D626`).
     expect(KEYED_AT_D626).toHaveLength(8);
-    // 🆕🆕🆕 D627 — and H1's 4 keys (`KEYED_AT_D627`).
     expect(KEYED_AT_D627).toHaveLength(4);
-    // 🆕🆕🆕 D628 — and A1's 2 new keys (`KEYED_AT_D628`).
     expect(KEYED_AT_D628).toHaveLength(2);
-    // 🆕🆕🆕 D630 — and M1's 2 Iron Defender keys (`KEYED_AT_D630`).
     expect(KEYED_AT_D630).toHaveLength(2);
-    // 🆕🆕🆕 D631 — and P1's 9 passive / trigger keys (`KEYED_AT_D631`).
     expect(KEYED_AT_D631).toHaveLength(9);
-    // 🆕🆕🆕 D632 — and D1's 5 Damp keys (`KEYED_AT_D632`).
     expect(KEYED_AT_D632).toHaveLength(5);
-    // 🆕🆕🆕 D635 — and F1's Fossil Quarry key (`KEYED_AT_D635`).
     expect(KEYED_AT_D635).toHaveLength(1);
-    // 🆕🆕🆕 D636 — and Clawitzer ×2 (`KEYED_AT_D636`).
     expect(KEYED_AT_D636).toHaveLength(2);
-    // 🆕🆕🆕 D637 — and the four `me` Antique Fossils (`KEYED_AT_D637`).
     expect(KEYED_AT_D637).toHaveLength(4);
-    // 🆕🆕🆕 D638 — and Mew ex ×3 (`KEYED_AT_D638`).
     expect(KEYED_AT_D638).toHaveLength(3);
-    // 🆕🆕🆕 D641 — and Lt. Surge's Bargain ×3 (`KEYED_AT_D641`).
     expect(KEYED_AT_D641).toHaveLength(3);
-    // 🆕🆕🆕 D642 — and the 6 Z1 + K2 keys (`KEYED_AT_D642`).
     expect(KEYED_AT_D642).toHaveLength(6);
-    // 🆕🆕🆕 D643 — and the 3 Y1a keys (`KEYED_AT_D643`).
     expect(KEYED_AT_D643).toHaveLength(3);
-    // 🆕🆕🆕 D644 — and the 5 Y1e keys (`KEYED_AT_D644`).
     expect(KEYED_AT_D644).toHaveLength(5);
-    // 🆕🆕🆕 D645 — and the 4 last one-off keys (`KEYED_AT_D645`).
     expect(KEYED_AT_D645).toHaveLength(4);
-    // 🆕🆕🆕 D646 — and the Backtrack Badge key (`KEYED_AT_D646`).
     expect(KEYED_AT_D646).toHaveLength(1);
-    // 🆕 Card revision B04 — and the three text-less `30th` Item keys (`KEYED_AT_B04`).
     expect(KEYED_AT_B04).toHaveLength(3);
     expect(me.sort()).toEqual(
       [
@@ -778,9 +639,6 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
       for (const named of programAbilityNames(programFor(id)))
         expect(printed, `${id} (${name}) logs "${named}"`).toContain(named);
     }
-    // The exclusion this rung enforces: Heatran's program (the Numel twin) names Armarouge's Ability.
-    // [🆕🆕🆕 D584 (D539): ~~"Scorching Armor"~~ — WITHDRAWN: Heatran is keyed on the D584 renamed copy
-    // and names its printed Ability, so the exclusion is lifted and Numel ×2 share it.]
     expect(programAbilityNames(programFor("sv06-123"))).toEqual(["Incandescent Body"]);
   });
 
@@ -800,7 +658,6 @@ describe("D582 — the five `me` Tera reprints carry the banner", () => {
   it("banners.ts marks them Tera, by id — and the three that are registry aliases share their twin's program", () => {
     for (const id of ME_TERA) expect(bannerOf(battler(id, { name: "x ex" })), id).toBe("Tera");
     expect(isTeraPokemon(battler("me02.5-057", { name: "Pikachu ex" }))).toBe(true);
-    // A Pikachu ex printing the banner table does not name is NOT Tera — by id, never by name.
     expect(isTeraPokemon(battler("me02.5-276", { name: "Pikachu ex" }))).toBe(false);
     for (const [id, twin] of [
       ["me02.5-057", "sv08-057"],
@@ -823,11 +680,6 @@ const POOL: Record<string, Card> = {
   [FILLER]: battler(FILLER, { hp: 900 }),
 };
 const DECK = deckOf({ [URBAIN]: 4, [FILLER]: 36, "fix-energy": 20 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function p1Turn(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });

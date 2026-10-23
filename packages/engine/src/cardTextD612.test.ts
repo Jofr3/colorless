@@ -19,16 +19,6 @@ import {
   typedEnergy,
 } from "./testFixtures";
 
-// ── 🆕🆕🆕 D612 — WP06: THE tcgdex MARKUP NORMALISER ─────────────────────────────────────────────────
-//
-// cardText.ts `normalizeCardText`, applied at ingest (apps/api ingest/map.ts) and at read (cards.ts
-// `cardOfUid` → `normalizedFace`). Every RAW text below is LOCAL D1 text as tcgdex served it before the
-// D612 re-ingest (2026-10-09); every clean text is the row after it. Three are not whole rows:
-// `draconicStar` and `flareSymbol` are EXCERPTS of the non-legal `swsh10.5` Draconic Star attack (`-050` /
-// `-081`) and Flare Symbol Ability (`-012`), and `dragonStrike` is a `me02.5-176` row that was already clean (the attack-name control).
-// A match created before the re-ingest persists the raw face in `GameState.cardPool`, so §4 drives a raw
-// face on a board.
-
 const RAW = {
   hydroPump:
     'This attack does 30 more damage for each <span class="energy-symbol Water" title="Water">Water</span> Energy attached to this Pokémon.',
@@ -163,8 +153,6 @@ describe("D612 §3 — `normalizedFace`: the same object unless a text changes",
     expect(normalizedFace(item).effect).toBe(CLEAN.burnBrightly);
   });
 });
-
-// ── ON A BOARD: a persisted pre-D612 face ──
 
 const KYOGRE = "30th-019";
 const FILLER = "d612-filler";

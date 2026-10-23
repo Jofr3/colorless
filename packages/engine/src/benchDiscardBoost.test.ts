@@ -31,29 +31,8 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.307.0 → 0.308.0 — 🆕🆕 D403: THE ADDITIVE HALF OF D402's FAMILY.
-//
-// "You may discard up to N [Basic] Energy from your Benched Pokémon. This attack does
-//  P more damage for each card you discarded in this way." — 2 sentences / 8 legal
-// printings, read by `deriveAttackDiscardScaledBoost` (the ELEVENTH reader) and
-// assembled by `discardScaledBoostProgram(reading, base)` into the SAME two ops D402
-// derives, with two differences: the discard's zone is the Bench alone, and the
-// damage carries the printed BASE.
-//
-// 🛑 WHAT THIS SLICE IS ABOUT IS A MECHANISM, NOT A SENTENCE. D402 refused this half
-// because `damageDefender {per, count}`'s hit is a SEPARATE `snipeActive` pass: a KEPT
-// base would be dealt in the pre-program pipeline and the scaled part inside the
-// program, and Resistance, `damageReductionAfterWR` and the §8.1 survival clamp are
-// each paid ONCE PER HIT. §5 drives exactly that on a −30 body, which is the ONLY
-// board where the two readings differ — Weakness DISTRIBUTES over a split hit and
-// therefore cannot see the difference at all.
-
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 
-/** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
-    "unread" is unread by the WHOLE engine and not merely by the one reader it is
-    about (D382's rule: a refusal claim that only asks its own producer is a claim
-    about nothing). */
 const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -65,19 +44,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
-  // 🆕🆕 D419 — the TWELFTH reader (D417, `deriveAttackCancelRequirement`), which
-  // this list never had.
-  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
-  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
-  // `];`, and appending moves that anchor without a character of it changing —
-  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
   deriveAttackCancelRequirement,
-  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-  // array's LAST entries plus its closing bracket, and appending moves that anchor
-  // without a character of it changing.
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
@@ -85,10 +53,6 @@ const READERS: readonly ((t: string) => unknown)[] = [
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 
-/** The TWO printed sentences this reader takes, transcribed from `legalAttackCorpus()`
-    byte for byte. §1 asserts each one is really in the column at the printing count
-    quoted beside it — the attribution control without which a paraphrase would pass
-    every rung below it (D183). */
 const TAKEN: readonly (readonly [number, string])[] = [
   [
     6,
@@ -103,13 +67,8 @@ const TAKEN: readonly (readonly [number, string])[] = [
 const BARE = TAKEN[0]?.[1] as string;
 const BASIC = TAKEN[1]?.[1] as string;
 
-/** 🆕🆕🆕 D490 — the THIRD printed head of this reader, `censusAttackCorpus.ts` FILE
-    LINE 130 at **2 legal printings**, and the row this file held as REFUSED from D403 to
-    D489. Asserted to be a corpus row below rather than trusted as typed (D452/D456). */
 const MILL =
   "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.";
-/** 🆕🆕🆕 D552 — the reader's THIRD member's one printing (`censusAttackCorpus.ts:569`),
-    asserted a corpus row by `selfHandAttachBoost.test.ts` §1. */
 const SELF_ATTACH =
   "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.";
 
@@ -123,23 +82,9 @@ function reading(text: string): AttackDiscardScaledBoost {
 }
 
 describe("D403 §1 — the family this reader takes, measured live over the column", () => {
-  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
-    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
-    // it could sit short of the module indefinitely — which is precisely the state
-    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
-    // D418. A guard in another file guards that file's copy alone.
-    //
-    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
-    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
-    // off the MODULE surface, so no edit here can move a census number again. What
-    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
-    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
-    // module and from this list in the SAME commit, and the figures would then move
-    // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the two printed sentences are really in the column, at 6 and 2 printings", () => {
@@ -153,19 +98,7 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     expect(units(TAKEN)).toBe(8);
   });
 
-  it("🛑 this reader takes EXACTLY those THREE, and no other reader takes any", () => {
-    // 🆕🆕🆕 **D490 — 2 sentences / 8 printings → 3 / 10, AND THE THIRD IS THE ONE THE
-    // RUNG BELOW USED TO HOLD AS REFUSED.** Re-pointed by MEMBER rather than decremented
-    // (D418/D488): a bare `toHaveLength(3)` would stay green under a build that claimed
-    // some *other* third sentence, so the partition is asserted by `kind` — the two
-    // bench-discard heads and the one two-deck mill — which reddens the day either arm
-    // eats the other's printing.
-    // 🆕🆕🆕 **D552 — 3 / 10 → 4 / 11, AND THE FOURTH IS AN ATTACH, NOT A DISCARD.**
-    // `censusAttackCorpus.ts:569` (the pre-damage self attach behind a multiplier head, 1
-    // printing) is the reader's THIRD MEMBER, `selfHandAttach` — the naming debt is written
-    // at the member (an attach on a reader called `DiscardScaledBoost`; a fourteenth reader
-    // was refused on D428's cost). Re-pointed by MEMBER again, for this rung's own reason.
-    // The title's "THREE" is the D490 count, kept as the record (D178).
+  it("this reader takes EXACTLY those THREE, and no other reader takes any", () => {
     const claimed = legalAttackCorpus().filter(
       ([, s]) => deriveAttackDiscardScaledBoost(s) !== null,
     );
@@ -190,47 +123,23 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     }
   });
 
-  it("🛑 `from your Benched Pokémon` occurs in the WHOLE column on these two only", () => {
-    // The zone is spelled as a LITERAL rather than captured, and this is the
-    // measurement behind that choice: D402's anchor reads `(this|your) Pokémon` as a
-    // free parameter because the multiply family prints BOTH values, and the additive
-    // family prints exactly one. Named as exactly-two rather than left unsaid (D400).
+  it("`from your Benched Pokémon` occurs in the WHOLE column on these two only", () => {
     const bench = legalAttackCorpus().filter(([, s]) => s.includes("from your Benched Pokémon"));
     expect(bench).toHaveLength(2);
     expect(units(bench)).toBe(8);
     expect([...bench].sort()).toEqual([...TAKEN].sort());
   });
 
-  it("🆕🆕🆕 D490 — the additive half has NO sentence left refused, and THIS reader owns all three", () => {
-    // 🛑 **THE OLD RUNG SAID THE OPPOSITE AND ITS STATED REASON WAS FALSE WHEN
-    // WRITTEN.** It read: *"its record is cards off two DECKS rather than Energy off a
-    // board, so it needs a recording mill this engine does not have. Refused by all
-    // TWELVE readers"*. TWO of its three clauses were wrong by D490: the recording mill
-    // shipped at **D488** (`discardDeckTop.recordAs`), so the engine HAD one for two
-    // slices; and the surface had been THIRTEEN since D417, not twelve. What was
-    // genuinely missing was the two-deck WALK (`whose: "eachPlayer"`) — one value on a
-    // shipped field. The clause is corrected here rather than deleted, dated, and with
-    // the measurement that falsified it (D442/D466).
-    //
-    // ⚠️ **RE-POINTED, NOT DELETED, AND THE NEW CLAIM KEEPS BOTH POLARITIES** (D438):
-    // the population still says which sentences carry the additive marker, the OWNER is
-    // named by function, and the OTHER TWELVE readers are still asserted to refuse all
-    // three — which is the half a bare `.not.toBeNull()` would have discarded.
+  it("D490 — the additive half has NO sentence left refused, and THIS reader owns all three", () => {
     const additive = legalAttackCorpus().filter(
       ([, s]) => s.includes("discarded in this way") && s.includes("more damage for each"),
     );
     expect(additive).toHaveLength(3);
     expect(units(additive)).toBe(10);
-    // NOTHING is left refused, and the count is asserted as a POPULATION rather than as
-    // a specimen (D423) so the day a fourth additive sentence is printed and unread this
-    // rung names it instead of quietly staying at zero.
     const left = additive.filter(([, s]) => deriveAttackDiscardScaledBoost(s) === null);
     expect(left).toEqual([]);
     for (const [, s] of additive) {
       expect(resolvedByAnyReader(s), s).toBe(true);
-      // 🆕🆕 D419 — asserted off the MODULE first. The loop below names WHICH reader
-      // answered and is kept for that; it can only walk the readers this file lists,
-      // which is the failure mode D418 measured in 38 files.
       for (const read of READERS) {
         if (read === deriveAttackDiscardScaledBoost) {
           expect(read(s), `${read.name} :: ${s}`).not.toBeNull();
@@ -241,16 +150,9 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     }
   });
 
-  it("🆕🆕🆕 D490 — the mill sentence is a REAL corpus row at 2 printings, byte for byte", () => {
-    // D452/D456: a refusal or a claim pinned on a HAND-RETYPED string is green by
-    // construction. The specimen is asserted to be a row of the committed corpus and its
-    // PRINTING COUNT is read off the corpus too — which is what tells a file-line
-    // citation from an array index in one look (D448).
+  it("D490 — the mill sentence is a REAL corpus row at 2 printings, byte for byte", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === MILL);
     expect(rows.map(([n]) => n)).toEqual([2]);
-    // The apostrophe is U+0027, MEASURED with `codePointAt` rather than by eye (D421,
-    // D440). The whole 640-row column carries zero U+2019, so the anchor's `['’]` arm is
-    // latent by design and `clauseApostrophe.test.ts`'s re-ingest sweep is what drives it.
     expect(MILL.codePointAt(MILL.indexOf("player") + 6)).toBe(0x27);
   });
 });
@@ -269,14 +171,10 @@ describe("D403 §2 — the reading, and the program the assembler builds from it
       per: 90,
       filter: { kind: "basicEnergy" },
     });
-    // 🆕🆕🆕 D490 — the SECOND member, beside its siblings so the discriminator is
-    // visible as a partition rather than as a field one arm happens to carry. It has no
-    // `cap` and no `filter` at all: the mill is mandatory and unfiltered, and the printed
-    // noun narrows the COUNT, not the movement.
     expect(deriveAttackDiscardScaledBoost(MILL)).toEqual({ kind: "eachDeckMill", per: 140 });
   });
 
-  it("🛑 the assembler folds the PRINTED BASE into the ONE damage op", () => {
+  it("the assembler folds the PRINTED BASE into the ONE damage op", () => {
     // The whole reason this is a reader plus an exported builder rather than a
     // `deriveAttackEffect` arm: `deriveAttackEffect` takes only a string, so a
     // captured `more` would have produced an op whose `base` nothing could populate.
@@ -305,38 +203,24 @@ describe("D403 §2 — the reading, and the program the assembler builds from it
   });
 
   it("`base` is SPELLED even at zero — one reading, one program shape", () => {
-    // An ABSENT `base` already means something specific on this op: the multiply
-    // family's DROPPED base. A builder that omitted it at 0 would give one reading two
-    // program shapes for no behavioural difference, and would make the op's own
-    // doc's distinction unreadable off a built program.
     const [, hit] = discardScaledBoostProgram(reading(BARE), 0);
     expect(hit).toEqual({ op: "damageDefender", base: 0, per: 60, count: "discarded" });
     expect(Object.keys(hit ?? {}).includes("base")).toBe(true);
   });
 
-  it("🛑 `deriveAttackEffect` refuses BOTH — the two producers are disjoint", () => {
-    // D402's anchor ends its damage clause at `does (\d+) damage for each` and its
-    // zone at `from (this|your) Pokémon`, so it refuses these sentences on TWO bytes.
-    // If it ever claimed one, `attack.ts` would append this program on top of that
-    // one and the attack would hit twice.
+  it("`deriveAttackEffect` refuses BOTH — the two producers are disjoint", () => {
     for (const [, s] of TAKEN) expect(deriveAttackEffect(s), s).toBeNull();
   });
 });
 
 describe("D403 §3 — the refusals, each pinned on ONE printed byte", () => {
-  it("🛑 the FOLD, the ZONE and the OFFER each refuse INDEPENDENTLY", () => {
-    // D399's rule: a near-miss the anchor already refuses for another reason proves
-    // nothing about the byte you meant to test. THE POSITIVE CONTROL FIRST.
+  it("the FOLD, the ZONE and the OFFER each refuse INDEPENDENTLY", () => {
     expect(deriveAttackDiscardScaledBoost(BARE)).not.toBeNull();
-    // …the FOLD alone: the printed "more" taken out. That is D402's sentence shape,
-    // and this reader must not claim it — both producers would then build a program.
     expect(
       deriveAttackDiscardScaledBoost(
         "You may discard up to 2 Energy from your Benched Pokémon. This attack does 60 damage for each card you discarded in this way.",
       ),
     ).toBeNull();
-    // …the ZONE alone: "Benched" taken out. The whole own side is D402's `yours`, and
-    // reading it here would offer the Energy that paid for the attack.
     expect(
       deriveAttackDiscardScaledBoost(
         "You may discard up to 2 Energy from your Pokémon. This attack does 60 more damage for each card you discarded in this way.",
@@ -353,9 +237,6 @@ describe("D403 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 
   it("the FILTER is the printed contrast and not the nine-type map", () => {
-    // No additive printing carries a brace code or a written-out type, so admitting
-    // them would be authoring cards (D361's refused matrix). The two spellings the
-    // column prints are the two this reader reads, and nothing else.
     for (const text of [
       "You may discard up to 2 {W} Energy from your Benched Pokémon. This attack does 60 more damage for each card you discarded in this way.",
       "You may discard up to 2 Water Energy from your Benched Pokémon. This attack does 60 more damage for each card you discarded in this way.",
@@ -366,10 +247,6 @@ describe("D403 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 
   it("a printed 0 in EITHER number stays loud — no silent no-op", () => {
-    // Two captured numbers, two positivity guards, asserted apart (D361: a row count
-    // is not a coverage map). A "up to 0" is a park with no pick; a 0 per-card is a
-    // clause that buys nothing however much comes off. Both belong on the loud
-    // `ATTACK_EFFECT_SKIPPED` path.
     expect(
       deriveAttackDiscardScaledBoost(
         "You may discard up to 0 Energy from your Benched Pokémon. This attack does 60 more damage for each card you discarded in this way.",
@@ -392,7 +269,6 @@ describe("D403 §3 — the refusals, each pinned on ONE printed byte", () => {
     for (const text of [
       `Draw a card. ${BARE}`,
       `${BARE} Draw a card.`,
-      // The capital, and the tail's own capital — D246's rule, this file's version.
       BARE.replace("You may", "you may"),
       BARE.replace("This attack does", "this attack does"),
       // The halves alone: neither is anybody's sentence.
@@ -450,16 +326,7 @@ function benchEnergy(state: GameState, index: number): string[] {
 }
 
 describe("D403 §4 — the Bench-only zone, and the caption it forced", () => {
-  it("🛑 the ACTIVE's Energy is NOT offered — this is what `yourBench` buys", () => {
-    // `from: "yours"` would offer all three: the Energy that PAID for this attack sits
-    // on the Active, and a cost is not spent, so the whole-board member would let the
-    // card fund its own boost with the Energy it just attacked with. The printed
-    // sentence says "your Benched Pokémon", and this is the board that can tell them
-    // apart — the ONE reason the union grew a fourth own-board member.
-    // THREE on the Bench and one on the Active, deliberately: three candidates against
-    // a printed ceiling of two is what makes the `cap` OBSERVABLE — an uncapped offer
-    // reads `max: 3` on this board and `max: 2` on a two-Energy one, so a two-Energy
-    // board would have been green under a dropped cap.
+  it("the ACTIVE's Energy is NOT offered — this is what `yourBench` buys", () => {
     const { state, benchIndex } = fielded(1, "fix-benchboost", [["fix-lightning-energy", 3]]);
     const activeEnergy = [...(state.players.p1.active?.energy ?? [])];
     const bench = benchEnergy(state, benchIndex);
@@ -538,24 +405,11 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
       });
       expect(find(events, "DAMAGE_DEALT")?.dealt, `${take} discarded`).toBe(dealt);
       expect(done.players.p2.active?.damage, `${take} discarded`).toBe(dealt);
-      // ONE row, never two — the whole claim, read off the event log.
       expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
     }
   });
 
-  it("🛑 THE DISCRIMINATOR: a −30 RESISTANCE is paid ONCE, so two discards deal 140", () => {
-    // The rung this whole slice exists for. `fix-psychic-resist-big` prints −30 against
-    // Psychic and `fix-benchboost` is a Psychic attacker, so:
-    //
-    //   ONE pass (this build)  : (50 + 120) − 30 = 140
-    //   TWO passes (D402's refusal, built anyway): (50 − 30) + (120 − 30) = 110
-    //   base DROPPED           : 120 − 30 = 90
-    //   base NOT suppressed    : (50 − 30) + (50 + 120 − 30) = 160
-    //
-    // Four numbers on one board, and only the first is right. ⚠️ WEAKNESS CANNOT TEST
-    // THIS AT ALL: a ×2 DISTRIBUTES over a split hit, so both readings return the same
-    // number — which is why the pool's −30 body is the instrument and no ×2 rung is
-    // written here. A subtraction is what separates one hit from two.
+  it("THE DISCRIMINATOR: a −30 RESISTANCE is paid ONCE, so two discards deal 140", () => {
     const { state, benchIndex } = fielded(
       7,
       "fix-benchboost",
@@ -576,10 +430,6 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
   });
 
   it("…and the SAME body takes 20 on a decline — the Resistance still paid once", () => {
-    // The decline arm, and it is arithmetic rather than an `otherwise`: N = 0 makes the
-    // one op deal `base + P × 0`, so `50 − 30 = 20`. D381's two gates each needed an
-    // explicit second arm carrying the printed base; this reading needs none, and that
-    // is the cheapest possible answer to D135's rule.
     const { state, benchIndex } = fielded(
       8,
       "fix-benchboost",
@@ -628,18 +478,7 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
     expect(done.players.p2.active?.damage).toBe(120);
   });
 
-  it("🛑 neither half of `ATTACK_EFFECT_SKIPPED` fires, on BOTH printed sentences", () => {
-    // The reading owns the printed EFFECT and the printed "+" marker, so both
-    // `*Simulated` terms `attack.ts` gained are load-bearing.
-    //
-    // 🛑 **THE ROW IS EMITTED BY THE `attack` ACTION, NOT BY THE `resolveEffect` THAT
-    // FOLLOWS IT, AND THE FIRST DRAFT OF THIS FILE ASSERTED IT ON THE WRONG ONE.** The
-    // §5 rung below used to carry `not.toContain("ATTACK_EFFECT_SKIPPED")` over the
-    // RESOLVE step's events — where the row can never appear, because the attack has
-    // already been declared — so it was green under both mutants and the D403 probe
-    // reported them as GAPs. `mustApply(state, attack)` is the only place this can be
-    // read, and a park splits the two event lists in a way that makes the mistake
-    // invisible to every other assertion in the file.
+  it("neither half of `ATTACK_EFFECT_SKIPPED` fires, on BOTH printed sentences", () => {
     for (const attacker of ["fix-benchboost", "fix-benchbasicboost"] as const) {
       const { state } = fielded(12, attacker, [["fix-energy", 2]]);
       deepFreeze(state);

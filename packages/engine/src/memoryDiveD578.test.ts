@@ -8,25 +8,16 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  must,
+  mustApply as run,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D578 — RELICANTH `sv05-084` / `sv05-173` "MEMORY DIVE" ──
-//
-// *"Each of your evolved Pokémon can use any attack from its previous Evolutions. (You still need
-// the necessary Energy to use each attack.)"* — `PassiveEffects.memoryDive`, read by
-// `memoryDiveLive` (any unlocked in-play holder on the seat) for `attackMenuOf`'s Memory Dive
-// section: the attacks of the cards UNDER an evolved body's top card, bottom to top, AFTER the
-// printed attacks. Rulings (decisions.md D578):
-//   R-MD1 the borrowed attack's printed cost is charged under every cost modifier;
-//   R-MD2 copy sources and imposed `preventChosenAttack` read PRINTED attacks only;
-//   R-MD3 whole-body locks and all-attacks (`null`) boosts apply to borrowed rows;
-//   R-MD4 ~~⚠️ UNRULED — a NAME-keyed self-lock from a borrowed attack installs nothing~~
-//         🆕 RULED (fixed at the landing): it binds to the row used, by its printed NAME
-//         (`LockedAttack.attackName`), so the next turn refuses that row and the turn after allows it;
-//   R-MD5 a borrowed attack keeps its timing gate through its source card.
-// Every body here is a LOCAL face; the ones whose printed text or registry row IS the rung
-// (Relicanth, Scyther, Fraxure, Exeggcute, Klefki, Seismitoad) carry their real ids and texts.
 
 const RELICANTH = "sv05-084";
 const RELICANTH_ALT = "sv05-173";
@@ -274,7 +265,6 @@ const LOCAL_CARDS: Record<string, Card> = {
       "The Pokémon this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the end of your turn.",
     ),
     name: "Technical Machine: Fluorite",
-    // 🆕 D581 — the attack the catalog row prints (the ingest keeps a Trainer's face since D581).
     attacks: CATALOG_MANIFEST.trainerFaces[TM]?.attacks ?? null,
   },
   [PLAIN]: poke(PLAIN, { name: "D578 Plain", attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
@@ -321,18 +311,6 @@ const DECK = deckOf({
   [R]: 1,
   "fix-energy": 7,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -597,7 +575,6 @@ describe("D578 Memory Dive §4 — R-MD3: whole-body locks and all-attacks boost
     expect(rejected(back, { type: "attack", seat: "p1", index: 0 })).toBe("ATTACK_PREVENTED");
     expect(rejected(back, { type: "attack", seat: "p1", index: 1 })).toBe("ATTACK_PREVENTED");
     expect(rejected(back, { type: "attack", seat: "p1", index: 3 })).toBe("ATTACK_PREVENTED");
-    // 🆕 D578 landing — and the turn AFTER, the lock has lapsed: the borrowed attack is live again.
     const later = nextOwnTurn(run(back, { type: "endTurn", seat: "p1" }).state);
     expect(dealt(run(later, { type: "attack", seat: "p1", index: 3 }).events)).toBe(90);
   });
@@ -635,13 +612,11 @@ describe("D578 Memory Dive §5 — R-MD4 (RULED: fixed at the landing): a NAME-k
       uid: active(state).stack[1],
       attack: "Slashing Strike",
     });
-    // The record: no printed index (-1), the borrowed row's printed NAME, the holder's next turn.
     expect(after.state.players.p1.active?.lockedAttacks).toEqual([
       { turn: state.turn + 2, attackIndex: -1, attackName: "Slashing Strike" },
     ]);
     const back = nextOwnTurn(after.state);
     expect(rejected(back, { type: "attack", seat: "p1", index: 3 })).toBe("ATTACK_PREVENTED");
-    // Only THAT row: the other borrowed row and the printed rows are untouched by the bar.
     const view = redactGame(back, "p1");
     if (view.phase.kind !== "turn:action") throw new Error("expected turn:action");
     expect(view.phase.attacks.map((a) => [a.name, a.playable])).toEqual([
@@ -753,7 +728,6 @@ describe("D578 Memory Dive §8 — a PRINTED-index record survives the menu chan
     expect(names(state)).toEqual(["Mid Strike/printed", "Low Strike/memoryDive"]);
     expect(rejected(state, { type: "attack", seat: "p1", index: 0 })).toBe("ATTACK_PREVENTED");
     expect(dealt(run(state, { type: "attack", seat: "p1", index: 1 }).events)).toBe(20);
-    // The wire agrees: the printed row is greyed by the bar, the borrowed row is live.
     const view = redactGame(state, "p1");
     if (view.phase.kind !== "turn:action") throw new Error("expected turn:action");
     expect(view.phase.attacks.map((a) => [a.name, a.playable])).toEqual([
@@ -804,19 +778,6 @@ describe("D578 Memory Dive §9 — a borrowed attack whose effect PARKS resumes 
 });
 
 describe("D578 Memory Dive §10 — census: no COPY-family attack is reachable as a borrowed attack", () => {
-  // The legal holders of every copy-family sentence (COPY_FAMILY_MARKER), from the audit card
-  // JSON (tcgdex, 2026-09-25), with their printed stage. Every one is a Stage 1 that nothing
-  // legal evolves FROM, or a Basic that does not evolve — measured by walking every legal
-  // evolution line (`tmp/d578-scr/lines.py`: 0 copy-family lower-stage attacks over 735 evolved
-  // legal Pokémon), so a copy attack can only ever be a TOP card's printed attack, never a
-  // Memory Dive row. A new copy holder reddens the printing count below and must be re-walked.
-  // 🆕 D578 landing (the parked review's finding (3)): THAT WALK IS NOT IN THIS SUITE AND CANNOT
-  // BE — no tracked data a test can read carries `evolveFrom` for these sets (`catalogManifest.ts`
-  // covers six older sets and no evolution column; the corpus is attack text only). The guarantee
-  // is MEASURED by the untracked script above and PINNED here only by the 13-printing count: a
-  // future card that evolves FROM an existing holder (a Stage 2 from Zoroark) turns nothing red.
-  // ~~The second `it` ("no holder is a Basic that evolves or a middle stage")~~ is WITHDRAWN: it
-  // read only the literal below and could not go red.
   const COPY_FAMILY_HOLDERS: readonly (readonly [string, string, string])[] = [
     ["sv06-079", "Clefable", "Stage1"],
     ["sv07-058", "Slowking", "Stage1"],

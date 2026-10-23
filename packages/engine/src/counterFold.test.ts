@@ -16,69 +16,6 @@ import {
   setDamage,
 } from "./testFixtures";
 
-// 0.351.0 → 0.352.0 — 🆕🆕🆕 **D450: `counterEachAll` REACHED FROM AN ATTACK.**
-//
-// THREE sentences, THREE legal printings, ONE op that already existed:
-//   · `censusAttackCorpus.ts` line **418** — *"Put 6 damage counters on each Pokémon
-//     that has an Ability (both yours and your opponent's)."*, arm 23d;
-//   · line **415** — *"Put 2 damage counters on each of your opponent's Pokémon."*,
-//     arm 23e;
-//   · line **414** — the same fold behind the printed window *"…that has any damage
-//     counters on it."*, arm 23f.
-//
-// 🛑 **THE SLICE IS THE OP, NOT THE READER.** `counterEachAll` has been in the union
-// since D340 and has had exactly ONE producer — Froslass's registry row — for a hundred
-// and ten decisions. D449 measured all three of these sentences as *expressible with
-// today's vocabulary and refused anyway*, and named three seams. All three are in one
-// function body, and all three are the difference between an ABILITY caller and an
-// ATTACK one:
-//   (i)   the op HARDCODED `source: "ability"`, so an attack would have filed a
-//         `COUNTERS_PLACED` row rendering as *"Ability: 60 damage to X"* — D136's
-//         finding 1 for the fourth time on this axis (D138, D139, D140 paid the first
-//         three). Now `source: "ability" | "attack"`, REQUIRED, `damageActive`'s and
-//         `damageChosen`'s spelling verbatim;
-//   (ii)  it made NO `effectRefused` call at all, so §11 was never consulted. Now it is
-//         asked PER BODY through D259's `target` parameter, after the narrowing (D433);
-//   (iii) it walked BOTH seats unconditionally. Now `side: "both" | "opponent"`,
-//         REQUIRED, `disableAbilities.side`'s two words copied rather than invented.
-//
-// ⚠️ **AND A FOURTH SEAM THE BRIEF DID NOT NAME, FOUND BY READING THE CONSUMER**: the
-// `"attack"` arm of `log.ts`'s `COUNTERS_PLACED` switch justifies its SYSTEM voice with
-// *"`seat` owns the DAMAGED Pokémon, which for an attack is the attacker's OPPONENT"*.
-// `side: "both"` damages the ATTACKER's own bodies, so that sentence stops being
-// universal the moment arm 23d ships. The row is still right and the reason is WIDER
-// than the one written — a system row names no actor at all — and the arm now says so.
-//
-// 🛑 **A PREMISE OF THE WORK ORDER THAT DID NOT SURVIVE, AND IT WAS THE REFUSAL.** The
-// brief said line 414 *"asks for a BOARD fact"* that `matchesFilter` can never see, and
-// that this is therefore *"a permanent boundary of the filter vocabulary"*. The first
-// half is TRUE and measured — `matchesFilter(card: Card | undefined, …)` is handed a
-// catalog card and never an `InPlayPokemon`, and its own `basicPokemon` arm names that
-// as the reason the *"HP or less REMAINING"* printings are unreachable from it. **The
-// conclusion does not follow.** A board fact does not have to travel through
-// `CardFilter` at all: `damageChosen.damagedOnly` (D437) has read these exact eight
-// printed words off an `InPlayPokemon` since it shipped. The rider was reused verbatim
-// and the sentence is built. **The boundary was real and it was the wrong boundary.**
-//
-// 🆕🆕🆕 **[D519 — THIS PARAGRAPH WAS RIGHT AND STAYED GREEN FOR SIXTY-NINE DECISIONS WHILE A
-// LATER SLICE WROTE ITS OPPOSITE ONE FILE OVER.** D518 refused corpus FILE LINE 596 (*"This
-// attack does 50 damage for each of your Pokémon that has any damage counters on it."*) on the
-// ground that it *"needs a `CardFilter` inhabitant"* — the exact inference this block had
-// already shown does not follow. D519 built it the way this block says: a `damagedOnly` rider on
-// `DamageCountSource.pokemonInPlay`, decided by `hasAnyDamageCounters` on an `InPlayPokemon`,
-// which is now the **FOURTH** carrier of that one predicate. ⚠️ **NOTHING REDDENED HERE, AND
-// NOTHING COULD HAVE**: this is prose, and D518's corpus-wide sweep was keyed on the printed
-// noun (`Special Condition`) rather than on the TYPE the refusal named. **Grep the refusal's
-// TYPE as well as its NOUN** — D516's rule (4), one axis wider.]**
-//
-// 🛑 **`MATCH_RECORD_VERSION` STAYS 29, AND THE REASON IS NOT THE USUAL ONE.** Two
-// REQUIRED fields on a shipped op is D386's case — normally a bump. It is free here
-// because **no v29 record can contain a `counterEachAll` literal at all**: an `EffectOp`
-// reaches storage only through `EffectContinuation`'s `pendingOp` and `rest`, a
-// continuation is written only when a program PARKS, this op never parks, and at v29 its
-// one producer was a program of length 1. §3 drives that over the serialized bytes in
-// three directions, and the LOSS direction is where the argument is actually made.
-
 function find<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
   type: T,
@@ -143,7 +80,6 @@ function attack(state: GameState, index: number): { state: GameState; events: Ga
 
 describe("§1 — the three printed folds, and the placement family's remaining refusals", () => {
   it("all three are in the legal attack column at the printing counts this slice claims", () => {
-    // ⚠️ A brief's printing count is a FLOOR until it is read off the corpus (D445).
     const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     expect(rows.get(ABILITY_FOLD)).toBe(1);
     expect(rows.get(BOARD_FOLD)).toBe(1);
@@ -151,52 +87,17 @@ describe("§1 — the three printed folds, and the placement family's remaining 
   });
 
   it("all three resolve through the reader SURFACE, and the surface did not grow", () => {
-    // Asked of the SURFACE rather than of one reader (D447): all three arms sit inside
-    // `deriveAttackEffect`, so there is no fourteenth reader.
     for (const s of [ABILITY_FOLD, BOARD_FOLD, WOUNDED_FOLD]) {
       expect(resolvedByAnyReader(s), s).toBe(true);
     }
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 the PLACEMENT family closes from TEN rows to SEVEN to TWO to ZERO, each departure by name", () => {
-    // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425), and it is D449's
-    // pattern re-run rather than re-imagined: `/put \d* ?damage counters/i`, case
-    // INSENSITIVE with the count OPTIONAL. The /i catches the lowercase mid-sentence
-    // Ability printings; the optional count catches the *"until its remaining HP"* rows,
-    // which print no number at all. A case-SENSITIVE `Put \d+` reports 16 and drops
-    // three of the refusals below.
+  it("the PLACEMENT family closes from TEN rows to SEVEN to TWO to ZERO, each departure by name", () => {
     const family = legalAttackCorpus().filter(([, t]) => /put \d* ?damage counters/i.test(t));
     expect(family).toHaveLength(19);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(38);
     const unread = family.filter(([, t]) => !resolvedByAnyReader(t));
-    // 🆕🆕🆕 **D451 — SEVEN BECAME FOUR AND TWELVE BECAME SEVEN**, and the three that
-    // left are the whole of bullet (c) below. ⚠️ **THE TWO NUMBERS DISAGREE FOR THE
-    // FIRST TIME IN THIS SECTION'S LIFE**: the HP rows carry 2, 1 and 2 printings where
-    // every sentence D449 and D450 claimed carried exactly one, so a slice that stepped
-    // both figures by the same 3 would have been wrong in one of them.
-    // 🆕🆕 **D456 — FOUR BECAME TWO AND SEVEN BECAME FOUR.** The two that left are the
-    // RETALIATION rows, corpus lines 179 and 180 (1 printing and 2), claimed by
-    // `deriveAttackEffect` over `installRecoil` — line 179 through D152's anchor with its
-    // parenthetical widened to `(?:it|this Pokémon)`, line 180 through the new anchor
-    // `SELF_INSTALLED_RECOIL_TAKEN` and the op's widened `amount: number | "damageTaken"`.
-    // ⚠️ **THE TWO FIGURES DISAGREE AGAIN, −2 SENTENCES AND −3 PRINTINGS.**
-    // They are named here as INEQUALITIES rather than dropped (D418), and the inequality
-    // is the stronger rung: a single looser anchor would have claimed both sentences with
-    // ONE op and passed any `toContain`-shaped successor to this block.
-    // 🆕🆕🆕 D501 — TWO BECAME ONE AND FOUR BECAME THREE; the row that left is
-    // corpus FILE LINE 685, named as a POSITIVE below rather than subtracted away.
-    // ⚠️ THE TWO FIGURES DISAGREE BY ONE AGAIN, −1 SENTENCE AND −1 PRINTING — and this
-    // time they AGREE, because the row is 1/1. Verified off the corpus rather than
-    // assumed from the row being singular (D451/D461/D464).
-    // 🆕🛑 **D538 — ONE BECAME **ZERO** AND THREE BECAME ZERO: THE PLACEMENT FAMILY IS
-    // NOW CLOSED, and an EMPTY table is exactly the shape D536's `ownerPrefix.test.ts`
-    // finding is about.** Every `not.toContain` below this line is VACUOUSLY TRUE the
-    // moment `unbuilt` is empty, so the load-bearing claim is re-pointed onto the
-    // POSITIVE and asserted FIRST: all 19 sentences / 38 printings of this family
-    // resolve through the reader surface. The `not.toContain` bullets are KEPT (D418 —
-    // re-point, never delete: each one still names WHICH row left and why), but they are
-    // no longer the rung that could redden, and this rung says so out loud.
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
     expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
     expect(family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0)).toBe(
@@ -221,20 +122,8 @@ describe("§1 — the three printed folds, and the placement family's remaining 
       expect(deriveAttackEffect(text), text).toEqual(program);
     }
     const unbuilt = unread.map(([, t]) => t);
-    // …and the three this slice claims are OUT of it, which is the delta stated as an
-    // identity rather than as arithmetic in a comment.
     for (const s of [ABILITY_FOLD, BOARD_FOLD, WOUNDED_FOLD]) expect(unbuilt).not.toContain(s);
 
-    // (a) THE SCALED TWIN — corpus line 412, **3 printings**, and it was the largest
-    //     unbuilt row in this family until D538.
-    //     🆕🆕🆕 **D538 BUILT IT, AND THE LAST OF D448's THREE REFUSALS IS SPENT.** D449
-    //     spent the first (no anchor claimed the verb); the remaining two were the
-    //     PAYLOAD count and the READERLESS tail, and arm 23b-bis answers both at once
-    //     — `damageChosen { perDiscardPileCard: <the filter> }` carries the payload and
-    //     `discardPileRetrieval { max: "all" } + shuffleDeck` reads the tail. The rung
-    //     INVERTS rather than being deleted (D418): `toContain` becomes the positive,
-    //     and the tail-alone nullity SURVIVES because the anchor is whole-sentence, which
-    //     is the half of the old claim that is still true and still discriminating.
     expect(unbuilt).not.toContain(
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
     );
@@ -245,43 +134,11 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     ).toEqual(["damageChosen", "discardPileRetrieval", "shuffleDeck"]);
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
 
-    // (b) 🆕 THE SCALED FOLD — 1 printing, and it is THIS SLICE'S OWN nearest neighbour
-    //     rather than a distant one. *"Put 1 damage **counter** on each of your
-    //     opponent's Pokémon for each of your Maushold in play."* is arm 23e's sentence
-    //     with a count clause bolted on, and it is refused on TWO axes at once: the
-    //     singular noun (which arm 23e's plural `counters` cannot match) and the
-    //     `pokemonInPlay` count, which `counterEachAll.amount` is a bare `number` for.
-    //     ⚠️ **NAMED HERE BECAUSE IT IS THE ROW A WIDER ANCHOR WOULD HAVE SWALLOWED**,
-    //     and swallowing it would have placed a flat 10 where the card prints a scale.
-    //     🛑 **AND IT IS NOT IN `unbuilt`, BECAUSE IT IS NOT IN THE LEGAL COLUMN AT
-    //     ALL** — 0 Standard-legal printings, which is a fact about the CATALOG and not
-    //     about the reader. Stated rather than glossed: a near miss that carries no
-    //     legal printing is still a near miss (the anchor must refuse it whatever the
-    //     legality column says), and asserting it through `unbuilt` would have been a
-    //     claim about the wrong population (D413/D449, the two-populations failure
-    //     pointed the other way for once).
     expect(new Map(legalAttackCorpus()).has(1)).toBe(true); // the column really is loaded
     expect(
       legalAttackCorpus().some(([, t]) => t.includes("for each of your Maushold in play")),
     ).toBe(false);
 
-    // (c) THE HP-TARGET ROWS — lines 425, 426 and 427, **5 printings**.
-    //     🆕🆕🆕 **SPENT AT D451, AND THIS BULLET GOT THE PREDICATE RIGHT, THE MECHANISM
-    //     RIGHT AND THE CONCLUSION WRONG.** *"…until its remaining HP is N"* does compute
-    //     the amount FROM THE TARGET; `remainingHpWithin` is a PREDICATE and D451 does
-    //     not call it; ONE mechanism does serve all three rows. What does not follow is
-    //     *"nothing in this engine subtracts to a target"* — `koSurvivalClamp`
-    //     (continuous.ts) has computed `effectiveMaxHp − KO_SURVIVAL_REMAINING_HP` since
-    //     D208, which is this arithmetic under another name, and *remaining HP* has had
-    //     exactly one definition (`effectiveMaxHp − damage`) since D349. The op is
-    //     `counterUntilRemainingHp`; the arms are 23g and 23h.
-    //     🛑 **AND THE ONE-AXIS CLAIM THIS BULLET MADE WAS ABOUT THE WRONG SENTENCE.**
-    //     It said *"the FIRST of them is now a one-axis near miss of arm 23e"*, meaning
-    //     line 425 — the BENCH fold, which really is a fold and really does differ from
-    //     arm 23e on the amount alone plus a zone. Lines 426/427 are not folds at all:
-    //     they name ONE body, and their near sibling is arm 22 (`damageActive`), not
-    //     23e. D451 inherited the seat scoping from neither — the direction lives in
-    //     `target`, `damageChosen`'s spelling, and the walk is the op's own.
     for (const s of [
       "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
@@ -299,10 +156,6 @@ describe("§1 — the three printed folds, and the placement family's remaining 
       ),
     );
 
-    // (d) THE CONFUSION SUBSTITUTION — 1 printing. Not a placement at all: it RAISES the
-    //     Checkup's own per-condition amount, which is a status field reached by a status
-    //     op. Refused on the VERB, which reads as this family's only because of one word.
-    // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
     expect(unbuilt).not.toContain(
       "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
     );
@@ -312,11 +165,6 @@ describe("§1 — the three printed folds, and the placement family's remaining 
       ),
     ).toEqual([{ op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 }]);
 
-    // (e) THE BOUNDED SELF-PLACEMENT — 1 printing, and it is the row D449's published
-    //     pattern could NOT see, carried forward here because a hole a predecessor named
-    //     is a hole this slice inherits. `Put up to 9 …` puts the bound between the verb
-    //     and the count, so `\d* ?damage counters` misses it; it is refused anyway, on a
-    //     consequent that scales off what was placed.
     expect(
       deriveAttackEffect(
         "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
@@ -361,12 +209,7 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
     ]);
   });
 
-  it("🛑 the two opponent anchors are a PREFIX PAIR and the `$` is the whole of the fence", () => {
-    // `COUNTER_FOLD_ON_OPPONENT_ALL`'s string is `COUNTER_FOLD_ON_OPPONENT_DAMAGED`'s
-    // prefix up to the final `\.`, so a build that dropped the `$` would read the
-    // windowed sentence as the bare fold and silently place counters on every body the
-    // card exempts. Asserted in BOTH directions — an INEQUALITY of derived programs
-    // rather than a nullity, which is the form D449 established for a near-miss rung.
+  it("the two opponent anchors are a PREFIX PAIR and the `$` is the whole of the fence", () => {
     expect(deriveAttackEffect(BOARD_FOLD)).not.toEqual(deriveAttackEffect(WOUNDED_FOLD));
     // …and the difference is exactly one key, which is what makes the pair a hazard.
     const bare = (deriveAttackEffect(BOARD_FOLD) as EffectOp[])[0] as EffectOp;
@@ -391,7 +234,6 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
         "the ability fold with the parenthetical removed",
         "Put 6 damage counters on each Pokémon that has an Ability.",
       ],
-      // THE SINGULAR NOUN — the scaled fold's own opening, and a real catalog row.
       [
         "one counter, singular",
         "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
@@ -415,10 +257,6 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
     ] as const) {
       expect(deriveAttackEffect(text), why).toBeNull();
     }
-    // 🛑 THE DETERMINER — the one near miss that is NOT null and must not be asserted
-    // as if it were (D449's rule: a `toBeNull` on a sentence the catalog prints is a
-    // liability). *"1 of"* is arm 23b's PICK where *"each of"* is this slice's FOLD, so
-    // the claim is an INEQUALITY of derived programs plus both positives beside it.
     const pick = deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Pokémon.");
     expect(pick).toEqual([
       { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack" },
@@ -427,8 +265,6 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
   });
 
   it("derives the CURLY apostrophe identically, and rejects a NON-BREAKING space", () => {
-    // EQUALITY with the straight form, never merely non-null: a non-null check passes on
-    // a reader that folded the sentence into some other row.
     for (const s of [ABILITY_FOLD, BOARD_FOLD, WOUNDED_FOLD]) {
       const curly = s.replaceAll("'", "’");
       expect(curly).not.toBe(s);
@@ -443,9 +279,6 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
   });
 
   it("accepts the unprinted counts, which is a claim about the GAME and not the INGEST", () => {
-    // D131/D135/D139's standing call: an unambiguous sentence the op expresses exactly is
-    // derived even where no card prints that number. A printed ZERO is refused instead —
-    // both by the arm's `>= 1` guard and again by the interpreter's `amount <= 0`.
     expect(deriveAttackEffect("Put 9 damage counters on each of your opponent's Pokémon.")).toEqual(
       [
         {
@@ -473,11 +306,7 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — TWO REQUIRED fields on a shipped op, and the record version does not move", () => {
-  it("🛑 the version PREDICTION, driven over the SERIALIZED BYTES in THREE directions", () => {
-    // 🛑 **WHICH SITUATION THIS IS, ASKED RATHER THAN INHERITED.** Adding a REQUIRED key
-    // to a persisted structure is D386's case and has cost a bump seven times. What makes
-    // it free here is a REACHABILITY fact and nothing softer.
-
+  it("the version PREDICTION, driven over the SERIALIZED BYTES in THREE directions", () => {
     // **DIRECTION 1 — FORWARD: the literal this deploy writes, whole.** Key sets are
     // asserted rather than eyeballed, because "the object looked right" is how an
     // optional key goes missing.
@@ -493,22 +322,6 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
       '{"op":"counterEachAll","amount":10,"filter":{"kind":"abilityPokemon"},"side":"both","source":"ability","exceptNamed":"Froslass"}',
     );
 
-    // **DIRECTION 2 — BACKWARD, AND IT IS THE ONE THAT DECIDES THE VERSION.** An
-    // `EffectOp` reaches storage by exactly one route: `EffectContinuation` carries
-    // `{pendingOp, rest, ctx, record}` and lives at `GameState.phase.cont`, which
-    // `MatchRecord.state` persists. A continuation is written only when a program PARKS.
-    // **This op never parks and never could have**, so no v29 record can hold the old
-    // three-key literal — there is nothing to read back wrongly.
-    //   · the op's own `stepOp` arm returns `{ done }` and never `{ park }`, driven
-    //     below on all three arms by the absence of an `effect:choose` phase;
-    //   · and at v29 its ONE producer was a program of LENGTH 1, so it could not even
-    //     ride `cont.rest` behind somebody else's park. Measured off the LIVE registry
-    //     rather than recalled.
-    //     ⚠️ THE SWEEP IS OVER `registryCardIds()` AND NOT OVER `FIXTURE_POOL`, which
-    //     is D342's repair inherited rather than re-earned: a pool-scoped auditor
-    //     audits the pool. Its FOUR program-bearing keys are walked (`attack`,
-    //     `abilities`, `triggered`, `trainer`); `energy` and `passive` carry no
-    //     `EffectOp[]` at all, which is what makes those four total.
     const authored: EffectOp[][] = [];
     for (const id of registryCardIds()) {
       const card = programFor(id);
@@ -519,11 +332,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
       if (card.trainer !== undefined) authored.push(card.trainer);
     }
     const producers = authored.filter((ops) => ops.some((o) => o.op === "counterEachAll"));
-    // 🆕🆕🆕 D555 — 3 -> **4**: Team Rocket's Tyranitar `sv10-096` "Sand Stream" is the
-    // op's SECOND registry producer (`side: "opponent"`, `basicPokemon`, 20), and it is a
-    // single-op `betweenTurns` program too — so the length-1 and never-parks halves of
-    // this rung hold unchanged. The "ONE producer" above is the v29 fact it names.
-    expect(producers).toHaveLength(4); // the three Froslass printings + Sand Stream, ONE registry id each
+    expect(producers).toHaveLength(4);
     for (const ops of producers) {
       expect(ops).toHaveLength(1);
       expect(ops[0]?.op).toBe("counterEachAll");
@@ -533,14 +342,6 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
       expect(state.phase.kind, `index ${index}`).not.toBe("effect:choose");
     }
 
-    // **DIRECTION 3 — THE LOSS DIRECTION, AND IT IS THE ONE THE BRIEF WAS RIGHT TO
-    // DEMAND.** A required key added to a shipped op normally degrades a v29 record into
-    // a silent wrong answer, and BOTH of these would: a lost `side` leaves the seat
-    // switch with no arm (a fold over `undefined`), and a lost `source` files a
-    // `COUNTERS_PLACED` whose label matches no arm of `log.ts`'s switch — a row that
-    // simply does not render. Neither is a soft landing, and neither is REACHABLE,
-    // because direction 2 established there is no record to lose them from. Both halves
-    // are stated, because the second alone would read as an excuse.
     for (const key of ["op", "amount", "filter", "side", "source"] as const) {
       const dropped = JSON.parse(
         JSON.stringify(fresh, (k, v) => (k === key ? undefined : v)),
@@ -563,7 +364,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — arm 23d walks both boards and the noun decides who is on it", () => {
-  it("🛑 counters land on every Ability body on BOTH seats and on nothing else", () => {
+  it("counters land on every Ability body on BOTH seats and on nothing else", () => {
     // Four bodies, two on each side, and exactly two of them carry a printed Ability.
     // The attacker itself carries none — deliberately (see the fixture), so "walks my
     // board" cannot be confused with "walks the body it is standing on".
@@ -575,16 +376,11 @@ describe("§4 — arm 23d walks both boards and the noun decides who is on it", 
     const { state: after, events } = attack(state, IDX.ability);
     const placed = placements(events);
     expect(placed).toHaveLength(2);
-    // ONE row per seat, and each row's `seat` owns the DAMAGED body — which on this
-    // board is the whole point: a build that filed both under the attacker's seat would
-    // read identically on every one-seat board in this file.
     expect(placed.map((e) => e.seat).sort()).toEqual(["p1", "p2"]);
     expect(placed.every((e) => e.amount === 60)).toBe(true);
     // 6 counters = 60 HP, at the PRODUCER.
     expect(after.players.p1.bench[0]?.damage).toBe(60); // own Ability body — the seam
     expect(after.players.p2.active?.damage).toBe(60);
-    // …and the three bodies WITHOUT a printed Ability are untouched, including the
-    // attacker. Without these the filter is unfalsifiable (D448).
     expect(after.players.p1.active?.damage).toBe(0);
     expect(after.players.p1.bench[1]?.damage).toBe(0);
     expect(after.players.p2.bench[0]?.damage).toBe(0);
@@ -603,11 +399,6 @@ describe("§4 — arm 23d walks both boards and the noun decides who is on it", 
   });
 
   it("the placement is FLAT — a ×2 Weakness does not double it", () => {
-    // §8.5 does not apply to a PLACED counter (D138/D139), and the catalog prints the
-    // rule on Bronzong sv03-145. `fix-lightning-weak` is ×2 Lightning at 130 HP and the
-    // attacker is {L}, so a build that routed this through the damage pipeline would
-    // read 40 where the print says 20. The `anyPokemon` fold is used because
-    // `fix-lightning-weak` carries no Ability and arm 23d would skip it.
     const { state: after } = attack(fielded(32, { defender: "fix-lightning-weak" }), IDX.board);
     expect(after.players.p2.active?.damage).toBe(20);
     // …and the printed-damage control on the SAME body does double, which is what makes
@@ -622,7 +413,7 @@ describe("§4 — arm 23d walks both boards and the noun decides who is on it", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — arm 23e walks the opponent's board only", () => {
-  it("🛑 every opponent body takes counters and the attacker's whole board is untouched", () => {
+  it("every opponent body takes counters and the attacker's whole board is untouched", () => {
     const state = fielded(40, {
       mine: ["fix-idlebody", "fix-bigbody"],
       theirs: ["fix-bigbody", "fix-lightning-weak"],
@@ -633,9 +424,6 @@ describe("§5 — arm 23e walks the opponent's board only", () => {
     expect(placed.every((e) => e.seat === "p2")).toBe(true);
     expect(after.players.p2.active?.damage).toBe(20);
     expect(after.players.p2.bench.map((b) => b.damage)).toEqual([20, 20]);
-    // 🛑 THE SEAT, DRIVEN: p1's own board is the half a `side: "both"` build would ruin,
-    // and one of these three bodies carries an Ability so the ability fold's board would
-    // have touched it.
     expect(after.players.p1.active?.damage).toBe(0);
     expect(after.players.p1.bench.map((b) => b.damage)).toEqual([0, 0]);
   });
@@ -654,12 +442,8 @@ describe("§5 — arm 23e walks the opponent's board only", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — the WINDOW: `damagedOnly`, D437's rider on a walk instead of a pick.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§6 — arm 23f narrows to bodies that already carry damage", () => {
-  it("🛑 only the already-damaged bodies take counters, and the control takes them all", () => {
+  it("only the already-damaged bodies take counters, and the control takes them all", () => {
     let state = fielded(50, { theirs: ["fix-bigbody", "fix-bigbody"] });
     state = setDamage(state, "p2", 30); // their Active is wounded
     state = setBenchDamage(state, "p2", 1, 10); // …and the SECOND benched body only
@@ -667,18 +451,12 @@ describe("§6 — arm 23f narrows to bodies that already carry damage", () => {
     expect(placements(events)).toHaveLength(2);
     expect(after.players.p2.active?.damage).toBe(50);
     expect(after.players.p2.bench.map((b) => b.damage)).toEqual([0, 30]);
-    // …and arm 23e on the identical board takes all three, which is the only thing that
-    // makes the skipped body above a measurement (D448's one-print-fixture rule).
     const { state: control } = attack(state, IDX.board);
     expect(control.players.p2.active?.damage).toBe(50);
     expect(control.players.p2.bench.map((b) => b.damage)).toEqual([20, 30]);
   });
 
   it("the threshold is `damage > 0` and not `>= 10`, so a HALVED hit is a candidate", () => {
-    // D437's spelling decision, pinned one op over and inherited here rather than
-    // re-made: `hasAnyDamageCounters` reads the field, and a 5-damage body IS a
-    // candidate. Unreachable off a printing today and constructible as a fixture, which
-    // is exactly the case a comment would get wrong.
     let state = fielded(51, { theirs: ["fix-bigbody"] });
     state = setBenchDamage(state, "p2", 0, 5);
     const { state: after } = attack(state, IDX.wounded);
@@ -698,15 +476,7 @@ describe("§6 — arm 23f narrows to bodies that already carry damage", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — the prevention gate, asked PER BODY", () => {
-  it("🛑 the EFFECTS shield REFUSES the placement — and the DAMAGE shield does not", () => {
-    // A placed counter is NOT damage (D138/D139/D142; the catalog prints the rule on
-    // Bronzong sv03-145), so it falls to the EFFECTS half of the family and to nothing
-    // else. Neither assertion means anything without the other: "the shield refused it"
-    // passes on a build that refuses everything, "the shield let it through" on a build
-    // that gates nothing. Four boards, two shields, one axis each.
-    //
-    // `fix-unaware` — "Prevent all effects of attacks used by your opponent's Pokémon
-    // done to this Pokémon. (Damage is not an effect.)"
+  it("the EFFECTS shield REFUSES the placement — and the DAMAGE shield does not", () => {
     const shielded = attack(fielded(60, { defender: "fix-unaware" }), IDX.board);
     expect(find(shielded.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
     expect(placements(shielded.events)).toHaveLength(0);
@@ -730,36 +500,18 @@ describe("§7 — the prevention gate, asked PER BODY", () => {
     expect(damageShieldControl.state.players.p2.active?.damage).toBe(0);
   });
 
-  it("🛑 a shield on ONE body silences exactly that body — the rest of the fold lands", () => {
-    // THE WHOLE REASON A SPREAD PLACER IS A DIFFERENT §11 EXPOSURE FROM A SINGLE-TARGET
-    // ONE. Refusing the op WHOLE would let one shielded body protect an entire board, a
-    // rule no printing states — D259's judgement for a candidate SET, reached here by a
-    // walk. Three bodies, one of them shielded, and the assertion is on all three.
+  it("a shield on ONE body silences exactly that body — the rest of the fold lands", () => {
     const state = fielded(62, { theirs: ["fix-unaware", "fix-bigbody"] });
     const { state: after, events } = attack(state, IDX.board);
     expect(placements(events)).toHaveLength(2);
     expect(after.players.p2.active?.damage).toBe(20);
     expect(after.players.p2.bench[0]?.damage).toBe(0); // the shielded BENCHED body
     expect(after.players.p2.bench[1]?.damage).toBe(20);
-    // ONE prevention row, naming the ONE body — not one per fold and not one per seat.
     const prevented = events.filter((e) => e.type === "ATTACK_EFFECT_PREVENTED");
     expect(prevented).toHaveLength(1);
-    // ⚠️ **AND THE SHIELDED BODY IS ON THE BENCH, WHICH IS A DIFFERENCE FROM THE SNIPE
-    // AND IS STATED RATHER THAN GLOSSED.** `placeSnipe`'s bench branch consults no
-    // shield at all (`snipeTargets` deliberately omits `unshieldedRefs` — its own doc
-    // block), so the put-counter PICK is gated on the Active alone. A FOLD has no
-    // candidate list and no prompt: it touches, so every body it touches is asked. The
-    // asymmetry is real, it is the snipe's to resolve, and this rung is the record of it.
-    // [🆕🆕🆕 D621 (D539): WITHDRAWN — RESOLVED: the put-counter Bench arm asks the funnel of the
-    // picked body since D621 (`counterPutChosen.test.ts` §5, `sideStateMeD621.test.ts` §5).]
   });
 
   it("the refusal is asked AFTER the narrowing, so a body the sentence never names is silent", () => {
-    // D433's ordering rule, driven rather than commented: `fix-unaware` carries a
-    // printed Ability, so arm 23d NAMES it and it files a prevention row; under arm 23f
-    // it is undamaged, so the window drops it BEFORE the gate and no row is filed at
-    // all. Every board is identical under both orderings — the only casualty of getting
-    // it backwards is a false log row, which is exactly why it would survive review.
     const named = attack(fielded(63, { defender: "fix-unaware" }), IDX.ability);
     expect(named.events.filter((e) => e.type === "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
     const notNamed = attack(fielded(63, { defender: "fix-unaware" }), IDX.wounded);
@@ -767,13 +519,7 @@ describe("§7 — the prevention gate, asked PER BODY", () => {
     expect(notNamed.state.players.p2.active?.damage).toBe(0);
   });
 
-  it("🛑 the OWN-SIDE half of the both-seats fold is refused by NOTHING, and the gate says so", () => {
-    // D430: every §11 shield in the pool names the ATTACK'S SOURCE and the source it
-    // names is always the holder's OPPONENT, so `effectRefusedOn` returns false on
-    // `seat === ctx.seat`. A Mist-style shield standing on the ATTACKER's own Bench does
-    // not stop the attacker's own printed sentence. Driven because the alternative — a
-    // gate that "conservatively" protects everything — is a wrong answer that looks
-    // careful, and `side: "both"` is the first placement producer that can reach it.
+  it("the OWN-SIDE half of the both-seats fold is refused by NOTHING, and the gate says so", () => {
     const state = fielded(64, { mine: ["fix-unaware"], defender: "fix-idlebody" });
     const { state: after, events } = attack(state, IDX.ability);
     expect(after.players.p1.bench[0]?.damage).toBe(60); // own shielded body: countered
@@ -787,7 +533,7 @@ describe("§7 — the prevention gate, asked PER BODY", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — a lethal placement Knocks Out and pays a Prize to the other seat", () => {
-  it("🛑 the opponent-side KO owes the ATTACKER a Prize", () => {
+  it("the opponent-side KO owes the ATTACKER a Prize", () => {
     // The op never KOs; `finishAttack`'s TWO-SEAT sweep does (flow.ts), and `lethalRefs`
     // walks Active AND Bench on both seats — which is what makes the own-side case below
     // work with no code written for it.
@@ -801,12 +547,7 @@ describe("§8 — a lethal placement Knocks Out and pays a Prize to the other se
     expect(after.phase.kind).toBe("ko:takePrizes");
   });
 
-  it("🛑 the OWN-SIDE KO owes the OPPONENT a Prize — D425's seam, reached by a placement", () => {
-    // `side: "both"` is the first thing in this engine that can Knock Out the ATTACKER's
-    // own body with a placed counter. `collectKnockOutPass` owes each Knock Out's Prize
-    // to `otherSeat(entry.ref.seat)`, so the opponent is paid with no code written here
-    // or there — and that is precisely the kind of fact that is true by construction and
-    // wrong the first time nobody checks it.
+  it("the OWN-SIDE KO owes the OPPONENT a Prize — D425's seam, reached by a placement", () => {
     let state = fielded(71, { mine: ["fix-idlebody"], defender: "fix-bigbody" });
     state = setBenchDamage(state, "p1", 0, 140); // 200 HP at 140 → 60 is exactly lethal
     const { events } = attack(state, IDX.ability);
@@ -817,18 +558,7 @@ describe("§8 — a lethal placement Knocks Out and pays a Prize to the other se
     expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(1);
   });
 
-  it("🛑 the KO is BY DAMAGE, and Vengeful Punch is where D414's marker is observable", () => {
-    // `koByEffect:<turn>` (types.ts) is stamped by ops that make a body lethal WITHOUT
-    // damaging it, and `koRecoilOf` (flow.ts) reads it to decide whether the printed
-    // "Knocked Out BY DAMAGE from an attack" recoil is owed. A placed counter DOES place
-    // damage, so no marker is stamped and the recoil IS owed — D434's own stated rule
-    // reaching a third producer.
-    //
-    // ⚠️ **THE ABSENCE IS DRIVEN THROUGH ITS READER RATHER THAN READ OFF THE BODY**: the
-    // KO'd body is gone by the time the events are inspected, so `markers` cannot be
-    // asserted at all. The recoil firing IS the observation, and it goes RED in exactly
-    // one direction — a build that stamped the marker here would leave the attacker
-    // undamaged.
+  it("the KO is BY DAMAGE, and Vengeful Punch is where D414's marker is observable", () => {
     let state = fielded(72);
     state = attachToolFromDeck(state, "p2", "active", "sv03-197");
     state = setDamage(state, "p2", 180);
@@ -838,16 +568,8 @@ describe("§8 — a lethal placement Knocks Out and pays a Prize to the other se
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §9 — the log row, and the Ability caller that must not have moved.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§9 — `source` on the wire, and the shipped Ability path unchanged", () => {
-  it("🛑 an attack's placement renders in the PRINTED verb and never the word Ability", () => {
-    // D136's finding 1, refused at the source for the fourth time on this axis. The
-    // `"ability"` arm prints the literal word Ability, which on an attack is false; the
-    // `"attack"` arm prints "Put:". This is the assertion that fails the moment somebody
-    // "simplifies" the field back into a hardcode.
+  it("an attack's placement renders in the PRINTED verb and never the word Ability", () => {
     const { state: after, events } = attack(fielded(80, { defender: "fix-idlebody" }), IDX.board);
     expect(placements(events).every((e) => e.source === "attack")).toBe(true);
     const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state: after, elapsed: "+00:07" };
@@ -861,10 +583,6 @@ describe("§9 — `source` on the wire, and the shipped Ability path unchanged",
     expect(placed?.who).toBe("system");
     expect(placed?.text).toContain("20");
     expect(placed?.text).not.toContain("Ability");
-    // ⚠️ THE SYSTEM VOICE'S STATED REASON NARROWED WITH THIS SLICE AND THE ROW DID NOT.
-    // The arm justifies "system" by "`seat` is the attacker's OPPONENT"; on the
-    // both-seats fold it is not, and the row is still system-voiced and still correct,
-    // because a system row names no actor to get wrong. Driven, not argued.
     const own = attack(
       fielded(81, { mine: ["fix-idlebody"], defender: "fix-bigbody" }),
       IDX.ability,
@@ -884,13 +602,6 @@ describe("§9 — `source` on the wire, and the shipped Ability path unchanged",
   });
 
   it("the registry Ability path is byte-identical across this slice", () => {
-    // ⚠️ **THE ONE THING A SEAM SLICE MUST PROVE ABOUT THE CALLER IT DID NOT COME FOR.**
-    // `effectRefusedOn` returns false at `ctx.invokedBy !== "attack"`, and a triggered
-    // Ability leaves `invokedBy` ABSENT — so Froslass now consults a gate it never used
-    // to, is never refused by it, and pushes no event. [🆕🆕🆕 D614 (D539): WITHDRAWN — a trigger
-    // carries `invokedBy: "ability"`, and an opponent's Luminous Wing refuses the counter
-    // (`abilityShieldMeD614.test.ts` §4).] The whole of `freezingShroud.test.ts`
-    // is the real witness; this is the field-level statement of why it stayed green.
     const program = programFor("sv06-053")?.triggered?.[0]?.program;
     expect(program).toEqual([
       {
@@ -905,10 +616,6 @@ describe("§9 — `source` on the wire, and the shipped Ability path unchanged",
   });
 });
 
-// A reference to `applyAction` so the import earns its place: every board above goes
-// through `mustApply`, which wraps it — this is the one direct call, and it pins that a
-// second attack in the same turn is refused, i.e. that the boards above really did end
-// their turn on the attack rather than leaving one open (§8's one-attack rule [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]).
 describe("§10 — the attack really is the turn's last action", () => {
   it("refuses a second attack after the fold resolves", () => {
     const { state } = attack(fielded(90, { theirs: ["fix-bigbody"] }), IDX.board);

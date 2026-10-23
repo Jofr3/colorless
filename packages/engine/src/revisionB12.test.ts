@@ -11,30 +11,14 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B12 (Abilities) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B12"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.abilities_json`, byte for byte below):
-//   §1 Infernape "Pyro Dance" (`sv06-033` / `sv06-173` / `svp-116`) — *"a Basic {R} Energy card, a
-//      Basic {F} Energy card, or 1 of each"*: three printed answers, {R}, {F} and {R,F}, and no empty
-//      one. The program was two MANDATORY one-card attaches, so a hand holding both types always
-//      attached both (forced outright when Infernape was the only Pokémon in play). The two ops now
-//      carry `atLeastOne` over one record slot: an op of the pair is declinable while another of it
-//      already attached, or one later in the program can still attach.
-//   §2 Magneton "Overvolt Discharge" (`sv08-059` / `svp-153` / `svp-159`) — the LAST attach onto the
-//      host resolves in the same reduction as the printed self Knock Out, and the log row named the
-//      host "a Pokémon" (the post-state no longer holds the Energy on any body). log.ts now names the
-//      body the same batch's KNOCKED_OUT discarded the Energy with.
 
 const PYRO_DANCE =
   "Once during your turn, you may attach a Basic {R} Energy card, a Basic {F} Energy card, or 1 of each from your hand to your Pokémon in any way you like.";
 const OVERVOLT_DISCHARGE =
   "Once during your turn, you may attach up to 3 Basic Energy cards from your discard pile to your {L} Pokémon in any way you like. If you use this Ability, this Pokémon is Knocked Out.";
 
-/** Every Standard-legal printing of each sentence on the local D1 (measured 2026-10-19). */
 const INFERNAPE = ["sv06-033", "sv06-173", "svp-116"] as const;
 const MAGNETON = ["sv08-059", "svp-153", "svp-159"] as const;
 const FILLER = "b12-filler";
@@ -96,11 +80,6 @@ const DECK = deckOf({
   "fix-energy": 22, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(state, action);
   if (!result.ok)
@@ -108,8 +87,6 @@ function run(state: GameState, action: GameAction): { state: GameState; events: 
   return { state: result.state, events: [...result.events] };
 }
 
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 1212, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -256,7 +233,7 @@ describe("B12 §1 — Infernape 'Pyro Dance': {R}, {F} or 1 of each, and never n
     expect(state.players.p1.hand).toEqual([]);
   });
 
-  it("🛑 the EMPTY answer is not printed: declining {R} makes the {F} mandatory", () => {
+  it("the EMPTY answer is not printed: declining {R} makes the {F} mandatory", () => {
     let state = run(board(INFERNAPE[0], { hand: [FIRE, FIGHTING] }), use("Pyro Dance")).state;
     state = run(state, DECLINE).state;
     const refused = applyAction(state, DECLINE);

@@ -27,102 +27,12 @@ import {
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
-// 0.74.0 → 0.75.0 — the PROMOTED-THIS-TURN clause (D124). Revavroom ex
-// sv06.5-015/-081 "Accelerator Flash" (20+, +120) and Golisopod swsh10.5-026
-// "First Impression" (20+, +90): "If this Pokémon moved from your Bench to the
-// Active Spot this turn, this attack does N more damage."
-//
-//   `yourActivePromotedThisTurn` — a BARE TAG on a LITERAL table row.
-//
-// THREE PRINTINGS ON ONE ROW, the best ratio in the family, and still ONE ROW
-// AND NOT A TEMPLATE: the two printed amounts (120 and 90) are captured by the
-// OUTER skeleton ("this attack does (\d+) more damage"), so the clause itself is
-// byte-identical across all three prints and there is nothing INSIDE it to
-// parameterise. D118's rule read from the other end — a template is warranted by
-// variation inside the clause, and here there is none. The two-amount pair in the
-// deriver block below is the mechanical proof of that claim.
-//
-// THIS IS THE FIRST CLAUSE IN THE FAMILY THAT BUYS NEW STATE, which is why this
-// suite has a block its siblings do not (`promotedTurn` — the state itself).
-// D123 got its turn event free by reading a rule-enforcement flag
-// (`allowances.supporterPlayed`, which exists because §7.2 caps Supporters at one
-// per turn); that shortcut is spent here, because NO RULE caps how often a
-// Pokémon may move up. The fact is per-Pokémon AND per-turn at once and nothing
-// on the model held it: `turnPlayed` records when the CARD entered play,
-// `markers` is a write-only bag never read in production, and `TurnAllowances` is
-// per-SEAT. So `InPlayPokemon` gained `promotedTurn: number | null` (types.ts).
-//
-// A TURN STAMP, NOT A FLAG — the decision the whole slice turns on, and it pays
-// three times:
-//
-//   (1) NO TURN-BOUNDARY CLEAR. `promotedTurn === state.turn` expires by
-//       ARITHMETIC, so `startTurn` walks nothing and no future slice can forget
-//       to reset it. (The turn-scoped board case below is what would catch a
-//       regression here.)
-//
-//   (2) NO SEAT GUARD — the exact inverse of D123, and the generalisation worth
-//       writing down: **D123's guard was owed to seat-AMBIGUOUS STATE
-//       (`state.allowances` is a SINGLE bag belonging to whoever owns the turn),
-//       not to the words "this turn".** A stamp on a Pokémon is unambiguous —
-//       the Pokémon already knows whose it is — so the predicate is TOTAL over
-//       seats, consumers and phases. `conditionHolds` reads
-//       `active.promotedTurn === state.turn` and asks `phaseViewOf` nothing.
-//
-//   (3) §8.1 FALLS OUT FREE. A Knock Out promotion runs during the OPPONENT's
-//       turn and stamps THEIR turn number, which can never equal `state.turn`
-//       once the controller's own turn has begun. Nothing had to be cleared to
-//       say "the replacement did not move up on your turn".
-//
-// ALL THREE bench→Active ROUTES STAMP IT and all three COUNT, because the printed
-// verb is "moved" and not "retreated": `retreat` (turn.ts), `switchInto`
-// (interpreter.ts — Switch/Escape Rope on your own board, Boss's Orders on the
-// opponent's, and Jet Energy's on-attach switch) and `resolvePromotion` after a KO
-// (flow.ts). Setup placement is NOT a route — a card played from the hand never
-// came from the Bench — so `makeInPlay` stamps `null`. It SURVIVES EVOLUTION:
-// `placeEvolution` spreads the whole Pokémon, and §10 sheds the effects of
-// ATTACKS, which having moved is not.
-//
-// THE NEGATIVE TWIN IS REAL AND IS NOT A NEAR-MISS OF THIS ROW: Palafin
-// sv03-062/-200 "Justice Kick" prints the same state question inverted — "If this
-// Pokémon didn't move from the Bench to the Active Spot this turn, this attack
-// does nothing." It differs three times over (a different CONSEQUENT, so the
-// OUTER anchor refuses it before this table is ever consulted; a different verb
-// form; and no possessive on "the Bench"). D125 has since simulated it — NOT as
-// the `conditionGate`-shaped slice this comment originally forecast, but off its
-// own skeleton and its own table, because a cancel must be evaluated in FRONT of
-// the §8.5 pipeline and no post-damage op can retract damage already dealt. It
-// resolves to THIS member, bought here, on zero new vocabulary
-// (attackRequirement.test.ts). Weavile sv02-134's "Assaulting Hunt"
-// reads the same transition as a `when` TRIGGER in the present tense — a
-// different mechanism again, not a clause.
-
-/** Revavroom ex's printed sentence at +120, pinned here and asserted
-    char-for-char against FIXTURE_POOL below. Neither Revavroom ex nor Golisopod
-    carries an authored program (see the ZERO-rows block), so the sentence IS the
-    wiring: a drifted character does not throw, it drops the card back onto the
-    loud ATTACK_EFFECT_SKIPPED path and silently stops paying the bonus. */
 const ACCELERATOR_FLASH =
   "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 120 more damage.";
 
-/** Golisopod's printed sentence at +90 — the SAME clause under a different
-    amount, and the whole argument for one row instead of a template. */
 const FIRST_IMPRESSION =
   "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 90 more damage.";
 
-/** The REAL negative twin from the same pool — Palafin sv03-062/-200's "Justice
-    Kick", verbatim. It reads the SAME state through the OTHER consequent, and the
-    three refusals below are refusals BY THE BONUS/EFFECT DERIVERS, at their outer
-    anchors: this sentence never reaches `CONDITIONAL_DAMAGE_CLAUSES` at all.
-
-    Since D125 it is not unmapped in the engine — `deriveAttackRequirement` reads
-    it off its OWN skeleton ("If <clause>, this attack does nothing.") and its own
-    two-row table, and it resolves to this very member,
-    `yourActivePromotedThisTurn`, without either table learning about the other.
-    attackRequirement.test.ts owns that side; what this suite pins is that the
-    three readers HERE still say null. Note the apostrophe: ASCII U+0027. The whole
-    978-card pool contains exactly two
-    non-ASCII characters anywhere — é (U+00E9) and × (U+00D7, in weakness values)
-    — so there is no U+2019 in the catalog for a matcher to trip over. */
 const JUSTICE_KICK =
   "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.";
 
@@ -132,10 +42,6 @@ const JUSTICE_KICK =
 const ASSAULTING_HUNT =
   "Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot.";
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -152,22 +58,10 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** The clause sentence at an arbitrary bonus — the constructor behind the
-    CONSTRUCTED cases below. The default deliberately matches NEITHER printing
-    (60 rather than 120 or 90), so a fold that hard-coded a printed amount would
-    survive a same-amount probe. */
 function promotedClause(per = 60): string {
   return `If this Pokémon moved from your Bench to the Active Spot this turn, this attack does ${per} more damage.`;
 }
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4).
-
-    Both Active spots are pinned to a neutral 200 HP fix-bigbody. Revavroom ex is
-    a STAGE 1 and could never be the dealt starter anyway, so the pin is not
-    optional here the way it was for D123's Basic: it is the only way a board
-    starts in a known shape. Pinning BOTH sides also keeps the defender's Weakness
-    out of every case that is not about Weakness — fix-bigbody has none. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -177,35 +71,15 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** `board`, then two passes — P1's SECOND turn, which is turn 4.
-
-    Only the EVOLUTION case needs it, and it needs it for a reason that has
-    nothing to do with this clause: §4/§10's first-turn evolution ban is spelled
-    in turn.ts as `state.turn === (seat === firstPlayer ? 1 : 2)`, and P1 (who
-    went second here) is banned on turn 2. Turn 4 is P1's first legal evolve. */
 function laterBoard(seed: number): GameState {
   const afterP1 = mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
   return mustApply(afterP1, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** Revavroom ex in the seat's Active Spot with Accelerator Flash's single {M}
-    paid. SURGERY, and surgery that CANNOT arm the clause: `setActiveFromDeck`
-    builds the Pokémon with `makeInPlay`, which stamps `promotedTurn: null` — so
-    this is the control board, and every armed board below goes through a real
-    action instead. The displaced fix-bigbody lands on the Bench.
-
-    The {M} is the type/cost oddity made concrete: Revavroom ex's `types` is
-    ["Lightning"] while its cost is Metal, and both halves are faithful to the D1
-    row (see the fixture's doc block). */
 function revavroomActive(state: GameState, seat: Seat): GameState {
   return attachFromDeck(setActiveFromDeck(state, seat, "sv06.5-015"), seat, "fix-metal-energy", 1);
 }
 
-/** Revavroom ex on the END of the seat's Bench with its {M} already attached —
-    the pre-state for every ARMED case, since all three bench→Active routes need
-    the Pokémon on the Bench first. Returns the state; the new Pokémon's index is
-    the bench length before the call, which every caller here knows is 0 (setup
-    placed no Bench). */
 function revavroomBenched(state: GameState, seat: Seat): GameState {
   const index = state.players[seat].bench.length;
   return attachBenchFromDeck(
@@ -217,10 +91,6 @@ function revavroomBenched(state: GameState, seat: Seat): GameState {
   );
 }
 
-/** Golisopod on the END of the seat's Bench with First Impression's single {W}
-    paid — the +90 twin's pre-state, and the mirror of `revavroomBenched` down to
-    the Energy type, which really is different: {M} on a Lightning Pokémon there,
-    {W} on a Water one here. */
 function golisopodBenched(state: GameState, seat: Seat): GameState {
   const index = state.players[seat].bench.length;
   return attachBenchFromDeck(
@@ -232,14 +102,6 @@ function golisopodBenched(state: GameState, seat: Seat): GameState {
   );
 }
 
-/** Arm the clause the FIRST way it can be armed: a real §11 `retreat` action.
-    The current Active pays with one plain {C} pulled from the deck (§11 takes any
-    Energy, which is why the deck's Colorless line is load-bearing even though
-    Accelerator Flash costs {M}), and `promoteBenchIndex` names who comes up.
-
-    There is no surgical shortcut anywhere in this suite: `promotedTurn` is
-    written at exactly three sites in the engine and every board case below goes
-    through one of them. */
 function retreatInto(state: GameState, seat: Seat, benchIndex: number): GameState {
   const withEnergy = attachFromDeck(state, seat, "fix-energy", 1);
   const paying = withEnergy.players[seat].active?.energy.at(-1);
@@ -252,10 +114,6 @@ function retreatInto(state: GameState, seat: Seat, benchIndex: number): GameStat
   }).state;
 }
 
-/** Play an authored Trainer from the seat's hand by card id, pulling a copy out
-    of the deck first — the shared spelling behind the Switch and Boss's Orders
-    routes. Both of those cards resolve WITHOUT parking when there is exactly one
-    legal target, which is the shape every caller here sets up. */
 function playTrainer(state: GameState, seat: Seat, cardId: string): GameState {
   const withCard = handFromDeck(state, seat, cardId, 1);
   const played = mustApply(withCard, {
@@ -285,10 +143,6 @@ function other(seat: Seat): Seat {
     unsimulated) is the second, which is why the index has to be named. */
 const FLASH_INDEX = 0;
 
-/** First Impression is Golisopod's FIRST attack; "Slash" (100, unsimulated, and
-    carrying no `effect` key at all) is the second. Spelled separately from
-    FLASH_INDEX even though the two happen to agree, so a reprint that reorders
-    one card's attacks cannot silently move the other's. */
 const IMPRESSION_INDEX = 0;
 
 const COND = { kind: "yourActivePromotedThisTurn" } as const;
@@ -301,9 +155,6 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
     // expected at all — and the base the fold starts from.
     expect(attack?.damage).toBe("20+");
     expect(attack?.name).toBe("Accelerator Flash");
-    // The type/cost oddity, asserted rather than described: a {M} cost on a {L}
-    // Pokémon. Faithful to the D1 row, and both halves are load-bearing (the
-    // deck pays Metal; the §8.5 defender is Lightning-weak).
     expect(attack?.cost).toEqual(["Metal"]);
     expect(FIXTURE_POOL["sv06.5-015"]?.types).toEqual(["Lightning"]);
     // TWO attacks, so FLASH_INDEX cannot be right by accident — and the second
@@ -325,9 +176,6 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
     expect(attack?.name).toBe("First Impression");
     expect(attack?.cost).toEqual(["Water"]);
     expect(FIXTURE_POOL["swsh10.5-026"]?.attacks).toHaveLength(2);
-    // "Slash" has NO `effect` key at all on the D1 row — not an empty string —
-    // so the fixture omits the field. An `effect: ""` would be a different (and
-    // wrong) fact, and `toEqual` here is what pins the absence.
     expect(FIXTURE_POOL["swsh10.5-026"]?.attacks?.[1]).toEqual({
       cost: ["Water", "Colorless", "Colorless"],
       name: "Slash",
@@ -357,22 +205,12 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
     expect(FIXTURE_POOL["swsh10.5-026"]?.retreat).toBe(2);
     expect(FIXTURE_POOL["swsh10.5-026"]?.weaknesses).toEqual([{ type: "Lightning", value: "×2" }]);
     expect(FIXTURE_POOL["swsh10.5-026"]?.resistances).toBeNull();
-    // Asked by NAME, not by key: §10 matches `evolveFrom` against the card's
-    // NAME, and FIXTURE_POOL is keyed by card ID, so a `FIXTURE_POOL["Varoom"]`
-    // lookup would be vacuously undefined and prove nothing. BOTH pre-evolutions
-    // are in the pool (Wimpod arrived with D114's "Punk Out"), so either line
-    // could be evolved — the evolution-survival case picks Varoom because it is
-    // the ex's own set and needs no second Energy type.
     const namesInPool = Object.values(FIXTURE_POOL).map((card) => card.name);
     expect(namesInPool).toContain("Varoom");
     expect(namesInPool).toContain("Wimpod");
   });
 
   it("pins the BYTES — one é apiece, so bytes = code points + 1", () => {
-    // The invariant this family carries is `bytes = codePoints + count("Pokémon")`,
-    // and both sentences say it exactly once. 101 code points / 102 bytes for the
-    // +120 print; 100 / 101 for the +90 one — the ONE-character difference being
-    // "120" against "90", which is the whole variation across the three printings.
     expect(ACCELERATOR_FLASH.length).toBe(101);
     expect(utf8Bytes(ACCELERATOR_FLASH)).toBe(102);
     expect(FIRST_IMPRESSION.length).toBe(100);
@@ -395,9 +233,6 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
   });
 
   it("is BYTE-IDENTICAL inside the clause across both printings", () => {
-    // THE ARGUMENT FOR ONE ROW. Strip the outer skeleton from each sentence and
-    // what is left is the same string — so the table key is one literal and the
-    // amount is somebody else's problem (the skeleton's capture group).
     const clause = "If this Pokémon moved from your Bench to the Active Spot this turn, ";
     expect(ACCELERATOR_FLASH.startsWith(clause)).toBe(true);
     expect(FIRST_IMPRESSION.startsWith(clause)).toBe(true);
@@ -408,8 +243,6 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
 
 describe("deriveAttackDamageBonus — the clause resolves to the new member", () => {
   it("maps BOTH real printings onto the SAME cond at DIFFERENT amounts", () => {
-    // The two-line proof that this is one row and not a template: identical
-    // `cond`, and the only difference is the number the OUTER skeleton captured.
     expect(deriveAttackDamageBonus(ACCELERATOR_FLASH)).toEqual({
       per: 120,
       count: { kind: "boardCondition", cond: { kind: "yourActivePromotedThisTurn" } },
@@ -461,10 +294,6 @@ describe("deriveAttackDamageBonus — the clause resolves to the new member", ()
 
 describe("the near-misses stay LOUD", () => {
   it("refuses Palafin's REAL printed Justice Kick — at the OUTER anchor", () => {
-    // The negative twin reads the SAME state, so it is worth being precise about
-    // WHERE it is refused: its consequent is "this attack does nothing", which
-    // CONDITIONAL_DAMAGE_BONUS's skeleton never matches, so the clause table is
-    // not consulted at all. Two further differences ride behind that one.
     expect(JUSTICE_KICK).toContain("Active Spot this turn");
     expect(JUSTICE_KICK).toContain("this attack does nothing.");
     expect(JUSTICE_KICK).toContain("from the Bench"); // no possessive
@@ -472,20 +301,11 @@ describe("the near-misses stay LOUD", () => {
     expect(deriveAttackDamageBonus(JUSTICE_KICK)).toBeNull();
     expect(deriveAttackDamageMultiplier(JUSTICE_KICK)).toBeNull();
     expect(deriveAttackEffect(JUSTICE_KICK)).toBeNull();
-    // A FOURTH reader claims it (D125) — off its own skeleton and its own table,
-    // and it lands on the member THIS row buys. Asserted here rather than only in
-    // attackRequirement.test.ts so the two suites are bound: the three nulls above
-    // are "wrong consequent", never "nobody wants this sentence", and the day the
-    // requirement table changes hands this line fails alongside that one.
     expect(deriveAttackRequirement(JUSTICE_KICK)).not.toBeNull();
     expect(deriveAttackRequirement(JUSTICE_KICK)).toEqual(COND);
   });
 
   it("refuses Weavile's REAL Assaulting Hunt — same transition, wrong mechanism", () => {
-    // The pool's ONLY other card reading bench→Active. It is an Ability, it is a
-    // `when` TRIGGER rather than a per-turn query, and its verb is the PRESENT
-    // "moves". Any one of the three is enough; the whole-sentence anchor never
-    // has to choose.
     expect(ASSAULTING_HUNT).toContain("moves from your Bench to the Active Spot");
     expect(ASSAULTING_HUNT).not.toContain("moved from");
     expect(ASSAULTING_HUNT.startsWith("Once during your turn,")).toBe(true);
@@ -496,22 +316,12 @@ describe("the near-misses stay LOUD", () => {
 
   it("refuses CONSTRUCTED rewrites of the clause — the Map key is char-for-char", () => {
     for (const clause of [
-      // Palafin's NEGATION under THIS consequent — i.e. the one rewrite that
-      // WOULD reach the clause table. It must miss there too, or a card printing
-      // the inverse question would silently score the bonus for the inverse
-      // board.
       "this Pokémon didn't move from your Bench to the Active Spot this turn",
       // …and the same negation with Palafin's own un-possessed "the Bench".
       "this Pokémon didn't move from the Bench to the Active Spot this turn",
-      // THE POSSESSIVE DROPPED, positive form: the pool prints "your Bench" on
-      // all three positive printings and "the Bench" on both Palafin prints, so
-      // the two spellings are a real distinction in the catalog and not a
-      // hypothetical one.
       "this Pokémon moved from the Bench to the Active Spot this turn",
       // Weavile's present tense under a damage consequent.
       "this Pokémon moves from your Bench to the Active Spot this turn",
-      // The CROSS-BOARD rewrite. If the pool ever prints it, it is a different
-      // member reading the other seat's Active — not this row.
       "your opponent's Active Pokémon moved from their Bench to the Active Spot this turn",
       // The pronoun already resolved — `conditionNote`'s output fed back in. The
       // note is for a HUMAN reading a board, and it must not round-trip into the
@@ -566,25 +376,10 @@ describe("deriver disjointness", () => {
 
 describe("ZERO registry rows — the cards derive straight off their printed text", () => {
   it("has no program AT THE PRINTED INDEX for either card, or for the reprint", () => {
-    // sv06.5-081 is byte-identical to -015 and is deliberately NOT a fixture, so
-    // this is the ONE place the reprint is named: it must be as unauthored as
-    // the print it copies, or the two would resolve differently.
-    //
-    // 🆕 🛑 **D313 SHARPENED THIS FROM THE CARD TO THE INDEX, AND IT IS D263's
-    // CORRECTION ARRIVING ON A SECOND PAGE.** Revavroom ex `sv06.5-015`/`-081` now
-    // CARRIES a registry program — for its **index 1**, "Shattering Speed"
-    // (*"Discard this Pokémon and all attached cards."*), which has nothing to do
-    // with this file's sentence. The claim this suite makes is about
-    // "Accelerator Flash" at **index 0**, and it is still perfectly true. ⚠️ **A
-    // GUARD THAT ASKS ABOUT THE CARDBOARD WHEN ITS WORK ORDER IS ABOUT ONE
-    // PRINTED SENTENCE REDDENS ON A ROW THAT DOES NOT CONCERN IT** — and the fix
-    // is to name the surface, never to delete the row.
     for (const id of ["sv06.5-015", "sv06.5-081"]) {
       expect(programFor(id)?.attack?.[0], id).toBeUndefined();
       expect(programFor(id)?.passive, id).toBeUndefined();
       expect(programFor(id)?.abilities, id).toBeUndefined();
-      // …and the index that IS authored is named, so this rung reddens again if
-      // D313's row ever moves onto the index this file owns.
       expect(programFor(id)?.attack?.[1], id).toBeDefined();
     }
     for (const id of ["swsh10.5-026"]) {
@@ -609,10 +404,6 @@ describe("ZERO registry rows — the cards derive straight off their printed tex
 
 describe("promotedTurn — the state itself", () => {
   it("stamps NULL on every Pokémon that never came from the Bench", () => {
-    // `makeInPlay` is the ONE constructor, and a card entering play arrives from
-    // the hand (or a deck search) — never from the Bench. Setup placement is
-    // therefore not a route, which is the whole reason the field can be a stamp
-    // rather than a flag somebody has to clear.
     expect(makeInPlay("uid#0", 0).promotedTurn).toBeNull();
     expect(makeInPlay("uid#1", 7).promotedTurn).toBeNull();
     const state = revavroomBenched(board(11), "p1");
@@ -664,11 +455,6 @@ describe("promotedTurn — the state itself", () => {
   });
 
   it("ROUTE 2b — `switchInto` via Boss's Orders stamps the OPPONENT's board", () => {
-    // THE INTERESTING HALF, and the one that would need a seat guard if the fact
-    // lived anywhere but on the Pokémon: P1 plays the Supporter, on P1's turn,
-    // and the Pokémon that MOVES is P2's. A Pokémon dragged out really did move
-    // to the Active Spot on that turn, so the stamp is honest — it simply fails
-    // to match once P2's own turn begins.
     const benched = revavroomBenched(board(11), "p2");
     expect(benched.phase).toEqual({ kind: "turn:action", seat: "p1" });
     const gusted = playTrainer(benched, "p1", "sv02-172");
@@ -692,10 +478,6 @@ describe("promotedTurn — the state itself", () => {
   });
 
   it("ROUTE 3 — a KO promotion stamps the ATTACKER's turn (§8.1)", () => {
-    // THE MOST IMPORTANT CASE IN THE FILE. §8.1 says the replacement comes up
-    // during the attacker's turn, and the stamp records exactly that. Nothing
-    // clears it; it simply cannot equal `state.turn` once the controller's own
-    // turn has begun.
     let state = revavroomActive(board(11), "p1"); // P1 attacks with a NEVER-moved Revavroom
     state = revavroomBenched(state, "p2"); // P2 bench[0] — the Pokémon that will come up
     state = benchFromDeck(state, "p2", "fix-bigbody"); // bench[1] — so the promotion is a real CHOICE
@@ -746,13 +528,6 @@ describe("promotedTurn — the state itself", () => {
   });
 
   it("SURVIVES EVOLUTION — `placeEvolution` spreads the stamp through", () => {
-    // §10 sheds Special Conditions, the retreat block and temporary markers. It
-    // does NOT shed this, because having moved is a fact about the TURN and not
-    // an effect sitting on the card — and mechanically because `placeEvolution`
-    // spreads `{ ...from }` and overwrites only the four fields it names.
-    //
-    // Turn 4 rather than turn 2: §4/§10 ban evolving on your own first turn, and
-    // P1 went second here, so turn 2 is P1's first.
     let state = laterBoard(11);
     expect(state.turn).toBe(4);
     state = benchFromDeck(state, "p1", "sv06.5-043"); // Varoom, turnPlayed 0
@@ -815,10 +590,6 @@ describe("the board — the clause through a REAL attack", () => {
   });
 
   it("pays the OTHER printed amount off the SAME row — Golisopod's 20 + 90 = 110", () => {
-    // THE TWO-AMOUNT PAIR, this time through the FOLD rather than the deriver.
-    // One clause, one `cond`, and attack.ts adds the number the DERIVATION
-    // captured off the outer skeleton — a fold that had memorised the +120 print
-    // would score 140 here, and one that ignored `per` entirely would score 20.
     const opened = board(11);
     const control = attachFromDeck(
       setActiveFromDeck(opened, "p1", "swsh10.5-026"),
@@ -847,9 +618,6 @@ describe("the board — the clause through a REAL attack", () => {
   });
 
   it("is TURN-SCOPED — a retreat LAST turn arms nothing this turn", () => {
-    // The assertion that would catch a `promotedTurn` turned into a boolean flag:
-    // nothing in this slice CLEARS the field, so if the comparison were not
-    // against `state.turn` the bonus would be permanent from the first retreat on.
     const retreated = retreatInto(revavroomBenched(board(11), "p1"), "p1", 0);
     expect(retreated.turn).toBe(2);
     const backAround = mustApply(mustApply(retreated, { type: "endTurn", seat: "p1" }).state, {
@@ -884,12 +652,6 @@ describe("the board — the clause through a REAL attack", () => {
   });
 
   it("folds BEFORE Weakness (§8.5) — (20 + 120) × 2 = 280", () => {
-    // fix-lightning-weak-big is 320 HP and ×2 Lightning, so BOTH numbers land
-    // without a KO — which matters here more than in any predecessor suite,
-    // because a KO parks the turn on a PROMOTION, i.e. on the very move this
-    // slice measures, and would drop a second `promotedTurn` stamp into the
-    // middle of the arithmetic. Revavroom ex is a LIGHTNING Pokémon even though
-    // it pays in Metal: Weakness reads the attacker's TYPE, never its cost.
     const opened = setActiveFromDeck(board(11), "p2", "fix-lightning-weak-big");
     expect(activeCardId(opened, "p2")).toBe("fix-lightning-weak-big");
     const control = revavroomActive(opened, "p1");
@@ -929,17 +691,6 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
   });
 
   it("NEEDS NO SEAT GUARD — one board, two seats, per-POKÉMON answers", () => {
-    // THE POINT OF THE SLICE, and the deliberate inverse of D123.
-    //
-    // `youPlayedSupporterThisTurn` reads `state.allowances`, which is a SINGLE
-    // bag describing whoever owns the current turn, so that arm has to prove
-    // ownership through `phaseViewOf` before it answers — unguarded it would
-    // report "your OPPONENT played a Supporter" as "you played a Supporter".
-    //
-    // THIS member has nothing to guard. The fact is stamped on a Pokémon, and a
-    // Pokémon already knows whose it is. So on ONE board, in ONE phase, with ONE
-    // turn owner, the two seats get DIFFERENT answers — and the seat that gets
-    // TRUE is not even the turn owner.
     const gusted = playTrainer(revavroomBenched(board(11), "p2"), "p1", "sv02-172");
     expect(gusted.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(conditionHolds(gusted, "p2", COND)).toBe(true); // NOT the turn owner
@@ -961,10 +712,6 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
   });
 
   it("is PHASE-BLIND — a ko:* park does not change either answer", () => {
-    // D123's member flips on exactly this state: a checkup-origin `ko:*` park has
-    // `activeSeat` null, so "during this turn" reads FALSE for BOTH seats. This
-    // member never consults the phase at all — `state.turn` has not advanced, so
-    // a Pokémon that moved during the turn just played still moved during it.
     const gusted = playTrainer(revavroomBenched(board(11), "p2"), "p1", "sv02-172");
     for (const phase of [
       { kind: "ko:takePrizes", seat: "p1", count: 1 },
@@ -985,10 +732,6 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
     expect(conditionNote(COND)).toBe(
       "your Active Pokémon moved from your Bench to the Active Spot this turn",
     );
-    // Everything after the subject is the printed sentence, the possessive on
-    // "your Bench" included — only "this Pokémon" was translated, because a
-    // reject message is read off a board by a person and "this" has no referent
-    // there. So this note does NOT round-trip the way D123's did…
     expect(ACCELERATOR_FLASH).not.toContain(conditionNote(COND));
     // …but its tail does, byte for byte.
     expect(ACCELERATOR_FLASH).toContain("moved from your Bench to the Active Spot this turn");

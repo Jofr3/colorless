@@ -1,8 +1,3 @@
-// PBKDF2 round-trip + encoding hygiene. WebCrypto (crypto.subtle) is a
-// global in vitest's node environment, same API surface as Workers. Tests
-// pass a low iteration count so the suite stays fast; the default only
-// matters for needsRehash decisions, asserted separately.
-
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_ITERATIONS,

@@ -22,23 +22,8 @@ import {
   setActiveFromDeck,
   specialEnergy,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D624 — WP31c: THE REST OF THE `me` DECK / HAND / DISCARD / ENERGY MISC ────────────────────────────
-//
-// 5 attack sentences / 7 `me` printings newly reader-built (effects.ts arm 6e-sexies). Every id and text off
-// the LOCAL D1, 2026-10-09, `legal_standard = 1`; every other text on the 7 cards was already built, so all 7
-// are finished.
-//
-//   Tail Generator ×2  — `attachFromDiscard`, `max: "opponentEnergyInPlay"` (NEW value), {L} hosts.
-//   Hand Trim          — `randomFromOpponentHand` `to: "discard"` with `untilHandSize` (NEW key).
-//   Select a Snack ×2  — Explorer's Guidance's `lookAtTopN` (exact, the rest discarded), revealed (R-SAS1).
-//   Send Flowers       — `attachFromDeck` `anyEnergy` onto 1 Benched {G} body, then the shuffle.
-//   Chirp              — `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance`, revealed.
-//
-// Dropped and named (§1): Elemental Blast, Pleasing Present and Skill Thief ×2. [🆕🆕🆕 D633 (D539): Elemental Blast
-// BUILT at D633 (O1, `discardEnergy.reserve`).] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1, `deriveAttackCopy`'s
-// in-play kind).] [🆕🆕🆕 D641 (D539): Pleasing Present BUILT at D641 (W1).]
 
 const TAIL_GENERATOR =
   "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.";
@@ -50,7 +35,6 @@ const SEND_FLOWERS =
 const CHIRP =
   "Search your deck for up to 2 Pokémon with {F} Resistance, reveal them, and put them into your hand. Then, shuffle your deck.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [TAIL_GENERATOR, ["me03-029", "me03-093"]],
   [HAND_TRIM, ["me03-067"]],
@@ -91,13 +75,10 @@ describe("D624 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("the dropped texts stay unbuilt: 3 texts / 4 printings, named (🆕🆕🆕 D633: Elemental Blast BUILT — O1; 2 / 3 stay; 🆕🆕🆕 D638: Skill Thief ×2 BUILT — X1; 1 / 1 stays)", () => {
+  it("the dropped texts stay unbuilt: 3 texts / 4 printings, named ( D633: Elemental Blast BUILT — O1; 2 / 3 stay; D638: Skill Thief ×2 BUILT — X1; 1 / 1 stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      // 🆕🆕🆕 D633 (D539): WITHDRAWN for Elemental Blast — the matched discard is `discardEnergy.reserve`.
-      // 🆕🆕🆕 D638 (D539): WITHDRAWN for Skill Thief — `deriveAttackCopy`'s in-play kind.
-      // 🆕🆕🆕 D641 (D539): WITHDRAWN for Pleasing Present — two `attachFromHand { max }`, the opponent's first.
       expect(resolvedByAnyReader(text), text).toBe(true);
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
@@ -309,11 +290,6 @@ const BOARD_IDS = new Set([
   "fix-energy",
 ]);
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6242, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -513,8 +489,6 @@ describe("D624 §5 — Select a Snack: the top 3, 1 into the hand, the other 2 d
     const state = table("30th-061", [["fix-energy", 1]]);
     const top = state.players.p1.deck.slice(0, 3);
     const parked = mustApply(state, attack(0)).state;
-    // The caption does not say the other 2 are discarded, exactly as for Explorer's Guidance (the
-    // shared `lookNote` never captions `restTo`); the DECK_TOP_DISCARDED row below says it instead.
     expect(promptOf(parked, "chooseCards").note).toBe(
       "Look at the top 3 cards of your deck and put a card into your hand.",
     );

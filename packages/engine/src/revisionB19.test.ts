@@ -1,27 +1,11 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { seatDamageReduction } from "./continuous";
-import type { GameAction, GameEvent, GameState, Seat } from "./index";
+import type { GameAction, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor, registryCardIds } from "./registry";
-import { battler, completeSetup, deckOf, typedEnergy } from "./testFixtures";
+import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B19 (Abilities) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B19"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.abilities_json` / `attacks_json`, byte for byte below):
-//   §1 Magearna "Auto Heal" (`sv09-107`) — *"whenever you attach an Energy card from your hand to 1 of
-//      your Pokémon, heal 90 damage from that Pokémon."* Only the §6.2 attach action fired it; an
-//      EFFECT's attach from the hand (Teal Dance, Lethargic Charge) healed nothing. Gengar ex "Gnawing
-//      Curse" (`sv05-104` / `-193`) shared the site and the gap.
-//   §2 Hop's Dubwool "Defiant Horn" (`sv09-136`), Hariyama "Heave-Ho Catcher" (`me01-073`) and Ledian
-//      "Glittering Star Pattern" (`svp-133` / `sv07-003` / `sv07-144`) — the printed "you may switch in"
-//      could not be declined: the bare `gust` forced a lone candidate and refused a ref-less answer.
-//   §3 Aurorus "Tundra Wall" (`me03-024` / `-092`) — *"take 50 less damage from attacks from your
-//      opponent's Pokémon"* also shielded the holder's side from its OWN attack (D558's named debt);
-//      every `seatDamageReductionAfterWR` row prints the same source clause.
 
 const AUTO_HEAL =
   "As long as this Pokémon is in the Active Spot, whenever you attach an Energy card from your hand to 1 of your Pokémon, heal 90 damage from that Pokémon.";
@@ -229,13 +213,6 @@ function table(p1: SideSpec, p2: SideSpec): GameState {
   return state;
 }
 
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
-
 function rejection(state: GameState, action: GameAction): string | undefined {
   const result = applyAction(state, action);
   return result.ok ? undefined : result.error.code;
@@ -390,10 +367,6 @@ describe("B19 §1 — an EFFECT's attach from the hand is an attach from the han
   });
 
   it("R-EIC1's order on the effect path: the watched triggers, THEN Electrified Incisors' counters (heal 0, then 80)", () => {
-    // TEST SURGERY — a live Electrified Incisors mark (8 counters) on the benched Ogerpon, as Pachirisu
-    // `me01-051` installs it. R-EIC1 (UNRULED, kept): the counters land after the attach riders AND the
-    // watched triggers. turn.ts's action path already did; the effect path placed them inside the
-    // attach, before any trigger, so Auto Heal then healed the 80 away.
     const marked = table(
       { active: { id: MAGEARNA }, bench: [{ id: OGERPON, damage: 0 }], hand: [G] },
       { active: { id: FILLER } },

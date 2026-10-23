@@ -20,18 +20,8 @@ import {
   toDeckTop,
   trainerCard,
   trimDeckTo,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D617 — WP24b: FIVE MORE WP24 SUPPORTERS ──
-//
-// 11 `me` Supporter printings / 5 printed texts, on five NEW objects (registry.ts D617 block):
-// Pokémon Center Lady (`healChosen.recoverHealed`), AZ's Tranquility (`healChosen.targetRecorded`
-// behind Scramble Switch's demoted-body filing, with `switchActive.demotedAsMoved`, R-AZT1), Grimsley's Move (shipped `lookAtTopN` + D611's
-// `notYourFirstTurn`), Gwynn (`drawCards.per` member `recorded`) and Naveen (`payFromHand.cap: "any"`
-// + `yourDeckNotEmpty`). Texts measured on the LOCAL D1, 2026-10-09, `legal_standard = 1` on every
-// row; driven on the real ids in a LOCAL `cardPool` (D275). Gladion's Final Battle, Acerola's
-// Mischief and Roxie's Performance stay unkeyed (each changes persisted side state — WP24c).
-// [🆕🆕🆕 D621 (D539): ~~"stay unkeyed"~~ — keyed since D621, WP24c, `sideStateMeD621.test.ts`.]
 
 const LADY = "me01-123";
 const AZ = "me04-076";
@@ -68,8 +58,6 @@ const TEXTS: readonly (readonly [readonly string[], string, string])[] = [
   ],
 ];
 
-/** The WP24 printings still unkeyed after this slice (persisted side state — WP24c). [🆕🆕🆕 D621 (D539):
-    keyed since D621 (WP24c, sideStateMeD621.test.ts).] */
 const NOT_KEYED: Readonly<Record<string, readonly string[]>> = {
   "Gladion's Final Battle": ["me05-077", "me05-108", "me05-118"],
   "Acerola's Mischief": ["me01-113", "me01-165", "me01-183", "me02.5-180"],
@@ -92,7 +80,7 @@ describe("D617 §1 — the faces: 11 `me` printings / 5 texts, one object per te
     expect(objects.size).toBe(5);
   });
 
-  it("the other 10 WP24 printings (3 texts) ~~stay unkeyed~~ (🆕🆕🆕 D621 (D539): WITHDRAWN — WP24c keys all 10)", () => {
+  it("the other 10 WP24 printings (3 texts) ~~stay unkeyed~~ ( D621 (D539): WITHDRAWN — WP24c keys all 10)", () => {
     const ids = Object.values(NOT_KEYED).flat();
     expect(ids).toHaveLength(10);
     for (const id of ids) expect(programFor(id), id).toBeDefined();
@@ -179,12 +167,11 @@ describe("D617 §2 — the registry programs, field for field", () => {
 const PLAIN = "d617-plain"; // a Basic {C}, no Rule Box
 const DARK = "d617-dark"; // a Basic {D}
 const DARK_S1 = "d617-dark-s1"; // a Stage 1 {D}
-const BRUTE = "d617-brute"; // "D617 Brute ex", a Basic Pokémon ex
-const MEGA = "d617-mega"; // "Mega D617 ex", a Mega Evolution Pokémon ex (shaped as a Basic for the board)
+const BRUTE = "d617-brute";
+const MEGA = "d617-mega";
 const VICTIM = "d617-victim";
 const FILLER = "d617-filler";
 const ITEM = "d617-item";
-/** Palafin `sv06-060` ("Zero to Hero") and Palafin ex `sv06-061`, on their real ids (R-AZT1). */
 const PALAFIN = "sv06-060";
 const PALAFIN_EX = "sv06-061";
 const ZERO_TO_HERO =
@@ -258,15 +245,9 @@ const DECK = deckOf({
   [PALAFIN]: 1,
   [PALAFIN_EX]: 1,
   "fix-fire-energy": 18,
-  "fix-energy": 6, // the prize row
+  "fix-energy": 6,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Hands and prize rows reset: every hand back into the deck, the six `fix-energy` the prize row. */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {

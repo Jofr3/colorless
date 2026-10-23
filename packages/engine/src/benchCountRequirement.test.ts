@@ -19,41 +19,6 @@ import {
   types,
 } from "./testFixtures";
 
-// D366 — THE OWN-BENCH COUNT, AND A COMPARATOR SETTLED FROM THE CATALOG BEFORE IT
-// WAS SPELLED.
-//
-// D365 handed over four sentences / nine legal printings still behind the
-// `"If <clause>, this attack does nothing."` skeleton, every one refused by
-// VOCABULARY. **THE POPULATION REPRODUCES EXACTLY** (§1, re-derived live off the
-// committed corpus and confirmed pool-wide on the remote D1 `colorless` `$.effect`
-// on 2026-08-19 with the extractor verified against the 640 / 1,732 / 60,467
-// total FIRST): 9 sentences / 18 legal units open with the skeleton, 5 s / 9 u
-// were carried, 4 s / 9 u reached the table and MISSED.
-//
-// 🛑 **AND SO DOES THE PRICE, WHICH IS THE FIRST TIME IN FOUR SLICES.** D363
-// found an inherited price too HIGH, D365 found one too LOW. This one is exact:
-// partitioned by WHAT ACTUALLY REFUSES EACH, against the live `BoardCondition`
-// union, the zero-new-vocabulary floor for D366's four is **0 rows / 0 sentences
-// / 0 printings** — every one of the four needs an ADDITION, and §1 says so by
-// value rather than by assertion. Victini is the largest at FOUR legal printings,
-// twice any other, and it is the one this slice buys.
-//
-// 🛑 **THE COMPARATOR WAS A CATALOG QUESTION AND IT WAS ASKED FIRST.** The printed
-// clause is *"4 or fewer"* under a NEGATIVE consequent, so the positive fact is
-// *"5 or more"* — which on a §3.3 five-slot Bench is FULL [🆕🆕🆕 D577 (D539): not under Area Zero
-// Underdepths, where a seat with a Tera Pokémon may Bench 8]. A `yourBenchIsFull`
-// predicate would answer this card identically on every board it can ever reach,
-// and would be wrong the day a printing spells a different threshold. The
-// whole-pool `%Benched Pokémon%` census on all three text columns returns exactly
-// TWO bench-count board facts: this one, and *"If your opponent has 3 or more
-// Benched Pokémon, this attack does 80 more damage."* — the OTHER seat at a
-// threshold that is NOT the cap. **THE PARAMETER IS LOAD-BEARING BECAUSE THE
-// CATALOG VARIES IT, NOT BECAUSE A NUMBER READS BETTER THAN A PREDICATE.**
-//
-// WHAT SHIPS: ONE `BoardCondition` member (`yourBenchAtLeast`), TWO reader arms,
-// ONE `ATTACK_REQUIREMENT_CLAUSES` row. ZERO new ops, events, error codes,
-// regexes, registry rows, state fields, prompt kinds or choice kinds.
-
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
@@ -67,29 +32,11 @@ const SKELETON = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
 const V_FORCE = "If you have 4 or fewer Benched Pokémon, this attack does nothing.";
 const V_FORCE_RIDER = `${V_FORCE} Then, spin the wheel of fate.`;
 
-/** The four legal printings this slice buys. */
 const VICTINI_IDS = ["sv10.5b-012", "sv10.5b-171", "sv10.5w-172", "svp-208"] as const;
 
-/** The THREE sentences this slice leaves behind, with their legal printing counts
-    and the vocabulary each still costs. D367's population, named rather than
-    counted. */
 const REFUSED: readonly (readonly [string, number, string])[] = [];
 
-/** 🆕🆕 D377 — THE THIRD ROW OF D365's LIST, MOVED OUT OF `REFUSED` RATHER THAN
-    DELETED FROM IT (D178: provenance is annotated, never overwritten). The entry
-    below is D365's own words and its own price, and its last clause has STOPPED
-    BEING TRUE: `opponentActiveBurned` now reads exactly that state field, bought by
-    D377 for a BONUS clause one table over and reaching this consequent through
-    `ATTACK_REQUIREMENT_CLAUSES`' polarity rule at no extra cost. Kept here so the
-    partition below still sums to D365's 4 / 9 and so a successor can see WHICH item
-    left the list and when. */
 const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[] = [
-  // 🆕🆕 D378 — THE FIRST ROW OF D365's LIST, MOVED THE SAME WAY, AND D365's PRICE WAS
-  // RIGHT ON BOTH HALVES: it said the sentence needed *"an ANY-OWNER stadium member"*
-  // and that `yourStadiumInPlay` reads OWNERSHIP, and D378 added `stadiumInPlay`
-  // BESIDE that member rather than re-pointing it. **THE REFUSAL WAS NOT OVERTURNED —
-  // IT WAS PAID** (D178: annotate provenance, never overwrite it). One row of D365's
-  // four is now the whole of what is left.
   [
     "If there is no Stadium in play, this attack does nothing.",
     2,
@@ -102,13 +49,6 @@ const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[
     "a BURNED member — the state field exists, no condition reads it (D365, driven; TAKEN at D377)",
     { kind: "opponentActiveBurned" },
   ],
-  // 🛑 🆕🆕 D379 — THE LAST ROW OF D365's LIST, MOVED THE SAME WAY, WHICH EMPTIES
-  // `REFUSED` OUTRIGHT. D365's reason is reproduced verbatim and was right on BOTH
-  // halves: the sentence needed an OWN-hand exact-size member, and `opponentHandAtMost`
-  // was the wrong seat AND the wrong comparator — two independent defects, so no
-  // widening could have reached it. D379 added `yourHandExactly { count }` beside that
-  // member. **THE REFUSAL WAS PAID, NOT OVERTURNED**, and the partition below still
-  // sums to D365's 4 / 9 because nothing left the record.
   [
     "If you don't have exactly 3 cards in your hand, this attack does nothing.",
     2,
@@ -117,8 +57,6 @@ const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[
   ],
 ];
 
-/** Setup, then open P1's turn 2 (P2 went first and passed). A DEDICATED deck
-    (D270), so no other suite's seeded shuffles move. */
 function board(seed: number): GameState {
   const state = driveSetup(seed, { p1: BENCH_COUNT_DECK, p2: BENCH_COUNT_DECK }, { first: "p2" });
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -155,46 +93,20 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
   it("re-derives 9 s / 18 u behind the skeleton, and 6 s / 13 u now carried", () => {
     const openers = corpus().filter(([, s]) => SKELETON.test(s.trim()));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
-    // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the missing 3 / 5 -> 2 / 4: the CROSS-BOARD
-    // STATUS PAIR took the third item on `REFUSED` below, off a member it bought for
-    // a BONUS row in the same commit. The population (9 / 18) is unmoved.
-    // 🆕🆕 D378 — 7 / 14 -> 8 / 16 and the missing 2 / 4 -> 1 / 2: STADIUM PRESENCE
-    // took the FIRST item on `REFUSED`, again off a member bought for a BONUS row in
-    // the same commit. The population (9 / 18) is still unmoved, and ONE row is left.
-    // 🛑 🆕🆕 D379 — 8 / 16 -> **9 / 18** and the missing 1 / 2 -> **0 / 0**: THE EXACT
-    // HAND-SIZE READ took the LAST item on `REFUSED`, and it is the FIRST of these
-    // steps whose member has no BONUS row beside it. The population (9 / 18) is STILL
-    // unmoved, which is the invariant this case exists to hold.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
     expect([carried.length, units(carried)]).toEqual([9, 18]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
     expect([missing.length, units(missing)]).toEqual([0, 0]);
-    // THE PARTITION SUMS — parts that do not add to the population are not a
-    // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
     expect(units(carried) + units(missing)).toBe(units(openers));
   });
 
-  it("🛑 Victini is FOUR legal printings, priced against the corpus and not against itself", () => {
-    // The handoff's headline number, re-derived. A printing count that rotted with
-    // the sets reddens here rather than in a comment.
+  it("Victini is FOUR legal printings, priced against the corpus and not against itself", () => {
     expect(units(corpus().filter(([, s]) => s === V_FORCE))).toBe(4);
-    // …and it really is the largest of the four D365 left. Every other sentence on
-    // that list is worth strictly fewer printings, which is the claim that made it
-    // the subject.
     for (const [sentence, count] of REFUSED) {
       expect(units(corpus().filter(([, s]) => s === sentence)), sentence).toBe(count);
       expect(count).toBeLessThan(4);
     }
-    // The residue this slice leaves, priced the same way — 3 sentences / 5
-    // printings, which with Victini's 4 is D365's own 4 / 9 to the unit.
-    // 🆕🆕 D377 — the list is now TWO rows plus `TAKEN_SINCE`'s one, and the sum is
-    // still D366's 3 / 5, which is what keeps this an accounting of D365's handoff
-    // rather than a snapshot of today.
-    // 🆕🆕 D378 — ONE row plus `TAKEN_SINCE`'s TWO, and the sum is STILL D366's 3 / 5.
-    // 🛑 🆕🆕 D379 — ZERO rows plus `TAKEN_SINCE`'s THREE, and the sum is STILL 3 / 5.
-    // Every row moved and the accounting did not, which is the whole reason rows are
-    // moved rather than deleted (D178).
     expect(REFUSED).toHaveLength(0);
     expect(TAKEN_SINCE).toHaveLength(3);
     const handed: readonly (readonly [string, number, string])[] = [
@@ -206,27 +118,14 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     expect(handed.reduce((sum, [, n]) => sum + n, 0) + 4).toBe(9);
   });
 
-  it("🛑 the FLOOR was 0 / 0 / 0 — every one of D365's four needed an ADDITION", () => {
-    // D363 found an inherited price too HIGH and D365 found one too LOW, so this
-    // slice states its floor as a NUMBER that measurement can contradict: of the
-    // four sentences D365 handed over, how many were answerable with vocabulary
-    // that already existed? ZERO. Victini is the proof by construction — this
-    // slice had to buy a member to answer it — and the other three are named with
-    // what each still costs, both of the driven refutations D365 recorded.
+  it("the FLOOR was 0 / 0 / 0 — every one of D365's four needed an ADDITION", () => {
     expect([...REFUSED, ...TAKEN_SINCE]).toHaveLength(3);
     for (const [sentence, , cost] of REFUSED) {
       expect(deriveAttackRequirement(sentence), cost).toBeNull();
     }
-    // 🆕🆕 D377 — and the one that LEFT the list is asserted from the other side, so
-    // the record says "this was refused and is not any more" rather than going quiet.
-    // 🆕🆕 D378 — the array carries the MEMBER each row now resolves to, so this pins
-    // WHICH vocabulary paid the refusal and not merely that one did.
     for (const [sentence, , cost, member] of TAKEN_SINCE) {
       expect(deriveAttackRequirement(sentence), cost).toEqual(member);
     }
-    // …and NONE of the three is refused by the ANCHOR: each matches the skeleton
-    // and misses at the TABLE, so what refuses them is still VOCABULARY. (D363's
-    // lesson: an anchor and a row differ in price by an order of magnitude.)
     for (const [sentence] of [...REFUSED, ...TAKEN_SINCE]) {
       expect(SKELETON.test(sentence.trim()), sentence).toBe(true);
       expect(SKELETON.exec(sentence.trim())?.[1], sentence).toBeTruthy();
@@ -235,20 +134,13 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
 });
 
 describe("§2 — the COMPARATOR, settled from the catalog before it was spelled", () => {
-  it("🛑 the row maps to `yourBenchAtLeast { count: 5 }` — the printed 4, flipped", () => {
+  it("the row maps to `yourBenchAtLeast { count: 5 }` — the printed 4, flipped", () => {
     expect(deriveAttackRequirement(V_FORCE)).toEqual({ kind: "yourBenchAtLeast", count: 5 });
-    // The polarity flip is the whole row: the skeleton owns the negation, so a
-    // printed "4 or fewer" is stored as the positive floor FIVE. The sentence says
-    // 4 and the value says 5, and that gap is asserted rather than left to a
-    // comment.
     expect(V_FORCE).toContain("4 or fewer");
     expect((deriveAttackRequirement(V_FORCE) as { count: number }).count).toBe(5);
   });
 
-  it("🛑 the pool VARIES the threshold and the SEAT, so a full-Bench predicate is the wrong shape", () => {
-    // The census that settled the parameter, re-stated as a corpus assertion. The
-    // legal attack column holds exactly TWO bench-COUNT board facts and they agree
-    // on nothing: different seat, different threshold, different consequent.
+  it("the pool VARIES the threshold and the SEAT, so a full-Bench predicate is the wrong shape", () => {
     const benchCounts = corpus().filter(
       ([, s]) => /\d+ or (fewer|more) Benched Pokémon/.test(s) && !s.includes("damage counters"),
     );
@@ -256,16 +148,7 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
       "If you have 4 or fewer Benched Pokémon, this attack does nothing.",
       "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.",
     ]);
-    // The sibling's threshold is THREE, which is not the Bench cap — so "5" on
-    // this row is a parameter the catalog varies and not the cap wearing a number.
     expect(benchCounts.some(([, s]) => s.includes("3 or more"))).toBe(true);
-    // 🆕🆕 D389 — AND IT IS BUILT NOW, AS THE SEAT SIBLING THIS ROW ASKED FOR AND NOT
-    // AS A SEAT PARAMETER ON THE MEMBER THIS SLICE BOUGHT. The rung is re-aimed rather
-    // than deleted, and it is re-aimed at the thing that matters: the sibling resolves
-    // through the BONUS consequent onto a DIFFERENT member, so this member's own
-    // reader still refuses it and `yourBenchAtLeast` is untouched — which is exactly
-    // what a re-pointing would have destroyed (D365's rename, priced at D362 and
-    // RE-MEASURED at D389 as 22 executable sites across 5 files).
     const sibling =
       "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.";
     expect(units(corpus().filter(([, s]) => s === sibling))).toBe(1);
@@ -274,8 +157,6 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
       cond: { kind: "opponentBenchAtLeast", count: 3 },
     });
     expect(deriveAttackRequirement(sibling)).toBeNull();
-    // 🛑 AND THE TWO MEMBERS ARE STILL TWO: this row's clause maps to `yourBenchAtLeast`
-    // at the printed floor 5, and nothing about D389 moved it.
     expect(deriveAttackRequirement(V_FORCE)).toEqual({ kind: "yourBenchAtLeast", count: 5 });
   });
 
@@ -290,9 +171,6 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
     expect(
       deriveAttackRequirement(`Flip a coin. If ${clause}, this attack does nothing.`),
     ).toBeNull();
-    // 🛑 AND THE TWO CONSEQUENTS STAY DISJOINT (D125): the bonus reader must not
-    // see a sentence meaning CANCEL, and the requirement reader must not see one
-    // meaning +N.
     expect(deriveAttackDamageBonus(V_FORCE)).toBeNull();
     expect(
       deriveAttackRequirement(
@@ -303,11 +181,7 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
 });
 
 describe("§3 — the two WIDENING candidates are not widenings, and that is DRIVEN", () => {
-  it("🛑 `yourOwnerPokemonInPlayAtLeast` counts the ACTIVE too — one body more, on Victini's own board", () => {
-    // The candidate: drop its `owner` and read it as "you have N or more Pokémon
-    // in play". Its arm spreads `[side.active, ...side.bench]`, so on every board
-    // Victini can attack from — which is every board where it HAS an Active — the
-    // two predicates are one body apart. A full Bench is 5 Benched and 6 in play.
+  it("`yourOwnerPokemonInPlayAtLeast` counts the ACTIVE too — one body more, on Victini's own board", () => {
     const full = withBench(ready(4101), 5);
     expect(full.players.p1.bench).toHaveLength(5);
     expect(full.players.p1.active).not.toBeNull();
@@ -332,17 +206,11 @@ describe("§3 — the two WIDENING candidates are not widenings, and that is DRI
     ).toBe(false);
   });
 
-  it("🛑 `yourBenchHasNamed` reads a NAME, so it cannot be widened into a COUNT", () => {
-    // The second candidate: make its `name` optional and add a count. Its arm
-    // resolves `topCardOf(state, p)?.name`, which two live consumers depend on
-    // (D280's `allOf` row and Falinks' +90), and a Bench of five nameless fillers
-    // satisfies the COUNT while satisfying no NAME at all. Two predicates, one
-    // board, opposite answers.
+  it("`yourBenchHasNamed` reads a NAME, so it cannot be widened into a COUNT", () => {
     const full = withBench(ready(4103), 5);
     expect(conditionHolds(full, "p1", { kind: "yourBenchAtLeast", count: 5 })).toBe(true);
     expect(conditionHolds(full, "p1", { kind: "yourBenchHasNamed", name: "Uxie" })).toBe(false);
     expect(conditionHolds(full, "p1", { kind: "yourBenchHasNamed", name: "Victini" })).toBe(false);
-    // 0 OF 2 — stated as a number, the way D365 stated its own.
     const widenings = [
       conditionHolds(full, "p1", { kind: "yourBenchAtLeast", count: 5 }) ===
         conditionHolds(full, "p1", { kind: "yourBenchHasNamed", name: "Uxie" }),
@@ -353,7 +221,7 @@ describe("§3 — the two WIDENING candidates are not widenings, and that is DRI
 });
 
 describe("§4 — on a BOARD: the cancel, the land, and the boundary between them", () => {
-  it("🛑 0 through 4 Benched CANCELS, and it is the REQUIREMENT that cancels", () => {
+  it("0 through 4 Benched CANCELS, and it is the REQUIREMENT that cancels", () => {
     for (let n = 0; n <= 4; n += 1) {
       const outcome = attackOutcome(withBench(ready(4200 + n), n));
       expect(outcome.cancelled, `bench ${String(n)}`).toBe(true);
@@ -364,37 +232,25 @@ describe("§4 — on a BOARD: the cancel, the land, and the boundary between the
     }
   });
 
-  it("🛑 FIVE Benched lands the printed 120 — the same board, one body more", () => {
+  it("FIVE Benched lands the printed 120 — the same board, one body more", () => {
     const outcome = attackOutcome(withBench(ready(4210), 5));
     expect(outcome.cancelled).toBe(false);
     expect(outcome.kinds).toContain("DAMAGE_DEALT");
     expect(outcome.kinds).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 the boundary is between 4 and 5 and it is the ONLY one — off by one either way is a real card", () => {
-    // The mutation rows on this member are a threshold and a comparator, so the
-    // suite has to be able to tell 4 from 5 from 6. `count: 4` would attack off a
-    // four-body Bench (the row above proves it must not); `count: 6` could never
-    // attack at all, because `BENCH_MAX` is 5. [🆕🆕🆕 D577 (D539): *"could never attack at all"* is
-    // WITHDRAWN — an Area Zero Underdepths Bench reaches 6 … 8 with a Tera Pokémon in play;
-    // `count: 6` is still wrong on the 5-Bench board this rung drives.]
+  it("the boundary is between 4 and 5 and it is the ONLY one — off by one either way is a real card", () => {
     const base = (n: number, seed: number) => withBench(ready(seed), n);
     const holds = (n: number, count: number) =>
       conditionHolds(base(n, 4300 + n), "p1", { kind: "yourBenchAtLeast", count });
     expect([0, 1, 2, 3, 4].map((n) => holds(n, 5))).toEqual([false, false, false, false, false]);
     expect(holds(5, 5)).toBe(true);
-    // A stored 4 would separate from the shipped 5 on exactly one Bench size, and
-    // that Bench size is reachable — which is what makes the row a real bug and
-    // not a formatting difference.
     expect(holds(4, 4)).toBe(true);
     expect(holds(4, 5)).toBe(false);
-    // A stored 6 is unreachable at every legal Bench size, `BENCH_MAX` included.
-    // [🆕🆕🆕 D577 (D539): *"unreachable at every legal Bench size"* is WITHDRAWN — 6 … 8 is reachable under
-    // Area Zero Underdepths; on THIS 5-Bench board the stored 6 still separates.]
     expect(holds(5, 6)).toBe(false);
   });
 
-  it("🛑 the ACTIVE SPOT IS NOT COUNTED — a full Bench is 5 and not 6", () => {
+  it("the ACTIVE SPOT IS NOT COUNTED — a full Bench is 5 and not 6", () => {
     const full = withBench(ready(4310), 5);
     expect(full.players.p1.active).not.toBeNull();
     expect(full.players.p1.bench).toHaveLength(5);
@@ -426,156 +282,16 @@ describe("§4 — on a BOARD: the cancel, the land, and the boundary between the
 });
 
 describe("§5 — the census terms, MEASURED rather than assumed", () => {
-  it("🛑 S2 — none of the four ids is a registry row, so the registry summand cannot move", () => {
+  it("S2 — none of the four ids is a registry row, so the registry summand cannot move", () => {
     const ids = registryCardIds();
-    // 🆕🆕🆕 D553 — 713 -> **725**: TWELVE registry keys on SEVEN program objects —
-    // the simple once-per-turn Abilities (Rapidash, Chandelure, Blissey ex, Swadloon,
-    // Mamoswine ex, Sawsbuck, Ethan's Quilava). Real catalog ids and NOT `fix-*` keys
-    // (both suites drive a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no
-    // row authors an `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
-    // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
-    // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
-    // and the first on which the gate NAMES its own attack. Real catalog ids and NOT
-    // `fix-*` keys (the suite drives a LOCAL `cardPool`, D275's idiom), and the row
-    // authors no `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
-    // — a bare `attackGate` at index **1**, the first gate in that field at a
-    // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
-    // LOCAL `cardPool`, D275's idiom), and it authors no `attack` program, so the
-    // ATTACK summand cannot move with it.
-    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
-    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
-    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
-    // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    // 🆕🆕🆕 D554 — 725 -> **740**: FIFTEEN registry keys on NINE program objects —
-    // the deck-search Trainers (Hilda, Colress's Tenacity, Cyrano, Hyper Aroma, Team
-    // Rocket's Transceiver, Energy Search Pro, Precious Trolley, Boxed Order,
-    // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
-    // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
-    // an `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕🆕 D555 — 740 -> **760**: TWENTY registry keys on TWELVE program objects —
-    // the zero-vocabulary Trainers (Cook, Poké Vital A, Iris's Fighting Spirit, Eri,
-    // Meddling Memo) and Abilities (Torrid Scales, Ancient Wing, Beckoning Tail,
-    // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
-    // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
-    // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
-    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
-    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
-    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
-    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    // 🆕🆕🆕 D557 — 779 -> **798**: NINETEEN registry keys on ELEVEN program objects —
-    // Kieran, Team Rocket's Venture Bomb, Morty's Conviction, Xerosic's Machinations,
-    // Lucian, Arven's Sandwich, Megaton Blower, Brilliant Blender, TM Machine, Dusk Ball
-    // and Tool Scrapper. Real catalog ids, no `fix-*` key (`chooseOneTrainersD557.test.ts`
-    // / `riderTrainersD557.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
-    // `svp-149`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D558 — 798 -> **816**: EIGHTEEN registry keys on TWELVE program objects —
-    // Counter Gain, Hop's Choice Band, Brave Bangle, Air Balloon, Rescue Board, Gravity
-    // Gemstone (Tools), Full Metal Lab, Granite Cave, Postwick, N's Castle, Paradise Resort
-    // (Stadiums) and Salvatore. Real catalog ids, no `fix-*` key
-    // (`continuousToolsStadiumsD558.test.ts` / `salvatoreD558.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv10.5w-085`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D559 — 816 -> **831**: FIFTEEN registry keys on SEVEN program objects — the
-    // ability bundle (Lillie's Clefairy ex ×4, Flutter Mane ×3, Gastrodon, Orthworm ex ×2,
-    // Maractus ×2, Klinklang ×2, Regirock). Real catalog ids, no `fix-*` key
-    // (`abilityBundleD559.test.ts` / `abilityRecoilArmorD559.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv05-212`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D560 — 831 -> **848**: SEVENTEEN registry keys on ELEVEN program objects — the
-    // second ability bundle (Drilbur, Team Rocket's Koffing, Thwackey ×2, Slaking ex ×2,
-    // Annihilape, Galvantula, Magmortar, Whimsicott ×2, Dachsbun ex ×3, Indeedee ×2,
-    // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
-    // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
-    // `sv09-082`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D561 — 848 -> **863**: FIFTEEN registry keys on NINE program objects — the
-    // trainer bundle (Perrin ×3, Crispin ×4, Super Potion, Love Ball, Hand Trimmer, Scoop Up
-    // Cyclone ×2, Scramble Switch, Academy at Night, Perilous Jungle). Real catalog ids, no
-    // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
-    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
-    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
-    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D563 — 877 -> **888**: ELEVEN registry keys on FIVE program objects — Eevee ex
-    // ×3 "Rainbow DNA", Noivern "Tuning Echo", Kyurem "Plasma Bane", Feraligatr ×2
-    // "Torrential Heart", Palafin ex ×4 "Hero's Spirit". Real catalog ids, no `fix-*` key
-    // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D564 — 888 -> **897**: NINE registry keys on FIVE program objects — Jasmine's
-    // Gaze ×3, Amarys ×3, Team Rocket's Factory, Community Center, Crobat "Shadowy Envoy"
-    // (Caretaker's rider re-authors an EXISTING object on its two existing keys). Real catalog
-    // ids, no `fix-*` key (`trainerBundleD564.test.ts` / `sideDamageNextTurnD564.test.ts` drive
-    // a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D565 — 897 -> **905**: EIGHT registry keys on FIVE program objects — Misty's
-    // Psyduck ×2 "Flustered Leap", Team Rocket's Orbeetle ×2 "Rocket Brain", Farfetch'd
-    // "Impromptu Carrier", Palafin "Zero to Hero", Ruffian ×2. Real catalog ids, no `fix-*` key
-    // (`abilityBundleD565.test.ts` / `ruffianD565.test.ts` drive a LOCAL `cardPool`), inserted
-    // MID-MAP after `sv06.5-029`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D566 — 905 -> **914**: NINE registry keys on SIX program objects — Brock's Scouting
-    // ×2, Ogre's Mask ×2, Heavy Baton, Amulet of Hope, Powerglass ×2, Team Rocket's Watchtower.
-    // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
-    // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
-    // `attack` program.
-    // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
-    // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
-    // 🆕🆕🆕 D568 — 918 -> **935**: SEVENTEEN registry keys on EIGHT program objects — the Tera
-    // banner unlock, Slice 1: Sparkling Crystal ×2, Tera Orb, Glass Trumpet ×2, Briar ×4, Milotic ex
-    // ×3 "Sparkling Scales", Noctowl ×3 "Jewel Seeker", Azumarill "Glistening Bubbles", and
-    // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
-    // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
-    // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
-    // 🆕🆕🆕 D569 — 935 -> **949**: FOURTEEN registry keys on SEVEN program objects — the Paradox
-    // banner unlock, Slice 2 part a: Iron Crown ex ×6 "Cobalt Command", Awakening Drum, Reboot Pod
-    // (non-attack), and SIX `attack`-keyed rows — Miraidon ×2 "Peak Acceleration", Great Tusk ×2
-    // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
-    // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
-    // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
-    // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
-    // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
-    // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
-    // 🆕🆕🆕 D571 — 956 -> **962**: SIX registry keys on THREE program objects — Iron Thorns ex
-    // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
-    // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
-    // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
-    // 🆕🆕🆕 D572 — 962 -> **968**: SIX registry keys on FOUR program objects — Munkidori ×3
-    // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
-    // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
-    // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
-    // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
-    // (`MALAMAR_COLLUDING_TENTACLES`, an ATTACK row on existing ops), keyed beside Xerosic's Machinations.
-    // 🆕🆕🆕 D576 — 969 -> **973**: FOUR registry keys on THREE program objects — the Antique Fossils
-    // `sv07-129` / `sv10.5b-080` (`PROTECTIVE_COVER`), `sv07-130` (`PRIMAL_ROOT`), `sv10.5w-079`
-    // (`PLUME_PROTECTION`): `playAsPokemon` + `passive`, ALL non-attack. Real catalog ids, no `fix-*`
-    // key, inserted MID-MAP after D572's rows (Area Zero Underdepths ×3 is PARKED, D577).
-    // 🆕🆕🆕 D577 — 973 -> **979**: SIX registry keys on THREE program objects — Area Zero Underdepths
-    // `sv07-131` / `sv07-174` / `sv08.5-094` (`AREA_ZERO_UNDERDEPTHS`, a `stadium`), Boomerang Energy
-    // `sv06-166` (`BOOMERANG_ENERGY`, an `energy`) and Tyme `sv08-190` / `sv08.5-143` (`TYME`, a
-    // `trainer`): ALL non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D576's rows.
-    // (🆕🆕🆕 D577 (D539): *"Area Zero Underdepths ×3 is PARKED, D577"* above is WITHDRAWN — BUILT here.)
-    // 🆕🆕🆕 D578 — 979 -> **985**: SIX registry keys on FOUR program objects — Scovillain ex
-    // `sv08-037` / `sv08-216` (`DOUBLE_TYPE`, a `passive`), Technical Machine: Fluorite `sv08-188`
-    // (`TM_FLUORITE`, `toolAttacks` + `toolDiscardAtEndOfYourTurn` + an `attack` key for its GRANTED
-    // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
-    // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
-    // MID-MAP after D577's rows; no `attackGate`.
-    expect(ids).toHaveLength(1451); // (🆕 **card revision B09 +1** — Paradise Resort `svp-045` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `PARADISE_RESORT` object; no `attackGate`.) (🆕 **card revision B08 +1** — Reversal Energy `sv02-192` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `REVERSAL_ENERGY` object; no `attackGate`.) (🆕 **card revision B05 +1** — Potion `mfb-33` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `POTION` object; no `attackGate`.) (🆕 **card revision B04 +7** — Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091` (`legal_standard = 0`, `legal_standard_effective = 1`) and the text-less `30th` Items Poké Pad `30th-126`, Switch `30th-127`, Ultra Ball `30th-128` (`legal_standard = 1`), MID-MAP, on the shipped `RARE_CANDY` / `SWITCH` / `ULTRA_BALL` / `POKE_PAD` objects; no `attackGate`.) (🆕 **card revision B01 +3** — Judge `sv04.5-228` / `sv10-167` / `sv10-222` (mark G, `legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `JUDGE` object; no `attackGate`.) (🆕🆕🆕 **D647 +13** — the merge of `main`: Arven ×5 and Miraidon ex "Tandem Unit" ×6 (rotated, user-requested; `CENSUS_NOT_LEGAL`) and Counter Catcher `sv04-160` / `sv04-264` (rotated), MID-MAP, on three NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D646 +1** — Backtrack Badge `me05-074`, MID-MAP, on one NEW `passive` Tool object; no `attackGate`.) (🆕🆕🆕 **D645 +4** — the last one-offs, Meganium `me01-010` / `mep-001` and Goodra `me04-068` / `mep-077`, MID-MAP, on two NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D644 +5** — Y1e, Cinderace `me01-028`, Patrat `me04-070`, Illumise `30th-004`, Ferrothorn `me04-063` and Transformation Tome `me04-083`, MID-MAP, on five NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D643 +3** — Y1a, Rotom ex `me02-029` / `-111` / `-126`, MID-MAP, on one NEW `passive` object (`toolCapForName`); no `attackGate`.) (🆕🆕🆕 **D642 +6** — Z1 + K2, Spiritomb `me01-087` / `-148`, Wishiwashi `30th-022`, Risky Ruins `me01-127`, Dizzying Valley `me02-088` and Ange Floette `me04-075`, MID-MAP, on five NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D641 +3** — Y1b, Lt. Surge's Bargain `me01-120` / `-170` / `-185`, MID-MAP, on one NEW Trainer object; no `attackGate`.) (🆕🆕🆕 **D638 +3** — X1, Mew ex `30th-066` / `-152` / `-158`, MID-MAP, on one NEW `passive` object (`memoryHelix`); no `attackGate`.) (🆕🆕🆕 **D637 +4** — the four `me` Antique Fossils `me03-068` / `-069`, `me05-072` / `-073`, MID-MAP, on four NEW fossil objects; no `attackGate`.) (🆕🆕🆕 **D636 +2** — Clawitzer `me01-038` / `-141`, MID-MAP, on one NEW `abilities` object; no `attackGate`.) (🆕🆕🆕 **D635 +1** — F1, Fossil Quarry `me05-076`, MID-MAP, on one NEW `stadium` object; no `attackGate`.) (🆕🆕🆕 **D632 +5** — D1, Damp: Psyduck ×3 and Golduck ×2, MID-MAP, on two NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D631 +9** — P1, the rest of the passive modifiers: Bastiodon ×3, Decidueye ex ×2, Kingambit, Garbodor, Yveltal and Snorlax, MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D630 +2** — M1, the persisted-record bundle: Iron Defender ×2, MID-MAP, on one NEW Trainer object; no `attackGate`.) (🆕🆕🆕 **D628 +2** — A1, the rest of the on-bench / on-move Abilities: Latios "Lustrous Assist" and Larry's Komala "Lethargic Charge", MID-MAP, on two NEW non-attack objects (Meowth ex ×3 "Last-Ditch Catch" rides D593's existing keys); no `attackGate`.) (🆕🆕🆕 **D627 +4** — H1, the Hide 'n' Sneak archetype: Poltchageist, Sinistcha, Shuppet and Banette "Hide 'n' Sneak", MID-MAP, on one NEW non-attack object; no `attackGate`.) (🆕🆕🆕 **D626 +8** — K1, the rest of the KO / damaged triggers: Flygon ×3 "Sandy Flapping", Miraidon ×2 "Photon Cord", Gengar ex ×2 "Fainting Spell" and Adversity Policy, MID-MAP, on four NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D625 +13** — T1, the rest of the `me` Trainers: Special Red Card ×2, Jumbo Ice Cream ×2, Dark Bell ×2, Wally's Compassion ×3, Blowtorch ×2, Great Haul Net and Strange Timepiece, MID-MAP, on seven NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D621 +16** — WP24c + WP23: Gladion's Final Battle ×3, Premium Power Pro ×3, Acerola's Mischief ×4, Roxie's Performance ×3 and Dawn ×3, MID-MAP, on five NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D620 +7** — WP26: Light Ball, Punk Helmet ×2, Team Rocket's Hypnotizer, Core Memory and Tremendous Bomb ×2, MID-MAP, on five NEW Tool objects; no `attackGate`.) (🆕🆕🆕 **D619 +7** — WP12 / WP15: Sacred Charm ×2, Thick Scale, Dewgong ×2 "Thick Fat" and Heliolisk ×2 "Frilled Generator", MID-MAP, on four NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D618 +8** — WP25b: Battle Cage ×2, Mystery Garden ×3 and Forest of Vitality ×3, MID-MAP, on three NEW `stadium` objects; no `attackGate`.) (🆕🆕🆕 **D617 +11** — WP24b: Pokémon Center Lady, AZ's Tranquility ×3, Grimsley's Move ×2, Gwynn ×3 and Naveen ×2, MID-MAP, on five NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D614 +4** — WP37b: Mega Clefable ex ×4 "Luminous Wing" (`mep-072`, `me03-031` / `-103` / `-119`), MID-MAP, on one NEW passive object; no `attackGate`.) (🆕🆕🆕 **D612 −4** — WP06: the attack-only keys `INFERNO_X` (`mep-023` / `-029`) and `STEALTHY_SLASH` (`30th-021` / `-148`) RETIRED, their normalised text now reader-built.) (🆕🆕🆕 **D611 +17** — WP21 + Dragonair: 17 `me` ids (Nighttime Maneuvers ×3, Sinister Surge ×3, Boisterous Wind ×2, Destructive Headbutting ×2, Evidence Gathering ×2, Sky Hunt ×2, Grand Wing, Spiteful Evolution, Evolutionary Guidance), MID-MAP, on nine NEW activated Ability objects; no `attackGate`.) (🆕🆕🆕 **D610 +16** — WP37a: 16 `me` ids (Solar Transfer ×4, Bubble Gathering, Metal Road ×2, Swirling Prose ×2, Holes ×2, Scale Up ×3, Tyrannically Gutsy ×2), MID-MAP, on seven NEW Ability / trigger / passive objects; no `attackGate`.) (🆕🆕🆕 **D608 +5** — WP30: 5 `30th` ids (Mewtwo ex ×3 "Photon Bullets", Greninja ex ×2 "Stealthy Slash"), MID-MAP, on two NEW attack-only objects (`PHOTON_BULLETS`, `STEALTHY_SLASH`; tcgdex's `<em>` markup); no `attackGate`.) (🆕🆕🆕 **D606 +9** — WP25a: 9 `me` Stadium ids (Prism Tower ×2, Surfing Beach ×2, Nighttime Mine, Lumiose City ×2, Celebratory Fanfare ×2), MID-MAP, on five NEW `stadium` objects; no `attackGate`.) (🆕🆕🆕 **D604 +8** — WP18: the 8 typed `me` Special Energies (Growing Grass, Rocky Fighting, Telepathic Psychic, Bubbly Water, Magnetic Metal, Nitro Fire, Shadowy Darkness, Voltaic Lightning), MID-MAP, on eight NEW `energy` objects; no `attackGate`.) (🆕🆕🆕 **D603 +11** — WP11: 11 Mega-gated `me` ids (Oricorio ex ×3, Ludicolo ×2, Linoone, Seviper, Mega Signal ×3, Jett), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D602 +9** — WP20b: 9 `me` Ability ids (Silvally ×2, Erika's Tangela ×2, Vivillon `30th-008`, Shuckle ×2, Erika's Vileplume ex, Solgaleo `30th-105`), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D599 +4** — WP24a: Anthea & Concordia `me02.5-182` / `-254` and Emma `me04-077` / `-107`, MID-MAP, on two NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D598 +13** — WP32: 13 `me` Ability ids (Mega Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape, Shedinja ×2, Gengar, Pecharunt), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D597 +2** — WP29: Mega Charizard X ex `mep-023` / `mep-029`, MID-MAP, on the NEW attack-only `INFERNO_X` (the `me02` "Inferno X" program; tcgdex prints "[R]"); no `attackGate`.) (🆕🆕🆕 **D594 +2** — WP33a: Luxio `me03-027` "Fighting Roar" and Chesnaught `me04-007` "Needly Armor", MID-MAP, on two NEW passive objects (`FIGHTING_ROAR`, `NEEDLY_ARMOR`), both non-attack; no `attackGate`.) (🆕🆕🆕 **D593 +5** — WP07: Drifblim `mep-006`, Meowth ex `me03-062` / `-107` / `-121` and Emolga `me04-030`, MID-MAP, on three NEW attack-only objects (Balloon Return, Tuck Tail ×3, Sky Return — Lillie's Comfey's "Fade Out" op at each printed index); no `attackGate`.) (🆕🆕🆕 **D591 +19** — WP20a: 19 `me` Pokémon ids, MID-MAP, on seven NEW `abilities` objects (Run Errand ×4, Alluring Wings, Fiery / Flash-Pop / Frosty Flapping ×3 each, Lunar Cycle ×3, Flaring Magic ×2), all non-attack; no `attackGate`.) (🆕🆕🆕 **D590 +13** — WP05: 13 `me` Pokémon ids, MID-MAP, on nine NEW `onEvolve` objects (Psychic Draw ×4 on two, Prison Panic, Energized Steps, Heave-Ho Catcher, Cast-Off Shell ×2, Enriching Melody ×2, Multiplying Cocoon, Haphazard Hammer), all non-attack; no `attackGate`.) (🆕🆕🆕 **D589 +5** — WP08: Mega Greninja ex ×5 (`mep-081`, `me04-022` / `-100` / `-116` / `-122`), MID-MAP, on the NEW `MORTAL_SHURIKEN`, all non-attack; no `attackGate`.) (🆕🆕🆕 **D588 +17** — WP22: 17 `me` Trainer ids, MID-MAP, on eight NEW objects (Canari ×3, Lillie's Determination ×4, Misty's Vitality ×2, Rosa's Encouragement ×3, Rust Syndicate Grunt ×2, Waitress, Hole-Digging Shovel, Lumiose Galette), all non-attack; no `attackGate`.) (🆕🆕🆕 **D587 +19** — WP04: 19 `me` Trainer ids, MID-MAP, on nine NEW objects (Wondrous Patch ×2, Philippe ×2, Jacinthe ×3, Firebreather ×2, Fighting Gong ×3, Tarragon ×2, Poké Pad ×3, Energy Swatter, Repel), all non-attack; no `attackGate`.) (🆕🆕🆕 **D586 +2** — WP03: Carbink `me02.5-117` / `-242` on the new `DOUBLE_TYPE_FP` ({F}{P} copy of Scovillain's `typesInPlay`), MID-MAP, non-attack; no `attackGate`.) (🆕🆕🆕 **D585 +19** — WP19's parameter copies: 19 `me` ids, MID-MAP, on eight NEW objects (Tundra Wall ×2, Wash Out, Powerful a-Salt ×2, Counterattacking Crest ×3, Stone Arms ×2, Scent Collection, Sky Transport ×5, Synchro Pulse ×3), all non-attack; no `attackGate`.) (🆕🆕🆕 **D584 +18** — the `me` alias tier 2: 18 `me` ids, MID-MAP — Ultra Ball ×2, Zoroark `30th-096` and Hop's Pincurchin ex `me02.5-068` on EXISTING objects, fourteen on the eight NEW D584 objects (Smooth Coat ×3, Shell Spikes, Incandescent Body ×2, Aerial Draw ×2, Share Happiness ×2, Intimidating Fang, Dopey Face, Float Up ×2 — the last two attack-only); no `attackGate`.) (🆕🆕🆕 **D583 +1** — Team Rocket's Energy `me02.5-217`, a reprint-alias key on `sv10-182`'s object, inserted MID-MAP; no `attackGate`.) (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(ids).toHaveLength(1451);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();
     }
   });
 
-  it("🛑 the SPLIT term stands still, and the branch is proven LIVE beside it", () => {
-    // The printed attack is a SINGLE sentence, so nothing is stripped and
-    // `splitHead` is untouched — the census claim, asserted rather than assumed.
+  it("the SPLIT term stands still, and the branch is proven LIVE beside it", () => {
     expect(splitAttackRequirementClause(V_FORCE)).toBeNull();
     expect(SKELETON.exec(V_FORCE.trim())?.[2]).toBeUndefined();
     // …and the fixture's CONTROL attack proves the branch is live on this very
@@ -590,10 +306,7 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     expect(deriveAttackRequirement(V_FORCE_RIDER)).toEqual(deriveAttackRequirement(V_FORCE));
   });
 
-  it("🛑 the control attack CANCELS too — the split does not smuggle the requirement away", () => {
-    // Index 1 on the fixture. A split that ran BEFORE the requirement read would
-    // hand the reader "Then, spin the wheel of fate.", find no row, and let 20
-    // damage land on a board the clause cancels on.
+  it("the control attack CANCELS too — the split does not smuggle the requirement away", () => {
     expect(attackOutcome(withBench(ready(4400), 2), 1).cancelled).toBe(true);
     const landed = attackOutcome(withBench(ready(4401), 5), 1);
     expect(landed.cancelled).toBe(false);
@@ -603,30 +316,19 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     expect(landed.kinds).toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 exactly ONE corpus sentence moved, and it is worth exactly FOUR units", () => {
-    // The raw summand's delta, derived from the corpus rather than announced. Any
-    // other sentence starting to resolve in the same commit reddens here.
+  it("exactly ONE corpus sentence moved, and it is worth exactly FOUR units", () => {
     const nowCarried = corpus().filter(
       ([, s]) => SKELETON.test(s.trim()) && deriveAttackRequirement(s) !== null,
     );
-    expect(nowCarried).toHaveLength(9); // 🆕🆕 D379 +1 — the EXACT HAND-SIZE row. // 🆕🆕 D378 +1 — the Stadium-PRESENCE row. // 🆕🆕 D377 +1 — the "isn't Burned" row.
+    expect(nowCarried).toHaveLength(9);
     const victini = nowCarried.filter(([, s]) => s === V_FORCE);
     expect(units(victini)).toBe(4);
-    // 🆕🆕 D377 — a `- 1` term, so D365's head is still RE-DERIVED from the live
-    // total rather than frozen at the head that measured it.
-    // 🆕🆕 D378 — a `- 2` term beside it: the Stadium-PRESENCE row is worth TWO
-    // printings, so the two subtrahends differ and the head is still D365's 9.
-    // 🆕🆕 D379 — a THIRD term, another `- 2`: the EXACT HAND-SIZE row is worth two
-    // printings as well, and D365's head is still 9.
-    expect(units(nowCarried) - units(victini) - 2 - 2 - 1).toBe(9); // D365's head, unmoved.
+    expect(units(nowCarried) - units(victini) - 2 - 2 - 1).toBe(9);
   });
 });
 
 describe("§6 — the exhaustive readers, and the guard D365 keyed on the wrong population", () => {
-  it("🛑 BOTH `switch (cond.kind)` readers gained an arm, and both answer", () => {
-    // The consumer set is TWO (D280 measured it), and unlike D365 this slice owes
-    // both of them — which is the difference between a row that reuses vocabulary
-    // and one that buys it. Driven rather than asserted about the arms.
+  it("BOTH `switch (cond.kind)` readers gained an arm, and both answer", () => {
     const state = withBench(ready(4500), 5);
     const cond = deriveAttackRequirement(V_FORCE) as BoardCondition;
     expect(typeof conditionHolds(state, "p1", cond)).toBe("boolean");
@@ -653,37 +355,15 @@ describe("§6 — the exhaustive readers, and the guard D365 keyed on the wrong 
     ).toBe(false);
   });
 
-  it("🛑 the table's FIRST apostrophe-free key — and that is what D365's completeness guard got wrong", () => {
-    // D365 repaired a stale hand-written list with a guard that re-derives the
-    // table's reachable size FROM THE LIVE READER. The repair was right and its
-    // POPULATION was wrong: it counted every carried sentence, not every carried
-    // sentence THE FOLD IS ABOUT. This row is the first that separates the two.
+  it("the table's FIRST apostrophe-free key — and that is what D365's completeness guard got wrong", () => {
     expect(V_FORCE).not.toContain("'");
     expect(deriveAttackRequirement(V_FORCE)).not.toBeNull();
-    // Six of the seven rows carry an apostrophe; five of THOSE are reachable from
-    // the legal corpus (Palafin's is `legal_standard = 0`). The corpus now carries
-    // SIX sentences and only FIVE of them belong to the fold's population.
     const carried = corpus()
       .filter(([, s]) => deriveAttackRequirement(s) !== null && SKELETON.test(s.trim()))
       .map(([, s]) => /^(If .+?, this attack does nothing\.)/.exec(s.trim())?.[1] ?? s.trim());
-    // 🆕🆕 D377 — 6 -> 7 and the apostrophe half 5 -> 6: the new key spells BOTH
-    // "opponent's" and "isn't", so it lands squarely in the fold's population and
-    // the apostrophe-FREE half stands still at Victini alone.
-    // 🆕🆕 D378 — 7 -> 8 and the apostrophe half STANDS STILL at 6, so the
-    // apostrophe-FREE half is 2 for the first time: *"If there is no Stadium in
-    // play"* carries neither an apostrophe nor a é, which is the SECOND such key in
-    // this table and the exact case D365's guard could not see. **THE POPULATION
-    // DISTINCTION THIS RUNG EXISTS FOR IS NOW MADE BY TWO ROWS RATHER THAN ONE.**
-    // 🆕🆕 D379 — 8 -> 9 and the apostrophe half 6 -> **7**: *"If you don't have exactly
-    // 3 cards in your hand"* carries "don't" and no é at all, so it lands in the fold's
-    // population while the apostrophe-FREE half stands still at TWO.
     expect(carried).toHaveLength(9);
     expect(carried.filter((s) => s.includes("'"))).toHaveLength(7);
     expect(carried.filter((s) => !s.includes("'"))).toHaveLength(2);
-    // A guard that had not learned the difference would demand this sentence be
-    // listed among the apostrophe rows, which would be a false claim about it.
-    // 🆕🆕 D378 — the apostrophe-free set is NAMED rather than counted, and it is now
-    // TWO. Sorted, so the assertion does not depend on corpus order.
     expect(carried.filter((s) => !s.includes("'")).sort()).toEqual(
       [V_FORCE, "If there is no Stadium in play, this attack does nothing."].sort(),
     );

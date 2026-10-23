@@ -15,27 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: payFromHand — the printed hand COST, which PARKS.
-//
-// One mechanism under two printed wordings, and the wordings are not a style
-// split. TRAINERS say "You can use this card only if you discard 2 OTHER cards
-// from your hand" (Ultra Ball, Earthen Vessel's "ANOTHER card"); ABILITIES say
-// "You must discard a card from your hand in order to use this Ability"
-// (Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise) and never say
-// "other" — because a Trainer sits in the very hand it pays out of and an
-// Ability's card is on the board. That correlation is exact across the family,
-// and it is why the gate excludes the played uid rather than the op carrying an
-// `other` flag.
-//
-// Three claims the suite is built around:
-//   1. IT IS A COST, so it is MANDATORY and exact — no decline, unlike every
-//      other chooseCards park (which are all printed "up to").
-//   2. IT IS PAID FIRST, and the order is observable: Revavroom pays, THEN draws
-//      to a hand size that counts the payment.
-//   3. IT VETOES THE PLAY when unpayable — the opposite call from attachFromTop
-//      (D45), on the card's own printed authority rather than the engine's guess
-//      that an op would whiff.
-
 const SEED = 20260721;
 
 function find<T extends GameEvent["type"]>(
@@ -45,8 +24,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Every uid the seat holds anywhere, sorted — the card-conservation census. A
-    cost MOVES cards hand → discard; it must never create or destroy one. */
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
   const inPlay = [side.active, ...side.bench].flatMap((p) =>
@@ -62,10 +39,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** Rebuild p1's HAND outright: every dealt card back into the deck, then exactly
-    `ids` dealt off it. The whole family turns on hand SIZE and hand CONTENTS —
-    the gate counts candidates, the prompt offers them — so a suite that let the
-    setup deal whatever it drew would be asserting a different question per seed. */
 function withHand(state: GameState, ids: readonly string[]): GameState {
   const side = state.players.p1;
   let next: GameState = {
@@ -240,8 +213,6 @@ describe("payFromHand — the printed cost PARKS, and it is mandatory", () => {
     if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(prompt.min).toBe(0); // the SEARCH is the printed "up to" — declinable
     expect(prompt.dest).toBe("hand");
-    // The SINGULAR search note, which this slice changed (searchNote now reads the
-    // shared noun table) and which nothing else in the suite pins.
     expect(prompt.note).toBe("Search your deck for a Pokémon into your hand.");
   });
 
@@ -608,12 +579,6 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
       "ABILITY_COST_UNMET",
     );
 
-    // BOTH unmet — an empty opponent Bench AND no Basic {G} in hand. Only one
-    // code can come back, so this is the case that fixes which gate runs first:
-    // useAbility asks programPlayable BEFORE the cost, exactly as it did when the
-    // cost was a handler field, so the migration changed no error the HUD sees.
-    // (playTrainer orders the two the other way — printed rules, then whiff
-    // heuristics — which is a deliberate difference, not a shared convention.)
     let neither = board(SEED);
     neither = withBoard(neither, MEOWSCARADA, []);
     neither = withHand(neither, ["fix-item"]);
@@ -627,10 +592,6 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
 
 describe("payFromHand — the apply's wire guards and purity", () => {
   it("skips a uid that is not in hand rather than conjuring one", () => {
-    // Driven through applyChoice directly: validateChoice makes this unreachable
-    // through the action API, which is exactly why the guard needs its own test —
-    // without it a uid from anywhere would be appended to the discard pile,
-    // DUPLICATING a card that is still sitting in the deck.
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, ["fix-item", "fix-grass-energy"]);

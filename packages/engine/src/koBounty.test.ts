@@ -28,31 +28,6 @@ import {
 } from "./testFixtures";
 import type { KoBounty } from "./types";
 
-// 0.433.0 → 0.434.0 — D549 (B), THE KNOCK OUT BOUNTY:
-//
-//   "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
-//    cards."
-//
-// `censusAttackCorpus.ts` FILE LINE 149 (leading count column 1): 1 sentence / 1 legal
-// printing — census class SUBST-16 at SUBMAX=12 before this slice. Claimed WHOLE by
-// `deriveAttackEffect` through ONE new anchor (`DEFENDER_KO_BOUNTY_NEXT_TURN`, one
-// capture, zero `['’]` slots) and ONE new arm (19f'') emitting ONE new op,
-// `bountyDefender { amount }`. The installer writes `InPlayPokemon.koBounty = { turn:
-// T+2, amount }` on the OPPONENT's Active; flow.ts `koPrizeBonus` pays it AFTER the seat
-// bonuses when the dying body was the Active, the record is live, and the batch is NOT
-// the Checkup (the new REQUIRED `checkup` flag — R1).
-//
-// ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID PRINTS THE SENTENCE ON THIS CHECKOUT, AND THAT
-// WAS MEASURED (D425, `git grep`). Every board rides file-local DECLARED `d549-*`
-// demonstrators in their OWN 60-card deck (D270); the real card is UNMEASURED.
-//
-// Sections: §1 the derivation · §2 the install · §3 the window, played · §4 the
-// sweep's three questions (the unit rungs: window, Checkup, Active — plus ONE PLAYED
-// mid-turn Knock Out through `resolveMidTurnKnockOuts`, the review's finding 2) · §5 R1 — a
-// Checkup Poison Knock Out does NOT pay, played · §6 a Glimmora-DENIED Knock Out pays
-// nothing · §7 the §10 clears · §8 §11 · §9 the merge · §10 the log · §11 the v33
-// bytes and the v32 reject.
-
 const S149 =
   "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards.";
 const P149: readonly EffectOp[] = [{ op: "bountyDefender", amount: 2 }];
@@ -62,13 +37,7 @@ const MARK = 0; // {C}, 10 — the installer (:149)
 const STRIKE = 1; // {C}, 400 — the Knock Out
 const POISON = 2; // {C}, 80, Poisons — the Checkup Knock Out (100 HP: 10 + 80 + 10)
 
-const GLIMMORA = "sv02-126"; // FIXTURE_POOL: 30 HP, "Shattering Crystal" (the prohibition)
-/** 🆕 the D549 review's finding 2 — the REAL Dusknoir `sv06.5-020` "Cursed Blast", held
-    in this LOCAL pool exactly as `cursedBlast.test.ts` holds it (the registry program
-    is keyed on the id, and `sv06.5` is not a `catalogManifest` set, so a shared-pool
-    body would have owed a `fix-*` key). It is here for ONE reason: an Ability that
-    Knocks the marked Active Out DURING turn 5 through `resolveMidTurnKnockOuts` — the
-    `false` call site the unit rungs in §4 never reach. */
+const GLIMMORA = "sv02-126";
 const DUSKNOIR = "sv06.5-020";
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -129,7 +98,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "d549-marker": 4,
   "d549-mark-victim": 4,
@@ -239,7 +207,6 @@ function render(events: GameEvent[], state: GameState): { who: string; text: str
   );
 }
 
-/** The Prize count P1 is OWED by the Knock Out: the parked pick, or what left the row. */
 function owed(before: GameState, after: GameState, events: GameEvent[]): number {
   if (after.phase.kind === "ko:takePrizes") return after.phase.count;
   const row = all(events, "PRIZES_OWED")[0];
@@ -316,7 +283,7 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       return (read?.(S149) ?? null) !== null;
     });
     expect(claimants).toEqual(["deriveAttackEffect"]);
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the sentence prints NO apostrophe, so the anchor owns no `['’]` slot", () => {
@@ -336,7 +303,6 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       S149.replace("the Defending Pokémon", "this Pokémon"),
       S149.replace("take 2 more", "take 2 fewer"),
       S149.replace("is Knocked Out", "is damaged"),
-      // …and the anchor is `^…$`: a sentence in front of it or behind it is not this row.
       `Draw a card. ${S149}`,
       `${S149} Draw a card.`,
     ];
@@ -379,7 +345,7 @@ describe("§2 — the install writes `{ turn: T+2, amount }` on the DEFENDER", (
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — a Knock Out on T+2 pays 1 + 2; on T+4 it pays the face value", () => {
-  it("🛑 Strike on turn 5 Knocks the marked Active Out: 3 Prize cards, and a PRIZE_BONUS row", () => {
+  it("Strike on turn 5 Knocks the marked Active Out: 3 Prize cards, and a PRIZE_BONUS row", () => {
     const window = inWindow(installed().state);
     expect(window.turn).toBe(5);
     const uid = activeUid(window, "p2");
@@ -421,12 +387,7 @@ describe("§4 — the sweep pays only a LIVE record, on the ACTIVE, outside the 
     expect(sweptCounts(lethal(window), false).counts).toEqual([1 + BOUNTY]);
   });
 
-  it("🛑 PLAYED mid-turn: Cursed Blast on turn 5 Knocks the marked Active Out — the bounty PAYS", () => {
-    // The D549 review's finding 2: the rung above calls `collectKnockOuts(…, false)` by
-    // hand, so it never exercises `resolveMidTurnKnockOuts`' OWN argument. This one
-    // does: an Ability (not an attack, not the Checkup) Knocks the marked Active Out on
-    // turn 5, and the sweep that pays is the mid-turn one. `D549-midturn-flag-forced-true`
-    // flips that call site's `false` to `true` and is killed HERE.
+  it("PLAYED mid-turn: Cursed Blast on turn 5 Knocks the marked Active Out — the bounty PAYS", () => {
     const window = benchFromDeck(inWindow(installed().state), "p1", DUSKNOIR);
     expect(window.turn).toBe(5);
     const uid = activeUid(window, "p2");
@@ -466,12 +427,12 @@ describe("§4 — the sweep pays only a LIVE record, on the ACTIVE, outside the 
     expect(state.turn).toBe(5);
   });
 
-  it("🛑 the Checkup flag: the same lethal board in the Checkup's sweep pays the face value", () => {
+  it("the Checkup flag: the same lethal board in the Checkup's sweep pays the face value", () => {
     const window = inWindow(installed().state);
     expect(sweptCounts(lethal(window), true).counts).toEqual([1]);
   });
 
-  it("🛑 the ACTIVE: a benched body carrying a live record (constructed) pays the face value", () => {
+  it("the ACTIVE: a benched body carrying a live record (constructed) pays the face value", () => {
     // Unreachable off a played line — every route off the Active Spot sheds the record
     // (§7) — so the board is built. The Active is lethal too and pays its own bounty.
     const window = inWindow(installed().state);
@@ -493,7 +454,7 @@ describe("§4 — the sweep pays only a LIVE record, on the ACTIVE, outside the 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — a Poison Knock Out in the Checkup that ends turn 5 pays the face value", () => {
-  it("🛑 Sting leaves the marked body on 10 HP, Poisoned; the Checkup Knocks it Out for 1", () => {
+  it("Sting leaves the marked body on 10 HP, Poisoned; the Checkup Knocks it Out for 1", () => {
     const window = inWindow(installed().state);
     const uid = activeUid(window, "p2");
     const { state, events } = attack(window, POISON);
@@ -696,7 +657,7 @@ describe("§10 — the rows say what this path keeps true (D421)", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its Knock Out (D549)", () => {
-  it("🛑 v33: the record is in the serialized state, and a JSON round-trip still pays", () => {
+  it("v33: the record is in the serialized state, and a JSON round-trip still pays", () => {
     const window = inWindow(installed().state);
     const bytes = JSON.stringify(window);
     expect(bytes.includes('"koBounty":{"turn":5,"amount":2}')).toBe(true);
@@ -705,15 +666,12 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
     expect(owed(revived, state, events)).toBe(1 + BOUNTY);
   });
 
-  it("🛑 v32-SHAPED body (the key genuinely ABSENT): the Knock Out THROWS", () => {
+  it("v32-SHAPED body (the key genuinely ABSENT): the Knock Out THROWS", () => {
     const revived = JSON.parse(JSON.stringify(inWindow(installed().state))) as GameState;
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
     delete target.koBounty;
     expect("koBounty" in target).toBe(false);
-    // `undefined !== null` is TRUE, so the sweep dereferences `.turn` of undefined —
-    // D326's throw on the first read of a missing required key, on the Knock Out of
-    // ANY Active outside a Checkup. Retiring the record is the only safe answer.
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(
       TypeError,
     );

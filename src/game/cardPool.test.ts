@@ -4,12 +4,6 @@ import { ApiError } from "../lib/api";
 import { json, stubFetch } from "../test/fetchStub";
 import { clearCardPoolCache, fetchCardPool } from "./cardPool";
 
-// fetchCardPool is a fetch-fan-out over GET /cards/:id, so the tests stub
-// global fetch with the shared routing table and assert on the partition
-// (pool vs missing), the rejection semantics, the in-flight ceiling, and
-// the module-level per-id cache (cleared between cases — it outlives each
-// test's fetch stub by design).
-
 /** A full wire-shaped Card (every column, null off-category) keyed by id. */
 function card(id: string): Card {
   return {

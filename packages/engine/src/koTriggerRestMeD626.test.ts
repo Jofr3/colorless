@@ -19,18 +19,9 @@ import {
   setConditions,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
 import { koToolTriggersOf } from "./triggers";
-
-// ── 🆕🆕🆕 D626 — K1: THE REST OF THE KO / DAMAGED TRIGGERS ──
-//
-// 4 printed texts / 8 `me` printings: Flygon ×3 "Sandy Flapping" (an `onEvolve` row and an `onKnockOut` row
-// behind `activeOnly` + `byOpponentAttack`, each behind an inner confirm), Miraidon ×2 "Photon Cord" (the NEW
-// `onSelfActiveKnockedOut` on the `koToolTrigger` stage), Gengar ex ×2 "Fainting Spell" (the NEW
-// `koAttackerOnCoinFlip`, read by flow.ts `faintingSpells`) and Adversity Policy (a Tool on the
-// `onDamagedByAttack` stage behind the NEW `yourActiveWeakToOpponentActiveType`). Every id and text off the
-// LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-09, `legal_standard = 1`. No `me` row is a
-// fixture, so the printed bytes are carried HERE and the suite drives a LOCAL `cardPool` (D275).
 
 const SANDY_FLAPPING =
   "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck.";
@@ -45,11 +36,9 @@ const FLYGON = ["mep-016", "me02-053", "me02-101"] as const;
 const MIRAIDON = ["mep-082", "me05-028"] as const;
 const GENGAR = ["30th-090", "30th-154"] as const;
 const POLICY = "me04-074";
-/** Mega Clefable ex — "Luminous Wing" (registry `LUMINOUS_WING`, D614): the opponent's Abilities' effects refused. */
 const CLEFABLE = "me03-031";
 /** Flutter Mane — "Midnight Fluttering": the opposing Active has no Abilities. */
 const FLUTTER = "sv05-078";
-/** Survival Brace — the full-HP KO-survival Tool (D562). */
 const BRACE = "sv06-164";
 
 const VIBRAVA = "d626-vibrava";
@@ -200,11 +189,6 @@ const BOARD_IDS = Object.keys(LOCAL)
   .filter((id) => id !== SPARE)
   .concat([E]);
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup, then P1's own SECOND turn (P2 went first; every turn passed); both hands back into the decks. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6260, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -229,7 +213,6 @@ function p1Turn(): GameState {
   }
   for (const s of ["p1", "p2"] as const)
     state = must(applyAction(state, { type: "setupReady", seat: s }));
-  // P1's SECOND turn (D590's opening), so a Flygon may be evolved from the hand.
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -406,7 +389,7 @@ describe("D626 §1 — the texts and the registry rows", () => {
     });
   });
 
-  it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping stay unkeyed (🆕🆕🆕 D642 (D539): WITHDRAWN — keyed since D642, the rung is inverted)", () => {
+  it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping stay unkeyed ( D642 (D539): WITHDRAWN — keyed since D642, the rung is inverted)", () => {
     for (const id of ["me01-087", "me01-148", "30th-022"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
@@ -796,7 +779,6 @@ describe("D626 §6 — Adversity Policy: a holder Weak to the opponent's Active,
     expect(conditionHolds(spark, "p2", cond)).toBe(true);
     expect(conditionHolds(spark, "p1", cond)).toBe(false);
     expect(conditionHolds(table(FOE, WEAK_L), "p2", cond)).toBe(false);
-    // D552 — a retype onto {C} makes the printed ×2 name {C}: the {C} attacker now matches, the {L} one does not.
     const retyped = (s: GameState) =>
       edit(s, "p2", "active", (b) => ({
         ...b,
@@ -804,7 +786,6 @@ describe("D626 §6 — Adversity Policy: a holder Weak to the opponent's Active,
       }));
     expect(conditionHolds(retyped(table(FOE, WEAK_L)), "p2", cond)).toBe(true);
     expect(conditionHolds(retyped(spark), "p2", cond)).toBe(false);
-    // D432 — an installed "no Weakness" bar answers false.
     expect(
       conditionHolds(
         edit(spark, "p2", "active", (b) => ({ ...b, noWeaknessTurn: spark.turn })),

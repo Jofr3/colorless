@@ -1,7 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { intoPlayOnlyViaOf, passivesOf, providedEnergy } from "./continuous";
-import type { GameEvent } from "./events";
 import { applyAction, attackCostAt, createGame, redactGame } from "./index";
 import type { GameAction, GameState, InPlayPokemon, Seat } from "./index";
 import { conditionHolds, conditionNote, evolveAliasLicensed } from "./interpreter";
@@ -14,24 +13,9 @@ import {
   deckOf,
   setActiveFromDeck,
   trainerCard,
+  must,
+  mustApply as run,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D563 — TWO OWN-ATTACK COST CLAUSES, AN EVOLVE ALIAS AND A CARD-BORNE PLAY RESTRICTION ──
-//
-//   Noivern    sv09-128                          "Tuning Echo"  — equal hands: ignore all Energy
-//                                                                   in the cost of Frightening Howl
-//   Kyurem     sv06.5-047                        "Plasma Bane"  — a "Colress" card in the
-//                                                                   opponent's discard: Trifrost for {C}
-//   Eevee ex   svp-174 / sv08.5-075 / sv08.5-167  "Rainbow DNA"  — evolves into any Pokémon ex that
-//                                                                   evolves from Eevee (from the hand)
-//   Palafin ex svp-126 / sv06-061 / sv06-193 / sv08.5-151 "Hero's Spirit" — into play only via
-//                                                                   Palafin's Zero to Hero
-//
-// D545's two cost-clause shapes on the ABILITY seam (`attackCostClause`, through `passivesOf`,
-// so a §9 lock restores the print), one alias on the §10 hand match (`evolveAsNamed`) and one
-// card-borne refusal (`intoPlayOnlyVia`, off the card — a lock cannot lift it). On the REAL ids,
-// on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Texts off tcgdex (the audit's
-// card JSON), 2026-09-28. Readings R-PB, R-RD, R-PF: docs/decisions.md D563.
 
 const NOIVERN = "sv09-128";
 const KYUREM = "sv06.5-047";
@@ -81,8 +65,6 @@ const LOCAL_CARDS: Record<string, Card> = {
         damage: 110,
         effect: "Your opponent's Active Pokémon is now Confused.",
       },
-      // ⚠️ TEST SURGERY — a SECOND attack Noivern does not print, so the clause's NAME key
-      // has a board it can be wrong on (the real card has one attack).
       { cost: HOWL_PRINTED, name: "Control Howl", damage: 10 },
     ],
   }),
@@ -199,7 +181,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [NOIVERN]: 1,
   [KYUREM]: 1,
@@ -223,18 +204,6 @@ const DECK = deckOf({
   [GROWER]: 1,
   [COLORLESS]: 20,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -381,7 +350,6 @@ function attackRows(state: GameState) {
 const declare = (state: GameState, index = 0) =>
   applyAction(state, { type: "attack", seat: "p1", index });
 
-/** The D549 attack-installed cost tax, live on p1's Active this turn (TEST SURGERY). */
 function taxed(state: GameState): GameState {
   const active = activeOf(state, "p1");
   return {
@@ -433,15 +401,13 @@ describe("§1 — five objects on eleven ids, no `attack` key, and the right SEA
     expect(row).toEqual({ passive: { evolveAsNamed: { name: "Eevee", intoSuffix: "ex" } } });
   });
 
-  it("🛑 the four Palafin ex share ONE card-borne `intoPlayOnlyVia` — NOT a passive", () => {
+  it("the four Palafin ex share ONE card-borne `intoPlayOnlyVia` — NOT a passive", () => {
     const row = programFor(PALAFIN_EX[0]);
     for (const id of PALAFIN_EX) expect(programFor(id)).toBe(row);
     expect(row).toEqual({ intoPlayOnlyVia: "Zero to Hero" });
     expect(row?.passive).toBeUndefined();
     for (const id of PALAFIN_EX) expect(intoPlayOnlyViaOf(POOL[id] as Card)).toBe("Zero to Hero");
     expect(intoPlayOnlyViaOf(POOL[PALAFIN] as Card)).toBeUndefined();
-    // 🆕🆕🆕 D565 — ~~`programFor(PALAFIN)` is undefined~~ (D539): Zero to Hero is BUILT, a
-    // TRIGGERED row on plain Palafin — and still no `intoPlayOnlyVia` on it.
     expect(programFor(PALAFIN)?.triggered?.map((t) => t.name)).toEqual(["Zero to Hero"]);
   });
 
@@ -465,7 +431,7 @@ describe("§1 — five objects on eleven ids, no `attack` key, and the right SEA
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal hands charge the print", () => {
-  it("🛑 equal hands, no Energy: charged `[]` and the attack APPLIES (110 and Confused)", () => {
+  it("equal hands, no Energy: charged `[]` and the attack APPLIES (110 and Confused)", () => {
     const state = equalHands(table(NOIVERN, 0));
     expect(charged(state)).toEqual([]);
     const result = declare(state);
@@ -473,7 +439,7 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
     expect(result.events.find((e) => e.type === "DAMAGE_DEALT")).toMatchObject({ base: 110 });
   });
 
-  it("🛑 unequal hands, no Energy: charged the printed {C}{C}{C} and §8.2 REJECTS", () => {
+  it("unequal hands, no Energy: charged the printed {C}{C}{C} and §8.2 REJECTS", () => {
     const state = unequalHands(table(NOIVERN, 0));
     expect(charged(state)).toEqual(HOWL_PRINTED);
     expect(refused(state, { type: "attack", seat: "p1", index: HOWL }).code).toBe(
@@ -487,7 +453,7 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
     expect(declare(state).ok).toBe(true);
   });
 
-  it("🛑 the clause is keyed by NAME: the body's other attack keeps its printed cost", () => {
+  it("the clause is keyed by NAME: the body's other attack keeps its printed cost", () => {
     const state = equalHands(table(NOIVERN, 0));
     expect(charged(state, CONTROL_HOWL)).toEqual(HOWL_PRINTED);
     expect(refused(state, { type: "attack", seat: "p1", index: CONTROL_HOWL }).code).toBe(
@@ -495,7 +461,7 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
     );
   });
 
-  it("🛑 a §9 lock (Flutter Mane Active) restores the printed cost even with equal hands", () => {
+  it("a §9 lock (Flutter Mane Active) restores the printed cost even with equal hands", () => {
     const state = equalHands(table(NOIVERN, 0, FLUTTER_MANE));
     expect(charged(state)).toEqual(HOWL_PRINTED);
     expect(refused(state, { type: "attack", seat: "p1", index: HOWL }).code).toBe(
@@ -503,7 +469,7 @@ describe("§2 — Noivern: equal hands WAIVE Frightening Howl's cost; unequal ha
     );
   });
 
-  it("🛑 WAIVE-LAST: under the D549 cost tax, equal hands still charge `[]`", () => {
+  it("WAIVE-LAST: under the D549 cost tax, equal hands still charge `[]`", () => {
     const state = taxed(equalHands(table(NOIVERN, 0)));
     expect(charged(state)).toEqual([]);
     expect(declare(state).ok).toBe(true);
@@ -548,7 +514,7 @@ describe('§3 — Kyurem: a "Colress" card in the OPPONENT\'s discard makes Trif
     expect(refused(state, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_COST_UNMET");
   });
 
-  it("🛑 Colress in the OPPONENT's discard, one {C}: charged `[Colorless]` and the attack APPLIES", () => {
+  it("Colress in the OPPONENT's discard, one {C}: charged `[Colorless]` and the attack APPLIES", () => {
     const state = pull(table(KYUREM, 1), "p2", COLRESS, "discard").state;
     expect(charged(state)).toEqual(["Colorless"]);
     const result = declare(state);
@@ -556,7 +522,7 @@ describe('§3 — Kyurem: a "Colress" card in the OPPONENT\'s discard makes Trif
     if (result.ok) expect(result.events.some((e) => e.type === "ATTACK_DECLARED")).toBe(true);
   });
 
-  it("🛑 R-PB — Colress in YOUR OWN discard does not satisfy it", () => {
+  it("R-PB — Colress in YOUR OWN discard does not satisfy it", () => {
     const state = pull(table(KYUREM, 1), "p1", COLRESS, "discard").state;
     expect(charged(state)).toEqual(TRIFROST_PRINTED);
     expect(refused(state, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_COST_UNMET");
@@ -572,13 +538,13 @@ describe('§3 — Kyurem: a "Colress" card in the OPPONENT\'s discard makes Trif
     expect(charged(state)).toEqual(TRIFROST_PRINTED);
   });
 
-  it("🛑 a §9 lock (Flutter Mane Active) restores the printed cost", () => {
+  it("a §9 lock (Flutter Mane Active) restores the printed cost", () => {
     const state = pull(table(KYUREM, 1, FLUTTER_MANE), "p2", COLRESS, "discard").state;
     expect(charged(state)).toEqual(TRIFROST_PRINTED);
     expect(refused(state, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_COST_UNMET");
   });
 
-  it("🛑 ALTERNATE-THEN-SURCHARGE: under the D549 tax the alternate is {C}{C} — one {C} is not enough", () => {
+  it("ALTERNATE-THEN-SURCHARGE: under the D549 tax the alternate is {C}{C} — one {C} is not enough", () => {
     const state = taxed(pull(table(KYUREM, 1), "p2", COLRESS, "discard").state);
     expect(charged(state)).toEqual([...TRIFROST_PRINTED, "Colorless"]);
     expect(refused(state, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_COST_UNMET");
@@ -646,7 +612,7 @@ const evolveActive = (uid: string): GameAction => ({
 });
 
 describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from the HAND", () => {
-  it('🛑 Umbreon ex (evolves from "Eevee") evolves an Eevee ex from the hand', () => {
+  it('Umbreon ex (evolves from "Eevee") evolves an Eevee ex from the hand', () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON_EX]);
     const { state: after, events } = run(state, evolveActive(uids[0] ?? ""));
     expect(events.some((e) => e.type === "POKEMON_EVOLVED")).toBe(true);
@@ -674,17 +640,17 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
     ).toBe(true);
   });
 
-  it('🛑 a NON-ex Umbreon is refused EVOLVE_MISMATCH (the print says "Pokémon ex")', () => {
+  it('a NON-ex Umbreon is refused EVOLVE_MISMATCH (the print says "Pokémon ex")', () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON]);
     expect(refused(state, evolveActive(uids[0] ?? "")).code).toBe("EVOLVE_MISMATCH");
   });
 
-  it("🛑 a NON-Eevee-line ex (Pidgeot ex, from Pidgeotto) is refused EVOLVE_MISMATCH", () => {
+  it("a NON-Eevee-line ex (Pidgeot ex, from Pidgeotto) is refused EVOLVE_MISMATCH", () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [PIDGEOT_EX]);
     expect(refused(state, evolveActive(uids[0] ?? "")).code).toBe("EVOLVE_MISMATCH");
   });
 
-  it("🛑 a LOCKED Eevee ex (Flutter Mane Active) is refused EVOLVE_MISMATCH", () => {
+  it("a LOCKED Eevee ex (Flutter Mane Active) is refused EVOLVE_MISMATCH", () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON_EX], FLUTTER_MANE);
     expect(refused(state, evolveActive(uids[0] ?? "")).code).toBe("EVOLVE_MISMATCH");
   });
@@ -697,14 +663,14 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
     expect(programFor(EEVEE)).toBeUndefined();
   });
 
-  it("🛑 the timing bans STAND (the reminder text): on p1's FIRST turn it is FIRST_TURN_EVOLVE", () => {
+  it("the timing bans STAND (the reminder text): on p1's FIRST turn it is FIRST_TURN_EVOLVE", () => {
     let state = table(EEVEE_EX[0], 0);
     const pulled = pull(state, "p1", UMBREON_EX, "hand");
     state = pulled.state;
     expect(refused(state, evolveActive(pulled.uid)).code).toBe("FIRST_TURN_EVOLVE");
   });
 
-  it("🛑 …and an Eevee ex put into play THIS turn is EVOLVE_TOO_SOON", () => {
+  it("…and an Eevee ex put into play THIS turn is EVOLVE_TOO_SOON", () => {
     const { state, uids } = evolveTable(EEVEE_EX[0], [UMBREON_EX]);
     const active = activeOf(state, "p1");
     const fresh = {
@@ -726,7 +692,7 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
     expect(evolveAliasLicensed(state, body, POOL[EEVEE] as Card)).toBe(false);
   });
 
-  it("🛑 R-RD — a DECK evolve is NOT widened: a benched Eevee ex offers no Umbreon ex", () => {
+  it("R-RD — a DECK evolve is NOT widened: a benched Eevee ex offers no Umbreon ex", () => {
     let { state } = evolveTable(GROWER, []);
     state = benchFromDeck(ensureInDeck(state, "p1", EEVEE_EX[0]), "p1", EEVEE_EX[0]);
     const eeveeUid = state.players.p1.bench[0]?.stack.at(-1);
@@ -741,7 +707,7 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which D565 built (R-PF closed)", () => {
-  it("🛑 the HAND evolve onto Finizen is refused EVOLVE_ONLY_VIA_ABILITY, naming the Ability", () => {
+  it("the HAND evolve onto Finizen is refused EVOLVE_ONLY_VIA_ABILITY, naming the Ability", () => {
     for (const id of PALAFIN_EX) {
       const { state, uids } = evolveTable(FINIZEN, [id]);
       const error = refused(state, evolveActive(uids[0] ?? ""));
@@ -775,7 +741,7 @@ describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which D565 built 
     expect(activeOf(after, "p1").stack.at(-1)).toBe(uids[0]);
   });
 
-  it("🛑 a DECK evolve never offers Palafin ex: a benched Finizen with only Palafin ex in the deck whiffs", () => {
+  it("a DECK evolve never offers Palafin ex: a benched Finizen with only Palafin ex in the deck whiffs", () => {
     let { state } = evolveTable(GROWER, []);
     state = benchFromDeck(ensureInDeck(state, "p1", FINIZEN), "p1", FINIZEN);
     // Only Palafin ex left in the deck to evolve Finizen: move the plain Palafin out.
@@ -799,7 +765,7 @@ describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which D565 built 
     expect([...offered]).toEqual([PALAFIN]);
   });
 
-  it("🆕🆕🆕 D565 — R-PF CLOSED: a RETREATING Palafin swaps in a Palafin ex from the deck, in place", () => {
+  it("D565 — R-PF CLOSED: a RETREATING Palafin swaps in a Palafin ex from the deck, in place", () => {
     const { state: evolved0, uids } = evolveTable(FINIZEN, [PALAFIN]);
     let state = run(evolved0, evolveActive(uids[0] ?? "")).state;
     state = benchFromDeck(ensureInDeck(state, "p1", GROWER), "p1", GROWER);

@@ -24,120 +24,28 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.368.0 → 0.369.0 — 🆕🆕 D470: THE BOARD-WIDE OWN-SIDE ENERGY COUNT, NARROWED BY
-// THE PRINTED NOUN THAT NAMES A SUBGROUP OF THE ZONE.
-//
-//   "This attack does 20 more damage for each {L} Energy attached to all of your
-//    Iono's Pokémon."
-//     — `censusAttackCorpus.ts` **FILE LINE 558**, 1 sentence / **1 Standard-legal
-//       printing**, the ADDITIVE fold.
-//
-// THE COST TABLE: **1 whole-sentence anchor (`SELF_ENERGY_FILTERED_SCALE`), 1 reader
-// arm in `deriveAttackDamageBonus`, 1 OPTIONAL field on the SHIPPED `energyOnSelf`
-// member (`filter?: CardFilter`), 1 evaluator branch in `scaledAttackDamage`, and 1
-// OPTIONAL parameter on the SHARED `countEnergyInPlay`**. ZERO new `EffectOp`
-// members, op fields, op values, prompts, events, error codes, registry rows,
-// `CardFilter` members, `packages/schema` bytes, `redact.ts` bytes, `GameState`
-// fields or `FIXTURE_POOL` ids.
-//
-// 🛑 **THE ROW PASSES D468's SCHEMA TEST, WHICH IS WHY IT IS THIS ONE.** The residue
-// classifier names a TOKEN, and the token may name a COLUMN (buildable) or a BANNER
-// (data-blocked, D468's `Ancient`/`Future`). *"Iono's"* names a COLUMN:
-// (🆕🆕🆕 D569 (D539): the banners are not data-blocked since D569 — `banners.ts` supplies them; the BODY map spells "Ancient Pokémon" and not "Future Pokémon")
-// `CardFilter.ownerPokemon` has read `Card.name` since D242, `Card.name` is one of
-// `cardSchema`'s 21 keys, and `inPlayBodyFilter`'s owner branch already resolves the
-// printed noun. So this filter counts real bodies on real boards rather than 0
-// forever (D190b/D199's strictly-worse-than-unbuilt).
-//
-// 🛑 **THE SHARED HELPER IS THE IMPLEMENTATION OF EVERY OP THAT CALLS IT (D454), SO
-// THE CALLERS WERE ENUMERATED BEFORE A BYTE WAS WRITTEN.** `countEnergyInPlay` has
-// exactly THREE call sites at this head — `attack.ts`'s `energyOnOpponent` board arm,
-// its `energyOnSelf` board arm, and `interpreter.ts`'s `yourEnergyInPlayAtLeast`
-// board condition. The third is NOT an op and no brief had named it. All three pass
-// THREE arguments and are byte-identical after this slice, because the new parameter
-// is OPTIONAL and `undefined` is every body — the same widening this function's own
-// doc block already made for `energy: null` at D193. §7 drives that rather than
-// asserting it.
-//
-// ⚠️ **DISJOINTNESS IS STRUCTURAL, AND D467/D468 REQUIRE SAYING WHICH KIND.**
-// `SELF_ENERGY_FILTERED_SCALE` and the shipped `SELF_ENERGY_SCALE` are both `^…$`
-// over the whole sentence and disagree on a MANDATORY run of bytes at the same
-// position: this one demands `[^.]+ Pokémon` after `all of your `, a run ending in a
-// SPACE that the shipped literal `all of your Pokémon` cannot spend. No string
-// matches both, so the arm ORDER is legibility and the corpus's order-swap row is a
-// DECLARED `equivalent` survivor with no companion deletion row — correctly none, a
-// guard there would be D205/D208's vacuous guard.
-//
-// 🛑 **THE `(?!opponent)` LOOKAHEAD IS A DIFFERENT GUARD, AND IT IS KILLABLE.** It
-// refuses *"…attached to all of your opponent's Pokémon."* — a SEAT, not a subgroup —
-// which would otherwise resolve to `{kind: "ownerPokemon", owner: "opponent"}` and
-// score 0 forever while the census recorded the sentence BUILT. §2 drives it, and
-// `boardWideEnergyScaling.test.ts` §2 has asserted that same `null` since D407.
-//
-// ⚠️ **NO NEW `FIXTURE_POOL` ID** — a file-local `cardPool` (D414), so
-// `opponentResistanceBonus.test.ts`'s pool-size pin and its ladder take a **0** term
-// (D452/D465). §9 asserts that rather than promising it.
-//
-// ⚠️ **`MATCH_RECORD_VERSION` STAYS 29** on the SERIALIZED-ALPHABET argument (D462),
-// in its strongest form — *there is no carrier at all* — and DRIVEN over the bytes in
-// §8. No `CardFilter` MEMBER is added, which is the half that would have cost a bump
-// (D446: `CardFilter` IS persisted, on nine `EffectOp` fields); `ownerPokemon` has
-// been an inhabitant a v29 record could hold since D242.
-//
-// SEED-FREE beyond the shuffles setup needs: the sentence carries no coin.
-
 // ─────────────────────────────────────────────────────────────────────────────
 // The printed bytes
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** The printed sentence, verbatim off `censusAttackCorpus.ts` file line 558. The
-    possessive is ASCII U+0027 and the é in `Pokémon` is U+00E9 — asserted on the
-    BYTES in §1 rather than eyeballed (D137/D227). */
 const OWNER_BOARD =
   "This attack does 20 more damage for each {L} Energy attached to all of your Iono's Pokémon.";
 
-/** The sentence ONE WORD NARROWER — D407's board-wide spelling, shipped since then
-    and printed 4 times with `{G}`. It is the NEAREST WRONG SIBLING of this slice's
-    row at the TEXT level, and the control for the filter's whole job: on every board
-    below it answers a different number, and if it did not, the filter would be
-    invisible. */
 const SHIPPED_BOARD =
   "This attack does 20 more damage for each {L} Energy attached to all of your Pokémon.";
 
-/** The ZONE-LESS spelling this member has read since D196 — one body, the attacker.
-    It is what makes §4's zero-match board distinguishable from a dead reader. */
 const SHIPPED_SELF =
   "This attack does 20 more damage for each {L} Energy attached to this Pokémon.";
 
-/** The `×` twin of this slice's sentence. **Printed ZERO times** — asserted over the
-    legal column in §6, not assumed. */
 const OWNER_BOARD_MULTIPLY =
   "This attack does 20 damage for each {L} Energy attached to all of your Iono's Pokémon.";
 
-/** The SEAT spelling the `(?!opponent)` lookahead exists to refuse. Printed on the
-    `×` fold only (file lines 581/584/610/614) and NOWHERE on the additive one, which
-    §6 measures. `boardWideEnergyScaling.test.ts` §2 has pinned its `null` since
-    D407, so the lookahead's deletion reddens an EXISTING rung as well as this one. */
 const OPPONENT_SEAT_BOARD =
   "This attack does 20 more damage for each {L} Energy attached to all of your opponent's Pokémon.";
 
-/** The BODY-vocabulary refusal — D468's data-blocked banner in this anchor's noun
-    slot. `inPlayBodyFilter` answers `null`, so the sentence stays on the loud
-    ATTACK_EFFECT_SKIPPED path instead of counting 0 forever.
-    🆕🆕🆕 D569 (D539): "data-blocked banner" is WITHDRAWN for Ancient — `inPlayBodyFilter` now
-    answers "Ancient Pokémon" (`bannerPokemon` over `banners.ts`). The probe is re-pointed to the
-    OTHER Paradox banner, which the body map does not spell (the name is kept so the rung's
-    history reads; the string is constructed, as it always was). */
 const ANCIENT_NOUN =
   "This attack does 20 more damage for each {L} Energy attached to all of your Future Pokémon.";
 
-/** The ENERGY-vocabulary probe, one guard over. ⚠️ **D500 CHANGED ITS SIGN**: it was
-    the refusal — `attachedEnergyFilter` answered `undefined` for "Basic Energy" — and
-    `Basic` is in `CLAUSE_ENERGY_TOKENS` now, so it RESOLVES, exactly as it does for
-    the two shipped arms above this one. The name is kept (D438: re-point, do not
-    rename away the trail) and the assertion moved. **0 legal printings either way** —
-    this composition is constructed, and the refusal it used to carry was always about
-    the vocabulary rather than about this anchor. */
 const BASIC_ENERGY_NOUN =
   "This attack does 20 more damage for each Basic Energy attached to all of your Iono's Pokémon.";
 
@@ -145,18 +53,8 @@ const BASIC_ENERGY_NOUN =
     the curly one is always written where a reader can see it. */
 const RSQUO = "’";
 
-/** The corpus FILE LINE of the row this slice claims (`fileLine = index + 53`,
-    D448's convention, broken twice since — D459). */
 const OWNER_BOARD_FILE_LINE = 558;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The pool — FILE-LOCAL (D414), so `FIXTURE_POOL` is byte-unchanged
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** The four sentences this file compares sit on ONE body at fixed indices, so every
-    "this clause and not that one" case is a same-fixture, same-board comparison. All
-    four cost one {C} and print the same base 10, so a difference in `dealt` is a
-    difference in the CLAUSE and in nothing else. */
 const ATTACKS = [
   { cost: ["Colorless"], name: "Iono Surge", damage: 10, effect: OWNER_BOARD },
   { cost: ["Colorless"], name: "Board Surge", damage: 10, effect: SHIPPED_BOARD },
@@ -164,8 +62,6 @@ const ATTACKS = [
   { cost: ["Colorless"], name: "Plain Surge", damage: 10 },
 ];
 
-/** The attacker that IS one of *"your Iono's Pokémon"* — it counts ITSELF, which is
-    `fix-tr-mewtwo`'s own shape (D440) and is the axis §3's Active/Bench split needs. */
 const IONO_ATTACKER: Card = battler("fix-ionobolt", {
   name: "Iono's Fixibolt",
   hp: 200,
@@ -193,11 +89,6 @@ const IONO_BENCH: Card = battler("fix-ionochu", {
 /** A benched body with NO prefix at all — the plain negative. */
 const PLAIN_BENCH: Card = battler("fix-plainmander", { name: "Fixidos", hp: 120 });
 
-/** 🛑 **THE SUBSTRING NEAR MISS, AND IT IS AN INVENTED CARD ON PURPOSE** (D260's
-    `Fix` convention). Its name CONTAINS `Iono's ` and does not BEGIN with it, so a
-    filter written with `includes` instead of `startsWith` counts it and a correct one
-    does not. `matchesFilter`'s `ownerPokemon` arm reads a PREFIX (cards.ts), and this
-    is the body that makes the difference a number rather than a claim. */
 const RIVAL_BENCH: Card = battler("fix-rivalono", {
   name: "Rival of Iono's Fixiton",
   hp: 120,
@@ -213,10 +104,6 @@ const IONO_FOE: Card = battler("fix-ionogar", {
   types: ["Lightning"],
 });
 
-/** 🛑 **THE EVOLUTION TOP-CARD PROBE.** `countEnergyInPlay`'s filter reads the TOP
-    card (§1.2), not the bottom of the stack, so an Iono's Basic that has evolved into
-    a body WITHOUT the prefix has stopped being one of *"your Iono's Pokémon"*. §5
-    stacks this card onto an Iono's body and watches the count drop. */
 const EVOLVED_TOP: Card = battler("fix-plainvolt", {
   name: "Fixivolt",
   hp: 160,
@@ -257,9 +144,6 @@ const BOARD = 1;
 const SELF = 2;
 const PLAIN = 3;
 
-/** One seed for the whole suite. Nothing here flips a coin and every body and every
-    attachment is placed by surgery, so a seed table would describe a shuffle rather
-    than a rule (D143). */
 const SEED = 7;
 
 function find<T extends GameEvent["type"]>(
@@ -294,12 +178,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** `by` is about to attack. The FOE opens and passes, so the attacking seat carries
-    no §4 first-turn restriction; BOTH Benches are cleared, because every number this
-    family reads is a BOARD TALLY and a body the setup shuffle happened to seat would
-    move it silently. The defender's Active is an Iono's body carrying SIX {L}: it is
-    the seat control, present on every board in this file, contributing 0 to every
-    correct answer. */
 function bare(attacker: string, by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -326,28 +204,6 @@ function benchWith(
   return next;
 }
 
-/** 🛑 **THE MIXED BOARD — the one every number in §3 is measured on, built so that
-    EIGHT plausible implementations answer EIGHT DIFFERENT numbers on this ONE setup.**
-
-      attacker's side (p1)                              defender's side (p2)
-        Active  Iono's Fixibolt         2 {L} + 1 {C}     Iono's Fixigar   6 {L}
-        Bench 0 Iono's Fixichu          1 {L}
-        Bench 1 Fixidos                 3 {L}
-        Bench 2 Rival of Iono's Fixiton 2 {L}
-
-    The correct answer is the {L} attached to the ATTACKER's bodies whose name BEGINS
-    `Iono's `, over Active + Bench: 2 + 1 = **3** counters → `scaled` 10 + 60 = 70.
-
-      • the FILTER dropped (D407's whole board)                → 8
-      • the ENERGY TYPE dropped (any Energy on those bodies)   → 4
-      • the ZONE dropped (the attacking body alone)            → 2
-      • the ACTIVE dropped from the holder list (Bench only)   → 1
-      • `includes` where the arm reads `startsWith`            → 5
-      • the SEAT inverted (the defender's Iono's bodies)       → 6
-      • the filter asked of the ENERGY uid, not of the BODY    → 0
-
-    Eight values, all distinct, on one setup — which is why `Rival of Iono's Fixiton`
-    and the {C} on the Active are both there. */
 function mixed(by: Seat = "p1"): GameState {
   let state = bare("fix-ionobolt", by);
   state = attachFromDeck(state, by, "fix-lightning-energy", 2);
@@ -359,10 +215,6 @@ function mixed(by: Seat = "p1"): GameState {
   ]);
 }
 
-/** 🛑 **ZERO-MATCH, ROUTE ONE: NO BODY MATCHES.** The attacker's side carries SEVEN
-    {L} Energy and not one of the bodies holding them is an Iono's Pokémon — the
-    attacker included. The correct answer is 0 and the board is loud with the
-    resource, which is what separates it from route three. */
 function zeroNoBody(by: Seat = "p1"): GameState {
   let state = bare("fix-plainbolt", by);
   state = attachFromDeck(state, by, "fix-lightning-energy", 2);
@@ -373,11 +225,6 @@ function zeroNoBody(by: Seat = "p1"): GameState {
   ]);
 }
 
-/** 🛑 **ZERO-MATCH, ROUTE TWO: THE BODIES MATCH AND THEIR ENERGY IS THE WRONG TYPE.**
-    Two Iono's bodies, three {W} and one {C} between them, and a THIRD body that is
-    not an Iono's carrying three {L} — so the unfiltered sibling answers 3 on this
-    very board while the filtered one answers 0, and the 0 belongs to the FILTER
-    rather than to an empty board. */
 function zeroWrongEnergy(by: Seat = "p1"): GameState {
   let state = bare("fix-ionobolt", by);
   state = attachFromDeck(state, by, "fix-water-energy", 2);
@@ -388,18 +235,11 @@ function zeroWrongEnergy(by: Seat = "p1"): GameState {
   ]);
 }
 
-/** 🛑 **ZERO-MATCH, ROUTE THREE: THE BOARD IS EMPTY.** One Iono's body, one {C} to
-    pay the cost, a swept Bench. 0 because there is nothing to count — the same
-    number as routes one and two and not the same fact, which is the whole reason all
-    three are here (D469's convention, one resource over). */
 function zeroEmpty(by: Seat = "p1"): GameState {
   const state = bare("fix-ionobolt", by);
   return attachFromDeck(state, by, "fix-energy", 1);
 }
 
-/** TEST SURGERY: push a fresh copy of `cardId` onto bench[index]'s STACK, which is
-    what an evolution does to the body it lands on (bottom → top). Local to this file
-    because the top-card reading is local to this slice's claim. */
 function stackOnto(state: GameState, seat: Seat, index: number, cardId: string): GameState {
   const side = state.players[seat];
   const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
@@ -427,10 +267,6 @@ function dealt(state: GameState, index: number, seat: Seat = "p1"): number | und
   return find(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE PRINTED BYTES AND THE CORPUS ROW
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the sentence, its corpus row, and the fixtures that print it", () => {
   it("is corpus FILE LINE 558, ONE sentence and ONE Standard-legal printing", () => {
     const corpus = legalAttackCorpus();
@@ -448,10 +284,6 @@ describe("§1 — the sentence, its corpus row, and the fixtures that print it",
   });
 
   it("the corpus row was UNREAD before this slice and is READ after it", () => {
-    // `resolvedByAnyReader` is the census's own predicate — the one whose answer
-    // moves RESIDUE. ⚠️ **AND IT IS NOT ENOUGH BY ITSELF** (D469): a census sees
-    // whether a sentence is CLAIMED, never whether it is claimed CORRECTLY, which is
-    // what §3 and §4 exist to answer.
     expect(resolvedByAnyReader(OWNER_BOARD)).toBe(true);
   });
 
@@ -498,12 +330,7 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     });
   });
 
-  it("🛑 the two SHIPPED spellings keep their exact shapes — the field's polarity", () => {
-    // The whole reason the field is OPTIONAL: `undefined` is EVERY body in the zone,
-    // so the 25 printings that reached this member before D470 — 21 zone-less and
-    // D407's 4 board-wide — are byte-identical afterwards. A producer that emitted a
-    // filter unconditionally, or an evaluator that read `undefined` as something
-    // other than "every body", is what this rung goes red for.
+  it("the two SHIPPED spellings keep their exact shapes — the field's polarity", () => {
     const board = deriveAttackDamageBonus(SHIPPED_BOARD);
     expect(board).toEqual({
       per: 20,
@@ -514,7 +341,6 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     expect(self).toEqual({ per: 20, count: { kind: "energyOnSelf", energyType: "Lightning" } });
     expect(self?.count).not.toHaveProperty("filter");
     expect(self?.count).not.toHaveProperty("zone");
-    // …and the real printed 4-printing row is unmoved too, byte for byte.
     expect(
       deriveAttackDamageBonus(
         "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.",
@@ -522,12 +348,7 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "Grass" } });
   });
 
-  it("🛑 GUARD 1 — the SEAT spelling is refused by the `(?!opponent)` lookahead", () => {
-    // Not a subgroup: `owner: "opponent"` would name cards whose NAME begins
-    // "opponent's ", of which the catalog has none, so the sentence would score 0 on
-    // every board forever while the census recorded it BUILT. Deleting the lookahead
-    // reddens THIS rung and `boardWideEnergyScaling.test.ts` §2's, which has asserted
-    // the same null since D407.
+  it("GUARD 1 — the SEAT spelling is refused by the `(?!opponent)` lookahead", () => {
     expect(deriveAttackDamageBonus(OPPONENT_SEAT_BOARD)).toBeNull();
     expect(deriveAttackDamageMultiplier(OPPONENT_SEAT_BOARD)).toBeNull();
     // …and the shipped opponent-side reading is untouched, so the null above is a
@@ -539,34 +360,13 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     ).toEqual({ kind: "energyOnOpponent", zone: "active", energyType: null });
   });
 
-  it("🛑 GUARD 2 — the BODY vocabulary refuses, and the sentence stays LOUD", () => {
-    // D468's data-blocked banner in this anchor's noun slot: `inPlayBodyFilter`
-    // (🆕🆕🆕 D569 (D539): the probe's banner is "Future" now — "Ancient Pokémon" is a body-map key since D569)
-    // answers null, so the arm falls through to `return null` rather than emitting a
-    // filter that counts 0 on every board.
+  it("GUARD 2 — the BODY vocabulary refuses, and the sentence stays LOUD", () => {
     expect(deriveAttackDamageBonus(ANCIENT_NOUN)).toBeNull();
     expect(deriveAttackEffect(ANCIENT_NOUN)).toBeNull();
     expect(deriveAttackDamagePenalty(ANCIENT_NOUN)).toBeNull();
   });
 
-  it("🛑 GUARD 3 — the ENERGY vocabulary, and it refuses exactly what it cannot read", () => {
-    // 🆕🆕 **D500 — `Basic` MOVED FROM THE REFUSED SIDE TO THE ADMITTED SIDE, AND THE
-    // GUARD IS UNCHANGED.** `attachedEnergyFilter` gained no branch; the shared
-    // `CLAUSE_ENERGY_TOKENS` gained a row, so the token now resolves to the card
-    // CATEGORY `"basic"` here for the same reason it resolves on the two arms above.
-    // This composition is CONSTRUCTED and 0 legal — no printing spells a `Basic`
-    // energy count on an owner-prefixed subgroup — and it is admitted rather than
-    // guarded out for D470's own stated reason at this anchor: *a reader is a function
-    // of TEXT, and a noun the column does not print simply never arrives*.
-    //
-    // 🛑 **AND THE GUARD'S POLARITY IS STILL WHAT THIS RUNG TESTS.** Guard 3 is
-    // `energyType !== undefined`; `D470-owner-board-arm-confuses-null-with-undefined-in-the-energy-guard`
-    // flips it to `!== null`. That row's `what` names TWO halves and D500 retires one
-    // of them — `Basic` is no longer an unresolvable token — so the row is now killed
-    // by the UNTYPED half alone: `OWNER_BOARD` below carries no token, resolves to
-    // `null`, and `!== null` refuses it. The row's `find`/`replace` are byte-unchanged
-    // (D496/D499: fix the suite, not the row) and the `{C}` case beside this one is
-    // what keeps the unresolvable half of the guard driven at all.
+  it("GUARD 3 — the ENERGY vocabulary, and it refuses exactly what it cannot read", () => {
     expect(deriveAttackDamageBonus(BASIC_ENERGY_NOUN)).toEqual({
       per: 20,
       count: {
@@ -608,13 +408,7 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     expect(deriveAttackDamageBonus(OWNER_BOARD.toLowerCase())).toBeNull();
   });
 
-  it("🛑 DISJOINTNESS IS STRUCTURAL — neither anchor can match the other's sentence", () => {
-    // D468's kind, not D467's: both patterns are `^…$` and disagree on a mandatory
-    // run of bytes at the same position. The FILTERED one demands `[^.]+ Pokémon`
-    // after `all of your `, a run that must end in a SPACE; the shipped literal
-    // `all of your Pokémon` spends none, and `this Pokémon` does not begin
-    // `all of your ` at all. Measured over the whole additive family rather than
-    // asserted on two specimens.
+  it("DISJOINTNESS IS STRUCTURAL — neither anchor can match the other's sentence", () => {
     const family = legalAttackCorpus()
       .map(([, s]) => s)
       .filter((s) =>
@@ -643,26 +437,21 @@ describe("§3 — the fold on a real board, where every wrong reading lands else
     expect(dealt(mixed(), IONO)).toBe(70);
   });
 
-  it("🛑 the FILTER-LESS sibling answers 8 on the SAME board — 10 + 160 = 170", () => {
+  it("the FILTER-LESS sibling answers 8 on the SAME board — 10 + 160 = 170", () => {
     // The one number that matters most: it is the sentence one word narrower, on the
     // same setup, and it is what a dropped filter would produce.
     expect(dealt(mixed(), BOARD)).toBe(170);
   });
 
-  it("🛑 the ZONE-LESS sibling answers 2 — 10 + 40 = 50", () => {
+  it("the ZONE-LESS sibling answers 2 — 10 + 40 = 50", () => {
     expect(dealt(mixed(), SELF)).toBe(50);
   });
 
   it("the clauseless attack answers the printed base alone — 10", () => {
-    // So the 70 above is the CLAUSE and not the board (D469's control).
     expect(dealt(mixed(), PLAIN)).toBe(10);
   });
 
-  it("🛑 the six remaining misreads are SIX DIFFERENT NUMBERS, driven on the counter", () => {
-    // `countEnergyInPlay` is where each of these would actually be made, so they are
-    // measured through it rather than described. Every value is distinct from the
-    // correct 3 AND from every other, which is what makes the suite discriminate
-    // instead of merely pass.
+  it("the six remaining misreads are SIX DIFFERENT NUMBERS, driven on the counter", () => {
     const state = mixed();
     const IONOS = { kind: "ownerPokemon", owner: "Iono" } as const;
     expect(countEnergyInPlay(state, "p1", "Lightning", IONOS)).toBe(3); // correct
@@ -702,8 +491,6 @@ describe("§4 — 0 is not one fact, so three boards reach it three ways", () =>
   it("ROUTE 1 — no body matches, and the board is LOUD with {L}", () => {
     const state = zeroNoBody();
     expect(dealt(state, IONO)).toBe(10);
-    // …and on that very board the filter-less sibling adds 140, so the silence is
-    // SPECIFIC rather than global (D469's control, at a second address).
     expect(dealt(state, BOARD)).toBe(150);
     expect(dealt(state, SELF)).toBe(50);
     expect(countEnergyInPlay(state, "p1", "Lightning")).toBe(7);
@@ -730,7 +517,7 @@ describe("§4 — 0 is not one fact, so three boards reach it three ways", () =>
     expect(state.players.p1.bench).toEqual([]);
   });
 
-  it("🛑 the three routes are DISTINGUISHABLE, which is the point of having three", () => {
+  it("the three routes are DISTINGUISHABLE, which is the point of having three", () => {
     // 0-because-nothing-matches, 0-because-the-wrong-resource and 0-because-empty are
     // the same number and not the same fact. The discriminant is what the UNFILTERED
     // sibling says on each board.
@@ -749,9 +536,6 @@ describe("§4 — 0 is not one fact, so three boards reach it three ways", () =>
 
 describe("§5 — the filter reads the TOP card (§1.2), and evolving is what proves it", () => {
   it("an Iono's Basic that evolves into a body WITHOUT the prefix stops counting", () => {
-    // `benchBodies`' own reading (D466), one resource over. The stack is bottom →
-    // top, so pushing `Fixivolt` onto `Iono's Fixichu` is exactly what an evolution
-    // does — and a filter reading `stack[0]` would keep counting the {L} underneath.
     const before = mixed();
     expect(dealt(before, IONO)).toBe(70);
     const after = stackOnto(before, "p1", 0, "fix-plainvolt");
@@ -765,15 +549,8 @@ describe("§5 — the filter reads the TOP card (§1.2), and evolving is what pr
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — THE EMPTY CELLS, MEASURED
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§6 — the cells this slice leaves EMPTY are measurements, not omissions", () => {
-  it("🛑 the `×` spelling of this sentence is printed ZERO times", () => {
-    // D435: not incrementing is a measurement. `SELF_ENERGY_MULTIPLY` keeps its bare
-    // "this Pokémon" tail, and the day a `×` board-wide own-side row is ingested this
-    // rung goes red and names it.
+  it("the `×` spelling of this sentence is printed ZERO times", () => {
     expect(
       legalAttackCorpus().filter(([, s]) =>
         /^This attack does \d+ damage for each (?:.+ )?Energy attached to all of your (?!opponent)(?:[^.]+ )?Pokémon\.$/.test(
@@ -785,7 +562,7 @@ describe("§6 — the cells this slice leaves EMPTY are measurements, not omissi
     expect(deriveAttackDamageBonus(OWNER_BOARD_MULTIPLY)).toBeNull();
   });
 
-  it("🛑 the OPPONENT-side board spelling is printed on the `×` fold ONLY", () => {
+  it("the OPPONENT-side board spelling is printed on the `×` fold ONLY", () => {
     // The measurement the `(?!opponent)` lookahead rests on: four rows, all of them
     // bare-fold, none of them additive. If an additive one is ever ingested this rung
     // names it and the lookahead has to be re-argued rather than silently swallow it.
@@ -797,18 +574,11 @@ describe("§6 — the cells this slice leaves EMPTY are measurements, not omissi
   });
 
   it("the whole of `Energy attached to all of your` is SEVEN rows, and the split is 2/5", () => {
-    // A DERIVED list rather than a remembered count (D466), and it is the census's own
-    // population for this anchor: two own-side rows (D407's and this slice's) and five
-    // opponent-side ones — of which four are the `×` seat spelling above and one is
-    // D406's Pokémon TOOL sentence, which counts no Energy at all.
     const rows = legalAttackCorpus()
       .map(([, s]) => s)
       .filter((s) => s.includes("attached to all of your"));
     expect(rows).toHaveLength(7);
     expect(rows).toContain(OWNER_BOARD);
-    // Every one of the seven that is READ, read: the two own-side Energy rows plus
-    // D406's Tool row. The four `×` opponent rows are `energyOnOpponent`'s and are
-    // read too, so this list is the anchor's population and not its residue.
     expect(rows.filter((s) => resolvedByAnyReader(s))).toHaveLength(7);
   });
 
@@ -827,10 +597,6 @@ describe("§6 — the cells this slice leaves EMPTY are measurements, not omissi
 
 describe("§7 — `countEnergyInPlay`, widened without moving a caller", () => {
   it("the new parameter is OPTIONAL and the 3-argument call is the old one", () => {
-    // D454: a shared helper is the implementation of every op that calls it. The
-    // three shipped call sites — `energyOnOpponent`'s board arm, `energyOnSelf`'s,
-    // and `yourEnergyInPlayAtLeast` — all pass three arguments, so this equality IS
-    // their behaviour.
     const state = mixed();
     expect(countEnergyInPlay(state, "p1", "Lightning", undefined)).toBe(
       countEnergyInPlay(state, "p1", "Lightning"),
@@ -878,13 +644,7 @@ describe("§7 — `countEnergyInPlay`, widened without moving a caller", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () => {
-  it("🛑 DIRECTION 1 — there is NO CARRIER AT ALL", () => {
-    // D427: choosing a carrier does not duck persistence, so this is asserted over
-    // the SERIALIZED board rather than reasoned from the type's name. An
-    // `AttackDamageBonus` is a LOCAL inside `attack()`; the reader runs at
-    // declaration and the value is discarded before the function returns. `CardFilter`
-    // IS persisted (D446) — on nine `EffectOp` fields — which is exactly why this
-    // slice adds no MEMBER to it: `ownerPokemon` has been an inhabitant since D242.
+  it("DIRECTION 1 — there is NO CARRIER AT ALL", () => {
     const before = mixed();
     const after = swing(before, IONO).state;
     for (const [label, state] of [
@@ -898,7 +658,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
     expect(after.pending).toEqual([]);
   });
 
-  it("🛑 DIRECTION 2 — a v29 record round-trips and the NEXT swing reads the same", () => {
+  it("DIRECTION 2 — a v29 record round-trips and the NEXT swing reads the same", () => {
     const first = swing(mixed(), IONO);
     expect(find(first.events, "DAMAGE_DEALT")?.dealt).toBe(70);
     const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
@@ -912,15 +672,8 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §9 — THE POOL TAX THIS SLICE DOES NOT PAY
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§9 — no new `FIXTURE_POOL` id", () => {
   it("the local ids are LOCAL", () => {
-    // D452/D465: a `FIXTURE_POOL` id is a census entry with a tax of its own —
-    // `opponentResistanceBonus.test.ts`'s pool-size pin and its ladder. A file-local
-    // pool takes a 0 term, and that is asserted rather than promised.
     for (const id of Object.keys(LOCAL_CARDS)) expect(FIXTURE_POOL[id], id).toBeUndefined();
     expect(Object.keys(LOCAL_CARDS)).toHaveLength(7);
   });

@@ -16,27 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: §9.2 — a printed clause that refers back to what an EARLIER
-// clause of the same card actually did. Three wordings, one running record
-// (`EffectContinuation.record`), which is the engine's first op→op data flow:
-//
-//   • MIRIAM (sv01-179/-238/-251, Supporter) — "Shuffle up to 5 Pokémon from
-//     your discard pile into your deck. If you shuffled any cards into your deck
-//     IN THIS WAY, draw 3 cards." The GATE arm: the retrieval files what it
-//     moved, and a `recordGate` two ops later reads it.
-//   • SUPERIOR ENERGY RETRIEVAL (sv02-189/-277, Item) — "You can use this card
-//     only if you discard 2 other cards from your hand. / Put up to 4 Basic
-//     Energy cards from your discard pile into your hand. (You can't choose a
-//     card you discarded WITH THE EFFECT OF THIS CARD.)" The EXCLUSION arm: the
-//     cost pays INTO the pile the next op reads, so without the record the cost
-//     refunds itself.
-//   • DENDRA (sv02-179 — pinned in deckBottom.test.ts) — "IF YOU DO, draw cards
-//     until you have 5." The same gate as Miriam's, on the payment.
-//
-// What the record is NOT: "the previous op's result". Miriam shuffles the deck
-// between the retrieval and the sentence about it, so the op being referred to
-// is two upstream — hence a named `EffectSlot`.
-
 const SEED = 20260722;
 
 const MIRIAM = "sv01-179";
@@ -67,10 +46,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** Rebuild p1's HAND outright: everything dealt back into the deck, then exactly
-    `ids` dealt off it. Both cards turn on hand CONTENTS (the cost's candidates,
-    the play gate's count), so a suite keeping whatever setup dealt would ask a
-    different question per seed. */
 function withHand(state: GameState, ids: readonly string[]): GameState {
   const side = state.players.p1;
   let next: GameState = {
@@ -119,11 +94,6 @@ function roundTrip(state: GameState): GameState {
 
 describe("Superior Energy Retrieval — the cost that must not refund itself", () => {
   it("BARS the cards it just paid from the retrieval, and nothing else", () => {
-    // The headline. The hand pays two Fire Energy INTO the discard pile that the
-    // very next op reads, and a third identical Fire Energy is already sitting
-    // there. Without the record all three would be offered and the player could
-    // take back exactly what they paid — a 2-card cost refunded, so the card
-    // becomes a strict +2 and its parenthetical means nothing.
     let state = board(SEED);
     state = withHand(state, [SER, "fix-fire-energy", "fix-fire-energy", "fix-item"]);
     state = withDiscard(state, { "fix-fire-energy": 1 });
@@ -137,11 +107,6 @@ describe("Superior Energy Retrieval — the cost that must not refund itself", (
     expect(paid).toHaveLength(2);
     const retrieval = chooseCardsPrompt(resolve(play(state, SER).state, paid).state);
 
-    // Barred: the two just paid. Offered: the identical PRINT that was already
-    // in the pile — the record is keyed by uid, not by card id, so a second copy
-    // of the same Energy is a different card and stays takeable, which is what
-    // the printed sentence says ("a card you discarded with the effect of this
-    // card", not "a card of that kind").
     for (const uid of paid) expect(retrieval.candidates).not.toContain(uid);
     expect(retrieval.candidates).toEqual(alreadyThere);
   });
@@ -166,10 +131,6 @@ describe("Superior Energy Retrieval — the cost that must not refund itself", (
   });
 
   it("carries the record ACROSS the park — the cost parks, then the retrieval does", () => {
-    // Every recording this engine can make happens on the resume path, because
-    // both recording ops park. The continuation is the only thing joining them:
-    // the cost's park stores NO record (nothing has run), the retrieval's stores
-    // the paid uids.
     let state = board(SEED);
     state = withHand(state, [SER, "fix-fire-energy", "fix-fire-energy", "fix-item"]);
     state = withDiscard(state, { "fix-water-energy": 2 });
@@ -197,11 +158,6 @@ describe("Superior Energy Retrieval — the cost that must not refund itself", (
   });
 
   it("records on the AUTO-RESOLVE path too — a hand with exactly the cost in it", () => {
-    // A cost whose offer is no bigger than `count` resolves inline in stepOp
-    // rather than parking, which is a SECOND place the recording has to happen.
-    // A record written only on the resume path would leave this hand — the
-    // ordinary late-game one, where the player has nothing to spare — refunding
-    // its own payment.
     let state = board(SEED);
     state = withHand(state, [SER, "fix-fire-energy", "fix-fire-energy"]);
     state = withDiscard(state, { "fix-fire-energy": 1 });
@@ -257,13 +213,6 @@ describe("Miriam — the gate two ops downstream", () => {
     for (const uid of taken) expect(done.players.p1.deck).toContain(uid);
     expect(census(done, "p1")).toEqual(before);
 
-    // ORDER IS OBSERVABLE, and it is why the gate cannot read "the previous
-    // op": the shuffle sits between the retrieval and the draw. A program that
-    // drew first would deal the UNSHUFFLED top — these three, in this order —
-    // while the cards it just put back sat at the bottom in pick order, which is
-    // exactly what the printed word "shuffle" denies. (The retrieval appends to
-    // the deck's END, so drawing first does not draw them back; the tell is the
-    // deck top, not the returned cards.)
     expect(done.players.p1.hand.slice(1)).not.toEqual(deckTop);
   });
 
@@ -309,10 +258,6 @@ describe("Miriam — the gate two ops downstream", () => {
 
 describe("the record itself", () => {
   it("Dendra's 'if you do' gates the draw on the payment", () => {
-    // Unreachable through the action path — `handCostUnmet` refuses the play
-    // with nothing to pay — so the program is run directly, which is the only
-    // way to ask whether the conditional is expressed in the card or only in the
-    // gate that guards it.
     const state = board(SEED);
     const empty: GameState = {
       ...state,
@@ -384,11 +329,6 @@ describe("the record itself", () => {
 
 describe("the registry rows", () => {
   it("resolves the SAME program for every authored id, reprints included", () => {
-    // The slice's headline is "Miriam ×3, Superior Energy Retrieval ×2" and only
-    // ONE id of each is ever exercised above — the reprints are pure data, so
-    // this is the only thing standing between a dropped row and a card that
-    // silently cannot be played (`TRAINER_NOT_SIMULATED`) at exactly one rarity.
-    // The deckBottom suite pins Dendra ×3 the same way.
     const miriam = programFor(MIRIAM)?.trainer;
     expect(miriam).toBeDefined();
     for (const id of ["sv01-179", "sv01-238", "sv01-251"]) {
@@ -399,8 +339,6 @@ describe("the registry rows", () => {
     for (const id of ["sv02-189", "sv02-277"]) {
       expect(programFor(id)?.trainer).toEqual(ser);
     }
-    // And they are DIFFERENT programs, so a row pointing at the wrong constant
-    // is caught rather than passing on shape alone.
     expect(miriam).not.toEqual(ser);
   });
 
@@ -449,13 +387,6 @@ function deepFreeze<T>(value: T): T {
 }
 
 describe("the record ACROSS a park — the claim the shipped cards never exercise", () => {
-  // Both shipped cards write and read the record inside ONE resume: SER's cost
-  // records in `applyChoice` and its retrieval reads it in the same
-  // `runProgram`; Miriam's retrieval records and its gate reads it likewise. So
-  // `cont.record` is STORED and asserted by the suite above, but nothing there
-  // ever reads it back — `resumeProgram`'s `{ ...cont.record }` seeding can be
-  // deleted outright and every other test still passes. These pin it.
-
   /** pay (parks, records "paid") → retrieve (parks, records nothing) → gate on
       "paid". The gate's answer was recorded BEFORE the second park, so it can
       only arrive through `cont.record`. */
@@ -500,8 +431,6 @@ describe("the record ACROSS a park — the claim the shipped cards never exercis
   });
 
   it("seeding from the continuation COPIES it — a resume never writes into stored state", () => {
-    // D14: `applyAction` is a pure replayable reducer, so the record inside the
-    // parked GameState must be unreachable from the resumed run's accumulator.
     let state = board(SEED);
     state = withHand(state, ["fix-item", "fix-water-energy"]);
     state = withDiscard(state, { "fix-fire-energy": 2, "fix-basic-1": 2 });
@@ -603,7 +532,6 @@ describe("hostile wire input at the SER retrieval park", () => {
     return { parked: resolve(costParked, paid).state, paid };
   }
 
-  // D14: never throws, never moves a card it shouldn't.
   const garbage: { name: string; uids: unknown }[] = [
     { name: "an unknown string", uids: ["not-a-uid"] },
     { name: "an empty string", uids: [""] },
@@ -825,10 +753,6 @@ describe("the prompt states what the ANSWER buys", () => {
 
 describe("a whiff overwrites the slot it would have written", () => {
   it("does not leave a stale recording behind", () => {
-    // Both recording ops must agree that "ran and moved nothing" is an ANSWER,
-    // not a silence — otherwise a slot written earlier survives an op that
-    // should have replaced it. Unreachable while each slot has one writer; the
-    // closed EffectSlot union makes reuse easy rather than hard.
     let state = board(SEED);
     state = withHand(state, ["fix-item"]);
     state = withDiscard(state, { "fix-basic-1": 1 });

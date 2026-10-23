@@ -13,12 +13,6 @@ import {
   setPrizes,
 } from "./testFixtures";
 
-// M5 (prize value, §8.1) — prizeValueOf turned real: a KO is worth 3 Prizes for
-// a VMAX, 2 for any other rule box (ex / V / VSTAR / GX), 1 for a plain body.
-// The class is read off the printed name suffix (pokemonSuffixOf, unit-tested in
-// cards.test.ts). This suite pins the KO→count wiring end to end: P1's fix-attacker
-// Bites a pre-damaged P2 Active to lethal and we read the Prize count the KO owes.
-
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first turn with no §4 attack restriction. */
 function p1Turn2(seed: number): GameState {
@@ -62,8 +56,6 @@ describe("prizeValueOf — the Prizes a KO owes (§8.1)", () => {
       "checkup",
       "startTurn",
     ]);
-    // Both Prizes leave the row in ONE pick (the ex flow takes `count` at once):
-    // P1's row drops 6 → 4, proving the count was real, not just the phase label.
     const next = must(applyAction(after, { type: "takePrizes", seat: "p1", prizeIndices: [0, 1] }));
     expect(next.players.p1.prizes.length).toBe(4);
   });

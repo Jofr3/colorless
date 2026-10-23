@@ -16,19 +16,10 @@ import {
   specialEnergy,
   trainerCard,
   benchFromDeck,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D565 — RUFFIAN: THE BODY-FIRST PICK ──
-//
-//   Ruffian  sv09-157 / sv09-181  Supporter  "Discard a Pokémon Tool and a Special Energy from 1 of your
-//                                            opponent's Pokémon."
-//
-// ONE question (which opponent body — the ones carrying a Tool OR a Special Energy, shield-filtered),
-// whose answer buys the two body-narrowed discards (`discardTools { count 1, bodyUid }` and
-// `discardEnergy { from "opponentChosen", specialEnergy, count 1, bodyUid }`). Driven on the REAL
-// ids on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Text off tcgdex (the audit's
-// card JSON), 2026-09-28. Reading R-RU1: docs/decisions.md D565.
 
 const RUFFIAN = ["sv09-157", "sv09-181"] as const;
 const FRAXURE = "sv06.5-045";
@@ -74,7 +65,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [RUFFIAN[0]]: 2,
   [RUFFIAN[1]]: 2,
@@ -85,18 +75,6 @@ const DECK = deckOf({
   [BASIC]: 8,
   [FILLER]: 36,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -242,7 +220,7 @@ describe("§1 — the print and the registry row", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§2 — one body qualifies: the pick is forced, both halves come off THAT body", () => {
-  it("🛑 a Tool and a Special Energy on the Active: both discarded to the OPPONENT's pile, the Basic stays", () => {
+  it("a Tool and a Special Energy on the Active: both discarded to the OPPONENT's pile, the Basic stays", () => {
     let state = table();
     state = attach(state, "p2", "active", TOOL, "tools");
     state = attach(state, "p2", "active", SPECIAL);
@@ -260,21 +238,21 @@ describe("§2 — one body qualifies: the pick is forced, both halves come off T
     );
   });
 
-  it("🛑 R-RU1: a body with ONLY a Tool is a legal pick — the Tool comes off, the Energy half whiffs", () => {
+  it("R-RU1: a body with ONLY a Tool is a legal pick — the Tool comes off, the Energy half whiffs", () => {
     const state = attach(table(), "p2", "active", TOOL, "tools");
     const { state: after, events } = play(state);
     expect(bodyAt(after, "p2", "active").tools).toEqual([]);
     expect(all(events, "ENERGY_DISCARDED")).toHaveLength(0);
   });
 
-  it("🛑 R-RU1: a body with ONLY a Special Energy is a legal pick — the Energy comes off, the Tool half whiffs", () => {
+  it("R-RU1: a body with ONLY a Special Energy is a legal pick — the Energy comes off, the Tool half whiffs", () => {
     const state = attach(table(), "p2", "active", SPECIAL);
     const { state: after, events } = play(state);
     expect(bodyAt(after, "p2", "active").energy).toEqual([]);
     expect(all(events, "TOOLS_DISCARDED")).toHaveLength(0);
   });
 
-  it("🛑 the Tool half is MANDATORY: one Tool on the body comes off INLINE, no take-or-decline park", () => {
+  it("the Tool half is MANDATORY: one Tool on the body comes off INLINE, no take-or-decline park", () => {
     const state = attach(table(), "p2", "active", TOOL, "tools");
     const { state: after } = play(state);
     expect(after.phase.kind).toBe("turn:action");
@@ -292,7 +270,7 @@ describe("§3 — several bodies qualify: the pick parks, and the answer narrows
     return state;
   }
 
-  it("🛑 the offer is exactly the qualifying bodies (the bare Bench 0 is not), Active first", () => {
+  it("the offer is exactly the qualifying bodies (the bare Bench 0 is not), Active first", () => {
     const { state } = play(loaded());
     if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "choosePokemon") {
       throw new Error("expected a choosePokemon park");
@@ -306,7 +284,7 @@ describe("§3 — several bodies qualify: the pick parks, and the answer narrows
     ]);
   });
 
-  it("🛑 answering Bench 1 strips Bench 1 ONLY — the Active keeps its Tool and its Special Energy", () => {
+  it("answering Bench 1 strips Bench 1 ONLY — the Active keeps its Tool and its Special Energy", () => {
     const parked = play(loaded()).state;
     const { state } = run(parked, pick({ spot: "bench", index: 1 }));
     expect(state.phase.kind).toBe("turn:action");
@@ -316,7 +294,7 @@ describe("§3 — several bodies qualify: the pick parks, and the answer narrows
     expect(bodyAt(state, "p2", "active").energy).toHaveLength(1);
   });
 
-  it("🛑 an unoffered body over the wire is refused", () => {
+  it("an unoffered body over the wire is refused", () => {
     const parked = play(loaded()).state;
     expect(applyAction(parked, pick({ spot: "bench", index: 0 })).ok).toBe(false);
   });
@@ -341,7 +319,7 @@ describe("§3 — several bodies qualify: the pick parks, and the answer narrows
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§4 — the shield and the refusal", () => {
-  it('🛑 a SHIELDED body (Fraxure "Unnerve") is not offered: with the Active also loaded, the pick is forced to it', () => {
+  it('a SHIELDED body (Fraxure "Unnerve") is not offered: with the Active also loaded, the pick is forced to it', () => {
     let state = table(FILLER, [FRAXURE]);
     state = attach(state, "p2", "active", TOOL, "tools");
     state = attach(state, "p2", 0, TOOL, "tools");
@@ -354,7 +332,7 @@ describe("§4 — the shield and the refusal", () => {
     expect(all(events, "TRAINER_EFFECT_PREVENTED")).toHaveLength(1);
   });
 
-  it("🛑 no opponent body carries a Tool or a Special Energy: the play is REFUSED (a card that could only whiff)", () => {
+  it("no opponent body carries a Tool or a Special Energy: the play is REFUSED (a card that could only whiff)", () => {
     const state = attach(table(), "p2", "active", BASIC);
     const before = setHand(state, "p1", [RUFFIAN[0]]);
     const result = applyAction(before, {
@@ -397,7 +375,7 @@ describe("§4 — the shield and the refusal", () => {
 describe("§5 — the narrowing keys, driven through the interpreter", () => {
   const ctx: EffectContext = { seat: "p1", invokedBy: "supporter" };
 
-  it("🛑 `discardTools.bodyUid` takes the Tool off THAT body only; absent, it would offer both", () => {
+  it("`discardTools.bodyUid` takes the Tool off THAT body only; absent, it would offer both", () => {
     let state = table(FILLER, [FILLER]);
     state = attach(state, "p2", "active", TOOL, "tools");
     state = attach(state, "p2", 0, TOOL, "tools");
@@ -408,12 +386,11 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
     if (out.kind !== "done") throw new Error("expected done");
     expect(bodyAt(out.state, "p2", 0).tools).toEqual([]);
     expect(bodyAt(out.state, "p2", "active").tools).toHaveLength(1);
-    // The unnarrowed op is the D543 up-to park over BOTH Tools.
     const wide = runProgram(state, [{ op: "discardTools", count: 1 }], ctx, []);
     expect(wide.kind).toBe("parked");
   });
 
-  it('🛑 `discardEnergy { from: "opponentChosen", bodyUid }` takes the Special Energy off THAT body only', () => {
+  it('`discardEnergy { from: "opponentChosen", bodyUid }` takes the Special Energy off THAT body only', () => {
     let state = table(FILLER, [FILLER]);
     state = attach(state, "p2", "active", SPECIAL);
     state = attach(state, "p2", 0, SPECIAL);
@@ -438,7 +415,7 @@ describe("§5 — the narrowing keys, driven through the interpreter", () => {
     expect(bodyAt(out.state, "p2", "active").energy).toHaveLength(1);
   });
 
-  it("🛑 the parked pick round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and resumes", () => {
+  it("the parked pick round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and resumes", () => {
     let state = table(FILLER, [FILLER]);
     state = attach(state, "p2", "active", TOOL, "tools");
     state = attach(state, "p2", 0, SPECIAL);

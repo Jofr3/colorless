@@ -28,30 +28,10 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS: FOUR PRINTINGS, THREE TEXTS, `MATCH_RECORD_VERSION` 38 → 39 ──
-//
-//   Antique Cover Fossil  sv07-129, sv10.5b-080  "Protective Cover" — no attack EFFECTS on it (R-FO5)
-//   Antique Root Fossil   sv07-130               "Primal Root"      — Active: the opponent's Basic
-//                                                                     attackers pay {C} more (R-FO5)
-//   Antique Plume Fossil  sv10.5w-079            "Plume Protection" — Benched: no attack DAMAGE (R-FO5)
-//
-// Each prints: *"Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by
-// any Special Conditions and can't retreat. At any time during your turn, you may discard this card from
-// play."* — R-FO1 (an ITEM play), R-FO2 (a Pokémon only in play), R-FO3 (discard from play), R-FO4 (the
-// card rules are not Abilities), R-FO6 (evolution onto it). Area Zero Underdepths ×3 is PARKED (D577).
-// (🆕🆕🆕 D577 (D539): *"PARKED"* is WITHDRAWN — BUILT at D577, `areaZeroUnderdepthsD577.test.ts`.)
-//
-// Every card is driven on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). The
-// fossils are built exactly as the catalog row arrives today — ~~an Item with `hp: null` and
-// `abilities: null` (the ingest drops both; decisions.md D576)~~ 🆕 D581: an Item carrying tcgdex's
-// `hp: 60` and its printed `abilities`, taken from `CATALOG_MANIFEST.trainerFaces` (the local D1,
-// measured — `apps/api/src/ingest/map.ts` keeps a Trainer's printed face since D581) — so the Ability
-// on the Pokémon face this suite sees is the CATALOG's, read by `fossils.ts`. Texts copied VERBATIM from
-// the tcgdex card JSON (2026-09-25) and pinned equal to the manifest's; the suite never reads that JSON
-// at run time.
 
 const COVER = "sv07-129";
 const COVER_2 = "sv10.5b-080";
@@ -97,15 +77,12 @@ const SPINNING_TAIL =
   "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const BENCH_SNIPE =
   "This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
-/** D425's `"yourBench"` spread and D447's own-Bench snipe: the ATTACKER'S OWN Bench is hit. */
 const SELF_SPREAD = "This attack does 30 damage to each of your Benched Pokémon.";
 const SELF_SNIPE =
   "This attack also does 20 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const PUT_COUNTERS = "Put 2 damage counters on 1 of your opponent's Pokémon.";
 const STRIP = "Discard an Energy from your opponent's Active Pokémon.";
 
-/** A fossil exactly as the catalog row arrives: an Item ~~with `hp`/`abilities` null (the ingest drops
-    both)~~ 🆕 D581: carrying its printed `hp` and `abilities`, read off `CATALOG_MANIFEST.trainerFaces`. */
 function fossilRow(id: string, name: string): Card {
   const face = CATALOG_MANIFEST.trainerFaces[id];
   if (face === undefined) throw new Error(`no catalog face for ${id}`);
@@ -285,7 +262,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [COVER]: 2,
   [COVER_2]: 1,
@@ -317,18 +293,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -520,12 +484,8 @@ const discard = (seat: Seat, target: PokemonTarget): GameAction => ({
   target,
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §0 — the face, pinned LITERALLY against the printed card (🆕 D581: the Ability is the catalog row's).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §0 — `fossils.ts`: the Pokémon face, its Ability read off the catalog row (D581)", () => {
-  it("🛑 FOUR ids, and only these — keyed by PRINTING id (🆕🆕🆕 D637 (D539): EIGHT — the four `me` fossils joined, antiqueFossilsMeD637.test.ts)", () => {
-    // 🆕🆕🆕 D637 — plus Antique Jaw / Sail Fossil `me03-068` / `-069` and Antique Armor / Skull Fossil `me05-072` / `-073`.
+  it("FOUR ids, and only these — keyed by PRINTING id ( D637 (D539): EIGHT — the four `me` fossils joined, antiqueFossilsMeD637.test.ts)", () => {
     expect([...FOSSIL_IDS].sort()).toEqual(
       [COVER, ROOT, COVER_2, PLUME, "me03-068", "me03-069", "me05-072", "me05-073"].sort(),
     );
@@ -533,34 +493,30 @@ describe("D576 §0 — `fossils.ts`: the Pokémon face, its Ability read off the
       expect(FOSSIL_IDS.has(id), id).toBe(false);
   });
 
-  it("🛑 the three printed Abilities, VERBATIM — names and texts, on the CATALOG rows (D581)", () => {
+  it("the three printed Abilities, VERBATIM — names and texts, on the CATALOG rows (D581)", () => {
     const faces = CATALOG_MANIFEST.trainerFaces;
     const ability = (name: string, effect: string) => [{ type: "Ability", name, effect }];
     expect(faces[COVER]?.abilities).toEqual(ability("Protective Cover", PROTECTIVE_COVER_TEXT));
     expect(faces[COVER_2]?.abilities).toEqual(ability("Protective Cover", PROTECTIVE_COVER_TEXT));
     expect(faces[ROOT]?.abilities).toEqual(ability("Primal Root", PRIMAL_ROOT_TEXT));
     expect(faces[PLUME]?.abilities).toEqual(ability("Plume Protection", PLUME_PROTECTION_TEXT));
-    // The rule's "60-HP" and the row's printed `hp` are the same number on all four (FOSSIL_HP).
     for (const id of [COVER, COVER_2, ROOT, PLUME]) expect(faces[id]?.hp, id).toBe(FOSSIL_HP);
     expect(faces[LILEEP]).toBeUndefined();
   });
 
-  it("🛑 D581 — the face's Ability IS the row's: a different row gives a different face, a stale row none", () => {
+  it("D581 — the face's Ability IS the row's: a different row gives a different face, a stale row none", () => {
     const row = POOL[COVER] as Card;
     const other = {
       ...row,
       abilities: [{ type: "Ability", name: "D581 Other", effect: "Not printed." }],
     };
     expect(fossilPokemonCard(other).abilities).toEqual(other.abilities);
-    // A catalog not re-ingested since D581 hands the engine `abilities: null` — the face then has no
-    // Ability (the deploy-order caveat in fossils.ts), and is still the 60-HP Basic {C} Pokémon.
     const stale = { ...row, hp: null, abilities: null };
     expect(fossilPokemonCard(stale)).toMatchObject({ category: "Pokemon", hp: 60, abilities: [] });
   });
 
-  it("🛑 the in-play face: a Basic {C} Pokémon, 60 HP, its Ability, no attacks / Weakness / Resistance / Retreat", () => {
+  it("the in-play face: a Basic {C} Pokémon, 60 HP, its Ability, no attacks / Weakness / Resistance / Retreat", () => {
     const row = POOL[ROOT] as Card;
-    // The catalog row as the ingest writes it today (🆕 D581: with its printed hp and Ability).
     expect(row).toMatchObject({ category: "Trainer", trainerType: "Item", hp: 60 });
     expect(row.abilities).toEqual([
       { type: "Ability", name: "Primal Root", effect: PRIMAL_ROOT_TEXT },
@@ -583,12 +539,11 @@ describe("D576 §0 — `fossils.ts`: the Pokémon face, its Ability read off the
     expect(face.abilities).toEqual([
       { type: "Ability", name: "Primal Root", effect: PRIMAL_ROOT_TEXT },
     ]);
-    // Memoized per id: the same object for the same catalog row, and the row itself for a non-fossil.
     expect(fossilPokemonCard(row)).toBe(face);
     expect(fossilPokemonCard(POOL[LILEEP] as Card)).toBe(POOL[LILEEP]);
   });
 
-  it("🛑 the registry: `playAsPokemon` + the printed Ability as `passive` — three objects on four ids", () => {
+  it("the registry: `playAsPokemon` + the printed Ability as `passive` — three objects on four ids", () => {
     expect(programFor(COVER)).toEqual({
       playAsPokemon: true,
       passive: { preventAttackEffects: true },
@@ -610,11 +565,8 @@ describe("D576 §0 — `fossils.ts`: the Pokémon face, its Ability read off the
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — R-FO1: playing it is an ITEM play onto the Bench.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §1 — R-FO1: an ITEM play that lands on the Bench", () => {
-  it("🛑 the hand card goes to the BENCH (never the discard pile), announced as an Item then a body", () => {
+  it("the hand card goes to the BENCH (never the discard pile), announced as an Item then a body", () => {
     const s = setHand(table(FILLER), "p1", [COVER]);
     const uid = handUidOf(s, "p1", COVER);
     const { state, events } = run(s, play(s, COVER));
@@ -631,7 +583,7 @@ describe("D576 §1 — R-FO1: an ITEM play that lands on the Bench", () => {
     expect(state.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
   });
 
-  it("🛑 an Item bar refuses it — the opponent's STAMPED bar and its Active's CONTINUOUS one (Tyranitar)", () => {
+  it("an Item bar refuses it — the opponent's STAMPED bar and its Active's CONTINUOUS one (Tyranitar)", () => {
     const s = setHand(table(FILLER), "p1", [ROOT]);
     const stamped: GameState = {
       ...s,
@@ -648,7 +600,7 @@ describe("D576 §1 — R-FO1: an ITEM play that lands on the Bench", () => {
     });
   });
 
-  it('🛑 a POKÉMON-play bar does NOT refuse it (Team Rocket\'s Arbok "Potent Glare") — it is not a Pokémon from the hand', () => {
+  it('a POKÉMON-play bar does NOT refuse it (Team Rocket\'s Arbok "Potent Glare") — it is not a Pokémon from the hand', () => {
     const s = setHand(table(FILLER, [], ARBOK), "p1", [PLUME, ABILITY_BASIC]);
     // The control: a Basic WITH an Ability really is barred on this board.
     const basic = handUidOf(s, "p1", ABILITY_BASIC);
@@ -658,14 +610,14 @@ describe("D576 §1 — R-FO1: an ITEM play that lands on the Bench", () => {
     expect(run(s, play(s, PLUME)).state.players.p1.bench).toHaveLength(1);
   });
 
-  it('🛑 it is not "playing a Basic Pokémon": the bench-play action refuses it as NOT a Basic', () => {
+  it('it is not "playing a Basic Pokémon": the bench-play action refuses it as NOT a Basic', () => {
     const s = setHand(table(FILLER), "p1", [COVER]);
     expect(
       refused(s, { type: "playBasicToBench", seat: "p1", uid: handUidOf(s, "p1", COVER) }).code,
     ).toBe("NOT_A_BASIC_POKEMON");
   });
 
-  it("🛑 it needs a free Bench slot — a full Bench refuses it, and both Trainer lists grey it the same way", () => {
+  it("it needs a free Bench slot — a full Bench refuses it, and both Trainer lists grey it the same way", () => {
     const full = setHand(table(FILLER, [FILLER, FILLER, FILLER, FILLER, FILLER]), "p1", [COVER]);
     expect(fossilPlayable(full, "p1")).toBe(false);
     expect(refused(full, play(full, COVER)).code).toBe("BENCH_FULL");
@@ -697,15 +649,11 @@ describe("D576 §1 — R-FO1: an ITEM play that lands on the Bench", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — R-FO2: a Pokémon ONLY while in play.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item everywhere else", () => {
-  it("🛑 `cardOfUid` is zone-aware: Item in the hand, Pokémon on the Bench, Item again in the discard pile", () => {
+  it("`cardOfUid` is zone-aware: Item in the hand, Pokémon on the Bench, Item again in the discard pile", () => {
     const s = setHand(table(FILLER), "p1", [COVER]);
     const uid = handUidOf(s, "p1", COVER);
     expect(cardOfUid(s, uid)).toMatchObject({ category: "Trainer", trainerType: "Item" });
-    // 🆕 D581 — the Item in the hand carries its catalog Ability and is still NOT a Pokémon with one.
     expect(hasPrintedAbility(cardOfUid(s, uid))).toBe(false);
     const benched = run(s, play(s, COVER)).state;
     expect(cardOfUid(benched, uid)).toMatchObject({
@@ -717,12 +665,11 @@ describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item ev
     const gone = run(benched, discard("p1", { spot: "bench", index: 0 })).state;
     expect(gone.players.p1.discard).toContain(uid);
     expect(cardOfUid(gone, uid)).toMatchObject({ category: "Trainer", trainerType: "Item" });
-    // A non-fossil uid never pays more than the one `Set.has`: the catalog row, by identity.
     const filler = top(bodyAt(gone, "p1", "active"));
     expect(cardOfUid(gone, filler)).toBe(POOL[FILLER]);
   });
 
-  it("🛑 60 HP: 60 damage Knocks it Out, for ONE Prize", () => {
+  it("60 HP: 60 damage Knocks it Out, for ONE Prize", () => {
     const s = p2Turn(table(COVER, [FILLER], HITTER));
     const fossil = bodyAt(s, "p1", "active");
     expect(effectiveMaxHp(s, fossil)).toBe(60);
@@ -732,12 +679,12 @@ describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item ev
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
   });
 
-  it("🛑 no Weakness and no Resistance — a Fighting attacker's 30 lands as 30", () => {
+  it("no Weakness and no Resistance — a Fighting attacker's 30 lands as 30", () => {
     const s = p2Turn(table(PLUME, [FILLER], FIGHTER));
     expect(bodyAt(run(s, attack("p2", 0)).state, "p1", "active").damage).toBe(30);
   });
 
-  it("🛑 not placeable in setup — the hand card is not a Basic Pokémon", () => {
+  it("not placeable in setup — the hand card is not a Basic Pokémon", () => {
     const created = createGame({ seed: 5763, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
     if (!created.ok) throw new Error("createGame failed");
     let state = created.state;
@@ -768,7 +715,7 @@ describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item ev
     );
   });
 
-  it("🛑 a deck search for a Basic Pokémon (Nest Ball) MISSES it — in the deck it is an Item", () => {
+  it("a deck search for a Basic Pokémon (Nest Ball) MISSES it — in the deck it is an Item", () => {
     const s = setHand(table(FILLER), "p1", [NEST_BALL]);
     const deckFossils = s.players.p1.deck.filter((u) => FOSSIL_IDS.has(s.cardIdByUid[u] ?? ""));
     expect(deckFossils.length).toBeGreaterThan(0);
@@ -785,7 +732,7 @@ describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item ev
     for (const fossil of deckFossils) expect(candidates).not.toContain(fossil);
   });
 
-  it("🛑 the wire carries the in-play face: a Pokémon row with a 60-HP battle line", () => {
+  it("the wire carries the in-play face: a Pokémon row with a 60-HP battle line", () => {
     const s = table(FILLER, [COVER]);
     const wire = redactGame(s, "p2");
     const row = wire.board.opponent.bench[0];
@@ -800,11 +747,8 @@ describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item ev
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §3 — R-FO3: "At any time during your turn, you may discard this card from play."
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §3 — R-FO3: discard it from play in your own main phase", () => {
-  it("🛑 a Benched fossil leaves with its WHOLE stack — no Knock Out, no Prize, the turn goes on", () => {
+  it("a Benched fossil leaves with its WHOLE stack — no Knock Out, no Prize, the turn goes on", () => {
     const s = attach(table(FILLER, [FILLER, PLUME]), "p1", 1, COLORLESS);
     const body = bodyAt(s, "p1", 1);
     const { state, events } = run(s, discard("p1", { spot: "bench", index: 1 }));
@@ -829,7 +773,7 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
     ]);
   });
 
-  it("🛑 an Active fossil leaves the spot EMPTY — a promotion is owed, then the SAME turn resumes", () => {
+  it("an Active fossil leaves the spot EMPTY — a promotion is owed, then the SAME turn resumes", () => {
     const s = table(COVER, [FILLER, FILLER]);
     const { state, events } = run(s, discard("p1", { spot: "active" }));
     expect(state.players.p1.active).toBeNull();
@@ -840,7 +784,7 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
     expect(promoted.turn).toBe(s.turn);
   });
 
-  it("🛑 an Active fossil with an EMPTY Bench: the board is empty — the §14.2 loss", () => {
+  it("an Active fossil with an EMPTY Bench: the board is empty — the §14.2 loss", () => {
     const s = table(ROOT);
     const { state } = run(s, discard("p1", { spot: "active" }));
     expect(state.phase).toEqual({
@@ -849,14 +793,14 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
     });
   });
 
-  it("🛑 one forced promotion when one body is left — no park", () => {
+  it("one forced promotion when one body is left — no park", () => {
     const s = table(COVER, [FILLER]);
     const { state } = run(s, discard("p1", { spot: "active" }));
     expect(state.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
     expect(state.players.p1.active).not.toBeNull();
   });
 
-  it("🛑 only a fossil-topped body: a non-fossil (and an empty spot, a bad index) is refused", () => {
+  it("only a fossil-topped body: a non-fossil (and an empty spot, a bad index) is refused", () => {
     const s = table(FILLER, [COVER]);
     expect(refused(s, discard("p1", { spot: "active" })).code).toBe("NOT_DISCARDABLE");
     expect(refused(s, discard("p1", { spot: "bench", index: 3 })).code).toBe("NO_TARGET");
@@ -867,7 +811,7 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
     ).toBe("BAD_TARGET");
   });
 
-  it('🛑 "during YOUR turn": the opponent cannot, and nobody can mid-prompt or in the attack-again window', () => {
+  it('"during YOUR turn": the opponent cannot, and nobody can mid-prompt or in the attack-again window', () => {
     const s = table(FILLER, [COVER], FILLER, [PLUME]);
     expect(refused(s, discard("p2", { spot: "bench", index: 0 })).code).toBe("WRONG_SEAT");
     expect(discardableTargets(s, "p2")).toEqual([]);
@@ -877,7 +821,6 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
     expect(parked.phase.kind).toBe("effect:choose");
     expect(refused(parked, discard("p1", { spot: "bench", index: 0 })).code).toBe("BAD_PHASE");
     expect(discardableTargets(parked, "p1")).toEqual([]);
-    // Festival Lead's attack-again window narrows the turn to an attack or a pass (R-FL1).
     const window: GameState = {
       ...s,
       allowances: { ...s.allowances, attackAgainUid: top(bodyAt(s, "p1", "active")) },
@@ -897,7 +840,7 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
     expect(open.discardable).toEqual([]);
   });
 
-  it("🛑 the offer funnel lists EXACTLY the fossil-topped spots, Active first — and the wire carries them to the actor alone", () => {
+  it("the offer funnel lists EXACTLY the fossil-topped spots, Active first — and the wire carries them to the actor alone", () => {
     const s = table(ROOT, [FILLER, COVER, PLUME]);
     expect(discardableTargets(s, "p1")).toEqual([
       { spot: "active" },
@@ -923,9 +866,6 @@ describe("D576 §3 — R-FO3: discard it from play in your own main phase", () =
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — R-FO4: the two CARD RULES are not Abilities.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §4 — R-FO4: \"can't be affected by any Special Conditions and can't retreat\" — card rules, never lifted", () => {
   for (const status of STATUSES) {
     it(`🛑 ${status}: the status is PREVENTED on the Active fossil`, () => {
@@ -942,7 +882,7 @@ describe("D576 §4 — R-FO4: \"can't be affected by any Special Conditions and 
     });
   }
 
-  it("🛑 every status hitter really derives (the five sentences are read, not skipped)", () => {
+  it("every status hitter really derives (the five sentences are read, not skipped)", () => {
     for (const status of STATUSES) {
       expect(
         deriveAttackEffect(`Your opponent's Active Pokémon is now ${status}.`),
@@ -951,7 +891,7 @@ describe("D576 §4 — R-FO4: \"can't be affected by any Special Conditions and 
     }
   });
 
-  it("🛑 it can't retreat — refused with the card rule's own message, and the wire's `retreat.can` is false", () => {
+  it("it can't retreat — refused with the card rule's own message, and the wire's `retreat.can` is false", () => {
     const s = attach(table(ROOT, [FILLER]), "p1", "active", COLORLESS);
     expect(retreatLocked(s, bodyAt(s, "p1", "active"))).toBe(true);
     expect(
@@ -965,14 +905,14 @@ describe("D576 §4 — R-FO4: \"can't be affected by any Special Conditions and 
     expect(wire.retreat).toEqual({ cost: 0, can: false });
   });
 
-  it("🛑 a Switch effect still moves it — the rule bars RETREAT, not every move", () => {
+  it("a Switch effect still moves it — the rule bars RETREAT, not every move", () => {
     const s = setHand(table(COVER, [FILLER]), "p1", [SWITCH]);
     const fossil = top(bodyAt(s, "p1", "active"));
     const { state } = run(s, play(s, SWITCH));
     expect(state.players.p1.bench.map(top)).toEqual([fossil]);
   });
 
-  it("🛑 Team Rocket's Watchtower ({C} Pokémon have no Abilities) does NOT lift either rule", () => {
+  it("Team Rocket's Watchtower ({C} Pokémon have no Abilities) does NOT lift either rule", () => {
     const s = withWatchtower(p2Turn(table(ROOT, [FILLER], statusHitter("Paralyzed"))));
     const fossil = bodyAt(s, "p1", "active");
     // The lock IS on: the fossil's Ability is silenced (Primal Root — §5).
@@ -988,7 +928,7 @@ describe("D576 §4 — R-FO4: \"can't be affected by any Special Conditions and 
     expect(retreatLocked(s, fossil)).toBe(true);
   });
 
-  it("🛑 Klefki's Basic lock does NOT lift them either", () => {
+  it("Klefki's Basic lock does NOT lift them either", () => {
     // Klefki locks every Basic in play, both sides, from its own Active Spot — the fossil's face is a Basic.
     const s = table(KLEFKI, [COVER]);
     const fossil = bodyAt(s, "p1", 0);
@@ -999,11 +939,8 @@ describe("D576 §4 — R-FO4: \"can't be affected by any Special Conditions and 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §5 — R-FO5: the three Abilities ARE Abilities.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", () => {
-  it("🛑 Cover: an attack's EFFECT on it is refused, its DAMAGE lands", () => {
+  it("Cover: an attack's EFFECT on it is refused, its DAMAGE lands", () => {
     const s = p2Turn(attach(table(COVER, [FILLER], STRIPPER), "p1", "active", COLORLESS));
     const { state } = run(s, attack("p2", 0));
     const fossil = bodyAt(state, "p1", "active");
@@ -1014,14 +951,14 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     expect(bodyAt(run(bare, attack("p2", 0)).state, "p1", "active").energy).toHaveLength(0);
   });
 
-  it("🛑 Cover: and a lock (Watchtower) lifts it — the Energy comes off", () => {
+  it("Cover: and a lock (Watchtower) lifts it — the Energy comes off", () => {
     const s = withWatchtower(
       p2Turn(attach(table(COVER, [FILLER], STRIPPER), "p1", "active", COLORLESS)),
     );
     expect(bodyAt(run(s, attack("p2", 0)).state, "p1", "active").energy).toHaveLength(0);
   });
 
-  it("🛑 Root, ACTIVE: the opponent's BASIC attacker pays {C} more — a free attack now costs one", () => {
+  it("Root, ACTIVE: the opponent's BASIC attacker pays {C} more — a free attack now costs one", () => {
     const s = p2Turn(table(ROOT, [FILLER], HITTER));
     expect(costOf(s)).toEqual(["Colorless"]);
     expect(refused(s, attack("p2", 0)).code).toBe("ATTACK_COST_UNMET");
@@ -1032,14 +969,14 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     ]);
   });
 
-  it('🛑 Root: a STAGE 1 attacker is not surcharged (the printed "Basic"), and a BENCHED Root surcharges nothing', () => {
+  it('Root: a STAGE 1 attacker is not surcharged (the printed "Basic"), and a BENCHED Root surcharges nothing', () => {
     const s = p2Turn(table(ROOT, [FILLER], STAGE1_HITTER));
     expect(costOf(s)).toEqual([]);
     const benched = p2Turn(table(FILLER, [ROOT], HITTER));
     expect(costOf(benched)).toEqual([]);
   });
 
-  it("🛑 Root: Watchtower lifts it — while the status immunity and the retreat lock STAY", () => {
+  it("Root: Watchtower lifts it — while the status immunity and the retreat lock STAY", () => {
     const s = withWatchtower(p2Turn(table(ROOT, [FILLER], HITTER)));
     expect(costOf(s)).toEqual([]);
     const fossil = bodyAt(s, "p1", "active");
@@ -1047,7 +984,7 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     expect(retreatLocked(s, fossil)).toBe(true);
   });
 
-  it("🛑 Plume, BENCHED: a spread's damage is prevented on it and lands everywhere else", () => {
+  it("Plume, BENCHED: a spread's damage is prevented on it and lands everywhere else", () => {
     const s = p2Turn(table(FILLER, [PLUME, FILLER], SPREADER));
     const { state } = run(s, attack("p2", 0));
     expect(bodyAt(state, "p1", 0).damage).toBe(0);
@@ -1055,14 +992,14 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     expect(bodyAt(state, "p1", "active").damage).toBe(30);
   });
 
-  it("🛑 Plume, BENCHED: a Bench snipe's damage is prevented on it too", () => {
+  it("Plume, BENCHED: a Bench snipe's damage is prevented on it too", () => {
     const s = p2Turn(table(FILLER, [PLUME], SNIPER));
     const { state } = run(s, attack("p2", 0));
     expect(bodyAt(state, "p1", 0).damage).toBe(0);
     expect(bodyAt(state, "p1", "active").damage).toBe(10);
   });
 
-  it("🛑 Plume: \"attacks from your OPPONENT'S Pokémon\" — its owner's OWN-Bench spread lands on it (D425)", () => {
+  it("Plume: \"attacks from your OPPONENT'S Pokémon\" — its owner's OWN-Bench spread lands on it (D425)", () => {
     // p2 attacks its OWN Bench, where p2's Plume sits: the attacker is not the fossil's opponent.
     const s = p2Turn(table(FILLER, [], SELF_SPREADER, [PLUME, FILLER]));
     const { state } = run(s, attack("p2", 0));
@@ -1070,7 +1007,7 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     expect(bodyAt(state, "p2", 1).damage).toBe(30);
   });
 
-  it("🛑 Plume: and its owner's OWN-Bench snipe lands on it too (D447)", () => {
+  it("Plume: and its owner's OWN-Bench snipe lands on it too (D447)", () => {
     // ONE legal pick (the lone Benched Plume), so the choice is forced and resolves inside the attack.
     const s = p2Turn(table(FILLER, [], SELF_SNIPER, [PLUME]));
     const { state } = run(s, attack("p2", 0));
@@ -1078,12 +1015,12 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     expect(bodyAt(state, "p1", "active").damage).toBe(10);
   });
 
-  it("🛑 Plume, ACTIVE: no protection — the zone clause", () => {
+  it("Plume, ACTIVE: no protection — the zone clause", () => {
     const s = p2Turn(table(PLUME, [FILLER], FIGHTER));
     expect(bodyAt(run(s, attack("p2", 0)).state, "p1", "active").damage).toBe(30);
   });
 
-  it("🛑 Plume prevents DAMAGE only: an EFFECT (damage counters) still lands on the Benched fossil — Cover's does not", () => {
+  it("Plume prevents DAMAGE only: an EFFECT (damage counters) still lands on the Benched fossil — Cover's does not", () => {
     const plume = p2Turn(table(FILLER, [PLUME], COUNTERS));
     const plumeHit = run(plume, attack("p2", 0)).state;
     const pick = (state: GameState, spot: Spot) =>
@@ -1101,9 +1038,6 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
         },
       });
     expect(bodyAt(pick(plumeHit, 0).state, "p1", 0).damage).toBe(20);
-    // Cover's EFFECTS half, on the same sentence, aimed at the ACTIVE Cover: refused. (The put-counter arm
-    // aimed at a BENCHED body asks no effects refusal at all — a pre-existing gap Skeledirge "Unaware" shares,
-    // recorded in decisions.md D576 as a carried finding, and deliberately NOT pinned here.)
     const cover = p2Turn(table(COVER, [FILLER], COUNTERS));
     const coverHit = run(cover, attack("p2", 0)).state;
     expect(bodyAt(pick(coverHit, "active").state, "p1", "active").damage).toBe(0);
@@ -1113,7 +1047,7 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
     ).toBe(20);
   });
 
-  it("🛑 Plume: Watchtower lifts it — the spread lands — while the status immunity and the retreat lock STAY", () => {
+  it("Plume: Watchtower lifts it — the spread lands — while the status immunity and the retreat lock STAY", () => {
     const s = withWatchtower(p2Turn(table(FILLER, [PLUME], SPREADER)));
     const fossil = bodyAt(s, "p1", 0);
     expect(passivesOf(s, fossil).preventDamageWhileBenched).toBe(false);
@@ -1123,11 +1057,8 @@ describe("D576 §5 — R-FO5: Protective Cover, Primal Root, Plume Protection", 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — R-FO6: evolution onto a fossil.
-// ─────────────────────────────────────────────────────────────────────────────
-describe('D576 §6 — R-FO6 (⚠️ UNRULED → ruled): Lileep evolves from "Antique Root Fossil", and the fossil stops', () => {
-  it("🛑 not on the turn it was played (§10), and on the next turn it does — by NAME", () => {
+describe('D576 §6 — R-FO6 ( UNRULED → ruled): Lileep evolves from "Antique Root Fossil", and the fossil stops', () => {
+  it("not on the turn it was played (§10), and on the next turn it does — by NAME", () => {
     // Two turns on, so §4's first-turn evolve ban (p1's turn 2 is its first) is not what refuses it.
     const later0 = table(FILLER);
     const s = setHand({ ...later0, turn: later0.turn + 2 }, "p1", [ROOT, LILEEP]);
@@ -1144,7 +1075,7 @@ describe('D576 §6 — R-FO6 (⚠️ UNRULED → ruled): Lileep evolves from "An
     expect(cardOfUid(evolved, top(bodyAt(evolved, "p1", 0)))?.name).toBe("Lileep");
   });
 
-  it("🛑 once evolved, the fossil's rules and Ability STOP: Lileep can retreat, is not discardable, takes statuses", () => {
+  it("once evolved, the fossil's rules and Ability STOP: Lileep can retreat, is not discardable, takes statuses", () => {
     let s = table(ROOT, [FILLER], HITTER);
     s = setHand(s, "p1", [LILEEP]);
     s = { ...s, turn: s.turn + 2 };
@@ -1167,7 +1098,7 @@ describe('D576 §6 — R-FO6 (⚠️ UNRULED → ruled): Lileep evolves from "An
     expect(costOf(theirs)).toEqual([]);
   });
 
-  it("🛑 Rare Candy puts Cradily straight onto the fossil (the chain bridges through Lileep)", () => {
+  it("Rare Candy puts Cradily straight onto the fossil (the chain bridges through Lileep)", () => {
     let s = table(FILLER, [ROOT]);
     s = setHand(s, "p1", [RARE_CANDY, CRADILY, LILEEP]);
     s = { ...s, turn: s.turn + 2 };
@@ -1205,7 +1136,7 @@ describe('D576 §6 — R-FO6 (⚠️ UNRULED → ruled): Lileep evolves from "An
 // §7 — `MATCH_RECORD_VERSION` 38 → 39: the persisted position, and its rollback reading.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlayPokemon.stack`", () => {
-  it("🛑 the bytes round-trip through JSON and still read as the Pokémon face", () => {
+  it("the bytes round-trip through JSON and still read as the Pokémon face", () => {
     const s = table(FILLER, [PLUME]);
     const revived = JSON.parse(JSON.stringify(s)) as GameState;
     const body = bodyAt(revived, "p1", 0);
@@ -1213,13 +1144,7 @@ describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlay
     expect(isFossilTop(revived, body)).toBe(true);
   });
 
-  it("🛑 a 0.459 ROLLBACK reads the SAME bytes as a Trainer with no HP — the body can NEVER be Knocked Out (NOT inert)", () => {
-    // 0.459's `cardOfUid` was the pool lookup: the catalog row, an Item with `hp: null`. `hpOf` reads that as
-    // a DATA GAP ("the KO check skips rather than insta-KOs"), so under 0.459 a v39 fossil body is unkillable.
-    // (🆕 D581: the row as the catalog held it BEFORE D581's ingest widening — today's row carries `hp: 60`.
-    // So the title holds only against a catalog not re-ingested since D581: on a re-ingested one, 0.459's
-    // category-blind `hpOf` reads 60 off the Item and the rolled-back body IS Knocked Out at 60 — apps/api
-    // match.ts' D576 entry says so.)
+  it("a 0.459 ROLLBACK reads the SAME bytes as a Trainer with no HP — the body can NEVER be Knocked Out (NOT inert)", () => {
     const row = { ...(POOL[COVER] as Card), hp: null, abilities: null };
     expect(hpOf(row)).toBeNull();
     // DRIVEN through THIS build's real KO check on the 0.459 reading of the bytes: an ordinary Item uid on top

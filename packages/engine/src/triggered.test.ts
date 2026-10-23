@@ -21,16 +21,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 6 — triggered Abilities (§9): the Abilities that FIRE on a game
-// event rather than being player-activated. Three scan points:
-//   • onPlayToBench — Flamigo "Insta-Flock" (search up to 3 Flamigo → hand);
-//   • onEvolve — Arboliva "Enriching Oil" (heal all from 1 of your Pokémon);
-//   • betweenTurns — Garganacl "Blessed Salt" (heal 20 from each of yours) and
-//     Trevenant "Forest Miasma" (Active-only: 1 counter on the opp's Active).
-// A board trigger parks on effect:choose like a Trainer and resumes to
-// turn:action; the between-turns triggers are non-parking and run inside the
-// Checkup, whose own KO sweep catches a lethal counter.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -45,10 +35,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** p1 (going first), both seats on TRIGGER_DECK with a fix-basic-1 Active,
-    advanced to `turn` by passing (the intermediate Checkups are no-ops — the
-    setup Actives carry no triggered Abilities). turn 1 is the returned state
-    itself; turn 3 is p1's first evolve-legal turn. */
 function triggerBoard(seed: number, turn = 1): GameState {
   let state = driveSetup(
     seed,

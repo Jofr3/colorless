@@ -21,21 +21,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D596 — WP09: MEGA GARDEVOIR ex AND XERNEAS ──
-//
-// 3 printed attack texts / 14 `me` printings. Every id and text measured on the LOCAL D1,
-// 2026-10-08, `legal_standard = 1`; no id was referenced in the tree before this slice. No `me`
-// row is a fixture, so the printed faces used on a board are carried HERE.
-//   • Mega Symphonia ×6 (Mega Gardevoir ex `me01-060`/`-159`/`-178`/`-187`, `mep-032`,
-//     `me02.5-089`) and Geo Storm ×2 (Xerneas `me04-042`/`-091`): `SELF_BOARD_ENERGY_MULTIPLY`,
-//     `energyOnSelf` at `zone: "board"` on the `×` fold — D407's board count, which was
-//     additive-only until now.
-//   • Overflowing Wishes ×6 (the same six Mega Gardevoir ex): `EACH_BENCHED_DECK_ATTACH`,
-//     `attachFromDeck { basicEnergy {P}, max: 1, benchOnly, each }` + `shuffleDeck`. `each` is the
-//     one new op field: `max` is per Benched body. R-OW1 (UNRULED): one answer, up to one card per
-//     Benched body, and a short answer stands (a deck search may come up short).
 
 const T = {
   wishes:
@@ -47,7 +34,6 @@ const T = {
 const GARDEVOIR_IDS = ["me01-060", "me01-159", "me01-178", "me01-187", "mep-032", "me02.5-089"];
 const XERNEAS_IDS = ["me04-042", "me04-091"];
 
-/** [text, legal `me` printings, the ids]. */
 const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
   [T.wishes, 6, GARDEVOIR_IDS],
   [T.symphonia, 6, GARDEVOIR_IDS],
@@ -107,9 +93,6 @@ describe("D596 §2 — near misses stay null", () => {
     expect(
       deriveAttackDamageMultiplier(T.symphonia.replace("{P} Energy", "Energy card")),
     ).toBeNull();
-    // Sylveon ex "Colorful Harmony" (`me` ×3): a TYPE count, not an Energy count — still unbuilt.
-    // [🆕🆕🆕 D607 (D539): "still unbuilt" is WITHDRAWN, kept as written — WP28a builds it on its own
-    // member, `basicEnergyTypesOnYourBoard`; it is still not THIS anchor's Energy count.]
     expect(
       resolvedByAnyReader(
         "This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.",
@@ -143,7 +126,6 @@ describe("D596 §2 — near misses stay null", () => {
       ),
     ];
     for (const text of controls) expect(deriveAttackEffect(text), text).toBeNull();
-    // The untyped spelling is unprinted and reads as the untyped search (D131).
     expect(deriveAttackEffect(T.wishes.replace("Basic {P} Energy", "Basic Energy"))?.[0]).toEqual({
       op: "attachFromDeck",
       filter: { kind: "basicEnergy" },
@@ -204,12 +186,6 @@ const DECK = deckOf({
   "fix-energy": 12,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4 with both hands and Prizes back in the decks (D595's idiom). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 5961, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

@@ -10,24 +10,9 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  mustApply as must,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B36 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B36"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`,
-// byte for byte below):
-//   §1 Skarmory "Steel Cutter" (`me05-060`) and Mawile "Double Eater" (`me03-032`) — *"Discard up to 2
-//      … Energy cards from your hand, and this attack does N damage for each card you discarded in this
-//      way."* — and Klefki "Stick 'n' Draw" (`sv08-128`), the same `payFromHand` op at the attack seam
-//      — *"Discard a card from your hand. If you do, draw 2 cards."*. The board was right (the filter,
-//      the up-to-2 ceiling, the per-card damage), but the op's one event (`HAND_COST_PAID`) rendered
-//      every row "discarded N cards from their hand to pay a cost". An attack's discard is part of its
-//      EFFECT — no attack sentence prints a cost — so the event now carries `effect: true` when an
-//      attack's program pays it, and the row drops "to pay a cost".
-//   §2 the control: Ultra Ball (`sv01-196`) — *"You can use this card only if you discard 2 other cards
-//      from your hand."* — IS a cost, and still says so.
 
 const STEEL_CUTTER =
   "Discard up to 2 Basic {M} Energy cards from your hand, and this attack does 40 damage for each card you discarded in this way.";
@@ -123,13 +108,6 @@ function table(attacker: string, hand: readonly string[]): GameState {
     };
   }
   return state;
-}
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
 }
 function chooseCards(state: GameState) {
   if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "chooseCards") {

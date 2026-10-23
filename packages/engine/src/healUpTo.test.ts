@@ -14,14 +14,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: healChosen's "up to N" arm — §9.1's min: 0 end, three slices
-// deferred and landed by Saguaro (sv02-187/-255/-270, Supporter): "Choose up to
-// 2 of your Pokémon and heal 50 damage from each of them." The park is the
-// first choosePokemonMulti with min ≠ max: "up to" legalizes 0, 1 or 2, so a
-// PARTIAL answer — which every earlier consumer of the prompt rejects — is a
-// printed right here. The exact-1 single arm (Potion / Fighting Au Lait /
-// Arboliva) is untouched and shares this board to prove it.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -76,10 +68,6 @@ const BENCH_1 = { seat: "p1", spot: { spot: "bench", index: 1 } } as const;
 
 describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
   it("parks {min: 0, max: 2} over ALL your Pokémon — undamaged ones included, on an undamaged board", () => {
-    // Deliberately NOTHING is damaged: the play is legal (healChosen has no
-    // programPlayable branch — the Potion / Fighting Au Lait doctrine) and
-    // every Pokémon is offered (the printed choose clause has no damaged
-    // restriction; an undamaged pick heals 0 and emits nothing).
     let state = benchFromDeck(board(3), "p1", "fix-basic-1");
     state = benchFromDeck(state, "p1", "fix-basic-1"); // 3 in play
     const { state: parked, events } = play(state, "sv02-187");
@@ -162,9 +150,6 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
   });
 
   it("still PARKS with one Pokémon in play, the ask §8.6-clamped to 'up to 1'", () => {
-    // The take-fewer right is a real decision over ANY non-empty board — a
-    // mutant that auto-takes at candidates ≤ 2 (the mandatory-snipe branch)
-    // would force-heal here instead of asking.
     const state = setActiveDamage(board(3), "p1", 90);
     const { state: parked } = play(state, "sv02-187");
     expect(parked.phase.kind).toBe("effect:choose");
@@ -281,8 +266,6 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
     expect(done.players.p1.bench[0]?.damage).toBe(30);
   });
 });
-
-// ── Purity + the D14 wire contract ──────────────────────────────────────────
 
 describe("healChosen 'up to' — purity and the JSON park", () => {
   it("does not mutate the frozen prior state, parking or resolving", () => {

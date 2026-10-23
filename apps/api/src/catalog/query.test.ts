@@ -207,13 +207,6 @@ describe("buildCardsWhere", () => {
     expect(params).toEqual(["Pokemon", "Common", "sv06.5", 60, 120]);
   });
 
-  // 🆕 D581 — the ingest keeps the `hp` a Trainer prints (12 Trainer rows in the
-  // local D1: the Antique Fossils' 60, Snorlax Doll's 120), so `hp` is no longer
-  // NULL on every non-Pokémon. An HP bound is a question about POKÉMON: each bound
-  // reads the card's HP only on a Pokémon row, with no category param (the user's
-  // own `category` filter is not needed for it, and none is bound). Measured on
-  // the local D1: `hp >= 60` matches 4,089 rows; the guarded bound matches 4,077,
-  // exactly the `category = 'Pokemon'` count — the 12 Trainers drop out.
   it("bounds HP on Pokémon rows only, without a bound category param (D581)", () => {
     for (const bound of [{ hpMin: 60 }, { hpMax: 120 }]) {
       const { sql, params } = render(defaults(bound));
@@ -260,10 +253,6 @@ describe("buildCardsWhere", () => {
   it("matches suffix with IN, and ANDs it with the stage dimension", () => {
     const { sql, params } = render(defaults({ suffix: ["ex", "MEGA"], stage: ["Basic"] }));
     expect(sql).toContain('"cards"."suffix" in (?, ?)');
-    // Two dimensions, so they AND: "a Basic Pokémon that is also an ex".
-    // Within `suffix` the repeats OR. This is the split the rail relies on —
-    // stage chips and suffix chips are separate sections precisely because
-    // the server can only AND across them.
     expect(sql).toContain('"cards"."stage" in (?)');
     expect(sql).toContain(" and ");
     expect(params).toEqual(["Basic", "ex", "MEGA"]);
@@ -291,12 +280,6 @@ describe("buildCardsWhere", () => {
     expect(params).toEqual(["Naoyo Kimura"]);
   });
 
-  // D197 — `effect` joined the OR. It is the ONLY disjunct that can match a
-  // Trainer or an Energy: on production every one of the 517 rows with
-  // `effect` has abilities_json AND attacks_json NULL (and every Pokémon has
-  // `effect` NULL), so the two JSON disjuncts and this one cover exactly
-  // disjoint halves of the catalog. Before it, `?text=` could not return a
-  // Trainer for any term at all — 275 of those rows are Standard-legal.
   it("ORs text over the abilities/attacks JSON AND the plain-text effect", () => {
     const { sql, params } = render(defaults({ text: "Poison" }));
     expect(sql).toContain(
@@ -324,10 +307,6 @@ describe("buildCardsWhere", () => {
     expect(params).toEqual(['%"Fi\\%re"%', '%"Wa\\\\ter"%']);
   });
 
-  // D197: `id` moved INTO the where. The shape that matters is "one bind for
-  // the whole list" — that is what keeps a 100-id hydration under D1's
-  // 100-parameter cap on the same statement as ORDER BY + LIMIT/OFFSET, and
-  // therefore what let the JS sort twin go (see the cardsOrder block below).
   it("expands the id list from ONE JSON bind, not N placeholders", () => {
     const { sql, params } = render(defaults({ id: ["sv06.5-001", "sv01-196"] }));
     expect(sql).toContain('"cards"."id" in (select "value" from json_each(?))');
@@ -361,12 +340,6 @@ describe("cardsOrder", () => {
     );
   });
 
-  // NULL hp (Trainers/Energy) lands last on `hp DESC` because SQLite orders
-  // NULL below every value — verified against SQLite directly:
-  //   ORDER BY hp DESC over (330, NULL, 70, NULL, 60) → 330, 70, 60, NULL, NULL.
-  // 🆕 D581 — the key is the HP AS A POKÉMON, so a Trainer that prints an HP
-  // (Snorlax Doll's 120, a fossil's 60) sorts with the hp-less rows, not among
-  // the 120-HP Pokémon.
   it("sorts hp-desc with collector order as the tiebreak", () => {
     expect(renderOrder("hp-desc")).toContain(
       `order by (case when "cards"."category" = 'Pokemon' then "cards"."hp" end) desc, "cards"."set_id" asc, "cards"."local_id" asc`,
@@ -374,25 +347,6 @@ describe("cardsOrder", () => {
   });
 });
 
-// D197 — the unification, pinned. `cardsOrder` used to have a JS twin
-// (`compareCardRows`) that sorted the id-hydration path's ≤100 rows in memory,
-// because that path fanned out into a chunked db.batch with no single
-// statement to order. Two specs, one order, nothing keeping them in step.
-//
-// They DID agree at the time of removal, and the argument is finite: the key
-// tuples are identical, `hp` is an integer on both sides, and the only way the
-// string keys could disagree is SQLite's BINARY collation (UTF-8 memcmp) vs
-// JS `<` (UTF-16 code units), which differ only when an astral code point
-// (≥ U+10000) meets a BMP one — surrogates sort BELOW U+E000..U+FFFF in
-// UTF-16 and ABOVE it in UTF-8. Measured against the production catalog
-// (3,786 rows): 13 rows carry a non-ASCII `name` (11 distinct — `Flabébé`,
-// `Nidoran♀`, `Nidoran♂`, the `Poké*` family), every character BMP, zero
-// astral; `set_id` and `local_id` are pure ASCII; and `cards` has no COLLATE
-// clause on any column, so BINARY it is. So the twin was latent, not live.
-//
-// It is gone now, and these cases pin the property that replaced it: the id
-// path and the plain path are the SAME statement shape, so there is nothing
-// left to keep in step.
 describe("one sort spec — the id path orders in SQL like every other query", () => {
   /** The /cards page statement as routes.ts builds it: where + order + page. */
   function renderPage(query: CardsQuery) {

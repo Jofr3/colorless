@@ -18,22 +18,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: `EffectContext.sourceUid` — the printed "this Pokémon". The
-// context now names the Pokémon whose effect is running, set at every run site
-// that knows it (useAbility, the trigger runners, the attacker) and ABSENT for
-// a Trainer program. First reader: `attachFromDeck.toSelf`, which lands
-//
-//   • PAWMOT (sv01-076/-209) — "Electrogenesis": "Once during your turn, you
-//     may search your deck for a Basic {L} Energy card and attach it to THIS
-//     Pokémon. Then, shuffle your deck."
-//
-// The headline claim this file exists to pin: a BENCHED Pawmot feeds ITSELF.
-// Every earlier attach target rule was seat-relative ("your Pokémon", "your
-// Benched {L} Pokémon") — none could say "the one using the Ability", and a
-// wrong implementation that fell back to the Active would look correct on
-// every board where Pawmot IS the Active. The bench boards below are the ones
-// that tell the two apart.
-
 const SEED = 20260722;
 
 const PAWMOT = "sv01-076";
@@ -77,9 +61,6 @@ function board(seed: number = SEED): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** P1's board rebuilt from nothing (the attachFromDeck suite's rule: setup
-    places whatever Basic it deals, and WHICH Pokémon is where is this slice's
-    whole subject). Legal-shaped: every uid stays in exactly one zone. */
 function withBoard(state: GameState, activeId: string, benchIds: readonly string[]): GameState {
   const side = state.players.p1;
   const returned = [side.active, ...side.bench].flatMap((p) =>
@@ -149,9 +130,6 @@ describe("the context carries the source — the mechanism", () => {
     const pawmotUid = activeUid(state, "p1");
     const { state: parked } = useElectrogenesis(state, "active");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    // The WHOLE context, not just the field: `{seat, sourceUid}` and nothing
-    // else is what the continuation serializes (D14).
-    // 🆕🆕🆕 D614 (D539): ~~"and nothing else"~~ — plus `invokedBy: "ability"`, the §11 ability channel.
     expect(parked.phase.cont.ctx).toEqual({
       seat: "p1",
       sourceUid: pawmotUid,
@@ -165,22 +143,10 @@ describe("the context carries the source — the mechanism", () => {
     const uid = handUid(state, "p1", FLAMIGO);
     const { state: parked } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    // 🆕🆕🆕 D614 — a triggered Ability carries `invokedBy: "ability"` too.
     expect(parked.phase.cont.ctx).toEqual({ seat: "p1", sourceUid: uid, invokedBy: "ability" });
   });
 
   it("a Trainer parks with NO source — the field is not even present", () => {
-    // Not merely `undefined`: a Trainer's context must carry NO `sourceUid`, the
-    // same phase-shape promise the §9.2 record keeps by being absent when empty.
-    //
-    // 🆕 D259 — THE CONTEXT IS NO LONGER `{seat}` ALONE, AND THE TWO AXES ARE WHY
-    // THIS ASSERTION STILL SAYS SOMETHING. `sourceUid` names WHICH BODY an effect
-    // belongs to; a played Trainer has none, and that is this test's subject and is
-    // unchanged. `invokedBy` names WHAT KIND OF THING is doing it, and a Trainer
-    // very much has one — the printed type, because Rhyperior "Wide Wall" refuses
-    // Supporters and lets Items through. Asserted as the WHOLE object (not a
-    // `toMatchObject`) so a third field cannot appear here unnoticed, which is the
-    // property this test existed for in the first place.
     let state = board();
     state = handFromDeck(state, "p1", NEST_BALL, 1);
     const { state: parked } = mustApply(state, {
@@ -189,10 +155,6 @@ describe("the context carries the source — the mechanism", () => {
       uid: handUid(state, "p1", NEST_BALL),
     });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    // 🆕🆕🆕 D564 — AND A THIRD FIELD DID APPEAR, AND THIS ASSERTION NOTICED IT, as it was
-    // written to: `playedUid`, the PLAYED CARD (Caretaker's "this Caretaker"), set by
-    // `playTrainer`'s one `runProgram` call. It is a CARD, not a body, which is exactly why
-    // it is not `sourceUid` — the absence asserted on the next line still holds.
     const played = handUid(state, "p1", NEST_BALL);
     expect(parked.phase.cont.ctx).toEqual({ seat: "p1", invokedBy: "item", playedUid: played });
     expect(Object.hasOwn(parked.phase.cont.ctx, "sourceUid")).toBe(false);
@@ -236,8 +198,6 @@ describe("Pawmot's Electrogenesis — the printed 'this Pokémon'", () => {
   });
 
   it("collapses the deck's two Basic {L} prints to ONE offered row", () => {
-    // Ten Basic {L} under two catalog ids, a pick of one: a single row. The
-    // collapse keys on provision (D42), so the id boundary does not survive it.
     const state = withBoard(board(), PAWMOT, []);
     const { state: parked } = useElectrogenesis(state, "active");
     const prompt = promptOf(parked);
@@ -311,12 +271,6 @@ describe("the empty sources — toSelf with nothing to point at", () => {
   if (program === undefined) throw new Error("Pawmot's program is not authored");
 
   it("a context with NO source whiffs rather than guessing a target", () => {
-    // A benched Pawmot is IN PLAY here — what is missing is only the context's
-    // pointer, so an implementation that fell back to "the controller's Active"
-    // or to attachEnergyTargets would attach somewhere on this board and fail
-    // this test. Unreachable through actions (every Ability path sets the
-    // source); reachable by authoring `toSelf` onto a Trainer, which this
-    // whiff makes a loud no-op instead of a wrong attach.
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const events: GameEvent[] = [];
     const result = runProgram(state, program, { seat: "p1" }, events);

@@ -19,18 +19,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D634 — C1: THE COIN REST ──
-//
-// 7 printed attack texts / 8 printings (`me` + `30th`), the coin sentences D595 and D605 dropped. Every
-// id and text measured on the LOCAL D1, 2026-10-10, `legal_standard = 1`; before this slice the ids were
-// named only by those drop lists. Pieces: `AttackCoinFlip.bonusOnAllHeads` (Hyper Lariat),
-// `AttackCoinFlip.deckUpToHeads` (All-You-Can-Grab, Gormandizer, Charge-Up Dash; 0 heads does nothing,
-// R-UTH1), two `COIN_GATED_CONSEQUENTS` rows (Challenging Delivery, Basic only under D613; Reversing
-// Gust on `returnBenched.includeActive` for the opponent's side) and `bottomFromOpponentHand.dest:
-// "deck"` with the `HAND_CARD_SHUFFLED_INTO_DECK` event (Snap Inspection ×2). No `me` row is a fixture,
-// so the printed faces used on a board are carried HERE.
 
 const T = {
   lariat: "Flip 2 coins. If both of them are heads, this attack does 100 more damage.",
@@ -44,7 +34,6 @@ const T = {
   snap: "Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck.",
 } as const;
 
-/** [text, legal printings, the ids]. */
 const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
   [T.lariat, 1, ["me01-112"]],
   [T.delivery, 1, ["me05-071"]],
@@ -155,7 +144,6 @@ describe("D634 §2 — near misses stay null; arm 46b's crossings", () => {
       expect(deriveAttackCoinFlip(text), text).toBeNull();
       expect(deriveAttackEffect(text), text).toBeNull();
     }
-    // The Benched sentence keeps D299's program (no `includeActive`).
     expect(
       deriveAttackEffect(T.gust.replace("opponent's Pokémon", "opponent's Benched Pokémon")),
     ).toEqual([
@@ -266,12 +254,6 @@ const DECK = deckOf({
   "fix-energy": 19,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4 with both hands back in the decks (D605's idiom). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6341, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

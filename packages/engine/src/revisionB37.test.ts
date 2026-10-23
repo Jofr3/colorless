@@ -1,26 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { GameAction, GameEvent, GameState } from "./index";
+import type { GameEvent, GameState } from "./index";
 import { applyAction, createGame } from "./index";
-import { battler, completeSetup, deckOf, typedEnergy } from "./testFixtures";
+import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B37 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B37"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`,
-// byte for byte below):
-//   §1 Ribombee "Plentiful Pollen" (`sv05-076`, U0929) — *"During your next turn, if the Defending
-//      Pokémon is Knocked Out, take 2 more Prize cards."* A turn-3 Pollen marks the Defending Pokémon
-//      for turn 5. When a turn-5 Pollen (the same Ribombee, or a second one switched in) is the attack
-//      that Knocks it Out, the turn-3 effect is still live at that attack's Knock Out — but the turn-5
-//      op re-installed the single `koBounty` slot for turn 7 BEFORE the sweep read it, and the +2 was
-//      never paid. The live record is now kept when the marked body is already lethally damaged (it
-//      leaves play at this attack's own sweep, so the turn-7 window can never open on it).
-//      The same holds down a chain: a NON-lethal turn-5 Pollen re-marks for turn 7, and the turn-7
-//      Pollen that Knocks Out pays the turn-5 +2.
-//   §2 the controls: a NON-lethal turn-5 Pollen still moves the mark to turn 7 (one row, nothing
-//      paid), and a first Pollen that Knocks Out pays only the face value (nothing live is marked).
 
 const POLLEN =
   "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards.";
@@ -116,19 +99,11 @@ function table(opts: { damage: number; benchRibombee?: boolean }): GameState {
   };
   return state;
 }
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 const pollen = (state: GameState) => must(state, { type: "attack", seat: "p1", index: 0 });
 const pass = (state: GameState, seat: "p1" | "p2") => must(state, { type: "endTurn", seat }).state;
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 
-/** The Prize count P1 is owed by the Knock Out: the parked pick, or what left the row. */
 function owed(before: GameState, after: GameState, events: readonly GameEvent[]): number {
   if (after.phase.kind === "ko:takePrizes") return after.phase.count;
   const row = ofType(events, "PRIZES_OWED")[0];

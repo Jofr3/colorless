@@ -12,21 +12,9 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B10 (Abilities) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B10"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.abilities_json`, byte for byte below):
-//   §1 Munkidori "Adrena-Brain" (`me02.5-099` / `sv06-095` / `sv06.5-072` / `sv08.5-044`) and §2 Team
-//      Rocket's Orbeetle "Rocket Brain" (`sv10-089` / `sv10-198`) — under an opposing Yveltal
-//      `30th-100` "Life-Locked" the SOURCE (the mover's Active) is heal-locked. Both movers took the
-//      counters off through `healChosen`, which asks `healLocked` and returns the board unchanged,
-//      and then placed the counters on the destination anyway: counters were CREATED, not moved.
-//      R-LL1 (D631, ⚠️ UNRULED, not changed here) reads a move off a locked Active as not a heal —
-//      `moveCountersFromBench` / `moveCountersBetweenOpponents` never asked the lock — and the two
-//      own-board movers now follow it: the source loses exactly what the destination gains.
 
 const ADRENA_BRAIN =
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.";
@@ -34,7 +22,6 @@ const ROCKET_BRAIN =
   "As often as you like during your turn, you may move 1 damage counter from 1 of your Team Rocket's Pokémon to another of your Pokémon.";
 const LIFE_LOCKED = "Your opponent's Active Pokémon can't be healed.";
 
-/** Every Standard-legal Adrena-Brain / Rocket Brain printing on the local D1 (measured 2026-10-19). */
 const MUNKIDORI = ["me02.5-099", "sv06-095", "sv06.5-072", "sv08.5-044"] as const;
 const ORBEETLE = ["sv10-089", "sv10-198"] as const;
 const YVELTAL = "30th-100";
@@ -98,20 +85,6 @@ const DECK = deckOf({
   "fix-energy": 32, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 1010, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

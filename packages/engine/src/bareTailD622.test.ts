@@ -14,18 +14,8 @@ import {
   deckOf,
   mustApply,
   setActiveFromDeck,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D622 — R-AM2 RETIRED: THE BARE W/R TAIL IS W/R ONLY ──
-//
-// *"This attack's damage isn't affected by Weakness or Resistance."* (and Oil Salvo's *"This damage
-// isn't …"*) nulls Weakness and Resistance and nothing else. Until D622 the three readers that read it
-// set `ignoreWR`, which `placeSnipe` / `snipeActive` also read as the Feint form's *"or by any effects
-// on that Pokémon"*, so a bare-tail snipe or spread passed every on-target prevention and reduction
-// (R-AM2). The bare readers now add `wrOnly`; `ignoreWR` alone is the Feint form (Iron Crown ex "Twin
-// Shotels"), unchanged. The texts below are the LOCAL D1 `attacks_json` effects, byte for byte
-// (`legal_standard = 1`): 4 bare texts / 8 printings, 1 Feint text / 6 printings, all `sv`; the `me`
-// column prints none of them (§1 measures both corpora). The bodies are file-local demonstrators.
 
 /** Arboliva ex "Oil Salvo" — sv10-023, sv10-207. */
 const OIL_SALVO =
@@ -39,7 +29,6 @@ const SEVERE_SQUALL =
 /** Sigilyph "Telekinesis" — sv10.5w-038, sv10.5w-121. */
 const TELEKINESIS =
   "This attack does 70 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance.";
-/** Iron Crown ex "Twin Shotels" — the FEINT form, 6 printings. */
 const TWIN_SHOTELS =
   "This attack does 50 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon.";
 
@@ -50,9 +39,9 @@ const BARE: readonly (readonly [string, string, number])[] = [
   ["Telekinesis", TELEKINESIS, 2],
 ];
 
-const SNIPER = "d622-sniper-ex"; // "D622 Sniper ex", {P}: the five attacks, cost-free
-const TARGET = "d622-target-ex"; // "D622 Target ex": Weakness {P} ×2
-const SHIELD = "d622-shield-ex"; // "D622 Shield ex": Resistance {P} −30
+const SNIPER = "d622-sniper-ex";
+const TARGET = "d622-target-ex";
+const SHIELD = "d622-shield-ex";
 const FILLER = "d622-filler";
 
 const ATTACKS: Card["attacks"] = [
@@ -74,11 +63,6 @@ const LOCAL: Record<string, Card> = {
 };
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL };
 const DECK = deckOf({ [SNIPER]: 4, [TARGET]: 6, [SHIELD]: 6, [FILLER]: 44 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's first turn (P2 went first and passed). */
 function p1Turn(): GameState {

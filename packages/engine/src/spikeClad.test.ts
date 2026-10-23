@@ -5,115 +5,19 @@ import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { programPlayable } from "./cardplay";
 import { firstAttachableEnergy } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
-import { battler, deckOf, itemTrainer, specialEnergy, typedEnergy } from "./testFixtures";
-
-// D353 — SPIKE-CLAD, AND THE ONE THING IT BUYS: `attachEnergyFrom.energyName`,
-// THE PRINTED PROPER NAME.
-//
-// "When you play this Pokémon from your hand to evolve 1 of your Pokémon during
-//  your turn, you may attach up to 2 Spiky Energy cards from your discard pile
-//  to this Pokémon."
-//        (Lycanroc sv09-085 / sv09-166 — an Ability, 2 Standard-legal printings)
-//
-// ⚠️ **THE CLAUSE, CENSUSED OVER ALL THREE TEXT COLUMNS AND NOT CARRIED FROM
-// BACKLOG ROW 9.** Remote D1 `colorless`, 2026-08-16, `json_each(abilities_json)` /
-// `json_each(attacks_json)` keyed on **`$.effect`** plus the bare `effect` column,
-// filtered to sentences containing `attach` AND any of the fourteen non-basic
-// Energy card NAMES the catalog prints. The extractor was verified against three
-// KNOWN-PRESENT rows (`sv09-085`, `sv10-145`, `sv09-107`) before any zero in it
-// was believed — the false-zero hazard is that the ability text key is `$.effect`
-// and NOT `$.text`.
-//
-// The answer is **2 SENTENCES / 4 PRINTINGS / 2 LEGAL**:
-//   • THIS sentence — Lycanroc `sv09-085` + `sv09-166`, both `legal_standard = 1`;
-//   • Wigglytuff `sv02-084` + `sv04.5-147`, *"Once during your turn, you may
-//     attach a **Therapeutic Energy** card from your hand to 1 of your Pokémon."*
-//     — both `legal_standard = 0`, ROTATED.
-// 🆕 **SO THE ROW IS NOT MERELY THE CHEAPEST MEMBER OF THE CLAUSE, IT IS THE
-// CLAUSE'S ENTIRE STANDARD-LEGAL POPULATION** — D352's shape one slice later, and
-// the second consecutive slice where step 4 of the method ("is this the cheapest
-// thing that sentence buys?") answered "it is the only thing".
-//
-// ⚠️ **AND THE ROTATED HALF IS WHY THE FIELD IS NOT A ONE-CARD SPECIAL CASE.**
-// Wigglytuff attaches from the **hand** to **1 of your Pokémon**; Lycanroc from
-// the **discard pile** to **this Pokémon**, twice. Same narrowing, different
-// source zone, different target shape, different count — so `energyName` is
-// orthogonal to `source` and to every `AttachTargetRiders` field, which is
-// exactly what a field rather than a card-shaped hack looks like. §4 drives the
-// rotated shape too, on a synthetic body, so the orthogonality is a MEASUREMENT.
-//
-// ⚠️ **THE SENTENCE THE SENTENCE RESTS ON WAS ALSO CENSUSED** (step 3). The
-// trigger clause *"When you play this Pokémon from your hand to evolve 1 of your
-// Pokémon during your turn"* is `trigger: "onEvolve"` and has been BUILT since
-// D250 — `registry.ts` carries EIGHT `onEvolve` rows at this head, seven of them
-// older than this one. `count: 2` + `toSelf` is `BATTLE_HARDENED`'s own shape
-// (D250/D205/D221), and `source: "discard"` is `ASSEMBLE_ALLOY`'s (D234). None of
-// it is new; the intersection is.
-//
-// 🛑 **WHAT THIS SLICE PAID, AND THE REFUTATION THAT PROVES IT HAD TO.**
-// ONE new optional op field, `attachEnergyFrom.energyName?: string`, answered by
-// the CardFilter predicate the engine already has (`{ kind: "byName", name }`).
-// ZERO new predicates, ZERO new ops, ZERO new prompt kinds, ZERO new CardFilter
-// kinds, ZERO deriver arms. §3 drives the three no-new-vocabulary spellings that
-// would have avoided even that one field and shows each one attaching the WRONG
-// card or nothing at all — from SOURCE, on a board, not by argument.
-//
-// ⚠️ **WHAT THIS SUITE CAN AND CANNOT PUT RED, SAID UP FRONT** (the guard rule):
-// * Dropping `energyName` from the registry row is caught by §2's board, which
-//   holds Basic {F} Energy in the same discard pile: the attach would take those.
-// * Dropping the name test from `attachableEnergies` is the same case.
-// * Keeping the name test but ALSO demanding `energyType === "Normal"` is caught
-//   [🆕🆕🆕 D583 (D539): the Basic test is `isBasicEnergy(card)` since D583]
-//   by §2 alone — Spiky Energy is a SPECIAL Energy and would become unreachable.
-//   That is this slice's ONE design call and it has its own mutant.
-// * Dropping `count: 2` lands 1 where it must land 2 (§2).
-// * Raising `count` to 3 is caught by the same case — a pile with 3 keeps 1.
-// * Dropping `toSelf` is caught by §5: the board holds a SECOND own Pokémon and
-//   the op would park instead of forcing, so `EFFECT_PENDING` would appear and
-//   the evolved body would not necessarily be fed.
-// * Wiring the trigger to `onPlayToBench` is caught by §6, which benches a body
-//   and asserts NOTHING fires.
-// * Dropping `optional` changes no behaviour today (the flag AUTO-FIRES; see
-//   `TriggeredAbility.optional`), so it is killed by §1's DECLARATION snapshot and
-//   by nothing else — the same verdict `battleHardened.test.ts` records.
-// * The play gate (`cardplay.ts`) and the park guard are NOT reachable from a
-//   board trigger, so §7 drives `firstAttachableEnergy` DIRECTLY: it is the one
-//   consumer of the narrowing this row's own card cannot exercise, and leaving it
-//   undriven would ship three of the four consumers.
+import { battler, deckOf, itemTrainer, specialEnergy, typedEnergy, must } from "./testFixtures";
 
 const LYCANROC_IDS = ["sv09-085", "sv09-166"] as const;
 const LYCANROC = "sv09-085";
 const ROCKRUFF = "d353-rockruff";
 
-/** The printed sentence, byte for byte, authored against the print rather than a
-    paraphrase (D183's class) and byte-identical on both printings — 221-char
-    `abilities_json` on each, remote D1 2026-08-16. */
 const SPIKE_CLAD_TEXT =
   "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, " +
   "you may attach up to 2 Spiky Energy cards from your discard pile to this Pokémon.";
 
-/** ⚠️ **REAL IDS ON A LOCAL `cardPool` (D275's idiom), AND `FIXTURE_POOL` IS NOT
-    TOUCHED.** `catalogManifest.ts` is generated off a local sqlite this clone does
-    not have and measures a 978-row / 6-set catalog holding no `sv09` row at all,
-    so no `fix-*` demonstrator is owed and none is written. **A FIXTURE IS A CENSUS
-    POPULATION** (D348) — `catalogManifest.test.ts` and `clauseApostrophe.test.ts`
-    both sweep `FIXTURE_POOL`, so §8 asserts by ID that nothing here reached it. */
-const SPIKY = "sv09-159"; // Spiky Energy — the REAL Standard-legal printing
+const SPIKY = "sv09-159";
 const SPIKY_ALT = "sv09-190"; // Spiky Energy — the REAL reprint, same NAME
 
-/** The negatives, and every one of them is load-bearing rather than filler:
-    - `MIST` is a DIFFERENT Special Energy. `energyProvidesOf` answers "Colorless"
-      for it exactly as it does for Spiky, so it is what an `energyType:
-      "Colorless"` spelling would have swallowed (§3).
-    - `FIGHTING` is a Basic Energy in the same pile — what a row with NO narrowing
-      at all attaches.
-    - `THERAPEUTIC` is the ROTATED by-name sentence's card, used in §4 to drive the
-      same field through a different source zone and a different target rule. */
-// ⚠️ `sv05-161`, NOT `sv09-160`. The first draft of this file wrote `sv09-160`
-// from memory; the remote D1 says that id is **Maractus**, a Pokémon. **A CARRIED
-// ID ROTS** (D206's class), caught here by re-querying rather than by a test —
-// nothing in this suite could have seen it, because a synthetic body under a
-// wrong id still behaves.
 const MIST = "sv05-161";
 const FIGHTING = "d353-fighting";
 const THERAPEUTIC = "d353-therapeutic";
@@ -160,11 +64,6 @@ const DECK = deckOf({
 
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function apply(
   state: GameState,
   action: Parameters<typeof applyAction>[1],
@@ -187,10 +86,6 @@ function firstBasicInHand(state: GameState, seat: Seat): string {
   return uid;
 }
 
-/** Pass whole turns until `turn`, leaving the actor in `turn:action`. §4/§10 bars
-    BOTH players from evolving on their own first turn, so every board in this file
-    runs on turn 3 — the trigger cannot be reached any earlier and saying so is
-    cheaper than a `FIRST_TURN_EVOLVE` a reader has to diagnose. */
 function passTo(state: GameState, turn: number): GameState {
   let next = state;
   while (next.turn < turn) {
@@ -227,10 +122,6 @@ function localSetup(seed: number): GameState {
   return state;
 }
 
-/** TEST SURGERY — p1's Active becomes a Rockruff, `pile` goes into p1's DISCARD in
-    that order, `bench` is placed as extra own bodies, and a Lycanroc printing sits
-    in hand ready to evolve. Everything is stated rather than drawn, so no count in
-    this file is a seed fact. */
 function board(
   pile: readonly string[],
   opts: { readonly lycanroc?: string; readonly bench?: readonly string[] } = {},
@@ -278,13 +169,6 @@ function evolveActive(state: GameState, uid: string): { state: GameState; events
   return apply(state, { type: "evolve", seat: "p1", uid, target: { spot: "active" } });
 }
 
-/** 🆕🆕 D359 — **THE EVOLVE NOW PARKS, AND ANSWERING IT IS THE WHOLE SLICE.**
-    *"you may attach **up to 2** Spiky Energy … to this Pokémon"* offers
-    `{0, 1, 2}`; until D359 the `toSelf` ref made `parkOrForce` force its lone
-    candidate and the controller got two without being asked. Evolves, then
-    answers with `take` (absent = the whole printed batch). A whiff never parks
-    and is returned as it comes, which is what keeps the empty-pile cases below
-    reading exactly as they did. */
 function evolveAndTake(
   state: GameState,
   uid: string,
@@ -314,15 +198,10 @@ function energyIdsOn(state: GameState, ref: PokemonRef): string[] {
 
 describe("D353 §1 — the authored row is ONE object over TWO printings", () => {
   it("both printings resolve to the SAME program object", () => {
-    // Identity, not deep equality: a second transcription would drift (D183).
     expect(programFor(LYCANROC_IDS[0])).toBe(programFor(LYCANROC_IDS[1]));
   });
 
   it("the program's KEY SET is exactly `triggered` — so it is wholly non-attack", () => {
-    // ⚠️ THIS IS THE ASSERTION `censusAtHead`'s `nonAttackRegistryIds()` +2 RESTS
-    // ON, and it is a KEY SET rather than a "has no attack" claim, because the
-    // filter is `some(key !== "attack")` and a program with BOTH keys would pass a
-    // weaker guard while moving a different census line.
     for (const id of LYCANROC_IDS) {
       expect(Object.keys(programFor(id) ?? {}).sort(), id).toEqual(["triggered"]);
     }
@@ -349,10 +228,6 @@ describe("D353 §1 — the authored row is ONE object over TWO printings", () =>
   });
 
   it("the row carries NONE of the class riders, because `toSelf` authors alone", () => {
-    // `attachEnergyFrom.toSelf`'s own doc: a print that names its own body prints
-    // no other target rule, so the member IGNORES the class riders rather than
-    // refereeing a co-authored one. Asserted by ABSENCE so a future co-author
-    // reddens here first.
     const op = (programFor(LYCANROC)?.triggered ?? [])[0]?.program[0] as Record<string, unknown>;
     for (const rider of ["targetType", "basicOnly", "ownerPokemon", "benchOnly", "anyEnergy"]) {
       expect(op, rider).not.toHaveProperty(rider);
@@ -376,13 +251,7 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     expect(after.events.map((e: GameEvent) => e.type)).toContain("ABILITY_TRIGGERED");
   });
 
-  it("🛑 A SPECIAL ENERGY IS REACHED — the ONE design call, driven", () => {
-    // Spiky Energy is `energy_type = 'Special'` (`sv09-159`/`sv09-190`, remote D1
-    // 2026-08-16), and `attachableEnergies` has excluded Special Energy at the OP
-    // since M5. The name SUBSUMES that test rather than conjoining with it: a
-    // proper name picks out exactly one printed card and decides the
-    // Basic/Special question by itself. Without the design call this board
-    // attaches NOTHING and the card does not work at all.
+  it("A SPECIAL ENERGY IS REACHED — the ONE design call, driven", () => {
     const { state, evolveUid } = board([SPIKY]);
     expect(POOL[SPIKY]?.energyType).toBe("Special");
     const after = evolveAndTake(state, evolveUid);
@@ -390,9 +259,6 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
   });
 
   it("a pile of Basic {F} and Mist Energy is UNTOUCHED — the narrowing, both ways", () => {
-    // The Basic half catches a row with no narrowing at all; the Mist half catches
-    // an `anyEnergy`-only widening AND an `energyType: "Colorless"` spelling, both
-    // of which reach Mist Energy. Nothing attaches and nothing leaves the pile.
     const { state, evolveUid } = board([FIGHTING, FIGHTING, MIST, MIST]);
     const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([]);
@@ -408,10 +274,7 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY, SPIKY_ALT]);
   });
 
-  it("🛑 the REPRINT counts — the name is a NAME and not an id", () => {
-    // `sv09-190` is a different catalog id printing the same card. A narrowing
-    // keyed on the id would take one of these and leave the other; the printed
-    // word is "Spiky Energy cards", so both are the same card to the player.
+  it("the REPRINT counts — the name is a NAME and not an id", () => {
     const { state, evolveUid } = board([SPIKY_ALT, SPIKY_ALT]);
     expect(POOL[SPIKY_ALT]?.name).toBe(POOL[SPIKY]?.name);
     expect(SPIKY_ALT).not.toBe(SPIKY);
@@ -436,9 +299,6 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
 // ── 3. THE NO-NEW-VOCABULARY REFUTATION, RUN FROM SOURCE ─────────────────────
 
 describe("D353 §3 — the three spellings that would have avoided the field, refuted", () => {
-  // ⚠️ NOT ARGUED — each alternative is BUILT as an `EffectOp` and run through the
-  // very consumer the real row uses, on the very pile the real row succeeds on.
-  // D351's rule: refute the zero-diff spellings from source before paying a field.
   const pile = [FIGHTING, MIST, SPIKY, SPIKY_ALT];
 
   function reachable(op: {
@@ -459,11 +319,6 @@ describe("D353 §3 — the three spellings that would have avoided the field, re
   }
 
   it('`energyType: "Colorless" + anyEnergy` reaches MIST — the wrong card', () => {
-    // `energyProvidesOf` (cards.ts) returns "Colorless" for EVERY Special Energy
-    // and for every `Normal`-typed Energy whose name is not a basic type word. In
-    // Standard that is SEVEN Special names (Boomerang, Enriching, Legacy, Mist,
-    // Neo Upper, Spiky, Team Rocket's) plus THREE `Normal`-typed oddballs
-    // (Ignition, Prism, Reversal) — remote D1 2026-08-16. The print names ONE card.
     expect(reachable({ energyType: "Colorless", anyEnergy: true })).toBe(MIST);
   });
 
@@ -472,10 +327,6 @@ describe("D353 §3 — the three spellings that would have avoided the field, re
   });
 
   it('`energyType: "Spiky"` matches the EMPTY SET — the silent-whiff failure', () => {
-    // `energyProvidesOf` only ever returns a member of `BASIC_ENERGY_TYPES`, so no
-    // card in any zone can answer this. It is not merely wrong, it is INVISIBLY
-    // wrong: `programPlayable` refuses an Ability whose attach could only whiff,
-    // so the card would stop being offered rather than misbehave.
     expect(reachable({ energyType: "Spiky" })).toBeUndefined();
     expect(reachable({ energyType: "Spiky", anyEnergy: true })).toBeUndefined();
   });
@@ -494,12 +345,6 @@ describe("D353 §3 — the three spellings that would have avoided the field, re
 
 describe("D353 §4 — `energyName` is orthogonal to `source` and to the riders", () => {
   it("the ROTATED by-name sentence's shape works too — HAND source, no `toSelf`", () => {
-    // Wigglytuff `sv02-084`/`sv04.5-147`: *"attach a Therapeutic Energy card from
-    // your **hand** to 1 of your Pokémon."* Both printings are `legal_standard = 0`
-    // so NO registry row is authored for them (D231's rule: a rider is added when a
-    // card prints it, and a rotated card does not print into Standard). What is
-    // driven here is the FIELD, at the other source zone and with no target rider,
-    // so the claim "this is not a card-shaped hack" is a measurement.
     const { state } = board([]);
     const withHand: GameState = {
       ...state,
@@ -558,11 +403,6 @@ describe("D353 §4 — `energyName` is orthogonal to `source` and to the riders"
 
 describe("D353/D359 §5 — the attach lands on the EVOLVED body, and now it ASKS", () => {
   it("a board with a SECOND own Pokémon still feeds ONLY the evolved one", () => {
-    // Dropping `toSelf` reddens this twice: the op would see two eligible own
-    // bodies and could land on the Bench. 🆕 D359 — the park is no longer the
-    // discriminator (a printed ceiling parks even over one candidate), so the
-    // claim is now made where it is actually load-bearing: the offered CANDIDATE
-    // LIST is one long and names the Active, and the Bench ends empty.
     const { state, evolveUid } = board([SPIKY, SPIKY], { bench: [BUDDY] });
     const parked = evolveActive(state, evolveUid);
     if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
@@ -574,26 +414,9 @@ describe("D353/D359 §5 — the attach lands on the EVOLVED body, and now it ASK
     expect(energyIdsOn(after.state, { seat: "p1", spot: { spot: "bench", index: 0 } })).toEqual([]);
   });
 
-  it("🛑🛑 D359 — THE PRINTED *'up to 2'* IS NO LONGER OVER-RESOLVED: {0, 1, 2}", () => {
-    // 🆕🆕 **THIS ROW USED TO PIN THE DEFECT AND NOW PINS THE REPAIR.** D358 bought
-    // the DECLINE and wrote here, correctly, that this card still would not get it:
-    // a declinable park buys {0, 2} and the print says {0, 1, 2} (§9.1 — *"one,
-    // two, or none, all legal"*). **WHAT WAS MISSING WAS A QUANTITY AXIS**, and
-    // D359 bought it — with NO new op field, because `count` was already the
-    // printed ceiling (`attachFromZoneClause` admits `count > 1` through its
-    // literal `up to (\d+)` alternative alone) and only the PROMPT and the ANSWER
-    // were missing it.
-    // ⚠️ **AND THE POPULATION FIGURE THIS ROW CARRIED WAS WRONG TWICE.** D353 wrote
-    // "from 5 legal printings to 7" over a list of 6; D358 re-derived 17 off the
-    // registry and named this card as one of EIGHT `count: 2` printings. D359
-    // re-derived THAT and found **13**, because a registry walk cannot see
-    // `deriveAttackEffect`'s three further `count: 2` sentences (Oricorio ×2,
-    // Regirock ex ×2, Kilowattrel ex ×1). Three slices, three different figures,
-    // and only the last one was measured over BOTH producers.
+  it("D359 — THE PRINTED *'up to 2'* IS NO LONGER OVER-RESOLVED: {0, 1, 2}", () => {
     const { state, evolveUid } = board([SPIKY, SPIKY]);
-    // TWO — the pre-D359 behaviour, still reachable and still the default answer.
     expect(energyIdsOn(evolveAndTake(state, evolveUid).state, ACTIVE_REF)).toEqual([SPIKY, SPIKY]);
-    // ONE — the printed middle answer, UNREACHABLE before this slice on this card.
     const one = evolveAndTake(state, evolveUid, 1);
     expect(energyIdsOn(one.state, ACTIVE_REF)).toEqual([SPIKY]);
     // …and the second Spiky is still in the discard pile, not consumed.
@@ -617,15 +440,13 @@ describe("D353/D359 §5 — the attach lands on the EVOLVED body, and now it ASK
     );
   });
 
-  it("🆕 D359 — the park carries the printed CEILING and the `toSelf` caption", () => {
+  it("D359 — the park carries the printed CEILING and the `toSelf` caption", () => {
     const { state, evolveUid } = board([SPIKY, SPIKY]);
     const parked = evolveActive(state, evolveUid);
     if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
     const prompt = parked.state.phase.prompt;
     if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(prompt.upTo).toBe(2);
-    // The caption D205 removed as unreachable, now reachable and worded: a list of
-    // one body must not be introduced as "which of your Pokémon?".
     expect(prompt.note).toBe("Attach up to 2 Energy to this Pokémon?");
   });
 });
@@ -666,14 +487,7 @@ describe("D353 §6 — `onEvolve` and not `onPlayToBench`", () => {
 // ── 7. THE FOURTH CONSUMER — the one this card cannot reach ──────────────────
 
 describe("D353 §7 — all FOUR consumers of the narrowing, and the one that needs a direct drive", () => {
-  it("🛑 `firstAttachableEnergy` carries the name — the gate/park half", () => {
-    // D246 wrote down that `attachableEnergies` is the single read surface and
-    // named its four consumers: the park guard in `applyEffectOp`, the apply, this
-    // function, and through it `programPlayable` (cardplay.ts) plus both HUD
-    // row-lighting mirrors. §2 drives the apply. The park guard and the play gate
-    // are unreachable from a BOARD TRIGGER — no gate runs on `onEvolve` — so this
-    // is the only place the other three can be exercised at all, and leaving it out
-    // would ship a narrowing that reached one consumer of four.
+  it("`firstAttachableEnergy` carries the name — the gate/park half", () => {
     const { state } = board([FIGHTING, MIST]);
     // A pile with no Spiky in it answers "nothing to attach" to the gate…
     expect(
@@ -684,23 +498,7 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
     expect(firstAttachableEnergy(state, "p1", "discard", undefined)).toBeDefined();
   });
 
-  it("🛑 `programPlayable` CARRIES THE NAME — and NO registry row can reach this today", () => {
-    // ⚠️ **THIS CASE EXISTS BECAUSE THE MUTANT SURVIVED WITHOUT IT.**
-    // `D353-play-gate-ignores-the-name` was probed individually before the sweep and
-    // came back **SURVIVED — an undeclared GAP** on the first pass: the drive above
-    // exercises the HELPER, and the mutant edits the `cardplay.ts` CALL SITE. Nothing
-    // in the registry reaches that call site, because Spike-Clad is a BOARD TRIGGER
-    // and no play gate runs on `onEvolve` — so the gate consumer had a name-blind
-    // question and a green suite at the same time. **PROBING EACH NEW ROW
-    // INDIVIDUALLY IS WHAT FOUND IT**, and the fix is a driven case rather than a
-    // declared survivor: a survivor here would have been an allowlist entry over a
-    // real divergence.
-    //
-    // The program is synthetic ON PURPOSE — the day a card prints *"Once during your
-    // turn, you may attach a <Named> Energy card…"* into Standard, this is the exact
-    // question that decides whether the Ability is offered. The rotated Wigglytuff
-    // pair prints precisely that sentence, so the shape is a print rather than an
-    // invention.
+  it("`programPlayable` CARRIES THE NAME — and NO registry row can reach this today", () => {
     const named: EffectOp[] = [
       { op: "attachEnergyFrom", source: "discard", energyName: "Spiky Energy", toSelf: true },
     ];
@@ -719,8 +517,6 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
   });
 
   it("the name and the type are not welded — a disagreeing pair matches nothing", () => {
-    // No printing spells both, and a program that did would whiff loudly rather
-    // than silently prefer one. Recorded as a measurement rather than as a rule.
     const { state } = board([SPIKY, SPIKY]);
     expect(
       firstAttachableEnergy(state, "p1", "discard", "Fighting", undefined, "Spiky Energy"),
@@ -728,38 +524,15 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
   });
 });
 
-// ── 8. THE FIXTURE IS A CENSUS POPULATION, AND THE BATON ─────────────────────
-
 describe("D353 §8 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("🛑 THE BATON, SPENT AND CONVERTED — the two ids are CONTIGUOUS, forever", () => {
-    // 🆕🆕 **D354 SPENT THIS PIN AND CONVERTED IT, exactly as `metalMaker.test.ts`
-    // §8, `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7 and
-    // `pyroDance.test.ts` §7 were converted when the baton left them.** The live
-    // EXPIRING form was `expect(raw.slice(-2)).toEqual([...LYCANROC_IDS])`, and
-    // D354's one new key (`sv10-145`) made it red on a constant nobody touched —
-    // the TWELFTH consecutive slice on which that happened, and it fired here
-    // rather than in `censusAtHead.test.ts`, which is what the baton is for.
-    //
-    // What survives is the CONTIGUITY claim, which stands still forever: these two
-    // ids entered the registry together and no later slice may interleave a key
-    // between them. It is a DIFFERENT assertion from the last-N pin and does not
-    // substitute for it — the live pin now lives in `xBoot.test.ts` §6 at width
-    // **1**, because D354 added exactly ONE id.
-    // ⚠️ **THE WIDTH IS THE NUMBER OF IDS THE LAST SLICE ADDED**, and copying the
-    // previous width is how a pin silently starts asserting a neighbour's row.
+  it("THE BATON, SPENT AND CONVERTED — the two ids are CONTIGUOUS, forever", () => {
     const raw = registryCardIds();
     const at = raw.indexOf(LYCANROC_IDS[0]);
     expect(at).toBeGreaterThanOrEqual(0);
     expect(raw.slice(at, at + 2)).toEqual([...LYCANROC_IDS]);
   });
 
-  it("🛑 the +2 on `raw.length` is EXACTLY the two Lycanroc ids — the Energy ids were already keys", () => {
-    // ⚠️ **THE THREE REAL ENERGY IDS IN THIS POOL WERE REGISTRY KEYS BEFORE THIS
-    // SLICE**: Spiky Energy `sv09-159`/`sv09-190` and Mist Energy `sv05-161` all
-    // carry their own `EnergyProgram` (they are three of `BUILT.specialEnergy`'s
-    // 8). So a reader who sized `raw.length`'s step off "how many real catalog ids
-    // does this suite name" would be wrong by three — the step is the number of
-    // ids this slice ADDED, and this assertion is what says which is which.
+  it("the +2 on `raw.length` is EXACTLY the two Lycanroc ids — the Energy ids were already keys", () => {
     const keys = new Set(registryCardIds());
     for (const id of LYCANROC_IDS) expect(keys.has(id), id).toBe(true);
     for (const id of [SPIKY, SPIKY_ALT, MIST]) expect(keys.has(id), id).toBe(true);
@@ -769,11 +542,7 @@ describe("D353 §8 — the pool, the registry keys, and the expiring insertion-o
     }
   });
 
-  it("🛑 NOTHING HERE REACHES `FIXTURE_POOL` — asserted BY ID, not described", () => {
-    // **A FIXTURE IS A CENSUS POPULATION** (D348). `catalogManifest.test.ts` and
-    // `clauseApostrophe.test.ts` both sweep `FIXTURE_POOL`; this file builds its
-    // own `cardPool` from `LOCAL_CARDS` alone and spreads nothing into the shared
-    // one, so neither sweep's population moves.
+  it("NOTHING HERE REACHES `FIXTURE_POOL` — asserted BY ID, not described", () => {
     const local = Object.keys(POOL).sort();
     expect(local).toEqual(Object.keys(LOCAL_CARDS).sort());
     expect(local).toContain(LYCANROC_IDS[0]);

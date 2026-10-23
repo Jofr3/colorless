@@ -18,21 +18,8 @@ import {
   setDamage,
   trainerCard,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D555 A — THE ZERO-VOCABULARY TRAINERS, 9 PRINTINGS / 5 TEXTS / 5 OBJECTS ──
-//
-//   Cook                    sv06-147                         Supporter  heal 70 from your Active
-//   Poké Vital A            sv06.5-062                       Item       heal 150 from 1 of your Pokémon
-//   Iris's Fighting Spirit  sv09-149 / sv09-180              Supporter  discard another card; draw to 6
-//   Eri                     sv05-146 / -199 / -210, sv08.5-136  Supporter  reveal; discard up to 2 Items
-//   Meddling Memo           sv08-181                         Item       their hand under their deck; draw that many
-//
-// ZERO new vocabulary: every op, rider and gate already shipped, and the one line
-// outside the registry is `bottomFromOpponentHandNote`'s printed "up to" discard form
-// (Eri's caption). Real ids on a LOCAL `cardPool` (D275), no `fix-*` demonstrator.
-// Texts, subtypes and legality off tcgdex (the ingest's own upstream), 2026-09-25.
-// The Abilities of the slice are `simpleAbilitiesD555.test.ts`.
 
 const COOK_TEXT = "Heal 70 damage from your Active Pokémon.";
 const VITAL_TEXT =
@@ -98,11 +85,6 @@ const DECK = deckOf({
   [SUPPORTER]: 8,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** p1 on its own (unrestricted) turn 2 — p2 went first and passed — with a FILLER
     Active and an EMPTY Bench on both sides. */
 function board(seed = 5550): GameState {
@@ -134,11 +116,6 @@ function board(seed = 5550): GameState {
   return state;
 }
 
-/** TEST SURGERY — `seat`'s hand becomes EXACTLY one card per entry of `ids` (in that
-    order): the old hand goes to the BOTTOM of the deck, then each id is pulled from
-    the deck — or, when every copy was prized, SWAPPED out of the Prizes for the
-    deck's bottom card, so the Prize row keeps its size. Every uid stays in exactly
-    one zone. */
 function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameState {
   const side = state.players[seat];
   let deck = [...side.deck, ...side.hand];
@@ -211,9 +188,6 @@ describe("D555 A §1 — the print, and the registry rows that map it", () => {
       ids: VITAL,
       text: VITAL_TEXT,
       trainerType: "Item",
-      // 🆕 Card revision B06 — the second sentence ("This card can't be put into your hand or deck
-      // from the discard pile.") is the card-borne `discardPileLocked` (D555 R3 closed;
-      // `revisionB06.test.ts` drives it).
       program: { trainer: [{ op: "healChosen", amount: 150 }], discardPileLocked: true },
     },
     {
@@ -308,7 +282,7 @@ describe("D555 A §2 — Cook: heal 70 from YOUR Active", () => {
     expect(all(events, "HEALED")).toHaveLength(1);
   });
 
-  it("🛑 an UNDAMAGED Active still PLAYS (D553 R1, UNRULED) — the Supporter is spent and no HEALED is filed", () => {
+  it("an UNDAMAGED Active still PLAYS (D553 R1, UNRULED) — the Supporter is spent and no HEALED is filed", () => {
     const { before, uid, state, events } = play(COOK[0], [FILLER], (s) =>
       setBenchDamage(benchFromDeck(s, "p1", FILLER), "p1", 0, 50),
     );
@@ -355,10 +329,7 @@ describe("D555 A §3 — Poké Vital A: heal 150 from 1 of your Pokémon", () =>
     expect(all(events, "HEALED").map((e) => e.amount)).toEqual([100]);
   });
 
-  it("🛑 MEASURED, NOT PREDICTED — with nothing damaged it is NOT refused: Potion's no-whiff doctrine (D555 R4)", () => {
-    // The brief predicted `healChosenTargets` would refuse an undamaged board. It does
-    // not: that funnel narrows ONLY on `remainingHpAtMost` (D349), so the unnarrowed
-    // offer is every own body, and `programPlayable` calls heal "playable enough".
+  it("MEASURED, NOT PREDICTED — with nothing damaged it is NOT refused: Potion's no-whiff doctrine (D555 R4)", () => {
     const { uid, state, events } = play(VITAL[0], [FILLER]);
     expect(types(events)).toEqual(["TRAINER_PLAYED"]);
     expect(state.players.p1.discard).toContain(uid);
@@ -531,10 +502,6 @@ describe("D555 A §6 — Meddling Memo: the opponent's hand under their deck, th
   });
 
   it('"shuffles those cards" — the bottom slice is the hand SHUFFLED off the live rng, not its old order', () => {
-    // The rung above compares the bottom slice SORTED, so it cannot see the shuffle.
-    // This one can: the slice is exactly `shuffle(oldHand, rngState)` (Iono's shared
-    // `handRefresh toBottom` path, interpreter.ts), and on this seed that order is NOT
-    // the old one, so a `toBottom` that appended the hand unshuffled goes red here.
     const { before, state } = play(MEMO[0], [FILLER], (s) =>
       setHand(s, "p2", [ITEM, SUPPORTER, FILLER, ITEM_2, ITEM]),
     );

@@ -1,10 +1,3 @@
-// Round-trip test for the generated upsert SQL: build real rows (every card
-// fixture + a deliberately hostile synthetic card), emit the SQL text, then
-// re-parse its VALUES tuples with a quote-aware scanner that inverts the
-// escaping rules — the decoded values must equal what went in. This is the
-// closest we get to executing the files without a SQLite engine in the tests;
-// the real execution path is covered by the ingest run against local D1.
-
 import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@colorless/schema";
 import { getTableColumns } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
@@ -35,11 +28,6 @@ import {
 
 type Decoded = string | number | null;
 
-/**
- * Parse the VALUES tuples out of a generated upsert, inverting the escaping
- * rules: quoted strings un-double their quotes, NULL → null, bare tokens are
- * numbers. Quote-aware, so parens/commas/newlines inside strings are data.
- */
 function parseValuesTuples(sql: string): Decoded[][] {
   const start = sql.indexOf("VALUES\n");
   const end = sql.lastIndexOf("\nON CONFLICT");
@@ -98,7 +86,6 @@ function parseValuesTuples(sql: string): Decoded[][] {
   return rows;
 }
 
-/** What each row value must decode back to, given its column kind. */
 function expectedTuple<Row>(columns: readonly SqlColumnSpec<Row>[], row: Row): Decoded[] {
   return columns.map((column) => {
     const value = row[column.key];
@@ -118,7 +105,6 @@ function expectedTuple<Row>(columns: readonly SqlColumnSpec<Row>[], row: Row): D
   });
 }
 
-/** A card row stuffed with every escaping hazard at once. */
 const hostileCard: CardRow = {
   id: "test-666",
   setId: "test",
@@ -168,8 +154,6 @@ describe("generated upsert SQL round-trips through the escaping rules", () => {
     const sql = cardsUpsertSql(rows);
     const tuples = parseValuesTuples(sql);
     expect(tuples).toEqual(rows.map((row) => expectedTuple(CARDS_COLUMNS, row)));
-    // 🆕 D581 — a Trainer's printed Pokémon face reaches the SQL text (map.ts keeps
-    // it on the Trainer branch): the fossil's hp and Ability, the machine's attack.
     const column = (name: string) => CARDS_COLUMNS.findIndex((c) => c.name === name);
     const fossilTuple = tuples[fixtures.indexOf(cardTrainerFossil)];
     expect(fossilTuple?.[column("hp")]).toBe(60);
@@ -196,13 +180,6 @@ describe("generated upsert SQL round-trips through the escaping rules", () => {
     expect(parseValuesTuples(setSql)).toEqual([expectedTuple(SETS_COLUMNS, setRow)]);
   });
 
-  // D203 — the one link in this file that was asserted in a comment and checked
-  // by nothing: the hand-written specs vs the Drizzle table they claim to
-  // mirror. A column added to ../db/catalog.ts and forgotten in the spec is
-  // otherwise SILENT — the generated INSERT omits it, and the next ingest
-  // leaves it NULL for good (`cards.suffix` is the live example of a column
-  // that arrived late). Derived from `getTableColumns`, so it cannot be kept
-  // green by editing it alongside the spec.
   it("every spec covers its whole table, in table order", () => {
     const specNames = (columns: readonly SqlColumnSpec<never>[]) => columns.map((c) => c.name);
     const tableNames = (table: SQLiteTable) =>

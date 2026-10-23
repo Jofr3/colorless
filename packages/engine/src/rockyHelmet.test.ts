@@ -14,19 +14,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.56.0 → 0.57.0 — Rocky Helmet sv01-193 (P3-M5 long tail, D106): "If the
-// Pokémon this card is attached to is in the Active Spot and is damaged by an
-// attack from your opponent's Pokémon (even if it is Knocked Out), put 2 damage
-// counters on the Attacking Pokémon." (Tool)
-//
-// This is the Tool twin of Counterattack Quills — it rides D98's `damageAttacker`
-// passive machinery VERBATIM: `passivesOf` already folds an attached Tool's
-// `damageAttacker` into its seat-free sum, and attack.ts places the counters on
-// the main-hit Active defender's attacker BEFORE finishAttack's §8.1 sweep. So it
-// is a pure DATA ROW — no new op. The Rocky-Helmet-specific fact is that the
-// recoil is granted by the TOOL, not the body: a bare fix-bigbody never
-// retaliates, and bolting Rocky Helmet onto it turns 20 HP back onto the attacker.
-
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
 
@@ -91,12 +78,6 @@ describe("Rocky Helmet — 2 counters on the attacker when the holder is damaged
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
     expect(done.players.p2.active?.damage).toBe(30);
 
-    // …then the Tool's recoil: 20 flat counters on the ATTACKER, labelled by the
-    // MECHANISM. ⚠️ THIS LINE ASSERTED `source: "ability"` UNTIL 0.90.0, on a card
-    // that is a TOOL — the suite pinning the defect as intended, for the third time
-    // in this family (D136's two, then this). It is POSITIVE about the new intent
-    // now: a Tool's recoil is not an Ability, and `counterattack.test.ts` owns the
-    // general form of the claim over the whole pool.
     expect(find(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 20,

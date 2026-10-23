@@ -18,22 +18,8 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B08 (Tools + Special Energy) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B08"), driven on
-// a real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect`
-// / `attacks_json`, byte for byte below):
-//   §1 Lillie's Pearl `sv09-151` and §2 Legacy Energy `sv06-167` — "… is Knocked Out by damage from
-//      an attack from your opponent's Pokémon, that player takes 1 fewer Prize card": a damage-free
-//      "that Pokémon is Knocked Out" (Mega Absol ex `me01-086` "Terminal Period", a
-//      `knockOutDefender` doom) reduced the Prize count, and for Legacy Energy spent its once-per-game
-//      latch. flow.ts `attachedPrizeReductions` now asks `koByOpponentAttack` (the predicate Shadowy
-//      Concealment and Amulet of Hope already read), so a `lethalByEffect` body reduces nothing.
-//   §3 Reversal Energy `sv02-192` — `legal_standard_effective = 1` since 714256b3 (print_key
-//      `c22445438109bc4e`, shared with the authored `sv04-266`) but had no registry row, so it fell
-//      into `unitsOf`'s unauthored Special Energy branch and always provided one {C}.
 
 const PEARL_TEXT =
   "If the Lillie's Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card.";
@@ -47,7 +33,6 @@ const CLAW_TEXT = "Your opponent reveals their hand, and you discard a card you 
 
 const PEARL = "sv09-151";
 const LEGACY = "sv06-167";
-/** Every Reversal Energy printing on the local D1 (measured 2026-10-19), the authored twin first. */
 const REVERSAL_IDS = ["sv04-266", "sv02-192"] as const;
 const ABSOL = "me01-086";
 const CLEFAIRY = "sv09-056";
@@ -147,13 +132,6 @@ const DECK = deckOf({
   "fix-energy": 20, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 808, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -226,7 +204,7 @@ describe("B08 §1 — Lillie's Pearl: \"… is Knocked Out by damage from an att
     });
   });
 
-  it('🛑 Terminal Period\'s damage-free "that Pokémon is Knocked Out" reduces NOTHING: P1 takes both Prizes for the ex', () => {
+  it('Terminal Period\'s damage-free "that Pokémon is Knocked Out" reduces NOTHING: P1 takes both Prizes for the ex', () => {
     const { events } = mustApply(pearlBoard(), terminalPeriod);
     expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);
     expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
@@ -234,7 +212,7 @@ describe("B08 §1 — Lillie's Pearl: \"… is Knocked Out by damage from an att
     expect(ofType(events, "PRIZES_OWED")).toEqual([{ type: "PRIZES_OWED", seat: "p1", count: 2 }]);
   });
 
-  it("🛑 the control: Claw of Darkness's 200 damage Knocks the same Clefairy ex Out BY DAMAGE, and P1 takes 1 fewer", () => {
+  it("the control: Claw of Darkness's 200 damage Knocks the same Clefairy ex Out BY DAMAGE, and P1 takes 1 fewer", () => {
     const { events } = mustApply(pearlBoard(), clawOfDarkness);
     expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(ofType(events, "PRIZE_REDUCED")).toEqual([
@@ -245,7 +223,7 @@ describe("B08 §1 — Lillie's Pearl: \"… is Knocked Out by damage from an att
 });
 
 describe('B08 §2 — Legacy Energy: "… Knocked Out by damage from an attack … This effect of your Legacy Energy can\'t be applied more than once per game."', () => {
-  it("🛑 Terminal Period's damage-free Knock Out reduces NOTHING and leaves the once-per-game latch UNSPENT", () => {
+  it("Terminal Period's damage-free Knock Out reduces NOTHING and leaves the once-per-game latch UNSPENT", () => {
     const { state: after, events } = mustApply(legacyBoard(), terminalPeriod);
     expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);
     expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
@@ -254,7 +232,7 @@ describe('B08 §2 — Legacy Energy: "… Knocked Out by damage from an attack �
     expect(after.oncePerGameSpent).toEqual({ p1: [], p2: [] });
   });
 
-  it("🛑 the control: Claw of Darkness's damage Knock Out reduces 2 → 1 and spends the latch", () => {
+  it("the control: Claw of Darkness's damage Knock Out reduces 2 → 1 and spends the latch", () => {
     const { state: after, events } = mustApply(legacyBoard(), clawOfDarkness);
     expect(ofType(events, "PRIZE_REDUCED")).toEqual([
       { type: "PRIZE_REDUCED", seat: "p2", uid: expect.any(String), by: 1, count: 1 },

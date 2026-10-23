@@ -19,37 +19,6 @@ import {
 } from "./testFixtures";
 import type { GameState, Seat } from "./types";
 
-// D210 — the §7.3 SHARED STADIUM's activated ability, projected onto the online
-// wire (`turn:action.stadiumAbility`) so the online HUD can offer it at all.
-//
-// D102 shipped the action (`useStadiumAbility`, cardplay.ts) with no wire surface
-// on either half, and D209 established what that cost: Levincia sv09-150 /
-// sv10-244 and Spikemuth Gym sv10-169 are Standard-legal (regulation I), are in
-// the registry, and reach real online matches because deck load applies no format
-// gate — so a player could put one in play, watch it sit there, and never be
-// offered its printed effect. A FIDELITY gap, not a soft-lock (both programs park
-// on `chooseCards`, dialoged since 2b-iii-c).
-//
-// This file pins the FOLD, and it pins it against `applyAction` rather than
-// against a restatement of `applyAction`'s terms. A projection that merely
-// type-checks is the failure mode here: the whole value of `redactedStadiumAbilityOf`
-// is that the button and the engine gate cannot disagree, and the only way to
-// check that is to ask both.
-//
-// The four realistic wrong implementations, and where each one dies:
-//   (a) offering the Stadium to BOTH seats — "the actor alone" below, driven from
-//       BOTH sides of the table so a hard-coded seat dies too;
-//   (b) reading the once-per-turn state from the wrong place — "greys once used",
-//       plus the re-arm case, which a per-seat misreading gets wrong;
-//   (c) dropping the `programPlayable` term — NOT killable against the printed
-//       pool, and this file says so out loud rather than shipping a guard that
-//       cannot fail (D200/D204/D205's mistake, three times this session). The
-//       vacuity is PINNED instead: see the last block. (🆕🆕🆕 D606 (D539): "NOT
-//       killable" is WITHDRAWN — Surfing Beach `me01-129` / `me04-114` whiff-gates on a
-//       {W} Active with no Benched {W}, and the D606 block at the end kills (c).)
-//   (d) dispatching without the seat — a client-side mutant, killed in
-//       `src/features/online/components/OnlineHud.stadiumAbility.dom.test.tsx`.
-
 const BOTH = { p1: STADIUM_ABILITY_DECK, p2: STADIUM_ABILITY_DECK };
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — no §4 restrictions.
@@ -84,8 +53,6 @@ describe("redactGame — the §7.3 Stadium activation offer, to the ACTOR ALONE"
       disabled: false,
       reason: null,
     });
-    // RED IF the `viewerSeat !== turnSeat` guard is dropped — mutant (a). The
-    // opponent would get a live button for an action `turnGate` answers WRONG_SEAT.
     expect(offerFor(p1Turn, "p2")).toBeNull();
 
     // …and again with the seats swapped, so a fold that hard-coded "p1" (or read
@@ -104,10 +71,6 @@ describe("redactGame — the §7.3 Stadium activation offer, to the ACTOR ALONE"
   it("withholds the AFFORDANCE, not the card — which is why the leak test is about the offer", () => {
     const state = deepFreeze(withStadium(p1Turn2(1), "p1", "sv03-196"));
     const opponentView = redactGame(state, "p2");
-    // The Stadium card itself is PUBLIC to both viewers (§7.3, board.stadium) and
-    // always was. So a "does p2's snapshot mention Town Store" test would be
-    // VACUOUSLY GREEN — it would pass whether or not the offer leaked. This
-    // asserts the card IS there precisely so the null above means what it says.
     expect(opponentView.board.stadium?.name).toBe("Town Store");
     expect(opponentView.phase.kind).toBe("turn:action");
     if (opponentView.phase.kind !== "turn:action") throw new Error("expected turn:action");
@@ -116,10 +79,6 @@ describe("redactGame — the §7.3 Stadium activation offer, to the ACTOR ALONE"
 
   it("withholds it from a SPECTATOR watching either side (3c-vii)", () => {
     const state = deepFreeze(withStadium(p1Turn2(1), "p1", "sv03-196"));
-    // The one `actor = null` gate in redactPhase is what does this — the reason a
-    // new affordance on this arm is withheld by DEFAULT rather than by remembering
-    // to. RED IF this fold reads `phase.seat` itself instead of the `turnSeat`
-    // parameter that gate nulls.
     expect(offerFor(state, "p1", true)).toBeNull();
     expect(offerFor(state, "p2", true)).toBeNull();
   });
@@ -128,10 +87,6 @@ describe("redactGame — the §7.3 Stadium activation offer, to the ACTOR ALONE"
     const bare = deepFreeze(p1Turn2(1));
     expect(bare.stadium).toBeNull();
     expect(offerFor(bare, "p1")).toBeNull();
-    // Beach Court is a real Stadium with a real printed effect and NO activated
-    // ability — `programFor(id).stadium.ability` is undefined. RED IF the fold
-    // offers a row for any Stadium in play, which would put a button in front of a
-    // player for a card that prints none.
     const beachCourt = deepFreeze(withStadium(p1Turn2(1), "p1", "sv01-167"));
     expect(beachCourt.stadium).not.toBeNull();
     expect(programFor("sv01-167")?.stadium?.ability).toBeUndefined();
@@ -160,15 +115,9 @@ describe("redactGame — the once-per-turn greying, and the re-arm", () => {
     const done = deepFreeze(activateTownStore(withStadium(p1Turn2(1), "p1", "sv03-196")));
     expect(done.phase.kind).toBe("turn:action");
     expect(done.allowances.stadiumAbilityUsed).toBe(true);
-    // RED IF the `allowances.stadiumAbilityUsed` term is dropped — mutant (b). The
-    // HUD would light a row the engine answers STADIUM_ABILITY_ALREADY_USED, which
-    // is the class of bug `redactedAttacksOf`'s ⚠️ blocks exist for.
     expect(offerFor(done, "p1")).toEqual({
       label: "Town Store",
       disabled: true,
-      // Matching the Ability/Trainer rows: null when the disable is self-evident
-      // (already used this turn). RED IF someone invents a string here — the row's
-      // tooltip contract is shared across the three folds.
       reason: null,
     });
   });
@@ -177,10 +126,6 @@ describe("redactGame — the once-per-turn greying, and the re-arm", () => {
     const done = activateTownStore(withStadium(p1Turn2(1), "p1", "sv03-196"));
     const p2Turn = deepFreeze(must(applyAction(done, { type: "endTurn", seat: "p1" })));
     expect(p2Turn.allowances.stadiumAbilityUsed).toBe(false);
-    // RED IF the fold ever grew per-seat bookkeeping for a flag that has none:
-    // `TurnAllowances` is ONE object that resets at the turn boundary, so P2's
-    // fresh turn re-offers the SAME shared Stadium, undimmed. A fold that cached
-    // "p1 used it" would grey this.
     expect(offerFor(p2Turn, "p2")).toEqual({
       label: "Town Store",
       disabled: false,
@@ -198,10 +143,6 @@ describe("redactGame — the once-per-turn greying, and the re-arm", () => {
     if (activator.kind !== "effect:choose" || opponent.kind !== "effect:choose") {
       throw new Error("expected effect:choose on both views");
     }
-    // The fidelity claim D209 made about this action ("it parks on chooseCards,
-    // which is dialoged") re-checked at the point it now matters — a button that
-    // parks a client with no prompt is D157's soft-lock. RED IF the park ever
-    // stops reaching the answerer.
     expect(activator.prompt?.kind).toBe("chooseCards");
     // …and the deck cards the search REVEALED stay off the opponent's wire, the
     // answerer gate this park depends on.
@@ -244,10 +185,6 @@ describe("redactGame — the offer AGREES WITH THE ENGINE GATE, state for state"
         actor: "p2",
       },
     ];
-    // The biconditional, per case: a lit button ⟺ the engine accepts. Every term
-    // of the fold (a Stadium in play, that Stadium having an ability, the
-    // once-per-turn flag) is a way to break this, and it cannot be satisfied by
-    // restating the fold — the right-hand side runs `cardplay.ts` for real.
     const pressable: string[] = [];
     const accepted: string[] = [];
     for (const { name, state, actor } of cases) {
@@ -263,24 +200,12 @@ describe("redactGame — the offer AGREES WITH THE ENGINE GATE, state for state"
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// A STANDARD-LEGAL driver, end to end — the card the gap was actually about.
-//
-// Levincia is not in FIXTURE_POOL and is deliberately not added to it: that pool's
-// real-id rows are swept against the live catalog, and this file makes no claim
-// about the printing beyond its id and its Stadium-ness (which is all the registry
-// keys on). The row is local and minimal on purpose.
-
 const LEVINCIA: Card = {
   ...trainerCard("sv09-150", "Stadium", "Once during each player's turn…"),
   name: "Levincia",
   regulationMark: "I",
 };
 
-/** TEST SURGERY: Levincia in the shared zone plus `lightning` Basic {L} Energy in
-    `owner`'s discard — the zone its `discardPileRetrieval` reads. Surgery rather
-    than a drag because the card has no FIXTURE_POOL row to deal into a deck; the
-    engine reads the pool off the STATE, so adding it here is the whole change. */
 function withLevincia(state: GameState, owner: Seat, lightning: number): GameState {
   const stadiumUid = "levincia-stadium";
   const energyUids = Array.from({ length: lightning }, (_, i) => `levincia-energy-${i}`);
@@ -337,7 +262,6 @@ describe("redactGame — Levincia sv09-150, the Standard-legal driver (D209's fi
       }),
     );
     expect(done.phase.kind).toBe("turn:action");
-    // Both Energy moved discard → hand, and the row is now greyed for the turn.
     expect(done.players.p1.discard).not.toContain("levincia-energy-0");
     expect(done.players.p1.hand).toContain("levincia-energy-0");
     expect(offerFor(done, "p1")).toEqual({ label: "Levincia", disabled: true, reason: null });
@@ -347,9 +271,7 @@ describe("redactGame — Levincia sv09-150, the Standard-legal driver (D209's fi
 // ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
-describe('the `programPlayable` term in the fold is correct and, today, UNREACHABLE (🆕🆕🆕 D606 (D539): "UNREACHABLE" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)', () => {
-  /** Every printed Stadium ability the registry implements — D209's census, kept
-      as a literal because `REGISTRY` is not exported and this list is the claim. */
+describe('the `programPlayable` term in the fold is correct and, today, UNREACHABLE ( D606 (D539): "UNREACHABLE" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)', () => {
   const STADIUM_ABILITY_IDS = [
     "sv02-171", // Artazon
     "sv03-229", // Artazon (reprint)
@@ -357,23 +279,10 @@ describe('the `programPlayable` term in the fold is correct and, today, UNREACHA
     "sv03-196", // Town Store
     "sv09-150", // Levincia
     "sv10-244", // Levincia (reprint)
-    "sv10-169", // Spikemuth Gym
-    // 🆕🆕🆕 D561 — the EIGHTH, and the first that is neither a deck search nor a discard
-    // retrieval: Academy at Night's program is a `payFromHand { count: 1, to: "deckTop" }`.
-    // Measured, not assumed: `programFor(id)?.stadium?.ability` over every audited id
-    // returns exactly these eight. `programPlayable` gates `payFromHand` NEITHER (its hand
-    // cost is `handCostUnmet`'s, a separate term), so the loop below still holds for it.
-    "sv06.5-054", // Academy at Night
-    // 🆕🆕🆕 D564 — the NINTH and TENTH, and the first two with a PRINTED GATE
-    // (`StadiumAbility.playableIf`, read by the fold's early return — driven in
-    // `trainerBundleD564.test.ts`). "Exactly these eight" above is WITHDRAWN (D539): the
-    // measurement over every audited id now returns these ten. Their programs are `drawCards 2`
-    // and `healEach 10`, which `programPlayable` gates NEITHER, so the loop below still holds.
+    "sv10-169",
+    "sv06.5-054",
     "sv10-173", // Team Rocket's Factory
-    "sv06-146", // Community Center
-    // 🆕🆕🆕 D606 — three of WP25a's four `me` Stadium-ability programs: `payFromHand` + `drawCards`,
-    // a Bench search and `healEach`, none of which `programPlayable` gates, so the loop below holds
-    // for them. The FOURTH, Surfing Beach, is NOT here: its `switchActive` IS gated — the D606 block.
+    "sv06-146",
     "me04-080", // Prism Tower
     "me04-111", // Prism Tower
     "me03-077", // Lumiose City
@@ -386,22 +295,13 @@ describe('the `programPlayable` term in the fold is correct and, today, UNREACHA
     for (const id of STADIUM_ABILITY_IDS) {
       expect(programFor(id)?.stadium?.ability).toBeDefined();
     }
-    // RED the day an eighth printing lands in FIXTURE_POOL without joining the
-    // list above — which is how this block stops silently under-scanning.
-    // 🆕🆕🆕 D561: the eighth (Academy at Night) is in the list now, so read "a ninth" —
-    // or, without the ordinal, ANY Stadium-ability printing in the pool the list lacks.
     const inPool = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.stadium?.ability !== undefined,
     );
     expect(inPool.sort()).toEqual(["sv01-178", "sv02-171", "sv03-196"]);
   });
 
-  it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term (🆕🆕🆕 D606 (D539): WITHDRAWN as a claim about EVERY printed Stadium — it holds for the ids listed; Surfing Beach whiff-gates)", () => {
-    // The most adverse board `programPlayable` has gates for: nothing in either
-    // deck, discard or hand, no opponent Bench, no Energy anywhere. If ANY of the
-    // seven (🆕🆕🆕 D561: eight; 🆕🆕🆕 D564: ten) programs contained a `gust` / `switchActive` / `moveEnergy` /
-    // `discardEnergy` / `attachEnergyFrom` / `bottomFromOpponentHand` /
-    // `damageChosen` op, this state would make it false.
+  it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term ( D606 (D539): WITHDRAWN as a claim about EVERY printed Stadium — it holds for the ids listed; Surfing Beach whiff-gates)", () => {
     const base = p1Turn2(1);
     const stripped: GameState = {
       ...base,
@@ -413,16 +313,6 @@ describe('the `programPlayable` term in the fold is correct and, today, UNREACHA
     for (const id of STADIUM_ABILITY_IDS) {
       const ability = programFor(id)?.stadium?.ability;
       if (ability === undefined) throw new Error(`${id} has no stadium ability`);
-      // ⚠️ THIS IS THE ADMISSION, PINNED. Every printed Stadium ability searches a
-      // deck or retrieves from a discard (🆕🆕🆕 D561: or, Academy at Night, pays a hand
-      // card to the deck top — `payFromHand`, which `programPlayable` does not gate
-      // either; its hand cost is the fold's separate `handCostUnmet` term, REACHABLE and
-      // driven in `stadiumsD561.test.ts` §3), and `programPlayable` gates NEITHER (see
-      // cardplay.ts — "a deck search is always playable enough"). So the term
-      // `!programPlayable(...)` in `redactedStadiumAbilityOf` cannot currently
-      // return true, mutant (c) SURVIVES against the real pool, and no assertion
-      // in this file pretends otherwise. (🆕🆕🆕 D606 (D539): of the LISTED ids only — Surfing
-      // Beach is not listed, and the D606 block kills mutant (c).)
       expect(programPlayable(stripped, ability.program, "p1")).toBe(true);
     }
     // The control that makes the loop above mean something: this state DOES make
@@ -431,17 +321,6 @@ describe('the `programPlayable` term in the fold is correct and, today, UNREACHA
     expect(programPlayable(stripped, [{ op: "gust" }], "p1")).toBe(false);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 🆕🆕🆕 D606 — SURFING BEACH, THE FIRST PRINTED STADIUM PROGRAM `programPlayable` REFUSES.
-//
-// Surfing Beach `me01-129` / `me04-114` (*"Once during each player's turn, that player may switch
-// their Active {W} Pokémon with 1 of their Benched {W} Pokémon."*) is a `switchActive { targetType:
-// "Water" }` behind a `yourActiveHasType Water` gate. With a {W} Active (the gate holds) and no
-// Benched {W}, the switch has no candidate: `useStadiumAbility` answers NO_LEGAL_TARGET and the fold
-// greys the row "No legal target" — the term D210 pinned as unreachable, now driven, so the
-// `D210-programPlayable` row is KILLED here. The Stadium and a {W} body are GRAFTED into the pool;
-// the Stadium is put into play by the real `playTrainer`, and the Active's card id is the surgery.
 
 const SURFING_BEACH = "me01-129";
 const D606_WATER = "d606-water";
@@ -481,12 +360,10 @@ function surfingBeachBoard(benchedWater: boolean): GameState {
   return benchedWater ? benchFromDeck(played, "p1", D606_WATER) : played;
 }
 
-describe("🆕🆕🆕 D606 — the `programPlayable` term, REACHED by Surfing Beach", () => {
+describe("D606 — the `programPlayable` term, REACHED by Surfing Beach", () => {
   it('a {W} Active with no Benched {W}: the row greys "No legal target" and the engine refuses NO_LEGAL_TARGET', () => {
     const board = deepFreeze(surfingBeachBoard(false));
     expect(board.players.p1.bench).toEqual([]);
-    // RED IF the fold drops `!programPlayable` (D210-programPlayable): the row would light for a click
-    // `useStadiumAbility` answers NO_LEGAL_TARGET.
     expect(offerFor(board, "p1")).toEqual({
       label: "Surfing Beach",
       disabled: true,

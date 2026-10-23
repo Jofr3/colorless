@@ -20,49 +20,7 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.81.0 → 0.82.0 — the UNCONDITIONAL MILL, both directions (D131). "Discard the
-// top [{N} cards|card] of your [opponent's] deck." — 16 printings / 7 distinct
-// clauses on ONE anchored regex and ONE deriver arm, the largest single mapping any
-// slice in this family has taken.
-//
-// THE OP WAS ALREADY BUILT. D130 shipped `discardOpponentDeckTop` for the coin
-// family and wrote into its own doc block that the own-deck reading was a live
-// unmapped sentence which "the first slice that maps it widens this field then, with
-// two readings in hand rather than one guessed at". This suite is the receipt for
-// that: `discardDeckTop { whose: "self" | "opponent"; count }`, one widened field, no
-// new member, and the interpreter arm grew ONE ternary.
-//
-// WHAT THIS FILE PINS, and why each half is here:
-//   • THE ANCHOR, on all 7 distinct clauses and against the 5 REAL catalog rows it
-//     must refuse. Four of those five are one clause away from a match, and the
-//     fifth (Camerupt sv03-032) is the same words aimed at BOTH decks with a damage
-//     bonus riding on what was discarded — the one that would do real damage if the
-//     anchor loosened.
-//   • THE SINGULAR BRANCH. "the top card" captures no digits and must still mean 1 —
-//     the only place the deriver invents a number rather than reading one. The
-//     alternation is about the two printed SPELLINGS; it does not filter "the top 1
-//     cards" (unprinted, but unambiguous), and "the top cards" names no amount at all.
-//   • THE DIRECTION, end to end and on BOTH seats — including the case that makes
-//     the widening honest: Gyarados swsh10.5-022 mills the OPPONENT at index 0 (D130,
-//     behind a coin) and its OWN deck at index 1 (D131, flat), so one card runs one
-//     action both ways and a `whose` that were ignored would fail here and nowhere
-//     else.
-//   • THE ORDER. Nine of the sixteen printings carry printed damage, and the ops run
-//     at attack.ts's TAIL (D125), so "230 damage, then discard 5 of your own"
-//     resolves in the printed order for free — asserted rather than assumed.
-//   • §14.3 IS STILL A DRAW-STEP RULE, on the direction that is new. An OPPONENT
-//     mill-out loses in the same event batch (attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so their turn
-//     starts here); a SELF mill-out loses A FULL TURN LATER, and that asymmetry is
-//     entirely in the rule rather than in the op.
-//   • NO RNG, NO PARK, NO REGISTRY ROW.
-
-/** The seven distinct clauses of the pool, verbatim, and the op each derives to.
-    Censused against the local D1 (2026-08-01) over the WHOLE effect string, 16
-    printings in all: this is the whole mapped set and nothing else in 978 cards / 6 sets
-    prints the shape. Named here rather than inlined so a table-driven case and the
-    end-to-end cases below cannot drift apart. */
 const CLAUSES = [
-  // OPPONENT-side — 7 printings across 2 clauses.
   {
     text: "Discard the top card of your opponent's deck.",
     op: { op: "discardDeckTop", whose: "opponent", count: 1 },
@@ -73,10 +31,8 @@ const CLAUSES = [
   {
     text: "Discard the top 2 cards of your opponent's deck.",
     op: { op: "discardDeckTop", whose: "opponent", count: 2 },
-    // Chi-Yu ex sv02-040 / -234 / -259 ("Jealously Singe") — three printings, one card.
     printings: 3,
   },
-  // OWN-side — 9 printings across 5 clauses, and the reading D130 declined.
   {
     text: "Discard the top card of your deck.",
     op: { op: "discardDeckTop", whose: "self", count: 1 },
@@ -92,8 +48,6 @@ const CLAUSES = [
   {
     text: "Discard the top 3 cards of your deck.",
     op: { op: "discardDeckTop", whose: "self", count: 3 },
-    // Haxorus sv06.5-046 ("Dragon Pulse" — the same attack NAME as Fraxure's, a
-    // different count, which is why the census is over the TEXT and not the name).
     printings: 1,
   },
   {
@@ -110,45 +64,6 @@ const CLAUSES = [
   },
 ] as const;
 
-/** The FIVE real catalog rows this anchor must refuse, verbatim off the local D1.
-    Every one of them contains the mapped words; not one of them is the mapped
-    sentence, and the refusal is the anchors alone in every case. They are this
-    file's "stays LOUD" witnesses, and better ones than an invented string would be:
-      • Wiglett sv01-056 — the same action on the same zone, GATED behind a flip,
-        printed by a card one evolution below Wugtrio. SIMULATED SINCE 0.85.0 by
-        `FLIP_DECK_TOP_MILL` (D134), which is why its case below is a SHAPE claim
-        rather than a null: what this file asserts is that the BARE anchor does not
-        claim it, and the proof is that the derived program is a `coinFlipGate` whose
-        branch is this anchor's own singular reading — not a bare mill.
-      • Wugtrio sv01-057 / Gyarados swsh10.5-022 idx 0 — D130's per-heads programs.
-        They ARE simulated, by `deriveAttackCoinFlip`; what is pinned here is that
-        the BARE reader does not also claim them, because two readers on one string
-        is an invariant nobody enforces.
-      • Whiscash sv03-109 — a BOARD-COUNTED amount ("For each {F} Energy attached to
-        this Pokémon, discard the top card of your opponent's deck."). Genuinely
-        unmapped, and the shape D128 would answer if anyone wanted it.
-      • corpus FILE LINE 130 — "Discard the top card of EACH PLAYER'S deck. This attack
-        does 140 more damage for each Energy card discarded in this way." Two decks
-        AND a damage bonus that reads WHAT was discarded. The dangerous one: a
-        loosened anchor would mill one deck and silently drop the bonus.
-
-    🛑🛑 **D490 — THE FIFTH ENTRY WAS A PHANTOM, AND THE BLOCK ABOVE CALLED IT
-    "verbatim off the local D1".** It read **100** more damage; the committed
-    `legal_standard = 1` column prints **140**, on the one and only row containing
-    *"each player's deck"* (measured by `legalAttackCorpus().filter(…)`, and the rung
-    below now asserts corpus membership rather than trusting the bytes). That is D452's
-    defect exactly — *a byte pin on an invented string is green by construction*, because
-    the pin measures the invention as faithfully as it would measure the truth — arriving
-    through a hand-retyped DAMAGE FIGURE rather than a hand-retyped opening. ⚠️ The
-    slice number is stated rather than the card: this checkout has no D1, so whether the
-    row is Camerupt `sv03-032` is UNRESOLVABLE here and the id has been replaced by the
-    corpus FILE LINE, which is (D448) the citation convention this repo mandates.
-
-    🛑 **AND THE ENTRY IS NO LONGER A "genuine gap": D490 BUILT IT.** It is kept in
-    this list, and the rung below is re-pointed rather than deleted (D444/D482), because
-    what it has always really guarded is DISJOINTNESS — that the bare `\.$`-anchored mill
-    does not reach across a sentence break — and that claim is STRONGER now that a
-    different reader owns the whole string. */
 const REAL_NEAR_MISSES = [
   "Flip a coin. If heads, discard the top card of your opponent's deck.",
   "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.",
@@ -157,12 +72,6 @@ const REAL_NEAR_MISSES = [
   "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.",
 ] as const;
 
-/** U+2019, the CURLY apostrophe, spelled as an ESCAPE rather than typed. The
-    opponent-side clauses carry an ASCII `'` and the pool holds ZERO U+2019 anywhere,
-    so a hand-retyped near-miss is the only way one enters the codebase — and it
-    would drop four printings onto the loud path with no number to notice it by. The
-    regex accepts BOTH (`['’]`), which is the family's standing choice; this pins
-    that the acceptance is deliberate rather than accidental. */
 const RSQUO = "\u2019";
 
 /** U+00A0, likewise an escape. Byte-different from an ASCII space and INVISIBLE in
@@ -183,11 +92,6 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** Skwovet prints "Nicked Nibble" (the mill) FIRST and "Gentle Slap" (a flat 10)
-    second; Gyarados prints "Wreak Havoc" (D130's coin mill) first and "Wild Splash"
-    (this slice's own-deck mill) second. Named rather than inlined, so a reprint that
-    reordered an attack fails on the fixture guards below rather than silently moving
-    every board case onto the wrong sentence. */
 const NIBBLE_INDEX = 0;
 const SLAP_INDEX = 1;
 const SPLASH_INDEX = 1;
@@ -198,25 +102,8 @@ const NIBBLE_MILL = 1;
 const SPLASH_MILL = 5;
 const SPLASH_DAMAGE = 230;
 
-/** ATTACKING ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the OPPONENT's turn starts inside the same
-    event batch and they DRAW — one more card off the very deck an opponent-side mill
-    just shortened. Named rather than folded into the numbers, because it is the one
-    thing that makes "P2's deck is 1 shorter" mean two different things depending on
-    which attack ran, and a silent `+ 1` in a slice about deck sizes is exactly the
-    kind of arithmetic that hides an off-by-one in the op. The ATTACKER never draws
-    here, which is why the self-mill assertions carry no such term. */
 const TURN_START_DRAW = 1;
 
-/** ONE BOARD, NO SWEEP. Nothing in this slice takes a coin, so there is no seed to
-    vary and a single deterministic board is the whole account — which is itself part
-    of what the suite claims (see the rng case at the end).
-
-    Setup then open P1's turn 2 (P2 went first and passed), so the attack step is
-    legal (§4). Both Active spots are pinned to fix-titan (340 HP, no Weakness, no
-    Resistance, NO ATTACKS) by surgery: Wild Splash's 230 cannot KO it, so no
-    promotion can park mid-batch and truncate a row sequence, and no defender attack
-    can interleave rows with the ones being counted. The board under test is not the
-    Pokémon — it is the DECKS. */
 function board(): GameState {
   let state = driveSetup(7, { p1: DECK_TOP_MILL_DECK, p2: DECK_TOP_MILL_DECK }, { first: "p2" });
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -225,10 +112,6 @@ function board(): GameState {
   return state;
 }
 
-/** Skwovet Active with one {C} paid — enough for EITHER of its attacks, which is the
-    point: the two cost the same, so nothing but the declared INDEX tells them apart
-    and an implementation keyed to the card rather than to the attack's text fails on
-    the control. */
 function skwovetActive(state: GameState, seat: Seat): GameState {
   return attachFromDeck(setActiveFromDeck(state, seat, "sv03-178"), seat, "fix-energy", 1);
 }
@@ -257,10 +140,6 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     for (const { text, op } of CLAUSES) {
       expect(deriveAttackEffect(text)).toEqual([op]);
     }
-    // THE CENSUS, ASSERTED AS A SHAPE. 7 distinct clauses / 16 printings, split 2 and
-    // 5 by direction and 7 and 9 by printing. These are the numbers the slice claims
-    // and the numbers a re-census has to reproduce; keeping them in the table means a
-    // clause added without its printing count fails here rather than quietly drifting.
     const sum = (whose: string) =>
       CLAUSES.filter((c) => c.op.whose === whose).reduce((n, c) => n + c.printings, 0);
     expect(CLAUSES).toHaveLength(7);
@@ -287,25 +166,14 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     // refused. That is what the alternation is for: the two branches are two printed
     // spellings, and a sentence belonging to neither has no reading.
     expect(deriveAttackEffect("Discard the top cards of your deck.")).toBeNull();
-    // "the top 1 cards" IS accepted, and deliberately not special-cased. It is not
-    // English and no card prints it, but `\d+` covers it and the only way to refuse
-    // it would be a digit class that exists to reject one string — buying nothing,
-    // since the reading is unambiguous and identical to the singular's. Pinned so
-    // that "the alternation is about SPELLING, not about filtering 1" is on the
-    // record rather than rediscovered from a regex.
     expect(deriveAttackEffect("Discard the top 1 cards of your deck.")).toEqual([
       { op: "discardDeckTop", whose: "self", count: 1 },
     ]);
   });
 
   it("refuses a printed ZERO — the guard every arm of this reader carries", () => {
-    // A "top 0 cards" printing is not a real card and would derive to a silent
-    // no-op: the attack would report a simulated effect and move nothing. Loud path.
     expect(deriveAttackEffect("Discard the top 0 cards of your deck.")).toBeNull();
     expect(deriveAttackEffect("Discard the top 0 cards of your opponent's deck.")).toBeNull();
-    // No CEILING, by contrast, and deliberately so: the op CLAMPS to the deck (§8.6),
-    // so a malformed large count mills a deck and stops. That is a legal board state,
-    // not a runaway — the thing D129 refused to add a ceiling for.
     expect(deriveAttackEffect("Discard the top 999 cards of your deck.")).toEqual([
       { op: "discardDeckTop", whose: "self", count: 999 },
     ]);
@@ -313,10 +181,6 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
 
   it("refuses the FIVE real catalog rows that share its words", () => {
     for (const [index, text] of REAL_NEAR_MISSES.entries()) {
-      // Index 0 (Wiglett, gated) has been simulated since 0.85.0 by ANOTHER arm of
-      // this same reader, so a null is no longer the right claim for it — see the
-      // gated case below, which is strictly stronger. Every other row must still
-      // derive to nothing here.
       if (index === 0) continue;
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -325,26 +189,12 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     // printed string, never two.
     expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[1])).not.toBeNull();
     expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[2])).not.toBeNull();
-    // 🆕🆕🆕 **D490 — RE-POINTED, AND THE OLD CLAIM'S REFUSALS ARE ALL KEPT.** The
-    // old rung said the two-deck row *"stays loud on BOTH readers — a genuine gap"*. It
-    // is BUILT now, by `deriveAttackDiscardScaledBoost`'s `eachDeckMill` member, so the
-    // "genuine gap" half is false. The half that was load-bearing is not: this file's
-    // bare anchor still refuses it (`\.$` against a sentence break) and so does the
-    // ADDITIVE damage-bonus reader (its count sources are board facts read at
-    // DECLARATION, where a §9.2 record can only be read from inside the program). Both
-    // are kept, and the OWNER is named beside them — a bare `.not.toBeNull()` re-point
-    // would have been true under a build that widened THIS anchor across the break,
-    // which is exactly the defect the entry was written for (D438).
     expect(deriveAttackEffect(REAL_NEAR_MISSES[4])).toBeNull();
     expect(deriveAttackDamageBonus(REAL_NEAR_MISSES[4])).toBeNull();
     expect(deriveAttackDiscardScaledBoost(REAL_NEAR_MISSES[4])).toEqual({
       kind: "eachDeckMill",
       per: 140,
     });
-    // 🛑 **AND THE SPECIMEN IS A ROW OF THE COMMITTED CORPUS, WITH ITS PRINTING COUNT
-    // READ OFF THE CORPUS TOO** (D452/D456/D448). This is the repair for the phantom the
-    // block at the top of the file describes: an entry that is merely byte-pinned can
-    // drift onto a sentence nobody prints and take a refusal with it.
     expect(
       legalAttackCorpus()
         .filter(([, t]) => t === REAL_NEAR_MISSES[4])
@@ -353,18 +203,8 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
   });
 
   it("leaves Wiglett's GATED printing to the flip anchor — and the mill inside it is THIS one", () => {
-    // RE-POINTED AT 0.85.0 (D134). Wiglett sv01-056 "Dig a Little" was this file's
-    // sharpest near-miss from 0.82.0 until `FLIP_DECK_TOP_MILL` mapped it; per the
-    // standing rule the case was re-pointed rather than deleted, and it now makes a
-    // stronger claim than the null did. THIS anchor still refuses the string — it
-    // starts at `^Discard` and the gated printing does not — so the gate cannot be
-    // dropped by a loosened body, which is the danger the case always guarded.
     const gated = REAL_NEAR_MISSES[0];
     expect(gated.startsWith("Discard")).toBe(false);
-    // The proof is the SHAPE: what comes back is a `coinFlipGate` whose branch is
-    // exactly what this anchor derives for the bare singular — including the
-    // `count: 1` it invents rather than reads. A build that let the bare body claim
-    // the gated string would return that inner op at the TOP level, unwrapped.
     expect(deriveAttackEffect(gated)).toEqual([
       {
         op: "coinFlipGate",
@@ -390,22 +230,12 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
       // and the reason no /i flag is on this regex.
       "discard the top 2 cards of your deck.",
       "discard the top card of your opponent's deck.",
-      // A CURLY apostrophe is ACCEPTED (`['’]`), unlike the drifts around it — the
-      // family's standing choice, pinned so it reads as deliberate. The pool holds
-      // zero U+2019, so this arm is latent by design.
-      // (asserted positively below, not here)
-      // A NON-BREAKING SPACE where an ASCII one is printed.
       `Discard the top${NBSP}2 cards of your deck.`,
       // An INTERIOR double space is not trimmable.
       "Discard the top  2 cards of your deck.",
       // Leading text pins `^` — and this is not hypothetical: it is how a rider
       // sentence would arrive.
       "Before doing damage, discard the top 2 cards of your deck.",
-      // A SECOND SENTENCE riding the same action — the shape the `$` exists for. No
-      // pool printing extends these clauses today, which is precisely why the guard
-      // is pinned now: the first one that does must land LOUDLY rather than
-      // half-resolve, dropping a rider the engine never saw. (Camerupt is the live
-      // proof that such printings exist at all.)
       "Discard the top 2 cards of your deck. Your opponent's Active Pokémon is now Confused.",
       "Discard the top card of your opponent's deck. Then, shuffle your deck.",
       // THE OTHER ZONES. "hand" and "discard pile" are different zones and different
@@ -461,8 +291,6 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
   });
 
   it("matches FIXTURE_POOL char-for-char for Gyarados's OWN-deck attack", () => {
-    // THE WIDENING'S PROOF CASE, and it needed no new bytes: D130 already fielded
-    // "Wild Splash" on this fixture as its refused near-miss, verbatim off the D1.
     const splash = FIXTURE_POOL["swsh10.5-022"]?.attacks?.[SPLASH_INDEX];
     expect(splash).toEqual({
       cost: ["Water", "Water", "Colorless", "Colorless"],
@@ -470,9 +298,6 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
       effect: "Discard the top 5 cards of your deck.",
       damage: SPLASH_DAMAGE,
     });
-    // ONE CARD, ONE ACTION, BOTH DIRECTIONS. Index 0 mills the OPPONENT (D130, behind
-    // an until-tails coin); index 1 mills its OWN deck (D131, flat). If `whose` were
-    // ignored anywhere downstream, THIS is the card it would show up on.
     expect(deriveAttackEffect(splash?.effect ?? "")).toEqual([
       { op: "discardDeckTop", whose: "self", count: SPLASH_MILL },
     ]);
@@ -485,11 +310,6 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
   });
 
   it("pins Paldean Clodsire's second attack, which D131 turned from control to case", () => {
-    // sv03-128 "Muddy Hammer" ({D}{C}{C}, 100) was retreatLock.test.ts's "one card,
-    // one derived attack" control while it was UNSIMULATED. It is now simulated, and
-    // that suite's "does not inherit down the attack index" case became STRONGER: the
-    // index-1 attack derives a DIFFERENT op rather than none, so the lock being absent
-    // there is a statement about the declared attack's text and not about an absence.
     expect(FIXTURE_POOL["sv03-128"]?.attacks?.[1]?.effect).toBe(
       "Discard the top card of your opponent's deck.",
     );
@@ -526,9 +346,7 @@ describe("the OPPONENT reading, end to end — Skwovet 'Nicked Nibble'", () => {
     // that must NOT move. A `whose` read the wrong way round passes every count
     // assertion above and fails exactly here.
     expect(done.players.p1.deck).toEqual(ownDeckBefore);
-    // The row belongs to the seat whose deck shrank (events.ts: `seat` is the OWNER).
     expect(find(events, "DECK_TOP_DISCARDED")?.seat).toBe("p2");
-    // Simulated, not skipped — and no damage, because the printing has none.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(done.players.p2.active?.damage).toBe(0);
@@ -593,10 +411,8 @@ describe("the OWN reading, end to end — Gyarados 'Wild Splash'", () => {
       ...state.players.p1.discard,
       ...ownDeckBefore.slice(0, SPLASH_MILL),
     ]);
-    // P2's deck lost exactly their turn-start draw — no mill row touched it.
     expect(done.players.p2.deck).toEqual(victimDeckBefore.slice(TURN_START_DRAW));
     expect(done.players.p2.discard).toEqual(state.players.p2.discard);
-    // The row belongs to the ATTACKER here — the one producer whose `seat` swings.
     expect(find(events, "DECK_TOP_DISCARDED")?.seat).toBe("p1");
     // And the printed damage still lands: fix-titan has no Weakness or Resistance, so
     // 230 arrives unmodified and does not KO its 340 HP.
@@ -606,10 +422,6 @@ describe("the OWN reading, end to end — Gyarados 'Wild Splash'", () => {
   });
 
   it("does the DAMAGE FIRST and the mill after — D125's tail placement, asserted", () => {
-    // Nine of the sixteen printings carry printed damage, and the printed order is
-    // "230 damage, then discard 5". Ops run at attack.ts's TAIL, strictly after the
-    // §8.5 pipeline, so that order is free — but "free" is exactly the kind of claim
-    // that stops being true silently, so it is pinned on the one card that shows it.
     const { events } = mustApply(gyaradosActive(board(), "p1"), {
       type: "attack",
       seat: "p1",
@@ -621,9 +433,6 @@ describe("the OWN reading, end to end — Gyarados 'Wild Splash'", () => {
   });
 
   it("runs BOTH of one card's directions on one board — index 0 out, index 1 in", () => {
-    // THE CASE THE WIDENING EXISTS FOR. Gyarados's index 0 is D130's coin mill at the
-    // OPPONENT; its index 1 is D131's flat mill at ITSELF. Same card, same op, and the
-    // only thing that decides which deck shrinks is the op's `whose` field.
     const start = gyaradosActive(board(), "p1");
     const splash = mustApply(start, { type: "attack", seat: "p1", index: SPLASH_INDEX });
     expect(splash.state.players.p1.deck.length).toBe(start.players.p1.deck.length - SPLASH_MILL);
@@ -664,14 +473,10 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
     });
     expect(milledUids(events)).toEqual(deckBefore);
     expect(done.players.p1.deck).toEqual([]);
-    // The row reported what MOVED, not what was printed — the log and the wire agree
-    // with the board rather than with the number on the card.
     expect(find(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(3);
   });
 
   it("mills an ALREADY-EMPTY deck silently — no row, no throw", () => {
-    // Every op finds nothing, so the op is a no-op and emits nothing. A zero-card row
-    // would announce that nothing happened, which is the one thing a log must not do.
     const state = trimDeckTo(skwovetActive(board(), "p1"), "p2", 0);
     const { state: done, events } = mustApply(state, {
       type: "attack",
@@ -684,10 +489,6 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
   });
 
   it("an OPPONENT mill-out loses at THEIR draw — inside this same batch", () => {
-    // §14.3 is a turn-START rule. Milling to zero does not end the game; the loss
-    // happens when the milled player must DRAW and cannot. Attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]
-    // (§5.3), so P2's next turn starts inside this batch and the row really does
-    // arrive here — which makes the claim about WHERE it sits, not whether it exists.
     const state = trimDeckTo(skwovetActive(board(), "p1"), "p2", NIBBLE_MILL);
     const { state: done, events } = mustApply(state, {
       type: "attack",
@@ -709,11 +510,6 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
   });
 
   it("a SELF mill-out loses a FULL TURN LATER — the asymmetry is the RULE, not the op", () => {
-    // THE CASE ONLY THE NEW DIRECTION CAN STATE, and the reason the self-mill needed
-    // no special handling. Wild Splash empties P1's OWN deck. P1's turn ends
-    // immediately after the attack — but the next DRAW is P2's, and P2 has a deck. So
-    // nothing happens in this batch at all: no GAME_OVER, no loss, an empty deck and a
-    // perfectly legal board.
     const state = trimDeckTo(gyaradosActive(board(), "p1"), "p1", SPLASH_MILL);
     const { state: attacked, events } = mustApply(state, {
       type: "attack",
@@ -738,10 +534,6 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
 
 describe("what the mill costs the rest of the engine — nothing", () => {
   it("consumes NO rng: the state's rngState is untouched on both directions", () => {
-    // The op takes the cards in the order they already sit in. That determinism is
-    // what let D130 repeat it once per heads, and it is what lets this whole suite run
-    // on ONE board with no seed sweep — so it is worth an assertion rather than a
-    // comment. (Contrast Gyarados's index 0, whose coin does consume rng.)
     const skwovet = skwovetActive(board(), "p1");
     expect(
       mustApply(skwovet, { type: "attack", seat: "p1", index: NIBBLE_INDEX }).state.rngState,
@@ -753,8 +545,6 @@ describe("what the mill costs the rest of the engine — nothing", () => {
   });
 
   it("never PARKS — the attack resolves to an ordinary action phase", () => {
-    // No choice in "the top N", so no prompt and no continuation. The turn simply
-    // ends [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], which is what every non-parking attack does.
     const { state: done } = mustApply(skwovetActive(board(), "p1"), {
       type: "attack",
       seat: "p1",
@@ -766,9 +556,6 @@ describe("what the mill costs the rest of the engine — nothing", () => {
   });
 
   it("costs ZERO registry rows — all three cards simulate off their printed text", () => {
-    // If any of these grew a row the registry would win (`programFor(id)?.attack?.
-    // [index] ?? derive`) and every assertion above would keep passing while testing
-    // nothing about the text.
     for (const id of ["sv03-178", "swsh10.5-022", "sv03-128"]) {
       expect(programFor(id)).toBeUndefined();
     }

@@ -16,21 +16,10 @@ import {
   deckOf,
   setActiveFromDeck,
   trainerCard,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D564 — THE MRV 35 → 36 TRAINER BUNDLE ──
-//
-//   Amarys                  sv08.5-093 / -132 / -170  Supporter  draw 4; END of turn, 5+ in hand: discard your hand
-//   Team Rocket's Factory   sv10-173                  Stadium    played a "Team Rocket" Supporter this turn: draw 2
-//   Community Center        sv06-146                  Stadium    played a Supporter this turn: heal 10 from each
-//   Crobat                  sv06.5-029                Ability    "Shadowy Envoy": played Janine's Secret Art: draw to 8
-//   Caretaker (rider)       sv06-144 / -203           Supporter  drew any + Community Center in play: shuffle itself in
-//
-// Jasmine's Gaze ×3 (the side-wide next-turn reduction) is `sideDamageNextTurnD564.test.ts`.
-// Every card is driven end-to-end on its REAL id on a LOCAL `cardPool` (D275) in the suite's
-// OWN deck (D270). Texts, subtypes and legality off tcgdex (the audit's card JSON),
-// 2026-09-28. Readings R-AM, R-FC, R-CT, R-CC and the three persisted keys: decisions.md D564.
 
 const AMARYS = ["sv08.5-093", "sv08.5-132", "sv08.5-170"] as const;
 const FACTORY = "sv10-173";
@@ -118,7 +107,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [AMARYS[0]]: 2,
   [AMARYS[1]]: 1,
@@ -138,18 +126,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -441,7 +417,7 @@ describe("§2 — the two NEW `BoardCondition` members, driven both ways", () =>
     expect(conditionHolds(state, "p1", JANINES)).toBe(false);
   });
 
-  it("🛑 the SUBSTRING form holds for a Team Rocket's Supporter and the EXACT form does not", () => {
+  it("the SUBSTRING form holds for a Team Rocket's Supporter and the EXACT form does not", () => {
     const { state, uid } = play(table(), ARIANA);
     expect(state.allowances.supporterPlayedUid).toBe(uid);
     expect(conditionHolds(state, "p1", TR)).toBe(true);
@@ -458,20 +434,20 @@ describe("§2 — the two NEW `BoardCondition` members, driven both ways", () =>
     ).toBe(true);
   });
 
-  it("🛑 the EXACT form holds for Janine's Secret Art and the SUBSTRING form does not", () => {
+  it("the EXACT form holds for Janine's Secret Art and the SUBSTRING form does not", () => {
     const { state } = play(noDarkInDeck(table(), "p1"), JANINE);
     expect(conditionHolds(state, "p1", JANINES)).toBe(true);
     expect(conditionHolds(state, "p1", TR)).toBe(false);
   });
 
-  it("🛑 THE SEAT GUARD — the OTHER seat reads FALSE on the turn owner's Supporter", () => {
+  it("THE SEAT GUARD — the OTHER seat reads FALSE on the turn owner's Supporter", () => {
     const { state } = play(table(), ARIANA);
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(conditionHolds(state, "p1", TR)).toBe(true);
     expect(conditionHolds(state, "p2", TR)).toBe(false);
   });
 
-  it("🛑 THE SEAT GUARD — FALSE for BOTH seats on a checkup-origin ko:* park (activeSeat null), TRUE for the owner mid-attack", () => {
+  it("THE SEAT GUARD — FALSE for BOTH seats on a checkup-origin ko:* park (activeSeat null), TRUE for the owner mid-attack", () => {
     const armed = play(table(), ARIANA).state;
     const parked: GameState = {
       ...armed,
@@ -547,7 +523,6 @@ describe("§3 — Amarys: draw 4, and at the END of the turn, 5 or more in hand 
         expect(all(events, "HAND_DISCARDED")).toEqual([
           { type: "HAND_DISCARDED", seat: "p1", uids: hand },
         ]);
-        // "At the end of this turn" — BEFORE the turn-ended row and the Checkup.
         expect(types.indexOf("HAND_DISCARDED")).toBeLessThan(types.indexOf("TURN_ENDED"));
         expect(next.players.p1.hand).toEqual([]);
         for (const uid of hand) expect(next.players.p1.discard).toContain(uid);
@@ -574,7 +549,7 @@ describe("§3 — Amarys: draw 4, and at the END of the turn, 5 or more in hand 
     expect(next.players.p1.hand).toHaveLength(4);
   });
 
-  it("🛑 R-AM — an ATTACK-ended turn pays it AFTER the Knock Out's prize: 4 + 1 prize = 5 → the hand is discarded", () => {
+  it("R-AM — an ATTACK-ended turn pays it AFTER the Knock Out's prize: 4 + 1 prize = 5 → the hand is discarded", () => {
     const board = table(FILLER, [], VICTIM, [FILLER]);
     const { state } = play(board, AMARYS[0]);
     expect(state.players.p1.hand).toHaveLength(4);
@@ -629,7 +604,7 @@ describe("§3 — Amarys: draw 4, and at the END of the turn, 5 or more in hand 
 describe("§4 — Team Rocket's Factory: a \"Team Rocket\" Supporter licenses one draw 2, on each player's own turn", () => {
   const factory = () => withStadium(table(), FACTORY);
 
-  it("🛑 a Team Rocket's Supporter played this turn: the Stadium draws 2", () => {
+  it("a Team Rocket's Supporter played this turn: the Stadium draws 2", () => {
     const { state } = play(factory(), ARIANA);
     const handBefore = state.players.p1.hand.length;
     const used = useStadium(state);
@@ -638,7 +613,7 @@ describe("§4 — Team Rocket's Factory: a \"Team Rocket\" Supporter licenses on
     expect(used.state.allowances.stadiumAbilityUsed).toBe(true);
   });
 
-  it("🛑 a NON-Team-Rocket Supporter does not license it — PLAY_CONDITION_NOT_MET with the printed clause", () => {
+  it("a NON-Team-Rocket Supporter does not license it — PLAY_CONDITION_NOT_MET with the printed clause", () => {
     const { state } = play(factory(), CARETAKER[0]);
     expect(state.allowances.supporterPlayed).toBe(true);
     expect(refused(state, { type: "useStadiumAbility", seat: "p1" })).toEqual({
@@ -663,7 +638,7 @@ describe("§4 — Team Rocket's Factory: a \"Team Rocket\" Supporter licenses on
     );
   });
 
-  it("🛑 EACH PLAYER'S TURN: p2 uses p1's Factory on its OWN turn off its own Team Rocket's Supporter", () => {
+  it("EACH PLAYER'S TURN: p2 uses p1's Factory on its OWN turn off its own Team Rocket's Supporter", () => {
     const p2Turn = endTurn(factory()).state;
     // p1's licence did not survive the boundary, and p2 has played nothing yet.
     expect(refused(p2Turn, { type: "useStadiumAbility", seat: "p2" }).code).toBe(
@@ -681,7 +656,7 @@ describe("§5 — Community Center: any Supporter licenses heal 10 from EACH of 
   const center = (bench: readonly string[] = [FILLER]) =>
     withStadium(table(FILLER, bench), COMMUNITY_CENTER);
 
-  it("🛑 after a Supporter: 10 off every damaged body of the ACTOR's, Active and Bench, and none of the opponent's", () => {
+  it("after a Supporter: 10 off every damaged body of the ACTOR's, Active and Bench, and none of the opponent's", () => {
     let state = play(center([FILLER, FILLER]), ARIANA).state;
     state = withDamage(withDamage(withDamage(state, "p1", "active", 30), "p1", 0, 10), "p1", 1, 50);
     state = withDamage(state, "p2", "active", 40);
@@ -700,7 +675,7 @@ describe("§5 — Community Center: any Supporter licenses heal 10 from EACH of 
     });
   });
 
-  it("🛑 R-CC — a board with NO damage: the use is ALLOWED and whiffs — spent, nothing healed", () => {
+  it("R-CC — a board with NO damage: the use is ALLOWED and whiffs — spent, nothing healed", () => {
     const { state } = play(center(), ARIANA);
     const used = useStadium(state);
     expect(all(used.events, "HEALED")).toEqual([]);
@@ -718,7 +693,7 @@ describe("§5 — Community Center: any Supporter licenses heal 10 from EACH of 
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§6 — Caretaker's rider: drew any cards AND Community Center in play → shuffles itself into the deck", () => {
-  it("🛑 WITH Community Center: draws 2, then leaves the discard for the deck — Super Rod's two rows", () => {
+  it("WITH Community Center: draws 2, then leaves the discard for the deck — Super Rod's two rows", () => {
     const board = withStadium(table(), COMMUNITY_CENTER);
     const deckBefore = board.players.p1.deck.length;
     const { uid, state, events } = play(board, CARETAKER[0]);
@@ -727,7 +702,6 @@ describe("§6 — Caretaker's rider: drew any cards AND Community Center in play
     expect(state.players.p1.deck).toContain(uid);
     // −1 Caretaker into the hand, −2 drawn, +1 Caretaker shuffled back.
     expect(state.players.p1.deck).toHaveLength(deckBefore - 1 - 2 + 1);
-    // 🆕 Card revision B02: `played: true` — the log names the played Caretaker going into the deck.
     expect(all(events, "DISCARD_RETRIEVED")).toEqual([
       { type: "DISCARD_RETRIEVED", seat: "p1", dest: "deck", uids: [uid], played: true },
     ]);
@@ -740,7 +714,7 @@ describe("§6 — Caretaker's rider: drew any cards AND Community Center in play
     expect(state.players.p1.deck).not.toContain(uid);
   });
 
-  it("🛑 a DIFFERENT Stadium (the Factory) is not Community Center — the name is the gate", () => {
+  it("a DIFFERENT Stadium (the Factory) is not Community Center — the name is the gate", () => {
     const { uid, state } = play(withStadium(table(), FACTORY), CARETAKER[0]);
     expect(state.players.p1.discard).toContain(uid);
   });
@@ -752,7 +726,7 @@ describe("§6 — Caretaker's rider: drew any cards AND Community Center in play
     expect(state.players.p1.deck).toContain(uid);
   });
 
-  it('🛑 R-CT — an EMPTY deck draws nothing, so it did NOT draw "any cards in this way": it stays in the discard', () => {
+  it('R-CT — an EMPTY deck draws nothing, so it did NOT draw "any cards in this way": it stays in the discard', () => {
     const held = setHand(withStadium(table(), COMMUNITY_CENTER), "p1", [CARETAKER[0]]);
     const side = held.players.p1;
     const empty: GameState = {
@@ -789,7 +763,7 @@ describe("§6 — Caretaker's rider: drew any cards AND Community Center in play
     expect(state.players.p1.deck).toEqual([uid]);
   });
 
-  it("🛑 R-FC — a Caretaker shuffled back STILL counts as played: Community Center heals after it", () => {
+  it("R-FC — a Caretaker shuffled back STILL counts as played: Community Center heals after it", () => {
     let board = withStadium(table(), COMMUNITY_CENTER);
     board = withDamage(board, "p1", "active", 20);
     const { uid, state } = play(board, CARETAKER[0]);
@@ -807,7 +781,7 @@ describe("§6 — Caretaker's rider: drew any cards AND Community Center in play
 describe('§7 — Crobat "Shadowy Envoy": Janine\'s Secret Art licenses a draw to 8', () => {
   const withJanine = (board: GameState) => play(noDarkInDeck(board, "p1"), JANINE).state;
 
-  it("🛑 after Janine's Secret Art: draws until 8, from the Active Spot or the Bench", () => {
+  it("after Janine's Secret Art: draws until 8, from the Active Spot or the Bench", () => {
     const active = run(withJanine(table(CROBAT)), useEnvoy({ spot: "active" }));
     expect(active.state.players.p1.hand).toHaveLength(8);
     expect(drawn(active.events)).toEqual([8]);
@@ -815,7 +789,7 @@ describe('§7 — Crobat "Shadowy Envoy": Janine\'s Secret Art licenses a draw t
     expect(benched.state.players.p1.hand).toHaveLength(8);
   });
 
-  it("🛑 ANOTHER Supporter does not license it — ABILITY_CONDITION_NOT_MET with the printed clause", () => {
+  it("ANOTHER Supporter does not license it — ABILITY_CONDITION_NOT_MET with the printed clause", () => {
     const { state } = play(table(CROBAT), CARETAKER[0]);
     expect(refused(state, useEnvoy())).toEqual({
       code: "ABILITY_CONDITION_NOT_MET",
@@ -841,7 +815,7 @@ describe('§7 — Crobat "Shadowy Envoy": Janine\'s Secret Art licenses a draw t
     expect(refused(used, useEnvoy()).code).toBe("ABILITY_ALREADY_USED");
   });
 
-  it("🛑 §9 — Flutter Mane's lock turns the ACTIVE Crobat's Ability off; a BENCHED Crobat is untouched", () => {
+  it("§9 — Flutter Mane's lock turns the ACTIVE Crobat's Ability off; a BENCHED Crobat is untouched", () => {
     const locked = withJanine(table(CROBAT, [CROBAT], FLUTTER_MANE));
     expect(refused(locked, useEnvoy()).code).toBe("ABILITY_DISABLED");
     expect(run(locked, useEnvoy({ spot: "bench", index: 0 })).state.players.p1.hand).toHaveLength(
@@ -849,7 +823,7 @@ describe('§7 — Crobat "Shadowy Envoy": Janine\'s Secret Art licenses a draw t
     );
   });
 
-  it("🛑 Poison Fang STILL DERIVES now that a CardProgram exists (D444's registry ?? derived): 120 and Poisoned for 2 counters", () => {
+  it("Poison Fang STILL DERIVES now that a CardProgram exists (D444's registry ?? derived): 120 and Poisoned for 2 counters", () => {
     expect(programFor(CROBAT)?.attack).toBeUndefined();
     let state = table(CROBAT);
     const side = state.players.p1;
@@ -873,7 +847,7 @@ describe('§7 — Crobat "Shadowy Envoy": Janine\'s Secret Art licenses a draw t
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§8 — the online offer follows the gate (redact.ts), term for term with `useStadiumAbility`", () => {
-  it("🛑 an UNSPENT gated use greys WITH the printed clause; licensed, it lights; spent, it greys with no reason", () => {
+  it("an UNSPENT gated use greys WITH the printed clause; licensed, it lights; spent, it greys with no reason", () => {
     const board = withStadium(table(), COMMUNITY_CENTER);
     expect(offerFor(board, "p1")).toEqual({
       label: "Community Center",
@@ -911,7 +885,7 @@ describe("§8 — the online offer follows the gate (redact.ts), term for term w
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 → 36)", () => {
-  it("🛑 both allowance keys round-trip through JSON and still act", () => {
+  it("both allowance keys round-trip through JSON and still act", () => {
     const amarys = play(table(), AMARYS[0], [FILLER]).state;
     const revivedAmarys = JSON.parse(JSON.stringify(amarys)) as GameState;
     expect(revivedAmarys.allowances.endOfTurnHandDiscard).toBe(5);
@@ -922,7 +896,7 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     expect(drawn(useStadium(revived).events)).toEqual([2]);
   });
 
-  it("🛑 (i) A v35 ROLLBACK resuming a v36 record mid-turn DROPS a pending Amarys discard and a Factory licence — NOT inert", () => {
+  it("(i) A v35 ROLLBACK resuming a v36 record mid-turn DROPS a pending Amarys discard and a Factory licence — NOT inert", () => {
     // A v35 engine never reads either key, which is this engine with the key at its
     // fresh value: the Supporter is spent (`supporterPlayed` true) and its effect is gone.
     const amarys = JSON.parse(
@@ -955,9 +929,6 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
       } = state.allowances;
       return { ...state, allowances: v35Allowances } as unknown as GameState;
     };
-    // MEASURED, not argued: `undefined !== null` passes the threshold test and
-    // `hand.length >= undefined` is false; an absent uid resolves to no card. Silent, so
-    // the version gate — not the reader — is what retires such a record.
     const licensed = strip(play(withStadium(table(), FACTORY), ARIANA).state);
     expect(refused(licensed, { type: "useStadiumAbility", seat: "p1" }).code).toBe(
       "PLAY_CONDITION_NOT_MET",

@@ -4,32 +4,11 @@ import { matchesFilter, topCardOf } from "./cards";
 import { effectiveTypesOf, inPlayCardOf, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard } from "./testFixtures";
+import { FIXTURE_POOL, battler, deckOf, trainerCard, must, mustApply as run } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D580 — IRON TREADS `sv05-118` "DUAL CORE" — THE LAST ABILITY ──
-//
-// *"As long as this Pokémon has a Future Booster Energy Capsule attached, it is {F} and {M}
-// type."* D578's `PassiveEffects.typesInPlay` (["Fighting", "Metal"]) behind the new
-// `typesInPlayWhileToolNamed` condition, read by continuous.ts `inPlayCardOf` ONLY.
-//
-// 🛑🛑🛑 **DUAL CORE CAN NEVER FIRE IN A STANDARD-LEGAL DECK.** Its condition card, Future Booster
-// Energy Capsule `sv05-149`, is regulation G and NOT Standard-legal, and it is not ingested. Every
-// behaviour below is proven on a CONSTRUCTED fixture Tool that merely carries that NAME
-// (`d580dc-capsule`). In a legal game the condition is always false and Iron Treads is always its
-// printed {M}.
-//
-// Rulings (decisions.md D580): R-DC1 (UNRULED) — the condition reads the ATTACHED Tools
-// (`pokemon.tools`), not `toolsInEffect`, so a Jamming Tower does not lift the retype (reversal:
-// read `toolsInEffect`). R-DC2 (by text) — a §9 Ability lock hands back the printed {M}. R-DC3
-// (by text) — the Tool is matched by its card NAME.
-//
-// Its OWN Weakness ({R}) and Resistance ({G}) stay as printed: being {F}{M} changes what ITS
-// attacks hit for Weakness / Resistance and what the type-keyed effects see; it does NOT make the
-// body take Fighting-keyed Weakness.
 
 const IRON_TREADS = "sv05-118";
 const CAPSULE = "d580dc-capsule"; // CONSTRUCTED: the name of the non-legal `sv05-149`
@@ -120,18 +99,6 @@ const DECK = deckOf({
   [FILLER]: 26,
   "fix-energy": 20,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -261,7 +228,7 @@ describe("D580 Dual Core §0 — the version and the registry row", () => {
     });
   });
 
-  it("🛑 the condition card `sv05-149` is NOT registered and NOT in the pool — Dual Core never fires in a Standard-legal deck", () => {
+  it("the condition card `sv05-149` is NOT registered and NOT in the pool — Dual Core never fires in a Standard-legal deck", () => {
     expect(programFor("sv05-149")).toBeUndefined();
     expect(FIXTURE_POOL["sv05-149"]).toBeUndefined();
   });

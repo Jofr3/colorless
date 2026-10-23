@@ -23,17 +23,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D589 — WP08: MEGA GRENINJA EX AND THE OPTIONAL-COST FAMILY ──
-//
-// 5 printed texts / 14 `me` units (9 printings): four attack sentences claimed by
-// `deriveAttackOptionalCostBoost` through a third skeleton (*"… and have this attack do N more
-// damage."*) over four new cost rows, plus Mega Greninja ex's "Mortal Shuriken" on Meowscarada ex
-// `sv02-015`'s `payFromHand` + `damageChosen` shape. Every id and text measured on the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07, `legal_standard = 1`; no id was referenced
-// anywhere in the tree before this slice. No `me` row is a fixture, so the printed bytes are carried
-// HERE and §1 pins each against the committed `me` corpus.
 
 const METALLIC_HAMMER =
   "You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage.";
@@ -46,7 +37,6 @@ const CHRONO_BURST =
 const MORTAL_SHURIKEN_TEXT =
   "Once during your turn, if this Pokémon is in the Active Spot, you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6 damage counters on 1 of your opponent's Pokémon.";
 
-/** [text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [METALLIC_HAMMER, ["me04-061"]],
   [RIOTOUS_BLASTING, ["me01-050", "me01-158"]],
@@ -393,11 +383,6 @@ const DECK = deckOf({
   [L]: 8,
   "fix-energy": 11,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

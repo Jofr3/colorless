@@ -7,80 +7,16 @@ import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, expectErr, trainerCard, typedEnergy } from "./testFixtures";
-
-// ── D344 — DEDUCTION KIT `sv08-171`, AND THE PRINTED `or` THAT WAS THE WHOLE
-//    REMAINING COST OF THE *"IN ANY ORDER"* FAMILY ──────────────────────────
-//
-// ── THE PRINTED SENTENCE ────────────────────────────────────────────────────
-//   "Look at the top 3 cards of your deck and put them back in any order, **or**
-//    shuffle them and put them on the bottom of your deck."
-//   Item, mark H, **1 Standard-legal printing of 1**, `effect` (125 chars).
-//
-// ── THE FAMILY CENSUS, RE-DERIVED FROM REMOTE D1 `colorless` (2026-08-15) ────
-// The resume point flagged the inherited figure as unverified and it needed the
-// flag. `instr(<col>,'in any order') > 0` over ALL THREE text columns:
-//
-//   `effect`          8 printings / 6 legal
-//   `attacks_json`    7 printings / 5 legal
-//   `abilities_json`  0 printings / 0 legal
-//   TOTAL            15 printings / 11 legal.  8 + 7 + 0 = 15 ✅  6 + 5 + 0 = 11 ✅
-//
-// **15 / 11 IS CONFIRMED TO THE DIGIT.** The SEVEN distinct sentences, with the
-// slice that read each:
-//   1. "Look at the top 4 cards of your deck and put them back in any order."
-//      — Iron Valiant `sv05-080` (1 legal) — BUILT, D341 (`ATTACK_REORDER_TOP`)
-//   2. "…the top 5 cards of your **opponent's** deck…" — Team Rocket's Dottler
-//      `sv10-088`, Gothorita `sv10.5w-042`/`-125` (3 legal) — BUILT, D341
-//   3. "Search your deck for 2 cards, shuffle your deck, then put those cards on
-//      top of it in any order." — Ciphermaniac's Codebreaking ×3 + Dialga
-//      `sv08-135` (4 legal) — BUILT, D342
-//   4. "Put 2 cards from your hand on the bottom of your deck in any order. …"
-//      — Kofu `sv07-138`/`-165` (2 legal) — BUILT, D343
-//   5. **THIS ONE** — Deduction Kit `sv08-171` (1 legal)
-//   6. "Look at the top 5 cards of your deck and discard any number of them. Put
-//      the other cards back in any order." — Raifort `sv06-161`/`sv08.5-142`
-//      (**0 legal**)
-//   7. "Look at the top 3 cards of **either player's** deck and put them back in
-//      any order." — Absol ex `sv03-135`/`-214` (**0 legal**)
-//
-// 🛑🛑 **AND THE INHERITED "FIVE OF SEVEN BUILT" WAS ONE TOO MANY — IT WAS
-//    FOUR.** D342 wrote it, D343 recorded that it did not reconcile against the
-//    sentences its own entry names and did not re-derive it. Counted off
-//    `registry.ts` and `effects.ts` at this head, four of the seven were built.
-//    **This is the fifth, and every sentence in the family with a legal printing
-//    is now built — the family CLOSES on Standard**, with two survivors that are
-//    both `legal_standard = 0` and buy nothing.
-//
-// ⚠️ THE HONEST FORM OF THE FIGURE SEPARATES THE TWO AXES, which is exactly what
-//    the rotten one did not: **7 sentences, 5 of them with any legal printing,
-//    and 5 of those 5 now built.** "Five of seven" was the right numerator
-//    attached to the wrong denominator a slice early.
-//
-// ── WHAT THE `or` ACTUALLY COST, AND WHY THE CHEAP READING IS REFUSED ───────
-// The work order priced it as *"the print settles neither a caption nor a prompt
-// kind"*. Measured against the source, **the KIND half was already paid**:
-// `confirm`'s own doc block records that *"a confirm answer means run `then` …
-// a fact about the program"* where a `mayDraw` answer is a fact about cards. A
-// binary answer picking between two printed arms is therefore a MEANING this
-// engine has had since D186, and `optional { then, otherwise }` has been a
-// two-armed branch on a human answer since D316.
-//
-// 🛑 **IT IS REFUSED ANYWAY, AND NOT ON TASTE.** An `optional` parks
-// `{kind:"confirm", note}` and **a confirm carries no candidates**. The print
-// hands the information over FIRST — *"**Look at the top 3 cards** of your deck
-// **and** put them back in any order, or …"* — so an `optional` wrapper asks the
-// question BLIND. That is not a caption difference; it is the loss of the one
-// thing the sentence gives before it asks. **THE PROMPT THAT ASKS THE `or` HAS
-// TO BE THE PROMPT THAT DELIVERS THE LOOK**, and `orderCards` is the only prompt
-// whose window `redactPrompt` resolves to the answerer alone.
-//
-// **THE ANSWER IS THE EMPTY ORDERING**, which reads as the print does: *none of
-// these cards is being put back on top*. It is a value the prompt could not
-// previously hold rather than one taken from something else — `validateChoice`
-// demands a permutation of a window never smaller than 2 — and it is admitted
-// EXACTLY when `alt` is present, which the second `describe` below pins from
-// both sides.
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  expectErr,
+  trainerCard,
+  typedEnergy,
+  must,
+  firstBasicInHand,
+} from "./testFixtures";
 
 const KIT = "sv08-171";
 const PRINTED =
@@ -93,12 +29,6 @@ const ENERGY = "fix-d344-energy";
 const MARKERS = ["fix-d344-m1", "fix-d344-m2", "fix-d344-m3", "fix-d344-m4"] as const;
 const FILLERS = ["fix-d344-f1", "fix-d344-f2", "fix-d344-f3"] as const;
 
-/** 🆕 A LOCAL `cardPool` (D275's idiom, `derivedSearchTopOrder.test.ts`'s shape
-    two slices over), NOT an addition to `FIXTURE_POOL`. `sv08` is not among
-    `catalogManifest`'s six generated sets, so a shared-pool body would owe a
-    `fix-deductionkit` registry key AND move `raw.length` by two instead of one —
-    the cost D337 paid and D338–D343 each declined. THE KEY IS THE SET, NOT THE
-    SURFACE. */
 const LOCAL_CARDS: Record<string, Card> = {
   [KIT]: trainerCard(KIT, "Item", PRINTED),
   [ENERGY]: typedEnergy(ENERGY, "Colorless"),
@@ -136,11 +66,6 @@ const DECK = deckOf({
   [FILLERS[2]]: 5,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function apply(
   state: GameState,
   action: Parameters<typeof applyAction>[1],
@@ -155,15 +80,6 @@ function find<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -256,9 +172,6 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
         otherwiseNote: ALT,
       },
     ]);
-    // 🛑 NO `optional` ANYWHERE IN IT, which is the refusal this row is about.
-    // Asserted rather than left to the doc block, because the cheap reading is
-    // the one a later slice would "simplify" this into.
     const ops = JSON.stringify(program?.trainer);
     expect(ops).not.toContain('"optional"');
     // …and the two windows agree. A divergence would silently bottom a different
@@ -300,11 +213,10 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
     // Everything under the window untouched, which is the half a shuffle would
     // destroy and the half this arm is FOR.
     expect(deck.slice(3)).toEqual(start.deck.slice(3));
-    // No bottoming row on this arm: the two arms are exclusive.
     expect(find(done.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
   });
 
-  it("🛑 THE EMPTY ORDERING TAKES THE PRINTED ALTERNATIVE: the top 3 go UNDER the deck", () => {
+  it("THE EMPTY ORDERING TAKES THE PRINTED ALTERNATIVE: the top 3 go UNDER the deck", () => {
     const start = parked(4003);
     if (start.state.phase.kind !== "effect:choose") throw new Error("not parked");
     const before = start.deck;
@@ -317,9 +229,6 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
     const deck = done.state.players.p1.deck;
     // Same cards, none created and none destroyed.
     expect([...deck].sort()).toEqual([...before].sort());
-    // 🛑 THE DECK UNDER THE WINDOW IS UNTOUCHED AND IN ORDER — this is the whole
-    // difference between `bottomDeckTop` and `shuffleDeck`, and the fact the log
-    // row exists to report. The draws that were coming are still coming.
     expect(deck.slice(0, before.length - 3)).toEqual(before.slice(3));
     // …and the three that moved are exactly the window, as a SET: the order they
     // land in is the shuffle's and this suite must not pin it.
@@ -360,8 +269,6 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
     });
     const row = find(done.events, "DECK_TOP_TO_BOTTOM");
     expect(row).toEqual({ type: "DECK_TOP_TO_BOTTOM", seat: "p1", count: 3 });
-    // 🛑 NOT A `SHUFFLE`. That row says the DECK was randomized and here it was
-    // not — the window under it was. A player watching needs the difference.
     expect(find(done.events, "SHUFFLE")).toBeUndefined();
     // The look was still announced by the park, on the earlier action.
     expect(find(start.events, "DECK_TOP_REORDERED")).toEqual({
@@ -408,11 +315,6 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
 
 describe("D344 — the empty ordering is legal EXACTLY where an alternative is printed", () => {
   it("a prompt with NO alternative still refuses it — the other four printings are untouched", () => {
-    // 🛑 THE GUARD, FROM THE SIDE THAT MATTERS. Iron Valiant / Dottler /
-    // Gothorita / Kofu print no `or`, and *"put them back in any order"* carries
-    // no "you may": an empty answer there is not a decline and must stay refused.
-    // Driven through a REAL parked prompt rather than by calling the validator,
-    // so the licence really is the prompt's own field.
     const start = parked(4008);
     if (start.state.phase.kind !== "effect:choose") throw new Error("not parked");
     const withoutAlt: GameState = {
@@ -427,10 +329,6 @@ describe("D344 — the empty ordering is legal EXACTLY where an alternative is p
   });
 
   it("a PARTIAL answer is refused even where an alternative IS printed", () => {
-    // The widening is `length === 0`, not `length <= candidates.length`. A short
-    // answer would leave cards out of the deck entirely (the apply splices over
-    // the first `uids.length` slots), which is the first of the three failures
-    // the permutation check was written for.
     const start = parked(4009);
     if (start.state.phase.kind !== "effect:choose") throw new Error("not parked");
     const prompt = start.state.phase.prompt;
@@ -467,10 +365,6 @@ describe("D344 — the empty ordering is legal EXACTLY where an alternative is p
 
 describe("D344 — the degenerate decks, and why the M1 guard needed no second arm", () => {
   it("a deck of ONE card does not park, and the alternative does not run", () => {
-    // `top.length` is `min(3, deck.length)`, so a 1-card deck makes both arms the
-    // SAME STATE: shuffling that card onto the bottom of nothing leaves it on
-    // top. The existing `top.length < 2` refusal is exactly right, and this is
-    // the board that says so.
     const withHand = toHand(board(4011), KIT);
     const one = withHand.state.players.p1.deck.slice(0, 1);
     const staged = setDeck(withHand.state, one);
@@ -478,7 +372,6 @@ describe("D344 — the degenerate decks, and why the M1 guard needed no second a
     expect(played.state.phase.kind).not.toBe("effect:choose");
     expect(played.state.players.p1.deck).toEqual(one);
     expect(find(played.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
-    // The LOOK is still announced, D241's rule: `count` is what was looked at.
     expect(find(played.events, "DECK_TOP_REORDERED")?.count).toBe(1);
   });
 
@@ -506,10 +399,6 @@ describe("D344 — the degenerate decks, and why the M1 guard needed no second a
   });
 
   it("an EMPTY deck plays the Item for nothing, and that is the family's precedent", () => {
-    // `programPlayable` has no `reorderTop` arm and needs none: the refusals that
-    // file makes are about a board that can offer no target at all, and a deck is
-    // a target even when it is empty (Poké Ball's "a deck search is always
-    // playable enough"). Pinned so a later slice adding a gate has to mean it.
     const withHand = toHand(board(4013), KIT);
     const staged = setDeck(withHand.state, []);
     const played = apply(staged, { type: "playTrainer", seat: "p1", uid: withHand.uid });

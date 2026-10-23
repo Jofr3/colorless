@@ -21,55 +21,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.69.0 → 0.70.0 — the PUBLIC-COUNT cluster (D119). D115 built the shape ("If
-// <clause>, this attack does N more damage." → a 0-or-1 INDICATOR folded through
-// the existing additive `per × count`), D116 added the pronoun rule, D117 the
-// third wave, D118 the first parameterised member. This slice adds no arithmetic,
-// no op, no event and no registry row either — but it is the first group of
-// clauses that reads NOTHING ON A POKÉMON:
-//
-//   • `opponentPrizesRemaining { counts }` — Krokorok sv01-116 "Payback"
-//     (exactly 1, +90) and Houndstone sv03-101 "Two Four-ocious" (exactly 2 or 4,
-//     +120): one member at two values.
-//   • `opponentHandAtMost { count }`     — Absol ex sv03-135/-214 "Cursed Slug"
-//     (3 or fewer, +120), the pool's only "or fewer" clause of any kind.
-//   • `handSizesEqual`                   — Bronzong sv03-145 "Extrasensory" (+90).
-//
-// Five printings / four cards / four clauses, all on ZERO registry rows.
-//
-// THE FOUR CALLS THIS SUITE EXISTS TO PIN:
-//
-// 1. A COUNT IS PUBLIC EVEN WHEN THE CARDS ARE NOT. `BoardCondition`'s standing
-//    invariant is that every member reads only public state, and it names "a
-//    hand's CONTENTS" as the thing that would break it. A hand's SIZE is on the
-//    other side of that line — both players watched every draw and play that set
-//    it, and redact.ts already ships the opponent's hand as face-down backs with a
-//    real `.length`. These are the members that put the distinction to work.
-//
-// 2. "EXACTLY" IS SET MEMBERSHIP, NEVER A RANGE. `[2, 4]` is not "2 to 4": the
-//    case that catches the confusion is 3 Prizes reading FALSE between two true
-//    values, and it is asserted on the board and directly.
-//
-// 3. TWO VALUES, ONE MEMBER — AND STILL TWO LITERAL ROWS. The Prize clauses share
-//    a shape, so they share a member (D118's rule). They do NOT share a template:
-//    two things vary between the sentences, the count LIST and the grammatical
-//    number agreeing with it ("1 Prize card" / "2 or 4 Prize cards"), and a
-//    pattern loose enough for both would accept text the game never prints. The
-//    tests for that are the constructed near-misses: an unprinted count stays
-//    LOUD rather than being silently admitted.
-//
-// 4. TWO HAND CLAUSES ARE TWO MEMBERS. A threshold against a printed constant and
-//    an equality between the two hands are different comparisons over different
-//    operands. They share a noun and nothing else — and the equality one is the
-//    vocabulary's first SEAT-SYMMETRIC member, asserted from both seats. (🆕🆕 D372 —
-//    "first" and no longer "only": `activeEnergyCountsEqual` is the second, and this
-//    file's own test name had to be corrected for it.)
-
-/** The four printed clauses' full sentences, pinned here and asserted
-    char-for-char against FIXTURE_POOL below. These cards derive off text — none
-    carries an authored attack (see the ZERO-rows block) — so the sentence IS the
-    wiring: a drifted character does not fail loudly, it silently un-simulates the
-    card at the exact moment the clause would have paid off. */
 const CURSED_SLUG =
   "If your opponent has 3 or fewer cards in their hand, this attack does 120 more damage.";
 const EXTRASENSORY =
@@ -79,10 +30,6 @@ const PAYBACK =
 const TWO_FOUROCIOUS =
   "If your opponent has exactly 2 or 4 Prize cards remaining, this attack does 120 more damage.";
 
-/** The two companion sentences on the cast. BOTH are real unbuilt attacks that
-    derive to nothing on every path — a deck peek on either player's deck, and a
-    next-turn effect-prevention rider — so each card carries a loud index beside
-    its silent one, and the contrast rides on one card rather than on two. */
 const FUTURE_SIGHT =
   "Look at the top 3 cards of either player's deck and put them back in any order.";
 const ORACLE_PRESS =
@@ -90,16 +37,8 @@ const ORACLE_PRESS =
 
 const CLAUSES = [CURSED_SLUG, EXTRASENSORY, PAYBACK, TWO_FOUROCIOUS];
 
-/** Every id this cluster covers. Keyed by ID everywhere in this file: Absol ex is
-    two printings of one rules text, and several other cards in the pool print
-    these exact words in a different frame (see the near-miss block), so an
-    assertion that went by `name` would be reading whichever card it found. */
 const CARD_IDS = ["sv03-135", "sv03-214", "sv03-145", "sv01-116", "sv03-101"] as const;
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -116,23 +55,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn — with BOTH Active spots pinned to a neutral 200 HP
-    fix-bigbody, the arithmetically clean defender (Colorless, no Weakness, no
-    Resistance) every damage number below is measured against.
-
-    THE COUNTS THIS BOARD OPENS WITH ARE THEMSELVES A FACT THE SUITE USES: seven
-    cards in each hand and six Prizes on each side, dealt by the real setup and
-    asserted rather than assumed. That makes `handSizesEqual` TRUE on the
-    untouched board — the one clause in this cluster that needs no surgery to
-    arm — and every Prize case a shrink away from a known 6.
-
-    Mulligan compensation is DECLINED on both sides (`extraDraw: 0`), which is a
-    legal choice and the only way those seven-card hands are seed-independent: a
-    mulligan hands the opponent extra draws, and a suite whose clauses read hand
-    SIZE would then be asserting on the shuffle. The equality is also a property
-    of WHERE in the turn cycle this board opens — each turn's draw alternates, so
-    one more `endTurn` puts the hands at 7 and 8 (see `boardP2`). */
 function board(seed: number): GameState {
   let state = driveSetup(
     seed,
@@ -145,30 +67,16 @@ function board(seed: number): GameState {
   return state;
 }
 
-/** `board`, then handed over to P2 — P1 passes into P2's turn 3, which is equally
-    unrestricted. Three of the four clauses are seat-asymmetric, and a P1-only
-    suite cannot tell "reads the opponent's side" apart from "reads p2's side".
-    NOTE the extra draw: hands here are 7 (P1) and 8 (P2), not 7 and 7. */
 function boardP2(seed: number): GameState {
   return mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
 }
 
-/** Pay a printed cost symbol-for-symbol onto `seat`'s Active — typed Energy for
-    the typed symbols, plain {C} (fix-energy) for the Colorless ones. No Energy in
-    this cast ARMS anything (unlike D118's), so the separation is only about
-    paying costs honestly rather than leaning on a wildcard. Must run AFTER the
-    attacker is fielded (attachFromDeck attaches to the Active Spot). */
 function pay(state: GameState, seat: Seat, spec: [string, number][]): GameState {
   let next = state;
   for (const [id, count] of spec) next = attachFromDeck(next, seat, id, count);
   return next;
 }
 
-/** TEST SURGERY: shrink `seat`'s hand to `size`, parking the surplus in the
-    discard — the zone a played card would have reached anyway, so the result
-    stays legal-shaped (every uid in exactly one zone). Shrink ONLY: growing a
-    hand means drawing, and a draw is a real action the organic case below uses
-    instead of a helper. */
 function setHandSize(state: GameState, seat: Seat, size: number): GameState {
   const side = state.players[seat];
   if (size > side.hand.length) throw new Error(`${seat} hand is ${side.hand.length}, cannot grow`);
@@ -185,11 +93,6 @@ function setHandSize(state: GameState, seat: Seat, size: number): GameState {
   };
 }
 
-/** (🆕🆕🆕 D548: *"face-down"* below is PARTLY false in general — a row may hold face-UP
-    slots — and exact on every board in this file, where no Purge runs.)
-    TEST SURGERY: shrink `seat`'s face-down Prize row to `count`, parking the rest
-    in the discard. Shrink only — the Prize row is dealt at 6 and never grows, and
-    the one case that needs Prizes MOVED rather than set uses a real knockout. */
 function setPrizesRemaining(state: GameState, seat: Seat, count: number): GameState {
   const side = state.players[seat];
   if (count > side.prizes.length) throw new Error(`${seat} has ${side.prizes.length} Prizes`);
@@ -237,10 +140,6 @@ function houndstone(state: GameState, seat: Seat): GameState {
 
 describe("the printed sentences — the fixture-text-verbatim guard", () => {
   it("matches FIXTURE_POOL char-for-char on all four printings", () => {
-    // Not decoration: this is the assertion that the fixture rows and the clause
-    // TABLE still agree on every byte. A one-character drift does not throw — it
-    // drops the card back onto the loud ATTACK_EFFECT_SKIPPED path and silently
-    // stops paying the bonus.
     expect(FIXTURE_POOL["sv03-135"]?.attacks?.[1]?.effect).toBe(CURSED_SLUG);
     expect(FIXTURE_POOL["sv03-145"]?.attacks?.[1]?.effect).toBe(EXTRASENSORY);
     expect(FIXTURE_POOL["sv01-116"]?.attacks?.[0]?.effect).toBe(PAYBACK);
@@ -251,10 +150,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
     expect(FIXTURE_POOL["sv03-145"]?.attacks?.[1]?.damage).toBe("70+");
     expect(FIXTURE_POOL["sv01-116"]?.attacks?.[0]?.damage).toBe("30+");
     expect(FIXTURE_POOL["sv03-101"]?.attacks?.[1]?.damage).toBe("80+");
-    // Names, so a re-ingest that reshuffled the attack order fails HERE rather
-    // than as a mystery damage number three describes down. Note Krokorok's
-    // clause sits at index 0 and the rest at index 1 — the asymmetry is real and
-    // is why every board case names its index explicitly.
     expect(FIXTURE_POOL["sv03-135"]?.attacks?.[1]?.name).toBe("Cursed Slug");
     expect(FIXTURE_POOL["sv03-145"]?.attacks?.[1]?.name).toBe("Extrasensory");
     expect(FIXTURE_POOL["sv01-116"]?.attacks?.[0]?.name).toBe("Payback");
@@ -262,10 +157,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("matches the companion rows too — two loud sentences and two empty ones", () => {
-    // Absol ex's and Bronzong's index 0 are REAL unbuilt attacks kept verbatim;
-    // Krokorok's and Houndstone's plain attacks omit `effect` ENTIRELY (not an
-    // empty string — the catalog rows have no key). Both kinds would break a case
-    // silently if a fixture edit moved them.
     expect(FIXTURE_POOL["sv03-135"]?.attacks?.[0]?.effect).toBe(FUTURE_SIGHT);
     expect(FIXTURE_POOL["sv03-145"]?.attacks?.[0]?.effect).toBe(ORACLE_PRESS);
     expect(FIXTURE_POOL["sv01-116"]?.attacks?.[1]?.effect).toBeUndefined();
@@ -302,12 +193,6 @@ describe("the printed sentences — the fixture-text-verbatim guard", () => {
   });
 
   it("is PURE ASCII — the cluster's own byte invariant, checked programmatically", () => {
-    // Every clause family before this one printed "Pokémon" and had to prove its
-    // é was precomposed. This one is the first whose clauses name no Pokémon at
-    // all — they read counts — so the invariant is stronger and simpler: no
-    // accent, no apostrophe of either kind, and therefore one byte per character.
-    // Asserted by construction, because the characters a re-ingest drifts on are
-    // INVISIBLE in a diff.
     const CURLY_APOSTROPHE = "’";
     for (const text of CLAUSES) {
       expect(text.normalize("NFC")).toBe(text);
@@ -350,9 +235,6 @@ describe("deriveAttackDamageBonus — the PUBLIC-COUNT clauses", () => {
   });
 
   it("reads the two HAND printings as two DIFFERENT members", () => {
-    // A threshold against a printed constant and an equality between the two
-    // hands: same noun, different comparison, different operands. D118's rule is
-    // "one TOKEN varying", and these do not qualify.
     expect(deriveAttackDamageBonus(CURSED_SLUG)).toEqual({
       per: 120,
       count: { kind: "boardCondition", cond: { kind: "opponentHandAtMost", count: 3 } },
@@ -364,8 +246,6 @@ describe("deriveAttackDamageBonus — the PUBLIC-COUNT clauses", () => {
   });
 
   it("takes N from the SENTENCE, and the counts from the clause", () => {
-    // The two Prize printings differ in BOTH — same shape, different list, different
-    // amount — which is exactly what a member-with-a-parameter has to keep apart.
     const payback = deriveAttackDamageBonus(PAYBACK);
     const twoFour = deriveAttackDamageBonus(TWO_FOUROCIOUS);
     expect(payback?.per).toBe(90);
@@ -381,10 +261,6 @@ describe("deriveAttackDamageBonus — the PUBLIC-COUNT clauses", () => {
 
 describe("the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
   it("refuses Bronzor sv03-144's 'Mirror Draw' — this card's clause, verbatim, inside a DRAW", () => {
-    // The sharpest real near-miss in the pool, and it is Bronzong's own
-    // PRE-EVOLUTION: the printed sentence contains Extrasensory's entire clause
-    // word for word. A substring matcher would score a damage bonus off a draw
-    // effect; the whole-sentence anchor is what refuses it.
     const mirrorDraw =
       "Draw cards until you have the same number of cards in your hand as your opponent.";
     expect(mirrorDraw).toContain("the same number of cards in your hand as your opponent");
@@ -394,9 +270,6 @@ describe("the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
   });
 
   it("refuses Slowbro swsh10.5-020 — Payback's clause in a USABILITY frame", () => {
-    // Same clause, different sentence: this one gates whether the attack may be
-    // used at all rather than adding damage. It is a real future slice (a
-    // `playableIf`-shaped attack gate) and it must not be read as a bonus.
     const twilight =
       "You can use this attack only if your opponent has exactly 1 Prize card remaining.";
     expect(twilight).toContain("your opponent has exactly 1 Prize card remaining");
@@ -405,33 +278,10 @@ describe("the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
   });
 
   it("refuses Slaking V swsh10.5-058/-077 — an OWN-seat, three-value list on an ABILITY", () => {
-    // The pool's third grammatical form of "exactly" (a three-value list) and its
-    // only own-seat one.
-    //
-    // 🆕🆕 **D517 — RE-POINTED, AND THIS RUNG IS THE OLDEST FUNCTION-SHAPED REFUSAL ON
-    // RECORD TO PAY OUT.** It used to end *"It would want a `yourPrizesRemaining`
-    // sibling; nothing here claims it, so it stays loud."* — written at **D119**
-    // (`48f38c0c`, 2026-08-01), naming the missing member BY THE NAME IT WAS EVENTUALLY
-    // GIVEN, **398 decisions** before D517 built it. D473 aged 42 and D479 aged 37; this
-    // is an order of magnitude past both, and it is the same reason: a refusal that names
-    // a MEMBER OF A UNION names a thing that cannot be re-spelled away (D515's rule).
-    //
-    // 🛑 **AND IT STAYED GREEN WHEN THE MEMBER LANDED, WHICH IS EXACTLY D516's HAZARD.**
-    // Building `yourPrizesRemaining` did not redden this line — the sentence is still
-    // refused — so a pass that chased only the rungs that went red would have left this
-    // one GREEN AND WRONG, still telling a reader that no member reads the controller's
-    // own Prize count. **The verdict is unchanged; the REASON is not**, and the reason is
-    // what the next slice reads. The member now EXISTS and is asserted here; what still
-    // blocks this sentence is its CONSEQUENT — an attack lock on an ABILITY, which is a
-    // `PassiveEffects` gate rather than anything `deriveAttack*` reads — and its
-    // three-value count list, which the member admits but no ATTACK sentence prints.
     const kindaLazy =
       "If you have exactly 2, 4, or 6 Prize cards remaining, this Pokémon can't attack.";
     expect(deriveAttackDamageBonus(kindaLazy)).toBeNull();
     expect(deriveAttackEffect(kindaLazy)).toBeNull();
-    // ✅ THE HALF OF THE OLD SENTENCE THAT IS NOW FALSE, asserted POSITIVE rather than
-    // deleted (D444): the sibling it asked for ships, it reads the controller's own seat,
-    // and it carries the three-value list this printing would need.
     expect(conditionNote({ kind: "yourPrizesRemaining", counts: [2, 4, 6] })).toBe(
       "you have exactly 2, 4, or 6 Prize cards remaining",
     );
@@ -441,10 +291,6 @@ describe("the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
   });
 
   it("refuses count VALUES the pool does not print — the literal table's whole point", () => {
-    // The argument for two literal rows instead of one template. An unprinted
-    // count is not silently admitted at some default: it falls through to null and
-    // keeps its ATTACK_EFFECT_SKIPPED row, which is a visible gap rather than a
-    // wrong number. Each of these is a well-formed sentence in the right skeleton.
     for (const clause of [
       "your opponent has exactly 3 Prize cards remaining",
       "your opponent has exactly 2, 4, or 6 Prize cards remaining",
@@ -458,9 +304,6 @@ describe("the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
   });
 
   it("refuses a plural that does not agree — the row carries the printed grammar", () => {
-    // A template spanning both Prize printings would have needed `cards?`, and
-    // that laxness would accept text the game never prints. The literal rows carry
-    // the agreement exactly as printed, in both directions.
     expect(
       deriveAttackDamageBonus(
         "If your opponent has exactly 1 Prize cards remaining, this attack does 90 more damage.",
@@ -509,10 +352,6 @@ describe("the derivers stay disjoint, and stay INDEX-KEYED", () => {
   });
 
   it("leaves both companion attacks unbuilt on EVERY path — the loud halves", () => {
-    // Neither is in this family and neither is built at all: a deck peek reaching
-    // both decks, and a next-turn effect-prevention rider. They are the reason
-    // "no ATTACK_EFFECT_SKIPPED" below is a claim about an INDEX rather than about
-    // a card.
     for (const text of [FUTURE_SIGHT, ORACLE_PRESS]) {
       expect(deriveAttackEffect(text)).toBeNull();
       expect(deriveAttackDamageBonus(text)).toBeNull();
@@ -523,18 +362,10 @@ describe("the derivers stay disjoint, and stay INDEX-KEYED", () => {
 
 describe("ZERO registry rows — every damage number below is text", () => {
   it("gives none of the five ids an authored program at all", () => {
-    // attack.ts resolves an attack as `programFor(id)?.attack?.[index] ?? derive`,
-    // so a single authored row would WIN and every damage number below would keep
-    // passing while testing nothing about the printed sentence. REGISTRY itself is
-    // not exported; `programFor` is the only view of it.
     for (const id of CARD_IDS) {
       expect(programFor(id)).toBeUndefined();
       expect(programFor(id)?.attack).toBeUndefined();
     }
-    // sv03-214 is Absol ex's second printing — byte-identical rules text (verified
-    // against the local D1: one distinct hex(attacks_json) across the two), no
-    // fixture of its own, equally rowless. Named in CARD_IDS so the pair stays
-    // visible; the fixture the board layer runs is sv03-135.
     expect(CARD_IDS).toContain("sv03-214");
     expect(FIXTURE_POOL["sv03-214"]).toBeUndefined();
   });
@@ -580,13 +411,6 @@ describe("Absol ex 'Cursed Slug' — their hand, 3 or fewer", () => {
   });
 
   it("ARMED BY THE GAME: P2 plays its hand down to 3 and Cursed Slug reads it", () => {
-    // No hand surgery at all. P2 benches Basics and attaches an Energy on its own
-    // turn — the ordinary way a hand empties — and the count P1's clause reads a
-    // turn later is the one the game left behind.
-    // A NAMED seed, because this case needs the deal itself to cooperate: P2's
-    // opening hand has to hold three spare Basics and an Energy for the shed to be
-    // playable at all. Every other case in this suite is seed-independent by
-    // pinning; this one is the exception and says so.
     let state = driveSetup(
       2,
       { p1: PUBLIC_COUNT_DECK, p2: PUBLIC_COUNT_DECK },
@@ -658,21 +482,7 @@ describe("Bronzong 'Extrasensory' — the two hands, equal", () => {
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
   });
 
-  it("🆕🆕 D372 — is the vocabulary's FIRST seat-symmetric member, and no longer its only one", () => {
-    // 🛑 THIS TEST'S NAME SAID "the vocabulary's ONE SEAT-SYMMETRIC member" AND D372
-    // FALSIFIED IT. `activeEnergyCountsEqual` — the two Active bodies' attached-Energy
-    // counts, equal — commutes for exactly the reason this one does, and it is driven
-    // from both seats in `sameEnergyBonus.test.ts` §6. The claim was true when D119
-    // wrote it, nothing in the suite was keyed on it, and it went stale in a file the
-    // new member does not touch. **A NEW MEMBER CAN FALSIFY A COMMENT IN A FILE IT
-    // DOES NOT TOUCH** (D370's lesson, collected here on purpose). Corrected to
-    // FIRST, which is a fact that cannot rot — the same repair `effects.ts` and
-    // `interpreter.ts` take in the same commit.
-    //
-    // ⚠️ AND D372 IS THE MEMBER WHERE THE WORD SPLITS IN TWO: its printed sentence is
-    // ASYMMETRIC (a pronoun on one side, the full noun phrase on the other) while its
-    // truth value commutes. This one is symmetric in both senses, which is why the
-    // distinction never had to be drawn before.
+  it("D372 — is the vocabulary's FIRST seat-symmetric member, and no longer its only one", () => {
     const equal = board(15);
     const uneven = setHandSize(equal, "p2", 5);
     for (const seat of ["p1", "p2"] as const) {
@@ -750,10 +560,6 @@ describe("Houndstone 'Two Four-ocious' — their Prizes, exactly 2 or 4", () => 
   });
 
   it("ARMED BY THE GAME: a two-Prize knockout moves their row from 6 to 4", () => {
-    // The Prize count is not set here, it is TAKEN — through the real §8.1 path.
-    // P2 knocks out a damaged Absol ex, which is an "… ex" and therefore worth two
-    // Prizes, so one knockout lands their row on exactly 4 and Houndstone reads it
-    // the following turn. Only the damage on the doomed body is surgery.
     let state = board(30);
     state = setDamage(absol(state, "p1"), "p1", 160); // 210 HP, 50 left
     state = benchFromDeck(state, "p1", "sv03-101");
@@ -765,10 +571,6 @@ describe("Houndstone 'Two Four-ocious' — their Prizes, exactly 2 or 4", () => 
     expect(types(ko.events)).toContain("KNOCKED_OUT");
     state = ko.state;
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 2 });
-    // The KOing player picks exactly `count` of THEIR OWN face-down prizes in one
-    // action (§8.1) — two of them here, because the body was an "… ex".
-    // (🆕🆕🆕 D548: *"face-down"* is PARTLY false in general — a face-UP slot is pickable
-    // too — and exact on this board, where no Purge ran.)
     state = mustApply(state, { type: "takePrizes", seat: "p2", prizeIndices: [0, 1] }).state;
     expect(state.players.p2.prizes.length).toBe(4);
     // P1 promotes the benched Houndstone into the empty Active Spot.
@@ -789,10 +591,6 @@ describe("Houndstone 'Two Four-ocious' — their Prizes, exactly 2 or 4", () => 
 
 describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
   it("doubles (base + scaled), not base alone: (80 + 120) × 2 = 400", () => {
-    // Houndstone is a Psychic Pokémon (the multiplier reads the ATTACKING
-    // Pokémon's type, not its attack cost) and fix-psychic-weak is ×2 Psychic, so
-    // the whole folded number doubles. A fold placed AFTER Weakness would give
-    // 80 × 2 + 120 = 280.
     let state = setActiveFromDeck(board(40), "p2", "fix-psychic-weak");
     state = houndstone(setPrizesRemaining(state, "p2", 2), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
@@ -818,10 +616,6 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
 
 describe("ATTACK_EFFECT_SKIPPED — never on the clause, ALWAYS on the unbuilt sibling", () => {
   it("simulates the sentence whether or not the clause holds, on all four cards", () => {
-    // The flag rides `scaling !== null` — the sentence being RECOGNISED — so a
-    // false clause is a simulated 0, not an unsimulated unknown. Asserted for the
-    // true AND the false board of each card, because a flag wired to the clause's
-    // VALUE would only show up on one of the two.
     const cases: { build: (seed: number) => GameState; index: number; arm: boolean }[] = [
       { build: (s) => absol(board(s), "p1"), index: 1, arm: false },
       { build: (s) => absol(setHandSize(board(s), "p2", 2), "p1"), index: 1, arm: true },
@@ -846,9 +640,6 @@ describe("ATTACK_EFFECT_SKIPPED — never on the clause, ALWAYS on the unbuilt s
   });
 
   it("still fires on Absol ex's OTHER attack — one card, one loud index and one silent", () => {
-    // Future Sight is genuinely unbuilt, so the skipped row is correct there. The
-    // contrast is the assertion: "no skipped row" above is a claim about the
-    // clause, not about a card the engine happens to find unreadable.
     const state = absol(board(60), "p1");
     const loud = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(loud.events)).toContain("ATTACK_EFFECT_SKIPPED");
@@ -887,10 +678,6 @@ describe("conditionHolds / conditionNote — the three members, directly", () =>
   });
 
   it("needs no Pokémon at all — the first members that read no Active", () => {
-    // Every member before this cluster answers FALSE on an empty Active Spot
-    // because it has nothing to look at. These three look at zones instead, so an
-    // empty board is not an edge case for them: the counts are still there and the
-    // answers are unchanged. Asserted by emptying BOTH Active spots.
     const state = board(64);
     const bare: GameState = {
       ...state,
@@ -905,11 +692,6 @@ describe("conditionHolds / conditionNote — the three members, directly", () =>
   });
 
   it("ROUND-TRIPS to the printed clause — these four notes need nothing dropped", () => {
-    // Every note in this family so far has had to drop something the printed text
-    // carries: a pronoun with no referent on the board (D116/D117), or the timing
-    // word "already" (D115). These clauses name no Pokémon and no timing, so the
-    // note IS the printed clause — including the grammatical number, which is
-    // built from the parameter rather than stored.
     expect(conditionNote({ kind: "opponentPrizesRemaining", counts: [1] })).toBe(
       "your opponent has exactly 1 Prize card remaining",
     );
@@ -932,11 +714,6 @@ describe("conditionHolds / conditionNote — the three members, directly", () =>
   });
 
   it("spells a three-value list the way the pool prints one", () => {
-    // Not reachable from any printed sentence today — Slaking V's list is on an
-    // Ability and own-seat — but the member admits it, so the note has to.
-    // 🆕🆕 D517 — and the OWN-SEAT half of that sentence now has a member of its own
-    // (`yourPrizesRemaining`), whose note is built from the SAME `printedList` helper and
-    // the SAME singular rule, so the pair cannot drift on the grammar either.
     expect(conditionNote({ kind: "yourPrizesRemaining", counts: [2, 4, 6] })).toBe(
       "you have exactly 2, 4, or 6 Prize cards remaining",
     );

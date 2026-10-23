@@ -1,7 +1,3 @@
-// The seat→viewer relabel (viewLog.ts). The engine's log.test.ts pins the row
-// CONTENT + that rows are filed under the actor's absolute seat; this pins the
-// tiny render-side mapping into the playmat's you/opponent/system vocabulary.
-
 import type { SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { viewLogEntries } from "./viewLog";

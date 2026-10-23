@@ -9,19 +9,6 @@ import { programFor } from "./registry";
 import { battler, completeSetup, deckOf, trainerCard, typedEnergy } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
-// ── CARD REVISION, BATCH B17 (Abilities) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B17"), driven on a
-// real board through `applyAction` / `attackCostAt` and asserted against the PRINTED text (local D1
-// `cards.abilities_json` / `attacks_json`, byte for byte below):
-//   §1 Bloodmoon Ursaluna ex "Seasoned Skill" (`sv06-141` / `-202` / `-216` / `-222` / `sv08.5-168` /
-//      `svp-177`) — *"**Blood Moon** used by this Pokémon costs {C} less for each Prize card your
-//      opponent has taken."* The per-Prize term was UNSCOPED (D242's flagged assumption: every printing
-//      has the one attack), and D578's attack menu made a second attack reachable — a Technical
-//      Machine's. Under a {C} surcharge (Antique Root Fossil "Primal Root") the discount cancelled
-//      the surcharge on TM: Fluorite's {G}{W}{P}. The term now carries the printed attack name
-//      (`attackCostDiscountAttack: "Blood Moon"`) and `attackCostAt` hands the menu row's name in.
-
 const SEASONED_SKILL =
   "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.";
 const BLOOD_MOON_TEXT = "During your next turn, this Pokémon can't attack.";
@@ -32,7 +19,6 @@ const FOSSIL_RULE =
 const TM_TEXT =
   "The Pokémon this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the end of your turn.";
 
-/** Every Standard-legal printing of the sentence on the local D1 (measured 2026-10-19). */
 const URSALUNA = ["sv06-141", "sv06-202", "sv06-216", "sv06-222", "sv08.5-168", "svp-177"] as const;
 const TM = "sv08-188"; // Technical Machine: Fluorite — "Fluorite" {G}{W}{P}
 const ROOT = "sv07-130"; // Antique Root Fossil — "Primal Root"
@@ -159,7 +145,6 @@ describe("B17 §1 — Seasoned Skill discounts BLOOD MOON only", () => {
       });
     }
     expect(new Set(URSALUNA.map((id) => programFor(id))).size).toBe(1);
-    // The TM's attack is the one the census of D578 makes reachable on this body.
     expect(CATALOG_MANIFEST.trainerFaces[TM]?.attacks?.[0]?.name).toBe("Fluorite");
     expect(CATALOG_MANIFEST.trainerFaces[TM]?.attacks?.[0]?.cost).toEqual(GWP);
     expect(CATALOG_MANIFEST.trainerFaces[ROOT]?.abilities?.[0]?.effect).toBe(PRIMAL_ROOT);

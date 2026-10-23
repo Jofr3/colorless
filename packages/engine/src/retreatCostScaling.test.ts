@@ -15,28 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.60.0 → 0.61.0 — the retreat-cost READERS (P3-M5 long tail, D110): a third
-// `DamageCountSource`, `opponentActiveRetreatCost`, landing FOUR cards at once.
-//
-//   additive ("+", "… does 30 MORE damage for each {C} …")  base + 30 × cost
-//     Heracross sv01-002 "Superpowered Throw" (10+)
-//     Spidops ex sv01-019/-223/-243 "Wire Hang" (90+)
-//     Sharpedo sv03-047 "Aqua Impact" (10+)
-//   multiply ("×", no "more", "… does 50 damage for each {C} …")  50 × cost
-//     Stoutland sv03-172 "Chomp Chomp Panic" (50×) — no base, so a retreat-0
-//     defender takes NOTHING
-//
-// All four sentences are char-for-char identical except the missing "more" on
-// Stoutland (verified against the live D1: 94 vs 89 chars, ASCII apostrophes),
-// so the whole slice is two anchored regexes + one `switch` arm. NO registry row
-// — these cards simulate straight off their printed text.
-//
-// The count is the EFFECTIVE cost (continuous.ts `effectiveRetreatCost`), not the
-// printed one — the payoff of D108's single derivation point: Beach Court's
-// discount, Calamitous Wasteland's surcharge and Clefable ex's set-to-zero aura
-// are all already inside the number these attacks read. This is the first count
-// source that is DERIVED rather than read off a field.
-
 const ADDITIVE_TEXT =
   "This attack does 30 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.";
 const MULTIPLY_TEXT =

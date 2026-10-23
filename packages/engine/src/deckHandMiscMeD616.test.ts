@@ -22,26 +22,8 @@ import {
   setDamage,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D616 — WP31b: THE SECOND PART OF THE `me` DECK / HAND / DISCARD / ENERGY MISC ───────────────
-//
-// 9 attack sentences / 11 `me` printings newly reader-built (effects.ts arm 6e-quater), each onto a SHIPPED
-// op's program; the one new field is `devolveChosen.defenderOnly`. Every other text on the 11 cards was
-// already built, so all 11 are finished. Every id and text off the LOCAL D1, 2026-10-09, `legal_standard = 1`;
-// no id was in the tree before this slice except in D615's WP31-rest list.
-//
-//   Ice Prison            — `discardEnergy` 2, then `applyStatus` Paralyzed on the Defending Pokémon.
-//   Backfire              — `discardEnergy` `to: "hand"`, 2 `providesEnergy` Fire.
-//   Soothing Melody ×2    — `healChosen` `zone: "bench"` with a `typedPokemon` Psychic filter (D569's field).
-//   Devolution Ray ×2     — `devolveChosen` with the NEW `defenderOnly`.
-//   Trials and Trip-ulations — `searchDeck` `byName` "Transformation Tome" → hand, revealed.
-//   Roto Call             — `optional` over a `pokemonNameContaining` "Rotom" Bench search and its shuffle.
-//   Reversed Clock        — Super Rod's program (`pokemonOrBasicEnergy` → deck, shuffle).
-//   Traverse Time         — `searchDeck` `anyOf` {G} Pokémon / Stadium → hand, revealed.
-//   Fetch and Hide        — `bottomFromOpponentHand` over an Item.
-//
-// WP31's other 8 texts / 11 printings stay for WP31c, named in §1 [🆕🆕🆕 D624 (D539): 5 / 7 BUILT by WP31c; 3 / 4 stay].
 
 const ICE_PRISON =
   "Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.";
@@ -60,7 +42,6 @@ const TRAVERSE_TIME =
 const FETCH_AND_HIDE =
   "Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent's deck.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [ICE_PRISON, ["me02.5-048"]],
   [BACKFIRE, ["me01-025"]],
@@ -117,7 +98,6 @@ const WP31_REST: readonly (readonly [string, readonly string[], string])[] = [
   ],
 ];
 
-/** 🆕🆕🆕 D624 — the first printing of each WP31_REST text WP31c builds (`deckHandMiscMeD624.test.ts`). */
 const BUILT_AT_D624: ReadonlySet<string> = new Set([
   "me03-029",
   "me03-067",
@@ -125,11 +105,8 @@ const BUILT_AT_D624: ReadonlySet<string> = new Set([
   "me03-003",
   "me03-066",
 ]);
-/** 🆕🆕🆕 D633 (D539) — O1 reads Elemental Blast (`attackOddsMeD633.test.ts`). */
 const BUILT_AT_D633: ReadonlySet<string> = new Set(["30th-121"]);
-/** 🆕🆕🆕 D638 (D539) — X1 reads Skill Thief (`copyBorrowedMeD638.test.ts`). */
 const BUILT_AT_D638: ReadonlySet<string> = new Set(["me05-054"]);
-/** 🆕🆕🆕 D641 (D539) — W1 reads Pleasing Present. */
 const BUILT_AT_D641: ReadonlySet<string> = new Set(["me04-018"]);
 
 describe("D616 §1 — the texts", () => {
@@ -145,15 +122,10 @@ describe("D616 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(11);
   });
 
-  it("WP31's rest stays unbuilt: 8 texts / 11 printings, named (🆕🆕🆕 D624: 5 of them / 7 printings are built — WP31c; 3 / 4 stay; 🆕🆕🆕 D633: Elemental Blast too — O1; 2 / 3 stay; 🆕🆕🆕 D638: Skill Thief ×2 too — X1; 1 / 1 stays)", () => {
+  it("WP31's rest stays unbuilt: 8 texts / 11 printings, named ( D624: 5 of them / 7 printings are built — WP31c; 3 / 4 stay; D633: Elemental Blast too — O1; 2 / 3 stay; D638: Skill Thief ×2 too — X1; 1 / 1 stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      // 🆕🆕🆕 D624 (D539): WP31c reads five of these; Elemental Blast, Pleasing Present and Skill Thief stay unbuilt. [🆕🆕🆕 D641 (D539): Pleasing Present no longer — W1.]
-      // [🆕🆕🆕 D633 (D539): Elemental Blast no longer — O1.] [🆕🆕🆕 D638 (D539): Skill Thief no longer — X1.]
-      // 🆕🆕🆕 D633 (D539): and O1 reads Elemental Blast.
-      // 🆕🆕🆕 D638 (D539): and X1 reads Skill Thief.
-      // 🆕🆕🆕 D641 (D539): and W1 reads Pleasing Present.
       expect(resolvedByAnyReader(text), text).toBe(
         BUILT_AT_D624.has(ids[0] ?? "") ||
           BUILT_AT_D633.has(ids[0] ?? "") ||
@@ -475,11 +447,6 @@ const BOARD_IDS = new Set([
   "fix-unaware",
   "fix-energy",
 ]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

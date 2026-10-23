@@ -25,25 +25,8 @@ import {
   setDamage,
   trainerCard,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D557 B + C — ONE RIDER EACH: THE HAND, DRAW AND HEAL TRAINERS, AND THE TOOL
-//    DISCARDS AND DECK WINDOWS ──
-//
-//   Morty's Conviction      sv05-155 / -201 / -211  Supporter  pay 1 → draw per OPPONENT's Benched Pokémon (`drawCards.per`)
-//   Xerosic's Machinations  sv06.5-064 / -089       Supporter  opponent discards DOWN TO 3 (`untilHandSize`)
-//   Lucian                  sv06-157 / -208         Supporter  both hands under; each player flips: 6 or 3 (`coinFlip`)
-//   Arven's Sandwich        sv10-161                Item       heal 30, or 100 on an Arven's Active (`yourActiveOwner`)
-//   Megaton Blower          sv08-182                Item       all opp. Tools + Special Energy, and a Stadium (`count: "all"`)
-//   Brilliant Blender       sv08-164                Item       up to 5 deck cards → the discard pile (`dest: "discard"`)
-//   TM Machine              sv10-181                Item       up to 3 "Technical Machine" Tools → hand (`toolNameContaining`)
-//   Dusk Ball               sv08-175                Item       a Pokémon from the BOTTOM 7 (`lookAtTopN.from`)
-//   Tool Scrapper           sv10.5w-085             Item       up to 2 Tools off EITHER side (`sides: "both"`)
-//
-// Every rider is driven BOTH WAYS on a real id, on a LOCAL `cardPool` (D275) in the suite's
-// OWN 60-card deck (D270). Texts, subtypes and legality off tcgdex, 2026-09-26. The labelled
-// confirm and the Item counter source are `chooseOneTrainersD557.test.ts`. docs/decisions.md
-// D557 (R-L1 Lucian's flip order).
 
 const MORTY = ["sv05-155", "sv05-201", "sv05-211"] as const;
 const XEROSIC = ["sv06.5-064", "sv06.5-089"] as const;
@@ -112,7 +95,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [MORTY[0]]: 1,
   [MORTY[1]]: 1,
@@ -141,11 +123,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -431,7 +408,7 @@ describe("D557 §1 — the prints, and the registry rows that map them", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's Bench at resolve", () => {
-  it('🛑 a hand holding Morty ALONE is refused — the printed "another card"', () => {
+  it('a hand holding Morty ALONE is refused — the printed "another card"', () => {
     const board = setHand(table(), "p1", [MORTY[0]]);
     expectErr(
       board,
@@ -450,7 +427,7 @@ describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's 
     expect(before.players.p1.hand).toHaveLength(2);
   });
 
-  it("🛑 it counts the OPPONENT's Bench, never your own (own 4, theirs 1 → draws 1)", () => {
+  it("it counts the OPPONENT's Bench, never your own (own 4, theirs 1 → draws 1)", () => {
     const board = table(FILLER, [FILLER, FILLER, FILLER, FILLER], FILLER, [FILLER]);
     const { events } = play(board, MORTY[1], [TOOL]);
     expect(all(events, "CARDS_DRAWN").map((e) => e.uids.length)).toEqual([1]);
@@ -463,11 +440,7 @@ describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's 
     expect(state.players.p1.discard.map((u) => state.cardIdByUid[u])).toContain(TOOL);
   });
 
-  // Review fix (D539): `drawCards` never parks ITSELF, but it RIDES `payFromHand`'s
-  // `rest`. Two DISTINCT cost candidates park the cost, and the stored continuation
-  // carries `drawCards { count: 1, per }` — so `per` IS persisted. `MATCH_RECORD_VERSION`
-  // holds because the key is optional (D125); this rung drives the persisted form.
-  it("🛑 `per` RIDES the parked cost's `rest`: a JSON round trip of the parked state still draws per the OPPONENT's Bench", () => {
+  it("`per` RIDES the parked cost's `rest`: a JSON round trip of the parked state still draws per the OPPONENT's Bench", () => {
     const board = table(FILLER, [FILLER, FILLER, FILLER], FILLER, [FILLER, FILLER]);
     const { state: parked, before } = play(board, MORTY[0], [TOOL, "fix-energy"]);
     if (parked.phase.kind !== "effect:choose")
@@ -514,7 +487,7 @@ describe("D557 §3 — Xerosic's Machinations: the OWNER discards DOWN TO 3", ()
     expect(state.phase.answerer).toBe("p2");
   });
 
-  it("🛑 the OWNER answers and ends at 3; the controller's frame is refused", () => {
+  it("the OWNER answers and ends at 3; the controller's frame is refused", () => {
     const parked = play(withOppHand(7), XEROSIC[1]).state;
     const picks = parked.players.p2.hand.slice(0, 4);
     expect(applyAction(parked, cards(picks, "p1")).ok).toBe(false);
@@ -529,7 +502,7 @@ describe("D557 §3 — Xerosic's Machinations: the OWNER discards DOWN TO 3", ()
     expect([p.min, p.max]).toEqual([1, 1]);
   });
 
-  it("🛑 a hand of 3 or fewer does NOTHING and never parks", () => {
+  it("a hand of 3 or fewer does NOTHING and never parks", () => {
     for (const n of [3, 2, 0]) {
       const { state, events, before } = play(withOppHand(n), XEROSIC[0]);
       expect(state.phase.kind, `${n}`).toBe("turn:action");
@@ -595,7 +568,7 @@ describe("D557 §4 — Lucian: each player flips their OWN coin (heads 6 / tails
     }
   });
 
-  it("🛑 each seat's draw follows ITS OWN coin — a shared flip would give both the same count", () => {
+  it("each seat's draw follows ITS OWN coin — a shared flip would give both the same count", () => {
     const { state } = lucianFaces(both(1, 1), "heads", "tails");
     expect([state.players.p1.hand.length, state.players.p2.hand.length]).toEqual([6, 3]);
   });
@@ -606,7 +579,7 @@ describe("D557 §4 — Lucian: each player flips their OWN coin (heads 6 / tails
     expect([state.players.p1.hand.length, state.players.p2.hand.length]).toEqual([3, 3]);
   });
 
-  it("🛑 NEITHER hand moved a card: no flips, no draws, no rng spent", () => {
+  it("NEITHER hand moved a card: no flips, no draws, no rng spent", () => {
     const { events, state, before } = lucian(both(0, 0), cursorFor("heads"));
     expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual([]);
     expect(all(events, "CARDS_DRAWN")).toEqual([]);
@@ -641,7 +614,7 @@ describe('D557 §5 — Arven\'s Sandwich: `yourActiveOwner`, and "instead" is a 
     expect(conditionNote(cond)).toBe("your Active Pokémon is an Arven's Pokémon");
   });
 
-  it("🛑 an Arven's Active damaged 150 heals 100 — ONE heal, never 30 + 70 or 130", () => {
+  it("an Arven's Active damaged 150 heals 100 — ONE heal, never 30 + 70 or 130", () => {
     const { state, events } = play(setDamage(table(ARVEN), "p1", 150), SANDWICH);
     expect(state.players.p1.active?.damage).toBe(50);
     expect(all(events, "HEALED").map((e) => e.amount)).toEqual([100]);
@@ -702,7 +675,7 @@ describe("D557 §6 — Megaton Blower: three sweeps, no question, refused only w
     ).toHaveLength(2);
   });
 
-  it("🛑 the SHIELDED body (preventTrainerEffects) keeps its Tool AND its Special Energy; YOUR own Tool is untouched", () => {
+  it("the SHIELDED body (preventTrainerEffects) keeps its Tool AND its Special Energy; YOUR own Tool is untouched", () => {
     const { state, events } = play(loaded(), MEGATON);
     expect(toolsOn(state, "p2", 1)).toEqual([TM_A]);
     expect(state.players.p2.bench[1]?.energy).toHaveLength(1);
@@ -710,7 +683,7 @@ describe("D557 §6 — Megaton Blower: three sweeps, no question, refused only w
     expect(all(events, "TRAINER_EFFECT_PREVENTED").length).toBeGreaterThan(0);
   });
 
-  it("🛑 the three are ALTERNATIVES: a board with ONLY a Tool, ONLY a Special Energy or ONLY a Stadium plays", () => {
+  it("the three are ALTERNATIVES: a board with ONLY a Tool, ONLY a Special Energy or ONLY a Stadium plays", () => {
     let onlyTool = table();
     onlyTool = attachToolFromDeck(ensureInDeck(onlyTool, "p2", TOOL), "p2", "active", TOOL);
     expect(toolsOn(play(onlyTool, MEGATON).state, "p2", "active")).toEqual([]);
@@ -753,7 +726,7 @@ describe("D557 §7 — Brilliant Blender: up to 5 cards to the DISCARD PILE, the
     expect(p.note).toBe("Search your deck for up to 5 cards and discard them.");
   });
 
-  it("🛑 the picks land in the CONTROLLER's discard pile (not the hand), named in the log, then SHUFFLE", () => {
+  it("the picks land in the CONTROLLER's discard pile (not the hand), named in the log, then SHUFFLE", () => {
     const parked = play(table(), BLENDER).state;
     const picks = parked.players.p1.deck.slice(0, 5);
     const { state, events } = mustApply(parked, cards(picks));
@@ -781,7 +754,7 @@ describe("D557 §7 — Brilliant Blender: up to 5 cards to the DISCARD PILE, the
 describe("D557 §8 — TM Machine: `toolNameContaining`, a TOOL whose name holds the fragment", () => {
   const filter: CardFilter = { kind: "toolNameContaining", fragment: "Technical Machine" };
 
-  it("🛑 matches a Technical Machine TOOL; refuses a plain Tool AND a same-fragment ITEM (the head noun)", () => {
+  it("matches a Technical Machine TOOL; refuses a plain Tool AND a same-fragment ITEM (the head noun)", () => {
     expect(matchesFilter(POOL[TM_A], filter)).toBe(true);
     expect(matchesFilter(POOL[TM_B], filter)).toBe(true);
     expect(matchesFilter(POOL[TOOL], filter)).toBe(false);
@@ -840,7 +813,7 @@ describe("D557 §9 — Dusk Ball: the BOTTOM 7, never the top", () => {
     );
   });
 
-  it('🛑 a Pokémon on TOP is NOT offered — the look whiffs and says "bottom" in the log', () => {
+  it('a Pokémon on TOP is NOT offered — the look whiffs and says "bottom" in the log', () => {
     const { state, events } = deckWithPokemonAt("top");
     expect(state.phase.kind).toBe("turn:action");
     expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ uids: [], from: "bottom" });
@@ -887,7 +860,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
     );
   });
 
-  it("🛑 the opponent's SHIELDED Active is not offered; YOUR OWN shielded Active is — your own Tools are never shielded", () => {
+  it("the opponent's SHIELDED Active is not offered; YOUR OWN shielded Active is — your own Tools are never shielded", () => {
     const { state, events } = play(tooled({ ownShielded: true }), SCRAPPER);
     const p = prompt(state);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
@@ -897,7 +870,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
     expect(all(events, "TRAINER_EFFECT_PREVENTED").map((e) => e.seat)).toEqual(["p2"]);
   });
 
-  it("🛑 a pick spanning BOTH boards sends each Tool to ITS OWNER's pile, one row per host under the victim's seat", () => {
+  it("a pick spanning BOTH boards sends each Tool to ITS OWNER's pile, one row per host under the victim's seat", () => {
     const parked = play(tooled(), SCRAPPER).state;
     const p = prompt(parked);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
@@ -934,7 +907,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
     );
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` holds: the parked op round-trips through JSON and resolves identically", () => {
+  it("`MATCH_RECORD_VERSION` holds: the parked op round-trips through JSON and resolves identically", () => {
     const parked = play(tooled(), SCRAPPER).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const p = prompt(parked);

@@ -22,51 +22,9 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.134.0 → 0.135.0 — the §8.1 KO-SURVIVAL CLAMP (P3-M5, D208):
-//
-//   "If this Pokémon has full HP and would be Knocked Out by damage from an
-//    attack, it is not Knocked Out, and its remaining HP becomes 10."
-//
-// SEVEN printings, all seven Standard-legal, under TWO Ability names: Pikachu ex
-// "Resolute Heart" (sv08-057, sv08-219, sv08-238, sv08-247, sv08.5-179) and
-// Crustle "Sturdy" (sv10.5b-052, sv10.5b-130). Census re-derived for this slice
-// against the remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786
-// rows / 20 sets, 2,021 legal) on 2026-08-04, with `json_each(abilities_json)` and
-// an EQUALITY on the effect string — not `LIKE` (case-insensitive in this engine)
-// and not a grouped `attacks_json` scan, which is the exact shape that made D206
-// and D207 each attribute a sentence to the wrong row.
-//
-// 🛑 THE PLACEMENT IS THE WHOLE SLICE, AND D199's REMAINDER ROW HAD IT WRONG.
-// That row filed this as "a §8.1 KO-SURVIVAL hook on `PassiveEffects`" resolved at
-// the KO sweep, beside `onKoPrizeGuard`. It cannot go there. The printed antecedent
-// is "has FULL HP" — a fact about the PRE-damage board — and the engine's ONE
-// lethality test, `isLethallyDamaged`, reads `pokemon.damage`, which by the time it
-// runs ALREADY INCLUDES the hit. Every call site of that predicate (`lethalRefs`,
-// `collectKnockOuts`, `koRecoilOf`, turn.ts's post-evolution check) is post-damage,
-// and all four of the engine's KO/post-KO detection sites (`onKnockOutTrigger`,
-// `triggersOf`, `passivesOf`'s sweep readers, `koToolTriggersOf`) are post-KO. The
-// datum the sentence turns on has been destroyed before any of them can ask.
-//
-// So this is a CLAMP AT THE DAMAGE WRITE, not a fifth detection site: one helper
-// (`koSurvivalClamp`) called from the four sites that emit `DAMAGE_DEALT` — attack.ts's
-// main hit and interpreter.ts's `spreadDamage`, `placeSnipe`'s `deals` arm and
-// `snipeActive` — each of which still holds the pre-hit body. ZERO detection sites
-// were added or touched. D171 bought the fourth at a high price; this slice buys none.
-//
-// ⚠️ THE COLLISIONS ANSWER THEMSELVES BECAUSE OF THAT PLACEMENT, and every one is
-// driven below rather than argued: once the clamped total is on the board the
-// survivor simply IS NOT lethally damaged, so `lethalRefs` skips it, no
-// `KNOCKED_OUT` fires, no Prize is staged, no `ko:` phase is entered, and
-// `koRecoilOf`'s `doomed` set — taken from `lethalRefs` itself — excludes it, so
-// Vengeful Punch stays silent. Rocky Helmet's `damageAttacker` still fires, because
-// its gate is `dealt > 0` and the clamp deliberately never touches `dealt`.
-
-/** The printed sentence, byte-for-byte off the remote D1 row (2026-08-04). All
-    seven printings carry it identically — asserted, not assumed. */
 const KO_SURVIVAL_TEXT =
   "If this Pokémon has full HP and would be Knocked Out by damage from an attack, it is not Knocked Out, and its remaining HP becomes 10.";
 
-/** The seven Standard-legal printings, in the order the census returned them. */
 const PRINTINGS = [
   "sv08-057", // Pikachu ex — "Resolute Heart"
   "sv08-219",
@@ -109,7 +67,6 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** Every recoil row the §9/§8.1 family produced, in site order. */
 function recoils(events: GameEvent[]) {
   return all(events, "COUNTERS_PLACED").filter((e) => e.source === "counterattack");
 }
@@ -142,8 +99,6 @@ function board(
   return attachFromDeck(state, "p1", "fix-energy", 1);
 }
 
-/** The printed Ability text a `FIXTURE_POOL` body carries, for the assertion that
-    licenses driving real printings on synthetic bodies. */
 function fixtureAbilityText(id: string): string | undefined {
   return FIXTURE_POOL[id]?.abilities?.[0]?.effect;
 }
@@ -152,10 +107,6 @@ function fixtureAbilityText(id: string): string | undefined {
 function benched(state: GameState, id: string) {
   return state.players.p2.bench.find((p) => state.cardIdByUid[p.stack.at(-1) ?? ""] === id);
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. The printed datum — re-queried for this slice, never inherited.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("the printed datum — the registry rows", () => {
   it("authors all SEVEN printings as the bare survivesKoAtFullHp passive", () => {
@@ -169,29 +120,13 @@ describe("the printed datum — the registry rows", () => {
   });
 
   it("the two synthetic demonstrators carry the IDENTICAL program and the IDENTICAL text", () => {
-    // The behaviour below is driven on fixtures because all seven real ids are
-    // outside the local 6-set catalog manifest, which cannot be regenerated
-    // (SQLITE_CANTOPEN). This is what licenses that substitution: same program,
-    // same printed sentence. RED if a fixture's text drifts from the D1 row — which
-    // is the failure mode that would make every board below prove nothing.
     for (const id of ["fix-sturdy", "fix-sturdytiny"]) {
       expect(programFor(id)?.passive, id).toEqual({ survivesKoAtFullHp: true });
       expect(fixtureAbilityText(id), id).toBe(KO_SURVIVAL_TEXT);
     }
   });
 
-  it("⚠️ REFUSES the two neighbours the census surfaced — neither is this sentence", () => {
-    // Machamp sv03.5-068 "Guts" prints the same CONSEQUENT with no "full HP"
-    // antecedent and a COIN FLIP in front of it, and is `legal_standard = 0`
-    // (mark G). Survival Brace sv06-164 is the TOOL twin — 1 Standard-legal — and
-    // adds "Then, discard this card.", which this flag cannot express: a passive
-    // fold has no way to consume its own source. Both are UNAUTHORED, deliberately.
-    // RED the moment someone folds either into `KO_SURVIVAL` for the printing count.
-    // 🆕🆕🆕 D562 CORRECTION (D539): ~~"Both are UNAUTHORED"~~ is WITHDRAWN for the
-    // Brace — D562 BUILT it, and NOT into `KO_SURVIVAL`: its own program carries its own
-    // key (`survivesKoAtFullHpFromOpponentThenDiscard`), because this flag still cannot
-    // discard. So the rung is INVERTED and keeps its point: the Brace is authored, and
-    // it is still refused by THIS program — it never carries `survivesKoAtFullHp`.
+  it("REFUSES the two neighbours the census surfaced — neither is this sentence", () => {
     expect(programFor("sv03.5-068")).toBeUndefined();
     expect(programFor("sv06-164")?.passive).toEqual({
       survivesKoAtFullHpFromOpponentThenDiscard: true,
@@ -204,13 +139,8 @@ describe("the printed datum — the registry rows", () => {
 // 2. THE PLACEMENT CLAIM — driven, not asserted in a comment.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-sweep hook", () => {
+describe("the placement — why this is a WRITE-SITE clamp and not a KO-sweep hook", () => {
   it("isLethallyDamaged CANNOT see the antecedent: it reads a total that already includes the hit", () => {
-    // The structural fact D199's row missed, driven directly. Two bodies that a KO
-    // sweep cannot tell apart: one that HAD full HP and one that did not, both
-    // sitting at the same post-hit total. `isLethallyDamaged` answers TRUE for both
-    // — identically — so no predicate downstream of the write can implement "has
-    // full HP". RED if `isLethallyDamaged` ever starts carrying pre-hit state.
     const state = board(1);
     const pokemon = state.players.p2.active;
     if (pokemon === undefined || pokemon === null) throw new Error("no active");
@@ -230,10 +160,6 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
   });
 
   it("the clamp's lethality test AGREES with isLethallyDamaged, boundary for boundary", () => {
-    // The two predicates cannot share code — flow.ts imports continuous.ts, so the
-    // arrow cannot reverse — so the agreement is asserted instead. This is the
-    // guard that kills the `>` mutant: at EXACTLY lethal the engine's own KO test
-    // says "dead", so the clamp must fire. RED if either side flips to `>`.
     const state = board(2);
     const pokemon = state.players.p2.active;
     if (pokemon === undefined || pokemon === null) throw new Error("no active");
@@ -252,14 +178,6 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
   });
 
   it("refuses a ZERO or PREVENTED hit — there is no Knock Out to refuse", () => {
-    // ⚠️ AND IT DOES SO WITH NO DEDICATED GUARD, WHICH IS A REPORTED MUTATION
-    // FINDING. A `dealt <= 0` early return was written and proved UNKILLABLE: to
-    // reach the lethality test the body must already be at `damage === 0`, and
-    // `effectiveMaxHp` never returns a non-positive number, so `0 + dealt >= hp`
-    // needs `dealt >= 1`. The comparison below already refuses this case on the
-    // right ground. The branch was REMOVED (D205's precedent) and the BEHAVIOUR
-    // kept here — so this test still goes RED if the lethality comparison is ever
-    // loosened to something a 0 or negative `dealt` could satisfy.
     const state = board(3);
     const pokemon = state.players.p2.active;
     if (pokemon === undefined || pokemon === null) throw new Error("no active");
@@ -268,8 +186,6 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
   });
 
   it("a body WITHOUT the passive is never clamped, at any damage", () => {
-    // The control for every board below. RED if the passive read is dropped and the
-    // clamp becomes unconditional — the "forget the antecedent" mutant's other half.
     const state = board(4, { defender: "fix-bigbody" });
     const pokemon = state.players.p2.active;
     if (pokemon === undefined || pokemon === null) throw new Error("no active");
@@ -298,10 +214,6 @@ describe("write site 1 — attack.ts's main hit", () => {
   });
 
   it("a 300 OVERKILL lands on the SAME 10 HP — the clamp is a floor on the RESULT", () => {
-    // The printed sentence names an outcome ("its remaining HP becomes 10"), not a
-    // subtraction, so the excess is irrelevant. RED if the clamp is ever written as
-    // "cap the damage at maxHp − 10" applied to `dealt` — that arithmetic happens to
-    // agree at exactly-lethal and diverges here.
     const state = board(11);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -317,8 +229,6 @@ describe("write site 1 — attack.ts's main hit", () => {
   });
 
   it("ONE damage counter and the same body dies normally — the printed antecedent", () => {
-    // "has FULL HP". RED if the `pokemon.damage !== 0` guard is dropped (the
-    // "survives always" mutant), which is the single most likely authoring mistake.
     const state = board(12, { defenderDamage: 10 });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
@@ -337,10 +247,6 @@ describe("write site 1 — attack.ts's main hit", () => {
   });
 
   it("the DAMAGE_DEALT row carries `survived` and keeps `dealt` honest", () => {
-    // The event widening. `dealt` stays the pipeline's real output and `damage` the
-    // clamped total, so the row reconstructs in printed order; the flag is what
-    // stops that looking like an arithmetic bug. RED if `survived` is emitted on an
-    // ordinary hit, or omitted on a clamped one.
     const clamped = mustApply(board(14), { type: "attack", seat: "p1", index: BLAST });
     expect(find(clamped.events, "DAMAGE_DEALT")).toMatchObject({
       dealt: STURDY_HP,
@@ -360,27 +266,12 @@ describe("write site 1 — attack.ts's main hit", () => {
 // 4. THE THREE-WAY ORDER WITNESS — one board, both recoil siblings, both answers.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ the order witness — survival, death, and the two recoils, on ONE board", () => {
-  /** The survivor wearing BOTH recoil Tools, so one attack declaration answers
-      both collisions at once. Two Tools on one body is a surgical board (the §
-      one-Tool cap lives at the attach gate, and Revavroom ex raises it to 4), and
-      it is what makes the two answers comparable rather than two experiments. */
+describe("the order witness — survival, death, and the two recoils, on ONE board", () => {
   function witness(seed: number, damage: number): GameState {
     return board(seed, { tools: ["sv01-193", "sv03-197"], defenderDamage: damage });
   }
 
   it("FULL HP: survives at 10, no KO, no Prize — and Vengeful Punch is SILENT while Rocky Helmet FIRES", () => {
-    // The whole slice in one assertion. The KO-conditioned recoil owes nothing
-    // because NO KNOCK OUT OCCURRED — and that falls out of the placement for free:
-    // `koRecoilOf` takes its `doomed` set from `lethalRefs`, which reads the already
-    // clamped board. The damage-conditioned recoil still fires because its gate is
-    // `dealt > 0` and the clamp never touches `dealt`.
-    //
-    // RED in four independent ways: if the clamp does not fire (KNOCKED_OUT + a
-    // Prize + a 60 recoil), if it fires but `koRecoilOf` re-derives lethality from
-    // something other than the board (a 40 appears), if `dealt` is clamped to 0 by a
-    // well-meaning author (Rocky Helmet's 20 vanishes), or if the survivor lands
-    // anywhere but 110.
     const state = witness(20, 0);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
@@ -389,7 +280,6 @@ describe("⚠️ the order witness — survival, death, and the two recoils, on 
     expect(find(events, "KNOCKED_OUT")).toBeUndefined();
     expect(done.players.p1.prizes).toHaveLength(6);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
-    // EXACTLY ONE recoil row, and it is the damage-conditioned one.
     expect(recoils(events).map((r) => r.amount)).toEqual([HELMET_HP]);
     expect(done.players.p1.active?.damage).toBe(HELMET_HP);
   });
@@ -428,12 +318,6 @@ describe("⚠️ the order witness — survival, death, and the two recoils, on 
 
 describe("write sites 2-4 — spreadDamage, placeSnipe's `deals` arm, snipeActive", () => {
   it("spreadDamage clamps a BENCHED full-HP holder and KOs the damaged one beside it", () => {
-    // ONE spread, TWO holders, opposite answers — the cleanest form of the
-    // antecedent, since both bodies take the identical 120 from the identical
-    // attack. Neither printing carries an "Active Spot" clause, so the Bench is
-    // where these cards actually live. RED if `spreadDamage` writes
-    // `pokemon.damage + dealt` unclamped, or if the clamp is hoisted out of the
-    // per-target loop and answers once for the whole bench.
     const state = board(30, {
       defender: "fix-bigbody",
       bench: [
@@ -463,12 +347,6 @@ describe("write sites 2-4 — spreadDamage, placeSnipe's `deals` arm, snipeActiv
   });
 
   it("placeSnipe's `deals` arm clamps a chosen BENCHED holder", () => {
-    // Attack damage to a chosen benched body (Wo-Chien "Covetous Ivy"'s arm). RED if
-    // the clamp is added to `placeSnipe` but on the wrong branch — which is the
-    // mistake the next test exists to catch from the other side.
-    // TWO benched bodies, because a count-1 pick over a ONE-body bench is forced
-    // and resolves without parking — the choice has to be real for this to exercise
-    // the chosen-target path at all.
     const state = board(31, {
       defender: "fix-bigbody",
       bench: [{ id: "fix-sturdy" }, { id: "fix-titan" }],
@@ -521,20 +399,8 @@ describe("write sites 2-4 — spreadDamage, placeSnipe's `deals` arm, snipeActiv
 // 6. THE BOUNDARY — "damage from an attack", asserted rather than assumed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ the boundary — a PLACED COUNTER is not damage from an attack", () => {
+describe("the boundary — a PLACED COUNTER is not damage from an attack", () => {
   it("a 12-COUNTER snipe kills the full-HP holder that an identical 120 of DAMAGE would spare", () => {
-    // THE boundary assertion, and it is a driven difference rather than a claim
-    // about two functions: `Sting` and `Pinpoint` are the same op (`damageChosen`,
-    // count 1, the opponent's Bench) reaching the SAME `placeSnipe` with the same
-    // 120 HP, and they differ only on `deals`. The counter arm places, which "is not
-    // damage from an attack" (D138/D139/D142) — the same line that already denies it
-    // Weakness, Resistance and every reduction passive. So the holder dies.
-    //
-    // RED if the clamp is added to `placeSnipe` above the `deals` branch instead of
-    // inside it — the single most plausible mis-placement in this file, and one that
-    // no amount of testing the `deals` arm would catch.
-    // The same two-body bench as the `deals` test above, for the same reason and so
-    // the two boards differ ONLY in which attack is declared.
     const state = board(40, {
       defender: "fix-bigbody",
       bench: [{ id: "fix-sturdy" }, { id: "fix-titan" }],
@@ -550,24 +416,12 @@ describe("⚠️ the boundary — a PLACED COUNTER is not damage from an attack"
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    // Counters, not damage: the resume emits a COUNTERS_PLACED and NOT ONE
-    // DAMAGE_DEALT row — which is the boundary stated in the event stream itself,
-    // and is why the clamp (which lives on the DAMAGE_DEALT writes) cannot reach
-    // here even in principle. The holder dies with full HP and its Ability intact.
     expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 120 });
     expect(all(events, "DAMAGE_DEALT")).toHaveLength(0);
     expect(find(events, "KNOCKED_OUT")?.uid).toBe(doomedUid);
   });
 
   it("CHECKUP BURN Knocks Out a FULL-HP holder — §13 is not an attack", () => {
-    // The Checkup half of the same boundary, on the 20 HP twin because that is the
-    // only HP at which a §13 tick is lethal at all. A full-HP body, the identical
-    // antecedent, and it dies — because burn places counters (flow.ts
-    // COUNTERS_PLACED source "burn") and never touches the clamp.
-    //
-    // RED if the clamp is ever hoisted into a shared "add damage" helper that the
-    // Checkup also calls — the survivor would appear on 10 and §13 would stop
-    // killing anything at full HP.
     let state = board(41, { defender: "fix-sturdytiny", bench: [{ id: "fix-bigbody" }] });
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     expect(state.players.p2.active?.damage).toBe(0); // full HP going in
@@ -581,11 +435,6 @@ describe("⚠️ the boundary — a PLACED COUNTER is not damage from an attack"
   });
 
   it("CHECKUP POISON Knocks Out a FULL-HP holder too", () => {
-    // Poison's twin of the above, and it is a separate case rather than a duplicate:
-    // burn and poison are two loops at two §13 steps, and a clamp leaking into one
-    // would not necessarily leak into the other. The counter is raised to 20 so the
-    // tick is exactly lethal on the 20 HP body — `poisonDamage` is a field for
-    // precisely this reason.
     let state = board(42, { defender: "fix-sturdytiny", bench: [{ id: "fix-bigbody" }] });
     state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
     state = setConditions(state, "p2", { poisonDamage: 20 });
@@ -601,13 +450,8 @@ describe("⚠️ the boundary — a PLACED COUNTER is not damage from an attack"
 // 7. effectiveMaxHp — the Bravery Charm board, in BOTH directions.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ effectiveMaxHp and NOT the printed hp — the Bravery Charm board", () => {
+describe("effectiveMaxHp and NOT the printed hp — the Bravery Charm board", () => {
   it("+50 HP moves the BAR: a 120 that used to be lethal no longer is, so nothing clamps", () => {
-    // Direction one. Under Bravery Charm the 120 HP Basic has 170 effective HP, so
-    // the exactly-lethal Blast is merely damage — the clamp must NOT fire and the
-    // body must sit on a plain 120. RED if the clamp reads the printed `hp`: it
-    // would see 120 >= 120, fire, and park the body on 110 — LESS damage than it
-    // actually took, from a hit that was never lethal.
     const state = board(50, { tools: ["sv02-173"] });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
@@ -618,10 +462,6 @@ describe("⚠️ effectiveMaxHp and NOT the printed hp — the Bravery Charm boa
   });
 
   it("+50 HP also moves the SURVIVOR: a 300 leaves it on 10 of SEVENTEEN, i.e. 160 damage", () => {
-    // Direction two, and the one that pins which number the "becomes 10" is read
-    // against. RED if the clamp computes `printedHp − 10` (110) rather than
-    // `effectiveMaxHp − 10` (160) — a mutant the previous test cannot see, because
-    // there the clamp correctly does not fire at all.
     const state = board(51, { tools: ["sv02-173"] });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -636,15 +476,7 @@ describe("⚠️ effectiveMaxHp and NOT the printed hp — the Bravery Charm boa
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. §9 — both printings are ABILITIES, so a lock switches the survival off.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("⚠️ §9 — an Ability-lock switches the survival OFF", () => {
-  /** Klefki "Mischievous Lock" is Active-only and locks BASIC Pokémon on BOTH
-      sides, so it sits in P2's Active spot and the holder is Benched, reached by
-      the spread. `locked: false` swaps in a bodied control with no Ability at all,
-      so the only difference between the two boards is the lock itself. */
+describe("§9 — an Ability-lock switches the survival OFF", () => {
   function lockBoard(seed: number, locked: boolean): GameState {
     return board(seed, {
       defender: locked ? "sv01-096" : "fix-bigbody",
@@ -653,10 +485,6 @@ describe("⚠️ §9 — an Ability-lock switches the survival OFF", () => {
   }
 
   it("under Klefki the holder DIES to a hit it would otherwise survive", () => {
-    // The §9 answer, driven. This is what the `disabled` drop on `sources[0]` buys,
-    // and it is the reason the flag rides `passivesOf` rather than being read
-    // straight off the catalog row at the four write sites — a build that did the
-    // latter would be shorter and would get this silently wrong.
     const locked = lockBoard(60, true);
     const holderUid = benchTopUid(locked, "p2", 0);
     const { events } = mustApply(locked, { type: "attack", seat: "p1", index: SHOCKWAVE });
@@ -675,13 +503,7 @@ describe("⚠️ §9 — an Ability-lock switches the survival OFF", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 9. Voice — the flag D208 emitted at four sites and nothing rendered (D219).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("the log — rendered under BOTH seats and READ, not copied", () => {
-  /** Render every non-turn row as "<who>: <text>". `attackerFilter.test.ts`'s
-      helper verbatim, so the two crumbs' voice tests compare line for line. */
   function render(state: GameState, events: GameEvent[]): string {
     const ctx: LogContext = { names: { p1: "Ember", p2: "Wren" }, state, elapsed: "+00:11" };
     return logFromEvents(events, ctx)
@@ -693,11 +515,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
       .join("\n");
   }
 
-  it("⚠️ THE FLAG WAS EMITTED AT FOUR SITES AND NOTHING RENDERED IT — it does now", () => {
-    // D159's finding one field down, and one slice old rather than seventy-six.
-    // Before this crumb the row read "dealt 300 damage to fix-sturdy", NO
-    // KNOCKED_OUT row followed it, and the board sat at 10 HP with nothing saying
-    // why. RED if the crumb is dropped, or if it stops naming the damaged body.
+  it("THE FLAG WAS EMITTED AT FOUR SITES AND NOTHING RENDERED IT — it does now", () => {
     const { state, events } = mustApply(board(70), { type: "attack", seat: "p1", index: OVERKILL });
     expect(find(events, "DAMAGE_DEALT")?.survived).toBe(true);
     expect(types(events)).not.toContain("KNOCKED_OUT");
@@ -707,22 +525,12 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
   });
 
   it("the row is filed under the ATTACKER's seat, and the wording is true there", () => {
-    // The voice question, asked rather than inherited. `DAMAGE_DEALT.seat` owns the
-    // DAMAGED Pokémon; the ROW is `otherSeat(seat)`. So a crumb naming an owner or
-    // a SOURCE would be spoken from the wrong chair — and the source is unknowable
-    // here anyway: TWO printed Ability names set this one flag and the event
-    // carries no member telling them apart.
-    // [🆕🆕🆕 D598 (D539): "TWO printed Ability names" is WITHDRAWN as the whole set, kept as
-    // written — the coin-flip survival (Tenacious Body, Durable Body) sets the flag too, and its
-    // own `ABILITY_COIN_FLIP` row names the Ability; the attacker's-seat voice stays true of it.]
     const { state, events } = mustApply(board(71), { type: "attack", seat: "p1", index: BLAST });
     expect(find(events, "DAMAGE_DEALT")?.seat).toBe("p2"); // the victim's seat…
-    expect(render(state, events)).toContain("p1: "); // …and P1's row.
+    expect(render(state, events)).toContain("p1: ");
   });
 
   it("a hit that did NOT clamp carries no crumb", () => {
-    // Loudness is owed to a rule that FIRED, not to one that declined (D140). RED
-    // if the crumb starts rendering off `dealt` or off the absence of a KO.
     const { state, events } = mustApply(board(72, { defender: "fix-bigbody" }), {
       type: "attack",
       seat: "p1",
@@ -733,11 +541,6 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
   });
 
   it("the crumb sits LAST, after every §8.5 breadcrumb it follows", () => {
-    // The clamp runs on the pipeline's FINISHED `dealt`, so its crumb is the last
-    // thing in the row — the same placement rule "· prevented" got, and for the
-    // same reason. Bravery Charm moves the maximum, which is also the board that
-    // licenses the crumb carrying no HP number: "10 HP left" here means 160 damage
-    // on a 170 HP body, not the 110 a printed-HP reading would quote.
     const { state, events } = mustApply(board(73, { tools: ["sv02-173"] }), {
       type: "attack",
       seat: "p1",
@@ -750,9 +553,6 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
   });
 
   it("…and it reads identically on a BENCHED body reached by a spread", () => {
-    // The other three write sites emit the same flag, and a spread files the row
-    // under the same attacker while naming a body that was never the Active. RED if
-    // the crumb is wired into the main-hit arm only.
     const state = board(74, { defender: "fix-bigbody", bench: [{ id: "fix-sturdy" }] });
     const { state: done, events } = mustApply(state, {
       type: "attack",

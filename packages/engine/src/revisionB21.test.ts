@@ -3,26 +3,15 @@ import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
-import { battler, completeSetup, deckOf, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  mustApply as must,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B21 (Abilities) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B21"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.abilities_json` / `attacks_json` / `effect`, byte for byte below):
-//   §1 Turtonator "Shell Spikes" (`me03-017`) — *"discard an Energy from the Attacking Pokémon."* The
-//      reaction runs after the attack's own effect program, and it read the attacker seat's CURRENT
-//      Active (`discardEnergy from: "opponentActive"`). Croconaw "Reverse Thrust" (*"Switch this
-//      Pokémon with 1 of your Benched Pokémon."*) put the attacker on the Bench first, so the Pokémon
-//      it promoted lost the Energy. Klawf ex "Counterattacking Pincer" (`sv03-120`) is the same program.
-//   §2 the same defect on the status twins: Armarouge "Scorching Armor" (`sv03-044`), Heatran / Numel
-//      "Incandescent Body" (`sv06-123`, `me02.5-027`, `me02.5-223`) Burned, and the five "Poison Point"
-//      printings Poisoned, the promoted Pokémon that never attacked. Team Rocket's Hypnotizer
-//      (`me02.5-206`, a Tool on the same stage) put it to sleep.
-//   §3 Whimsicott "Wafting Heal" (`sv05-015` / `sv08.5-008`) — *"If you healed any damage in this way,
-//      discard all Energy from that Pokémon."* Under Yveltal "Life-Locked" (`30th-100`) the heal heals
-//      nothing, and the Energy was still discarded.
 
 const SHELL_SPIKES =
   "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), discard an Energy from the Attacking Pokémon.";
@@ -178,13 +167,6 @@ function table(p1: SideSpec, p2: SideSpec): GameState {
     };
   }
   return state;
-}
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
 }
 
 const activeOf = (state: GameState, seat: Seat): InPlayPokemon => {

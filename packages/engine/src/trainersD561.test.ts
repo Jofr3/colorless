@@ -20,24 +20,8 @@ import {
   setDamage,
   trainerCard,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D561 — THE SEVEN ITEMS AND SUPPORTERS OF THE TRAINER BUNDLE ──
-//
-//   Perrin            sv06-160 / -209 / -220          Supporter  up to 2 Pokémon back; search that many (V1 `deckBottom` on the "any" arm, V2 `maxRecorded`)
-//   Crispin           sv07-133 / -164, sv08.5-105 / -171  Supporter  2 Basic Energy of different types: 1 to hand, 1 attached (V4 `oneOfRecorded`)
-//   Super Potion      sv09-158                        Item       heal 60; if healed, discard an Energy from THAT body (V5)
-//   Love Ball         sv06-156                        Item       a Pokémon named like one of the opponent's in play (V3)
-//   Hand Trimmer      sv05-150                        Item       each player down to 5, the opponent first (V6 `whose: "self"`)
-//   Scoop Up Cyclone  sv06-162, sv08.5-128            Item ACE   1 of your Pokémon, Active included, to hand (V7 `includeActive`)
-//   Scramble Switch   sv08-186                        Item ACE   switch; move any Energy off the DEMOTED body (V8)
-//
-// Every rider is driven BOTH WAYS on a real id, on a LOCAL `cardPool` (D275) in the suite's
-// OWN 60-card deck (D270). Texts, subtypes and legality off tcgdex (the audit's card JSON),
-// 2026-09-27. Readings R-PR, R-CR1 (UNRULED), R-CR2, R-SP, R-LB, R-HT, R-SC, R-SS, each with
-// its reversal condition in docs/decisions.md D561. §9 drives `MATCH_RECORD_VERSION` holding
-// at 35 over JSON revivals and names every 0.444 rollback misreading. The two Stadiums are
-// `stadiumsD561.test.ts`.
 
 const PERRIN = ["sv06-160", "sv06-209", "sv06-220"] as const;
 const CRISPIN = ["sv07-133", "sv07-164", "sv08.5-105", "sv08.5-171"] as const;
@@ -94,7 +78,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [PERRIN[0]]: 1,
   [PERRIN[1]]: 1,
@@ -123,11 +106,6 @@ const DECK = deckOf({
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const ACTIVE: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const BENCH = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -449,7 +427,7 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
     );
   });
 
-  it("🛑 two returned → the search's ceiling is TWO; the returned cards are IN the deck and can be found again", () => {
+  it("two returned → the search's ceiling is TWO; the returned cards are IN the deck and can be found again", () => {
     const { state: parked, before } = play(table(), PERRIN[1], [PIKA, FILLER, ITEM]);
     const paid = before.players.p1.hand.slice(1, 3);
     const { state: searching, events } = mustApply(parked, cards(paid));
@@ -467,7 +445,7 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
     expect(state.phase.kind).toBe("turn:action");
   });
 
-  it("🛑 ONE returned → the ceiling is ONE (`maxRecorded`), not the printed bound 2", () => {
+  it("ONE returned → the ceiling is ONE (`maxRecorded`), not the printed bound 2", () => {
     const { state: parked, before } = play(table(), PERRIN[2], [PIKA, FILLER]);
     const { state: searching } = mustApply(parked, cards([before.players.p1.hand[1] as string]));
     const p = prompt(searching);
@@ -476,7 +454,7 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
     expect(p.note).toBe("Search your deck for a Pokémon into your hand.");
   });
 
-  it('🛑 NONE returned (the printed "up to" floor) → no search at all, and the deck is still shuffled', () => {
+  it('NONE returned (the printed "up to" floor) → no search at all, and the deck is still shuffled', () => {
     const { state: parked } = play(table(), PERRIN[0], [PIKA]);
     const { state, events } = mustApply(parked, cards([]));
     expect(all(events, "DECK_SEARCHED")).toEqual([]);
@@ -493,18 +471,12 @@ describe("D561 §2 — Perrin: up to 2 Pokémon back into the deck, then search 
     expect(types(events as GameEvent[])).toContain("SHUFFLE");
   });
 
-  it("🛑 R-PR — the log counts the returned cards (hidden → hidden) and the searched ones are REVEALED", () => {
+  it("R-PR — the log counts the returned cards (hidden → hidden) and the searched ones are REVEALED", () => {
     const { state: parked, before } = play(table(), PERRIN[0], [PIKA, FILLER]);
     const { state: searching, events: paidEvents } = mustApply(
       parked,
       cards(before.players.p1.hand.slice(1, 3)),
     );
-    // 🆕🆕🆕 D561 review — R-PR's LOG sub-reading, NAMED rather than left as an accident: the caption and
-    // `handCostAction` say *"put them into your deck"* (the print names no end), but the log row names the
-    // ENGINE's placement — the shipped `"deckBottom"` verb — because that is where the cards physically are
-    // when the search runs. It leaks nothing (hidden → hidden, a count) and the end is immaterial (the deck is
-    // searched, then shuffled). Reversal: a reader who needs the print's wording in the log — then
-    // `HAND_COST_PAID` gains an "into the deck" member and this row speaks it.
     expect(searching.players.p1.deck.slice(-2)).toEqual(before.players.p1.hand.slice(1, 3));
     expect(render(paidEvents, searching).map((r) => r.text)).toContain(
       "put 2 cards from their hand on the bottom of their deck",
@@ -534,7 +506,7 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     expect(p.caps?.length).toBe(3);
   });
 
-  it("🛑 R-CR2 — TWO found: a labelled choice between the two TYPES; the chosen one is attached, the other STAYS in hand", () => {
+  it("R-CR2 — TWO found: a labelled choice between the two TYPES; the chosen one is attached, the other STAYS in hand", () => {
     const { state, fire, water } = searched(table());
     const { state: asked, events } = mustApply(state, cards([fire, water]));
     expect(all(events, "DECK_SEARCHED").map((e) => e.reveal)).toEqual([true]);
@@ -616,7 +588,7 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     expect(dropped.players.p1.hand).toEqual([older, water]);
   });
 
-  it("🛑 R-CR2's VERIFY — a Special Energy in hand is never the attached card (the attach's Basic-card test)", () => {
+  it("R-CR2's VERIFY — a Special Energy in hand is never the attached card (the attach's Basic-card test)", () => {
     const { state, fire, water } = searched(table(), [LUMINOUS]);
     const luminous = state.players.p1.hand[0] as string;
     expect(idOf(state, luminous)).toBe(LUMINOUS);
@@ -626,7 +598,7 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     expect(done.players.p1.hand).toContain(luminous);
   });
 
-  it('⚠️ R-CR1 (UNRULED) — ONE found: *"Attach Fire Energy"* or *"Keep it in your hand"*', () => {
+  it('R-CR1 (UNRULED) — ONE found: *"Attach Fire Energy"* or *"Keep it in your hand"*', () => {
     const { state, fire } = searched(table());
     const { state: asked } = mustApply(state, cards([fire]));
     expect(prompt(asked)).toMatchObject({
@@ -659,7 +631,7 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D561 §4 — Super Potion: heal 60, and ONLY IF it healed, discard an Energy from THAT body (V5, R-SP)", () => {
-  it("🛑 one body (forced pick): heals 60, then the discard PARKS over two DIFFERENT Energy on it", () => {
+  it("one body (forced pick): heals 60, then the discard PARKS over two DIFFERENT Energy on it", () => {
     let board = setDamage(table(), "p1", 80);
     board = attachFromDeck(attachFromDeck(board, "p1", FIRE, 1), "p1", WATER, 1);
     const { state, events } = play(board, SUPER_POTION);
@@ -688,7 +660,7 @@ describe("D561 §4 — Super Potion: heal 60, and ONLY IF it healed, discard an 
     expect(state.players.p1.active?.damage).toBe(0);
   });
 
-  it("🛑 R-SP — an UNDAMAGED body heals 0 and discards NOTHING", () => {
+  it("R-SP — an UNDAMAGED body heals 0 and discards NOTHING", () => {
     const board = attachFromDeck(table(), "p1", FIRE, 1);
     const { state, events } = play(board, SUPER_POTION);
     expect(all(events, "HEALED")).toEqual([]);
@@ -703,7 +675,7 @@ describe("D561 §4 — Super Potion: heal 60, and ONLY IF it healed, discard an 
     expect(state.phase.kind).toBe("turn:action");
   });
 
-  it("🛑 the PICKED body is the one stripped — a damaged Benched pick loses ITS Energy, the Active keeps its own", () => {
+  it("the PICKED body is the one stripped — a damaged Benched pick loses ITS Energy, the Active keeps its own", () => {
     let board = attachFromDeck(table(FILLER, [PIKA]), "p1", FIRE, 1);
     const bench = board.players.p1.bench[0];
     if (bench === undefined) throw new Error("no bench");
@@ -757,7 +729,7 @@ describe("D561 §5 — Love Ball: a Pokémon with the SAME NAME as one of the op
     expect(new Set(q.candidates.map((u) => idOf(bench, u)))).toEqual(new Set([FILLER, PIKA_EX]));
   });
 
-  it('🛑 R-LB — the name is EXACT: "D561 Pikachu ex" opposite finds no "D561 Pikachu"; the whiff still shuffles', () => {
+  it('R-LB — the name is EXACT: "D561 Pikachu ex" opposite finds no "D561 Pikachu"; the whiff still shuffles', () => {
     const board = purgeFromDeck(table(FILLER, [], PIKA_EX, []), "p1", PIKA_EX);
     const { state, events } = play(board, LOVE_BALL);
     expect(state.phase.kind).toBe("turn:action");
@@ -771,7 +743,7 @@ describe("D561 §5 — Love Ball: a Pokémon with the SAME NAME as one of the op
 describe("D561 §6 — Hand Trimmer: each player down to 5, the OPPONENT first (V6, R-HT)", () => {
   const eight = [ITEM, ITEM, ITEM, ITEM, FILLER, FILLER, FILLER, FILLER];
 
-  it("🛑 the opponent answers FIRST (their own discard), then the controller answers theirs", () => {
+  it("the opponent answers FIRST (their own discard), then the controller answers theirs", () => {
     const board = setHand(table(), "p2", eight);
     const { state: first } = play(board, HAND_TRIMMER, [ITEM, ITEM, FILLER, FILLER, FIRE, WATER]);
     if (first.phase.kind !== "effect:choose") throw new Error("expected a park");
@@ -801,7 +773,7 @@ describe("D561 §6 — Hand Trimmer: each player down to 5, the OPPONENT first (
     expect(state.phase.kind).toBe("turn:action");
   });
 
-  it("🛑 R-HT — the played Item has LEFT the hand: 1 + 5 others is five, so the controller discards nothing", () => {
+  it("R-HT — the played Item has LEFT the hand: 1 + 5 others is five, so the controller discards nothing", () => {
     const board = setHand(table(), "p2", [ITEM, ITEM]);
     const { state, events } = play(board, HAND_TRIMMER, [ITEM, ITEM, FILLER, FILLER, FIRE]);
     expect(state.phase.kind).toBe("turn:action");
@@ -869,7 +841,7 @@ describe("D561 §7 — Scoop Up Cyclone: 1 of your Pokémon, the Active INCLUDED
     expect(types(events as GameEvent[])).toContain("PROMOTION_REQUIRED");
   });
 
-  it("🛑 R-SC — with an EMPTY Bench the lone Active is forced, and the empty spot is the §14.2 LOSS", () => {
+  it("R-SC — with an EMPTY Bench the lone Active is forced, and the empty spot is the §14.2 LOSS", () => {
     const { state, events } = play(table(), SCOOP[0]);
     expect(state.phase.kind).toBe("gameOver");
     if (state.phase.kind !== "gameOver") return;
@@ -917,7 +889,7 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
     expect([...(state.players.p1.active?.energy ?? [])].sort()).toEqual([...energy].sort());
   });
 
-  it('🛑 R-SS — moving NOTHING is a legal answer ("you may")', () => {
+  it('R-SS — moving NOTHING is a legal answer ("you may")', () => {
     const { board, energy } = staged();
     const { state: parked } = play(board, SCRAMBLE);
     const { state: moving } = mustApply(parked, pokemon(BENCH(0)));
@@ -931,11 +903,6 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
     expect([...(benched?.energy ?? [])].sort()).toEqual([...energy].sort());
   });
 
-  // 🆕 D561 review: the first draft of this rung staged ONE Benched body and put the Water on it — so the forced switch
-  // made that body the NEW Active, the Water sat on the DESTINATION, and the rung held with the V8 source pin removed
-  // (`D561-scramble-source-unpinned` applied by hand: this rung stayed green). Rebuilt over TWO Benched bodies: the
-  // Water rides bench[1] (PIKA_EX), the answer promotes bench[0], so the Water is on a body that STAYS Benched and is
-  // offered exactly when the source is unpinned.
   it("another Benched body's Energy is NOT a source — only the Pokémon moved to the Bench", () => {
     let { board, energy } = staged([PIKA, PIKA_EX]);
     const other = board.players.p1.bench[1];
@@ -971,7 +938,7 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
     expect(all(events, "ENERGY_MOVED")).toEqual([]);
   });
 
-  it('🛑 R-SS — an EMPTY Bench refuses the play (§7, no legal target), so "If you do" never reads an empty slot', () => {
+  it('R-SS — an EMPTY Bench refuses the play (§7, no legal target), so "If you do" never reads an empty slot', () => {
     const board = setHand(table(), "p1", [SCRAMBLE]);
     expectErr(
       board,
@@ -983,7 +950,7 @@ describe("D561 §8 — Scramble Switch: switch, then move any amount off the DEM
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and every 0.444 rollback reading named", () => {
-  it("Perrin: the parked payment revives identically; ⚠️ stripped of `maxRecorded` (the 0.444 reading) ONE paid Pokémon buys a search of TWO", () => {
+  it("Perrin: the parked payment revives identically; stripped of `maxRecorded` (the 0.444 reading) ONE paid Pokémon buys a search of TWO", () => {
     const { state: parked, before } = play(table(), PERRIN[0], [PIKA, FILLER]);
     const one = cards([before.players.p1.hand[1] as string]);
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
@@ -996,7 +963,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(p.max).toBe(2);
   });
 
-  it("Crispin: the scheduled optional revives identically and resolves with its labels STRIPPED; ⚠️ stripped of `oneOfRecorded` the attach ~~takes the first Basic Energy in hand, unasked~~ asks which (card revision B01)", () => {
+  it("Crispin: the scheduled optional revives identically and resolves with its labels STRIPPED; stripped of `oneOfRecorded` the attach ~~takes the first Basic Energy in hand, unasked~~ asks which (card revision B01)", () => {
     const { state: searching } = play(table(), CRISPIN[0]);
     const p = prompt(searching);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -1015,10 +982,6 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(JSON.stringify(cont(searching).rest)).toContain('"oneOfRecorded":"moved"');
     const rolled = reviveWith(searching, (j) => j.split(',"oneOfRecorded":"moved"').join(""));
     const { state } = mustApply(rolled, cards([water, fire]));
-    // 🆕 Card revision B01 — the record stripped of the key is now read by an engine whose untyped
-    // attach ASKS when the hand holds unlike Energy, so this proxy no longer shows "unasked": the
-    // card question parks over the {W} and the {R}. The 0.444 build itself still behaves as named
-    // (the first Basic Energy in hand); only this in-tree proxy of it moved.
     const q = prompt(state);
     if (q.kind !== "chooseCards") throw new Error("expected the B01 card question");
     expect(q).toMatchObject({ min: 1, max: 1, dest: "attach" });
@@ -1028,7 +991,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(done.players.p1.active?.energy).toEqual([water]);
   });
 
-  it("Super Potion: the parked pick revives identically; ⚠️ stripped of `discardEnergyFromHealed` it heals and discards NOTHING", () => {
+  it("Super Potion: the parked pick revives identically; stripped of `discardEnergyFromHealed` it heals and discards NOTHING", () => {
     let board = attachFromDeck(table(FILLER, [PIKA]), "p1", FIRE, 1);
     board = setDamage(board, "p1", 60);
     const { state: parked } = play(board, SUPER_POTION);
@@ -1044,12 +1007,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(state.players.p1.active?.energy).toHaveLength(1);
   });
 
-  // 🆕🆕🆕 D561 review: the first draft of this rung stripped `recordDemoted` ALONE — a mixed reader no deploy runs
-  // (a 0.444 reader ignores `sourceRecorded` too) — and named the misreading "the record names the NEW Active and the
-  // move whiffs". WITHDRAWN (old title, struck and kept: ~~"Scramble Switch: the parked switch revives identically;
-  // ⚠️ stripped of `recordDemoted` the record names the NEW Active and the move whiffs"~~). Stripping BOTH keys is the
-  // 0.444 reading, and it is OVER-PERMISSIVE, not a whiff: every Benched body's Energy is offered.
-  it("Scramble Switch: the parked switch revives identically; ⚠️ stripped of BOTH `recordDemoted` and `sourceRecorded` (the 0.444 reading) the move is OFFERED over EVERY Benched body's Energy", () => {
+  it("Scramble Switch: the parked switch revives identically; stripped of BOTH `recordDemoted` and `sourceRecorded` (the 0.444 reading) the move is OFFERED over EVERY Benched body's Energy", () => {
     let board = attachFromDeck(table(FILLER, [PIKA, PIKA_EX]), "p1", FIRE, 2);
     const fires = [...(board.players.p1.active?.energy ?? [])];
     const other = board.players.p1.bench[1];
@@ -1088,7 +1046,6 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(all(events, "POKEMON_SWITCHED")).toHaveLength(1);
     const m = prompt(state);
     if (m.kind !== "moveEnergy") throw new Error(`expected moveEnergy, got ${m.kind}`);
-    // ⚠️ The misreading: the unrelated Benched body's Water is offered BESIDE the demoted body's two Fire.
     expect(m.movable.map((x) => x.uid).sort()).toEqual([...fires, water].sort());
     expect(m.destinations).toEqual([ACTIVE]);
   });

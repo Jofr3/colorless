@@ -4,7 +4,7 @@ import { boostedAttackDamage, everyAttackBoostOf } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -15,23 +15,11 @@ import {
   clearBench,
   deckOf,
   setActiveFromDeck,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import { topUid } from "./cards";
 import { type InPlayPokemon, evolveOnto } from "./types";
-
-// ── 🆕🆕🆕 D563 — FERALIGATR "TORRENTIAL HEART" ──
-//
-//   Feraligatr  svp-089 / sv05-041  Stage 2  "Torrential Heart" — "Once during your turn, you
-//   may put 5 damage counters on this Pokémon. If you do, during this turn, attacks used by
-//   this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying
-//   Weakness and Resistance)."
-//
-// Two riders on two shipped ops: `damageSelf { on: "source", source: "ability" }` places the
-// counters on THIS body wherever it sits, and `boostAttack { attack: null, holder: "source",
-// thisTurn: true }` writes the D546 all-attacks record on THIS body, stamped for THIS turn.
-// Driven on the REAL ids, on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Text,
-// stage and legality off tcgdex (the audit's card JSON), 2026-09-28. Readings R-TH (UNRULED)
-// and the shared slot: docs/decisions.md D563.
 
 const FERALIGATR = "svp-089";
 const FERALIGATR_REPRINT = "sv05-041";
@@ -106,7 +94,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [FERALIGATR]: 2,
   [FERALIGATR_REPRINT]: 2,
@@ -119,18 +106,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -274,10 +249,6 @@ function render(events: GameEvent[], state: GameState): { who: string; text: str
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — the row.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the registry row: one activated Ability, two ops, two riders", () => {
   it("both printings share ONE object: once per turn, usable from the Bench, no `attack` key", () => {
     const row = programFor(FERALIGATR);
@@ -317,7 +288,7 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
     expect(body(state.players.p2.active).damage).toBe(0);
   });
 
-  it("🛑 writes an all-attacks record stamped THIS turn (not `turn + 2`)", () => {
+  it("writes an all-attacks record stamped THIS turn (not `turn + 2`)", () => {
     const start = table({});
     const { state } = useActive(start);
     expect(body(state.players.p1.active).boostedAttack).toEqual({
@@ -329,7 +300,7 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
     expect(boostedAttackDamage(state, body(state.players.p1.active), 0)).toBe(120);
   });
 
-  it("🛑 the main hit pays +120 BEFORE Weakness: (160 + 120) × 2 = 560", () => {
+  it("the main hit pays +120 BEFORE Weakness: (160 + 120) × 2 = 560", () => {
     const { state } = useActive(table({}));
     const { events } = attack(state);
     const dealt = find(events, "DAMAGE_DEALT");
@@ -394,7 +365,7 @@ describe("§3 — used from the BENCH: the counters and the record land on the B
     expect(find(events, "COUNTERS_PLACED")?.uid).toBe(topUid(benched));
   });
 
-  it("🛑 promoted by a RETREAT the same turn, it still pays: Bench → Active does not clear", () => {
+  it("promoted by a RETREAT the same turn, it still pays: Bench → Active does not clear", () => {
     const start = table({ active: PIVOT, energy: 0, bench: [FERALIGATR], benchEnergy: 2 });
     let state = useBench(start, 0).state;
     state = run(state, {
@@ -436,7 +407,7 @@ describe("§3 — used from the BENCH: the counters and the record land on the B
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, and ignores a later lock", () => {
-  it("🛑 R-TH — used on the Active and RETREATED to the Bench: the record is shed (§10)", () => {
+  it("R-TH — used on the Active and RETREATED to the Bench: the record is shed (§10)", () => {
     const start = table({ bench: [PIVOT] });
     let state = useActive(start).state;
     const gatorUid = topUid(body(state.players.p1.active));
@@ -454,7 +425,7 @@ describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, a
     expect(body(benched).damage).toBe(50);
   });
 
-  it("🛑 it EXPIRES: on the holder's next turn the same body attacks for the printed 160", () => {
+  it("it EXPIRES: on the holder's next turn the same body attacks for the printed 160", () => {
     let state = useActive(table({})).state;
     state = run(state, { type: "endTurn", seat: "p1" }).state;
     state = run(state, { type: "endTurn", seat: "p2" }).state;
@@ -462,7 +433,7 @@ describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, a
     expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 160, dealt: 320 });
   });
 
-  it("🛑 LOCK-IMMUNE ONCE INSTALLED: a Flutter Mane Active after the use does not stop the +120", () => {
+  it("LOCK-IMMUNE ONCE INSTALLED: a Flutter Mane Active after the use does not stop the +120", () => {
     let state = useActive(table({})).state;
     state = clearBench(
       setActiveFromDeck(ensureInDeck(state, "p2", FLUTTER_MANE), "p2", FLUTTER_MANE),
@@ -509,7 +480,7 @@ describe("§5 — once per turn PER BODY, and a lethal self-placement is a mid-t
     expect(body(state.players.p1.bench[0]).boostedAttack?.amount).toBe(120);
   });
 
-  it("🛑 a LETHAL self-placement is swept mid-turn and the Prize goes to the OPPONENT", () => {
+  it("a LETHAL self-placement is swept mid-turn and the Prize goes to the OPPONENT", () => {
     const start = table({ damage: 140, bench: [PIVOT] });
     const p2Prizes = start.players.p2.prizes.length;
     const p1Prizes = start.players.p1.prizes.length;
@@ -617,7 +588,7 @@ describe('§6 — the riders: `on`/`holder: "source"` find the body by uid; abse
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; the slot is one per body", () => {
-  it("🛑 a this-turn record on an attacker whose snipe lands on the ACTIVE pays +120 (`snipeActive`)", () => {
+  it("a this-turn record on an attacker whose snipe lands on the ACTIVE pays +120 (`snipeActive`)", () => {
     // TEST SURGERY: the record Torrential Heart writes, moved onto a sniper's body — the
     // record shape is the ONLY input `snipeActive`'s fold reads (`everyAttackBoostOf`).
     const installed = useActive(table({})).state;
@@ -688,7 +659,7 @@ describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; th
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — `MATCH_RECORD_VERSION` holds at 35: the record Torrential Heart writes is D546's shape", () => {
-  it("🛑 the persisted bytes are D546's three keys — only the stamp's VALUE is this turn's", () => {
+  it("the persisted bytes are D546's three keys — only the stamp's VALUE is this turn's", () => {
     const start = table({});
     const { state } = useActive(start);
     expect(JSON.stringify(body(state.players.p1.active).boostedAttack)).toBe(
@@ -703,10 +674,7 @@ describe("§8 — `MATCH_RECORD_VERSION` holds at 35: the record Torrential Hear
     expect(find(attack(revived).events, "DAMAGE_DEALT")).toMatchObject({ bonus: 120, dealt: 560 });
   });
 
-  it("⚠️ ROLLBACK — the 0.446 readers are unchanged: they pay a this-turn stamp as they pay any live one", () => {
-    // `boostedAttackDamage` / `everyAttackBoostOf` compare `turn === state.turn` and were not
-    // edited by D563, so a 0.446 deploy resuming this record mid-turn pays the same +120; it
-    // cannot WRITE one (no Torrential Heart row), and the counters are plain damage.
+  it("ROLLBACK — the 0.446 readers are unchanged: they pay a this-turn stamp as they pay any live one", () => {
     const { state } = useActive(table({}));
     const holder = body(state.players.p1.active);
     expect(boostedAttackDamage(state, holder, 0)).toBe(120);

@@ -1,10 +1,3 @@
-// Auth route behavior that doesn't need a real D1 (the catalog routes.test.ts
-// pattern): body validation and rate limiting run BEFORE any DB access, the
-// cookie-less session paths, OAuth configuration gating + state verification
-// (which precede the provider fetches), and the 501 email stubs. The full
-// data paths (register→me→logout, wrong-password 401, duplicate 409) run
-// against the real local D1 via `wrangler dev` — see docs §3.5.
-
 import { describe, expect, it } from "vitest";
 import type { Env } from "../env";
 import app from "../index";

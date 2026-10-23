@@ -24,25 +24,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.61.0 → 0.62.0 — Spidops ex sv01-019/-223/-243 "Trap Territory" (P3-M5 long
-// tail, D111): "Your opponent's Active Pokémon's Retreat Cost is {C} more."
-//
-// The LAST unbuilt modifier on the retreat-cost seam — a full D1 census puts the
-// seam at exactly 9 card ids (4 modifier effects / 4 reader effects, Spidops ex
-// in both buckets), so this closes it. It is the cross-board, delta-returning
-// mirror of D108's `noRetreatCostAura`, and the three things it turns on:
-//
-//   • the SOURCE has no "in the Active Spot" clause — only the TARGET does. A
-//     benched Spidops ex surcharges just as well.
-//   • it is stage-agnostic, unlike both Stadiums, which is why
-//     `effectiveRetreatCost`'s Basic-only early RETURN had to become a zero TERM.
-//   • a Stadium and an aura CAN coexist, so the ± composition D109 found
-//     unreachable between the two Stadiums is finally reachable here — and the
-//     floor has to be applied to the SUM, not per term.
-//
-// Plus the one composition that lands on a single card: Spidops ex's own "Wire
-// Hang" READS (D110) the very cost this Ability raises.
-
 const ABILITY_TEXT = "Your opponent's Active Pokémon's Retreat Cost is {C} more.";
 const WIRE_HANG_TEXT =
   "This attack does 30 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.";
@@ -87,16 +68,6 @@ function withStadium(state: GameState, cardId: string): GameState {
 
 describe("Trap Territory — the registry data row (opponentActiveRetreatSurcharge)", () => {
   it("authors all three printings as a flat +1 surcharge, and NO target narrowing", () => {
-    // 🆕 D322 — the field stopped being a bare `number`. Ariados `sv06-005`
-    // "Big Net" prints the SAME delta with one adjective added ("your opponent's
-    // Active EVOLUTION Pokémon's"), so the shape is now
-    // `{ amount, targetEvolution? }` and Trap Territory is the UNMARKED print
-    // that makes the rider legible. The `toEqual` is kept EXACT rather than
-    // loosened to a `toMatchObject`: this row's whole job is to say that the
-    // bare sentence carries nothing else, and the explicit `toBeUndefined`
-    // below says it in the direction a future rider would break. The rider is
-    // `seatDamageBonusBeforeWR.target`'s `CardFilter` reused whole (D245), not a
-    // bespoke boolean — the same printed "Active Evolution Pokémon" one seam over.
     for (const id of ["sv01-019", "sv01-223", "sv01-243"]) {
       expect(programFor(id)?.passive).toEqual({ opponentActiveRetreatSurcharge: { amount: 1 } });
       expect(programFor(id)?.passive?.opponentActiveRetreatSurcharge?.target).toBeUndefined();
@@ -104,9 +75,6 @@ describe("Trap Territory — the registry data row (opponentActiveRetreatSurchar
   });
 
   it("keeps the fixture's printed text verbatim — Wire Hang DERIVES off it", () => {
-    // Spidops ex carries a registry row for the Ability but NOT for the attack:
-    // "Wire Hang" simulates straight off its sentence (D110), so a one-character
-    // drift here silently un-simulates half the card with no other failure.
     const card = FIXTURE_POOL["sv01-019"];
     expect(card?.abilities?.[0]).toEqual({
       type: "Ability",
@@ -198,8 +166,6 @@ describe("Trap Territory — the fold in effectiveRetreatCost", () => {
   });
 
   it("composes with Beach Court — the ± case two Stadiums could never reach", () => {
-    // §7.3 allows one Stadium in play, so `basicRetreatDiscount` and
-    // `basicRetreatSurcharge` never meet (D109). A Stadium and an aura do.
     let state = withStadium(board(9), "sv01-167");
     expect(activeCost(state)).toBe(1); // 2 − 1
     state = setActiveFromDeck(state, "p2", "sv01-019");

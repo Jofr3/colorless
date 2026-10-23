@@ -22,62 +22,9 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.310.0 → 0.311.0 — 🆕🆕 D406: THE COUNTED TOOL SCALER.
-//
-//   "This attack does 30 damage for each Pokémon Tool attached to all of your
-//    Pokémon."   — 1 sentence, 5 LEGAL printings
-//
-// THE THIRTEENTH `DamageCountSource`, AND THE FIRST THAT COUNTS NEITHER ENERGY,
-// NOR BODIES, NOR DAMAGE COUNTERS. Twelve members over three resources became
-// thirteen over four, and the fourth cost no new state at all: `InPlayPokemon.tools`
-// has been an ingested, persisted uid array since M4, and `attachTool` (cardplay.ts)
-// has always refused anything whose `trainerType` is not "Tool", so the arithmetic
-// is `tools.length` summed over a zone with no provision question in it.
-//
-// ── 🛑 WHAT THIS SUITE EXISTS TO PIN, AND WHY EACH RUNG CAN GO RED ───────────
-//
-// The evaluator has FOUR ways to be wrong and every one of them is a real
-// neighbouring arm rather than a straw:
-//
-//   ⑴ THE SEAT. The printed word is "all of YOUR Pokémon" and the attack damages
-//      the opponent, so the two seats are opposite ends of one swing —
-//      `opponentBenchCount` reads `defenderSeat` three cases up in the same
-//      `switch`. §3's canonical board wears 3 Tools on the attacker's side and 5
-//      on the defender's, so a seat flip reads 150 where the truth is 90.
-//   ⑵ THE ZONE. "all of" is §6.3's "in play" — Active **plus** Bench, the same
-//      reading `energyOnOpponent`'s `zone: "board"` takes at the other end of the
-//      table. The canonical board splits 2 on the Active and 1 on the Bench, so an
-//      Active-only read says 60 and a Bench-only one says 30.
-//   ⑶ THE RESOURCE. `yourBenchCount` counts BODIES and `energyOnSelf` counts
-//      ENERGY, and both are one `case` away. The canonical board holds 2 benched
-//      bodies and 1 attached Energy against 3 Tools, so neither can pass for it.
-//   ⑷ THE ARITHMETIC. `tools.length` SUMMED, never "how many bodies wear one":
-//      §7.4's one-per-body cap is an ATTACH-GATE rule and Revavroom ex sv03-156's
-//      "Tune-Up" raises it to 4, so the Active wearing TWO is a real board and a
-//      body-tally reads 2 where the truth is 3.
-//
-// ⚠️ **AND THE BASE IS DROPPED, WHICH IS THE FIFTH THING AND THE ONLY ONE THAT IS
-// NOT AN ARM.** The sentence carries no "more" (D145/D167's whole discriminator),
-// so it lands on the MULTIPLY fold and `scaledBase`'s existing
-// `damageMultiplier !== null` disjunct zeroes the printed `30×`. §4 drives the
-// Tool-less board and asserts NO `DAMAGE_DEALT` EVENT AT ALL — a build that kept
-// the base would deal 30 there and be green everywhere else in this file.
-//
-// ⚠️ **THE MEMBER IS MULTIPLY-ONLY, AND THAT IS AN ABSENCE THIS SUITE PINS RATHER
-// THAN AN OVERSIGHT.** The "more" twin is not printed anywhere in the legal attack
-// column, so `deriveAttackDamageBonus` deliberately gains no arm — the exact mirror
-// of `bothActivesEnergyCount`, which is ADD-only because its no-adjective twin is 0
-// legal. Two members, two one-reader shapes, opposite folds.
-
-/** The printed sentence, byte for byte off `legalAttackCorpus()` — the committed
-    `legal_standard = 1` attack column. `Pokémon` carries the real é (U+00E9) in
-    both slots and there is no apostrophe anywhere in it. */
 const TOOL_COUNT =
   "This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon.";
 
-/** The "more" twin. **PRINTED NOWHERE** — the column holds exactly one "for each
-    Pokémon Tool" sentence and it is this bare one — so this is an ABSENCE and is
-    pinned as such, never an unread printing. */
 const UNPRINTED_MORE =
   "This attack does 30 more damage for each Pokémon Tool attached to all of your Pokémon.";
 /** The "less" twin, printed nowhere either. */
@@ -88,37 +35,16 @@ const UNPRINTED_LESS =
 const UNPRINTED_OPPONENT =
   "This attack does 30 damage for each Pokémon Tool attached to all of your opponent's Pokémon.";
 
-/** ⚠️ **THE NEAR MISS THAT IS A REAL CATALOG ROW AND A DIFFERENT QUESTION**: the two
-    printed EXISTENCE clauses, already built as `BoardCondition`s (D369 and its twin)
-    and reached through the 0-or-1 indicator on the ADDITIVE fold. Same noun, one body,
-    a boolean rather than a count. */
 const OWN_TOOL_EXISTS =
   "If this Pokémon has a Pokémon Tool attached, this attack does 40 more damage.";
 const FOE_TOOL_EXISTS =
   "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.";
-/** ⚠️ **AND THE LARGEST ONE, WHICH IS THE SAME NOUN DISCARDED RATHER THAN COUNTED** —
-    5 legal printings, and blocked on a pre-damage execution point this engine has no
-    seam for (`deriveAttackDamageBonus`'s own doc block: the deriver's ops all run
-    AFTER damage). It must stay LOUD. */
 const TOOL_DISCARD =
   "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.";
 
-/** ⚠️ **THE NEAR MISS ONE RESOURCE OVER, AND IT CONTRADICTED A CLAIM `effects.ts`
-    ALREADY MADE.** `energyOnSelf`'s block said it carries no `zone` because *"the
-    pool prints no board-wide spelling of '… attached to all of YOUR Pokémon'"*
-    (D196, measured 2026-08-04 against the remote D1). The committed column prints
-    one, at 4 legal printings. ✅ **D407 BUILT IT** — `SELF_ENERGY_SCALE` captures its
-    tail as a whole printed noun phrase and `energyOnSelf` carries the optional
-    `zone`. The constant stays here because the rung below is the one that reddened
-    when it landed, which is what a correction written as a GUARD buys over one
-    written as a comment. */
 const BOARD_WIDE_ENERGY =
   "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.";
 
-/** One seed for the whole suite. Nothing here flips a coin and every Active, every
-    Benched body and every Tool is placed by surgery, so a seed table would describe
-    a shuffle rather than a rule (D143's move, inherited by every member of this
-    family since). */
 const SEED = 7;
 
 function find<T extends GameEvent["type"]>(
@@ -128,12 +54,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** `by`'s opponent opens and passes, so the attacking seat carries no §4
-    first-turn restriction. Both Actives are placed by surgery and BOTH Benches are
-    cleared to nothing: every number this suite reads is a POPULATION, so a body the
-    setup shuffle happened to place would move the answer silently. One {C} is
-    attached to pay the printed cost — and it is also the Energy a Tool count must
-    ignore. */
 function board(by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   const foe = opener;
@@ -167,20 +87,6 @@ function swing(state: GameState, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index: 0 });
 }
 
-/** 🛑 **THE CANONICAL BOARD, AND EVERY WRONG ANSWER ON IT IS A DIFFERENT NUMBER.**
-    The attacker wears 2 Tools on its Active and 1 on bench[0] of TWO benched bodies;
-    the defender wears 3 on its Active and 2 on its one benched body. So:
-
-      truth (own board, Tools summed)      3 → **90**
-      the seat flipped (their board)       5 → 150
-      the Active alone                     2 →  60
-      the Bench alone                      1 →  30
-      bodies WEARING a Tool, own board     2 →  60
-      benched BODIES (`yourBenchCount`)    2 →  60
-      attached ENERGY (`energyOnSelf`)     1 →  30
-      both sides                           8 → 240
-
-    Seven distinct wrong numbers against one right one, on ONE setup. */
 function canonical(by: Seat = "p1"): GameState {
   const foe = by === "p1" ? "p2" : "p1";
   const state = dress(board(by), by, 2, [1, 0]);
@@ -207,9 +113,6 @@ describe("§1 — the printed sentence, its population, and the fixture that car
   });
 
   it("carries fix-toolscaler's WHOLE printed card, `30×` marker included", () => {
-    // The whole list, so the fixture cannot be wrong by OMISSION (D156's failure
-    // mode). ⚠️ THE TRAILING "×" IS LOAD-BEARING: it is the marker this fold
-    // consumes and the one that tells attack.ts to DROP the printed base.
     expect(FIXTURE_POOL["fix-toolscaler"]?.attacks).toEqual([
       {
         cost: ["Colorless"],
@@ -239,7 +142,7 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
     });
   });
 
-  it("🛑 is MULTIPLY-ONLY: the additive and subtractive readers refuse the same sentence", () => {
+  it("is MULTIPLY-ONLY: the additive and subtractive readers refuse the same sentence", () => {
     // The one-reader shape, and it is the mirror of `bothActivesEnergyCount`'s.
     // Turns red the moment somebody gives `deriveAttackDamageBonus` a matching arm
     // "for symmetry" — which would author a card the catalog does not print.
@@ -248,8 +151,7 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
     expect(deriveAttackEffect(TOOL_COUNT)).toBeNull();
   });
 
-  it("🛑 the UNPRINTED twins stay loud on every reader", () => {
-    // "more", "less" and the opponent-side zone are ABSENCES, not unread printings.
+  it("the UNPRINTED twins stay loud on every reader", () => {
     for (const text of [UNPRINTED_MORE, UNPRINTED_LESS, UNPRINTED_OPPONENT]) {
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       expect(deriveAttackDamageBonus(text)).toBeNull();
@@ -283,8 +185,6 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
         "This attack does 0 damage for each Pokémon Tool attached to all of your Pokémon.",
       ),
     ).toBeNull();
-    // …and the capture really is a capture, driven on CONSTRUCTED text that is
-    // labelled as constructed rather than presented as a card (D121).
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 20 damage for each Pokémon Tool attached to all of your Pokémon.",
@@ -292,7 +192,7 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
     ).toEqual({ per: 20, count: { kind: "toolsOnYourBoard" } });
   });
 
-  it("🛑 the REAL catalog near-misses are refused, and each is a different question", () => {
+  it("the REAL catalog near-misses are refused, and each is a different question", () => {
     // The two EXISTENCE clauses are boolean reads of ONE body and are already built
     // as `BoardCondition`s on the ADDITIVE fold; the Tool DISCARD is the same noun
     // removed rather than counted. All three must stay off this pattern.
@@ -315,16 +215,7 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
     expect(deriveAttackEffect(TOOL_DISCARD)).toBeNull();
   });
 
-  it("✅ the BOARD-WIDE ENERGY sentence is BUILT — this rung reddened by name, as designed", () => {
-    // 4 legal printings of "… for each {G} Energy attached to all of your Pokémon."
-    // — the spelling `energyOnSelf`'s doc block said the pool does not print. It
-    // does, and D406 pinned the sentence UNBUILT here precisely so that the
-    // successor who gave `energyOnSelf` its zone would redden HERE rather than
-    // rediscover the claim a third time. 🆕🆕 **D407 IS THAT SUCCESSOR, AND THIS IS
-    // THE RUNG IT TURNED RED**; the population is unchanged and only the reader's
-    // answer moved, which is the whole point of writing the correction as a guard.
-    // The `×` half stays null — that fold's board-wide own-Energy spelling really
-    // is absent from the column (see `boardWideEnergyScaling.test.ts` §2).
+  it("the BOARD-WIDE ENERGY sentence is BUILT — this rung reddened by name, as designed", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === BOARD_WIDE_ENERGY);
     expect(rows.reduce((sum, [n]) => sum + n, 0)).toBe(4);
     expect(deriveAttackDamageBonus(BOARD_WIDE_ENERGY)).toEqual({
@@ -340,12 +231,7 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — countToolsInPlay, and the four ways the evaluator could be wrong", () => {
-  it("🛑 the canonical board really does separate all eight readings", () => {
-    // D214's attribution control, applied to a set of readings rather than to a
-    // build artifact: a rung that only exercises boards where the candidate answers
-    // AGREE is the vacuous guard this repo keeps rediscovering. Asserted BEFORE any
-    // damage is read, so a later drift in the fixture deck cannot quietly collapse
-    // two of them onto one number.
+  it("the canonical board really does separate all eight readings", () => {
     const state = canonical();
     const mine = state.players.p1;
     const theirs = state.players.p2;
@@ -371,7 +257,7 @@ describe("§3 — countToolsInPlay, and the four ways the evaluator could be wro
     expect(countToolsInPlay(dress(bare, "p1", 2, [1, 0]), "p1")).toBe(3);
   });
 
-  it("🛑 sums `tools.length` rather than counting the bodies that wear one", () => {
+  it("sums `tools.length` rather than counting the bodies that wear one", () => {
     // §7.4's one-per-body cap is an ATTACH-GATE rule and Revavroom ex sv03-156's
     // "Tune-Up" raises it to 4, so a single body wearing THREE is a real board. A
     // body tally reads 1 here; the truth is 3.
@@ -399,7 +285,7 @@ describe("§4 — the `×` fold on a live board", () => {
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
   });
 
-  it("🛑 the PRINTED BASE IS DROPPED: a Tool-less board deals nothing and emits NO DAMAGE_DEALT", () => {
+  it("the PRINTED BASE IS DROPPED: a Tool-less board deals nothing and emits NO DAMAGE_DEALT", () => {
     // The printed `30×` is the PER-UNIT, so a build that kept the base would deal 30
     // here — and would be green on every other rung in this file. `base: 0` above is
     // the same claim from the other side.
@@ -408,7 +294,7 @@ describe("§4 — the `×` fold on a live board", () => {
     expect(events.some((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toBe(false);
   });
 
-  it("🛑 the SEAT is the attacker's: the opponent's Tools are invisible", () => {
+  it("the SEAT is the attacker's: the opponent's Tools are invisible", () => {
     // The defender wears 5 and the attacker none. A `defenderSeat` read — the arm
     // `opponentBenchCount` uses three cases up — deals 150 here; the truth is no
     // damage at all.
@@ -417,14 +303,14 @@ describe("§4 — the `×` fold on a live board", () => {
     expect(find(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
-  it("🛑 the BENCH counts: Tools behind the Active are not invisible", () => {
+  it("the BENCH counts: Tools behind the Active are not invisible", () => {
     // The Active-only reading — `yourActiveHasToolAttached`'s zone, one abstraction
     // down — deals nothing here; the truth is 60.
     const state = dress(board(), "p1", 0, [1, 1]);
     expect(find(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ scaled: 60, dealt: 60 });
   });
 
-  it("🛑 BODIES are not the resource: two benched Pokémon wearing nothing deal nothing", () => {
+  it("BODIES are not the resource: two benched Pokémon wearing nothing deal nothing", () => {
     // `yourBenchCount` reads exactly this board as 2 and deals 60. The Tool count
     // reads it as 0.
     const state = dress(board(), "p1", 0, [0, 0]);
@@ -461,17 +347,7 @@ describe("§4 — the `×` fold on a live board", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — the persisted question, asked and answered", () => {
-  it("🛑 MATCH_RECORD_VERSION STAYS 25 — a DamageCountSource is never persisted", () => {
-    // Argued from where the member is STORED, not from the file it is declared in:
-    // it lives inside a DERIVED `AttackDamageBonus` computed from card text and
-    // consumed in the same tick. Nothing parks it, no `EffectOp` carries it, and no
-    // `MatchRecord` field holds one — so no v25 record could ever have contained a
-    // `DamageCountSource` in the first place.
-    // DRIVEN rather than argued, in `selfEnergyScaling.test.ts`'s idiom: the two
-    // things that could park are an `EffectOp` and a program, and this sentence
-    // produces neither — `deriveAttackEffect` returns null for it, so there is no
-    // op to ride `GameState.phase.cont.pendingOp` and nothing new can appear in a
-    // saved record at all.
+  it("MATCH_RECORD_VERSION STAYS 25 — a DamageCountSource is never persisted", () => {
     expect(deriveAttackEffect(TOOL_COUNT)).toBeNull();
     expect(deriveAttackDamageMultiplier(TOOL_COUNT)).not.toBeNull();
   });

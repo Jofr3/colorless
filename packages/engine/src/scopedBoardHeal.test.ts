@@ -19,83 +19,16 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.359.0 → 0.360.0 — 🆕🆕 D461, THE SCOPED BOARD HEAL. "Heal 100 damage from each of
-// your {Basic|Benched} Pokémon." — 2 sentences / 4 legal printings,
-// `censusAttackCorpus.ts` file lines 273 and 274, claimed WHOLE by
-// `deriveAttackEffect` through ONE new anchor, ONE noun map and TWO new optional
-// riders on the SHIPPED `healEach` op.
-//
-// 🛑 WHAT THE BLOCKER CENSUS SAID, AND WHAT IT DID NOT SAY. Both rows were
-// `PHRASE-1`: delete ONE token and the remainder derives. That is a statement about
-// WHERE the blocker is — the verb, the amount and the destination all ship — and it
-// is emphatically NOT a statement that this is a one-line change, because the
-// derived value LOSES the token's meaning in both cases:
-//
-//   • delete "Basic"   → `[{op:"healEach", amount:100}]`, which heals every EVOLVED
-//     body on the side as well. A superset.
-//   • delete "Benched" → `[{op:"healEach", amount:100}]`, which heals the ATTACKER.
-//     Also a superset — and the D447 defect class exactly.
-//
-// Both mis-readings are QUIET: the log grows rows, never loses them, and every
-// assertion a one-body board could make stays green. So the whole slice is WHICH
-// BODIES, and every case below is a board where the two sets differ.
-//
-// 🛑 THE ANSWER TO "FILTER OR SCOPE — ONE AXIS OR TWO" IS TWO, AND IT IS A FACT
-// ABOUT `matchesFilter` RATHER THAN A PREFERENCE. Its signature is
-// `(card: Card | undefined, filter: CardFilter)` — it is never handed an
-// `InPlayPokemon` — so *"Benched"* is not expressible as a `CardFilter` at any
-// width, while *"Basic"* is exactly `{kind:"basicPokemon"}`. The union's own rule
-// then decides the rest: the PAYLOAD is identical (one printed amount, nothing
-// else), so it is ONE member and not two; the two adjectives are two axes, so they
-// are two FIELDS and not one enum. `AttachTargetRiders` (D204) is the shipped
-// precedent — two card facts and two board facts as flat riders on one op — and the
-// two field names here are ITS names verbatim.
-//
-// 🛑 THE THIRD ROW OF THE PRINTED FAMILY IS REFUSED, AND THE REASON IS DATA.
-// *"Heal 100 damage from 1 of your Benched **Ancient** Pokémon."* (file line 272, 1
-// legal printing) is the same shape one determiner over, and its blocker is the
-// banner: `Ancient` is in NO column of the persisted catalog. §8 drives that
-// refusal and states the falsifier, which is an INGEST change and nothing in this
-// package.
-// 🆕🆕🆕 D569 (D539): ~~the reason is DATA … the falsifier is an INGEST change and nothing
-// in this package~~ WITHDRAWN — `banners.ts` (in this package) supplies the banner, and
-// `sv05-077` "Supportive Singing" is BUILT as an index-keyed registry row over the NEW
-// `healChosen.filter`. The DERIVER still refuses the sentence (§8 pins that); "`Ancient`
-// is in NO column of the persisted catalog" stays TRUE.
-
-/** The two printed sentences, verbatim, and the op each derives to. Both are looked
-    up in `legalAttackCorpus()` in §1 WITH their printing counts, so a hand-retyped
-    near-miss reddens rather than passing. */
 const BASIC_TEXT = "Heal 100 damage from each of your Basic Pokémon.";
 const BENCH_TEXT = "Heal 100 damage from each of your Benched Pokémon.";
-/** The UNNARROWED sentence this family is a narrowing of — D133's, shipped at
-    0.84.0. Not this slice's, and carried here because every claim below is a
-    DIFFERENCE from it.
-
-    ⚠️ AT 30 AND NOT AT 100, MEASURED RATHER THAN ASSUMED: the column prints the bare
-    board heal at 10, 20, 30 and 50 and NEVER at 100, so the two narrowed sentences do
-    NOT have an unnarrowed twin at their own amount. A first draft of this file
-    asserted that "Heal 100 damage from each of your Pokémon." was a corpus row and it
-    is not — the amounts do not line up across the narrowing, which is worth knowing
-    before anyone prices this family off a shared number. */
 const BARE_TEXT = "Heal 30 damage from each of your Pokémon.";
-/** The same bare sentence at the narrowed family's amount — UNPRINTED, and accepted
-    by D133's anchor anyway. CHOSEN_HEAL's "deliberately UNFILTERED cross product"
-    call (D131): the anchor takes any N because the op expresses any N exactly, and a
-    refusal would be a claim about the ingest rather than about the game. */
 const BARE_TEXT_UNPRINTED = "Heal 100 damage from each of your Pokémon.";
-/** The `Ancient` row: the third member of the printed family and the one refused.
-    A corpus row, asserted as such in §8 rather than quoted from a doc block. */
 const ANCIENT_TEXT = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
 
 /** The two attack indices on both `fix-scopedheal` bodies, in printed order. */
 const BASIC_SALVE = 0;
 const BENCH_SALVE = 1;
 
-/** The printed heal, and the damage figures every delta is stated in terms of. They
-    are all DIFFERENT from each other and from the heal, so a mixed-up body cannot
-    land on a number that happens to be right; and `CLAMPED` is below the printed
-    heal so the per-body clamp is visible on the same board as the rest. */
 const HEAL = 100;
 const ACTIVE_HURT = 250;
 const BASIC_BENCH_HURT = 200;
@@ -112,15 +45,6 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** ONE BOARD, NO SWEEP. Neither sentence takes a coin or makes a choice, so there is
-    no seed to vary and one deterministic board is the whole account (D133's call,
-    one family over — and §7 asserts the determinism rather than assuming it).
-
-    Setup then open P1's turn 2 (P2 went first and passed), so the attack step is
-    legal (§4). Both Active spots are pinned to `fix-titan` and BOTH BENCHES ARE
-    EMPTIED — not housekeeping, but the difference between a suite that counts the
-    bodies a case put on the board and one that counts strangers `setActiveFromDeck`
-    displaced there. */
 function board(): GameState {
   const state = driveSetup(
     7,
@@ -131,10 +55,6 @@ function board(): GameState {
   return clearBench(clearBench(opened, "p1"), "p2");
 }
 
-/** `id` in `seat`'s Active Spot with both {C} paid and `damage` HP on it. SURGERY on
-    both counts, `boardHeal.test.ts`'s reason: `fix-scopedheal-evo` is a Stage 1 and
-    could never be dealt as an opening Active, and the damage arrives by `setDamage`
-    rather than by scripting attacks that would place it. */
 function attacker(state: GameState, seat: Seat, id: string, damage: number): GameState {
   const fielded = attachFromDeck(
     clearBench(setActiveFromDeck(state, seat, id), seat),
@@ -155,11 +75,6 @@ function benchBodies(state: GameState, seat: Seat, bodies: [string, number][]): 
   return next;
 }
 
-/** The board every §3/§4 case shares: a BASIC attacker, a BASIC benched body and an
-    EVOLVED benched body, all three damaged by different amounts. The three bodies are
-    what make the two printed sets DIFFERENT and NOT NESTED — `Basic` takes the Active
-    and bench 0, `Benched` takes bench 0 and bench 1 — which is the only board shape
-    on which a build that collapsed the two riders can fail. */
 function threeBodies(): GameState {
   return benchBodies(attacker(board(), "p1", "fix-scopedheal", ACTIVE_HURT), "p1", [
     ["fix-titan", BASIC_BENCH_HURT],
@@ -169,9 +84,6 @@ function threeBodies(): GameState {
 
 describe("§1 — the two anchors, the corpus, and the disjointness", () => {
   it("both sentences are CORPUS rows at the printed counts, and both were UNBUILT", () => {
-    // D452's rule: a byte pin on an invented string is green by construction. Each
-    // sentence is looked up in the committed `legal_standard = 1` attack column WITH
-    // its printing count, so a retyped near-miss reddens here first.
     const corpus = new Map(legalAttackCorpus().map(([units, text]) => [text, units]));
     expect(corpus.get(BASIC_TEXT)).toBe(2);
     expect(corpus.get(BENCH_TEXT)).toBe(2);
@@ -180,18 +92,11 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
     // why the narrowing has no same-N twin to be compared against on a board.
     expect(corpus.get(BARE_TEXT_UNPRINTED)).toBeUndefined();
     expect(deriveAttackEffect(BARE_TEXT_UNPRINTED)).toEqual([{ op: "healEach", amount: HEAL }]);
-    // 2 sentences / 4 printings — the numbers this slice claims and the numbers a
-    // re-census has to reproduce.
     expect([BASIC_TEXT, BENCH_TEXT].length).toBe(2);
     expect((corpus.get(BASIC_TEXT) ?? 0) + (corpus.get(BENCH_TEXT) ?? 0)).toBe(4);
   });
 
   it("THE FAMILY IS CLOSED AT TWO ADJECTIVES, measured over all 640 corpus rows", () => {
-    // The loosest plausible shape for "a board heal whose set is narrowed", run over
-    // the whole column rather than over the rows this slice expected to find. It
-    // returns exactly two, so there is no third adjective and no residual
-    // fall-through — worth stating because D439's twin of this anchor reached SEVEN
-    // rows and claimed only five.
     const loose = /^Heal (\d+) damage from each of your (.+) Pokémon\.$/;
     const hits = legalAttackCorpus()
       .filter(([, text]) => loose.test(text))
@@ -200,16 +105,10 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
       [BASIC_TEXT, 2],
       [BENCH_TEXT, 2],
     ]);
-    // And the LOOSEST shape of all — any printed heal over a named SET of your own
-    // bodies — returns nine rows, of which six already built before this slice and
-    // three are the printed family. The third is `Ancient` (§8).
     const family = legalAttackCorpus().filter(([, text]) =>
       /[Hh]eal .* from (each|\d+|all|any) of your/.test(text),
     );
     expect(family).toHaveLength(9);
-    // Six of the nine built before this slice, two build BECAUSE of it, and exactly
-    // ONE is left — the whole ledger of this family in one rung. If a later slice
-    // unblocks the banner, this line is what should go red first.
     expect(family.filter(([, text]) => !resolvedByAnyReader(text)).map(([, t]) => t)).toEqual([
       ANCIENT_TEXT,
     ]);
@@ -224,10 +123,6 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
       { op: "healEach", amount: HEAL, benchOnly: true },
     ]);
     expect(deriveAttackEffect(BARE_TEXT)).toEqual([{ op: "healEach", amount: 30 }]);
-    // THE SHAPE CLAIM, ASSERTED RATHER THAN DESCRIBED. All three are one op of the
-    // same kind carrying the same amount; the narrowed pair adds exactly one key
-    // each, and it is a DIFFERENT key. A build that reached for one `scope` enum, or
-    // for a second union member, fails this rung and not a board.
     const keysOf = (text: string) => Object.keys(deriveAttackEffect(text)?.[0] ?? {}).sort();
     expect(keysOf(BARE_TEXT)).toEqual(["amount", "op"]);
     expect(keysOf(BASIC_TEXT)).toEqual(["amount", "basicOnly", "op"]);
@@ -235,10 +130,6 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
   });
 
   it("the two anchors are DISJOINT — neither can claim the other's text", () => {
-    // The narrowed anchor requires at least one captured character between `your `
-    // and ` Pokémon.`, and the bare sentence has nothing there for it to take. So the
-    // ORDER of the two arms in the deriver is immaterial — an invariant worth
-    // asserting rather than arguing, and asserted in BOTH directions on one N.
     const narrowed = /^Heal (\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\.$/;
     const bare = /^Heal (\d+) damage from each of your Pokémon\.$/;
     expect(narrowed.test(BARE_TEXT)).toBe(false);
@@ -251,10 +142,6 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
   });
 
   it("REFUSES an adjective the map does not know — the map is the vocabulary", () => {
-    // The anchor is loose and the MAP is what refuses, `IN_PLAY_BODY_NOUNS`' design
-    // verbatim. That direction matters more here than in most families: the
-    // unnarrowed reading heals a SUPERSET, so a permissive miss is a quiet wrong
-    // answer rather than a loud one.
     for (const text of [
       "Heal 100 damage from each of your Ancient Pokémon.",
       "Heal 100 damage from each of your Tera Pokémon.",
@@ -268,11 +155,6 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
   });
 
   it("REFUSES the opponent's board — the `(?!opponent)` lookahead, both ways", () => {
-    // Without the lookahead the capture would take `opponent's` and hand it to the
-    // map. Today the map refuses it and the card is merely LOUD; the lookahead is
-    // what stops that refusal turning into a WRONG SEAT the day an opponent-side heal
-    // noun lands. `boardHeal.test.ts` has pinned this sentence since D133 and it
-    // stays pinned — now against two anchors instead of one.
     const narrowed = /^Heal (\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\.$/;
     expect(narrowed.test("Heal 100 damage from each of your opponent's Pokémon.")).toBe(false);
     expect(deriveAttackEffect("Heal 100 damage from each of your opponent's Pokémon.")).toBeNull();
@@ -291,18 +173,11 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
       // "all" for a number: a real printed amount on the neighbouring `healChosen`
       // sentence that `healEach.amount` cannot carry.
       "Heal all damage from each of your Basic Pokémon.",
-      // A LEADING RIDER pins `^` — how a gated or conditional printing arrives.
       "Flip a coin. If heads, heal 100 damage from each of your Basic Pokémon.",
       // A SECOND SENTENCE riding the same action — the shape the `$` exists for, and
       // the shape the `[^.]+` capture cannot span whatever the `$` did.
       "Heal 100 damage from each of your Basic Pokémon. Then, shuffle your deck.",
       "Heal 100 damage from each of your Benched Pokémon. This Pokémon is now Asleep.",
-      // …and the same compound the OTHER way round, with the mapped sentence in the
-      // TAIL and a CAPITAL `Heal` starting it. This is the row that pins `^` rather
-      // than `$`, and it needs the capital: every lowercase mid-sentence form (Saguaro's
-      // tail, a coin gate) is refused by the case of the verb before the anchor is
-      // consulted at all, so a reader that dropped `^` alone would still refuse them and
-      // the guard would be green for the wrong reason.
       "This Pokémon is now Asleep. Heal 100 damage from each of your Basic Pokémon.",
       // The DETERMINER: "1 of your" is `healChosen`'s sentence, a park and a choice.
       "Heal 100 damage from 1 of your Basic Pokémon.",
@@ -349,11 +224,6 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
 
 describe("§2 — one op, two axes: the shape can say what the catalog does not print", () => {
   it("the CROSSING is expressible by the op and refused by the reader", () => {
-    // The test that the shape is the right one. A `scope: "basic" | "bench"` enum
-    // could not construct this value at all; two union members could not either
-    // without a third. The catalog does not print the crossing today — the reader
-    // says so on the line below — and the vocabulary must not be the reason it could
-    // never be read.
     const crossing: EffectOp = { op: "healEach", amount: HEAL, basicOnly: true, benchOnly: true };
     expect(crossing).toEqual({ op: "healEach", amount: HEAL, basicOnly: true, benchOnly: true });
     expect(
@@ -362,11 +232,6 @@ describe("§2 — one op, two axes: the shape can say what the catalog does not 
   });
 
   it("ABSENT means UNNARROWED on both riders, and not `false`", () => {
-    // `basicOnly` absent is not a gate on "not Basic" and `benchOnly` absent is not a
-    // gate on "not Benched" — both absent is D133's whole board, which is the value
-    // every producer predating this slice emits. The pre-existing Ability producer is
-    // the witness: Garganacl's "Blessed Salt" carries neither key and must keep
-    // reading exactly as it did.
     const blessedSalt = programFor("sv02-123")?.triggered?.[0]?.program?.[0];
     expect(blessedSalt).toMatchObject({ op: "healEach" });
     expect(Object.keys(blessedSalt ?? {}).sort()).toEqual(["amount", "op"]);
@@ -375,9 +240,6 @@ describe("§2 — one op, two axes: the shape can say what the catalog does not 
 
 describe("§3 — the BENCH scope: the Active is out of the set, whatever it is", () => {
   it("heals every benched body and LEAVES THE ATTACKER DAMAGED", () => {
-    // THE D447 DEFECT CLASS, driven. A build that healed the Active under this
-    // sentence passes every bench assertion below and fails on this line alone —
-    // which is exactly what deleting the printed "Benched" produces.
     const state = threeBodies();
     const attackerUid = activeUid(state, "p1");
     const benchA = benchTopUid(state, "p1", 0);
@@ -393,7 +255,6 @@ describe("§3 — the BENCH scope: the Active is out of the set, whatever it is"
     // The EVOLVED bench body heals too — "Benched" says nothing about stage, and a
     // build that shared one rider between the two sentences fails here.
     expect(done.players.p1.bench[1]?.damage).toBe(EVO_BENCH_HURT - HEAL);
-    // ONE ROW PER BODY THAT MOVED, in bench index order, and NO row for the attacker.
     expect(all(events, "HEALED")).toEqual([
       { type: "HEALED", seat: "p1", uid: benchA, amount: HEAL },
       { type: "HEALED", seat: "p1", uid: benchB, amount: HEAL },
@@ -483,10 +344,6 @@ describe("§4 — the BASIC filter: the Active is IN the set when it is a Basic"
   });
 
   it("the STAGE is read off the TOP CARD, not off the stack's bottom", () => {
-    // An evolved body's identity is its top card (§1.2). The fixture's Stage 1 sits
-    // on the bench as one body here; the claim is that `matchesFilter` was handed the
-    // TOP card, which is what `topCardOf` returns — a build reading the printed stage
-    // off anything else would call an evolved body Basic and heal it.
     const state = benchBodies(attacker(board(), "p1", "fix-scopedheal", ACTIVE_HURT), "p1", [
       ["fix-scopedheal-evo", EVO_BENCH_HURT],
     ]);
@@ -503,9 +360,6 @@ describe("§4 — the BASIC filter: the Active is IN the set when it is a Basic"
 
 describe("§5 — what ZERO means, and it is the SHIPPED guard rather than a fourth one", () => {
   it("REFUSES a printed zero at the producer — the guard every arm here carries", () => {
-    // A "Heal 0 damage" printing is not a real card and would derive to a set's worth
-    // of silent no-ops: an attack reporting a simulated effect that moved nothing.
-    // Loud path, on BOTH new sentences.
     expect(deriveAttackEffect("Heal 0 damage from each of your Basic Pokémon.")).toBeNull();
     expect(deriveAttackEffect("Heal 0 damage from each of your Benched Pokémon.")).toBeNull();
     // No CEILING, by contrast, and deliberately so: the interpreter clamps PER BODY
@@ -517,11 +371,6 @@ describe("§5 — what ZERO means, and it is the SHIPPED guard rather than a fou
   });
 
   it("CLAMPS PER BODY — the shipped `healed <= 0` skip, and no new guard beside it", () => {
-    // D451's finding, applied rather than re-derived: this project has three
-    // zero-shapes and the right one depends on whether the amount is a producer's
-    // constant or varies per body. A heal clamps to each body's OWN damage, so it
-    // varies, and the per-body skip is the shipped answer. Both riders SHRINK the set
-    // the skip runs over; neither changes what zero means.
     const state = benchBodies(attacker(board(), "p1", "fix-scopedheal", ACTIVE_HURT), "p1", [
       ["fix-titan", CLAMPED],
       ["fix-titan", BASIC_BENCH_HURT],
@@ -545,9 +394,6 @@ describe("§5 — what ZERO means, and it is the SHIPPED guard rather than a fou
   });
 
   it("WHIFFS SILENTLY per body, and the skip does not truncate the walk", () => {
-    // An undamaged body BETWEEN two damaged ones emits no row and the two either side
-    // still do. The count of HEALED rows is the count of bodies that MOVED, never the
-    // size of the set.
     const state = benchBodies(attacker(board(), "p1", "fix-scopedheal", ACTIVE_HURT), "p1", [
       ["fix-titan", BASIC_BENCH_HURT],
       ["fix-titan", 0],
@@ -558,12 +404,6 @@ describe("§5 — what ZERO means, and it is the SHIPPED guard rather than a fou
   });
 
   it("AN EMPTY SET is the all-whiffed board, not a new case — both riders", () => {
-    // The two ways the printed set can be empty on a legal board, and neither is a
-    // park, a skip or an error. The attack is SIMULATED and moves nothing.
-    //
-    // (a) `benchOnly` with an EMPTY BENCH — the mirror of D133's "the Active alone IS
-    //     each" case, and its exact complement: here the Active is the only body and
-    //     it is the one body the sentence excludes.
     const emptyBench = attacker(board(), "p1", "fix-scopedheal", ACTIVE_HURT);
     const benchRun = mustApply(emptyBench, { type: "attack", seat: "p1", index: BENCH_SALVE });
     expect(benchRun.state.players.p1.active?.damage).toBe(ACTIVE_HURT);
@@ -598,10 +438,6 @@ describe("§5 — what ZERO means, and it is the SHIPPED guard rather than a fou
 
 describe("§6 — the SEAT boundary, and what the narrowing costs the rest of the engine", () => {
   it("leaves the OPPONENT's damaged board untouched — the healEachAll boundary", () => {
-    // `healEach` is seat-scoped through `ctx.seat`; `healEachAll` (Picnic Basket) is
-    // not. The distinction is invisible on an undamaged opponent, so the opponent is
-    // DAMAGED here — Active and Bench, on BOTH stages — and must come back unchanged
-    // under both riders.
     for (const index of [BASIC_SALVE, BENCH_SALVE]) {
       let state = threeBodies();
       state = setDamage(state, "p2", OPPONENT_HURT);
@@ -645,9 +481,6 @@ describe("§6 — the SEAT boundary, and what the narrowing costs the rest of th
   });
 
   it("costs ZERO registry rows — both bodies simulate off their printed text", () => {
-    // If either grew a row the registry would win (`programFor(id)?.attack?.[index]
-    // ?? derive`) and every assertion above would keep passing while testing nothing
-    // about the text.
     for (const id of ["fix-scopedheal", "fix-scopedheal-evo"]) {
       expect(programFor(id)).toBeUndefined();
     }
@@ -655,32 +488,14 @@ describe("§6 — the SEAT boundary, and what the narrowing costs the rest of th
 });
 
 describe("§7 — the record-shape derivation, made rather than inherited", () => {
-  it("🛑 `MATCH_RECORD_VERSION` STAYS 29 — the reachability argument, driven", () => {
-    // D450's rule for a non-parking change is REACHABILITY: can the thing this slice
-    // touched ever appear inside a saved record? An `EffectOp` IS persisted — it
-    // reaches `GameState.phase.cont.pendingOp` and `phase.cont.rest` — so the
-    // question has a real subject, and it is answered twice.
-    //
-    //   (1) `healEach` NEVER PARKS. It names its bodies outright, so `stepOp` returns
-    //       `{ done }` and no `EffectContinuation` is ever written. §6 drives that.
-    //   (2) IT CANNOT RIDE IN SOMEONE ELSE'S `rest` EITHER. The only producer of
-    //       either new field is the arm added here, and that arm returns a program of
-    //       length ONE — asserted on the line below — so there is no op in front of
-    //       it that could park and leave it queued.
-    //
-    // And the fields are OPTIONAL, which is D125/D383's WIDENING: every v29 byte
-    // string that spells `{"op":"healEach","amount":N}` still parses and still means
-    // exactly what it meant, because ABSENT is the unnarrowed reading (§2).
+  it("`MATCH_RECORD_VERSION` STAYS 29 — the reachability argument, driven", () => {
     for (const text of [BASIC_TEXT, BENCH_TEXT]) {
       expect(deriveAttackEffect(text)).toHaveLength(1);
     }
   });
 
-  it("🛑 driven over the SERIALIZED BYTES, in three directions", () => {
+  it("driven over the SERIALIZED BYTES, in three directions", () => {
     const state = threeBodies();
-    // The turn the heal RUNS on — read before the attack, because the attack ends the
-    // turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and `done.turn` is already the next one. A stamp compared against the wrong
-    // turn is green on a board where nothing healed at all.
     const healTurn = state.turn;
     const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: BASIC_SALVE });
     const bytes = JSON.stringify(done);
@@ -693,11 +508,6 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     expect(bytes).not.toContain("healEach");
     expect(bytes).not.toContain("basicOnly");
     expect(bytes).not.toContain("benchOnly");
-    // (c) LOSS — a v29 reader that dropped everything this slice knows about still
-    //     reads every field of this record with its old meaning: `damage` is a plain
-    //     number and `healedTurn` is the turn stamp `healedBody` has written since
-    //     0.x. Round-tripping through JSON is the check that nothing in the board
-    //     depends on a shape only this engine can name.
     const roundTripped = JSON.parse(bytes) as GameState;
     expect(roundTripped.players.p1.active?.damage).toBe(ACTIVE_HURT - HEAL);
     expect(roundTripped.players.p1.active?.healedTurn).toBe(healTurn);
@@ -707,52 +517,22 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
 });
 
 describe("§8 — the REFUSAL, with its own reason and its own falsifier", () => {
-  // 🆕🆕🆕 D569 (D539): "is UNBUILT, and stays unbuilt" is WITHDRAWN for the PROGRAM — Scream Tail
-  // `sv05-077` "Supportive Singing" is BUILT as a hand-written REGISTRY attack (`healChosen` with the
-  // NEW `filter: bannerPokemon Ancient`). What this rung still pins is that the DERIVER refuses it.
-  it("the `Ancient` row is a CORPUS row, is UNBUILT, and stays unbuilt (🆕 D569: by the deriver — the registry builds it)", () => {
+  it("the `Ancient` row is a CORPUS row, is UNBUILT, and stays unbuilt ( D569: by the deriver — the registry builds it)", () => {
     // The third member of the printed family, refused for a reason that is not this
     // package's to fix.
     const corpus = new Map(legalAttackCorpus().map(([units, text]) => [text, units]));
     expect(corpus.get(ANCIENT_TEXT)).toBe(1);
     expect(deriveAttackEffect(ANCIENT_TEXT)).toBeNull();
     expect(resolvedByAnyReader(ANCIENT_TEXT)).toBe(false);
-    // Deleting the banner reaches a BUILT string, which is the census's own evidence
-    // that the banner is the whole blocker: the determiner, the zone and the amount
-    // all ship on `healChosen`.
     expect(deriveAttackEffect("Heal 100 damage from 1 of your Benched Pokémon.")).toEqual([
       { op: "healChosen", amount: HEAL, zone: "bench" },
     ]);
   });
 
   it("THE BANNER'S PRICE IS 7 SENTENCES / 10 PRINTINGS, and the falsifier is INGEST", () => {
-    // 🛑 THE REFUSAL IS ABOUT A COLUMN, NOT ABOUT A SENTENCE. `Ancient` is a
-    // per-PRINTING banner that is in NO field of the persisted `Card` and in no field
-    // of tcgdex's card model — `PREVENT_DAMAGE_FROM_CLASS` and D439/D440 have said so
-    // since D204 and it is re-read here rather than inherited. So the fix is an
-    // INGEST change (a new catalog column, populated per printing) and nothing in
-    // `packages/engine` can be it.
-    //
-    // WHAT IT COSTS, measured over the whole attack column rather than over this
-    // family: seven sentences carry the word and every one of them is unbuilt.
     const ancient = legalAttackCorpus().filter(([, text]) => /Ancient/.test(text));
     expect(ancient).toHaveLength(7);
     expect(ancient.reduce((sum, [units]) => sum + units, 0)).toBe(10);
-    // 🆕🆕🆕 D569 (D539) — "every one of them is unbuilt" and "the fix is an INGEST change … nothing
-    // in `packages/engine` can be it" are WITHDRAWN: the fix was an ENGINE table keyed by printing
-    // id (`banners.ts`; the `Card` still has no banner field — the falsifier below stays TRUE, and
-    // that is the point: it was the wrong falsifier). Of the seven: TWO are claimed by READERS
-    // (Koraidon "Primordial Beatdown", Roaring Moon "Vengeance Fletching"), THREE are hand-written
-    // REGISTRY attacks the readers still refuse (Great Tusk "Land Collapse", Scream Tail — this
-    // file's own row — and Flutter Mane), and TWO stay unbuilt for reasons that are not the
-    // banner (Iron Moth's persisted attacker class, Koraidon `sv08-116`'s seat-level record).
-    // 🆕🆕🆕 D575 (D539): "TWO stay unbuilt" is now ONE — Iron Moth is BUILT (the `"ancient"`
-    // attacker class, `MATCH_RECORD_VERSION` 37 → 38) and claimed WHOLE by a READER; Koraidon
-    // `sv08-116` is the one left.
-    // 🆕🆕🆕 D579 (D539): "Koraidon `sv08-116` is the one left" is WITHDRAWN — BUILT, claimed WHOLE by a
-    // READER (a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level
-    // `GameState.recentAttackers`). All SEVEN Ancient sentences are built now: FOUR by readers
-    // (pinned below) and THREE as registry attacks.
     const readerClaimed = ancient.filter(([, text]) => resolvedByAnyReader(text));
     expect(readerClaimed.map(([, text]) => text).sort()).toEqual(
       [

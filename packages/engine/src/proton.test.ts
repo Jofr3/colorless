@@ -17,65 +17,10 @@ import {
   trainerCard,
 } from "./testFixtures";
 
-// D224 — TEAM ROCKET'S PROTON: the row two earlier slices left ready, landed for
-// ZERO new engine code.
-//
-// "If you go first, you may use this card during your first turn.
-//
-//  Search your deck for up to 3 Basic Team Rocket's Pokémon, reveal them, and put
-//  them into your hand. Then, shuffle your deck."
-//
-// **2 Standard-legal printings** (`sv10-177`, `sv10-227` — byte-identical, and
-// the ONLY two rows in the catalog carrying this sentence; remote D1 `colorless`
-// `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-05).
-//
-// ⚠️ **THE POINT OF THE ROW IS THE TRANSFER.** `ownerPrefix.test.ts` dropped this
-// card because its first sentence needed a `CardProgram` flag the engine did not
-// have. D223 then built that flag **for a different card** (Carmine, whose first
-// sentence is byte-identical) and D200 had already built the filter the second
-// sentence needs. Neither slice was aimed here. **An engine piece transfers
-// across cards; a registry row does not** — so the piece arrived free and the row
-// still had to be written, which is this file.
-//
-// ⚠️ WHAT THIS SUITE CAN PUT RED, SAID UP FRONT (the guard rule, conventions.md):
-// * Dropping `trainerFirstTurnExempt` fails the turn-1 play; adding it to the
-//   §7.2 allowance as well fails "still spends the Supporter".
-// * Deleting §4's lock outright (rather than exempting one card) fails the Nemona
-//   CONTROL, which sits in the same hand on the same board.
-// * Dropping `stage: "basic"` offers Team Rocket's Arbok; dropping the owner
-//   offers Cynthia's Gible and the plain bodies; widening past `category ===
-//   "Pokemon"` offers Team Rocket's Energy **and Proton's own spare copies**,
-//   which carry the possessive prefix in their printed names.
-// * `max: 3` → Hop's Bag's 2, or `dest: "bench"`, each fails its own assertion.
-// * Dropping the trailing `shuffleDeck` fails on the whiff, on the decline AND on
-//   the taken path — all three are asserted, because the Nest Ball pattern's
-//   whole claim is that the shuffle does not depend on the search.
-// * Sharing `CARMINE`'s or `HOPS_BAG`'s program object fails the identity tests.
-//
-// 🛑 **AND ONE PRINTED CLAUSE IS NOT MODELLED — "reveal them" — WHICH IS PINNED
-// AT THE BOTTOM OF THIS FILE RATHER THAN LEFT IN PROSE.** See that block for the
-// measurement that both authorises the row and refuses the cheap fix.
-
-/** The printed effect, byte for byte off the D1 (D183's class: an arm written
-    from a paraphrase passes a test written against the same paraphrase). */
 const PROTON_TEXT =
   "If you go first, you may use this card during your first turn.\n\nSearch your deck for up to 3 Basic Team Rocket's Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.";
 
 const PROTON_IDS = ["sv10-177", "sv10-227"] as const;
-
-// ── The demonstrator pool. Synthetic `fix-*` bodies declared HERE rather than in
-//    `testFixtures.ts`, and for a reason stronger than D190's manifest rule
-//    (which applies too — the generated `catalogManifest.ts` measures a 978-row /
-//    6-set catalog holding no `sv10` row at all): `ownerPrefix.test.ts` asserts
-//    that **no card in `FIXTURE_POOL` matches ANY census owner**, so putting a
-//    "Team Rocket's …" body in the shared pool would turn that sweep red. The
-//    pool is a PARAMETER of `createGame`, so this one stays local.
-//
-//    ⚠️ THE `name` IS THE POINT — every other fixture in this repo takes
-//    `name: id`, and these cannot, because the predicate reads the NAME. The
-//    names are real printed names (D1, 2026-08-05: Team Rocket's Meowth
-//    sv10-149, Mimikyu sv10-087, Arbok sv10-113 ← Ekans, Energy sv10-182), and
-//    the ids stay `fix-*` so the manifest generator and checker both skip them.
 
 /** A Basic in the subgroup — what the search is FOR. */
 function subgroupBasic(id: string, name: string): Card {
@@ -83,10 +28,6 @@ function subgroupBasic(id: string, name: string): Card {
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
-  /** The card itself. ⚠️ Its printed NAME carries the possessive prefix too, so
-      the spare copies sitting in the deck are the sharpest in-deck negative this
-      search has: a filter that read the name without the `category` conjunct
-      would offer the player their own Supporters. */
   "fix-proton": {
     ...trainerCard("fix-proton", "Supporter", PROTON_TEXT),
     name: "Team Rocket's Proton",
@@ -114,18 +55,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The acting deck: four Proton, the Nemona control (`sv01-180`, "Draw 3
-    cards.") beside them on every board, both search targets, and one of each
-    negative — so every exclusion below is observed against a card that is
-    actually in the deck at the moment of the offer, never against an absence.
-    Deep on `fix-bigbody` (200 HP dominant Basic) so setup never mulligans at an
-    arbitrary seed.
-
-    ⚠️ FOUR OF EACH NEGATIVE, NOT TWO, AND THE REASON IS A FAILURE THIS FILE
-    ALREADY HAD: at two copies the "…and each one is in the deck at the time"
-    guard went RED at one seed, because both Arboks had been dealt into the
-    opening hand and the Prizes. A guard that depends on the shuffle is a flaky
-    guard; the deck is what makes it a fact. */
 const PROTON_DECK = deckOf({
   "fix-proton": 4,
   "sv01-180": 4, // Nemona — the ordinary Supporter, the §4 control
@@ -138,10 +67,6 @@ const PROTON_DECK = deckOf({
   "fix-energy": 16,
 });
 
-/** The WHIFF board: the same Protons, and every Team Rocket's card in it is one
-    the filter must refuse (the Stage 1 and the Energy). A search that finds
-    nothing must be a no-op that still shuffles — and this deck is what makes the
-    `stage: "basic"` narrowing and the whiff path the SAME assertion. */
 const NO_BASIC_DECK = deckOf({
   "fix-proton": 4,
   "sv01-180": 4,
@@ -152,14 +77,8 @@ const NO_BASIC_DECK = deckOf({
   "fix-energy": 20,
 });
 
-/** ⚠️ THE OPPONENT PLAYS A DECK WITH NO TEAM ROCKET CARD IN IT, and that is
-    load-bearing for the reveal block at the bottom: "p2's snapshot never names
-    the searched cards" is only a claim about the SEARCH if p2's own visible
-    zones cannot hold a copy of one. */
 const OPPONENT_DECK = deckOf({ "fix-bigbody": 30, "fix-basic-1": 4, "fix-energy": 26 });
 
-/** `driveSetup` against the LOCAL pool (D190/D199/D200's helper verbatim — the
-    shared one closes over `FIXTURE_POOL`). Returns the state on TURN 1. */
 function localSetup(
   seed: number,
   first: Seat,
@@ -262,9 +181,6 @@ describe("D224 — the registry rows", () => {
         filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
         dest: "hand",
         max: 3,
-        // D225 — the printed "reveal them", authored at last. D224 shipped this
-        // row WITHOUT it and said so; the block at the bottom of this file was
-        // written to go red on the day it landed, and did.
         reveal: true,
       },
       { op: "shuffleDeck" },
@@ -276,11 +192,6 @@ describe("D224 — the registry rows", () => {
   });
 
   it("is neither Carmine nor Hop's Bag — the two objects it could have been", () => {
-    // ⚠️ THE TWO CHEAP MISTAKES. Carmine (sv06-145) prints the SAME first
-    // sentence, so sharing its object would have been one keystroke — and would
-    // have given Proton "discard your hand and draw 5". Hop's Bag (sv09-147) is
-    // the same op with the owner changed, and sharing THAT would have handed an
-    // Item a §4 exemption it never printed.
     const proton = programFor("sv10-177");
     expect(proton).not.toBe(programFor("sv06-145"));
     expect(proton).not.toBe(programFor("sv09-147"));
@@ -310,7 +221,6 @@ describe("§4 — the exemption D223 bought for another card, spent here", () =>
   });
 
   it("…while the CONTROL Supporter on the SAME board is still refused", () => {
-    // ⚠️ THE ASSERTION THAT STOPS "DELETE THE §4 GATE" FROM PASSING.
     const state = handFromDeck(armed(3), "p1", "sv01-180", 1);
     const refused = applyAction(state, {
       type: "playTrainer",
@@ -334,11 +244,6 @@ describe("§4 — the exemption D223 bought for another card, spent here", () =>
   });
 
   it("follows the going-first SEAT, not p1, and cannot become a going-second licence", () => {
-    // ⚠️ THE HALF cardplay.ts LEAVES IMPLICIT, DRIVEN RATHER THAN ARGUED (D223's
-    // finding): turn 1 belongs to `state.firstPlayer` by construction, so the
-    // going-SECOND seat's turn-1 attempt dies at the seat gate before the
-    // Supporter branch is reached at all.
-    // p2 goes first, holding the Proton deck: the licence follows the SEAT.
     const mirrored = localSetup(4, "p2", { p1: OPPONENT_DECK, p2: PROTON_DECK });
     expect(mirrored.turn).toBe(1);
     expect(mirrored.firstPlayer).toBe("p2");
@@ -375,7 +280,7 @@ describe("the search — D200's filter at its stage narrowing", () => {
       "Search your deck for up to 3 Basic Team Rocket's Pokémon into your hand.",
     );
     expect(prompt.max).toBe(3);
-    expect(prompt.min).toBe(0); // ⚠️ the printed "up to" — declining is legal
+    expect(prompt.min).toBe(0);
     expect(prompt.dest).toBe("hand");
   });
 
@@ -396,8 +301,6 @@ describe("the search — D200's filter at its stage narrowing", () => {
   });
 
   it("refuses each negative BY NAME — and each one is in the deck at the time", () => {
-    // ⚠️ THE EXCLUSIONS ARE OBSERVED, NOT ASSUMED: a "not offered" assertion
-    // against a card that is not in the deck cannot go red.
     const state = armed(5);
     const parked = mustApply(state, {
       type: "playTrainer",
@@ -441,8 +344,6 @@ describe("the search — D200's filter at its stage narrowing", () => {
   });
 
   it("'UP TO 3' means the player may take NONE — and the deck still shuffles", () => {
-    // ⚠️ THE PRINTED WORD, DRIVEN. The park's `min: 0` is what makes an empty
-    // answer legal; a search authored as an exact-N pick would reject it.
     const state = armed(3);
     const deckBefore = state.players.p1.deck.length;
     const { state: done, events } = playAndTake(state, () => []);
@@ -501,8 +402,6 @@ describe("the search — D200's filter at its stage narrowing", () => {
 
 describe("the HUD mirror — the read site D223 had to discover", () => {
   it("lights Proton's wire row on turn 1 while greying the control in the SAME call", () => {
-    // ⚠️ ONE `redactGame` CALL, TWO ROWS, OPPOSITE ANSWERS — so the test cannot
-    // pass by the whole trainer list having been enabled.
     const state = handFromDeck(armed(3), "p1", "sv01-180", 1);
     expect(state.turn).toBe(1);
     const phase = redactGame(state, "p1").phase;
@@ -518,8 +417,6 @@ describe("the HUD mirror — the read site D223 had to discover", () => {
       uid: handUid(state, "p1", "fix-proton"),
       name: "Team Rocket's Proton",
       disabled: false,
-      // The §4 timing is self-evident and carries no tooltip either way; an
-      // ENABLED row must carry none at all.
       reason: null,
       rareCandy: false,
     });
@@ -527,35 +424,7 @@ describe("the HUD mirror — the read site D223 had to discover", () => {
   });
 });
 
-describe("✅ the printed 'reveal them' — the clause D224 pinned as a gap, PAID at D225", () => {
-  // ⚠️ THIS BLOCK WAS A PINNED GAP AND IS NOW A PINNED FEATURE — kept and
-  // rewritten rather than deleted, because the record of what it used to assert
-  // is the reason the next author can trust what it asserts now (D178).
-  //
-  // What D224 wrote here: three registry rows in this family asserted that a
-  // reveal "needs no op — a search that ends in the hand is public by
-  // construction", and measured, that was FALSE. The chooseCards prompt is
-  // redacted to the ANSWERER alone (redact.ts's hidden-candidate family), the
-  // hand is withheld from the opponent, and the only thing that crossed was a
-  // count-only `DECK_SEARCHED` log row. The opponent learned a number; in paper
-  // they see the cards. D224 shipped the row anyway (the clause moves no card,
-  // changes no zone, gates no legality and files no §9.2 record) and predicted
-  // that "THIS TEST GOES RED THE DAY SOMEBODY BUILDS IT".
-  //
-  // ✅ IT DID, AND THIS IS THAT DAY. D225 added an optional `reveal?: true` to
-  // `searchDeck` and `lookAtTopN`, spelled on the rows whose print carries the
-  // word, read in `log.ts`'s two arms. The second test below used to assert the
-  // bare count and now asserts the names.
-  //
-  // 🛑 WHAT DID **NOT** CHANGE, AND IT IS THE HALF THAT MATTERS: the reveal is a
-  // property of the printed SENTENCE, not of the destination. The Standard-legal
-  // census that killed the cheap fix (name the cards whenever `dest === "hand"`)
-  // still holds and got bigger on re-measurement — 15 printings / 8 sentences
-  // search a deck into hand with NO reveal printed, every one of them searching
-  // for uncategorised "cards", where naming would be a real leak. The
-  // discriminating guard lives in `revealClause.test.ts`, which drives a
-  // to-hand search with no printed reveal and asserts the row stays a count.
-
+describe("the printed 'reveal them' — the clause D224 pinned as a gap, PAID at D225", () => {
   function searchedRow(state: GameState, events: GameEvent[]) {
     const rows = logFromEvents(events, {
       names: { p1: "P1", p2: "P2" },
@@ -609,11 +478,6 @@ describe("✅ the printed 'reveal them' — the clause D224 pinned as a gap, PAI
       const name = POOL[done.cardIdByUid[uid] as string]?.name as string;
       expect(text, `${name} was searched but not revealed`).toContain(name);
     }
-    // 🛑 THE REVEAL IS THE LOG ROW, NOT THE SNAPSHOT — and that separation is the
-    // reason this row could be paid at all. The cards are in p1's HAND, which
-    // stays withheld: a §15.E reveal shows the cards once, it does not turn the
-    // hand face up for the rest of the game. `OPPONENT_DECK` holds no Team Rocket
-    // card, so a hit here could only have come from p1's zones.
     const snapshot = JSON.stringify(redactGame(done, "p2"));
     for (const id of ["fix-tr-meowth", "fix-tr-mimikyu"]) {
       expect(snapshot, `${id} leaked into the opponent's snapshot`).not.toContain(id);

@@ -25,61 +25,13 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.95.0 → 0.96.0 — the DURATED DAMAGE REDUCTION (P3-M5 long tail, D147):
-//
-//   "During your opponent's next turn, this Pokémon takes {20|30|50} less damage
-//    from attacks (after applying Weakness and Resistance)."          (12 printings)
-//   "Discard all Energy from this Pokémon. During your opponent's next turn, this
-//    Pokémon takes 100 less damage from attacks (after applying Weakness and
-//    Resistance)."                                                    ( 2 printings)
-//
-// The largest count this tail had left — 14 printings across 4 amounts — and the
-// third stamped field on `InPlayPokemon`, which is the slice D143 deferred the
-// GENERALISATION question to. The verdict is a third PARALLEL field and the
-// argument is in decisions.md (D147); the two facts that decided it are both
-// pinned below rather than only argued:
-//
-//   • THE READ PATH IS NOT SHARED, only the SITES are. All four damage sites ask
-//     `attackBlockOf` and `installedReductionOf` two independent questions at two
-//     different steps of §8.5 — one is SUBTRACTED inside the pipeline, the other
-//     SUPERSEDES its result — and the case where a block DECLINES while a
-//     reduction on the same body still bites is driven here;
-//   • THE MECHANISM AND THE NUMBER ALREADY EXISTED. The pool prints this exact
-//     sentence MINUS its four-word duration prefix as an always-on Ability on FOUR
-//     printings (Bouffalant sv03-174 "Bouffer" 20, Stonjourner sv01-121
-//     "Exoskeleton" 20, Copperajah ex sv02-150/-245 "Bronze Body" 30), simulated
-//     since 0.x as `PassiveEffects.damageReductionAfterWR` and read at those same
-//     four sites. So this field is a SOURCE summed into a number the engine
-//     already computes — which is why the read-site diff is one `+` each and why
-//     the clamp, the `ignoreWR` bypass and the `DAMAGE_DEALT.reduction` row all
-//     come for free.
-//
-// ⚠️ THE PRINTED PARENTHETICAL IS THE SPEC AND IT IS DRIVEN, NOT ASSERTED. Every
-// DAMAGE_DEALT row this suite produces is re-derived from its own reported fields
-// in BOTH orders (`pipeline` below), and the two are asserted to differ wherever a
-// Weakness is present. Resistance and the reduction are both ADDITIVE and commute,
-// so the parenthetical can only ever bite on the MULTIPLICATIVE step — which is
-// why the fixtures were chosen for their Weakness lines.
-
 /** The bare sentence at each printed amount — one anchor, one capture. */
 function bare(amount: number): string {
   return `During your opponent's next turn, this Pokémon takes ${String(amount)} less damage from attacks (after applying Weakness and Resistance).`;
 }
-/** Eiscue sv02-048/-205 "Frigid Block" — the COMPOUND printing, verbatim. */
 const COMPOUND = `Discard all Energy from this Pokémon. ${bare(100)}`;
-/** The always-on Ability spelling — this sentence MINUS the duration prefix, on
-    Bouffalant sv03-174 / Stonjourner sv01-121 / Copperajah ex sv02-150. It is a
-    printed ABILITY, read out of the registry, and must never derive as an ATTACK
-    effect: the duration is the entire difference between the two readings. */
 const ALWAYS_ON =
   "This Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance).";
-/** The ATTACKER-side family — the OTHER parenthetical: 6 printings across TWO
-    attack sentences plus one Ability. A debuff on the attacker read at a different
-    step on a different body, and the reason "(after applying …)" is inside this
-    file's anchor rather than trimmed off it. **The five ATTACK printings became
-    D149**; the list is kept (re-pointed, not deleted) because the claim it makes
-    is now the sharper one — the two families must be told apart by their
-    parenthetical BY TWO LIVE READERS rather than by one reader and a silence. */
 const BEFORE_WR_ATTACKS = [
   // Houndoom sv06.5-008/-066 "Snarl" ({R}{C}{C}, 100, INDEX 1).
   "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance).",
@@ -88,16 +40,9 @@ const BEFORE_WR_ATTACKS = [
   // Florges sv01-093 "Moonblast" ({P}{C}{C}, 120, INDEX 0).
   "During your opponent's next turn, the Defending Pokémon's attacks do 30 less damage (before applying Weakness and Resistance).",
 ];
-/** Entei sv03-030 "Pressure" — the always-on member, an ABILITY and a CROSS-BOARD
-    aura (Active clause on both ends), deliberately left unread by D149 as well as
-    by this slice. It must stay NULL on the attack reader. */
 const BEFORE_WR_ABILITY =
   "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).";
 
-/** One seed for the whole suite. Nothing here flips a coin — no printing of this
-    family carries one — so a seed table would describe a shuffle rather than a
-    rule, and the install cases pin that by an unchanged `rngState` (D143's move,
-    inherited by `classBlock.test.ts` and now by this one). */
 const SEED = 11;
 
 function find<T extends GameEvent["type"]>(
@@ -114,17 +59,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** ⚠️ THE ORDERING ORACLE — §8.5 step 5 computed BOTH WAYS from a row's own
-    reported fields, so the pin is on the ENGINE's arithmetic rather than on a
-    number a test author typed.
-
-    `afterWR` is the printed reading: base (+ bonus) → ×Weakness → −Resistance →
-    clamp → −reduction → clamp. `beforeWR` is the only other placement a build
-    could plausibly choose: subtract the reduction from the base first, then run
-    the modifiers. Every damage row in this suite is checked against `afterWR`,
-    and every row that reports a Weakness is additionally asserted to DIFFER from
-    `beforeWR` — so a build that moved the subtraction one step earlier fails on
-    the specific declarations rather than on a comment. */
 function pipeline(row: {
   base: number;
   bonus?: number;
@@ -145,9 +79,6 @@ function pipeline(row: {
   };
 }
 
-/** Assert a damage row is the AFTER-W/R reading, and — when the row reports a
-    Weakness — that the two readings really are different numbers on this board.
-    Called on every driven hit, so the ordering claim is swept rather than spot-checked. */
 function expectAfterWR(row: Extract<GameEvent, { type: "DAMAGE_DEALT" }>): void {
   const { afterWR, beforeWR } = pipeline(row);
   expect(row.dealt).toBe(row.prevented === true ? 0 : afterWR);
@@ -171,9 +102,6 @@ function armed(installer: string, energy: { id: string; count: number }[]): Game
   return state;
 }
 
-/** The four installers and everything a declaration of theirs needs: the attack
-    INDEX (not constant — two of the fourteen printings sit at 1), the energy, and
-    the printed amount the install must write. Read off the local D1 per printing. */
 const INSTALLERS = {
   "sv03-169": { index: 0, amount: 20, energy: [{ id: "fix-energy", count: 1 }], hit: 0 },
   "sv01-001": { index: 0, amount: 30, energy: [{ id: "fix-energy", count: 2 }], hit: 10 },
@@ -187,14 +115,9 @@ const INSTALLERS = {
     hit: 90,
   },
   "sv02-048": { index: 1, amount: 100, energy: [{ id: "fix-water-energy", count: 3 }], hit: 100 },
-  // The FIFTH producer, and the one no list named: Varoom has been in the fixture
-  // pool since D131 as Revavroom ex's pre-evolution, printing this rider all along.
   "sv06.5-043": { index: 0, amount: 30, energy: [{ id: "fix-metal-energy", count: 1 }], hit: 0 },
 } as const;
 
-/** `armed`, then the install declared — asserting the row actually landed, so a
-    board that failed to install can never leave a case asserting "nothing was
-    reduced" against nothing. Returns P2's turn (the window). */
 function installed(installer: keyof typeof INSTALLERS): GameState {
   const spec = INSTALLERS[installer];
   const { state, events } = mustApply(armed(installer, [...spec.energy]), {
@@ -221,9 +144,6 @@ function swing(
   return mustApply(next, { type: "attack", seat: "p2", index });
 }
 
-/** A live reduction written straight onto a body — for the boards no printing can
-    reach (a BENCHED holder; a reduction sitting beside D142's block). D144/D146's
-    precedent for pinning a rule with no card behind it. */
 function withReduction(
   state: GameState,
   seat: Seat,
@@ -263,30 +183,17 @@ function rendered(state: GameState, events: GameEvent[]): { who: string; text: s
 
 describe("the durated damage reduction — derived, not authored", () => {
   it("derives every printed amount off ONE anchor with ONE capture", () => {
-    // FOUR amounts, one `(\d+)` (D120's precondition met: a NUMBER is closed by
-    // its type, unlike the open consequent vocabularies that earn a row each).
-    // 100 is included even though only the COMPOUND prints it, because the capture
-    // is the same capture — the bare anchor must be able to read a number it will
-    // never be handed rather than accidentally enumerating three.
     for (const amount of [20, 30, 50, 100]) {
       expect(deriveAttackEffect(bare(amount))).toEqual([{ op: "reduceDamage", amount }]);
     }
-    // …and an amount nothing prints derives too, which is what makes the capture a
-    // capture rather than a three-row table with a regex around it.
     expect(deriveAttackEffect(bare(70))).toEqual([{ op: "reduceDamage", amount: 70 }]);
   });
 
   it("refuses a printed ZERO — the guard every arm in this family carries", () => {
-    // A "takes 0 less damage" record changes no arithmetic anywhere and would emit
-    // a row announcing a protection that does not exist, which is worse than an
-    // unread sentence. No such printing exists; the guard is the point.
     expect(deriveAttackEffect(bare(0))).toBeNull();
   });
 
   it("folds the typographic apostrophe", () => {
-    // A re-ingest that changes only punctuation must not silently un-simulate
-    // fourteen printings (D136/D137). The `['’]` class sits BEFORE the capture,
-    // which a template-per-amount build would have had to spell three times.
     for (const amount of [20, 30, 50]) {
       expect(deriveAttackEffect(bare(amount).replace(/'/g, "’"))).toEqual(
         deriveAttackEffect(bare(amount)),
@@ -317,11 +224,6 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("refuses the ALWAYS-ON spelling — the duration is the whole difference", () => {
-    // Bouffalant sv03-174 "Bouffer", Stonjourner sv01-121 "Exoskeleton" and
-    // Copperajah ex sv02-150/-245 "Bronze Body" print THIS sentence, and all three
-    // are simulated — as a registry PASSIVE, not as an attack effect. Deriving it
-    // here would install a one-turn stamp for a permanent Ability, i.e. read the
-    // right number at the right step for the wrong lifetime.
     expect(deriveAttackEffect(ALWAYS_ON)).toBeNull();
     expect(programFor("sv03-174")?.passive?.damageReductionAfterWR).toBe(20);
     expect(programFor("sv01-121")?.passive?.damageReductionAfterWR).toBe(20);
@@ -332,25 +234,9 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("refuses the ATTACKER-side family — the OTHER parenthetical", () => {
-    // 6 printings that reduce damage by a flat number BEFORE Weakness and
-    // Resistance, on the ATTACKER's side of the table. Same verb, same units, a
-    // different body and a different step — so a reader keying on "N less damage"
-    // would have shipped five attacks and an Ability backwards.
-    //
-    // ⚠️ RE-POINTED AT D149, NOT DELETED — NULL → SHAPE, D145's rule and the move
-    // D147 itself made on two witnesses. The five ATTACK printings now derive, to
-    // an op of their own on a field of their own, and the claim this case makes
-    // gets SHARPER rather than weaker: the demand is no longer "nothing reads
-    // this" but "the other reader reads it, and this one still does not" — i.e.
-    // two readers must not claim one printed clause (D148's own sharpening of
-    // `typeNameClause`). The ABILITY sentence stays flatly NULL: it is a
-    // cross-board aura with an Active clause on both ends, deliberately out of
-    // D149's scope, and an attack reader that swallowed it would install a
-    // one-turn stamp for a permanent Ability.
     for (const text of BEFORE_WR_ATTACKS) {
       expect(deriveAttackEffect(text)).not.toBeNull();
       expect((deriveAttackEffect(text) as EffectOp[])[0]?.op).toBe("weakenDefenderAttacks");
-      // …and NOT this slice's op, which is the whole point of the parenthetical.
       expect(deriveAttackEffect(text)).not.toEqual([{ op: "reduceDamage", amount: 100 }]);
     }
     expect(deriveAttackEffect(BEFORE_WR_ABILITY)).toBeNull();
@@ -366,16 +252,10 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("derives the COMPOUND to TWO ops in printed order — the free count", () => {
-    // Eiscue sv02-048/-205 "Frigid Block". Its first sentence has derived since
-    // 0.x, so the pair costs ONE regex — D145's census flagged this exact printing
-    // as one of the four compounds `SELF_DISCARD_ALL`'s `$` keeps out, and this is
-    // the day it said would come.
     expect(deriveAttackEffect(COMPOUND)).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
       { op: "reduceDamage", amount: 100 },
     ]);
-    // The discard half is BYTE-IDENTICAL to the bare discard anchor's own output
-    // (D132's inventory rule with nothing left over on that half)…
     const compound = deriveAttackEffect(COMPOUND) as EffectOp[];
     expect(compound[0]).toEqual(
       (deriveAttackEffect("Discard all Energy from this Pokémon.") as EffectOp[])[0],
@@ -397,9 +277,6 @@ describe("the durated damage reduction — derived, not authored", () => {
     // either body is considered — assert the prefix relationship that makes it so.
     expect(COMPOUND.endsWith(bare(100))).toBe(true);
     expect(COMPOUND.startsWith("Discard all Energy")).toBe(true);
-    // And the BARE DISCARD anchor still refuses the compound (D145's live guard —
-    // pinned in `attackPark.test.ts` and `tailsSelfCost.test.ts` too, and here
-    // because this is the slice that made it load-bearing rather than theoretical).
     expect(deriveAttackEffect("Discard all Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ]);
@@ -410,9 +287,6 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("keeps the fixtures' NAME, text, cost, damage and INDEX verbatim", () => {
-    // Ids, NAMES, costs, printed damage and the INDEX all checked against the local
-    // D1 (2026-08-02, 978 cards / 6 sets) PER PRINTING — D144's rule, extended to names by
-    // D146 after four consecutive lists carried two wrong ones.
     expect(FIXTURE_POOL["sv03-169"]?.name).toBe("Swablu");
     expect(FIXTURE_POOL["sv03-169"]?.attacks?.[0]).toEqual({
       cost: ["Colorless"],
@@ -442,11 +316,7 @@ describe("the durated damage reduction — derived, not authored", () => {
       damage: 100,
       effect: COMPOUND,
     });
-    // ⚠️ THE INDEX IS NOT CONSTANT ACROSS THE FAMILY — two of the fourteen print
-    // the rider at index 1 and the other twelve at index 0, which is why each was
-    // read separately rather than once for the family.
     expect(Object.values(INSTALLERS).map((s) => s.index)).toEqual([0, 0, 1, 1, 0]);
-    // …and Varoom, fielded for an unrelated slice, is verbatim too.
     expect(FIXTURE_POOL["sv06.5-043"]?.name).toBe("Varoom");
     expect(FIXTURE_POOL["sv06.5-043"]?.attacks?.[0]).toEqual({
       cost: ["Metal"],
@@ -465,9 +335,6 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("emits `reduceDamage` from exactly the four printings, swept over the pool", () => {
-    // The producer SET, discovered rather than listed (D145's move): a fifth
-    // producer fails loudly instead of being absorbed, and the amounts it emits
-    // are asserted to be the printed ones rather than "some number".
     const producers = new Map<string, number[]>();
     const walk = (ops: EffectOp[], id: string) => {
       for (const op of ops) {
@@ -485,16 +352,6 @@ describe("the durated damage reduction — derived, not authored", () => {
       const authored = programFor(card.id)?.attack;
       for (const ops of Object.values(authored ?? {})) walk(ops, card.id);
     }
-    // ⚠️ FIVE, NOT FOUR — AND THE FIFTH IS WHY THIS SWEEP IS A SWEEP. Varoom
-    // sv06.5-043 has been in the fixture pool since D131's promoted-clause work,
-    // fielded as the PRE-EVOLUTION of Revavroom ex, and its index-0 "Rigidify"
-    // has been printing this family's 30 the whole time with nothing reading it.
-    // The suite discovered it; no list mentioned it; and the same thing was true
-    // of Forretress sv01-139's index-1 "Rolling Shell", which this slice went
-    // looking for and found already fielded. Two of the fourteen printings were
-    // ALREADY SITTING IN THE POOL as unmapped riders on cards fielded for other
-    // reasons — which is the strongest argument this file makes for discovering a
-    // producer set rather than listing it.
     expect([...producers.entries()].sort()).toEqual([
       ["sv01-001", [30]],
       ["sv01-139", [50]],
@@ -526,9 +383,6 @@ describe("the durated damage reduction — installing it", () => {
       uid: installer,
       amount: 30,
     });
-    // D142's stamp arithmetic, unchanged and re-driven on the third field that
-    // uses it: turn 2 installed it, turn 3 is the opponent's, and that is the only
-    // turn it answers on. NOT the installing turn — the printed word is "next".
     expect(done.players.p1.active?.damageReduction).toEqual({ turn: 3, amount: 30 });
     expect(done.turn).toBe(3);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -620,16 +474,6 @@ describe("the durated damage reduction — installing it", () => {
 
 describe("the durated damage reduction — the §8.5 ORDERING the parenthetical pins", () => {
   it("subtracts AFTER Weakness: Metal 90 into a ×2 Metal body with 100 installed", () => {
-    // ⚠️ THE SLICE'S HEADLINE NUMBER, and it is driven off two printed cards with
-    // no surgery in it. Forretress sv01-139 (Metal) declares "Rolling Shell" (90)
-    // into Eiscue sv02-048, which is ×2 METAL and carrying its own 100:
-    //
-    //     printed:  90 × 2 = 180, − 100 = 80        ← what the card says
-    //     reversed: max(0, 90 − 100) = 0, × 2 = 0   ← a reduction that never fires
-    //
-    // The wrong order turns a 100-point reduction into TOTAL IMMUNITY against a
-    // 90-point attack, and the 110 HP body ends the turn alive either way — so the
-    // difference is visible in `dealt` rather than only in a KO.
     let state = installed("sv02-048");
     const shielded = activeUid(state, "p1");
     state = clearBench(state, "p1");
@@ -655,8 +499,6 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
       expectAfterWR(row);
     }
     expect(done.players.p1.active?.damage).toBe(80);
-    // …and the row does NOT say `prevented`: a clamped or heavy reduction is not a
-    // §11 prevention, and the two are different facts about the same 0.
     expect(row?.prevented).toBeUndefined();
   });
 
@@ -680,10 +522,6 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
       expect(pipeline(tank).beforeWR).toBe(20);
       expectAfterWR(tank);
     }
-    // Pineco (60 HP, ×2 Fire, 30 installed) takes the same 60:
-    //   printed  60 × 2 = 120, − 30 = 90   → KNOCKED OUT
-    //   reversed (60 − 30) × 2 = 60        → also lethal on 60 HP, which is why the
-    //                                        assertion is on the NUMBER as well
     state = clearBench(installed("sv01-001"), "p1");
     state = benchFromDeck(state, "p1", "fix-titan"); // a promote target
     const pineco = swing(
@@ -705,11 +543,6 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
   });
 
   it("subtracts AFTER Weakness on EVERY ×2 board this pool can build", () => {
-    // A TABLE rather than a case, because the mutation this suite most needs to
-    // catch — moving the subtraction one step earlier — is only observable where a
-    // Weakness and a live reduction sit on the SAME body, and the pool offers
-    // exactly these boards. Each row states the printed answer and the reversed
-    // one, and the reversed one is asserted to be what the engine did NOT do.
     const boards = [
       // installer, its amount, attacker index/energy, printed dealt, reversed dealt
       // Pineco (×2 Fire, 30) taking Bite (30 Fire): 60 − 30 = 30 vs (30−30)×2 = 0.
@@ -738,12 +571,6 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
   });
 
   it("COMMUTES with Resistance — which is why only Weakness makes the order visible", () => {
-    // Both Resistance and this reduction are ADDITIVE, so they can be applied in
-    // either order and give the same number. That is not a gap in the test: it is
-    // the reason the printed parenthetical exists at all, and the reason the
-    // fixtures were chosen for their WEAKNESS lines. Asserted on the arithmetic
-    // rather than on a board, because no Grass attacker in this deck hits the
-    // Active — the claim is about the operation, not about a card.
     const resisted = {
       base: 100,
       weakness: null,
@@ -774,9 +601,6 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
     expect(row?.reduction).toBe(100);
     expect(row?.dealt).toBe(0);
     expect(row?.weakness).toBeNull();
-    // ⚠️ `prevented` STAYS ABSENT. A 0 from a big reduction and a 0 from a §11
-    // block are the same number and different facts — the block SUPERSEDES the
-    // pipeline, this ran it — and the row must not claim the second.
     expect(row?.prevented).toBeUndefined();
     // The body took nothing, and the damage field is still exactly 0 rather than
     // having gone negative anywhere on the way.
@@ -800,10 +624,6 @@ describe("the durated damage reduction — the four READ SITES", () => {
   });
 
   it("reduces an Active-target SNIPE — `snipeActive`, the other site that runs W/R", () => {
-    // Rotom sv01-069's "Linear Attack" ({C}, `opponentAny` 20, `deals`) into
-    // Swablu's ×2 LIGHTNING and its own 20: 20 × 2 = 40, − 20 = 20. This is the
-    // second of the four sites that runs Weakness at all, so the ordering claim is
-    // pinned twice on two different code paths rather than once.
     let state = clearBench(installed("sv03-169"), "p1"); // one candidate → no park
     state = setDamage(state, "p1", 0);
     const { events } = swing(state, "sv01-069", [{ id: "fix-energy", count: 1 }]);
@@ -819,11 +639,6 @@ describe("the durated damage reduction — the four READ SITES", () => {
   });
 
   it("reduces SPREAD damage on the Bench — guarded at a site no printing reaches", () => {
-    // ⚠️ UNREACHABLE OFF ANY CARD, GUARDED ANYWAY (D146's precedent). A reduction
-    // can only be installed from the Active Spot and leaving it clears the record,
-    // so no legal sequence puts a LIVE one on a benched body. Ignoring it there
-    // would make the field mean one thing at two sites and another at two more,
-    // purely because no printing reaches them — an accident rather than a guard.
     let state = clearBench(installed("sv03-169"), "p1");
     state = benchFromDeck(state, "p1", "fix-titan");
     state = withReduction(state, "p1", { bench: 0 }, 20);
@@ -879,9 +694,6 @@ describe("the durated damage reduction — the LIFETIME", () => {
   });
 
   it("ends when the Pokémon leaves the Active Spot — a Boss's Orders INSIDE the window", () => {
-    // §10's reachable clear, and it is reachable for D142's reason rather than
-    // D143's: the window belongs to the OPPONENT, so the opponent is the only
-    // player who can move the body while it is live.
     let state = installed("sv03-169");
     const shielded = activeUid(state, "p1");
     expect(state.players.p1.bench.length).toBeGreaterThan(0);
@@ -904,7 +716,6 @@ describe("the durated damage reduction — the LIFETIME", () => {
     const benchIndex = next.players.p1.bench.findIndex((p) => p.stack.includes(shielded));
     expect(benchIndex).toBeGreaterThanOrEqual(0);
     expect(next.players.p1.bench[benchIndex]?.damageReduction).toBeNull();
-    // Silent: the POKEMON_SWITCHED row already tells the story (D112's call).
     expect(types(gusted.events)).not.toContain("DAMAGE_REDUCTION_APPLIED");
     // And it is GONE rather than merely unread — the promoted body takes a full hit.
     const { events } = swing(next, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
@@ -913,12 +724,6 @@ describe("the durated damage reduction — the LIFETIME", () => {
   });
 
   it("ends on EVOLVING — unreachable by construction, written anyway", () => {
-    // §10 sheds the effects of ATTACKS. Installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, whose four attacks install nothing and whose window admits only `attack` / `endTurn` (R-FL1); no board here builds it], the window is the
-    // opponent's, and nobody evolves on someone else's turn — so no legal sequence
-    // puts an evolution between the install and the expiry, exactly as at D142.
-    // A surgery pins the RULE rather than a sequence, and the pair is real cards:
-    // Pineco (30) evolving into Forretress (50), which also shows the record is the
-    // POKÉMON's rather than the card's.
     let state = installed("sv01-001");
     // Hand the window back so the holder's controller may act, then re-stamp the
     // record onto the (now current) turn so the clear has something live to remove.
@@ -935,7 +740,6 @@ describe("the durated damage reduction — the LIFETIME", () => {
     });
     expect(types(events)).toContain("POKEMON_EVOLVED");
     expect(done.players.p1.active?.damageReduction).toBeNull();
-    // Silent, like every §10 clear in this family: POKEMON_EVOLVED is the row.
     expect(types(events)).not.toContain("DAMAGE_REDUCTION_APPLIED");
   });
 
@@ -958,22 +762,13 @@ describe("the durated damage reduction — the LIFETIME", () => {
   });
 
   it("MERGES by MAX when installed twice in one window, and says nothing when it need not", () => {
-    // Unreachable off any printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card prints two of
-    // these), so it is constructed — D144/D146's precedent. The rule is D142's `||`
-    // with the boolean replaced by a number: a second installation may never leave
-    // the holder with LESS protection than one of them printed.
     let state = armed("sv03-169", [{ id: "fix-energy", count: 1 }]);
     state = withReduction(state, "p1", "active", 50, state.turn + 1);
     const bigger = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // The printed 20 landing on top of a 50 must NOT downgrade it…
     expect(bigger.state.players.p1.active?.damageReduction).toEqual({ turn: 3, amount: 50 });
-    // …and, having changed nothing, it says nothing (D140/D146: announcing a
-    // re-install that moved no number would be announcing a non-event).
     expect(types(bigger.events)).not.toContain("DAMAGE_REDUCTION_APPLIED");
 
-    // The other direction: a smaller existing record is raised, and the row reports
-    // the MERGED number rather than the printed one, because the row must describe
-    // the state that now exists.
     let smaller = armed("sv03-169", [{ id: "fix-energy", count: 1 }]);
     smaller = withReduction(smaller, "p1", "active", 10, smaller.turn + 1);
     const raised = mustApply(smaller, { type: "attack", seat: "p1", index: 0 });
@@ -991,10 +786,6 @@ describe("the durated damage reduction — the LIFETIME", () => {
 
 describe("the durated damage reduction — beside D142's block", () => {
   it("is SUPERSEDED by a live block on the same body", () => {
-    // Two durated effects, one body, one window — the board the third stamped
-    // field makes reachable. The block NULLS the result and the reduction is
-    // subtracted inside the pipeline, so when both are live the block wins and the
-    // row says `prevented` rather than merely reporting a big `reduction`.
     let state = clearBench(installed("sv02-048"), "p1");
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active");
@@ -1012,18 +803,10 @@ describe("the durated damage reduction — beside D142's block", () => {
     const row = find(events, "DAMAGE_DEALT");
     expect(row?.prevented).toBe(true);
     expect(row?.dealt).toBe(0);
-    // The reduction is still COMPUTED and REPORTED — the block supersedes, it does
-    // not skip, which is the same claim D142 made about Weakness on this row.
     expect(row?.reduction).toBe(100);
   });
 
   it("still bites when a `fromClass` block DECLINES — the two are independent reads", () => {
-    // ⚠️ THIS IS THE CASE THAT DECIDED THE GENERALISATION. `attackBlockOf` folds
-    // D146's attacker-class filter into its own read and returns null for an
-    // attacker the filter refuses; `installedReductionOf` has no filter and knows
-    // nothing about attackers. Same body, same window, same four sites — two
-    // independent answers, which is why a discriminated union would have merged
-    // the STORAGE and shortened nothing.
     let state = clearBench(installed("sv01-139"), "p1"); // Forretress, 50 installed
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active");
@@ -1053,10 +836,6 @@ describe("the durated damage reduction — beside D142's block", () => {
     );
     expect(find(basic.events, "DAMAGE_DEALT")?.prevented).toBe(true);
     expect(find(basic.events, "DAMAGE_DEALT")?.dealt).toBe(0);
-    // …and by a STAGE 1 (Forretress itself, Metal): the block declines, the attack
-    // lands in full — and the reduction, which asked nobody about the attacker,
-    // still takes its 50 off. 90 × 2 (Forretress is ×2 Fire… but the attacker here
-    // is METAL and the target is a ×2 FIRE body, so no Weakness) − 50 = 40.
     const evolved = swing(
       state,
       "sv01-139",
@@ -1081,9 +860,6 @@ describe("the durated damage reduction — the VOICE", () => {
     const rows = rendered(done, events);
     const shield = rows.findIndex((r) => r.text.includes("less damage from attacks"));
     expect(shield).toBeGreaterThanOrEqual(0);
-    // `seat` owns the protected Pokémon AND that Pokémon is the actor's own, so
-    // the row credits the right player — the straightforward case D142 named, and
-    // the opposite of D141's counterattack row. NOT a system row.
     expect(rows[shield]?.who).toBe("p1");
     expect(rows[shield]?.text).toBe(
       "Pineco takes 30 less damage from attacks during your opponent's next turn",
@@ -1095,9 +871,6 @@ describe("the durated damage reduction — the VOICE", () => {
   });
 
   it("says NOTHING when the reduction FIRES — `DAMAGE_DEALT.reduction` is the whole story", () => {
-    // Loudness is owed to UNREAD TEXT, not to a read rule doing its job (D140,
-    // D146). The number is already on the damage row, which has carried it since
-    // Bouffalant "Bouffer" and names the FACT rather than the source.
     const state = clearBench(installed("sv03-169"), "p1");
     const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
     expect(types(events)).not.toContain("DAMAGE_REDUCTION_APPLIED");

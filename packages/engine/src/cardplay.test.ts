@@ -20,11 +20,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 2 — Trainers (§7), Abilities (§9) and the resumable effect
-// interpreter (§15.E/G) that both drive through. The suite exercises every
-// archetype in the representative registry plus the mid-effect parking, the
-// per-turn caps, and the never-throw wire checks on the new actions.
-
 /** Setup then open P1's turn 2: with P2 going first, ending P2's turn 1 puts P1
     on their (unrestricted-for-order) first turn — no going-first Supporter /
     attack ban, so Trainers play freely. */
@@ -319,12 +314,7 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(prompt.max).toBe(2);
-    expect(prompt.min).toBe(0); // the printed "up to" — declinable
-    // REGRESSION (engine 0.26.0): this is the card that shipped the searchNote
-    // plural bug. `searchNote` used to keep its own singular-only noun table
-    // beside the shared one, so it prefixed the count onto an ARTICLE and this
-    // read "Search your deck for up to 2 a Basic Water Energy into your hand."
-    // It survived because nothing asserted any search note; now something does.
+    expect(prompt.min).toBe(0);
     expect(prompt.note).toBe(
       "Search your deck for up to 2 Basic Water Energy cards into your hand.",
     );

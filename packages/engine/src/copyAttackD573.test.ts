@@ -28,23 +28,10 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D573 — THE COPY-ATTACK SUBSTITUTION: NINE PRINTINGS, FOUR TEXTS ──
-//
-//   N's Zoroark ex   sv09-098 / -175 / -185 / -189   "Night Joker"       — 1 of your Benched N's Pokémon's attacks
-//   Zoroark          sv10.5w-062 / -143              "Foul Play"         — 1 of your opponent's Active Pokémon's attacks
-//   Clefable         sv06-079                        "Metronome"         — the same sentence
-//   TR's Mimikyu     sv10-087                        "Gemstone Mimicry"  — …Active TERA Pokémon's attacks
-//   Ethan's Sudowoodo sv10-093                       "Try to Imitate"    — Flip a coin. If heads, …Active Pokémon's attacks
-//
-// Every copier is driven on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270).
-// Texts, stats and costs off tcgdex (the audit's card JSON), 2026-10-03. The copy is SUBSTITUTED at
-// declaration: attack.ts re-enters `attack()` with the copied attack as an override. Rulings
-// R-CP1..9 (R-CP3/5/8/9 ⚠️ UNRULED; R-CP4 only in "not offered" vs "offered and fails" — the clause
-// itself BINDS THE COPIER, §3b; R-CP9 a copied name-keyed lock / boost binds nothing, §3c):
-// docs/decisions.md D573.
 
 const NIGHT_JOKER_IDS = ["sv09-098", "sv09-175", "sv09-185", "sv09-189"] as const;
 const ZOROARK = ["sv10.5w-062", "sv10.5w-143"] as const;
@@ -83,23 +70,11 @@ const SEEK_INSPIRATION =
   "Discard the top card of your deck, and if that card is a Pokémon that doesn't have a Rule Box, choose 1 of its attacks and use it as this attack. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)";
 const CRUEL_SLASH_TEXT = "Your opponent's Active Pokémon is now Confused.";
 const MIND_JACK_TEXT = "This attack does 30 damage for each of your opponent's Benched Pokémon.";
-/** A REAL gate clause (`ATTACK_GATE_CLAUSES` row 1) in front of a REAL built body (corpus FILE LINE 335). */
 const GATED_TEXT =
   "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.";
-/** A REAL corpus sentence no reader claims (asserted live in §3, D480) — the anti-laundering witness.
-    🆕🆕🆕 D575 — RE-POINTED (never deleted, D418): it held Hypno `sv06.5-017` "Daydream" (*"During your
-    opponent's next turn, if they attach an Energy card from their hand to the Defending Pokémon, their
-    turn ends."*, corpus FILE LINE 177), which D575 BUILDS (`markHandAttach { endsTurn }`). It now holds
-    Walking Wake `sv06-063` "Undulating Slice" — a residue sentence D575 leaves unbuilt, VERIFIED before
-    choosing (D532): `readersClaiming` is [] and the row is in the legal column.
-    (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.) */
 const UNREAD_TEXT =
   "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
-/** 🆕🆕🆕 D573 second review — three REAL corpus sentences that LOCK or BOOST an attack BY NAME on
-    "this Pokémon" (Scyther sv05-001 Slashing Strike; Gouging Fire ex sv05-038/-188/-204/-214/svp-144
-    Blaze Blitz; Meloetta ex sv10.5b-044/-159/-167 Echoed Voice), carried on CONSTRUCTED 900-HP holders
-    so a copy never Knocks Out its source (§3c, R-CP9). Membership asserted live there (D480). */
 const SLASHER = "d573t-slasher";
 const BLITZER = "d573t-blitzer";
 const ECHOER = "d573t-echoer";
@@ -293,8 +268,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 2,
     attacks: [{ cost: ["Colorless"], name: "Test Blast", damage: 90 }],
   }),
-  // 🆕🆕🆕 D573 review — an N's body whose index 0 prints the GATED clause and index 1 does not:
-  // the R-CP4 witness on Night Joker's own Bench, where "you" is one player under any reading.
   [N_GATED]: battler(N_GATED, {
     name: "N's Gatemon",
     types: ["Colorless"],
@@ -397,7 +370,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [NIGHT_JOKER_IDS[0]]: 1,
   [NIGHT_JOKER_IDS[1]]: 1,
@@ -430,18 +402,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -671,9 +631,7 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     expect(deriveAttackCopy(TRY_TO_IMITATE)).toEqual({ from: "opponentActive", flip: true });
   });
 
-  it("🛑 ~~refuses the two mid-attack-park members (they stay BLOCKED)~~ (🆕🆕🆕 D574: claims them as RESOLVE-TIME kinds) and refuses every one-token near miss", () => {
-    // 🆕🆕🆕 D574 — INVERTED (D539): the two mid-attack-park members are BUILT
-    // (`copyRemainderBundleD574.test.ts`), as the second KIND — never as one of these four sources.
+  it("~~refuses the two mid-attack-park members (they stay BLOCKED)~~ ( D574: claims them as RESOLVE-TIME kinds) and refuses every one-token near miss", () => {
     expect(deriveAttackCopy(HAUGHTY_ORDER)).toEqual({
       from: "opponentDeckTop",
       count: 10,
@@ -699,7 +657,6 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
         "Flip a coin. If tails, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
       ),
     ).toBeNull();
-    // A typographic apostrophe is the same printed sentence (D136/D137) on EVERY slot.
     expect(deriveAttackCopy(FOUL_PLAY.split("'").join("’"))).toEqual({ from: "opponentActive" });
     expect(deriveAttackCopy(NIGHT_JOKER.split("'").join("’"))).toEqual({
       from: "benchOwner",
@@ -712,8 +669,6 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
 
   it("the corpus: 4 sentences / 9 legal printings claimed at DECLARATION; the marker spans all 6 family sentences / 13 printings", () => {
     const corpus = legalAttackCorpus();
-    // 🆕🆕🆕 D574 — narrowed to the DECLARATION-TIME kinds (this suite's four): the reader claims all
-    // six family sentences now, and the two RESOLVE-TIME ones are `copyRemainderBundleD574.test.ts`'s.
     const claimed = corpus.filter(([, s]) => {
       const copy = deriveAttackCopy(s);
       return copy !== null && !isResolvedAttackCopy(copy);
@@ -729,9 +684,6 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     expect(claimed.reduce((n, [c]) => n + c, 0)).toBe(9);
     const family = corpus.filter(([, s]) => COPY_FAMILY_MARKER.test(s));
     expect([family.length, family.reduce((n, [c]) => n + c, 0)]).toEqual([6, 13]);
-    // …and the two left are exactly the two this slice does not build.
-    // 🆕🆕🆕 D574 — INVERTED (D539): they are left by THIS suite's kinds only; D574 claims both as
-    // RESOLVE-TIME kinds, so the family has NO unclaimed member and both resolve now.
     expect(
       family
         .filter(([, s]) => {
@@ -875,7 +827,6 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
 
   for (const id of NIGHT_JOKER_IDS) {
     it(`${id} Night Joker: 0 candidates (no Benched N's Pokémon with a usable attack) — nothing resolves`, () => {
-      // Zorua is not an N's Pokémon; a Benched N's Zoroark ex has only a copy attack (R-CP3).
       const other = NIGHT_JOKER_IDS.find((x) => x !== id) as string;
       const { state, events } = run(armed(id, [ZORUA, other], SOLO), declare(id));
       expect(types(events)).not.toContain("EFFECT_PENDING");
@@ -916,7 +867,7 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
 });
 
 describe("D573 §3 — the four substitution sites, each with a board that tells the copy from the copier", () => {
-  it("🛑 SITE 4 — a copied REGISTRY-authored attack runs the SOURCE card's program (Great Tusk Land Collapse mills 1)", () => {
+  it("SITE 4 — a copied REGISTRY-authored attack runs the SOURCE card's program (Great Tusk Land Collapse mills 1)", () => {
     expect(programFor(GREAT_TUSK)?.attack?.[0]).toBeDefined();
     const parked = run(armed(ZOROARK[0], [], GREAT_TUSK), declare(ZOROARK[0]));
     expect(prompt(parked.state)).toMatchObject({ kind: "chooseAttack" });
@@ -929,9 +880,8 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     expect(state.players.p2.deck.length).toBe(deckBefore - 2);
   });
 
-  it("🛑 SITES 1 + 2 — a copied DERIVED attack applies the SOURCE damage box AND the source effect (Cruel Slash: 140, Confused)", () => {
+  it("SITES 1 + 2 — a copied DERIVED attack applies the SOURCE damage box AND the source effect (Cruel Slash: 140, Confused)", () => {
     const { state, events } = run(armed(ZOROARK[1], [], PERSIAN), declare(ZOROARK[1]));
-    // R-CP3's bound: Haughty Order is a copy-family attack, so Cruel Slash is the only candidate and it is FORCED.
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
       attack: "Foul Play",
@@ -942,7 +892,7 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 SITE 1's modifier — a copied `30×` multiplier reads the COPIER's side (Mind Jack counts the copier's opponent's Bench)", () => {
+  it("SITE 1's modifier — a copied `30×` multiplier reads the COPIER's side (Mind Jack counts the copier's opponent's Bench)", () => {
     const { state, events } = run(
       armed(ZOROARK[0], [], ZOROARK[1], [FILLER, FILLER]),
       declare(ZOROARK[0]),
@@ -953,22 +903,17 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     expect(oppActiveDamage(state)).toBe(60);
   });
 
-  // 🆕🆕🆕 D573 review — this rung FIRST ran on p1's FIRST turn (p1 went second), the one board
-  // where the printed clause BARS the attack, and asserted 90: green only because of its board,
-  // and enshrining a deleted rule. It now runs a turn LATER, where the clause bars nothing; the
-  // barred board is §3b's.
-  it("🛑 SITE 3 — a copied attack carrying a TIMING clause is split on the SOURCE, where it is printed (R-CP4): on a turn it does not bar, the body resolves, nothing is skipped", () => {
+  it("SITE 3 — a copied attack carrying a TIMING clause is split on the SOURCE, where it is printed (R-CP4): on a turn it does not bar, the body resolves, nothing is skipped", () => {
     const { state, events } = run(
       later(armed(ZOROARK[0], [FILLER, FILLER, FILLER], GATED)),
       declare(ZOROARK[0]),
     );
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Gated Count" });
-    // "your Benched Pokémon" is the COPIER's (R-CP2): 3 × 30.
     expect(oppActiveDamage(state)).toBe(90);
   });
 
-  it("🛑 the ANTI-LAUNDERING rung — a copied UNBUILT sentence reports ITSELF: ATTACK_EFFECT_SKIPPED carries the COPIED text", () => {
+  it("the ANTI-LAUNDERING rung — a copied UNBUILT sentence reports ITSELF: ATTACK_EFFECT_SKIPPED carries the COPIED text", () => {
     expect(resolvedByAnyReader(UNREAD_TEXT)).toBe(false);
     expect(legalAttackCorpus().some(([, s]) => s === UNREAD_TEXT)).toBe(true);
     const { events } = run(armed(ZOROARK[0], [], UNREAD), declare(ZOROARK[0]));
@@ -992,19 +937,18 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
       attack: "Metronome",
       as: "Giant Tusk",
     });
-    // Great Tusk is weak to Psychic ×2 — and Clefable IS Psychic (R-CP2): 160 → 320, a Knock Out.
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 160, dealt: 320 });
     expect(types(events)).toContain("KNOCKED_OUT");
   });
 
-  it("🛑 R-CP2 — Weakness reads the COPIER's type: Darkness Zoroark doubles, Psychic Clefable does not", () => {
+  it("R-CP2 — Weakness reads the COPIER's type: Darkness Zoroark doubles, Psychic Clefable does not", () => {
     const dark = run(armed(ZOROARK[0], [], WEAK_DARK), declare(ZOROARK[0]));
     expect(all(dark.events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 60, dealt: 120 });
     const psychic = run(armed(CLEFABLE, [], WEAK_DARK), declare(CLEFABLE));
     expect(all(psychic.events, "DAMAGE_DEALT")[0]).toMatchObject({ base: 60, dealt: 60 });
   });
 
-  it("🛑 R-CP2 — the defender's PREVENTION reads the COPIER: Armor Tail stops N's Testmon ex itself, not N's Zoroark ex copying it", () => {
+  it("R-CP2 — the defender's PREVENTION reads the COPIER: Armor Tail stops N's Testmon ex itself, not N's Zoroark ex copying it", () => {
     // Control: the Basic ex SOURCE attacking directly is prevented.
     const direct = run(attach(table(N_BASIC_EX, [], FARIGIRAF), "p1", "active", [COLORLESS]), {
       type: "attack",
@@ -1025,7 +969,6 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
     const { state, events } = run(armed(ZOROARK[1], [], PERSIAN), declare(ZOROARK[1]));
     expect(bodyAt(state, "p1", "active").usedAttack).toMatchObject({ name: "Foul Play" });
     expect(render(events, state)).toContain("p1: Zoroark used Foul Play (as Cruel Slash)");
-    // …and an ordinary declaration renders as it always did (the key is absent, D135).
     const plain = run(attach(table(ZOROARK[1]), "p1", "active", [DARK]), {
       type: "attack",
       seat: "p1",
@@ -1036,15 +979,14 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
   });
 });
 
-// 🆕🆕🆕 D573 review — the first build split a copied clause off (SITE 3) and enforced it NOWHERE.
 describe("D573 §3b — R-CP4: a copied timing clause BINDS THE COPIER (looked up on the source, asked for the copier's seat)", () => {
-  it("🛑 control — the gated attack used DIRECTLY on p1's first turn (p1 went second) is ATTACK_PREVENTED", () => {
+  it("control — the gated attack used DIRECTLY on p1's first turn (p1 went second) is ATTACK_PREVENTED", () => {
     // Seed 5732: on the suite's 5731 the deck's one Gated copy is in neither p1's deck nor its Prizes.
     const direct = attach(table(GATED, [], FILLER, [], 5732), "p1", "active", [COLORLESS]);
     expect(refused(direct, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_PREVENTED");
   });
 
-  it("🛑 Foul Play cannot copy it on that turn: it is not a candidate, so the copy is EMPTY — declared, no `as`, no damage, no skip", () => {
+  it("Foul Play cannot copy it on that turn: it is not a candidate, so the copy is EMPTY — declared, no `as`, no damage, no skip", () => {
     const { state, events } = run(
       armed(ZOROARK[0], [FILLER, FILLER, FILLER], GATED),
       declare(ZOROARK[0]),
@@ -1065,7 +1007,7 @@ describe("D573 §3b — R-CP4: a copied timing clause BINDS THE COPIER (looked u
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 Night Joker off its OWN Benched N's body: the barred attack is not offered (the other is FORCED); a turn later both are", () => {
+  it("Night Joker off its OWN Benched N's body: the barred attack is not offered (the other is FORCED); a turn later both are", () => {
     const direct = attach(table(N_GATED), "p1", "active", [COLORLESS]);
     expect(refused(direct, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_PREVENTED");
     const first = run(armed(NIGHT_JOKER_IDS[0], [N_GATED], SOLO), declare(NIGHT_JOKER_IDS[0]));
@@ -1112,15 +1054,7 @@ function retyped(state: GameState, seat: Seat, spot: Spot, id: string): GameStat
 const p2Passes = (state: GameState): GameState =>
   must(applyAction(state, { type: "endTurn", seat: "p2" }));
 
-// 🆕🆕🆕 D573 second review — a COPIED self-lock / self-boost that NAMES the source attack. Its
-// installer (interpreter.ts `preventAttackUse` and the boost installer) resolves the printed name
-// against the HOLDER's own card, and the holder is the COPIER (R-CP2), which prints no attack of that
-// name — so it installs NOTHING, silently, and the sentence is not skipped. Before D573 that was a
-// constructed case ("unreachable off every printing — all name their own attack"); a copy REACHES it
-// off real printings. R-CP9 (⚠️ UNRULED, decisions.md D573) reads it as the rules answer under the
-// name-reference reading: the copier has no attack by that name, so the lock binds nothing and the
-// boost pays nothing. Each rung pairs the copy with the SOURCE used directly (the installer works).
-describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAMES the source attack binds nothing", () => {
+describe("D573 §3c — R-CP9 ( UNRULED): a copied lock or boost that NAMES the source attack binds nothing", () => {
   it("the three sentences are REAL legal corpus sentences, each claimed by a reader (so a copy reaches them)", () => {
     for (const text of [SLASHING_TEXT, BLITZ_TEXT, ECHO_TEXT]) {
       expect(legalAttackCorpus().some(([, s]) => s === text)).toBe(true);
@@ -1135,7 +1069,7 @@ describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAME
     expect(bodyAt(state, "p1", "active").lockedAttacks).toHaveLength(1);
   });
 
-  it("🛑 Foul Play copying Slashing Strike: 60, NO lock, nothing skipped — and Foul Play copies it AGAIN next turn", () => {
+  it("Foul Play copying Slashing Strike: 60, NO lock, nothing skipped — and Foul Play copies it AGAIN next turn", () => {
     const board = retyped(armed(ZOROARK[0]), "p2", "active", SLASHER);
     const parked = run(board, declare(ZOROARK[0]));
     const { state, events } = run(parked.state, pickAttack(1));
@@ -1152,7 +1086,7 @@ describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAME
     expect(oppActiveDamage(again.state)).toBe(120);
   });
 
-  it("🛑 Foul Play copying Blaze Blitz (until it leaves the Active Spot): 260 every turn, no bar", () => {
+  it("Foul Play copying Blaze Blitz (until it leaves the Active Spot): 260 every turn, no bar", () => {
     const board = retyped(armed(ZOROARK[0]), "p2", "active", BLITZER);
     const first = run(run(board, declare(ZOROARK[0])).state, pickAttack(1));
     expect(all(first.events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Blaze Blitz" });
@@ -1172,7 +1106,7 @@ describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAME
     });
   });
 
-  it("🛑 Foul Play copying Echoed Voice: 30, NO boost recorded, and the next turn's copy is 30 again", () => {
+  it("Foul Play copying Echoed Voice: 30, NO boost recorded, and the next turn's copy is 30 again", () => {
     const board = retyped(armed(ZOROARK[0]), "p2", "active", ECHOER);
     const first = run(board, declare(ZOROARK[0]));
     expect(all(first.events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Echoed Voice" });
@@ -1184,13 +1118,13 @@ describe("D573 §3c — R-CP9 (⚠️ UNRULED): a copied lock or boost that NAME
 });
 
 describe("D573 §4 — the bounds and the empty readings", () => {
-  it("🛑 R-CP3 — Foul Play against Persian ex offers ONLY Cruel Slash (Haughty Order is a copy): forced, no park", () => {
+  it("R-CP3 — Foul Play against Persian ex offers ONLY Cruel Slash (Haughty Order is a copy): forced, no park", () => {
     const { events } = run(armed(ZOROARK[0], [], PERSIAN), declare(ZOROARK[0]));
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({ as: "Cruel Slash" });
   });
 
-  it("🛑 R-CP3 — Foul Play against a Foul Play Zoroark offers ONLY Mind Jack", () => {
+  it("R-CP3 — Foul Play against a Foul Play Zoroark offers ONLY Mind Jack", () => {
     const { events } = run(armed(CLEFABLE, [], ZOROARK[0]), declare(CLEFABLE));
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_DECLARED")[0]).toMatchObject({
@@ -1199,18 +1133,16 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     });
   });
 
-  it("🛑 Gemstone Mimicry against a NON-Tera Active does nothing — even one carrying two attacks", () => {
+  it("Gemstone Mimicry against a NON-Tera Active does nothing — even one carrying two attacks", () => {
     const { state, events } = run(armed(MIMIKYU, [], TARGET), declare(MIMIKYU));
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(oppActiveDamage(state)).toBe(0);
   });
 
-  it("🛑 Try to Imitate on TAILS does nothing (forced and parked boards alike)", () => {
+  it("Try to Imitate on TAILS does nothing (forced and parked boards alike)", () => {
     const forced = run(withFaces(armed(SUDOWOODO, [], SOLO), ["tails"]), declare(SUDOWOODO));
     expect(all(forced.events, "ATTACK_EFFECT_COIN_FLIP")[0]).toMatchObject({ result: "tails" });
     expect(oppActiveDamage(forced.state)).toBe(0);
-    // 🆕🆕🆕 D573 review — tails COPIED NOTHING, so `as` is ABSENT (events.ts) and the log does not
-    // say the attack became Smash. (The first build asserted `as: "Smash"` here.)
     expect(all(forced.events, "ATTACK_DECLARED")[0]).not.toHaveProperty("as");
     const lines = render(forced.events, forced.state);
     expect(lines).toContain("p1: Ethan's Sudowoodo used Try to Imitate");
@@ -1222,7 +1154,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     expect(turnPassed(state)).toBe(true);
   });
 
-  it("🛑 a CONFUSED tails resolves no copy — and Try to Imitate spends no second coin", () => {
+  it("a CONFUSED tails resolves no copy — and Try to Imitate spends no second coin", () => {
     const confuse = (s: GameState) =>
       withBody(s, "p1", "active", (p) => ({
         ...p,
@@ -1234,7 +1166,6 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     );
     expect(all(foul.events, "ATTACK_FAILED")[0]).toMatchObject({ reason: "confusion" });
     expect(oppActiveDamage(foul.state)).toBe(0);
-    // Nothing resolved, so nothing was copied: no `as` (D573 review, events.ts).
     expect(all(foul.events, "ATTACK_DECLARED")[0]).not.toHaveProperty("as");
     const imitate = run(
       withFaces(confuse(armed(SUDOWOODO, [], SOLO)), ["tails"]),
@@ -1245,7 +1176,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     expect(oppActiveDamage(imitate.state)).toBe(0);
   });
 
-  it("🛑 Night Joker with 2+ N's bodies: choosePokemon (only eligible bodies) → chooseAttack → the pick", () => {
+  it("Night Joker with 2+ N's bodies: choosePokemon (only eligible bodies) → chooseAttack → the pick", () => {
     const parked = run(
       armed(NIGHT_JOKER_IDS[0], [ZORUA, N_ONE, NIGHT_JOKER_IDS[1], N_TWO], SOLO),
       declare(NIGHT_JOKER_IDS[0]),
@@ -1291,7 +1222,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     expect(refused(parked.state, { type: "endTurn", seat: "p1" }).code).toBeDefined();
   });
 
-  it("🛑 the answer RE-VALIDATES the copier: another uid in the Active spot (even another Foul Play) is PHASE_DESYNC", () => {
+  it("the answer RE-VALIDATES the copier: another uid in the Active spot (even another Foul Play) is PHASE_DESYNC", () => {
     const parked = run(armed(ZOROARK[0], [ZOROARK[1]], TARGET), declare(ZOROARK[0]));
     const side = parked.state.players.p1;
     const swapped: GameState = {
@@ -1308,7 +1239,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     expect(refused(swapped, pickAttack(1)).code).toBe("PHASE_DESYNC");
   });
 
-  it("🛑 every declaration gate runs AGAIN on the copier at the answer: a cost no longer met is refused", () => {
+  it("every declaration gate runs AGAIN on the copier at the answer: a cost no longer met is refused", () => {
     const parked = run(armed(ZOROARK[0], [], TARGET), declare(ZOROARK[0]));
     const stripped = withBody(parked.state, "p1", "active", (p) => ({
       ...p,
@@ -1321,7 +1252,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
 describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 rollback", () => {
   const parkedBoard = () => run(armed(ZOROARK[0], [], TARGET), declare(ZOROARK[0]));
 
-  it("🛑 the park leaves the state byte-identical except `phase`; its only event is EFFECT_PENDING", () => {
+  it("the park leaves the state byte-identical except `phase`; its only event is EFFECT_PENDING", () => {
     const before = armed(ZOROARK[0], [], TARGET);
     const parked = run(before, declare(ZOROARK[0]));
     expect(parked.events).toEqual([
@@ -1348,7 +1279,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
     });
   });
 
-  it("🛑 a JSON round-trip of the parked state resolves identically", () => {
+  it("a JSON round-trip of the parked state resolves identically", () => {
     const parked = parkedBoard();
     const revived = JSON.parse(JSON.stringify(parked.state)) as GameState;
     const direct = run(parked.state, pickAttack(1));
@@ -1357,7 +1288,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
     expect(viaJson.events).toEqual(direct.events);
   });
 
-  it("🛑 THE ROLLBACK READING (0.456's path: no route, `applyChoice` default, then `settleProgram`) is INERT", () => {
+  it("THE ROLLBACK READING (0.456's path: no route, `applyChoice` default, then `settleProgram`) is INERT", () => {
     const parked = parkedBoard().state;
     const phase = parked.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");

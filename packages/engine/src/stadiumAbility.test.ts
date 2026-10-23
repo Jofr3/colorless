@@ -18,16 +18,6 @@ import {
   types,
 } from "./testFixtures";
 
-// P3-M5 (D102, engine 0.53.0) — the "once during each player's turn" Stadium
-// ACTIVATED ability, the last big op-family row: Artazon / Mesagoza / Town Store.
-// A new `useStadiumAbility` action runs the shared Stadium's `ability.program`
-// under the turn's own player, gated by the per-turn `stadiumAbilityUsed` flag
-// (which re-arms every turn, so the opponent activates the SAME Stadium on THEIR
-// own turn — "each player's turn" needs no non-active-seat routing). Two new
-// CardFilter kinds carry the searches: `basicPokemon.noRuleBox` (Artazon) and
-// `toolCard` (Town Store); Mesagoza reuses `anyPokemon` inside the Poké Ball
-// coin gate.
-
 const both = { p1: STADIUM_ABILITY_DECK, p2: STADIUM_ABILITY_DECK };
 
 /** Setup then open P1's turn 2 (P2 went first, passed) — no §4 restrictions. */

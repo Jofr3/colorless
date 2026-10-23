@@ -13,46 +13,9 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ── D314 — ELDEGOSS `sv07-011` "BREEZY GIFT", AND A PRICE THAT WAS WRONG BY A
-//    WHOLE FIELD. ───────────────────────────────────────────────────────────────
-//
-// *"Put this Pokémon and all attached cards into your deck. If you do, search
-//  your deck for up to 3 cards and put them into your hand. Then, shuffle your
-//  deck."* — ONE legal printing, attack index 0, no printed `damage`.
-//
-// 🛑 **THE HANDOFF PRICED THIS ROW AS "A `recordAs` ON `returnSelf` ITSELF" AND
-// THE FIELD IS NOT OWED.** D311 earned `drawCards.recordAs` because an empty deck
-// really does draw nothing, so Dudunsparce's two halves come apart on a board a
-// player reaches. Ask the same question of this sentence and the answer inverts:
-// `returnSelf` can decline to move exactly three ways (no ref from `sourceRef`,
-// no body in the spot, no top uid), and an ATTACK program reaches none of them —
-// §8 declares the attack off the attacker's own Active body, "Breezy Gift" deals
-// no damage, and nothing between the declaration and step 4 empties that spot.
-// **A gate whose antecedent cannot fail is D310's *"a FILTER may be a
-// SUBSTITUTION"* wearing §9.2's clothes**: green, dead and unkillable. §2 asserts
-// the ABSENCE against the live program and drives the closest board there is to a
-// separating one (an EMPTY deck) to show it does not separate.
-//
-// 🛑 **WHAT THE ROW REALLY BUYS IS A BOARD: THIS IS THE FIRST PROGRAM IN THIS
-// ENGINE THAT *PARKS* AFTER EMPTYING ITS OWN ACTIVE SPOT.** D311's Dudunsparce
-// and D312's Gholdengo removed the actor and finished, so the §8.1 promotion
-// D312 queued in `finishAttack` was always reached with the program settled.
-// Here `searchDeck` asks a question first: an `effect:choose` interrupt is
-// announced while the attacker's Active Spot stands EMPTY, and the promotion is
-// queued only when the answer comes back. §4 and §5 drive that ordering, §6 the
-// §14.2 ending underneath it.
-//
-// ⚠️ **AND THE VERB IS *PUT*, WHICH NO OTHER PRINTING IN THIS FAMILY SAYS.** The
-// four other deck printings all *"shuffle … into your deck"*; this one *puts* and
-// then ends *"Then, shuffle your deck."* `returnSelf`'s deck arm shuffles as it
-// places, so the program emits TWO `SHUFFLE` rows for a sentence that prints one
-// shuffle — DRIVEN in §3 rather than hidden, because the log reports what the
-// ENGINE did and the engine really did randomise twice. Randomising EARLY can
-// change no outcome: `searchDeck` scans the whole deck, so its candidate set is
-// order-blind, and the printed trailing shuffle is the one that hides the order
-// the player has just seen.
 
 const ELDEGOSS = "sv07-011";
 const PRINTED =
@@ -67,10 +30,6 @@ const UNDER = "fix-d314bg-under";
 const GRASS = "fix-d314bg-grass";
 const TOOL = "fix-d314bg-tool";
 
-/** The LOCAL pool (D275's idiom) — the real id lives HERE and not in
-    `FIXTURE_POOL`, so no `fix-*` demonstrator is owed and `catalogManifest`
-    never sees it. (It would owe none anyway: `sv07` is not one of that
-    manifest's six sets.) */
 const LOCAL_CARDS: Record<string, Card> = {
   [ELDEGOSS]: battler(ELDEGOSS, {
     name: "Eldegoss",
@@ -120,13 +79,7 @@ const DECK = deckOf({
   [GRASS]: 38,
 });
 
-/** Two seeds — nothing below rests on one shuffle (D270). */
 const SEEDS = [3141, 3167] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function apply(
   state: GameState,
@@ -142,15 +95,6 @@ function find<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -199,10 +143,6 @@ function fuel(state: GameState, count: number): GameState {
   };
 }
 
-/** TEST SURGERY — push `count` cards UNDER p1's Active, building a real evolution
-    STACK. The whole point: `stack` and `energy`+`tools` only differ on a body
-    with more than one card in its stack, and this destination takes BOTH piles,
-    so a build that moved only the top card is invisible on a Basic. */
 function stackUnder(state: GameState, count: number): GameState {
   const side = state.players.p1;
   const body = side.active;
@@ -289,7 +229,7 @@ describe("D314 §1 — the print, the row, and the index it does not claim", () 
     expect(POOL[ELDEGOSS]?.attacks?.[1]?.effect).toBeUndefined();
   });
 
-  it("🛑 the row is THREE EXISTING OPS in printed order and nothing else", () => {
+  it("the row is THREE EXISTING OPS in printed order and nothing else", () => {
     expect(programFor(ELDEGOSS)?.attack?.[0]).toEqual([
       { op: "returnSelf", dest: "deck" },
       { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },
@@ -298,9 +238,6 @@ describe("D314 §1 — the print, the row, and the index it does not claim", () 
   });
 
   it("INDEX-PRECISE: index 1 is not claimed, and the Ability slot stays empty", () => {
-    // "Leafage" is `damage: 50` with NO effect key at all, so it contributes zero
-    // attack units and must not inherit this program (D187's inflated result,
-    // D312's rung one card over).
     expect(programFor(ELDEGOSS)?.attack?.[1]).toBeUndefined();
     expect(programFor(ELDEGOSS)?.abilities).toBeUndefined();
     expect(programFor(ELDEGOSS)?.triggered).toBeUndefined();
@@ -313,9 +250,6 @@ describe("D314 §1 — the print, the row, and the index it does not claim", () 
     expect(search).not.toHaveProperty("reveal");
     expect(PRINTED).toContain("up to 3 cards");
     expect(PRINTED).not.toContain("reveal");
-    // ⚠️ THE INTERSECTION PROOF for the absent rider (D135's ABSENT-never-false
-    // rule): a sibling registry search that DOES print the word carries it, so
-    // "no `reveal`" is a reading of this sentence and not of the type.
     const comfey = programFor("sv09-068")?.attack?.[0]?.[0];
     expect(comfey?.op).toBe("searchDeck");
     const misty = programFor("sv10-050")?.attack?.[0]?.[0];
@@ -323,10 +257,6 @@ describe("D314 §1 — the print, the row, and the index it does not claim", () 
   });
 
   it("the trailing `shuffleDeck` is the printed sentence and is a SEPARATE op", () => {
-    // Every other search row in this registry authors the printed "Then, shuffle
-    // your deck." as its own op; a build that folded it into `searchDeck` would
-    // read a card that never says it (`derivedHandSearch`'s trailing-sentence
-    // guard, from the registry side).
     const program = programFor(ELDEGOSS)?.attack?.[0] ?? [];
     expect(program[2]).toEqual({ op: "shuffleDeck" });
     expect(PRINTED.endsWith("Then, shuffle your deck.")).toBe(true);
@@ -334,7 +264,7 @@ describe("D314 §1 — the print, the row, and the index it does not claim", () 
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D314 §2 — 🛑 the field the handoff priced and this row does NOT owe", () => {
+describe("D314 §2 — the field the handoff priced and this row does NOT owe", () => {
   it("no `recordAs` on the `returnSelf`, and no `recordGate` anywhere in the program", () => {
     const program = programFor(ELDEGOSS)?.attack?.[0] ?? [];
     expect(program[0]).not.toHaveProperty("recordAs");
@@ -344,12 +274,7 @@ describe("D314 §2 — 🛑 the field the handoff priced and this row does NOT o
     expect(JSON.stringify(programFor(ELDEGOSS))).not.toContain("record");
   });
 
-  it("⚠️ THE INTERSECTION PROOF: the sibling that DOES have a separating board carries both", () => {
-    // Without this, "no recordGate" would pass on an engine that had never built
-    // one. Dudunsparce's *"If you drew any cards in this way"* comes apart on an
-    // empty deck, so D311 spent the slot; this sentence's antecedent cannot fail,
-    // so it does not. The two rows differ on the field for a reason that is about
-    // the BOARD and not about house style.
+  it("THE INTERSECTION PROOF: the sibling that DOES have a separating board carries both", () => {
     const dudunsparce = programFor(DUDUNSPARCE)?.abilities?.[0]?.program ?? [];
     expect(dudunsparce[0]).toMatchObject({ op: "drawCards", recordAs: "moved" });
     expect(dudunsparce[1]).toMatchObject({ op: "recordGate", slot: "moved" });
@@ -357,11 +282,6 @@ describe("D314 §2 — 🛑 the field the handoff priced and this row does NOT o
 
   for (const seed of SEEDS) {
     it(`🛑 the closest thing to a separating board does not separate — an EMPTY deck still returns and still searches (seed ${seed})`, () => {
-      // The board D311's row comes apart on, asked of this one. p1's deck is
-      // EMPTY when the attack is declared, so the only card the search can ever
-      // find is the Eldegoss the op before it just put there. Both halves of the
-      // printed sentence still happen: this is what "the antecedent cannot fail"
-      // looks like when it is driven instead of argued.
       const state = emptyDeck(board({ seed, under: 1, tool: true, energy: 2 }));
       expect(state.players.p1.deck).toHaveLength(0);
       const uids = [
@@ -415,17 +335,10 @@ describe("D314 §3 — the removal: both piles to the deck, and the TWO shuffles
     const returned = find(events, "POKEMON_RETURNED");
     expect(returned?.dest).toBe("deck");
     expect(returned?.uids).toHaveLength(6);
-    // Not a split — this printing sends nothing anywhere else.
     expect(returned).not.toHaveProperty("attachmentsTo");
   });
 
-  it("🛑 TWO `SHUFFLE` rows for a sentence that prints ONE shuffle — and both are true", () => {
-    // ⚠️ THE ONE PRINTING IN THIS FAMILY WHOSE VERB IS *PUT*. The other four deck
-    // printings say "shuffle … into your deck"; this one puts, searches, and then
-    // shuffles. `returnSelf`'s deck arm randomises as it places, so the engine
-    // really does shuffle twice — the log reports what happened, not what the
-    // sentence said, and shuffling EARLY can change no outcome because
-    // `searchDeck` scans the whole deck rather than its top.
+  it("TWO `SHUFFLE` rows for a sentence that prints ONE shuffle — and both are true", () => {
     const state = board({ under: 1, tool: true, energy: 2 });
     const parked = apply(state, BREEZY);
     // One SHUFFLE before the question is asked…
@@ -440,7 +353,7 @@ describe("D314 §3 — the removal: both piles to the deck, and the TWO shuffles
     expect(after.indexOf("DECK_SEARCHED")).toBeLessThan(after.indexOf("SHUFFLE"));
   });
 
-  it("⚠️ THE CONTROL: the sibling that prints *shuffle* emits exactly ONE", () => {
+  it("THE CONTROL: the sibling that prints *shuffle* emits exactly ONE", () => {
     // Without this the rung above would pass on an engine that shuffled twice for
     // every removal. Gholdengo's "You may shuffle this Pokémon…" is one shuffle
     // and stays one.
@@ -451,26 +364,19 @@ describe("D314 §3 — the removal: both piles to the deck, and the TWO shuffles
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D314 §4 — 🛑 the first program that PARKS with its own Active Spot empty", () => {
+describe("D314 §4 — the first program that PARKS with its own Active Spot empty", () => {
   it("the interrupt is announced while p1 has no Active, and p2's board is untouched", () => {
     const state = board({ bench: 2, under: 1, energy: 2 });
     const p2Active = state.players.p2.active;
     const { state: parked, events } = apply(state, BREEZY);
     expect(parked.phase.kind).toBe("effect:choose");
     expect(events.map((e) => e.type)).toContain("EFFECT_PENDING");
-    // 🛑 THE BOARD NOTHING IN THIS ENGINE HAD REACHED: a decision is outstanding
-    // and the seat that must answer it has an EMPTY Active Spot.
     expect(parked.players.p1.active).toBeNull();
     expect(parked.players.p1.bench).toHaveLength(2);
     expect(parked.players.p2.active).toEqual(p2Active);
   });
 
-  it("🛑 NO promotion is queued or announced while the choice is outstanding", () => {
-    // The ordering the whole section exists for. §8.1's promotion is owed the
-    // moment the spot empties, and it is DELIBERATELY not queued here: it belongs
-    // to the attack epilogue, which has not run. A build that promoted inside the
-    // op would refill the spot mid-question — and would do it before the player
-    // had seen the prompt.
+  it("NO promotion is queued or announced while the choice is outstanding", () => {
     const { state: parked, events } = apply(board({ bench: 2, under: 1, energy: 2 }), BREEZY);
     expect(events.map((e) => e.type)).not.toContain("PROMOTION_REQUIRED");
     expect(events.map((e) => e.type)).not.toContain("TURN_ENDED");
@@ -515,14 +421,7 @@ describe("D314 §5 — the search, its two legal answers, and the tail behind it
     const { state: done, events } = apply(parked, take([]));
     expect(done.players.p1.hand).toHaveLength(handBefore);
     expect(done.players.p1.deck).toHaveLength(deckBefore);
-    // 🛑 THE PRINTED SHUFFLE STILL FIRES on the decline — it is a separate op and
-    // a separate sentence, and `searchDeck`'s whiff never suppresses it.
     expect(events.map((e) => e.type)).toContain("SHUFFLE");
-    // ⚠️ AND THE TURN HAS *NOT* ENDED, WHICH IS THIS ROW'S OWN NEW ORDERING: the
-    // §8.1 promotion is owed and sits in front of the tail, so `TURN_ENDED` is
-    // still queued rather than fired. Declining the search does not decline the
-    // removal — the two clauses are separate ops and only one of them was a
-    // decision.
     expect(events.map((e) => e.type)).not.toContain("TURN_ENDED");
     expect(events.map((e) => e.type)).toContain("PROMOTION_REQUIRED");
     expect(done.pending.map((s) => s.kind)).toContain("endTurn");
@@ -548,8 +447,6 @@ describe("D314 §6 — §8.1's promotion, queued only once the answer comes back
     expect(order).toContain("PROMOTION_REQUIRED");
     expect(order.indexOf("DECK_SEARCHED")).toBeLessThan(order.indexOf("PROMOTION_REQUIRED"));
     expect(done.pending.filter((s) => s.kind === "promote")).toHaveLength(1);
-    // …and the turn tail sits behind it: a player does not hand over a board with
-    // an empty Active Spot (D312's ordering, reached through a park this time).
     const kinds = done.pending.map((s) => s.kind);
     expect(kinds.indexOf("promote")).toBeLessThan(kinds.indexOf("endTurn"));
   });
@@ -565,12 +462,7 @@ describe("D314 §6 — §8.1's promotion, queued only once the answer comes back
     expect(done.phase).toMatchObject({ seat: "p2" });
   });
 
-  it("🛑 a Bench of NONE is the §14.2 loss — and the player still gets their search", () => {
-    // ⚠️ THE ORDERING THAT MAKES THIS DIFFERENT FROM D312's Gholdengo: the loss is
-    // owed from the instant the spot empties, and it is nonetheless deferred until
-    // the outstanding decision has been answered. Losing a player's prompt because
-    // they were about to lose the game would be the same class of defect as
-    // promoting into the spot mid-question.
+  it("a Bench of NONE is the §14.2 loss — and the player still gets their search", () => {
     const parked = must(applyAction(board({ bench: 0, under: 1, energy: 2 }), BREEZY));
     expect(parked.phase.kind).toBe("effect:choose");
     const handBefore = parked.players.p1.hand.length;
@@ -581,7 +473,7 @@ describe("D314 §6 — §8.1's promotion, queued only once the answer comes back
     expect(find(events, "GAME_OVER")?.outcome).toMatchObject({ result: "win", winner: "p2" });
   });
 
-  it("⚠️ THE CONTROL: the card's OTHER attack promotes nobody", () => {
+  it("THE CONTROL: the card's OTHER attack promotes nobody", () => {
     // The seam scans both seats on every attack; on "Leafage" neither spot empties
     // and nothing is queued. Without this a build that promoted unconditionally
     // would still pass every rung above.
@@ -599,12 +491,6 @@ describe("D314 §6 — §8.1's promotion, queued only once the answer comes back
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D314 §7 — the family at TWELVE of thirteen, and why the last one is not next", () => {
-  /** The thirteen legal printings of the self-removal family, re-derived over
-      `attacks_json` + `abilities_json` + `effect` at `legal_standard = 1` on
-      2026-08-10 (the union of `'and all attached cards into'`,
-      `'cards attached to this'` and `'Discard this Pokémon and all attached'` —
-      D311's literal, D312's word order and D313's subject sweep, run again and
-      returning the same thirteen). */
   const FAMILY = [
     "sv05-129",
     "sv08.5-080",
@@ -617,7 +503,7 @@ describe("D314 §7 — the family at TWELVE of thirteen, and why the last one is
     "sv10-217",
     "sv10-234",
     "sv10-242",
-    ELDEGOSS, // 🆕 D314
+    ELDEGOSS,
     POLIWRATH, // the one left
   ] as const;
 
@@ -630,21 +516,7 @@ describe("D314 §7 — the family at TWELVE of thirteen, and why the last one is
     expect(FAMILY.filter((id) => !built.includes(id))).toEqual([POLIWRATH]);
   });
 
-  it("🛑 Poliwrath is refused on the DAMAGE FOLD, and this repo already priced that shape", () => {
-    // ⚠️ RE-DERIVED RATHER THAN INHERITED. The resume point priced this row as
-    // *"a decision feeding a conditional damage boost, and no arm spends a
-    // `recordGate` slot on the damage step"* — as if the slot were the cost. It
-    // is not. *"You may do 120 more damage. If you do, …"* puts a PLAYER DECISION
-    // IN FRONT OF §8.5, and `attack.ts` folds the printed damage BEFORE step 4
-    // runs the program, so no op inside the program can add to a hit that has
-    // already landed. `effects.ts` says exactly this about the identical shape
-    // one family over — Copperajah `sv06.5-042`'s *"You may do 100 more damage.
-    // If you do, during your next turn, this Pokémon can't attack."* — which it
-    // refuses as *"a park the damage fold cannot express today"*.
-    //
-    // So the family CANNOT be closed at 13 of 13 by a registry row, and the row
-    // that closes it is a change to the damage pipeline. The refusal is asserted
-    // LIVE so it cannot rot into prose.
+  it("Poliwrath is refused on the DAMAGE FOLD, and this repo already priced that shape", () => {
     expect(programFor(POLIWRATH)).toBeUndefined();
     // …and the printed antecedent that makes it so, transcribed.
     expect(POOL[ELDEGOSS]?.attacks?.[0]?.damage).toBeUndefined();
@@ -660,10 +532,7 @@ describe("D314 §7 — the family at TWELVE of thirteen, and why the last one is
     expect(bare).not.toContain('{"op":"returnSelf"}');
   });
 
-  it("🛑 the DESTINATION axis stays closed at 4 of 4 — this row adds no member", () => {
-    // D313's claim, re-asked after a new printing landed on it. The one printing
-    // left prints `deck`, which is built four times over, so nothing about `dest`
-    // is owed by the last row either.
+  it("the DESTINATION axis stays closed at 4 of 4 — this row adds no member", () => {
     const dests = new Set(
       FAMILY.map((id) => JSON.stringify(programFor(id) ?? null))
         .flatMap((json) => [...json.matchAll(/"dest":"(deck|hand|discard)"/g)])

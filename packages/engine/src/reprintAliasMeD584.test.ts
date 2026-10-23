@@ -16,29 +16,8 @@ import {
   setActiveFromDeck,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D584 — THE `me` ALIAS TIER 2: RENAMED COPIES, PARAMETER COPIES, WHITESPACE TWINS ──
-//
-// 18 `me` printings / 11 printed texts whose twin is BUILT on an `sv` id, but which D582's
-// same-object alias could not take (reprintAliasMeD582.test.ts's NOT-aliased rows, plus the ones
-// its byte-equality join missed). Measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`),
-// 2026-10-07, `legal_standard = 1` on every row:
-//
-//   • "alias"   — the face equals the twin's once tcgdex's markup is normalised (a newline run, or
-//                 "ColorlessColorless" for {C}{C}), or differs by a word that does not change the
-//                 rule under the SAME Ability name ("place" / "put"), AND the twin's program names no
-//                 Ability: keyed on the twin's OBJECT (D190's idiom, `toBe`).
-//   • "renamed" — the twin's program NAMES its Ability (or the twin's own alias logged another
-//                 card's name: Heatran), so a NEW object carries the twin's ops under the printed
-//                 name. Some `me` texts add "use this Ability." (the `me` wording of the same rule).
-//   • "param"   — one printed parameter differs (30 for 20; Confused for Paralyzed): a NEW object
-//                 with the twin's field at the printed value.
-//   • "attack"  — the twin's ATTACK sentence at another INDEX: a NEW object at the printed index.
-//
-// No `me` row is a fixture, so the printed bytes are carried HERE (transcribed off the D1) and the
-// face rung asserts each `me` text against its twin's, through one stated normalisation and one
-// stated delta. Where the twin IS a full-text fixture, the table is checked against it too.
 
 /** tcgdex's two markup artefacts on these rows: a run of whitespace (Ultra Ball's "\n" against
     `sv01-196`'s "\n\n") and an energy symbol spelled as its type word ("ColorlessColorless"). */
@@ -293,8 +272,6 @@ function ability(name: string, effect: string): Partial<Card> {
 
 const text = (id: string) => FACES.find(([ids]) => ids.includes(id))?.[4] ?? "";
 
-/** The LOCAL pool (D275's idiom): the real ids, printed names, texts and HP. No Weakness is
-    carried (nothing below reads it). */
 const LOCAL: Record<string, Card> = {
   "me04-073": body(
     "me04-073",
@@ -397,11 +374,6 @@ const DECK = deckOf({
   [PSYCHIC]: 6,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup, then `seat`'s own turn (the other seat went first and passed). */
 function turnOf(seat: Seat): GameState {
   const first: Seat = seat === "p1" ? "p2" : "p1";
@@ -458,7 +430,6 @@ describe("D584 §3 — the renamed copies log the PRINTED name", () => {
     const events: GameEvent[] = [];
     coinFlipShieldPrevents(state, cinccino, "p2", 30, events);
     expect(all(events, "ABILITY_COIN_FLIP").map((e) => e.ability)).toEqual(["Smooth Coat"]);
-    // …and on the real attack, the same row.
     const { events: hit } = mustApply(state, BITE);
     expect(all(hit, "ABILITY_COIN_FLIP").map((e) => e.ability)).toEqual(["Smooth Coat"]);
   });

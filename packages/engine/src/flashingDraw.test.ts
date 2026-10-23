@@ -18,62 +18,10 @@ import {
   types,
 } from "./testFixtures";
 
-// D222 — FLASHING DRAW (Iono's Kilowattrel), and the `from: "self"` MEMBER
-// D190 REFUSED TO BUILD IT WITHOUT — plus the `programPlayable` parameter that
-// turned out to be the larger half of the price.
-//
-// "You must discard a Basic {L} Energy from this Pokémon in order to use this
-// Ability. Once during your turn, you may draw cards until you have 6 cards in
-// your hand."
-//
-// ⚠️ **THE SECOND OF D190's FOUR `DROPPED` ROWS TO BE COLLECTED**, row 3 of
-// `docs/reference/coverage-backlog-legal.md`'s ranked table, and the second
-// consecutive slice in which that table's `needs` string matched the landed diff.
-// The exact piece it named:
-//
-//   **A `from: "self"` MEMBER ON `discardEnergy`.** The members that existed were
-//   `opponentActive` / `opponentChosen` / `yourActive` / `yours` (+ the
-//   `opponentEach` sweep), and `yourActive` means "this Pokémon" only inside an
-//   ATTACK, where §8 makes the actor the Active. This sentence is an ABILITY's
-//   and carries NO Active clause, so with `yourActive` a BENCHED Kilowattrel
-//   would pay its cost off whichever body happened to be Active — and would be
-//   USABLE while holding no {L} of its own.
-//
-// ⚠️ **AND THE PIECE THE RESUME POINT TOLD THIS SLICE TO PRICE FIRST, WHICH WAS
-// RIGHT TO INSIST: `programPlayable` COULD NOT ASK THE QUESTION.** "You MUST
-// discard … IN ORDER TO USE this Ability" is a COST, not a target — so the gate
-// has to answer "does THIS body hold a matching Energy", and it took no
-// `sourceUid`. D221's `attachEnergyFrom.toSelf` needed no such change ONLY
-// because its un-narrowed target set always contains the host; a discard's does
-// not. The parameter is optional, and its ABSENCE is a fact rather than a
-// default: a Trainer has no "this Pokémon", so a `self` op in one is refused.
-//
-// ⚠️ WHAT THIS SUITE CAN PUT RED, SAID UP FRONT (the guard rule, conventions.md):
-// * Authoring `from: "yourActive"` instead — the exact narrowing D190 refused —
-//   fails the two BENCH tests: the discard comes off the Active, and a benched
-//   host holding no {L} is allowed to activate off the Active's.
-// * Dropping the `sourceUid` argument at `useAbility`'s gate (or inside
-//   `discardEnergyPlayable`) fails "REFUSED when THIS body holds no {L} but the
-//   Active does" — the board is deliberately built so the two answers differ.
-// * Swapping `drawUntilHandSize` for `drawCards` fails BOTH draw tests in
-//   opposite directions (a short hand under-draws, a full hand over-draws).
-// * Widening the filter to `anyEnergy` fails "a {C} on the host does not pay it".
-// * Every board below holds Basic {L} Energy on TWO different Pokémon, so no
-//   assertion here can pass by there being only one thing to take.
-
-/** The three Standard-legal printings, from `registryOnlyPrograms.test.ts`'s own
-    `DROPPED` enumeration (D190, measured against the remote D1 on 2026-08-04). */
 const FLASHING_DRAW_IDS = ["svp-182", "sv09-055", "sv09-163"] as const;
 
-/** The printed sentence, byte for byte — authored against the print rather than
-    against a paraphrase (D183's class). */
 const FLASHING_DRAW_TEXT =
   "You must discard a Basic {L} Energy from this Pokémon in order to use this Ability. Once during your turn, you may draw cards until you have 6 cards in your hand.";
-
-// ── The demonstrator pool. `fix-flashingdraw` is a SYNTHETIC body carrying the
-//    real program: a fixture id naming a real printing must appear in
-//    `catalogManifest.ts`, which is generated off a local sqlite this clone does
-//    not have and which holds none of `svp` / `sv09` anyway. D190's idiom. ──
 
 const LOCAL_CARDS: Record<string, Card> = {
   /** fix-flashingdraw — a {L} Basic with the activated Ability and nothing else.
@@ -89,10 +37,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** ⚠️ `fix-lightning-1` IS THE LOAD-BEARING FIXTURE HERE AND IT IS REUSED, NOT
-    WRITTEN — the FIXTURE_POOL sweep first (D196). It is a {L} Basic with no
-    Ability of its own: the OTHER body that can hold a Basic {L} Energy, which is
-    exactly what `yourActive` would have taken the cost off. */
 const DECK = deckOf({
   "fix-flashingdraw": 4,
   "fix-lightning-1": 4,
@@ -154,10 +98,6 @@ function board(seed: number): GameState {
   return mustApply(localSetup(seed, "p2"), { type: "endTurn", seat: "p2" }).state;
 }
 
-/** P1's hand cut to exactly `size` cards, the surplus returned to the deck — the
-    one board variable this Ability reads, and the opening hand's size is a
-    property of the SEED rather than of the card. Legal-shaped (every uid stays in
-    exactly one zone), like every other helper in `testFixtures.ts`. */
 function handSize(state: GameState, size: number): GameState {
   const side = state.players.p1;
   if (side.hand.length < size) throw new Error(`p1 holds ${side.hand.length}, needed ${size}`);
@@ -189,8 +129,6 @@ describe("D222 — the registry rows", () => {
     for (const id of FLASHING_DRAW_IDS) {
       expect(programFor(id), `${id} left Flashing Draw`).toBe(first);
     }
-    // A duplicated id would make the count lie about the coverage this slice
-    // bought, which is the ONE number a reader carries away from it.
     expect(new Set(FLASHING_DRAW_IDS).size).toBe(3);
     expect(programFor("fix-flashingdraw"), "the demonstrator is not Flashing Draw").toBe(first);
   });
@@ -214,19 +152,10 @@ describe("D222 — the registry rows", () => {
         ],
       },
     ]);
-    // `count` is ABSENT, which is the printed singular "a Basic {L} Energy" —
-    // D104's minimal shape, and the field a copy of Corviknight's "Discard 2"
-    // would have brought along.
     expect(programFor("sv09-055")?.abilities?.[0]?.program?.[0]).not.toHaveProperty("count");
   });
 
   it("does NOT share an object with the cost-then-draw twin, and leaves the neighbours unmarked", () => {
-    // ⚠️ THE MISTAKE AN AUTHOR ACTUALLY MAKES: N's Zoroark ex's "Trade" (D190,
-    // and the same set) is the same SHAPE — a once-per-turn Ability whose first
-    // op is a cost and whose second is a draw — and the reprint idiom says
-    // byte-identical text SHARES the object. These sentences are not
-    // byte-identical (a different cost zone, a different draw op), so sharing
-    // would silently move another card.
     expect(programFor("svp-182")).not.toBe(programFor("sv09-098"));
     // Trade still pays out of the HAND and still draws a FIXED two.
     expect(programFor("sv09-098")?.abilities?.[0]?.program).toEqual([
@@ -249,9 +178,6 @@ describe("D222 — the registry rows", () => {
 
 describe("Flashing Draw — driven through the real engine", () => {
   it("pays off THIS Pokémon from the BENCH, on a board whose ACTIVE also holds a Basic {L}", () => {
-    // ⚠️ THE TEST THAT KILLS `yourActive`, AND THE REASON D190 DROPPED THE ROW.
-    // The Active is a {L} body carrying a Basic {L} Energy, so the wrong member
-    // has something to take and would take it silently.
     let state = setActiveFromDeck(board(1), "p1", "fix-lightning-1");
     state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-flashingdraw");
     state = attachFromDeck(state, "p1", "fix-lightning-energy", 1);
@@ -280,10 +206,6 @@ describe("Flashing Draw — driven through the real engine", () => {
   });
 
   it("is REFUSED when THIS body holds no {L} and the ACTIVE does — the printed cost, asked of the right Pokémon", () => {
-    // ⚠️ THE `sourceUid` PROOF. Both readings of "this Pokémon" have an answer on
-    // this board and they DISAGREE: the host holds nothing, the Active holds a
-    // Basic {L}. A gate that dropped the uid would light this row and let the
-    // benched Kilowattrel spend another Pokémon's Energy.
     let state = setActiveFromDeck(board(2), "p1", "fix-lightning-1");
     state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-flashingdraw");
     state = attachFromDeck(state, "p1", "fix-lightning-energy", 2);
@@ -341,11 +263,6 @@ describe("Flashing Draw — driven through the real engine", () => {
   });
 
   it("NEVER TRIMS — a hand of 7 draws nothing and the cost is STILL paid", () => {
-    // The other direction of the same op, and the printed reading: the sentence
-    // names a target hand SIZE, so a bigger hand is already past it. The cost is
-    // a cost — "you must discard … in order to use this Ability" — so it is not
-    // refunded, and the gate deliberately does not refuse on hand size (a draw is
-    // "playable enough"; refusing would invent a clause the card does not print).
     let state = setActiveFromDeck(board(5), "p1", "fix-flashingdraw");
     state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-lightning-1");
     state = attachFromDeck(state, "p1", "fix-lightning-energy", 1);
@@ -379,10 +296,6 @@ describe("Flashing Draw — driven through the real engine", () => {
 
 describe("the `programPlayable` gate itself — `sourceUid` is an ANSWER, not a default", () => {
   it("says NO with no source uid, on a board covered in Basic {L} Energy", () => {
-    // ⚠️ THE CLAIM THE OPTIONAL PARAMETER RESTS ON. A Trainer program authored
-    // with `from: "self"` has no "this Pokémon", and the safe answer for a COST
-    // is "unpayable" — not "fall back to the Active", which is precisely the
-    // narrowing D190 refused. Driven against the REAL program, not a retyped one.
     let state = setActiveFromDeck(board(7), "p1", "fix-flashingdraw");
     state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-lightning-1");
     state = attachFromDeck(state, "p1", "fix-lightning-energy", 2);

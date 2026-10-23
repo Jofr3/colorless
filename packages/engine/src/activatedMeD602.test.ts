@@ -17,20 +17,8 @@ import {
   setDamage,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D602 — WP20b: THE `me` ACTIVATED ABILITIES (search / heal / attach) ──
-//
-// 6 printed texts / 9 `me` printings on six new registry objects, all on shipped vocabulary
-// (`searchDeck` + `shuffleDeck`, `coinFlipGate`, `healChosen`, `healEach`, `attachFromDeck toSelf`,
-// `playableIf` `yourHandExactly` 0, `requiresEnergyType`, `benchOnly`). Every id and text measured on
-// the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was
-// referenced anywhere in the tree before this slice. None prints "You can't use more than 1 …
-// Ability each turn", so every lock is per Pokémon (`true`). Dropped and named: Dragonair
-// `me02.5-151` "Evolutionary Guidance" (an untyped per-body Energy gate) and Larry's Komala
-// `me02.5-175` "Lethargic Charge" (an Active-only attach target) — both stay unkeyed (§8). [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)]
-// [🆕🆕🆕 D611 (D539): WITHDRAWN for Dragonair — keyed at D611 (`activatedMeD611.test.ts`); Larry's Komala
-// stays unkeyed (dropped again at D611). §8 pins both.]
 
 const CALL_A_BUDDY =
   "Once during your turn, if you have no cards in your hand, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.";
@@ -52,7 +40,6 @@ const SHUCKLE = ["me01-011", "me01-136"] as const;
 const VILEPLUME = "me02.5-003";
 const SOLGALEO = "30th-105";
 
-/** [Ability name, the keyed printings, the printed text, `benchOnly`]. */
 const ABILITIES: readonly (readonly [string, readonly string[], string, boolean])[] = [
   ["Call a Buddy", SILVALLY, CALL_A_BUDDY, false],
   ["Gathering of Blossoms", TANGELA, GATHERING_OF_BLOSSOMS, false],
@@ -246,13 +233,6 @@ const DECK = deckOf({
   "fix-energy": 10,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4; both hands back into the decks and the Prizes swapped out
-    for deck filler, so every named card is findable (D591's `p1Turn`). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6021, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -523,8 +503,8 @@ describe("D602 §7 — Sunrise: on the Bench, up to 2 Basic {M} Energy from the 
   });
 });
 
-describe('D602 §8 — the two dropped texts stay unkeyed, and the version (🆕🆕🆕 D611 (D539): "stay unkeyed" WITHDRAWN for Dragonair — keyed at D611)', () => {
-  it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry no program (🆕🆕🆕 D611 (D539): WITHDRAWN for Dragonair — it carries its D611 Ability; 🆕🆕🆕 D628 (D539): WITHDRAWN for Larry's Komala — it carries its D628 Ability)", () => {
+describe('D602 §8 — the two dropped texts stay unkeyed, and the version ( D611 (D539): "stay unkeyed" WITHDRAWN for Dragonair — keyed at D611)', () => {
+  it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry no program ( D611 (D539): WITHDRAWN for Dragonair — it carries its D611 Ability; D628 (D539): WITHDRAWN for Larry's Komala — it carries its D628 Ability)", () => {
     expect(programFor("me02.5-151")?.abilities?.[0]?.name).toBe("Evolutionary Guidance");
     expect(programFor("me02.5-175")?.abilities?.[0]?.name).toBe("Lethargic Charge");
   });

@@ -1,8 +1,3 @@
-// 🆕🆕🆕 D643 — MATCH_RECORD_VERSION 47 → 48, THE SEVENTH MIGRATION (match.ts "47 → 48 AT D643"): Multi Adapter's
-// `PendingStage` `toolTrim`, its parked `EffectOp` `trimTools` and a two-Tool `InPlayPokemon.tools` are all persisted
-// shapes a 0.525 rollback misreads. No v47 writer could write any of them, so a v47 record is migrated by a re-stamp
-// alone (no D1 read), as a v45 or v46 one is; a v44 record takes D636's step, a v43 two, a v42 three, a v41 all four.
-
 import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@colorless/engine";
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
@@ -25,7 +20,7 @@ import {
 } from "./match";
 
 const BODY = "d643-body";
-const ROTOM_ID = "me02-029"; // Rotom ex "Multi Adapter" — read since D643
+const ROTOM_ID = "me02-029";
 const BAND = "sv01-197"; // Vitality Band
 const CHARM = "sv02-173"; // Bravery Charm
 const JAW = "me03-068"; // Antique Jaw Fossil — kept so the earlier steps run over the same pool
@@ -60,7 +55,6 @@ const BODY_CARD: Card = {
 } as unknown as Card;
 const MULTI_ADAPTER_TEXT =
   'Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each.';
-/** The catalog row a v47 pool holds — the printed face; only this build reads its Ability. */
 const ROTOM_CARD: Card = {
   ...BODY_CARD,
   id: ROTOM_ID,
@@ -104,7 +98,6 @@ const CHARM_CARD = tool(
   "Bravery Charm",
   "The Basic Pokémon this card is attached to gets +50 HP.",
 );
-/** The catalog row as a pool holds it (D581's ingest keeps the printed face). */
 const JAW_CARD: Card = {
   ...BODY_CARD,
   id: JAW,
@@ -191,8 +184,6 @@ function fresh(seed = 6430): GameState {
   return created.state;
 }
 
-/** A record as an older deploy wrote it. v47, v46 and v45 are this build's bytes (no key was added at any); v44 also
-    lacks D636's keys; v43 D630's too; v42 D621's too; v41 is the D583-refreshed shape below that. */
 function oldRecord(version: 41 | 42 | 43 | 44 | 45 | 46 | 47, state?: GameState): MatchRecord {
   let old = state ?? fresh();
   if (version <= 44) {
@@ -234,8 +225,8 @@ function oldRecord(version: 41 | 42 | 43 | 44 | 45 | 46 | 47, state?: GameState)
 }
 
 describe("D643 — the version and the gate", () => {
-  it("MATCH_RECORD_VERSION is 48 (🆕🆕🆕 49 since D646); v41 pool-migrated, v42 side-key-, v43 record-key-, v44 lock-key-migrated, v45, v46 and v47 re-stamped (🆕🆕🆕 D646: and v48, coinRedoMigrationD646.test.ts)", () => {
-    expect(MATCH_RECORD_VERSION).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
+  it("MATCH_RECORD_VERSION is 48 ( 49 since D646); v41 pool-migrated, v42 side-key-, v43 record-key-, v44 lock-key-migrated, v45, v46 and v47 re-stamped ( D646: and v48, coinRedoMigrationD646.test.ts)", () => {
+    expect(MATCH_RECORD_VERSION).toBe(49);
     expect(MIGRATABLE_MATCH_RECORD_VERSION).toBe(41);
     expect(SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION).toBe(42);
     expect(RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION).toBe(43);
@@ -249,13 +240,12 @@ describe("D643 — the version and the gate", () => {
     const old = oldRecord(47);
     expect(readMatchRecord(old)).toBeNull();
     expect(migratablePoolIdsOf(old)).toEqual([]);
-    expect(readMatchRecord({ ...old, version: 49 })).not.toBeNull(); // 🆕🆕🆕 D646 — 49 is this build's own
+    expect(readMatchRecord({ ...old, version: 49 })).not.toBeNull();
   });
 
-  it("v40 and v49 (🆕🆕🆕 D646 (D539): v40 and v50 — v49 is this build's own) are neither read nor migrated; a v47 record missing its players or its log is not migrated", () => {
+  it("v40 and v49 ( D646 (D539): v40 and v50 — v49 is this build's own) are neither read nor migrated; a v47 record missing its players or its log is not migrated", () => {
     const old = oldRecord(47);
     for (const version of [40, 50]) {
-      // 🆕🆕🆕 D646 — 49 is this build's own
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -273,7 +263,7 @@ describe("D643 — what the migration writes", () => {
       [ROTOM_ID]: { ...ROTOM_CARD, name: "stale" } as Card,
     });
     if (migrated === null) throw new Error("not migrated");
-    expect(migrated.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
+    expect(migrated.version).toBe(49);
     expect(readMatchRecord(migrated)).not.toBeNull();
     expect(migrated.state).toEqual(board);
     expect(migrated.state.cardPool[ROTOM_ID]).toBe(old.state.cardPool[ROTOM_ID]);
@@ -297,10 +287,10 @@ describe("D643 — what the migration writes", () => {
     expect(migrated.state.players.p1.trainerFlipLockTurn).toBe(board.turn);
   });
 
-  it("v46 and v45: re-stamped too; v44: D636's keys; v43, v42 and v41: the earlier steps too — every one lands at v48 (🆕🆕🆕 v49 since D646)", () => {
+  it("v46 and v45: re-stamped too; v44: D636's keys; v43, v42 and v41: the earlier steps too — every one lands at v48 ( v49 since D646)", () => {
     for (const version of [46, 45] as const) {
       const migrated = migrateMatchRecord(oldRecord(version), {});
-      expect(migrated?.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
+      expect(migrated?.version).toBe(49);
       expect({ ...migrated, version }).toEqual(oldRecord(version));
     }
     for (const version of [44, 43, 42, 41] as const) {
@@ -309,7 +299,7 @@ describe("D643 — what the migration writes", () => {
         [ROTOM_ID]: ROTOM_CARD,
       });
       if (migrated === null) throw new Error(`v${version} not migrated`);
-      expect(migrated.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
+      expect(migrated.version).toBe(49);
       expect(readMatchRecord(migrated)).not.toBeNull();
       expect(migrated.state.players.p1.trainerFlipLockTurn).toBeNull();
       expect(migrated.state.handPlayLockedTurn.p2.Stadium).toBeNull();
@@ -382,20 +372,20 @@ function fakeSlot(value: unknown) {
 }
 
 describe("D643 — the DO's read migrates a v47 record without asking D1", () => {
-  it("a v47 record: written once as v48 (🆕🆕🆕 v49 since D646), D1 never asked; the next read is plain", async () => {
+  it("a v47 record: written once as v48 ( v49 since D646), D1 never asked; the next read is plain", async () => {
     const { slot, api } = fakeSlot(oldRecord(47));
     const never = async (): Promise<Record<string, Card>> => {
       throw new Error("D1 asked");
     };
     const load = await loadMatchRecord(api, never);
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
-    expect(load.record.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
+    expect(load.record.version).toBe(49);
     expect(slot.puts).toEqual([load.record]);
     expect((await loadMatchRecord(api, never)).kind).toBe("ok");
     expect(slot.puts).toHaveLength(1);
   });
 
-  it("a v41 record still asks D1 for its pool, and lands at v48 (🆕🆕🆕 v49 since D646) with every key", async () => {
+  it("a v41 record still asks D1 for its pool, and lands at v48 ( v49 since D646) with every key", async () => {
     const { slot, api } = fakeSlot(oldRecord(41));
     const asked: string[][] = [];
     const load = await loadMatchRecord(api, async (ids) => {
@@ -404,7 +394,7 @@ describe("D643 — the DO's read migrates a v47 record without asking D1", () =>
     });
     expect(asked).toEqual([[BODY, ROTOM_ID, BAND, CHARM, JAW].sort()]);
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
-    expect(load.record.version).toBe(49); // 🆕🆕🆕 D646 — 48 → 49.
+    expect(load.record.version).toBe(49);
     expect(load.record.state.players.p1.trainerFlipLockTurn).toBeNull();
     expect(slot.puts).toHaveLength(1);
   });

@@ -13,25 +13,16 @@ import { resumeProgram, runProgram } from "./interpreter";
 import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, specialEnergy, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  specialEnergy,
+  typedEnergy,
+  must,
+  mustApply as run,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D578 — TEAM ROCKET'S ENERGY `sv10-182` (Special Energy, 1 legal printing) ──
-//
-// *"This card can only be attached to a Team Rocket's Pokémon. If this card is attached to
-// anything other than a Team Rocket's Pokémon, discard this card. / As long as this card is
-// attached to a Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy."*
-//
-// Provision: TWO constrained units over {P, D} (cards.ts `constrainedEnergyUnit`; `costMet`
-// allocates concrete units, then constrained units against their members' summed shortfall,
-// then wildcards — exact because the sets are laminar). Restriction:
-// `EnergyProgram.attachOnlyToOwner` — turn.ts refuses the hand attach (`BAD_TARGET`, the
-// allowance not spent), flow.ts `discardMisplacedEnergy` discards it at the top of `advance`
-// from any body it reached another way (R-TRE1 ~~⚠️ UNRULED~~ 🆕 RULED, fixed at the landing:
-// the same state check now also runs after every program step, on a parked op's answer and on
-// every accepted action — §6 — so the card never REMAINS on such a body), and a misplaced card
-// provides nothing meanwhile. R-TRE2 (⚠️ UNRULED): "for each {P} Energy attached" counts the
-// CARD once.
 
 const TR_ENERGY = "sv10-182";
 const TR_TEXT =
@@ -67,8 +58,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     stage: "Stage1",
     evolveFrom: "Team Rocket's Mewtwo",
   }),
-  // CONSTRUCTED (no printing does this): a non-Team Rocket's Stage 1 that evolves FROM a Team
-  // Rocket's Pokémon — the evolve route onto a different owner, a non-program path with no drain.
   [DEFECTOR]: body(DEFECTOR, {
     name: "D578 Defector",
     stage: "Stage1",
@@ -96,18 +85,6 @@ const DECK = deckOf({
   [R]: 4,
   "fix-energy": 16,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -229,7 +206,7 @@ describe("D578 Team Rocket's Energy §1 — the registry row and the ONE constra
     expect(constrainedEnergyTypes(ANY_ENERGY)).toBeNull();
   });
 
-  it("🛑 exactly ONE constrained set exists registry-wide — `costMet`'s greedy is exact only for laminar sets", () => {
+  it("exactly ONE constrained set exists registry-wide — `costMet`'s greedy is exact only for laminar sets", () => {
     const sets = new Set<string>();
     for (const id of registryCardIds()) {
       const energy = programFor(id)?.energy;

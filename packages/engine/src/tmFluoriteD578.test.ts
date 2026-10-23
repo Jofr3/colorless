@@ -2,35 +2,27 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { isTeraPokemon } from "./cards";
 import { attackGateOf, attackMenuOf, toolCardSimulated } from "./continuous";
-import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import { CATALOG_MANIFEST } from "./catalogManifest";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  must,
+  mustApply as run,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D578 — TECHNICAL MACHINE: FLUORITE `sv08-188` (Tool, 1 legal printing) ──
-//
-// *"The Pokémon this card is attached to can use the attack on this card. (You still need the
-// necessary Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard
-// it at the end of your turn."* — "Fluorite" {G}{W}{P}: *"Discard all Energy from this Pokémon,
-// and heal all damage from each of your Tera Pokémon."*
-//
-// The attack text is ~~DATA (`technicalMachines.ts` — the ingest drops a Trainer's attacks)~~
-// 🆕 D581: the Tool card's own catalog `attacks` (the ingest keeps a Trainer's printed face since
-// D581; `technicalMachines.ts` is deleted), the offer is `attackMenuOf`'s TOOL section (after the
-// printed attacks), the program is the registry row's own `attack[0]`, the end-of-turn discard is
-// flow.ts `discardEndOfTurnTools`. The TM card here is a LOCAL face on the real id, ~~`attacks: null`
-// as the catalog hands it~~ 🆕 D581: carrying the attack the catalog row prints, read off
-// `CATALOG_MANIFEST.trainerFaces` (the local D1, measured).
 
 const TM = "sv08-188";
 const TM_TEXT =
   "The Pokémon this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the end of your turn.";
 const HOLDER = "d578t-holder";
-const TERA = "sv07-032"; // Lapras ex — a Tera printing (banners.ts), no registry program
-const TERA_2 = "sv08-142"; // Tatsugiri ex — a Tera printing, no registry program
+const TERA = "sv07-032";
+const TERA_2 = "sv08-142";
 const JAMMING_TOWER = "sv06-153";
 const VITALITY_BAND = "sv01-197";
 const PLAIN = "d578t-plain";
@@ -48,7 +40,6 @@ const body = (id: string, extra: Partial<Card> = {}): Card =>
     ...extra,
   });
 
-/** 🆕 D581 — the attack the catalog row prints (`apps/api/src/ingest/map.ts` keeps it since D581). */
 const TM_ATTACKS = CATALOG_MANIFEST.trainerFaces[TM]?.attacks ?? null;
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -95,18 +86,6 @@ const DECK = deckOf({
   [P]: 4,
   "fix-energy": 14,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -238,7 +217,6 @@ describe("D578 TM Fluorite §1 — the data and the registry row", () => {
 
   it("the row grants the Tool's printed attack, its program at index 0, and the end-of-turn discard; the Tool is simulated", () => {
     const program = programFor(TM);
-    // 🆕 D581 — a FLAG: the attack is the Tool card's own catalog row, not a registry copy.
     expect(program?.toolAttacks).toBe(true);
     expect(program?.attack?.[0]).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
@@ -428,12 +406,6 @@ describe("D578 TM Fluorite §6 — the §8 first-turn ban still applies to the T
   });
 });
 
-// ── 🆕 D581 — THE TOOL SECTION READS THE TOOL CARD'S OWN PRINTED ATTACKS ──
-// The catalog row keeps a Trainer's printed attacks since D581 (`apps/api/src/ingest/map.ts`),
-// so `toolAttacks` is a FLAG and the menu row's attack IS the row's object. A Tool that prints
-// an attack but whose program grants none (Technical Machine: Blindside `sv04-176`, unbuilt and
-// not Standard-legal) adds nothing, and a catalog not re-ingested since D581 (no `attacks` on the
-// row) grants nothing either — the deploy-order caveat.
 describe("D581 TM Fluorite — the granted attack is the Tool card's catalog row", () => {
   const BLINDSIDE = "sv04-176";
   /** Re-point p1's Active's first Tool uid at `id`, carrying `card` in the state's pool. */

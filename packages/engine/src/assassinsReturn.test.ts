@@ -15,83 +15,9 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
 
-// ── D313 — THE DESTINATION AXIS OF `returnSelf`, PRICED OVER ALL FOUR PRINTED
-//    SPELLINGS AT ONCE AND DRIVEN ON EVERY ONE. ────────────────────────────────
-//
-// 🛑 **THIS SLICE EXISTS BECAUSE TWO EARLIER ONES REFUSED THE FIELD AND WERE
-// RIGHT TO.** D311 shipped `returnSelf` with no `dest` at all ("a field with a
-// single member is a widening waiting to be mis-read as a choice"). D312 found
-// four more printings by REVERSING THE WORD ORDER of its census literal, and
-// wrote down the sharper version of the same refusal: **a three-member enum
-// authored over the destinations then known would not have fitted Team Rocket's
-// Crobat ex's SPLIT**, so the field would have been widened or re-read within one
-// slice of being authored. *A destination is only knowable once the census stops
-// moving.* It has now stopped, and this suite is the cash.
-//
-// ── THE CENSUS, SWEPT ON A FOURTH AXIS ──────────────────────────────────────
-//
-// Remote Cloudflare D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786
-// rows / 2,021 `legal_standard = 1`), 2026-08-10, WHOLE COLUMN read (D306's rule).
-// D310 widened the COLUMNS (8), D311 shortened the LITERAL to the pronoun (9),
-// D312 reversed the WORD ORDER (13). D313 swept the axis none of the three
-// touched — **the SUBJECT rather than the attachment noun**:
-//
-//   SELECT id, name, legal_standard, attacks_json, abilities_json, effect
-//     FROM cards
-//    WHERE legal_standard = 1
-//      AND ( instr(<all three columns>,'Discard this Pokémon')     > 0
-//         OR instr(<all three columns>,'put this Pokémon into')     > 0
-//         OR instr(<all three columns>,'shuffle this Pokémon into') > 0
-//         OR instr(<all three columns>,'attached to it')            > 0 );
-//
-// **IT RETURNS NOTHING NEW.** Every hit is already in the family except
-// Conkeldurr `sv10.5b-049`/`-127` (*"gets +40 HP for each {F} Energy attached to
-// it"* — an HP aura, a different mechanism). ⚠️ **A NEGATIVE RESULT FROM A NEW
-// AXIS IS THE ONLY THING THAT CAN SAY A CENSUS HAS STOPPED MOVING**, and it is
-// worth more here than any of the three positive corrections, because the
-// decision this slice makes — how many members the field has — is exactly the
-// decision a fourteenth printing would have invalidated. **THIRTEEN.**
-//
-// ── THE FOUR PRINTED COMBINATIONS, AND WHY THE SHAPE IS 1 + 1 AND NOT 2 ─────
-//
-//   body → deck    · attachments → deck      6 printings  (3 built D311/D312)
-//   body → hand    · attachments → hand      Lillie's Comfey `sv09-068` idx 1
-//   body → discard · attachments → discard   Revavroom ex `sv06.5-015`/`-081` idx 1
-//   body → hand    · attachments → DISCARD   T.R.'s Crobat ex ×4        idx 0
-//
-// Three agree and one splits. **Two independent `"deck" | "hand" | "discard"`
-// fields would author NINE combinations to serve FOUR printed ones** — five arms
-// no card can reach, which is D310's green-and-dead widening exactly. So `dest`
-// is the BODY's zone and `attachmentsTo` is the ONE printed departure from it,
-// and the ABSENCE of the second field is the positive statement *the attachments
-// follow the body* rather than a default nobody chose. §2 and §3 drive both
-// states; §7 asserts no registry row spells a redundant one.
-//
-// ── THE SPLIT IS A SEAM `stackUids` ALREADY HAD ─────────────────────────────
-//
-// *"(Discard all cards attached to this Pokémon.)"* is NOT a discard of the whole
-// pile. §8's bounce takes the EVOLUTION STACK to the hand with the body — a
-// Crobat ex returned to hand takes its Golbat and its Zubat with it — and only
-// Energy and Tools are "attached". `stackUids` is `[...stack, ...energy,
-// ...tools]`, so the printed parenthetical cuts it at the join it was already
-// built on and the op needs no new extraction. **§2 drives that on a THREE-CARD
-// stack**, which is the only board on which the two readings differ: on a Basic
-// with one card in `stack` a wrong split is invisible.
-//
-// ── WHAT THE SLICE COSTS ────────────────────────────────────────────────────
-//
-// THREE registry ATTACK rows over SEVEN legal printings and THREE sentences, plus
-// TWO optional op fields and ONE optional event field. **ZERO** new `EffectOp`s,
-// `PendingStage` kinds, prompt kinds, choice kinds, `GameEvent` types, error
-// codes, `GameState` fields, `AbilityProgram` fields, regexes and deriver arms;
-// `packages/schema` takes ZERO. `MATCH_RECORD_VERSION` stays **18** — both op
-// fields are widenings a v18 deploy cannot author, and a v18 record's bare
-// `{op:"returnSelf"}` reads as the deck, which §6 DRIVES rather than argues.
-
-/** The three printed sentences, transcribed off the D1 rows rather than
-    assembled (D306: transcribe, never interpolate). */
 const CROBAT_PRINTED =
   "You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)";
 const COMFEY_PRINTED = "Put this Pokémon and all attached cards into your hand.";
@@ -120,9 +46,6 @@ const PSY = "fix-d313ar-psy";
 const METAL = "fix-d313ar-metal";
 const TOOL = "fix-d313ar-tool";
 
-/** The LOCAL pool (D275's idiom) — the four real ids live HERE and not in
-    `FIXTURE_POOL`, so no `fix-*` demonstrator and no `catalogManifest` row is
-    owed for any of them. */
 const LOCAL_CARDS: Record<string, Card> = {
   [CROBAT]: battler(CROBAT, {
     name: "Team Rocket's Crobat ex",
@@ -210,13 +133,7 @@ const DECK = deckOf({
   [METAL]: 12,
 });
 
-/** Two seeds — nothing below rests on one shuffle (D270). */
 const SEEDS = [4241, 4253] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function find<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
@@ -258,10 +175,6 @@ function fuel(state: GameState, cardId: string, count: number): GameState {
   };
 }
 
-/** TEST SURGERY — push `count` cards UNDER p1's Active, building a real
-    evolution STACK. 🛑 **THIS IS THE WHOLE POINT OF §2**: `stack` and
-    `energy`+`tools` only differ on a body that has more than one card in its
-    stack, so a split that discarded the wrong pile is invisible on a Basic. */
 function stackUnder(state: GameState, count: number): GameState {
   const side = state.players.p1;
   const body = side.active;
@@ -328,7 +241,7 @@ describe("D313 §1 — the three prints, the three registry rows, and what diffe
     expect(POOL[REVAVROOM]?.attacks?.[0]?.effect).toBe(REVAVROOM_IDX0);
   });
 
-  it("🛑 the SPLIT row is `dest: hand` + `attachmentsTo: discard`, wrapped in the printed `optional`", () => {
+  it("the SPLIT row is `dest: hand` + `attachmentsTo: discard`, wrapped in the printed `optional`", () => {
     expect(programFor(CROBAT)?.attack?.[0]).toEqual([
       {
         op: "optional",
@@ -340,11 +253,6 @@ describe("D313 §1 — the three prints, the three registry rows, and what diffe
   });
 
   it("the two UNSPLIT rows are bare — no wrapper, no `attachmentsTo`", () => {
-    // ⚠️ THE WRAPPER ASYMMETRY IS THE PRINT AND NOT HOUSE STYLE, and the three
-    // rows are in ONE slice so that it cannot be mistaken for one: Crobat ex
-    // prints "You may" and gets an `optional`; Comfey and Revavroom ex print no
-    // such words and get none, so their bounce is compulsory. A confirm prompt in
-    // front of either would invent a decision the card does not offer.
     expect(programFor(COMFEY)?.attack?.[1]).toEqual([{ op: "returnSelf", dest: "hand" }]);
     expect(programFor(REVAVROOM)?.attack?.[1]).toEqual([{ op: "returnSelf", dest: "discard" }]);
     expect(CROBAT_PRINTED.includes("You may")).toBe(true);
@@ -353,41 +261,26 @@ describe("D313 §1 — the three prints, the three registry rows, and what diffe
   });
 
   it("index-precision in BOTH directions on all three cards", () => {
-    // D187's inflated intermediate result, and `CardProgram.attack`'s own rule.
     expect(programFor(CROBAT)?.attack?.[0]).toBeDefined();
     expect(programFor(CROBAT)?.attack?.[1]).toBeUndefined();
     for (const id of [COMFEY, REVAVROOM, REVAVROOM_REPRINT]) {
       expect(programFor(id)?.attack?.[1], id).toBeDefined();
     }
-    // Comfey's index 0 is BUILT — for "Inviting Flowers", a different sentence
-    // entirely (D200's row). Revavroom's index 0 is NOT, and must not inherit the
-    // self-discard: "Accelerator Flash" is a moved-this-turn conditional this
-    // engine cannot read.
     expect(programFor(COMFEY)?.attack?.[0]).toBeDefined();
     expect(programFor(REVAVROOM)?.attack?.[0]).toBeUndefined();
     expect(programFor(REVAVROOM_REPRINT)?.attack?.[0]).toBeUndefined();
   });
 
   it("the four Crobat ex printings are ONE object that carries BOTH printed surfaces", () => {
-    // 🛑 D313's own correction, and the suite that made it was
-    // `legalNonAttackPrograms.test.ts`. The first draft gave the four printings a
-    // NEW object and left `fix-bitingspree` on a triggered-only one; that suite
-    // reddened, because it drives the DEMONSTRATOR and claims the result is about
-    // the printings. **A `fix-*` demonstrator is not a smaller program, it is the
-    // same program on a constructed body.**
     const first = programFor(CROBAT);
     for (const id of CROBAT_REPRINTS) expect(programFor(id), id).toBe(first);
     expect(programFor("fix-bitingspree")).toBe(first);
     expect(first?.triggered).toHaveLength(1);
     expect(first?.attack?.[0]).toBeDefined();
-    // …and Revavroom's two printings share theirs, D190's reprint idiom.
     expect(programFor(REVAVROOM_REPRINT)).toBe(programFor(REVAVROOM));
   });
 
   it("the three sentences are DISTINCT — no row was written from a paraphrase", () => {
-    // D183's defect: an arm authored from a paraphrase passes a test written
-    // against the same paraphrase and matches no real card. The three notes and
-    // the three fixtures agree byte for byte, and no two are equal.
     const set = new Set([CROBAT_PRINTED, COMFEY_PRINTED, REVAVROOM_PRINTED]);
     expect(set.size).toBe(3);
     const wrapper = programFor(CROBAT)?.attack?.[0]?.[0];
@@ -431,8 +324,6 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
       // …and the attachments are in the discard, which is the parenthetical.
       for (const uid of attached) expect(after.players.p1.discard, uid).toContain(uid);
       expect(after.players.p1.discard).toHaveLength(discardBefore + 3);
-      // 🛑 THE CROSS-CHECK THAT MAKES IT A SPLIT AND NOT A COINCIDENCE: neither
-      // pile leaked into the other zone.
       for (const uid of stack) expect(after.players.p1.discard, uid).not.toContain(uid);
       for (const uid of attached) expect(after.players.p1.hand, uid).not.toContain(uid);
       // The deck is untouched — this destination never shuffles.
@@ -441,8 +332,6 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
   }
 
   it("no SHUFFLE event is emitted — nothing reached the deck", () => {
-    // The gather-then-apply rule in `returnSelf`: the deck is touched at most
-    // once, and a printing that sends it nothing emits no row at all.
     const parked = must(applyAction(split(), ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
@@ -470,9 +359,6 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
   });
 
   it("the log row COUNTS THE ATTACHMENTS and not the pile", () => {
-    // 🛑 `uids.length - 1` would say FIVE — every other card that left play,
-    // including the two under the Crobat ex that went to the HAND. The row has to
-    // count `attachmentsTo.uids`, and this is the assertion that says so.
     const parked = must(applyAction(split(), ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
@@ -485,7 +371,6 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
       l.kind === "action" ? l.segments.some((seg) => seg.text.includes("P1's hand")) : false,
     );
     if (line === undefined || line.kind !== "action") throw new Error("no POKEMON_RETURNED row");
-    // 🛑 THE ACTOR, not the owner — D299's rule, unchanged by the split.
     expect(line.who).toBe("p1");
     const text = line.segments.map((seg) => seg.text).join("");
     expect(text).toContain("into P1's hand");
@@ -494,12 +379,6 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
   });
 
   it("a SPLIT with nothing attached says so by omission, not by a zero", () => {
-    // The `n > 0` branch of the log row, and the board that reaches it: an
-    // unfuelled body cannot attack, so the discriminating case is a Crobat ex
-    // whose only attachments are the two Energy the cost demands — remove the
-    // Tool and the count falls to 2, remove the Energy and there is no attack.
-    // What this rung actually pins is that the SPLIT branch is chosen by the
-    // FIELD and never by the count.
     const state = board({ attacker: CROBAT, energy: DARK, count: 2, under: 2 });
     const parked = must(applyAction(state, ASSASSIN));
     const result = applyAction(parked, YES);
@@ -525,10 +404,6 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
 // ────────────────────────────────────────────────────────────────────────────
 describe("D313 §3 — the two UNSPLIT destinations, which are the split's controls", () => {
   it("Comfey sends the ATTACHMENTS to the HAND too — the same board, the other field state", () => {
-    // 🛑 THE INTERSECTION PROOF (D310's lesson) FOR `attachmentsTo`: the identical
-    // board shape under the identical op, differing ONLY in whether the field is
-    // authored. Crobat ex discards its Energy; Comfey puts it in the hand. Without
-    // this rung "the attachments went somewhere" would pass on either reading.
     const state = board({ attacker: COMFEY, energy: PSY, count: 1, under: 0, tool: true });
     const body = state.players.p1.active;
     const attached = [...(body?.energy ?? []), ...(body?.tools ?? [])];
@@ -557,11 +432,7 @@ describe("D313 §3 — the two UNSPLIT destinations, which are the split's contr
     expect(find(result.events, "SHUFFLE")).toBeUndefined();
   });
 
-  it("🛑 a self-DISCARD is not a Knock Out — nobody takes a prize", () => {
-    // §8.1's prize belongs to the player whose opponent's Pokémon was Knocked
-    // Out, and nobody Knocked this one out. The op emits POKEMON_RETURNED and
-    // never KNOCKED_OUT, so this is the rung that keeps the third zone from
-    // quietly becoming a free prize for the defender.
+  it("a self-DISCARD is not a Knock Out — nobody takes a prize", () => {
     const state = board({ attacker: REVAVROOM, energy: METAL, count: 3 });
     const prizesBefore = state.players.p2.prizes.length;
     const result = applyAction(state, SHATTER);
@@ -613,7 +484,7 @@ describe("D313 §4 — the printed `optional`, both directions, and its absence 
     expect(parked.phase.prompt.note).toBe(CROBAT_PRINTED);
   });
 
-  it("🛑 neither compulsory printing parks at all — the wrapper is the sentence", () => {
+  it("neither compulsory printing parks at all — the wrapper is the sentence", () => {
     // The converse of §1's assertion, driven on a board: a Comfey and a Revavroom
     // ex resolve in one action with no prompt in between, so an author who copied
     // Crobat ex's wrapper across would redden here and not only in §1.
@@ -635,10 +506,6 @@ describe("D313 §4 — the printed `optional`, both directions, and its absence 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zones", () => {
   it("the hand destination empties the Active Spot and the seam promotes", () => {
-    // D312 built this seam for the DECK destination. It sweeps for an empty
-    // Active Spot and never asks why it is empty, so the two new zones inherit it
-    // with no code — and this is the rung that says the inheritance is real
-    // rather than assumed.
     const state = board({ attacker: CROBAT, energy: DARK, count: 2, bench: 2 });
     const parked = must(applyAction(state, ASSASSIN));
     const after = must(applyAction(parked, YES));
@@ -657,7 +524,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
     expect(find(result.events, "POKEMON_PROMOTED")?.uid).toBe(benched);
   });
 
-  it("🛑 an EMPTY Bench is the §14.2 loss, and it falls out with no new code", () => {
+  it("an EMPTY Bench is the §14.2 loss, and it falls out with no new code", () => {
     const state = board({ attacker: REVAVROOM, energy: METAL, count: 3, bench: 0 });
     const result = applyAction(state, SHATTER);
     if (!result.ok) throw new Error("attack failed");
@@ -672,9 +539,6 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
     const parked = must(applyAction(state, ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
-    // TURN_ENDED must NOT have fired while the promotion is still queued: the
-    // stages splice in FRONT of `turnTail`, and a mutant that puts them behind it
-    // reddens exactly here.
     expect(find(result.events, "TURN_ENDED")).toBeUndefined();
     expect(result.state.phase.kind).toBe("ko:promote");
   });
@@ -682,14 +546,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the deck", () => {
-  it('🛑 a parked continuation holding `{op:"returnSelf"}` with NO `dest` shuffles into the deck', () => {
-    // **THIS IS THE REASON `dest` IS OPTIONAL AND IT IS DRIVEN RATHER THAN
-    // ARGUED.** `MATCH_RECORD_VERSION` stays at 18 because a record written by the
-    // OLD deploy can hold exactly this op inside a parked `optional` —
-    // Gholdengo's row is that shape — and this deploy must read it as the deck,
-    // which is what every v18 authoring site meant. The board below IS that
-    // record: a real park, with its `pendingOp` rewritten to the pre-D313 spelling
-    // the way a resumed v18 blob would arrive.
+  it('a parked continuation holding `{op:"returnSelf"}` with NO `dest` shuffles into the deck', () => {
     const state = board({ attacker: CROBAT, energy: DARK, count: 2, under: 2, tool: true });
     const parked = must(applyAction(state, ASSASSIN));
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
@@ -724,8 +581,6 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
   });
 
   it("the ATTRIBUTION CONTROL: the same board with the D313 spelling splits instead", () => {
-    // Without this the rung above would pass on an engine that ignored `dest`
-    // entirely and always shuffled — D214's control, applied to a back-compat arm.
     const state = board({ attacker: CROBAT, energy: DARK, count: 2, under: 2, tool: true });
     const parked = must(applyAction(state, ASSASSIN));
     const result = applyAction(parked, YES);
@@ -736,9 +591,6 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
   });
 
   it("every registry `returnSelf` spells its `dest` — the optionality is the WIRE's, not the author's", () => {
-    // The converse guard (D304's shape): `dest` is optional in the TYPE for one
-    // reason only, and this rung is what stops that reason from becoming an
-    // authoring habit. A future row that omits it reddens here.
     const bare = JSON.stringify(
       [
         CROBAT,
@@ -748,7 +600,7 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
         "sv06-080",
         "sv08-131",
         "sv05-129",
-        "sv07-011", // 🆕 D314
+        "sv07-011",
       ].map((id) => programFor(id)),
     );
     expect(bare).toContain('"returnSelf"');
@@ -758,43 +610,36 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D313 §7 — the family, the field, and what is left", () => {
-  /** The thirteen legal printings, with the DESTINATION each prints. */
   const FAMILY: readonly (readonly [string, "deck" | "hand" | "discard" | "split", boolean])[] = [
-    ["sv05-129", "deck", true], // Dudunsparce — Run Away Draw (Ability, D311)
-    ["sv08.5-080", "deck", true], // Dudunsparce (reprint, D311)
-    ["sv06-080", "deck", true], // Abra — Teleporter (Ability, D312)
-    ["sv08-131", "deck", true], // Gholdengo — Surf Back (attack idx 1, D312)
+    ["sv05-129", "deck", true],
+    ["sv08.5-080", "deck", true],
+    ["sv06-080", "deck", true],
+    ["sv08-131", "deck", true],
     ["sv06-043", "deck", false], // Poliwrath — a conditional damage BOOST first
-    ["sv07-011", "deck", true], // 🆕 D314 — Eldegoss, and it wanted NO `recordAs`
-    [COMFEY, "hand", true], // 🆕 D313
-    [REVAVROOM, "discard", true], // 🆕 D313
-    [REVAVROOM_REPRINT, "discard", true], // 🆕 D313
-    [CROBAT, "split", true], // 🆕 D313
-    ["sv10-217", "split", true], // 🆕 D313
-    ["sv10-234", "split", true], // 🆕 D313
-    ["sv10-242", "split", true], // 🆕 D313
+    ["sv07-011", "deck", true],
+    [COMFEY, "hand", true],
+    [REVAVROOM, "discard", true],
+    [REVAVROOM_REPRINT, "discard", true],
+    [CROBAT, "split", true],
+    ["sv10-217", "split", true],
+    ["sv10-234", "split", true],
+    ["sv10-242", "split", true],
   ];
 
   it("thirteen printings, TWELVE built, and the one left is not a `dest` question", () => {
-    // 🆕 D314 — 11 → 12. Eldegoss `sv07-011` is a `deck` printing on an axis that
-    // was already closed, which is why it cost no field at all.
     expect(FAMILY).toHaveLength(13);
     expect(FAMILY.filter(([, , built]) => built)).toHaveLength(12);
     expect(FAMILY.filter(([, , built]) => !built).map(([id]) => id)).toEqual(["sv06-043"]);
   });
 
-  it("🛑 ALL FOUR printed destinations are BUILT — the axis is closed, which is what makes the field honest", () => {
-    // The claim the whole slice rests on. A `dest` with a member no printing
-    // reaches would be the widening D311 and D312 refused; a `dest` missing a
-    // member some printing DOES reach would have to be widened next slice. Every
-    // value is printed and every printed value is built.
+  it("ALL FOUR printed destinations are BUILT — the axis is closed, which is what makes the field honest", () => {
     const built = new Set(FAMILY.filter(([, , b]) => b).map(([, dest]) => dest));
     expect([...built].sort()).toEqual(["deck", "discard", "hand", "split"]);
     const owed = new Set(FAMILY.filter(([, , b]) => !b).map(([, dest]) => dest));
     expect([...owed]).toEqual(["deck"]);
   });
 
-  it("🛑 every BUILT row is refused LIVE by the right spelling — the converse guard", () => {
+  it("every BUILT row is refused LIVE by the right spelling — the converse guard", () => {
     for (const [id, dest, built] of FAMILY) {
       const authored = JSON.stringify(programFor(id) ?? null);
       if (!built) {
@@ -813,9 +658,6 @@ describe("D313 §7 — the family, the field, and what is left", () => {
   });
 
   it("no registry row spells a REDUNDANT `attachmentsTo`", () => {
-    // `attachmentsTo: "discard"` on a `dest: "discard"` row would be legal and
-    // meaningless — the field's whole content is that it DIFFERS from `dest`.
-    // Revavroom ex is the row where an author would most easily write it.
     for (const [id] of FAMILY) {
       const authored = JSON.stringify(programFor(id) ?? null);
       expect(authored, id).not.toContain('"dest":"discard","attachmentsTo"');
@@ -823,12 +665,6 @@ describe("D313 §7 — the family, the field, and what is left", () => {
   });
 
   it("the SUBJECT-side census sweep is recorded as a NEGATIVE result", () => {
-    // A census that has been corrected three times by three sessions is corrected
-    // a fourth time by nobody only if somebody looked. D313 looked on the axis the
-    // three earlier fixes could not reach — the SUBJECT rather than the attachment
-    // noun — and the four literals in this suite's header returned nothing new.
-    // The number is pinned here so that a fourteenth printing reddens a test
-    // rather than sitting in a comment.
     expect(FAMILY).toHaveLength(13);
     expect(new Set(FAMILY.map(([id]) => id)).size).toBe(13);
   });

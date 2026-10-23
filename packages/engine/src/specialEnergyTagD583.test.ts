@@ -11,34 +11,8 @@ import {
   deckOf,
   specialEnergy,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D583 — A SPECIAL ENERGY IS ONE THAT PRINTS RULES TEXT, WHATEVER tcgdex TAGS IT ──
-//
-// tcgdex tags `energyType: "Normal"` on 14 Standard-legal Energy printings that print rules text:
-// all 11 `me` Special Energies and three `sv` ones (Reversal `sv04-266`, Prism `sv10.5b-086`,
-// Ignition `sv10.5w-086`). Measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`),
-// 2026-10-07:
-//
-//   SELECT id, name, effect FROM cards
-//    WHERE category = 'Energy' AND energy_type = 'Normal' AND effect NOT IN ('');   -- 14 rows, all legal
-//   SELECT energy_type, COUNT(*) FROM cards
-//    WHERE category = 'Energy' AND (effect IS NULL OR effect = '') GROUP BY 1;     -- Normal|52, no Special
-//
-// So the text separates the catalog exactly: 52 Basic Energy rows print none, and all 29 rows that
-// print text (14 tagged Normal + 15 tagged Special) are Special Energy. The schema's own doc says
-// the same (`Card.effect`: "null on basic energies").
-//
-// MEASURED BEFORE THE FIX (engine 0.466.0, `isSpecialEnergy` = `energyType === "Special"`): each of
-// the 14 faces below answered `isSpecialEnergy` false and matched the `basicEnergy` filter, so a
-// "Basic Energy" search offered Prism Energy (§3) and a Special-only reader skipped it. Their
-// PROVISION was right all along — the registry keys Reversal / Prism / Ignition (and, since D582,
-// `me02-124` / `me02.5-216`) by id (continuous.ts `providedEnergy`), and the census's Special
-// Energy column splits by `category`, which is how they were counted built.
-//
-// The fix is the ENGINE predicate (so a persisted `GameState.cardPool` holding the old tag is read
-// right) plus the ingest (`apps/api/src/ingest/map.ts` writes "Special" for an Energy that prints
-// text); neither D1 is re-ingested here.
 
 /** [id, name, effect] — the 14 faces, verbatim off the LOCAL D1 (`energy_type` is `Normal` on each). */
 const MISTAGGED: readonly (readonly [string, string, string])[] = [
@@ -199,11 +173,6 @@ const POOL: Record<string, Card> = {
 };
 const DECK = deckOf({ "sv01-172": 4, [FILLER]: 36, [PRISM]: 16, [FIRE]: 4 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function p1Turn(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -331,13 +300,6 @@ describe("D583 §4 — Team Rocket's Energy `me02.5-217` is keyed on `sv10-182`'
     expect(isSpecialEnergy(asCatalog("me02.5-217", name, effect))).toBe(true);
   });
 });
-
-// ── §5 ON A BOARD: two DIFFERENT Normal-tagged Specials are two answers, not one ──
-//
-// interpreter.ts `cardIdentity` keys a Basic Energy on the type it provides (`basic:<type>`) and
-// everything else on its catalog id. Before D583 the "Normal" tag alone made Prism and Reversal
-// Energy both `basic:Colorless`, so "Discard an Energy from this Pokémon" over the two collapsed to
-// ONE representative and resolved with no prompt; since D583 they are two candidates.
 
 const REVERSAL = "sv04-266";
 const DISCARDER = "d583-discarder";

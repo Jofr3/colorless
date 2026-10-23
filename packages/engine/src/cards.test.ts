@@ -17,10 +17,6 @@ import { basicEnergy, battler, typedEnergy } from "./testFixtures";
 describe("energyProvidesOf (§6.3)", () => {
   it("derives the type from the name, tolerating the 'Basic ' prefix", () => {
     expect(energyProvidesOf(typedEnergy("e", "Fire"))).toBe("Fire");
-    // Real prints spell it both ways: sv06.5-098/099 are "Basic Darkness
-    // Energy" / "Basic Metal Energy" (energyType "Normal", types NULL) — a
-    // greedy parse would capture "Basic Darkness" and demote it to Colorless,
-    // leaving typed costs permanently unpayable.
     expect(
       energyProvidesOf({ ...typedEnergy("e", "Darkness"), name: "Basic Darkness Energy" }),
     ).toBe("Darkness");

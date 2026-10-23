@@ -17,92 +17,20 @@ import {
   types,
 } from "./testFixtures";
 
-/** 🆕🆕 **D491 — THE LOUD CONTROL'S SENTENCE, and its blocker is DATA.**
-    `censusAttackCorpus.ts` FILE LINE 272, 1 legal printing. Refused by all 13
-    `deriveAttack*` readers, by all four splitters and by the registry, and it cannot
-    stop being refused: the `Ancient` banner is a per-PRINTING fact and `cardSchema`
-    carries no column for it, so no reader at any width can classify it. */
-/* (🆕🆕🆕 D569 (D539): "refused … by the registry, and it cannot stop being refused" and "no
-    reader at any width can classify it" are WITHDRAWN — `banners.ts` (an engine table keyed by
-    printing id, no ingest change) supplies the banner, and the sentence's one printing, Scream
-    Tail `sv05-077` "Supportive Singing", is BUILT as an index-keyed REGISTRY row
-    (`SUPPORTIVE_SINGING`, `healChosen` with the NEW `filter` rider). The 13 derive readers and
-    the four splitters still refuse the TEXT, so on this `fix-*` card (not that printing) it is
-    still LOUD and the control still works — see §7's note.) */
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
 
-// 0.328.0 → 0.329.0 — 🆕🆕 D427: HEAL SELF BY THE DAMAGE THIS ATTACK DEALT.
-//
-//   "Heal from this Pokémon the same amount of damage you did to your opponent's
-//    Active Pokémon."
-//
-// **1 sentence / 6 legal printings** (corpus line 286) over `legalAttackCorpus()`'s
-// 640 sentences / 1,732 printings — the `legal_standard = 1` attack column. The
-// LARGEST single record in the split-aware unbuilt residue at D426's head: **196
-// sentences / 299 printings**, subtracting `resolvedByAnyReader`,
-// `splitAttackGateClause`, `splitAttackTrailingClause` and a `registry.ts` substring
-// test (D425's rule — a residue figure without its subtraction set is meaningless).
-//
-// 🛑 **THE DESIGN DECISION IS THE CARRIER, AND `EffectRecord` LOSES ON ITS VALUE TYPE
-// RATHER THAN ON TASTE.** D406 priced this sentence one slice before declining it and
-// named the reason: `EffectRecord` is `{ [K in EffectSlot]?: string[] }` and
-// `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"` (Walking Wake), and it is NOT a list of distinct card uids: it files a COUNT as repeated top uids, one entry per damage counter placed. So the ABSOLUTE form of the argument around this note — ~~every slot is a list of card uids; no slot to file a figure in and no widening that keeps the map's value type~~ — is WITHDRAWN: a count CAN ride a slot by repetition with `string[]` unchanged. It stands only QUALIFIED: every slot's VALUE TYPE is still a uid list, and the dealt-damage figure stays on `EffectContext.dealt` by CHOICE (an HP figure read by arithmetic, not a handful of counters), not because no slot could hold it) — **every §9.2 slot in this engine
-// is a LIST OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in
-// and no widening that keeps the map's value type. The MEANING agrees and is the
-// second reason, not the first: the record's own doc block calls it *"what the ops
-// ALREADY RUN left behind"*, an accumulator that changes at nearly every op, where
-// this number is computed by §8.5 BEFORE the program's first op and is fixed for the
-// whole run. That is `seat`'s shape, so it rides `EffectContext.dealt`.
-//
-// 🛑 **PICKING `EffectContext` DOES NOT DUCK THE VERSION QUESTION — BOTH CANDIDATES
-// ARE PERSISTED.** `ctx` rides `EffectContinuation` into `phase.cont` exactly as
-// `record` does, so a program that PARKS writes this key into a `MatchRecord`.
-// `MATCH_RECORD_VERSION` **STAYS 26** because the key is OPTIONAL: D125's WIDENING,
-// with `EffectContext.invokedBy` as the precedent verbatim (`apps/api/src/lobby/
-// match.ts`: *"an OPTIONAL field and therefore a WIDENING… it would not have bumped
-// anything on its own"*) and D412's 25 → 26 as the counter-case (a REQUIRED
-// `InPlayPokemon.retreatLockedTurn`). §3 DRIVES both directions on a real park rather
-// than asserting either.
-//
-// ⚠️ **THE HANDOFF'S ONE FALSE PREMISE, AND IT WAS THE STRUCTURAL ONE (D421/D424).**
-// The brief stated that `attack.ts`'s `const dealt` (line 1966 at HEAD) is in scope at
-// the `runProgram` call because both sit inside `export function attack`. They do —
-// and `dealt` is declared inside the `if (scaledBase + scaledTotal > 0)` BLOCK, which
-// closes ~60 lines before the call. Reading the enclosing FUNCTION is not reading the
-// enclosing BLOCK. The repair is a function-scope `let dealtToDefender = 0`, and its
-// initialiser then turned out to BE the whiff semantics (§6), so the false premise
-// cost nothing but would have cost a compile error to anyone who trusted it.
-//
-// ⚠️ **THE APOSTROPHE BYTE IS MEASURED, NOT REMEMBERED (D421).** `hexdump -C` on
-// `censusAttackCorpus.ts` line 286 returns `6f 70 70 6f 6e 65 6e 74 27 73` —
-// `opponent's` with **U+0027** — and the whole corpus file holds **zero** U+2019
-// bytes. The anchor's `['’]` class is therefore DEFENSIVE, matching the 133 anchors in
-// `effects.ts` that already spell it that way, and §1 pins both halves.
-
-/** One seed for the whole suite. Nothing declared here flips a coin and every Active,
-    defender and damage total is placed by surgery, so a seed table would describe a
-    shuffle rather than a rule (D143's move, inherited by every damage suite since). */
 const SEED = 7;
 
-/** The printed sentence, transcribed off `censusAttackCorpus.ts` line 286 and used as
-    the single source for the corpus assertions, the derivation assertions and the
-    fixture cross-check below. Written once so no copy of it can drift (D415). */
 const SENTENCE =
   "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.";
 
 /** The whole program the sentence derives to. One op, no gate, no wrapper. */
 const PROGRAM: readonly EffectOp[] = [{ op: "heal", target: "self", amount: "dealt" }];
 
-/** `fix-suction`'s indices. Three print `SENTENCE`; index 3 prints a row nothing
-    reads, and exists so §7's "nothing was skipped" claim has a control. */
 const IDX = { fifty: 0, twoHundred: 1, noDamage: 2, loud: 3 } as const;
 
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
 
-/** A board with `fix-suction` Active for `seat`, `defender` Active opposite, three
-    Colorless attached and `healerDamage` already on the healer. The turn is handed to
-    `seat` by ending the OTHER seat's first turn, so §4's going-first ban is never in
-    the way and every board here is turn 2 or later. */
 function board(defender: string, healerDamage: number, seat: Seat = "p1"): GameState {
   const decks = { p1: SELF_HEAL_DEALT_DECK, p2: SELF_HEAL_DEALT_DECK };
   let state = driveSetup(SEED, decks, { first: other(seat) });
@@ -128,9 +56,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** The two numbers every board in this suite is really about: what §8.5 said it
-    dealt, and what the healer actually got back. `undefined` means the row was never
-    emitted, which is a different fact from a zero and is asserted as such. */
 function dealtAndHealed(events: GameEvent[]): {
   base: number | undefined;
   dealt: number | undefined;
@@ -151,34 +76,19 @@ describe("§1 — one sentence, six printings, no sibling to generalise over", (
     expect(rows).toEqual([[6, SENTENCE]]);
   });
 
-  it("🛑 the LOOSEST plausible family grep returns exactly ONE row — so a template would author a card", () => {
-    // D121's warrant wants TWO printings with ONE TOKEN VARYING before a capture
-    // group is justified. **THE PATTERN IS PUBLISHED SO ITS EDGES ARE VISIBLE**
-    // (D424/D425): three alternatives wide and case-insensitive, so a possessive, an
-    // adverb or a capitalisation cannot hide a sibling from it. What it cannot see is
-    // a sentence spelling the idea with none of these substrings — e.g. "heal that
-    // much damage" — and this rung says only that no such row is in THIS column.
+  it("the LOOSEST plausible family grep returns exactly ONE row — so a template would author a card", () => {
     const LOOSE = /same amount of damage|damage you did|amount of damage/i;
     const family = legalAttackCorpus().filter(([, text]) => LOOSE.test(text));
     expect(family).toEqual([[6, SENTENCE]]);
-    // …and the CONTROL on the same axis (D424): the pattern is not vacuous — it is a
-    // real filter that admits things, which a sweep returning one row cannot show by
-    // itself. Run against the whole corpus with only the last alternative it matches
-    // more, and against a neighbouring heal family it matches none.
     expect(LOOSE.test("This attack does 30 more damage.")).toBe(false);
     expect(LOOSE.test("Heal 30 damage from this Pokémon.")).toBe(false);
     expect(LOOSE.test("Heal the same amount of damage.")).toBe(true);
   });
 
-  it("🛑 the apostrophe byte is U+0027, and the corpus holds no U+2019 anywhere", () => {
+  it("the apostrophe byte is U+0027, and the corpus holds no U+2019 anywhere", () => {
     expect(SENTENCE).toContain("opponent's");
     expect(SENTENCE).not.toContain("’");
-    // The POPULATION rather than the specimen (D423): no corpus row anywhere carries
-    // the curly byte, so the `['’]` class in the anchor is defensive and this rung
-    // says which of the two it is.
     expect(legalAttackCorpus().filter(([, text]) => text.includes("’"))).toEqual([]);
-    // …and the anchor still claims the curly spelling, so a re-ingest that swapped the
-    // byte would not silently un-simulate six printings.
     expect(deriveAttackEffect(SENTENCE.replace("'", "’"))).toEqual(PROGRAM);
   });
 
@@ -192,8 +102,6 @@ describe("§1 — one sentence, six printings, no sibling to generalise over", (
       SENTENCE,
       LOUD_SENTENCE,
     ]);
-    // 🆕🆕 D491 — the specimen is asserted to BE a corpus row at its printed count, not
-    // byte-pinned (D452/D490: a pin measures an invention as faithfully as the truth).
     expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
       [1, LOUD_SENTENCE],
     ]);
@@ -202,12 +110,7 @@ describe("§1 — one sentence, six printings, no sibling to generalise over", (
     expect(attacks.map((attack) => attack.damage)).toEqual([50, 200, undefined, 50]);
   });
 
-  it("⚠️ the six carriers cannot be enumerated in this checkout, and that is stated not invented", () => {
-    // D425: this clone has no D1. `selfHeal.test.ts`, `chosenHeal.test.ts` and
-    // `boardHeal.test.ts` have each named Iron Moth `sv06.5-009` "Suction" as a
-    // carrier since they were written; that id is INHERITED FROM THOSE COMMENTS and
-    // was not verified against a catalog here, which is exactly why the fixture is
-    // `fix-suction` and not `sv06.5-009`. What is MEASURED is the sentence and the 6.
+  it("the six carriers cannot be enumerated in this checkout, and that is stated not invented", () => {
     expect(Object.keys(FIXTURE_POOL)).not.toContain("sv06.5-009");
     expect(legalAttackCorpus().filter(([, text]) => text === SENTENCE)[0]?.[0]).toBe(6);
   });
@@ -222,48 +125,22 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
     expect(deriveAttackEffect(SENTENCE)).toEqual(PROGRAM);
   });
 
-  it("🛑 ZERO new readers — the arm is inside `deriveAttackEffect`, and the surface is unmoved", () => {
-    // The census keys on the MODULE's `deriveAttack*` export set (D418). An arm adds
-    // no export, so every figure in this repo that moved, moved because a SENTENCE
-    // became claimed and for no other reason.
-    // 🆕🆕 **D428 — 12 → 13, AND THE COUNT ALONE CAN NO LONGER CARRY THIS CLAIM.**
-    // The surface genuinely grew (D428's `deriveAttackPreDamage`), so a rung that
-    // only pins the number has stopped saying anything about D427's arm. Re-pointed
-    // WITH its discrimination replaced rather than dropped (D418's second half): the
-    // proposition is *"no export is named for THIS sentence"*, and a slice that
-    // quietly split the heal arm out into a `deriveAttackHealDealt` reader breaks the
-    // third rung while the first two stay green.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+  it("ZERO new readers — the arm is inside `deriveAttackEffect`, and the surface is unmoved", () => {
+    expect(attackReaderSurface()).toHaveLength(14);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
     expect(attackReaderSurface().filter((name) => /Heal|Dealt/i.test(name))).toEqual([]);
   });
 
-  it("🛑 the sentence is claimed WHOLE — neither splitter is involved, and no registry row is", () => {
+  it("the sentence is claimed WHOLE — neither splitter is involved, and no registry row is", () => {
     expect(resolvedByAnyReader(SENTENCE)).toBe(true);
     expect(splitAttackGateClause(SENTENCE)).toBeNull();
     expect(splitAttackTrailingClause(SENTENCE)).toBeNull();
   });
 
-  it("🛑 refuses each near-miss — and ADMITS one on the same axis beside each (D424)", () => {
-    // A refusal rung passes trivially against a reader that refuses everything, so
-    // every REFUSED here is paired with an ADMITTED that shares its axis.
-    // 🛑 THE TWO ANCHOR ROWS BELOW WERE WRITTEN WRONG FIRST AND THE MUTATION HARNESS
-    // CAUGHT BOTH, WHICH IS EXACTLY WHAT IT IS FOR. The original leading-clause case
-    // spelled the tail "…, heal from this Pokémon…" in LOWERCASE and the original
-    // trailing case joined with a COMMA — so an anchor with `^` removed still failed
-    // to match the first (wrong case) and one with `\.$` removed still failed to match
-    // the second (no period to anchor on). Both rungs passed, both proved NOTHING
-    // about the anchor they were named for, and `D427-anchor-loses-its-leading-caret`
-    // / `-trailing-terminator` SURVIVED. The cases now differ from `SENTENCE` in the
-    // ANCHOR and in nothing else: same bytes, same capitalisation, a real sentence
-    // boundary on the side being tested.
+  it("refuses each near-miss — and ADMITS one on the same axis beside each (D424)", () => {
     const REFUSED = [
       // the WRONG SIDE: healing the opponent is not printed anywhere
       "Heal from your opponent's Active Pokémon the same amount of damage you did to this Pokémon.",
-      // a LEADING clause — `^` is the only thing that refuses it. Modelled on
-      // `SELF_SLEEP_HEAL`'s real printed compound ("This Pokémon is now Asleep. Heal
-      // {N} damage from it."), so the head is a shape this pool actually prints. An
-      // anchor without `^` claims this WHOLE and silently drops the Asleep.
       `This Pokémon is now Asleep. ${SENTENCE}`,
       // a TRAILING clause — `\.$` is the only thing that refuses it. An anchor
       // without it claims the head and silently drops the status the card prints.
@@ -286,10 +163,7 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
     for (const [text, program] of ADMITTED) expect(deriveAttackEffect(text), text).toEqual(program);
   });
 
-  it("🛑 exactly ONE corpus sentence is newly claimed — the arm's blast radius, measured", () => {
-    // The arm must not have swept a neighbour in. Every OTHER heal row in the column
-    // keeps whatever verdict it had, which this checks by naming the whole set of
-    // corpus sentences this op-shape is derived from.
+  it("exactly ONE corpus sentence is newly claimed — the arm's blast radius, measured", () => {
     const dealtRows = legalAttackCorpus().filter(([, text]) =>
       ((deriveAttackEffect(text) ?? []) as EffectOp[]).some(
         (op) => op.op === "heal" && op.amount === "dealt",
@@ -303,12 +177,6 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
 // §3 — the CARRIER, and the version prediction driven both directions.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** A board parked mid-effect on a DIFFERENT attack — `fix-selfenergyhand`'s "Put an
-    Energy attached to this Pokémon into your hand." with two distinct Energy, which
-    is D405's park. It is used here rather than this slice's own sentence for the
-    reason that makes the version question live at all: the `heal` op never parks, but
-    the CARRIER is shared with every attack program that does. Two candidates so the
-    op parks rather than auto-resolving (D416: count the candidates your board offers). */
 function parkedMidAttack(): GameState {
   const decks = { p1: SELF_ENERGY_HAND_DECK, p2: SELF_ENERGY_HAND_DECK };
   let state = driveSetup(SEED, decks, { first: "p2" });
@@ -326,17 +194,7 @@ function contOf(state: GameState): { ctx: Record<string, unknown>; rest: EffectO
 }
 
 describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` stays 26", () => {
-  it("🛑 `EffectRecord` ~~could not have held it~~ (🆕🆕🆕 D579 (D539): WITHDRAWN as absolute — `placed` files a COUNT as repeated uids; the figure stays on `ctx.dealt` by CHOICE) — every slot's value type is a LIST OF UIDS", () => {
-    // The decision, stated as a fact about the model rather than as a preference
-    // (D424: prefer a refusal the type system re-derives). Every value ever filed in
-    // a record by any op in the vocabulary is an array of strings; ~~an HP figure has
-    // no slot and no widening that keeps the map's value type~~ (🆕🆕🆕 D579 (D539):
-    // WITHDRAWN as absolute — D579's `"placed"` slot files a COUNT as one repeated uid
-    // per counter, so a count CAN ride a slot by repetition with `string[]` unchanged;
-    // what this rung still pins is the VALUE TYPE (every entry a string), and the HP
-    // figure stays on `EffectContext.dealt` by CHOICE, not because no slot could hold
-    // it — see the D579 note at the head of this file). Driven off a REAL
-    // parked record rather than off the type, because a type claim is not executable.
+  it("`EffectRecord` ~~could not have held it~~ ( D579 (D539): WITHDRAWN as absolute — `placed` files a COUNT as repeated uids; the figure stays on `ctx.dealt` by CHOICE) — every slot's value type is a LIST OF UIDS", () => {
     const cont = contOf(parkedMidAttack());
     const record = (cont as unknown as { record?: Record<string, unknown> }).record ?? {};
     for (const value of Object.values(record)) {
@@ -348,7 +206,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
     expect(typeof cont.ctx.dealt).toBe("number");
   });
 
-  it("🛑 the value RIDES A PARK — this is why the version question is live at all", () => {
+  it("the value RIDES A PARK — this is why the version question is live at all", () => {
     const state = parkedMidAttack();
     const cont = contOf(state);
     // `fix-selfenergyhand` prints 30 and the defender is neutral, so §8.5 arrives at
@@ -359,8 +217,6 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
       invokedBy: "attack",
       dealt: 30,
     });
-    // THE LITERAL KEY ANCHOR (D279's pairing rule): a diff between two boards from
-    // ONE build cannot see "every ctx grew a key", because the key is on both sides.
     const revived = JSON.parse(JSON.stringify(state)) as GameState;
     expect(Object.keys(contOf(revived).ctx).sort()).toEqual([
       "dealt",
@@ -370,17 +226,9 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
     ]);
   });
 
-  it('🛑 `invokedBy === "attack"` ⟺ `dealt !== undefined`, on every continuation this engine writes', () => {
-    // The pairing is what makes a LOST key detectable: both are set in one object
-    // literal at `attack.ts`'s single `runProgram` call, so a build that dropped
-    // `dealt` would leave a continuation that says it is an attack's effect and
-    // cannot say what the attack did. Driven on the one park this suite can reach.
+  it('`invokedBy === "attack"` ⟺ `dealt !== undefined`, on every continuation this engine writes', () => {
     const ctx = contOf(parkedMidAttack()).ctx;
     expect(ctx.invokedBy === "attack").toBe(ctx.dealt !== undefined);
-    // …and the CONTROL: a program invoked by something that is NOT an attack has
-    // neither key. `deriveAttackEffect` is the only producer of `amount: "dealt"`, so
-    // there is no non-attack runner that can read it — asserted as the population
-    // rather than as a specimen (D423).
     const nonAttack = legalAttackCorpus().filter(([, text]) =>
       ((deriveAttackEffect(text) ?? []) as EffectOp[]).some(
         (op) => op.op === "heal" && op.amount === "dealt",
@@ -389,22 +237,12 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
     expect(nonAttack).toHaveLength(1);
   });
 
-  it("🛑 the version PREDICTION, driven both directions: this is a WIDENING", () => {
-    // **DIRECTION 1 — a v26 continuation written BEFORE this slice.** It has no
-    // `dealt` key at all. Strip it and resume: the park resolves byte-identically,
-    // because nothing in a pre-D427 program reads the field. That is D125's widening
-    // test — the old bytes still mean what they meant — and it is the whole argument
-    // for not bumping 26.
+  it("the version PREDICTION, driven both directions: this is a WIDENING", () => {
     const parked = parkedMidAttack();
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const phase = revived.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const legacy = phase as unknown as { cont: { ctx: Record<string, unknown> } };
-    // ⚠️ THE KEY IS REMOVED, NOT SET TO `undefined`, AND THE DIFFERENCE IS THE WHOLE
-    // TEST. A pre-D427 continuation does not carry the key at all; `ctx.dealt =
-    // undefined` leaves it in `Object.keys` and would make the rung below assert the
-    // opposite of what it means. Rebuilt through `entries`/`fromEntries` rather than
-    // with `delete`, which `lint/performance/noDelete` refuses.
     legacy.cont.ctx = Object.fromEntries(
       Object.entries(legacy.cont.ctx).filter(([key]) => key !== "dealt"),
     );
@@ -425,12 +263,6 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
     expect(resolvedLegacy.players.p1.hand).toEqual(resolvedToday.players.p1.hand);
     expect(resolvedLegacy.players.p1.active).toEqual(resolvedToday.players.p1.active);
 
-    // **DIRECTION 2 — a v26 record holding the OLD `heal` shape.** `heal.amount` went
-    // `number` → `number | "dealt"`, and an `EffectOp` IS persisted (`cont.rest`,
-    // `cont.pendingOp`). A record written before this slice carries the LITERAL, and
-    // under this deploy that literal still resolves to exactly that many HP. A new
-    // union inhabitant on an existing field is a WIDENING (D426's argument for a new
-    // op, D358's for an absent flag); a RENAME is what bumped 21 → 22 and 25 → 26.
     const legacyOp: EffectOp = { op: "heal", target: "self", amount: 30 };
     expect(deriveAttackEffect("Heal 30 damage from this Pokémon.")).toEqual([legacyOp]);
     const withLegacyTail = JSON.parse(JSON.stringify(parked)) as GameState;
@@ -467,12 +299,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — post-Weakness, post-Resistance, post-reduction: the DEALT amount", () => {
-  it("🛑 ONE printed 50, THREE defenders, THREE heals — base and dealt come apart in BOTH directions", () => {
-    // This is the defect a census cannot see and a careless test would miss: a build
-    // that healed the printed base passes every board where the two agree, and only a
-    // ×2 body and a reduction body can tell them apart. Both are here, on one attack,
-    // at one index, against a W/R-free control that differs from the ×2 body in
-    // exactly one printed row.
+  it("ONE printed 50, THREE defenders, THREE heals — base and dealt come apart in BOTH directions", () => {
     const HEALER_DAMAGE = 150;
     const cases = [
       ["fix-drainwall", 50], // no Weakness, no Resistance, no aura — dealt === base
@@ -491,11 +318,7 @@ describe("§4 — post-Weakness, post-Resistance, post-reduction: the DEALT amou
     expect(new Set(cases.map(([, expected]) => expected)).size).toBe(3);
   });
 
-  it("⚠️ the reduction is the pipeline's LAST step, and it is read AFTER Weakness — one board says so", () => {
-    // Hariyama is ×2 Psychic and the attacker is Fire, so its Weakness is inert here
-    // and the −10 is the only subtraction; the ×2 board carries no aura, so the
-    // doubling is the only multiplication. The two are separated by construction
-    // rather than by argument.
+  it("the reduction is the pipeline's LAST step, and it is read AFTER Weakness — one board says so", () => {
     const reduced = dealtAndHealed(swing(board("sv02-113", 150), IDX.fifty).events);
     const doubled = dealtAndHealed(swing(board("fix-drainweak", 150), IDX.fifty).events);
     const flat = dealtAndHealed(swing(board("fix-drainwall", 150), IDX.fifty).events);
@@ -504,10 +327,6 @@ describe("§4 — post-Weakness, post-Resistance, post-reduction: the DEALT amou
   });
 
   it("the healed amount EQUALS `DAMAGE_DEALT.dealt` on every board that heals — one identity, swept", () => {
-    // The engine has exactly one §8.5 answer, and the heal and the log row must be
-    // reading it rather than each recomputing it (D425's derived-facts rule). Swept
-    // over every board in this suite that heals at all, clamped by the healer's own
-    // damage — which is the whole of §5.
     for (const [defender, healerDamage] of [
       ["fix-drainwall", 150],
       ["fix-drainweak", 150],
@@ -528,7 +347,7 @@ describe("§4 — post-Weakness, post-Resistance, post-reduction: the DEALT amou
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — the clamp is the healer's own damage, and it is `healSelf`'s, not a new one", () => {
-  it("🛑 an attacker with 20 damage that deals 100 heals 20, not 100", () => {
+  it("an attacker with 20 damage that deals 100 heals 20, not 100", () => {
     const { state, events } = swing(board("fix-drainweak", 20), IDX.fifty);
     const { dealt, healed } = dealtAndHealed(events);
     expect(dealt).toBe(100);
@@ -550,10 +369,7 @@ describe("§5 — the clamp is the healer's own damage, and it is `healSelf`'s, 
     expect(state.players.p1.active?.damage).toBe(0);
   });
 
-  it("⚠️ the clamp is the SHIPPED one — the literal-amount heal answers identically", () => {
-    // The control that says this slice invented no clamp: `heal` with a literal
-    // amount has clamped to the healer's damage since 0.x, and the "dealt" source
-    // rides the same `Math.min`. Same board, same shortfall, same answer.
+  it("the clamp is the SHIPPED one — the literal-amount heal answers identically", () => {
     const literal = deriveAttackEffect("Heal 30 damage from this Pokémon.");
     expect(literal).toEqual([{ op: "heal", target: "self", amount: 30 }]);
     const { events } = swing(board("fix-drainwall", 20), IDX.fifty);
@@ -566,11 +382,7 @@ describe("§5 — the clamp is the healer's own damage, and it is `healSelf`'s, 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — every way the amount is zero, and each one is silent rather than loud", () => {
-  it("🛑 PREVENTED damage means `dealt` is 0, so the heal is 0 and no HEALED row is emitted", () => {
-    // `fix-imperviousshell` prints "prevent all damage … if that damage is 200 or
-    // more", and index 1 prints exactly 200. The DAMAGE_DEALT row is still filed
-    // (with `prevented`), so this is not "the pipeline did not run" — it is "the
-    // pipeline ran and arrived at nothing".
+  it("PREVENTED damage means `dealt` is 0, so the heal is 0 and no HEALED row is emitted", () => {
     const { state, events } = swing(board("fix-imperviousshell", 150), IDX.twoHundred);
     const damage = find(events, "DAMAGE_DEALT");
     expect(damage?.base).toBe(200);
@@ -578,14 +390,12 @@ describe("§6 — every way the amount is zero, and each one is silent rather th
     expect(damage?.dealt).toBe(0);
     expect(find(events, "HEALED")).toBeUndefined();
     expect(state.players.p1.active?.damage).toBe(150);
-    // …and the CONTROL on the same axis (D424): the very same attack into a body with
-    // no shield deals 200 and heals the healer's whole 150.
     const open = swing(board("fix-wall", 150), IDX.twoHundred);
     expect(dealtAndHealed(open.events).dealt).toBe(200);
     expect(dealtAndHealed(open.events).healed).toBe(150);
   });
 
-  it("🛑 an attack with NO printed damage never runs the §8.5 block — the hoisted 0 IS the semantics", () => {
+  it("an attack with NO printed damage never runs the §8.5 block — the hoisted 0 IS the semantics", () => {
     // Index 2 prints the sentence and no damage at all, so
     // `scaledBase + scaledTotal > 0` is false, `dealtToDefender` keeps its
     // initialiser, and "the same amount of damage you did" is correctly none.
@@ -597,10 +407,6 @@ describe("§6 — every way the amount is zero, and each one is silent rather th
   });
 
   it("an ABSENT defender is refused by the turn gate — the program never runs at all", () => {
-    // The guard is `attack.ts`'s NO_TARGET, ~1,300 lines above the effect program:
-    // there is no board on which this sentence meets an empty Active Spot, because
-    // the attack is rejected before a single event is filed. Driven rather than
-    // argued, by emptying the defender's spot.
     const state = board("fix-drainwall", 150);
     const empty: GameState = {
       ...state,
@@ -618,7 +424,7 @@ describe("§6 — every way the amount is zero, and each one is silent rather th
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — a Knocked Out defender changes nothing about what was dealt", () => {
-  it("🛑 a 200 into a 120-HP body deals 200, heals 200-worth, and THEN Knocks Out", () => {
+  it("a 200 into a 120-HP body deals 200, heals 200-worth, and THEN Knocks Out", () => {
     // `dealt` is deliberately unclamped by the defender's remaining HP (§8.1's own
     // comment says so), so the printed "damage you did" is 200 and not 120. The heal
     // is still bounded by the HEALER, which is a different clamp entirely.
@@ -629,7 +435,7 @@ describe("§7 — a Knocked Out defender changes nothing about what was dealt", 
     expect(types(events)).toContain("KNOCKED_OUT");
   });
 
-  it("🛑 the ORDER is printed order: DAMAGE_DEALT, then HEALED, then the KO sweep", () => {
+  it("the ORDER is printed order: DAMAGE_DEALT, then HEALED, then the KO sweep", () => {
     // §8 step 4 — the attack's own effect program runs AFTER the damage and BEFORE
     // finishAttack's §8.1 sweep. A build that ran the program first would read a
     // `dealt` that had not happened yet.
@@ -639,10 +445,7 @@ describe("§7 — a Knocked Out defender changes nothing about what was dealt", 
     expect(order[0]).toBe("ATTACK_DECLARED");
   });
 
-  it("🛑 no ATTACK_EFFECT_SKIPPED in EITHER direction — and index 3 is the control that skips", () => {
-    // The sentence is READ now, on every board this suite drives, whether the heal
-    // moved anything or not. Without the control below this rung would pass against a
-    // build that never emits the row at all.
+  it("no ATTACK_EFFECT_SKIPPED in EITHER direction — and index 3 is the control that skips", () => {
     for (const [defender, healerDamage, index] of [
       ["fix-drainwall", 150, IDX.fifty],
       ["fix-drainweak", 150, IDX.fifty],
@@ -656,17 +459,6 @@ describe("§7 — a Knocked Out defender changes nothing about what was dealt", 
       const { events } = swing(board(defender, healerDamage), index);
       expect(types(events), label).not.toContain("ATTACK_EFFECT_SKIPPED");
     }
-    // THE CONTROL, on the SAME BODY and the same printed 50: index 3 prints an unread
-    // sentence and the loud row still fires. 🆕🆕 D491 RE-POINTED it — the slot used to
-    // print *"Each player draws 3 cards."* and D491 built that sentence, which would
-    // have left this rung green while it stopped testing anything. The replacement is
-    // blocked by DATA (the `Ancient` banner is in no ingested column), so unlike a
-    // merely-unbuilt sentence it cannot be claimed by any reader at any width (D461).
-    // 🆕🆕🆕 D569 (D539): ~~blocked by DATA … cannot be claimed by any reader at any
-    // width~~ WITHDRAWN — `banners.ts`' engine table supplies the banner (no ingest
-    // change) and its one printing, `sv05-077`, is BUILT as an index-keyed registry row
-    // (`SUPPORTIVE_SINGING`). The control stands as an UNREAD sentence: no derive reader
-    // claims it, and this fixture is not that printing.
     const loud = swing(board("fix-drainwall", 150), IDX.loud);
     expect(types(loud.events)).toContain("ATTACK_EFFECT_SKIPPED");
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
@@ -678,7 +470,7 @@ describe("§7 — a Knocked Out defender changes nothing about what was dealt", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — both chairs, and a frozen board resolves", () => {
-  it("🛑 p2 attacking heals p2's Active off the damage p2 dealt — the seat is not hard-coded", () => {
+  it("p2 attacking heals p2's Active off the damage p2 dealt — the seat is not hard-coded", () => {
     for (const seat of ["p1", "p2"] as const) {
       const { state, events } = swing(board("fix-drainweak", 150, seat), IDX.fifty, seat);
       const { dealt, healed } = dealtAndHealed(events);

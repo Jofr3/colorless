@@ -26,75 +26,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 🆕🆕🆕 D539 — THE NAMED-BODY MULTIPLIER WITH A NAMED-BODY OWN-SIDE SPREAD BEHIND
-// IT, AND THE ONE BODY THE SHIPPED MACHINERY COULD NOT REACH.
-//
-// `censusAttackCorpus.ts` **FILE LINE 595** — *"This attack does 50 damage for each of
-// your Drifloon and Drifblim in play. This attack also does 30 damage to each of your
-// Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
-// — **1 sentence / 2 legal printings** (`legalAttackCorpus()` index **542**, leading
-// count column `2`). It is the LAST UNBUILT ROW OF TWO FAMILIES AT ONCE, re-measured
-// live at this head in §9: `/This attack also does /` reads **17 sentences / 41
-// printings** and `/ damage to each of /` reads **11 / 20**, and :595 was the only
-// unbuilt member of either.
-//
-// ⚠️ **NO CARD ID IS RESOLVED FOR THIS SENTENCE ON THIS CHECKOUT, AND THAT WAS
-// MEASURED** (D425, conventions.md "When a card id cannot be resolved"). A whole-repo
-// `git grep -F` of the printed sentence at this head returns the corpus row,
-// `bodiesInPlayScaling.test.ts`'s refusal rungs and one docs paragraph — no id and no
-// card name anywhere. `catalogManifest.ts:197` does hold `sv01-089 Drifloon`, but its
-// attacks are `["Gust", "Balloon Blast"]`, a DIFFERENT attack, which is exactly the
-// two-populations trap conventions.md:155 records. So this suite rides FILE-LOCAL
-// DECLARED demonstrators, `d539-*`, in D538's `d538-pile-sniper` shape.
-//
-// ⚠️ **THEIR CARD *NAMES* ARE THE PRINTED ONES AND THAT IS NOT AN INVENTION.** The
-// derived filter is `byName`, which compares `card.name`; a demonstrator named
-// anything else would make the whole slice vacuous. The ID is declared and local; the
-// NAME is the printed noun the sentence itself carries.
-//
-// engine 0.423.0 → 0.424.0. ONE new whole-compound anchor (`NAMED_BODIES_MULTIPLY_
-// SPREAD`, with a `\2` BACKREFERENCE), ONE new `IN_PLAY_BODY_NOUNS` row (the NINTH
-// exact key), ONE new arm in `deriveAttackDamageMultiplier`, ONE new arm in
-// `deriveAttackEffect`, ONE new value on the persisted union `damageChosen.target`
-// (`"yourAny"`) and, in the interpreter, `snipeTargets`' fourth `case`, `snipeNote`'s
-// widened parameter and — the site the compiler could NOT name — `placeSnipe`'s
-// own-side ACTIVE leg. **ZERO new `EffectOp` members, zero new `count` kinds, zero new
-// `CardFilter` members, zero new prompt kinds, zero new events, zero new readers** —
-// `attackReaderSurface()` stays **13**, and `attack.ts` takes ZERO code bytes.
-//
-// 🛑 **ONE ANCHOR, TWO READERS, ONE `effect` STRING — D493/D494's ROUTE FOR THE THIRD
-// TIME.** `deriveAttackDamageMultiplier` claims the whole compound for the × fold and
-// `deriveAttackEffect` claims the same whole compound for the own-side spread;
-// `attack.ts:1708` binds `derivedHead` UNCONDITIONALLY and the `damageMultiplier`
-// ternary at `attack.ts:1761-1764` is GUARDED by `damageBonus !== null`, so a sentence
-// both claim reaches both bindings with no branch GIVEN `deriveAttackDamageBonus(PRINTED)`
-// is null — §3 quotes BOTH bindings out of `attack.ts` and DRIVES that premise.
-//
-// The COMPOSITION seam was RE-PRICED at this head before it was declined and §1
-// re-runs that arithmetic: the narrowest splitter widening that would reach this row
-// admits **0 sentences / 0 printings** and leaves all eleven currently-split rows
-// byte-identical.
-//
-// 🛑 **A GREEN CENSUS IS SATISFIED BY HALF THIS SLICE, AND §4 IS THE ANSWER.** The
-// MULTIPLIER arm alone flips `resolvedByAnyReader`, steps `BUILT.attack` by 2 and moves
-// every census figure — with the own-side spread never happening. So §4 asserts **HP on
-// a board**, not op shape: the 50-per-body fold over 1/2/3 bodies, the 30 landing on
-// EVERY named body INCLUDING THE ATTACKER ITSELF, a Weakness-carrying named body taking
-// exactly 30, unnamed own bodies taking nothing, and the opponent's board untouched by
-// the second half. `D539-effect-arm-deleted` and `D539-target-becomes-yourbench` are
-// the two rows that no census figure and no caption can see.
-//
-// 🛑 **`MATCH_RECORD_VERSION` HELD AT 30, BOTH D450 DOORS DRIVEN OVER THE SERIALIZED
-// BYTES (D427).** Door 1, the carrier: `damageChosen` rides `phase.cont.pendingOp` ONLY
-// when it PARKS, and `count: "all"` resolves INLINE and never parks, so no record that
-// can exist holds the new value. Door 2, the alphabet: the union WIDENS at a persisted
-// address — D125's free case, and D447 added `"yourBench"` to THIS EXACT UNION and held
-// the version. §7 drives both directions in `ownBenchSnipe.test.ts` §3's shape.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** The printed sentence, READ off the corpus in §1 and used as a constant everywhere
-    else. Retyped ONCE, here, and §1's first rung is what proves the bytes agree. */
 const PRINTED =
   "This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
@@ -105,8 +36,6 @@ const PART_1 = "This attack does 50 damage for each of your Drifloon and Drifbli
 const PART_2 = "This attack also does 30 damage to each of your Drifloon and Drifblim.";
 const PART_3 = "(Don't apply Weakness and Resistance for Benched Pokémon.)";
 
-/** The MISMATCHED-NOUN twin: the `\2` backreference's own falsifier, CONSTRUCTED and
-    labelled so (D440). Identical to `PRINTED` in every byte but the second noun. */
 const MISMATCHED = PRINTED.replace(
   "to each of your Drifloon and Drifblim.",
   "to each of your Pokémon ex.",
@@ -151,15 +80,7 @@ const PLAIN = "d539-plain";
 const WALL = "d539-wall";
 const ENERGY = "fix-energy";
 
-/** The attack list every demonstrator Drifblim carries. Index 0 is the PRINTED row;
-    index 1 is the CONTROL (same attacker, same cost, no effect text, a flat 10) so that
-    "no park and no board change" is a claim about the op rather than about the board. */
 const ATTACKS = [
-  // ⚠️ **NO PRINTED `damage` ON INDEX 0, AND THAT IS A DECLARATION RATHER THAN A
-  // PRINTING'S FACT** (no id is resolved, D425). `attack.ts` drops the printed base to
-  // ZERO whenever a multiply reader consumed the clause, so a printed number here would
-  // be unreachable anyway — it is omitted so every point of HP this suite counts came
-  // from the fold or the op, and a rung reading 100 cannot be read as 90 + 10.
   { cost: ["Colorless"], name: "Balloon Swarm", effect: PRINTED },
   { cost: ["Colorless"], name: "Plain Tap", damage: 10 },
   // THE MISMATCHED-NOUN near miss, declared so §1 can drive the backreference through a
@@ -175,14 +96,6 @@ const LOCAL_CARDS: Record<string, Card> = {
   [BLIMP]: blimp(BLIMP, 250),
   /** §5's attacker: 30 HP, so its OWN 30 Knocks it Out mid-attack. */
   [FRAIL_BLIMP]: blimp(FRAIL_BLIMP, 30),
-  /** 🆕🛑 **THE ATTACKER ITSELF CARRYING A WEAKNESS ×2, AND IT EXISTS BECAUSE THE
-      BENCH COULD NOT ASK THE QUESTION.** A Weakness on an own BENCH body is not a
-      measurement of the no-`ignoreWR` reading at all: the bench loop applies W/R in NO
-      build of this engine, so `WEAK_LOON` on the bench reads 30 whatever the Active leg
-      does. The discriminating board is a Weakness in the ATTACKER's OWN ACTIVE SPOT,
-      which is the only spot `yourAny` newly reaches and the only one where a copy of
-      `placeSnipe`'s opponent-side Active arm would have doubled it. 250 HP so the rung
-      reads damage and not a Knock Out. */
   [WEAK_BLIMP]: battler(WEAK_BLIMP, {
     name: "Drifblim",
     hp: 250,
@@ -201,9 +114,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     weaknesses: [{ type: "Colorless", value: "×2" }],
   }),
-  /** An own-side body the printed noun does NOT name. It must take ZERO under every
-      rung here, and it is the only assertion that separates the filtered spread from an
-      unfiltered one (`D539-filter-dropped`). */
   [PLAIN]: battler(PLAIN, {
     name: "D539 Plain",
     hp: 200,
@@ -220,7 +130,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its own deck (D270's rule), 60 counted before the first run: 7 × 6 + 18. */
 const DECK = deckOf({
   [BLIMP]: 6,
   [FRAIL_BLIMP]: 6,
@@ -261,10 +170,6 @@ function openTable(): GameState {
   return table;
 }
 
-/** p1 owns TURN 2 with `attacker` Active and exactly `ownBench` behind it; p2 is the
-    Wall with exactly `foeBench`. **BOTH benches are cleared before anything is placed**
-    — every figure below is a POPULATION over a board, so a body the setup shuffle
-    happened to leave in place would move an answer silently. */
 function table(
   attacker: string,
   ownBench: readonly string[],
@@ -324,9 +229,6 @@ const corpusRows = () => legalAttackCorpus();
 const units = (rows: readonly (readonly [number, string])[]) =>
   rows.reduce((n, [count]) => n + count, 0);
 
-/** Every reader `censusAtHead.test.ts` sweeps with, DERIVED FROM THE MODULE (D417/D419)
-    rather than hand-listed, so this file cannot claim "unread by the engine" off a stale
-    copy of the surface. */
 const READERS: readonly ((t: string) => unknown)[] = attackReaderSurface().map((name) => {
   const fn = (effectsModule as unknown as Record<string, unknown>)[name];
   if (typeof fn !== "function") throw new Error(`reader ${name} is not a function on effects.ts`);
@@ -334,36 +236,19 @@ const READERS: readonly ((t: string) => unknown)[] = attackReaderSurface().map((
 });
 const claimedByAny = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
-/** THIS SLICE's anchor, rebuilt here from the printed bytes. It exists for one reason:
-    a "what did this slice move" question asked AFTER the build is not that question
-    (D491). The pre-slice verdict is DERIVED as `now && !NEW_ANCHOR.test(row)` rather
-    than quoted from a session that cannot be re-run, and §9 pins that the rows this
-    pattern claims are EXACTLY the ones that moved. */
 const NEW_ANCHOR =
   /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\. This attack also does (\d+) damage to each of your \2\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
 const builtBefore = (text: string) => resolvedByAnyReader(text) && !NEW_ANCHOR.test(text);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE CORPUS ROW, THE ANCHOR, AND THE ROUTE THAT WAS PRICED AND DECLINED.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
-  it("🛑 the row is READ by index and by units, never retyped (D183/D456)", () => {
+  it("the row is READ by index and by units, never retyped (D183/D456)", () => {
     const row = corpusRows()[542];
     expect(row?.[1]).toBe(PRINTED);
-    // The LEADING COUNT COLUMN is the printing count and the unit the census delta is
-    // measured in — 1 sentence, 2 legal printings. ⚠️ THIS ROW IS WHY D539's sentence
-    // step and printing step DISAGREE (1 against 2), the FIFTH consecutive slice on
-    // which they have.
     expect(row?.[0]).toBe(2);
-    // EXACTLY ONE row carries this string: the sentence is the key of the census delta,
-    // so a duplicate would double-count the printings under one build.
     expect(corpusRows().filter(([, s]) => s === PRINTED)).toEqual([[2, PRINTED]]);
   });
 
-  it("🛑 the printed BYTES: U+0027 at 150, U+00E9 at 198, length 204", () => {
-    // Counted off the corpus rather than off this file's own literal, because the two
-    // could disagree and the corpus is the population the census measures.
+  it("the printed BYTES: U+0027 at 150, U+00E9 at 198, length 204", () => {
     const printed = corpusRows()[542]?.[1] ?? "";
     expect(printed).toHaveLength(204);
     expect(printed.charCodeAt(150)).toBe(0x27);
@@ -373,28 +258,22 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect((printed.match(/'/g) ?? []).length).toBe(1);
   });
 
-  it("🛑 the sentence is READ by `resolvedByAnyReader` — the census delta's own predicate", () => {
+  it("the sentence is READ by `resolvedByAnyReader` — the census delta's own predicate", () => {
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
   });
 
-  it("🛑 the SURFACE did not grow: a new ARM is not a new READER (D447)", () => {
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+  it("the SURFACE did not grow: a new ARM is not a new READER (D447)", () => {
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 THE `\\2` BACKREFERENCE, DRIVEN BOTH WAYS — matched nouns match", () => {
-    // The mechanism: the card multiplies by the SAME bodies it then splashes on. The
-    // capture is read ONCE and the second printing of the noun must be the SAME bytes.
+  it("THE `\\2` BACKREFERENCE, DRIVEN BOTH WAYS — matched nouns match", () => {
     const m = NEW_ANCHOR.exec(PRINTED);
     expect(m?.[1]).toBe("50");
     expect(m?.[2]).toBe("Drifloon and Drifblim");
     expect(m?.[3]).toBe("30");
   });
 
-  it("🛑 …and MISMATCHED nouns REFUSE — the falsifier, through both readers", () => {
-    // CONSTRUCTED, and labelled so (D440). `MISMATCHED` differs from `PRINTED` in
-    // exactly the second noun, and BOTH nouns are ones the vocabulary can spell — so
-    // the refusal is the BACKREFERENCE's and not the map's. `D539-anchor-drops-the-
-    // backreference` is the experiment this rung is the killer for.
+  it("…and MISMATCHED nouns REFUSE — the falsifier, through both readers", () => {
     expect(MISMATCHED).not.toBe(PRINTED);
     expect(MISMATCHED.replace("Pokémon ex", "Drifloon and Drifblim")).toBe(PRINTED);
     expect(NEW_ANCHOR.test(MISMATCHED)).toBe(false);
@@ -403,10 +282,7 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(resolvedByAnyReader(MISMATCHED)).toBe(false);
   });
 
-  it("🛑 …and the CONTROL on the same axis: swapping BOTH nouns together still reads", () => {
-    // D424 — a refusal rung needs a control, or it passes on a build that refuses
-    // everything. Both nouns moved to the SAME other vocabulary word, and the pattern
-    // claims it again.
+  it("…and the CONTROL on the same axis: swapping BOTH nouns together still reads", () => {
     const both = PRINTED.replaceAll("Drifloon and Drifblim", "Pokémon ex");
     expect(both).not.toBe(PRINTED);
     expect(NEW_ANCHOR.test(both)).toBe(true);
@@ -420,21 +296,11 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     });
   });
 
-  it("🛑 the `^` refuses a printed prefix and the `$` refuses a printed continuation", () => {
-    // 🛑 **THIS RUNG'S FIRST DRAFT DID NOT TEST THE `^` AT ALL, AND THE PROBE SAID SO.**
-    // Lower-casing the leading `T` to glue the sentence onto a prefix makes the string
-    // refuse for a DIFFERENT reason — the pattern demands a capital `This` wherever it
-    // starts — so `D539-anchor-loses-its-caret` SURVIVED the first probe as a real GAP.
-    // The killer is a prefix that KEEPS the capital: with the `^` gone, the pattern
-    // matches from the second sentence on and the engine authors a program for a card
-    // whose leading clause it silently dropped. Both spellings are kept, because they
-    // refuse for two different reasons and only one of them is about the anchor.
+  it("the `^` refuses a printed prefix and the `$` refuses a printed continuation", () => {
     expect(deriveAttackEffect(`Discard an Energy from this Pokémon. ${PRINTED}`)).toBeNull();
     expect(
       deriveAttackDamageMultiplier(`Discard an Energy from this Pokémon. ${PRINTED}`),
     ).toBeNull();
-    // …and the CONTROL that keeps it a measurement (D424): the identical string WITHOUT
-    // the prefix is claimed, so the refusal is the anchor's and not the vocabulary's.
     expect(deriveAttackEffect(PRINTED)).not.toBeNull();
     expect(
       deriveAttackEffect(`Flip a coin. If heads, ${PRINTED[0]?.toLowerCase()}${PRINTED.slice(1)}`),
@@ -442,15 +308,12 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(deriveAttackEffect(`${PRINTED} Then, discard an Energy from this Pokémon.`)).toBeNull();
     // …and the terminator itself: dropping the final `)` is one byte and must refuse.
     expect(deriveAttackEffect(PRINTED.slice(0, -1))).toBeNull();
-    // `D539-anchor-loses-its-caret` / `D539-anchor-loses-its-terminator`.
   });
 
-  it("🛑 the `['’]` class on `Don't` — the slot CURLS and derives IDENTICALLY (D136/D137)", () => {
+  it("the `['’]` class on `Don't` — the slot CURLS and derives IDENTICALLY (D136/D137)", () => {
     const curly = PRINTED.replace("Don't", "Don’t");
     expect(curly).not.toBe(PRINTED);
     expect((curly.match(/'/g) ?? []).length).toBe(0);
-    // EQUALITY, never merely non-null: a non-null check passes on a reader that folded
-    // the sentence into some other row.
     expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(PRINTED));
     expect(deriveAttackEffect(curly)).toEqual(PROGRAM);
     expect(deriveAttackDamageMultiplier(curly)).toEqual(FOLD);
@@ -467,11 +330,7 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(deriveAttackEffect(nbsp)).toBeNull();
   });
 
-  it("🛑 the `(?!opponent)` LOOKAHEAD is kept, and it is driven (D407)", () => {
-    // The slot is a CAPTURE, so without the lookahead `for each of your ` would admit a
-    // printed `opponent's …` noun and score the OPPONENT's sentence off the ATTACKER's
-    // board. CONSTRUCTED, and labelled so — the column prints no such compound today,
-    // which is exactly why the lookahead is insurance rather than a live refusal.
+  it("the `(?!opponent)` LOOKAHEAD is kept, and it is driven (D407)", () => {
     const foe = PRINTED.replaceAll("of your Drifloon and Drifblim", "of your opponent's Pokémon");
     expect(NEW_ANCHOR.test(foe)).toBe(false);
     expect(deriveAttackEffect(foe)).toBeNull();
@@ -480,7 +339,7 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(NEW_ANCHOR.test(mine)).toBe(true);
   });
 
-  it("🛑 the anchor claims EXACTLY 1 of 640 rows / 2 of 1,732 printings", () => {
+  it("the anchor claims EXACTLY 1 of 640 rows / 2 of 1,732 printings", () => {
     const rows = corpusRows();
     expect(rows).toHaveLength(640);
     expect(units(rows)).toBe(1732);
@@ -489,26 +348,21 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(units(claimed)).toBe(2);
   });
 
-  it("🛑 …and from `IN_PLAY_BODY_SCALE`, which additionally demands ` more damage`", () => {
+  it("…and from `IN_PLAY_BODY_SCALE`, which additionally demands ` more damage`", () => {
     const more = PART_1.replace("does 50 damage", "does 50 more damage");
     expect(deriveAttackDamageBonus(more)).toEqual(FOLD);
     expect(NEW_ANCHOR.test(more)).toBe(false);
     expect(deriveAttackDamageBonus(PRINTED)).toBeNull();
   });
 
-  it("🛑 no corpus row matches this anchor AND any other reader's whole-sentence claim", () => {
-    // The anchor is new, so "claimed by something else too" is a question about the
-    // BUILD and not about history: a row both this pattern and a shipped reader claim
-    // would be a row whose program depends on arm order.
+  it("no corpus row matches this anchor AND any other reader's whole-sentence claim", () => {
     for (const [, text] of corpusRows()) {
       if (!NEW_ANCHOR.test(text)) continue;
       expect(builtBefore(text)).toBe(false);
     }
   });
 
-  it("🛑 the COMPOSITION ROUTE IS STILL REFUSED, and all three kept rungs are RE-MEASURED", () => {
-    // `effects.ts:15919`'s refusal paragraph is kept as the record of a price that came
-    // true (D442/D466). Every clause of it is still literally true at this head:
+  it("the COMPOSITION ROUTE IS STILL REFUSED, and all three kept rungs are RE-MEASURED", () => {
     expect(splitAttackTrailingClause(PRINTED)).toBeNull();
     expect(splitAttackGateClause(PRINTED)).toBeNull();
     expect(deriveAttackEffect(PART_3)).toBeNull();
@@ -516,10 +370,7 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(PRINTED.split(/(?<=\.)\s+(?=[A-Z(])/)).toEqual([PART_1, PART_2, PART_3]);
   });
 
-  it("🛑 THE SPLITTER WIDENING WAS RE-PRICED HERE: 0 sentences / 0 printings (D493)", () => {
-    // The narrowest widening that would reach this row — REGLUE a `(`-leading part onto
-    // its predecessor, so the parenthetical stops being the tail. Simulated over all 640
-    // rows rather than argued, because "the seam buys nothing" is a MEASUREMENT.
+  it("THE SPLITTER WIDENING WAS RE-PRICED HERE: 0 sentences / 0 printings (D493)", () => {
     const BREAK = /(?<=\.)\s+(?=[A-Z(])/;
     const widened = (text: string): { head: string; tail: string } | null => {
       const trimmed = text.trim();
@@ -550,14 +401,8 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
         admittedUnits += count;
       }
     }
-    // The seam admits NOTHING on its own and disturbs NOTHING that ships — so the
-    // anchor buys the row for one regex and the shared splitter is left alone.
     expect([admitted, admittedUnits]).toEqual([0, 0]);
     expect(changed).toBe(0);
-    // …and the ELEVEN currently-split rows are the population that argument is about,
-    // which is the trailing-split census figure §9 pins UNMOVED.
-    // 🆕🆕🆕 D574 — ELEVEN → TWELVE: Alakazam (file line 686) composes on the trailing seam now; the
-    // two widening measurements above are UNMOVED (0 / 0 admitted, 0 changed).
     expect(splitToday).toBe(12);
   });
 });
@@ -567,46 +412,19 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
-  it("🛑 the printed noun resolves to the PAIR, as an `anyOf` and not an intersection", () => {
-    // D245's argument for the combinator: the printed "and" names a SET each body is
-    // asked about ONE AT A TIME. An intersection reading would name bodies that are both
-    // a Drifloon and a Drifblim, of which the pool has none — a sentence that scores 0
-    // forever. Driven through the READER, so the map row is asserted where it is used.
+  it("the printed noun resolves to the PAIR, as an `anyOf` and not an intersection", () => {
     expect(deriveAttackDamageMultiplier(PART_1)).toEqual(FOLD);
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
   });
 
-  it("🛑 …and HALF the key is not the key: neither name alone resolves to the pair", () => {
-    // `D539-map-value-single-byname` collapses the `anyOf` to one `byName` and scores
-    // HALF the board. The two singular spellings are NOT map rows, so they fall to the
-    // typed branch, miss `CLAUSE_POKEMON_TYPES` and reach the trailing `null`.
+  it("…and HALF the key is not the key: neither name alone resolves to the pair", () => {
     for (const half of ["Drifloon", "Drifblim"]) {
       const text = `This attack does 50 damage for each of your ${half} in play.`;
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
     }
   });
 
-  it("🛑 the ninth key RESOLVES and carries no apostrophe — the half of the vocabulary this suite can reach", () => {
-    // ⚠️ **NO DERIVATION IS CLAIMED HERE, AND D539 WITHDREW THE CLAIM THAT THERE WAS ONE.**
-    // `IN_PLAY_BODY_NOUNS` is module-private to `effects.ts` — it is not exported, so no
-    // suite can read `.size` at all — and `benchNounScaling.test.ts` §5's `9 + 11 + 11 = 31`
-    // is a HAND LIST plus a HAND SUM: when the ninth key landed in this slice, both the list
-    // and the literal were moved BY HAND and nothing went RED in between. What §5 DOES
-    // derive is the stronger half — every listed key is driven THROUGH
-    // `deriveAttackDamageMultiplier`, so a key that stops RESOLVING reddens even though a
-    // key that stops EXISTING does not (`effects.ts`'s map block and `index.ts`'s D539
-    // entry carry the same withdrawal).
-    // (🆕🆕🆕 D569 (D539): §5's sum is `10 + 11 + 11 = 32` now — D569's tenth key, "Ancient
-    // Pokémon", was missed by the landing and moved BY HAND at its final review, the same
-    // failure a second time.)
-    // (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns — `13 + 11 + 11 = 35`, moved by hand again, none with an apostrophe.)
-    // (🆕🆕🆕 D623 (D539): 14 exact keys / 36 nouns — `14 + 11 + 11 = 36`, moved by hand again, none with an apostrophe.)
-    // (🆕🆕🆕 D635 (D539): 15 exact keys / 37 nouns — `15 + 11 + 11 = 37`, moved by hand again, none with an apostrophe.)
-    //
-    // This rung asserts only the part that is this slice's and that it can actually reach:
-    // the ninth key is a key, it reaches a reading, and it carries no apostrophe — which is
-    // the whole of what `inPlayBodyFilter`'s disjointness argument (and `D439-vocabulary-
-    // order-loses-the-owner`'s declared reason) needs from a new exact key.
+  it("the ninth key RESOLVES and carries no apostrophe — the half of the vocabulary this suite can reach", () => {
     expect(deriveAttackDamageMultiplier(PART_1)).not.toBeNull();
     expect(/['’]s Pokémon$/.test("Drifloon and Drifblim")).toBe(false);
     // …and it does NOT reach the owner branch, which is the disjointness made executable
@@ -625,10 +443,7 @@ describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
     });
   });
 
-  it("⚠️ the CONSEQUENCE, stated rather than discovered: the other anchors read it too", () => {
-    // D466/D467's own stated consequence at a third key — a reader is a function of
-    // TEXT, and a noun the column does not print simply never arrives. Asserted so the
-    // widening is a decision on the record rather than a surprise.
+  it("the CONSEQUENCE, stated rather than discovered: the other anchors read it too", () => {
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 10 damage for each of your Drifloon and Drifblim in play.",
@@ -644,18 +459,14 @@ describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
     }
   });
 
-  it("🛑 an UNMAPPED noun leaves the sentence LOUD rather than resolving on a guess (D190b)", () => {
-    // `D539-map-row-dropped` is the experiment: with the row gone, `inPlayBodyFilter`
-    // answers `null`, both arms decline, and the sentence falls to the skip path.
-    // (🆕🆕🆕 D569 (D539): "Ancient Pokémon" is a map KEY now — `banners.ts` — so the unmapped witness is
-    // the other Paradox banner; the local name is kept.)
+  it("an UNMAPPED noun leaves the sentence LOUD rather than resolving on a guess (D190b)", () => {
     const ancient = PRINTED.replaceAll("Drifloon and Drifblim", "Future Pokémon");
     expect(NEW_ANCHOR.test(ancient)).toBe(true); // the PATTERN claims it…
     expect(deriveAttackEffect(ancient)).toBeNull(); // …and the VOCABULARY refuses it
     expect(deriveAttackDamageMultiplier(ancient)).toBeNull();
   });
 
-  it("🛑 a printed ZERO is not a real card — the `per >= 1` guard, on both arms", () => {
+  it("a printed ZERO is not a real card — the `per >= 1` guard, on both arms", () => {
     const zero = PRINTED.replace("does 50 damage for", "does 0 damage for");
     expect(deriveAttackDamageMultiplier(zero)).toBeNull();
     const zeroSpread = PRINTED.replace("also does 30 damage", "also does 0 damage");
@@ -668,20 +479,16 @@ describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D539 §3 — both readers claim the whole compound off ONE `effect` string", () => {
-  it("🛑 `deriveAttackDamageMultiplier` claims it — the exact fold", () => {
+  it("`deriveAttackDamageMultiplier` claims it — the exact fold", () => {
     expect(deriveAttackDamageMultiplier(PRINTED)).toEqual(FOLD);
   });
 
-  it("🛑 `deriveAttackEffect` claims it — the exact program, ONE op", () => {
+  it("`deriveAttackEffect` claims it — the exact program, ONE op", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
     expect(deriveAttackEffect(PRINTED)).toHaveLength(1);
   });
 
-  it("🛑 the op carries NO `ignoreWR`, and the KEY IS ABSENT rather than false", () => {
-    // §8.5 scopes W/R to the Defending Pokémon; the parenthetical is the spread family's
-    // standard reminder, not a suppression. D492's opponent-side twin DOES set the flag
-    // off a genuinely different printed sentence, which is what makes this a reading
-    // rather than an omission. `D539-*` cannot make the key false — only present.
+  it("the op carries NO `ignoreWR`, and the KEY IS ABSENT rather than false", () => {
     const op = deriveAttackEffect(PRINTED)?.[0];
     expect(op).toBeDefined();
     expect(Object.keys(op ?? {})).toEqual([
@@ -696,19 +503,16 @@ describe("D539 §3 — both readers claim the whole compound off ONE `effect` st
     expect("ignoreWR" in (op ?? {})).toBe(false);
   });
 
-  it("🛑 the two readers resolve the SAME noun to the SAME filter (D159)", () => {
+  it("the two readers resolve the SAME noun to the SAME filter (D159)", () => {
     const fold = deriveAttackDamageMultiplier(PRINTED);
     const op = deriveAttackEffect(PRINTED)?.[0];
     if (op === undefined || op.op !== "damageChosen") throw new Error("expected a damageChosen");
-    // ONE question, ONE answer — asserted by VALUE across the two readers, because a
-    // build that narrowed the fold and widened the spread would multiply by one
-    // population and splash on another with every log row reading correctly.
     expect(JSON.stringify(op.filter)).toBe(
       JSON.stringify((fold?.count as { filter: CardFilter } | undefined)?.filter),
     );
   });
 
-  it("🛑 neither PART is claimed as this compound — the whole-string claim, executable", () => {
+  it("neither PART is claimed as this compound — the whole-string claim, executable", () => {
     expect(deriveAttackEffect(PART_2)).toBeNull();
     expect(deriveAttackDamageMultiplier(PART_2)).toBeNull();
     expect(deriveAttackEffect(PART_3)).toBeNull();
@@ -716,84 +520,49 @@ describe("D539 §3 — both readers claim the whole compound off ONE `effect` st
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — THE BOARD. THE SECTION THIS SLICE IS REALLY ABOUT.
-//
-// 🛑 A GREEN CENSUS IS SATISFIED BY HALF THIS SLICE: the multiplier arm alone flips
-// `resolvedByAnyReader`, steps `BUILT.attack` by 2 and moves every census figure, with
-// the own-side spread never happening. So every rung below asserts HP on a board.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D539 §4 — the fold, and the 30 that lands on every named body", () => {
-  it("🛑 (a) the × fold over ONE named body in play: 50 to the defender", () => {
+  it("(a) the × fold over ONE named body in play: 50 to the defender", () => {
     // The attacker alone is a Drifblim, and it counts itself — "in play" is the whole
     // board, and the printed noun names the attacker.
     const { state } = swing(table(BLIMP, [PLAIN]));
     expect(damageVector(state, "p2")).toEqual([50]);
   });
 
-  it("🛑 (a) TWO named bodies: 100", () => {
+  it("(a) TWO named bodies: 100", () => {
     const { state } = swing(table(BLIMP, [LOON, PLAIN]));
     expect(damageVector(state, "p2")).toEqual([100]);
   });
 
-  it("🛑 (a) THREE named bodies: 150 — and the step is the PRINTED 50, not a constant", () => {
+  it("(a) THREE named bodies: 150 — and the step is the PRINTED 50, not a constant", () => {
     const { state } = swing(table(BLIMP, [LOON, LOON, PLAIN]));
     expect(damageVector(state, "p2")).toEqual([150]);
-    // `D539-multiplier-arm-deleted` deals NO base at all here, because `attack.ts` drops
-    // the printed base to zero for a multiply clause and this attack prints none.
   });
 
-  it("🛑 (b) THE ATTACKER ITSELF TAKES 30 — the mechanism `yourAny` introduces", () => {
-    // 🛑 **THE RUNG THE WHOLE SLICE TURNS ON.** `target: "yourBench"` typechecks, ships,
-    // logs a plausible board and SILENTLY SPARES THE ATTACKER; `count: "all"` never
-    // parks, so no caption contradicts it and NO CENSUS FIGURE MOVES.
-    // `D539-target-becomes-yourbench` is killable by this assertion and by nothing else
-    // in this repo.
+  it("(b) THE ATTACKER ITSELF TAKES 30 — the mechanism `yourAny` introduces", () => {
     const { state } = swing(table(BLIMP, [LOON, PLAIN]));
     expect(damageVector(state, "p1")).toEqual([30, 30, 0]);
   });
 
-  it("🛑 (b) …and `placeSnipe` reaches the own ACTIVE even with NO own bench at all", () => {
-    // The board on which the bench funnel is EMPTY: without the own-side Active leg the
-    // op returns at `targeted.size === 0` and the attack deals nothing to itself, with
-    // `tsc` green and no event to say so — D447's silent no-op, one spot over.
+  it("(b) …and `placeSnipe` reaches the own ACTIVE even with NO own bench at all", () => {
     const { state, events } = swing(table(BLIMP, []));
     expect(damageVector(state, "p1")).toEqual([30]);
     expect(damageVector(state, "p2")).toEqual([50]);
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(2);
   });
 
-  it("🛑 (c) A NAMED BODY CARRYING A WEAKNESS TAKES EXACTLY 30 — the no-`ignoreWR` reading", () => {
-    // Driven, not argued. ×2 on a Colorless attacker would read 60 if the own-side legs
-    // ran the §8.5 pipeline; §8.5 scopes Weakness to the DEFENDING Pokémon and neither
-    // an own bench body nor the attacker is it.
-    //
-    // ⚠️ **THIS BOARD IS THE CONTROL AND NOT THE MEASUREMENT, AND SAYING SO IS THE
-    // POINT** (D424): the Weakness here is on an own BENCH body, and the own-side bench
-    // loop applies W/R in NO build of this engine — so 30 on this board is consistent
-    // with BOTH readings of the Active leg. The rung beneath it is the one that
-    // discriminates.
+  it("(c) A NAMED BODY CARRYING A WEAKNESS TAKES EXACTLY 30 — the no-`ignoreWR` reading", () => {
     const { state } = swing(table(BLIMP, [WEAK_LOON, PLAIN]));
     expect(damageVector(state, "p1")).toEqual([30, 30, 0]);
   });
 
-  it("🛑 (c) THE DISCRIMINATING BOARD IS THE ATTACKER'S OWN ACTIVE SPOT — still exactly 30", () => {
-    // 🛑 The attacker itself carries the ×2, and the attacker's own Active is the ONE
-    // spot `yourAny` newly reaches. It is also the only spot where a copy of
-    // `placeSnipe`'s opponent-side Active arm — which runs the full §8.5 pipeline —
-    // would have doubled the printed 30. `D539-own-active-leg-doubles-a-weakness` routes
-    // this leg through `snipeActive`, and THIS is the rung that reads the reading rather
-    // than the seat.
+  it("(c) THE DISCRIMINATING BOARD IS THE ATTACKER'S OWN ACTIVE SPOT — still exactly 30", () => {
     const { state } = swing(table(WEAK_BLIMP, [PLAIN]));
     expect(damageVector(state, "p1")).toEqual([30, 0]);
     // …and the fold still COUNTED it: one named body in play is the attacker itself.
     expect(state.players.p2.active?.damage).toBe(50);
   });
 
-  it("🛑 (c) …and that hit's DAMAGE_DEALT row reports NO Weakness, rather than a doubled one", () => {
-    // The log and the board agree, which is D433's class: a row reading `base 30 / ×2 /
-    // dealt 60` under a board that moved 30 would be the same defect one field over.
+  it("(c) …and that hit's DAMAGE_DEALT row reports NO Weakness, rather than a doubled one", () => {
     const { events } = swing(table(WEAK_BLIMP, [PLAIN]));
     const own = events.filter(
       (e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> =>
@@ -802,7 +571,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect(own.map((r) => [r.base, r.weakness, r.dealt])).toEqual([[30, null, 30]]);
   });
 
-  it("🛑 (c) …and the WEAKNESS IS LIVE, which is what makes the rung a measurement (D424)", () => {
+  it("(c) …and the WEAKNESS IS LIVE, which is what makes the rung a measurement (D424)", () => {
     // The CONTROL on the same axis: the identical Weakness in the DEFENDING spot doubles
     // the fold, off the same attacker and the same board. Without this, "30" is
     // consistent with a board that has no Weakness on it at all.
@@ -814,27 +583,20 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect(after.players.p2.active?.damage).toBe(100); // 50 × 1, ×2 Weakness
   });
 
-  it("🛑 (d) an UNNAMED own body takes NOTHING — the filter, on a board", () => {
-    // `D539-filter-dropped` hits the attacker's whole board. Three own bodies, one of
-    // them unnamed, and the vector separates the two builds by one number.
+  it("(d) an UNNAMED own body takes NOTHING — the filter, on a board", () => {
     const { state } = swing(table(BLIMP, [LOON, PLAIN, PLAIN]));
     expect(damageVector(state, "p1")).toEqual([30, 30, 0, 0]);
-    // 🛑 …and the ROW COUNT: two bodies took it, so there are exactly two own-side
-    // `DAMAGE_DEALT` rows plus the defender's. A build that hit all four reads four.
     const { events } = swing(table(BLIMP, [LOON, PLAIN, PLAIN]));
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(3);
   });
 
-  it("🛑 (e) THE OPPONENT'S BOARD IS UNTOUCHED BY THE SECOND HALF", () => {
-    // `D539-target-becomes-opponentany` hits across the table: the defender would take
-    // 100 + 30 and the opposing bench 30 each. The possessive is read off the printed
-    // sentence, and a flipped side is `D425-spread-side-flips`' failure at a new op.
+  it("(e) THE OPPONENT'S BOARD IS UNTOUCHED BY THE SECOND HALF", () => {
     const { state } = swing(table(BLIMP, [LOON], [LOON, PLAIN]));
     expect(damageVector(state, "p2")).toEqual([100, 0, 0]);
     expect(damageVector(state, "p1")).toEqual([30, 30]);
   });
 
-  it("🛑 (e) …even when the OPPONENT fields the very bodies the noun names", () => {
+  it("(e) …even when the OPPONENT fields the very bodies the noun names", () => {
     // The sharpest board for the seat: p2's bench is two Drifloon. A build reading the
     // noun without the seat splashes across the table; the printed *"your"* says it does
     // not, and the fold still counts only p1's.
@@ -843,7 +605,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect(damageVector(state, "p1")).toEqual([30, 30]);
   });
 
-  it('🛑 it never PARKS, and that is what `count: "all"` means', () => {
+  it('it never PARKS, and that is what `count: "all"` means', () => {
     const { state, events } = swing(table(BLIMP, [LOON, PLAIN]));
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(eventTypes(events)).not.toContain("EFFECT_PENDING");
@@ -852,13 +614,13 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect("cont" in state.phase).toBe(false);
   });
 
-  it("🛑 the ATTACK is not skipped and the sentence is SIMULATED", () => {
+  it("the ATTACK is not skipped and the sentence is SIMULATED", () => {
     const { events } = swing(table(BLIMP, [LOON, PLAIN]));
     expect(eventTypes(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(eventTypes(events)).toContain("ATTACK_DECLARED");
   });
 
-  it("🛑 the MISMATCHED-NOUN near miss is LOUD through a real attack, not merely null", () => {
+  it("the MISMATCHED-NOUN near miss is LOUD through a real attack, not merely null", () => {
     // Driven through the attack rather than through the deriver alone: the sentence is
     // read by nothing, so the engine says so on the loud channel.
     const { events } = swing(table(BLIMP, [LOON, PLAIN]), 2);
@@ -873,10 +635,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect(damageVector(state, "p2")).toEqual([10]);
   });
 
-  it("🛑 the DAMAGE_DEALT rows name the DAMAGED body's seat and the ATTACKER as dealer", () => {
-    // D447's reading at a new member: `seat` is the damaged body's and `by` is always
-    // the attacker, so on the own-side legs the two coincide and the log reads
-    // "p1 dealt … to p1".
+  it("the DAMAGE_DEALT rows name the DAMAGED body's seat and the ATTACKER as dealer", () => {
     const { events } = swing(table(BLIMP, [LOON, PLAIN]));
     const rows = events.filter(
       (e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT",
@@ -894,9 +653,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     }
   });
 
-  it("🛑 the ACTIVE leg is FIRST, and the order is `ownInPlayRefs`' (Active, then bench)", () => {
-    // Observable rather than cosmetic: each hit files its own row, and an own-side KO is
-    // swept afterwards, so the order is what a replay renders.
+  it("the ACTIVE leg is FIRST, and the order is `ownInPlayRefs`' (Active, then bench)", () => {
     const { events } = swing(table(BLIMP, [LOON]));
     const rows = events.filter(
       (e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT",
@@ -904,12 +661,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     expect(rows.map((r) => r.seat)).toEqual(["p2", "p1", "p1"]);
   });
 
-  it("⚠️ the PLACEMENT arm of the own-side Active leg, driven through a CONSTRUCTED op", () => {
-    // No printing reaches it today. It exists because `placeSnipe`'s opponent-side
-    // Active leg four lines up draws the same `deals` distinction, and a function whose
-    // two Active legs disagreed about it would be two readings of one rule (D131/D159).
-    // CONSTRUCTED and labelled so (D440); D205's boundary is that an arm a test can
-    // reach is not an arm no build can reach.
+  it("the PLACEMENT arm of the own-side Active leg, driven through a CONSTRUCTED op", () => {
     const state = table(BLIMP, [LOON, PLAIN]);
     const events: GameEvent[] = [];
     const placed = {
@@ -923,8 +675,6 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
     const run = runProgram(state, [placed], { seat: "p1", invokedBy: "attack" }, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p1")).toEqual([20, 20, 0]);
-    // A placed counter is NOT damage from an attack (D138/D139/D142) — so the own
-    // ACTIVE files `COUNTERS_PLACED`, exactly as the bench loop's default arm does.
     expect(eventTypes(events)).toEqual(["COUNTERS_PLACED", "COUNTERS_PLACED"]);
   });
 });
@@ -934,11 +684,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D539 §5 — `yourAny` can Knock Out the attacker's own Active", () => {
-  it("🛑 a 30-HP attacker Knocks ITSELF Out, and the PRIZE goes to the OPPONENT", () => {
-    // 🛑 **DRIVEN, NOT INHERITED FROM A PARAGRAPH.** `finishAttack` sweeps
-    // `[defender, attacker]` and prizes each KO'd side's opponent — the same rule the
-    // confusion self-hit and `damageSelf`'s recoil already ride. This is the first time
-    // a CHOSEN-target op reaches it, so it is asserted on a board.
+  it("a 30-HP attacker Knocks ITSELF Out, and the PRIZE goes to the OPPONENT", () => {
     const before = table(FRAIL_BLIMP, [LOON, PLAIN]);
     expect(before.players.p2.prizes).toHaveLength(6);
     const { state, events } = swing(before);
@@ -948,13 +694,8 @@ describe("D539 §5 — `yourAny` can Knock Out the attacker's own Active", () =>
     );
     // EXACTLY ONE Knock Out: the defender has 500 HP and took 100.
     expect(ko.map((e) => e.seat)).toEqual(["p1"]);
-    // 🛑 **THE PRIZE IS OWED TO THE OPPONENT, AND THE OWING IS A STAGED DECISION.**
-    // `finishAttack` queues `ko:takePrizes` for the KO'd side's OPPONENT — p2 — so the
-    // claim is asserted where the engine makes it, at the phase, rather than at a
-    // counter that has not moved yet.
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
     expect(state.players.p2.prizes).toHaveLength(6);
-    // …and DRIVEN to the end: p2 takes it, p1's row never moves.
     const taken = mustApply(state, {
       type: "takePrizes",
       seat: "p2",
@@ -964,7 +705,7 @@ describe("D539 §5 — `yourAny` can Knock Out the attacker's own Active", () =>
     expect(taken.players.p1.prizes).toHaveLength(6);
   });
 
-  it("🛑 …and the BENCH half still landed before the sweep read the board", () => {
+  it("…and the BENCH half still landed before the sweep read the board", () => {
     // The KO is the epilogue's, not the op's: every named body took its 30 first, and
     // the attacker's own damage is what made it lethal.
     const { state } = swing(table(FRAIL_BLIMP, [LOON, PLAIN]));
@@ -973,7 +714,7 @@ describe("D539 §5 — `yourAny` can Knock Out the attacker's own Active", () =>
     expect(state.players.p2.active?.damage).toBe(100);
   });
 
-  it("🛑 …and the DEFENDER still took the fold, so the attack was not aborted", () => {
+  it("…and the DEFENDER still took the fold, so the attack was not aborted", () => {
     // A build that swept before the program finished would leave the defender at 0. The
     // fold counts the attacker even though the attacker is about to die: the count is
     // taken at DECLARATION, which is `attack.ts`'s standing rule for this family.
@@ -987,11 +728,7 @@ describe("D539 §5 — `yourAny` can Knock Out the attacker's own Active", () =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D539 §6 — no named body in play is a SILENT no-op, not a skip", () => {
-  it("🛑 an attacker the noun does not name, over a bench it does not name: nothing happens", () => {
-    // The fold is ZERO, so `attack.ts` deals no base; the op's candidate set is EMPTY,
-    // so it places nothing and files no event. ⚠️ And it is NOT an
-    // `ATTACK_EFFECT_SKIPPED`: the sentence WAS read, which is the distinction D437's
-    // block draws and the one a "nothing happened" rung usually loses.
+  it("an attacker the noun does not name, over a bench it does not name: nothing happens", () => {
     const { state, events } = swing(table(PLAIN, [PLAIN, PLAIN]));
     expect(damageVector(state, "p1")).toEqual([0, 0, 0]);
     expect(damageVector(state, "p2")).toEqual([0]);
@@ -1001,7 +738,7 @@ describe("D539 §6 — no named body in play is a SILENT no-op, not a skip", () 
     expect(eventTypes(events)).toContain("ATTACK_DECLARED");
   });
 
-  it("🛑 …and the turn still ENDS, which is what makes it a no-op rather than a stall", () => {
+  it("…and the turn still ENDS, which is what makes it a no-op rather than a stall", () => {
     const { state } = swing(table(PLAIN, [PLAIN]));
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(state.turn).toBe(3);
@@ -1013,16 +750,13 @@ describe("D539 §6 — no named body in play is a SILENT no-op, not a skip", () 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D539 §7 — the widening at a persisted address, and the version does not move", () => {
-  it('🛑 DOOR 1, THE CARRIER: `count: "all"` never parks, so no record can hold the value', () => {
-    // D427 — over the BYTES, not from the type's name. `damageChosen` rides
-    // `GameState.phase.cont.pendingOp` ONLY when it PARKS; this op resolves inline, so
-    // the new literal never reaches a record at all.
+  it('DOOR 1, THE CARRIER: `count: "all"` never parks, so no record can hold the value', () => {
     const { state } = swing(table(BLIMP, [LOON, PLAIN]));
     expect("cont" in state.phase).toBe(false);
     expect(JSON.stringify(state)).not.toContain("yourAny");
   });
 
-  it("🛑 DOOR 2, THE ALPHABET: the pre-slice values still mean what they meant", () => {
+  it("DOOR 2, THE ALPHABET: the pre-slice values still mean what they meant", () => {
     // The LOSS direction, driven through JSON because the claim is about BYTES.
     // `ownBenchSnipe.test.ts` §3's shape, at the fourth member.
     const preSlice = [
@@ -1036,9 +770,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
     }
   });
 
-  it("🛑 …and the NEW value round-trips byte for byte, which is the other direction", () => {
-    // Both directions or neither (D441). A rung that only drives the old bytes passes on
-    // a build that ignores the new inhabitant entirely.
+  it("…and the NEW value round-trips byte for byte, which is the other direction", () => {
     const fresh = deriveAttackEffect(PRINTED)?.[0];
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"yourAny","amount":30,"count":"all","source":"attack","deals":true,"filter":{"kind":"anyOf","filters":[{"kind":"byName","name":"Drifloon"},{"kind":"byName","name":"Drifblim"}]}}',
@@ -1046,10 +778,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
     expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
   });
 
-  it("🛑 a v30 `yourBench` op over THIS board still means the bench and NOT the Active", () => {
-    // The sharpest LOSS direction available: the value D447 added, over the very board
-    // this slice's value is about. If `yourAny` had been spelled by RENAMING `yourBench`
-    // rather than by adding a member, this rung would read 30 on the attacker.
+  it("a v30 `yourBench` op over THIS board still means the bench and NOT the Active", () => {
     const state = table(BLIMP, [LOON, PLAIN]);
     const events: GameEvent[] = [];
     const v30 = {
@@ -1066,9 +795,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
     expect(damageVector(run.state, "p1")).toEqual([0, 30, 0]);
   });
 
-  it("🛑 every member of the union is inhabited by a PRINTED sentence, not just by the type", () => {
-    // D205's shape: a union member no printing produces is a value no board can reach.
-    // All FOUR are reached here from the catalog's own text.
+  it("every member of the union is inhabited by a PRINTED sentence, not just by the type", () => {
     const seen = new Set<string>();
     for (const [, text] of corpusRows()) {
       for (const op of (deriveAttackEffect(text) ?? []) as EffectOp[]) {
@@ -1083,27 +810,8 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — THE DESCRIBER OBLIGATION, TRACED THROUGH THE CALL SITE AND EMPTY.
-//
-// 🛑 **AND THE DESCRIBER OBLIGATION IS EMPTY, TRACED THROUGH THE CALL SITE RATHER THAN
-// ARGUED FROM THE OP'S CATEGORY (D478/D489, and `classedBoardSpread.test.ts`'s own shape
-// at D492).** `snipeNote` has exactly ONE caller — `interpreter.ts`'s `damageChosen`
-// PARK branch — and `count: "all"` takes the forced branch above it on every board, so
-// no caption is built. `describeBranch` and `describeCondition` have exactly one caller
-// each, `withConsequence`, which returns the prompt unchanged unless `recordSlotOf(op)`
-// is defined; `damageChosen` is not one of its seven recording ops. And `log.ts` needs
-// nothing: the events are `DAMAGE_DEALT`, which every snipe and every spread in the
-// engine already renders.
-//
-// 🛑 **NO CAPTION RUNG IS WRITTEN AT ALL, AND THAT IS THE POINT.** A caption assertion
-// that can never fail is the thing to avoid; a traced empty obligation is not a guard.
-// `snipeNote`'s `target` parameter and its `zone`/`owner` ternaries were widened anyway,
-// so the day a `1 of your Pokémon` printing lands they already read right.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D539 §8 — the obligation is traced, and it is empty", () => {
-  it("🛑 no prompt is built on any board this printing reaches", () => {
+  it("no prompt is built on any board this printing reaches", () => {
     for (const bench of [[], [LOON], [LOON, PLAIN], [LOON, LOON, PLAIN]]) {
       const { state } = swing(table(BLIMP, bench));
       expect(state.phase.kind).not.toBe("effect:choose");
@@ -1111,49 +819,36 @@ describe("D539 §8 — the obligation is traced, and it is empty", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §9 — THE CENSUS DELTA, AND THE TWO FAMILIES THIS ROW CLOSES.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D539 §9 — what this slice moved, measured over the legal column", () => {
-  it("🛑 the step is +1 sentence / +2 printings, DERIVED from the anchor", () => {
+  it("the step is +1 sentence / +2 printings, DERIVED from the anchor", () => {
     const moved = corpusRows().filter(
       ([, text]) => resolvedByAnyReader(text) && !builtBefore(text),
     );
     expect(moved).toEqual([[2, PRINTED]]);
     expect(units(moved)).toBe(2);
-    // ⚠️ **THE FIFTH CONSECUTIVE SLICE WHOSE TWO STEPS DISAGREE** (D535 1-vs-2, D536
-    // 1-vs-3, D537 1-vs-2, D538 1-vs-3), so a `.length` chain takes `− 1` where a
-    // `units(…)` chain takes `− 2` (D426).
     expect([moved.length, units(moved)]).toEqual([1, 2]);
   });
 
-  it("🛑 `/This attack also does /` IS CLOSED — 17 sentences / 41 printings, all read", () => {
-    // 🛑 **RE-POINTED ONTO THE POSITIVE (D536/D538's lesson).** With :595 built, an
-    // `unbuilt` loop over this family goes VACUOUSLY TRUE, so the assertion that means
-    // something is that EVERY member resolves — and the family's own size, asserted
-    // FIRST, is what stops the loop silently shrinking to nothing.
+  it("`/This attack also does /` IS CLOSED — 17 sentences / 41 printings, all read", () => {
     const family = corpusRows().filter(([, t]) => /This attack also does /.test(t));
     expect([family.length, units(family)]).toEqual([17, 41]);
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
   });
 
-  it("🛑 `/ damage to each of /` IS CLOSED — 11 sentences / 20 printings, all read", () => {
+  it("`/ damage to each of /` IS CLOSED — 11 sentences / 20 printings, all read", () => {
     const family = corpusRows().filter(([, t]) => / damage to each of /.test(t));
     expect([family.length, units(family)]).toEqual([11, 20]);
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
   });
 
-  it("🛑 …and :595 was the LAST unbuilt row of BOTH — what CLOSURE means here", () => {
-    // The claim that makes the two rungs above a CLOSURE rather than a coincidence:
-    // before this slice each family had exactly one unbuilt member and it was this row.
+  it("…and :595 was the LAST unbuilt row of BOTH — what CLOSURE means here", () => {
     for (const pattern of [/This attack also does /, / damage to each of /]) {
       const wasUnbuilt = corpusRows().filter(([, t]) => pattern.test(t) && !builtBefore(t));
       expect(wasUnbuilt).toEqual([[2, PRINTED]]);
     }
   });
 
-  it("🛑 the SPLIT and REGISTRY census figures stand still — this row is a RAW claim", () => {
+  it("the SPLIT and REGISTRY census figures stand still — this row is a RAW claim", () => {
     // A whole-sentence reader claim is not a split, so `SPLIT_ATTACK_UNITS` and
     // `COMPOUND_ATTACK_UNITS` do not move and neither does the trailing-split count,
     // which §1's simulation already pinned at ELEVEN.

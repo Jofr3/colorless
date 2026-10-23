@@ -63,9 +63,6 @@ const fireEnergy = builderCard({
   subtype: "Basic Energy",
   types: ["Fire"],
 });
-// A rotated-out card: mark "F", so the fixture factory derives standard:false
-// for it (D191 — the derivation happens once, at construction; the validator
-// itself knows only the verdict).
 const rotated = builderCard({
   cardId: "swsh1-1",
   name: "Snom",
@@ -325,11 +322,6 @@ describe("validateDeck", () => {
   });
 
   it("fails a rotated-out mark in Standard but not in Expanded", () => {
-    // Same card, same single verdict, two keys: the fixture's mark "F" derived
-    // {standard: false, expanded: true} at construction (test/fixtures.ts —
-    // the ONE site a rotation edits now), and validateDeck just reads the key
-    // the format names. Every Expanded-legality claim here is measured: all
-    // 3,786 catalog rows carry legal_expanded = 1 (see test/legality.test.ts).
     const inStandard = validateDeck(deckOf([rotated, 1]), standard);
     expect(inStandard.issues).toContainEqual({
       level: "error",

@@ -27,63 +27,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.379.0 → 0.380.0 — 🆕🆕🆕 D485: THE MANDATORY FILTERED SWEEP OF THE OPPONENT'S HAND.
-//
-//   file line 673 (1 printing)  "Your opponent reveals their hand. Discard all Item
-//                                cards and Pokémon Tool cards you find there."
-//
-// 1 sentence / 1 legal printing over `legalAttackCorpus()`'s 640 / 1,732. The carrier id
-// is UNRESOLVED and is stated as such rather than invented — this checkout has no D1
-// (D425's standing limitation).
-//
-// 🛑 **BUILD STATE WAS SETTLED FIRST, WITH THE ORACLE THIS SURFACE ACTUALLY HAS (D480).**
-// For an ATTACK sentence `programFor` is not the oracle — `refusedPrintings.ts`'s own
-// limit 1 says so in writing, and the table deliberately carries no `"attack"` surface.
-// The oracle is the THIRTEEN readers off `attackReaderSurface()`, run programmatically
-// against the printed string: **13 / 13 null at HEAD**, and both splitters null too, so
-// the row survived every one of the census's four subtractions. §2 re-runs that.
-//
-// 🛑 **THE COMPOSITION QUESTION WAS ASKED FIRST AND DRIVEN, AND SO WAS D483's
-// COUNTERWEIGHT** — *a composition that matches on the boards you happen to build is not
-// a composition that matches.* Three shipped ops touch the opponent's hidden hand:
-//   · `opponentDiscardsFromHand { count }` — a STATIC count, UNFILTERED, and answered by
-//     the OPPONENT. The printed quantity here is a predicate, not a number.
-//   · `randomFromOpponentHand { to }` — one card, chosen by the RNG (🆕🆕🆕 D624 (D539): ~~one
-//     card~~ — or `max(0, hand − untilHandSize)` cards, each its own RNG draw, under Hand Trim).
-//   · `bottomFromOpponentHand { filter, dest: "discard" }` — **the near-miss, and it takes
-//     the same `filter` into the same pile.** 🛑 **On any board whose opponent hand holds
-//     exactly ONE matching card the two are BYTE-IDENTICAL**: a single-class offer
-//     auto-resolves (the M1 doctrine), so there is not even a park to separate them. That
-//     is the board a suite reaches for first, and it would have made this whole file
-//     vacuous. **They differ the moment the hand holds TWO matches** — this op takes both
-//     and asks nothing; that one takes exactly one and PARKS to ask which. §5 fields that
-//     board and DRIVES both readings rather than arguing them.
-//
-// 🛑 **AND THE ROW IS `COMPOUND-head`, SO D466's RULE APPLIED: DRIVE THE SPLITTER BEFORE
-// PRICING.** Driven — the printed string splits at its one period into a head
-// `deriveAttackEffect` has claimed since M5 (`revealOpponentHand`) and this tail, so **a
-// TAIL-ONLY anchor would have freed the row through `splitAttackTrailingClause` with no
-// compound anchor at all.** It was refused anyway, and §7 is that refusal driven: *"you
-// find there"* is an ANAPHOR whose antecedent is the reveal, and a standalone tail arm
-// would let the splitter compose it behind **any** claimed head — *"Draw 3 cards. Discard
-// all Item cards and Pokémon Tool cards you find there."* would empty half the opponent's
-// hand off a sentence that never revealed it. **So this row is NOT one of D466's
-// "building the head does not free the row" cases; it is the opposite one — the row would
-// have come free too cheaply, in the wrong direction.**
-//
-// ⚠️ **WHAT THIS SLICE COST, NAMED AS ZEROES SO THE CLAIM IS CHECKABLE:** ONE new
-// `EffectOp` member (`discardFromOpponentHand`), ONE new anchor, ONE new
-// `deriveAttackEffect` arm and ONE new `interpreter.ts` op arm. **ZERO** new `CardFilter`
-// members (the printed noun phrase is `anyOf` over the shipped `item` and `toolCard`),
-// readers (the surface stands still at **13**), prompts, choice kinds, events, error
-// codes, `GameState` fields, registry rows, `FIXTURE_POOL` ids (file-local `cardPool`,
-// D414), `redact.ts` bytes or `packages/schema` bytes.
-//
-// SEED-FREE: neither op consumes RNG. The one seed below feeds setup's shuffle, and every
-// board rebuilds the hand under test outright.
-
-/** The printed sentence, byte for byte off `legalAttackCorpus()` (§1 asserts it, so a
-    re-ingest disagrees with this line rather than with a number). */
 const SWEEP =
   "Your opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you find there.";
 /** Its two halves at the one printed period — used by §7 and by nothing else. */
@@ -105,20 +48,9 @@ const SWEEP_PROGRAM: readonly EffectOp[] = [
 
 const SEED = 20260907;
 
-// ── The board (D414: a file-local `cardPool`, no `FIXTURE_POOL` id). ─────────────────
 const SWEEP_ATTACK = 0;
 const NO_EFFECT_AT_ALL = 1;
 
-/** `d485-*` keys with no catalog row behind them (D425).
-
-    🛑 **THE HAND IS EIGHT DISTINCT IDS AND ITS COMPOSITION IS COMPUTED, NOT CHOSEN.**
-    §5 lists six readings of the printed sentence and requires their answers to be six
-    DIFFERENT numbers on this one board — D482's arithmetic-coincidence class, whose
-    symptom is a control PASSING. Three Items, two Tools and two Trainers of the OTHER
-    two printed subtypes is what makes that true: drop one Item and *items-only* answers
-    2, colliding with *tools-only*; drop the Supporter and the Stadium and *every
-    Trainer* answers 5, colliding with *correct*. **§5 computes all six answers, and both
-    near-misses, off this table rather than trusting this paragraph.** */
 const SWEEP_CARDS: Record<string, Card> = {
   /** The attacker. Index 0 prints the sentence; index 1 prints NO effect text at all,
       which is §6's control separating *the program ran and found nothing* from *no
@@ -140,10 +72,6 @@ const SWEEP_CARDS: Record<string, Card> = {
   "d485-item-c": trainerCard("d485-item-c", "Item", "The third test Item."),
   "d485-tool-a": trainerCard("d485-tool-a", "Tool", "The first test Tool."),
   "d485-tool-b": trainerCard("d485-tool-b", "Tool", "The second test Tool."),
-  /** A Supporter and a Stadium: the two OTHER printed Trainer subtypes. They are in the
-      hand because `item` and `toolCard` are `trainerType` reads (cards.ts), so a build
-      that tested `category === "Trainer"` alone would sweep them too — and a hand whose
-      only non-matches were Energy could not tell that build from the right one. */
   "d485-sup": trainerCard("d485-sup", "Supporter", "A test Supporter."),
   "d485-stadium": trainerCard("d485-stadium", "Stadium", "A test Stadium."),
   "d485-nrg": basicEnergy("d485-nrg"),
@@ -151,7 +79,6 @@ const SWEEP_CARDS: Record<string, Card> = {
 
 const SWEEP_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...SWEEP_CARDS };
 
-/** Its own deck (D270/D412), 60 counted before the first run: 8+8+6+6+6+6+6+4+4+6. */
 const SWEEP_DECK = deckOf({
   "d485-thief": 8,
   "d485-wall": 8,
@@ -165,8 +92,6 @@ const SWEEP_DECK = deckOf({
   "d485-nrg": 6,
 });
 
-/** 🛑 THE LOAD-BEARING HAND. Three Items, two Tools, and three non-matching cards of
-    three different kinds. Read as a POPULATION by §5 rather than as a list. */
 const LOADED_HAND = [
   "d485-item-a",
   "d485-item-b",
@@ -228,11 +153,6 @@ function withHand(state: GameState, seat: Seat, ids: readonly string[]): GameSta
   return next;
 }
 
-/** p1 owns TURN 2 with the Thief Active and `oppHand` in the other seat's hand.
-    ⚠️ **BOTH hands are rebuilt and both benches cleared** — every figure below is a
-    population over a hand, so a card the setup shuffle happened to deal would move an
-    answer silently. p1's own hand is loaded with a matching pair on purpose: it is the
-    board on which a SEAT-inverted build is observable at all (§5). */
 function table(oppHand: readonly string[] = LOADED_HAND, attacker: Seat = "p1"): GameState {
   const defender: Seat = attacker === "p1" ? "p2" : "p1";
   let state = openTable(defender);
@@ -258,10 +178,6 @@ function idOf(uid: string, state: GameState): string {
 const idsIn = (state: GameState, seat: Seat, zone: "hand" | "discard"): string[] =>
   state.players[seat][zone].map((uid) => idOf(uid, state)).sort();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE CENSUS, MEASURED OVER THE POPULATION (D423)
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the sentence, and the family it lands in, measured not quoted", () => {
   it("the printed sentence is IN the legal attack column at exactly 1 printing", () => {
     const row = legalAttackCorpus().find(([, sentence]) => sentence === SWEEP);
@@ -269,13 +185,7 @@ describe("§1 — the sentence, and the family it lands in, measured not quoted"
     expect(row?.[0]).toBe(1);
   });
 
-  it("🛑 the WHOLE `reveals their hand` family, printed whole and classified", () => {
-    // ⚠️ THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425): every corpus row
-    // containing the literal `reveals their hand`. What it CANNOT see: a sentence that
-    // spells the act any other way ("have your opponent reveal their hand" — the Ability
-    // column's wording, which is not this column), and a hand read that names no reveal.
-    // This is `opponentHandScaling.test.ts` §-family's own sweep, re-run here because
-    // this slice MOVES one of its rows out of the refused half.
+  it("the WHOLE `reveals their hand` family, printed whole and classified", () => {
     const family = legalAttackCorpus().filter(([, s]) => s.includes("reveals their hand"));
     expect(family.map(([n, s]) => `${n} ${s}`).sort()).toEqual(
       [
@@ -289,12 +199,6 @@ describe("§1 — the sentence, and the family it lands in, measured not quoted"
       ].sort(),
     );
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(17);
-    // 🛑 THE SHARE, RE-DERIVED RATHER THAN CARRIED. D445 claimed 5 of the 17 and left 2
-    // refused; this slice claims a sixth row, so the refused remainder is ONE printing —
-    // the attack-COPY sentence, which stays refused for its own re-argued reason
-    // (`opponentHandScaling.test.ts` §6). Measured through the readers, not asserted.
-    // (🆕🆕🆕 D580 (D539): ~~"stays refused"~~ as a BUILD claim — Mr. Mime is BUILT at D580 as a REGISTRY
-    // row and D445's refusal is retired; the READERS still refuse the sentence, which is all this measures.)
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
     expect(refused.map(([, s]) => s)).toEqual([
       "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
@@ -302,35 +206,21 @@ describe("§1 — the sentence, and the family it lands in, measured not quoted"
     expect(refused.reduce((sum, [n]) => sum + n, 0)).toBe(1);
   });
 
-  it("⚠️ NO APOSTROPHE OF EITHER CLASS on the sentence, so the BEARING census stands still", () => {
-    // The sentence says *their hand* and never *your opponent's hand*, so there is no
-    // `['’]` slot for a punctuation-normalising re-ingest to curl. `clauseApostrophe`'s
-    // sweep moves on FIXTURE additions as well as reader ones (D425), and this slice adds
-    // one fixture sentence: the prediction that it does NOT move is asserted, not assumed.
+  it("NO APOSTROPHE OF EITHER CLASS on the sentence, so the BEARING census stands still", () => {
     expect(SWEEP).not.toContain("'");
     expect(SWEEP).not.toContain("’");
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — BUILD STATE, AND WHAT THE ANCHOR CLAIMS OVER ALL 640 ROWS (D472/D480)
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§2 — the oracle, and the anchor's yield measured over the whole column", () => {
-  it("🛑 the anchor claims EXACTLY this row — 1 sentence / 1 printing over 640", () => {
+  it("the anchor claims EXACTLY this row — 1 sentence / 1 printing over 640", () => {
     const claimed = legalAttackCorpus().filter(([, s]) => deriveAttackEffect(s) !== null);
     const mine = claimed.filter(([, s]) => s.includes("Discard all Item cards"));
     expect(mine.map(([, s]) => s)).toEqual([SWEEP]);
     expect(mine.reduce((sum, [n]) => sum + n, 0)).toBe(1);
   });
 
-  it("🛑 the TEMPLATED alternative claims the IDENTICAL 1 / 1, so the capture buys nothing", () => {
-    // D121's warrant wants TWO printings with one token varying before a parameter is
-    // justified. The wider form is MEASURED rather than argued about: over all 640 rows a
-    // `^Discard all (…) cards and (…) cards you find there\.$` template — here spelled as
-    // the sweep it would license, with the leading reveal kept — matches the same single
-    // row. A capture with one witness is D424's shape, and it would owe a printed-noun
-    // table on top.
+  it("the TEMPLATED alternative claims the IDENTICAL 1 / 1, so the capture buys nothing", () => {
     const WIDE =
       /^Your opponent reveals their hand\. Discard all ([A-Za-zé ]+) cards and ([A-Za-zé ]+) cards you find there\.$/;
     const wide = legalAttackCorpus().filter(([, s]) => WIDE.test(s));
@@ -343,9 +233,7 @@ describe("§2 — the oracle, and the anchor's yield measured over the whole col
   });
 
   it("the reader surface is still THIRTEEN, derived off the module", () => {
-    // The oracle this slice used, pinned so a fourteenth reader cannot arrive unnoticed
-    // and quietly change what "13 / 13 null" meant.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 });
 
@@ -358,12 +246,7 @@ describe("§3 — the derived program", () => {
     expect(deriveAttackEffect(SWEEP)).toEqual(SWEEP_PROGRAM);
   });
 
-  it("🛑 the filter is `anyOf` of two SHIPPED members, and they are DISJOINT", () => {
-    // ⚠️ THE DISJOINTNESS IS WHY THE PRINT NAMES BOTH, and it is asserted on CARDS rather
-    // than described: `item` and `toolCard` are two values of one `trainerType` column
-    // (cards.ts; D231 measured 116 Item rows and 60 Tool rows with no row both). So
-    // `anyOf`'s `.some` is the only reading that pays anybody — an intersection reading
-    // would sweep nothing at all, which is one of §5's six answers.
+  it("the filter is `anyOf` of two SHIPPED members, and they are DISJOINT", () => {
     const item = SWEEP_CARDS["d485-item-a"] as Card;
     const tool = SWEEP_CARDS["d485-tool-a"] as Card;
     const sup = SWEEP_CARDS["d485-sup"] as Card;
@@ -406,7 +289,7 @@ describe("§4 — `discardFromOpponentHand`, driven off a program", () => {
     expect(types(events)).toEqual(["HAND_REVEALED", "FORCED_HAND_DISCARD"]);
   });
 
-  it("🛑 the CONTROLLER's own hand is untouched, on a board where it holds matches", () => {
+  it("the CONTROLLER's own hand is untouched, on a board where it holds matches", () => {
     // The seat axis, observable only because `table()` loads p1's hand with an Item and a
     // Tool. A build that read `ctx.seat` instead of `otherSeat(ctx.seat)` would empty this
     // hand and leave the other one whole, and both halves are asserted.
@@ -435,9 +318,6 @@ describe("§4 — `discardFromOpponentHand`, driven off a program", () => {
 // §5 — THE LOAD-BEARING BOARD: SIX READINGS, SIX DIFFERENT ANSWERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** The six readings a builder could plausibly ship, each with the number of cards it
-    takes out of `LOADED_HAND`. 🛑 **THE ANSWERS ARE DERIVED FROM THE HAND BELOW, NEVER
-    TYPED** — D482's arithmetic-coincidence class, whose symptom is a control PASSING. */
 const READINGS: readonly (readonly [string, CardFilter | null])[] = [
   ["correct — anyOf(item, toolCard)", SWEEP_FILTER],
   ["filter dropped — discard EVERYTHING", { kind: "anyCard" }],
@@ -448,7 +328,7 @@ const READINGS: readonly (readonly [string, CardFilter | null])[] = [
 ];
 
 describe("§5 — the discriminating board, computed BEFORE it is asserted", () => {
-  it("🛑 the six readings answer six DIFFERENT numbers on this one hand", () => {
+  it("the six readings answer six DIFFERENT numbers on this one hand", () => {
     const cards = LOADED_HAND.map((id) => SWEEP_CARDS[id] as Card);
     const swept = READINGS.map(([, filter]) =>
       filter === null
@@ -463,11 +343,6 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
     // confused on this board and none of the rungs below is vacuous by coincidence.
     expect(swept).toEqual([5, 8, 3, 2, 7, 0]);
     expect(new Set(swept).size).toBe(READINGS.length);
-    // ⚠️ **THE HAND IS WHAT MAKES THAT TRUE, AND IT IS ASSERTED RATHER THAN DESCRIBED.**
-    // Drop one Item and *items-only* answers 2, colliding with *tools-only*; drop the
-    // Supporter and the Stadium and *every Trainer* answers 5, colliding with *correct*.
-    // Both near-misses are computed here so the composition of `LOADED_HAND` is a
-    // MEASUREMENT of what it has to be and not a preference.
     const without = (drop: string) =>
       cards.filter((c) => c.id !== drop).filter((c) => matchesFilter(c, { kind: "item" })).length;
     expect(without("d485-item-a")).toBe(2);
@@ -477,10 +352,7 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
     expect(trainersWithoutTheOthers).toBe(5);
   });
 
-  it("🛑 the NEAR-MISS shipped op is separated by this board, and would NOT be by a smaller one", () => {
-    // D483's counterweight, driven rather than asserted. `bottomFromOpponentHand` takes
-    // the SAME filter into the SAME pile, so on a ONE-MATCH hand it is byte-identical to
-    // the sweep — no park, one card, same destination. Both halves are driven here.
+  it("the NEAR-MISS shipped op is separated by this board, and would NOT be by a smaller one", () => {
     const ONE_MATCH = ["d485-item-a", "d485-sup", "d485-nrg"];
     for (const program of [
       SWEEP_PROGRAM,
@@ -495,10 +367,6 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
       expect(idsIn(result.state, "p2", "discard")).toEqual(["d485-item-a"]);
       expect(idsIn(result.state, "p2", "hand")).toEqual(["d485-nrg", "d485-sup"].sort());
     }
-    // 🛑 …AND ON THE LOADED HAND THEY DIVERGE IN BOTH OBSERVABLE WAYS. The sweep finishes;
-    // the near-miss PARKS to ask which single card to move. That is the board this file's
-    // §4 and §6 are built on, and naming it is what makes the composition refusal a
-    // measurement rather than a preference.
     const near: readonly EffectOp[] = [
       { op: "revealOpponentHand" },
       { op: "bottomFromOpponentHand", filter: SWEEP_FILTER, dest: "discard" },
@@ -515,9 +383,6 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
       seat: "p1",
       index: SWEEP_ATTACK,
     });
-    // ⚠️ READ THE DISCARD PILE, NOT THE HAND: an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the opponent has
-    // already drawn for their own turn by the time this state exists. The pile is the
-    // zone the sentence writes and the only one that cannot be moved by the draw.
     expect(idsIn(state, "p2", "discard")).toEqual(
       ["d485-item-a", "d485-item-b", "d485-item-c", "d485-tool-a", "d485-tool-b"].sort(),
     );
@@ -530,13 +395,7 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 the LOG row this op reaches, driven — D478's call-path obligation", () => {
-    // ⚠️ **DESCRIBER OBLIGATIONS FOLLOW THE CALL PATH (D478), AND THIS OP REACHES A
-    // DESCRIBER IT DID NOT AUTHOR.** `FORCED_HAND_DISCARD` is D426's row, written for a
-    // sentence whose OWNER picked the cards; this op reaches it with a sentence where
-    // nobody picked anything. The rendering is asserted rather than assumed, and the
-    // number in it is the one the BOARD produced — a describer that had rendered the op's
-    // printed count would have had no number to render, because this op prints none.
+  it("the LOG row this op reaches, driven — D478's call-path obligation", () => {
     const { state, events } = mustApply(table(), {
       type: "attack",
       seat: "p1",
@@ -556,8 +415,6 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
     expect(row.segments.map((seg) => seg.text).join("")).toContain(
       "discarded 5 cards from their hand",
     );
-    // …and it is filed under the SEAT THAT LOST THE CARDS, not under the attacker — the
-    // row carries no `actor`, so a describer cannot derive one (D425's closed-world trap).
     expect(row.who).toBe("p2");
   });
 });
@@ -577,7 +434,7 @@ describe("§6 — zero matches, and the controls that say WHY it is silent", () 
     expect(types(events)).not.toContain("FORCED_HAND_DISCARD");
   });
 
-  it("🛑 CONTROL ONE — the program DID run: the reveal fired on the same board", () => {
+  it("CONTROL ONE — the program DID run: the reveal fired on the same board", () => {
     // The first of the two silences. `HAND_REVEALED` is the op that cannot whiff, so its
     // presence separates *the sweep ran and matched nothing* from *nothing ran*.
     const { events } = mustApply(table(BARREN_HAND), {
@@ -589,7 +446,7 @@ describe("§6 — zero matches, and the controls that say WHY it is silent", () 
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 CONTROL TWO — an attack with NO effect text on the SAME board reveals nothing", () => {
+  it("CONTROL TWO — an attack with NO effect text on the SAME board reveals nothing", () => {
     // The other silence, fielded so the two are distinguishable. Same board, same seat,
     // same hand; the only difference is the printed sentence.
     const { events } = mustApply(table(BARREN_HAND), {
@@ -601,9 +458,7 @@ describe("§6 — zero matches, and the controls that say WHY it is silent", () 
     expect(types(events)).not.toContain("FORCED_HAND_DISCARD");
   });
 
-  it("🛑 CONTROL THREE — one Item in the same hand and exactly one card moves", () => {
-    // The silence is about the BOARD and not about the op: swap one non-match for a match
-    // and the same program on the same seat files the row it withheld a moment ago.
+  it("CONTROL THREE — one Item in the same hand and exactly one card moves", () => {
     const { state, events } = mustApply(table(["d485-item-a", "d485-sup", "d485-nrg"]), {
       type: "attack",
       seat: "p1",
@@ -614,32 +469,18 @@ describe("§6 — zero matches, and the controls that say WHY it is silent", () 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — THE SPLITTER, DRIVEN (D466) — AND THE TAIL-ONLY ANCHOR REFUSED (D472)
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§7 — why the compound is anchored WHOLE and not composed", () => {
-  it("🛑 the printed string splits into a head that BUILDS and this tail", () => {
-    // D466's rule: drive `splitAttackTrailingClause` before pricing any `COMPOUND-*` row.
-    // Driven with the real string rather than reasoned from the class name.
+  it("the printed string splits into a head that BUILDS and this tail", () => {
     expect(SWEEP).toBe(`${SWEEP_HEAD} ${SWEEP_TAIL}`);
     expect(resolvedByAnyReader(SWEEP_HEAD)).toBe(true);
   });
 
-  it("🛑 the splitter DOES compose this shape — proved on a tail that already builds", () => {
-    // The counterfactual, executed: with a tail `deriveAttackEffect` claims, the same head
-    // composes today. So a tail-only anchor WOULD have freed the row — the refusal below
-    // is a design choice and not a limitation, and this rung is what makes that checkable.
+  it("the splitter DOES compose this shape — proved on a tail that already builds", () => {
     const composed = splitAttackTrailingClause(`${SWEEP_HEAD} Draw 3 cards.`);
     expect(composed).toEqual({ head: SWEEP_HEAD, tail: "Draw 3 cards." });
   });
 
-  it("🛑 THE TAIL IS AN ANAPHOR, so nothing claims it alone — and nothing may", () => {
-    // ⚠️ *"you find there"* points at the reveal. A standalone tail arm would let the
-    // splitter compose this effect behind ANY claimed head, and the sentence below is the
-    // board that would be wrong: a draw that empties half the opponent's hand. Asserted as
-    // `toBeNull` in BOTH directions — the tail unread, and the bogus compound unread —
-    // so the day a tail-only anchor is written this file names it.
+  it("THE TAIL IS AN ANAPHOR, so nothing claims it alone — and nothing may", () => {
     expect(deriveAttackEffect(SWEEP_TAIL)).toBeNull();
     const BOGUS = `Draw 3 cards. ${SWEEP_TAIL}`;
     expect(deriveAttackEffect(BOGUS)).toBeNull();
@@ -661,13 +502,7 @@ describe("§7 — why the compound is anchored WHOLE and not composed", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the persisted record cannot hold this op", () => {
-  it("🛑 REACHABILITY IS EMPTY: neither op in the program can park", () => {
-    // A `MatchRecord` is `{version, seed, startedAt, state, log, names}`; the only address
-    // an `EffectOp` reaches is `state.phase.cont` (`{pendingOp, rest, ctx, record?}`) on an
-    // `effect:choose` phase. `pendingOp` is the op that PARKED and `rest` is what queued
-    // BEHIND one — so an op can be persisted only if it parks, or if something ahead of it
-    // does. Both are driven here on the real boards this program can reach: every hand
-    // composition in this file, run through the whole program, ends `done`.
+  it("REACHABILITY IS EMPTY: neither op in the program can park", () => {
     for (const hand of [
       LOADED_HAND,
       BARREN_HAND,
@@ -685,11 +520,7 @@ describe("§8 — the persisted record cannot hold this op", () => {
     }
   });
 
-  it("🛑 the SERIALIZED ALPHABET does not grow: a round trip is byte-identical", () => {
-    // The other half of D463's pair. A v29 record written by an older deploy cannot carry
-    // this op (it did not exist), and a record written by THIS deploy cannot either — the
-    // rung above says why. So the bytes a record holds are unchanged, driven by round
-    // tripping the post-attack state through JSON and replaying the comparison.
+  it("the SERIALIZED ALPHABET does not grow: a round trip is byte-identical", () => {
     const { state } = mustApply(table(), { type: "attack", seat: "p1", index: SWEEP_ATTACK });
     const round = JSON.parse(JSON.stringify(state)) as GameState;
     expect(round).toEqual(state);

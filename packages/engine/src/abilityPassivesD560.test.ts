@@ -18,30 +18,15 @@ import {
   setActiveFromDeck,
   setConditions,
   setDamage,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D560 — THE ABILITY BUNDLE, PART 2: THE THREE PASSIVES, MAGMORTAR, AND THE TWO
-//    ACTIVATED ABILITIES ──
-//
-//   Slaking ex   sv08-147 / -227     "Born to Slack"     cantAttackUnless opponentHasExOrVInPlay (V2)
-//   Annihilape   sv10-092            "Lose Cool"         +120 pre-W/R, yourActiveDamageCountersAtLeast 2 (V3)
-//   Galvantula   sv06.5-002          "Compound Eyes"     +50 pre-W/R, opponentActiveHasAbility (V4)
-//   Magmortar    sv09-021            "Magma Surge"       opponentBurnExtraCounters 30 (the §13.2 scan)
-//   Thwackey     sv06-015 / svp-115  "Boom Boom Groove"  playableIf yourActiveHasAbility "Festival Lead" (V1)
-//   Cradily      sv07-006            "Selective Slime"   coinFlipGate → two labelled binary confirms
-//
-// Part 1 (the five triggered Abilities and the eleven registry rows) is
-// `abilityTriggersD560.test.ts`. Every board rides a LOCAL `cardPool` (D275) in the suite's
-// OWN 60-card deck (D270): the printed cards transcribed from the tcgdex JSON (2026-09-26)
-// plus `d560-*` demonstrators. Readings R-SL, R-AN, R-GV, R-MG, R-TW, R-CR: docs/decisions.md
-// D560.
 
 const SLAKING = ["sv08-147", "sv08-227"] as const;
 const ANNIHILAPE = "sv10-092";
 const GALVANTULA = "sv06.5-002"; // FIXTURE_POOL's own transcription
 const MAGMORTAR = "sv09-021";
 const THWACKEY = ["sv06-015", "svp-115"] as const;
-const GOLDEEN = "sv06-044"; // Basic, "Festival Lead" (unbuilt — PRINTED is what V1 reads) (🆕🆕🆕 D570 (D539): "unbuilt" WITHDRAWN — `FESTIVAL_LEAD` is built; V1 still reads the PRINTED name, so nothing here moves)
+const GOLDEEN = "sv06-044";
 const DIPPLIN = "sv06-018"; // Stage 1, "Festival Lead"
 const CRADILY = "sv07-006";
 const FLUTTER = "sv05-078";
@@ -75,7 +60,7 @@ const NORM = "d560-norm"; // a {C} attacker: Strike 50 / Pick Off 30
 const WALL = "d560-wall"; // 900 HP {C}, no Ability, no Weakness — the plain defender
 const WALL_EX = "d560-wall-ex"; // 900 HP Basic ex, no Ability
 const WALL_V = "d560-wall-v"; // 900 HP Basic V, no Ability
-const WALL_VMAX = "d560-wall-vmax"; // a VMAX — NOT "ex or V" (D107)
+const WALL_VMAX = "d560-wall-vmax";
 const ABLE = "d560-able"; // 900 HP Basic WITH an Ability
 const ABLE_V = "d560-able-v"; // 900 HP Basic V WITH an Ability (Spiritomb's target)
 const PSY_WEAK_ABLE = "d560-psy-weak-able"; // ×2 {G} Weakness WITH an Ability — the order board
@@ -111,9 +96,6 @@ const LOCAL_CARDS: Record<string, Card> = {
       }),
     ]),
   ),
-  // ⚠️ TEST SURGERY: the printed card PLUS a demonstrator snipe at index 1, so the
-  // `snipeActive` site can be driven with Lose Cool on the attacker (the passive is keyed
-  // by id; index 0 is the printed attack, unchanged).
   [ANNIHILAPE]: battler(ANNIHILAPE, {
     name: "Annihilape",
     stage: "Stage2",
@@ -328,7 +310,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [SLAKING[0]]: 1,
   [SLAKING[1]]: 1,
@@ -356,11 +337,6 @@ const DECK = deckOf({
   "fix-fighting-energy": 4,
   "fix-energy": 25,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -564,7 +540,7 @@ describe('D560 §2 — Slaking ex "Born to Slack": can\'t attack with no ex / V 
     expect(dealtBy(slaking(WALL_EX), 0)?.dealt).toBe(280);
   });
 
-  it('🛑 an opposing BENCHED ex or V is enough — the Bench is "in play" (R-SL)', () => {
+  it('an opposing BENCHED ex or V is enough — the Bench is "in play" (R-SL)', () => {
     expect(dealtBy(slaking(WALL, [WALL_EX]), 0)?.dealt).toBe(280);
     expect(dealtBy(slaking(WALL, [WALL_V]), 0)?.dealt).toBe(280);
   });
@@ -659,7 +635,7 @@ describe('D560 §4 — Galvantula "Compound Eyes": +50 into an Active that HAS a
     expect(row?.dealt).toBe(100);
   });
 
-  it("🛑 the ORDER with ×2 Weakness: (50 + 50) × 2 = 200, never 50 × 2 + 50", () => {
+  it("the ORDER with ×2 Weakness: (50 + 50) × 2 = 200, never 50 × 2 + 50", () => {
     expect(dealtBy(galv(PSY_WEAK_ABLE), 0)?.dealt).toBe(200);
   });
 
@@ -683,7 +659,7 @@ describe('D560 §4 — Galvantula "Compound Eyes": +50 into an Active that HAS a
     expect(row?.dealt).toBe(200);
   });
 
-  it("🛑 R-GV: a LOCKED Ability still counts — Spiritomb on p1's Bench silences the Basic V", () => {
+  it("R-GV: a LOCKED Ability still counts — Spiritomb on p1's Bench silences the Basic V", () => {
     const state = galv(ABLE_V, [], [SPIRITOMB]);
     expect(disabledAbilityUids(state).has(topOf(body(state, "p2")))).toBe(true);
     expect(dealtBy(state, 0)?.dealt).toBe(100);
@@ -729,11 +705,11 @@ describe('D560 §5 — Magmortar "Magma Surge": 3 more counters on the opposing 
     }
   });
 
-  it("🛑 it stacks per Magmortar: two give 20 + 60 = 80", () => {
+  it("it stacks per Magmortar: two give 20 + 60 = 80", () => {
     expect(burnRow(checkup(MAGMORTAR, [MAGMORTAR]).events, "p2")?.amount).toBe(80);
   });
 
-  it("🛑 the counters land BEFORE the cure flip: 50 on heads (Burn cured) AND on tails", () => {
+  it("the counters land BEFORE the cure flip: 50 on heads (Burn cured) AND on tails", () => {
     for (const face of ["heads", "tails"] as const) {
       const { state, events } = checkup(MAGMORTAR, [], WALL, face);
       const order = events.map((e) => e.type);
@@ -750,7 +726,7 @@ describe('D560 §5 — Magmortar "Magma Surge": 3 more counters on the opposing 
     expect(seatBurnExtraCounters(table(NORM, [], MAGMORTAR, [], []), "p1")).toBe(30);
   });
 
-  it("🛑 silenced by a §9 lock: an opposing Active Flutter Mane over an Active Magmortar → 20", () => {
+  it("silenced by a §9 lock: an opposing Active Flutter Mane over an Active Magmortar → 20", () => {
     expect(burnRow(checkup(MAGMORTAR, [], FLUTTER).events, "p2")?.amount).toBe(20);
     // …and a BENCHED Magmortar is out of Flutter Mane's reach: 50.
     expect(burnRow(checkup(NORM, [MAGMORTAR], FLUTTER).events, "p2")?.amount).toBe(50);
@@ -797,7 +773,7 @@ describe('D560 §6 — Thwackey "Boom Boom Groove": the printed Festival Lead ga
     }
   });
 
-  it("🛑 R-TW: a LOCKED Festival Lead Active still satisfies it (an opposing Flutter Mane)", () => {
+  it("R-TW: a LOCKED Festival Lead Active still satisfies it (an opposing Flutter Mane)", () => {
     const state = table(GOLDEEN, [THWACKEY[0]], FLUTTER, [], []);
     expect(disabledAbilityUids(state).has(topOf(body(state, "p1")))).toBe(true);
     expect(use(state).ok).toBe(true);

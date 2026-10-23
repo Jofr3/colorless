@@ -22,75 +22,22 @@ import {
   types,
 } from "./testFixtures";
 
-// D364 — TWO LEADING-SENTENCE STRIPPERS AT ONE SITE, IN A FIXED ORDER, AND
-// NOTHING SAID WHAT HAPPENS TO A PRINTING CARRYING BOTH.
-//
-// D282 built `splitAttackGateClause`; D363 built `splitAttackRequirementClause`
-// in its shape and put it BEHIND it at the one call site (attack.ts). Each slice
-// asserted its own split. Neither asserted the COMPOSITION, and the site's own
-// comment makes an order claim — *"Getting that order backwards would read the
-// requirement off the companion sentence and cancel nothing"* — with nothing
-// behind it. This file is what is behind it.
-//
-// 🛑 THE MEASUREMENT, RE-QUERIED RATHER THAN INHERITED (remote D1 `colorless`,
-// `$.effect`, 2026-08-18, and re-derived LIVE in §1 below off the committed
-// corpus). D363's handoff quoted the census D282 priced its refusal against:
-// *"613 of 1,732 legal attack units are multi-sentence, and only 16 open with
-// `If ` — 13 timing gates plus 3 `You can use this attack only if…`"*.
-//
-//   • **THE COUNTS REPRODUCE TO THE UNIT.** 1,732 units / 640 sentences; 613
-//     units / 271 sentences multi-sentence; 16 units / 8 sentences opening `If `.
-//   • **THE ATTRIBUTION DOES NOT, AND IT CANNOT** — a sentence that opens
-//     *"You can use this attack only if…"* does not open with `If `, so those 3
-//     printings were never IN the 16. The true partition is **10 + 6**: 10 of the
-//     16 are the gate family's two `If `-spellings (7 BAN + 3 GATE), and the
-//     remaining 6 are sentences whose leading `If` IS the substance — of which
-//     **2 are the requirement family** (Sawk), the very rows D363 shipped. The
-//     `13` is the WHOLE gate family (7 BAN + 3 GATE + 3 LICENCE); adding the
-//     LICENCE arm again double-counts it and drops the 6.
-//
-// The arithmetic lands on 16 either way, which is exactly why it survived a
-// slice: **a count can reproduce exactly while its attribution is wrong.** §1
-// asserts the partition so the correction is a measurement rather than a
-// paragraph.
-//
-// 🛑 AND THE ANSWER TO "SHOULD THIS BECOME ONE GENERIC COMPOSER" IS STILL NO,
-// FOR A REASON THIS FILE MEASURES INSTEAD OF INHERITING: the two splits are
-// **DISJOINT ON THE WHOLE CATALOG** — 0 of 1,732 legal units are claimed by both
-// (§2). A `splitHead` that strips leading sentences in a loop would be
-// scaffolding for a population of zero, which is D282's own refusal and D205's
-// definition of the next vacuous guard. What ships instead is the ASSERTION: the
-// order is pinned where the two splits meet (§3), and the disjointness is a
-// TRIPWIRE that reddens by name the day a printing carries both.
-
 /** Sawk `sv10.5w-049`/`-130` "Rising Chop" ({F}, 90 — the cost is ONE Fighting;
     see §4's note), as PRINTED. The catalog's only both-halves compound. */
 const SAWK =
   "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.";
 /** Its leading requirement sentence. */
 const SAWK_HEAD = "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.";
-/** Its trailing companion — `deriveAttackDamageSuppression`'s since D192. */
 const SAWK_TAIL = "This attack's damage isn't affected by Weakness or Resistance.";
-/** 🆕🆕 D417 — Eternatus `sv08-141` "World Ender", as PRINTED: the TRAILING,
-    ANAPHORIC cancel and the fourth stripper's whole population (1 legal unit). */
 const CANCEL_PRINTING = "Discard a Stadium in play. If you can't, this attack does nothing.";
-/** Its head — `deriveAttackEffect`'s since D380, and the TABLE's key. */
 const CANCEL_HEAD = "Discard a Stadium in play.";
 /** Its trailing clause. Byte-identical on every member of the family, which is what
     "anaphoric" means and why the table cannot be keyed on it. */
 const CANCEL_CLAUSE = "If you can't, this attack does nothing.";
-/** D282's BAN spelling, printed on 7 legal units. */
 const GATE_BAN = "If you go second, you can't use this attack during your first turn.";
-/** D282's LICENCE spelling, printed on 3 legal units — and the one that is NOT
-    in the 16, because it does not open with `If `. */
 const GATE_LICENCE =
   "You can use this attack only if you go second, and only during your first turn.";
 
-/** ⚠️ CONSTRUCTED, AND LABELLED CONSTRUCTED. No printing in 978 cards / 6 sets
-    carries both a gate clause and a does-nothing sentence (§2 measures it), so
-    this string is a COUNTEREXAMPLE, not a fixture — it exists to show that the
-    site's order is a real commitment rather than an accident, and no card, deck
-    or registry row is authored for it anywhere in this repo. */
 const BOTH = `${GATE_BAN} ${SAWK}`;
 /** The same two clauses in the other order. Also constructed. */
 const REVERSED = `${SAWK_HEAD} ${GATE_BAN} ${SAWK_TAIL}`;
@@ -106,9 +53,6 @@ function reversedOrder(text: string): string {
   return splitAttackGateClause(stripped)?.body ?? stripped;
 }
 
-/** 🆕🆕 D417 — the site's order over all FOUR strippers: gate clause off the front,
-    then the requirement clause, then the cancel clause off the BACK, then D409's
-    trailing composition. What is left is the string the readers see. */
 function fourSiteOrder(text: string): string {
   const gated = splitAttackGateClause(text)?.body ?? text;
   const required = splitAttackRequirementClause(gated)?.body ?? gated;
@@ -127,9 +71,6 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-/** Setup, then open P1's turn 2 (P2 went first and passed) — `SAWK_SPLIT_DECK`'s
-    harness, copied from D363's suite because the board fact §5 drives is a
-    DIFFERENT claim about the same deck. */
 function board(seed: number): GameState {
   const state = driveSetup(seed, { p1: SAWK_SPLIT_DECK, p2: SAWK_SPLIT_DECK }, { first: "p2" });
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -155,7 +96,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(opensIf)).toBe(16);
   });
 
-  it("🛑 partitions the 16 as 10 GATE + 6 SUBSTANTIVE — not D363's `13 + 3`", () => {
+  it("partitions the 16 as 10 GATE + 6 SUBSTANTIVE — not D363's `13 + 3`", () => {
     const opensIf = corpus().filter(([, s]) => s.includes(". ") && s.startsWith("If "));
     const gate = opensIf.filter(([, s]) => splitAttackGateClause(s) !== null);
     const substantive = opensIf.filter(([, s]) => splitAttackGateClause(s) === null);
@@ -163,306 +104,60 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gate)).toBe(10);
     expect(gate.length).toBe(3);
     expect(units(gate.filter(([, s]) => s.startsWith(GATE_BAN)))).toBe(7);
-    // 6 substantive units on 5 sentences, and 2 of them ARE the requirement
-    // family — the `does nothing.` opener D363's handoff said appears in neither
-    // of its counts. It appears in this one.
     expect(units(substantive)).toBe(6);
     expect(substantive.length).toBe(5);
     expect(units(substantive.filter(([, s]) => splitAttackRequirementClause(s) !== null))).toBe(2);
     expect(units(gate) + units(substantive)).toBe(16);
   });
 
-  it("🛑 the 3 LICENCE printings are multi-sentence and are NOT among the 16", () => {
+  it("the 3 LICENCE printings are multi-sentence and are NOT among the 16", () => {
     // The double-count, driven. They are gate-family units, they are counted in
     // the 13, and they cannot be in a population defined as "opens with `If `".
     const licence = corpus().filter(([, s]) => s.startsWith(GATE_LICENCE));
     expect(units(licence)).toBe(3);
     expect(licence.every(([, s]) => s.includes(". "))).toBe(true);
     expect(licence.some(([, s]) => s.startsWith("If "))).toBe(false);
-    // …and 13 is the WHOLE gate family, which is 10 + 3 and not 13 + 3.
-    // 🆕🆕 D395 — the WHOLE gate family is now 14, and the 13 above is the
-    // FIRST-TURN family alone: Miltank `sv08.5-081`'s clause is a second family
-    // sharing only the `onlyIf` polarity, and it is in NEITHER of this section's
-    // two populations (it is a SINGLE sentence, so not in the 271/613, and it opens
-    // `You can use…`, so not in the 16). **THE PARTITION 10 + 3 IS UNMOVED AND THE
-    // TOTAL IS NOT** — which is the arithmetic that says the new row joined from
-    // outside both filters rather than from inside one of them.
-    // 🆕🆕🆕 **D541 14 → 17**, and the THREE new printings join from OUTSIDE both of this
-    // section's populations exactly as D395's one did: Sylveon ex's row is a SECOND family
-    // again (`during your LAST turn`, the `barredIf` polarity), it does not open with `If `
-    // (so it cannot be in the 16) and its clause prints LAST (so it is in neither half of
-    // the `leadingIf` filter). **The 10 + 3 partition below is UNMOVED and the TOTAL IS
-    // NOT** — the same arithmetic D395's note describes, a second time.
-    // 🆕🆕🆕 **D545 17 → 19** — and the TWO new printings join from OUTSIDE both populations
-    // for D395's reason exactly: `:316` and `:324` are SINGLE clause-only sentences (not in the
-    // multi-sentence 271/613), and though both open with `If `, neither contains a `. `, so the
-    // `leadingIf` filter's multi-sentence half cannot see them. The 10 + 3 partition is UNMOVED.
     const gateAll = corpus().filter(([, s]) => splitAttackGateClause(s) !== null);
     expect(units(gateAll)).toBe(19);
-    // 🛑 **THE FILTER HAD TO CHANGE AND THAT IS A FINDING, NOT A FIX.** It used to read
-    // `body !== ""`, which was a PROXY for "not the clause-only Miltank row" and worked only
-    // while the gate family had exactly one non-first-turn member. D541 adds a second, whose
-    // body is NOT empty, so the proxy silently admitted it and the 10 + 3 partition would have
-    // read 13 + 3. The family is now keyed on the printed words the three first-turn spellings
-    // SHARE and the two others do not.
     const firstTurn = gateAll.filter(([, s]) =>
       (splitAttackGateClause(s)?.clause ?? "").includes("during your first turn"),
     );
     expect(units(firstTurn)).toBe(13);
     expect(units(firstTurn) - units(licence)).toBe(10);
-    // …and the two non-first-turn rows are exactly the 1 + 3 the total now carries above it.
-    // 🆕🆕🆕 **D545 4 → 6** — the non-first-turn rows are now FOUR (1 + 3 + 1 + 1): D545's two
-    // cost clauses print no *"during your first turn"*, so the first-turn filter is UNMOVED at 13
-    // and the whole +2 lands on this difference.
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — ~~17 of 968~~ registry ids carry an `attackGate`, in three kinds (🆕🆕🆕 D582 (D539): the figures are WITHDRAWN — 18 of 1,087 at D582)", () => {
-    // The registry side of the same 13, walked independently of the text side:
-    // a count that agrees across two surfaces is a count, not a transcription.
-    // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
-    // side and the TEXT side of §2 below DISAGREE: three ids joined the field and
-    // ZERO joined `ATTACK_GATE_CLAUSES`, because Angelite's clause is TRAILING and
-    // ships GATE-ONLY. The two surfaces were 13/13 and then 14/14; they are 17/14
-    // now, and the gap IS the measurement that no split was authored.
-    // 🆕🆕🆕 **D541 LANDING REVIEW — THE NOTE ABOVE IS WITHDRAWN, AND THIS COMMIT FALSIFIES ALL
-    // THREE OF ITS CLAUSES.** ① *"ZERO joined `ATTACK_GATE_CLAUSES`"* — that closed list carries FIVE
-    // rows now and the FIFTH is Angelite's trailing clause, so a row DID join. ② *"they are 17/14
-    // now"* — the TEXT side of the very "§2 below" this note points at asserts `[7, 17]`, so the two
-    // surfaces are **17/17** and AGREE again. ③ *"the gap IS the measurement that no split was
-    // authored"* — a split WAS authored: it is this slice's TRAILING branch on `splitAttackGateClause`.
-    // ⚠️ **IT WAS TRUE AT EVERY HEAD UP TO D540's AND WENT FALSE JOINTLY WITH THE ARM THAT REFUTES
-    // IT** — the same joint withdrawal the next `it()` records, so it never sat stale (D178/D418:
-    // annotate, never overwrite). **AND WHAT IT CAUGHT SURVIVES, RE-STATED**: the registry side and the
-    // TEXT side are two independent transcriptions of one fact, and their DIFFERENCE is the live
-    // detector of a gate nobody authored a split for — it is pinned at **0** now, by this block's own
-    // `toBe(17)` and §2's `[7, 17]`, rather than read off a gap of 3.
-    // 🆕🆕🆕 **D545 LANDING — *"that closed list carries FIVE rows now"* (① above) IS D541's
-    // FIGURE: IT CARRIES SEVEN.** Rows 6 and 7 are D545's COST clauses (`:316`, `:324`), not
-    // timing clauses, and they joined with no registry row — see the D545 note below.
-    // 🛑 **AND THIS IS THE SIXTH SITE OF THE BLOCK-PROSE CLASS, AT THE THIRD UNFINISHED GREP OF ONE
-    // SLICE.** The NEXT `it()` in THIS FILE withdrew the SAME D396 note in place, and `registry.ts:2860`
-    // carried the same claim and WAS withdrawn — two of three code sites swept and the third missed,
-    // THREE LINES BELOW this commit's own `@@ -188,11 +188,27 @@` hunk: the identical "context line on
-    // screen" shape as the fourth site. `git grep -i -F "the gap IS the measurement"` RETURNED FIVE lines
-    // at that head — this one, `docs/workstreams/simulator.md` and `docs/progress.md`'s D396 narrative
-    // (both annotated with this one), and TWO frozen dated records (D396's own session-log entry and its
-    // struck status row) which say what D396 MEASURED and are kept as written. It returns more now,
-    // because each withdrawal QUOTES the sentence it withdraws.
-    // 🆕🆕🆕 **D545 — *"it is pinned at 0 now"* IS WITHDRAWN: THE DIFFERENCE IS 2, AND THIS TIME
-    // IT MEASURES THE OPPOSITE THING.** The TEXT side is [9, 19] (§2) and the REGISTRY side is
-    // unmoved at 17, because D545's two rows (`:316` / `:324`, the COST clauses) are split with
-    // NO registry row behind them — the first gate printings the derivation serves ALONE. So
-    // the gap is no longer "a gate nobody authored a split for" (registry > text, D396) but
-    // "a split nobody authored a row for" (text > registry), and both directions are now
-    // named. The registry figure here is the one that stays pinned.
+  it("S2 — ~~17 of 968~~ registry ids carry an `attackGate`, in three kinds ( D582 (D539): the figures are WITHDRAWN — 18 of 1,087 at D582)", () => {
     const ids = registryCardIds();
-    // 🆕🆕🆕 D553 — 713 -> **725**: TWELVE registry keys on SEVEN program objects —
-    // the simple once-per-turn Abilities (Rapidash, Chandelure, Blissey ex, Swadloon,
-    // Mamoswine ex, Sawsbuck, Ethan's Quilava). Real catalog ids and NOT `fix-*` keys
-    // (both suites drive a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no
-    // row authors an `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
-    // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
-    // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
-    // and the first on which the gate NAMES its own attack. Real catalog ids and NOT
-    // `fix-*` keys (the suite drives a LOCAL `cardPool`, D275's idiom), and the row
-    // authors no `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
-    // — a bare `attackGate` at index **1**, the first gate in that field at a
-    // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
-    // LOCAL `cardPool`, D275's idiom), and it authors no `attack` program, so the
-    // ATTACK summand cannot move with it.
-    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
-    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
-    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
-    // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    // 🆕🆕🆕 D554 — 725 -> **740**: FIFTEEN registry keys on NINE program objects —
-    // the deck-search Trainers (Hilda, Colress's Tenacity, Cyrano, Hyper Aroma, Team
-    // Rocket's Transceiver, Energy Search Pro, Precious Trolley, Boxed Order,
-    // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
-    // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
-    // an `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕🆕 D555 — 740 -> **760**: TWENTY registry keys on TWELVE program objects —
-    // the zero-vocabulary Trainers (Cook, Poké Vital A, Iris's Fighting Spirit, Eri,
-    // Meddling Memo) and Abilities (Torrid Scales, Ancient Wing, Beckoning Tail,
-    // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
-    // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
-    // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
-    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
-    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
-    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
-    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    // 🆕🆕🆕 D557 — 779 -> **798**: NINETEEN registry keys on ELEVEN program objects —
-    // Kieran, Team Rocket's Venture Bomb, Morty's Conviction, Xerosic's Machinations,
-    // Lucian, Arven's Sandwich, Megaton Blower, Brilliant Blender, TM Machine, Dusk Ball
-    // and Tool Scrapper. Real catalog ids, no `fix-*` key (`chooseOneTrainersD557.test.ts`
-    // / `riderTrainersD557.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
-    // `svp-149`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D558 — 798 -> **816**: EIGHTEEN registry keys on TWELVE program objects —
-    // Counter Gain, Hop's Choice Band, Brave Bangle, Air Balloon, Rescue Board, Gravity
-    // Gemstone (Tools), Full Metal Lab, Granite Cave, Postwick, N's Castle, Paradise Resort
-    // (Stadiums) and Salvatore. Real catalog ids, no `fix-*` key
-    // (`continuousToolsStadiumsD558.test.ts` / `salvatoreD558.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv10.5w-085`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D559 — 816 -> **831**: FIFTEEN registry keys on SEVEN program objects — the
-    // ability bundle (Lillie's Clefairy ex ×4, Flutter Mane ×3, Gastrodon, Orthworm ex ×2,
-    // Maractus ×2, Klinklang ×2, Regirock). Real catalog ids, no `fix-*` key
-    // (`abilityBundleD559.test.ts` / `abilityRecoilArmorD559.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv05-212`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D560 — 831 -> **848**: SEVENTEEN registry keys on ELEVEN program objects — the
-    // second ability bundle (Drilbur, Team Rocket's Koffing, Thwackey ×2, Slaking ex ×2,
-    // Annihilape, Galvantula, Magmortar, Whimsicott ×2, Dachsbun ex ×3, Indeedee ×2,
-    // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
-    // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
-    // `sv09-082`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D561 — 848 -> **863**: FIFTEEN registry keys on NINE program objects — the
-    // trainer bundle (Perrin ×3, Crispin ×4, Super Potion, Love Ball, Hand Trimmer, Scoop Up
-    // Cyclone ×2, Scramble Switch, Academy at Night, Perilous Jungle). Real catalog ids, no
-    // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
-    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
-    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
-    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D563 — 877 -> **888**: ELEVEN registry keys on FIVE program objects — Eevee ex
-    // ×3 "Rainbow DNA", Noivern "Tuning Echo", Kyurem "Plasma Bane", Feraligatr ×2
-    // "Torrential Heart", Palafin ex ×4 "Hero's Spirit". Real catalog ids, no `fix-*` key
-    // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D564 — 888 -> **897**: NINE registry keys on FIVE program objects — Jasmine's
-    // Gaze ×3, Amarys ×3, Team Rocket's Factory, Community Center, Crobat "Shadowy Envoy"
-    // (Caretaker's rider re-authors an EXISTING object on its two existing keys). Real catalog
-    // ids, no `fix-*` key (`trainerBundleD564.test.ts` / `sideDamageNextTurnD564.test.ts` drive
-    // a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D565 — 897 -> **905**: EIGHT registry keys on FIVE program objects — Misty's
-    // Psyduck ×2 "Flustered Leap", Team Rocket's Orbeetle ×2 "Rocket Brain", Farfetch'd
-    // "Impromptu Carrier", Palafin "Zero to Hero", Ruffian ×2. Real catalog ids, no `fix-*` key
-    // (`abilityBundleD565.test.ts` / `ruffianD565.test.ts` drive a LOCAL `cardPool`), inserted
-    // MID-MAP after `sv06.5-029`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D566 — 905 -> **914**: NINE registry keys on SIX program objects — Brock's Scouting
-    // ×2, Ogre's Mask ×2, Heavy Baton, Amulet of Hope, Powerglass ×2, Team Rocket's Watchtower.
-    // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
-    // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
-    // `attack` program.
-    // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
-    // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
-    // 🆕🆕🆕 D568 — 918 -> **935**: SEVENTEEN registry keys on EIGHT program objects — the Tera
-    // banner unlock, Slice 1: Sparkling Crystal ×2, Tera Orb, Glass Trumpet ×2, Briar ×4, Milotic ex
-    // ×3 "Sparkling Scales", Noctowl ×3 "Jewel Seeker", Azumarill "Glistening Bubbles", and
-    // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
-    // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
-    // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
-    // 🆕🆕🆕 D569 — 935 -> **949**: FOURTEEN registry keys on SEVEN program objects — the Paradox
-    // banner unlock, Slice 2 part a: Iron Crown ex ×6 "Cobalt Command", Awakening Drum, Reboot Pod
-    // (non-attack), and SIX `attack`-keyed rows — Miraidon ×2 "Peak Acceleration", Great Tusk ×2
-    // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
-    // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
-    // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
-    // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
-    // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
-    // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
-    // 🆕🆕🆕 D571 — 956 -> **962**: SIX registry keys on THREE program objects — Iron Thorns ex
-    // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
-    // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
-    // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
-    // 🆕🆕🆕 D572 — 962 -> **968**: SIX registry keys on FOUR program objects — Munkidori ×3
-    // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
-    // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
-    // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
-    // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
-    // (an ATTACK row on existing ops, no `attackGate`, so the gated count below stands at 17).
-    // 🆕🆕🆕 D576 — 969 -> **973**: FOUR registry keys on THREE program objects — the Antique Fossils
-    // `sv07-129` / `sv10.5b-080` (`PROTECTIVE_COVER`), `sv07-130` (`PRIMAL_ROOT`), `sv10.5w-079`
-    // (`PLUME_PROTECTION`): `playAsPokemon` + `passive`, ALL non-attack. Real catalog ids, no `fix-*`
-    // key, inserted MID-MAP after D572's rows; no `attackGate`, so the gated count below stands at 17.
-    // 🆕🆕🆕 D577 — 973 -> **979**: SIX registry keys on THREE program objects — Area Zero Underdepths
-    // `sv07-131` / `sv07-174` / `sv08.5-094` (`AREA_ZERO_UNDERDEPTHS`, a `stadium`), Boomerang Energy
-    // `sv06-166` (`BOOMERANG_ENERGY`, an `energy`) and Tyme `sv08-190` / `sv08.5-143` (`TYME`, a
-    // `trainer`): ALL non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D576's
-    // rows; no `attackGate`, so the gated count below stands at 17.
-    // 🆕🆕🆕 D578 — 979 -> **985**: SIX registry keys on FOUR program objects — Scovillain ex
-    // `sv08-037` / `sv08-216` (`DOUBLE_TYPE`, a `passive`), Technical Machine: Fluorite `sv08-188`
-    // (`TM_FLUORITE`, `toolAttacks` + `toolDiscardAtEndOfYourTurn` + an `attack` key for its GRANTED
-    // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
-    // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
-    // MID-MAP after D577's rows; no `attackGate`.
-    expect(ids.length).toBe(1451); // (🆕 **card revision B09 +1** — Paradise Resort `svp-045` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `PARADISE_RESORT` object; no `attackGate`.) (🆕 **card revision B08 +1** — Reversal Energy `sv02-192` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `REVERSAL_ENERGY` object; no `attackGate`.) (🆕 **card revision B05 +1** — Potion `mfb-33` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `POTION` object; no `attackGate`.) (🆕 **card revision B04 +7** — Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091` (`legal_standard = 0`, `legal_standard_effective = 1`) and the text-less `30th` Items Poké Pad `30th-126`, Switch `30th-127`, Ultra Ball `30th-128` (`legal_standard = 1`), MID-MAP, on the shipped `RARE_CANDY` / `SWITCH` / `ULTRA_BALL` / `POKE_PAD` objects; no `attackGate`.) (🆕 **card revision B01 +3** — Judge `sv04.5-228` / `sv10-167` / `sv10-222` (mark G, `legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `JUDGE` object; no `attackGate`.) (🆕🆕🆕 **D647 +13** — the merge of `main`: Arven ×5 and Miraidon ex "Tandem Unit" ×6 (rotated, user-requested; `CENSUS_NOT_LEGAL`) and Counter Catcher `sv04-160` / `sv04-264` (rotated), MID-MAP, on three NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D646 +1** — Backtrack Badge `me05-074`, MID-MAP, on one NEW `passive` Tool object; no `attackGate`.) (🆕🆕🆕 **D645 +4** — the last one-offs, Meganium `me01-010` / `mep-001` and Goodra `me04-068` / `mep-077`, MID-MAP, on two NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D644 +5** — Y1e, Cinderace `me01-028`, Patrat `me04-070`, Illumise `30th-004`, Ferrothorn `me04-063` and Transformation Tome `me04-083`, MID-MAP, on five NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D643 +3** — Y1a, Rotom ex `me02-029` / `-111` / `-126`, MID-MAP, on one NEW `passive` object (`toolCapForName`); no `attackGate`.) (🆕🆕🆕 **D642 +6** — Z1 + K2, Spiritomb `me01-087` / `-148`, Wishiwashi `30th-022`, Risky Ruins `me01-127`, Dizzying Valley `me02-088` and Ange Floette `me04-075`, MID-MAP, on five NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D641 +3** — Y1b, Lt. Surge's Bargain `me01-120` / `-170` / `-185`, MID-MAP, on one NEW Trainer object; no `attackGate`.) (🆕🆕🆕 **D638 +3** — X1, Mew ex `30th-066` / `-152` / `-158`, MID-MAP, on one NEW `passive` object (`memoryHelix`); no `attackGate`.) (🆕🆕🆕 **D637 +4** — the four `me` Antique Fossils `me03-068` / `-069`, `me05-072` / `-073`, MID-MAP, on four NEW fossil objects; no `attackGate`.) (🆕🆕🆕 **D636 +2** — Clawitzer `me01-038` / `-141`, MID-MAP, on one NEW `abilities` object; no `attackGate`.) (🆕🆕🆕 **D635 +1** — F1, Fossil Quarry `me05-076`, MID-MAP, on one NEW `stadium` object; no `attackGate`.) (🆕🆕🆕 **D632 +5** — D1, Damp: Psyduck ×3 and Golduck ×2, MID-MAP, on two NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D631 +9** — P1, the rest of the passive modifiers: Bastiodon ×3, Decidueye ex ×2, Kingambit, Garbodor, Yveltal and Snorlax, MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D630 +2** — M1, the persisted-record bundle: Iron Defender ×2, MID-MAP, on one NEW Trainer object; no `attackGate`.) (🆕🆕🆕 **D628 +2** — A1, the rest of the on-bench / on-move Abilities: Latios "Lustrous Assist" and Larry's Komala "Lethargic Charge", MID-MAP, on two NEW non-attack objects (Meowth ex ×3 "Last-Ditch Catch" rides D593's existing keys); no `attackGate`.) (🆕🆕🆕 **D627 +4** — H1, the Hide 'n' Sneak archetype: Poltchageist, Sinistcha, Shuppet and Banette "Hide 'n' Sneak", MID-MAP, on one NEW non-attack object; no `attackGate`.) (🆕🆕🆕 **D626 +8** — K1, the rest of the KO / damaged triggers: Flygon ×3 "Sandy Flapping", Miraidon ×2 "Photon Cord", Gengar ex ×2 "Fainting Spell" and Adversity Policy, MID-MAP, on four NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D625 +13** — T1, the rest of the `me` Trainers: Special Red Card ×2, Jumbo Ice Cream ×2, Dark Bell ×2, Wally's Compassion ×3, Blowtorch ×2, Great Haul Net and Strange Timepiece, MID-MAP, on seven NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D621 +16** — WP24c + WP23: Gladion's Final Battle ×3, Premium Power Pro ×3, Acerola's Mischief ×4, Roxie's Performance ×3 and Dawn ×3, MID-MAP, on five NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D620 +7** — WP26: Light Ball, Punk Helmet ×2, Team Rocket's Hypnotizer, Core Memory and Tremendous Bomb ×2, MID-MAP, on five NEW Tool objects; no `attackGate`.) (🆕🆕🆕 **D619 +7** — WP12 / WP15: Sacred Charm ×2, Thick Scale, Dewgong ×2 "Thick Fat" and Heliolisk ×2 "Frilled Generator", MID-MAP, on four NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D618 +8** — WP25b: Battle Cage ×2, Mystery Garden ×3 and Forest of Vitality ×3, MID-MAP, on three NEW `stadium` objects; no `attackGate`.) (🆕🆕🆕 **D617 +11** — WP24b: Pokémon Center Lady, AZ's Tranquility ×3, Grimsley's Move ×2, Gwynn ×3 and Naveen ×2, MID-MAP, on five NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D614 +4** — WP37b: Mega Clefable ex ×4 "Luminous Wing" (`mep-072`, `me03-031` / `-103` / `-119`), MID-MAP, on one NEW passive object; no `attackGate`.) (🆕🆕🆕 **D612 −4** — WP06: the attack-only keys `INFERNO_X` (`mep-023` / `-029`) and `STEALTHY_SLASH` (`30th-021` / `-148`) RETIRED, their normalised text now reader-built.) (🆕🆕🆕 **D611 +17** — WP21 + Dragonair: 17 `me` ids (Nighttime Maneuvers ×3, Sinister Surge ×3, Boisterous Wind ×2, Destructive Headbutting ×2, Evidence Gathering ×2, Sky Hunt ×2, Grand Wing, Spiteful Evolution, Evolutionary Guidance), MID-MAP, on nine NEW activated Ability objects; no `attackGate`.) (🆕🆕🆕 **D610 +16** — WP37a: 16 `me` ids (Solar Transfer ×4, Bubble Gathering, Metal Road ×2, Swirling Prose ×2, Holes ×2, Scale Up ×3, Tyrannically Gutsy ×2), MID-MAP, on seven NEW Ability / trigger / passive objects; no `attackGate`.) (🆕🆕🆕 **D608 +5** — WP30: 5 `30th` ids (Mewtwo ex ×3 "Photon Bullets", Greninja ex ×2 "Stealthy Slash"), MID-MAP, on two NEW attack-only objects (`PHOTON_BULLETS`, `STEALTHY_SLASH`; tcgdex's `<em>` markup); no `attackGate`.) (🆕🆕🆕 **D606 +9** — WP25a: 9 `me` Stadium ids (Prism Tower ×2, Surfing Beach ×2, Nighttime Mine, Lumiose City ×2, Celebratory Fanfare ×2), MID-MAP, on five NEW `stadium` objects; no `attackGate`.) (🆕🆕🆕 **D604 +8** — WP18: the 8 typed `me` Special Energies (Growing Grass, Rocky Fighting, Telepathic Psychic, Bubbly Water, Magnetic Metal, Nitro Fire, Shadowy Darkness, Voltaic Lightning), MID-MAP, on eight NEW `energy` objects; no `attackGate`.) (🆕🆕🆕 **D603 +11** — WP11: 11 Mega-gated `me` ids (Oricorio ex ×3, Ludicolo ×2, Linoone, Seviper, Mega Signal ×3, Jett), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D602 +9** — WP20b: 9 `me` Ability ids (Silvally ×2, Erika's Tangela ×2, Vivillon `30th-008`, Shuckle ×2, Erika's Vileplume ex, Solgaleo `30th-105`), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D599 +4** — WP24a: Anthea & Concordia `me02.5-182` / `-254` and Emma `me04-077` / `-107`, MID-MAP, on two NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D598 +13** — WP32: 13 `me` Ability ids (Mega Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape, Shedinja ×2, Gengar, Pecharunt), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D597 +2** — WP29: Mega Charizard X ex `mep-023` / `mep-029`, MID-MAP, on the NEW attack-only `INFERNO_X` (the `me02` "Inferno X" program; tcgdex prints "[R]"); no `attackGate`.) (🆕🆕🆕 **D594 +2** — WP33a: Luxio `me03-027` "Fighting Roar" and Chesnaught `me04-007` "Needly Armor", MID-MAP, on two NEW passive objects (`FIGHTING_ROAR`, `NEEDLY_ARMOR`), both non-attack; no `attackGate`.) (🆕🆕🆕 **D593 +5** — WP07: Drifblim `mep-006`, Meowth ex `me03-062` / `-107` / `-121` and Emolga `me04-030`, MID-MAP, on three NEW attack-only objects (Balloon Return, Tuck Tail ×3, Sky Return — Lillie's Comfey's "Fade Out" op at each printed index); no `attackGate`.) (🆕🆕🆕 **D591 +19** — WP20a: 19 `me` Pokémon ids, MID-MAP, on seven NEW `abilities` objects (Run Errand ×4, Alluring Wings, Fiery / Flash-Pop / Frosty Flapping ×3 each, Lunar Cycle ×3, Flaring Magic ×2), all non-attack; no `attackGate`.) (🆕🆕🆕 **D590 +13** — WP05: 13 `me` Pokémon ids, MID-MAP, on nine NEW `onEvolve` objects (Psychic Draw ×4 on two, Prison Panic, Energized Steps, Heave-Ho Catcher, Cast-Off Shell ×2, Enriching Melody ×2, Multiplying Cocoon, Haphazard Hammer), all non-attack; no `attackGate`.) (🆕🆕🆕 **D589 +5** — WP08: Mega Greninja ex ×5 (`mep-081`, `me04-022` / `-100` / `-116` / `-122`), MID-MAP, on the NEW `MORTAL_SHURIKEN`, all non-attack; no `attackGate`.) (🆕🆕🆕 **D588 +17** — WP22: 17 `me` Trainer ids, MID-MAP, on eight NEW objects (Canari ×3, Lillie's Determination ×4, Misty's Vitality ×2, Rosa's Encouragement ×3, Rust Syndicate Grunt ×2, Waitress, Hole-Digging Shovel, Lumiose Galette), all non-attack; no `attackGate`.) (🆕🆕🆕 **D587 +19** — WP04: 19 `me` Trainer ids, MID-MAP, on nine NEW objects (Wondrous Patch ×2, Philippe ×2, Jacinthe ×3, Firebreather ×2, Fighting Gong ×3, Tarragon ×2, Poké Pad ×3, Energy Swatter, Repel), all non-attack; no `attackGate`.) (🆕🆕🆕 **D586 +2** — WP03: Carbink `me02.5-117` / `-242` on the new `DOUBLE_TYPE_FP` ({F}{P} copy of Scovillain's `typesInPlay`), MID-MAP, non-attack; no `attackGate`.) (🆕🆕🆕 **D585 +19** — WP19's parameter copies: 19 `me` ids, MID-MAP, on eight NEW objects (Tundra Wall ×2, Wash Out, Powerful a-Salt ×2, Counterattacking Crest ×3, Stone Arms ×2, Scent Collection, Sky Transport ×5, Synchro Pulse ×3), all non-attack; no `attackGate`.) (🆕🆕🆕 **D584 +18** — the `me` alias tier 2: 18 `me` ids, MID-MAP — Ultra Ball ×2, Zoroark `30th-096` and Hop's Pincurchin ex `me02.5-068` on EXISTING objects, fourteen on the eight NEW D584 objects (Smooth Coat ×3, Shell Spikes, Incandescent Body ×2, Aerial Draw ×2, Share Happiness ×2, Intimidating Fang, Dopey Face, Float Up ×2 — the last two attack-only); no `attackGate`.) (🆕🆕🆕 **D583 +1** — Team Rocket's Energy `me02.5-217`, a reprint-alias key on `sv10-182`'s object, inserted MID-MAP; no `attackGate`.) (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(ids.length).toBe(1451);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
-    // 🆕🆕🆕 D582 — 17 -> **18**: Terapagos ex `me02.5-179`, a reprint-alias key on `sv07-128`'s
-    // object — the ELEVENTH `barredIf`, at index 0.
     expect(gated.length).toBe(18);
     const kinds = gated.flatMap((id) =>
       Object.values(programFor(id)?.attackGate ?? {}).map((g) => g.kind),
     );
-    // 🆕🆕 D396 — 7 -> **10**: Sylveon ex's three printings are the EIGHTH, NINTH
-    // and TENTH `barredIf`, and the first whose condition is not §4's turn order.
-    expect(kinds.filter((k) => k === "barredIf").length).toBe(11); // 🆕🆕🆕 D582 +1 (`me02.5-179`)
-    // 🆕🆕 D395 — 3 -> **4**: Miltank `sv08.5-081` is the FOURTH `onlyIf` and the
-    // first whose condition is not the §4 `allOf([youGoSecond, yourFirstTurn])`.
+    expect(kinds.filter((k) => k === "barredIf").length).toBe(11);
     expect(kinds.filter((k) => k === "onlyIf").length).toBe(4);
     expect(kinds.filter((k) => k === "firstTurnExempt").length).toBe(3);
-    // 🛑 AND THE INDEX, WHICH IS THE HALF THIS SECTION COULD NOT ASSERT BEFORE.
-    // Thirteen gates sat at index 0 and one sits at index 1, so the KEY of this map
-    // is finally load-bearing on the catalog side too — the same claim
-    // `rolloutGate.test.ts` drives on a board.
-    // 🆕🆕 D396 — 13 / **4**: Sylveon ex's three join Miltank at index 1, and the
-    // majority at index 0 is now 13 of 17 rather than 13 of 14 — so an index-blind
-    // read is wrong on FOUR printings across TWO cards and two polarities.
     const indices = gated.flatMap((id) => Object.keys(programFor(id)?.attackGate ?? {}));
-    expect(indices.filter((k) => k === "0").length).toBe(14); // 🆕🆕🆕 D582 +1 (`me02.5-179`)
+    expect(indices.filter((k) => k === "0").length).toBe(14);
     expect(indices.filter((k) => k === "1").length).toBe(4);
   });
 });
 
 describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
-  it("gate split claims 7 s / 17 u (🆕 D541 6/14 → 7/17; the TITLE had been stale at 5/13 since D395; 🆕🆕 D545 → 9 s / 19 u), requirement split 1 s / 2 u, and BOTH claim 0", () => {
+  it("gate split claims 7 s / 17 u ( D541 6/14 → 7/17; the TITLE had been stale at 5/13 since D395; D545 → 9 s / 19 u), requirement split 1 s / 2 u, and BOTH claim 0", () => {
     const all = corpus();
     const gate = all.filter(([, s]) => splitAttackGateClause(s) !== null);
     const req = all.filter(([, s]) => splitAttackRequirementClause(s) !== null);
     const both = all.filter(
       ([, s]) => splitAttackGateClause(s) !== null && splitAttackRequirementClause(s) !== null,
     );
-    // 🆕🆕 D396 — **UNMOVED at [6, 14]**, and that is the claim rather than an
-    // omission: Sylveon ex's three printings gained a registry `attackGate` and NO
-    // `ATTACK_GATE_CLAUSES` row, because their gate clause is TRAILING and
-    // `splitAttackGateClause` is `^`-anchored by policy. All nine readers were run
-    // over the stripped body at D396 and every one refuses it, so a trailing
-    // stripper would have moved this pair and bought ZERO printings.
-    // 🆕🆕🆕 **D541 — WITHDRAWN, AND IT MOVED THIS PAIR EXACTLY AS IT PREDICTED: [6, 14] →
-    // [7, 17].** The prediction was right about the MECHANISM and wrong about the YIELD only
-    // because the yield was contingent on a body nobody had built. D541 built it
-    // (`returnBenchedChosen`), so the trailing stripper buys **3** printings rather than
-    // zero. ⚠️ The premise was RE-CONFIRMED before it was withdrawn — all 13 live readers
-    // still refused that stripped body at D541's head — so this note went false JOINTLY with
-    // the arm and never sat stale.
-    // 🆕🆕 D395 — [5, 13] -> **[6, 14]**, and the disjointness below is UNMOVED:
-    // the new row is a clause-only printing, and `splitAttackRequirementClause`'s
-    // own list does not contain it.
-    // 🆕🆕🆕 **D545 — [7, 17] → [9, 19]**: two clause-only COST clauses (`:316` / `:324`), and
-    // the disjointness below is UNMOVED — neither is in `splitAttackRequirementClause`'s list.
     expect([gate.length, units(gate)]).toEqual([9, 19]);
     expect([req.length, units(req)]).toEqual([1, 2]);
-    // 🛑 THE TRIPWIRE. The day a printing carries both, this reddens by name and
-    // the composer question is live again — with a population above zero.
-    // 🆕🆕🆕 **D541 — MEASURED UNMOVED AT [0, 0], AND THE DISJOINTNESS HAD TO BE RE-DERIVED
-    // RATHER THAN INHERITED.** The old argument was *"the two strippers look at OPPOSITE ENDS
-    // of the string"*, which is exactly the property a TRAILING gate branch destroys:
-    // `splitAttackRequirementClause` reads a LEADING does-nothing sentence and the gate
-    // splitter now also reads a TRAILING clause, so for the first time the two COULD both fire
-    // on one printing. They still do not — on this catalog.
     expect([both.length, units(both)]).toEqual([0, 0]);
   });
 
-  it("🛑 the ORDER IS UNOBSERVABLE ON THE CATALOG — both orders agree on all 640", () => {
+  it("the ORDER IS UNOBSERVABLE ON THE CATALOG — both orders agree on all 640", () => {
     // The consequence of disjointness, stated as the thing that would break.
     // This is what makes a generic composer scaffolding: there is no printed
     // string it would answer differently.
@@ -476,22 +171,12 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     // split must be seen to MOVE the string on its own population.
     expect(siteOrder(SAWK)).toBe(SAWK_TAIL);
     expect(siteOrder(`${GATE_BAN} ${SAWK_TAIL}`)).toBe(SAWK_TAIL);
-    // 🆕🆕 D395 — 6 -> **7**: the clause-only printing is MOVED by the site (to
-    // the empty string), which is the strongest form of "the reader really ran".
-    // 🆕🆕🆕 **D541 7 -> 8** — MEASURED, not predicted. The SENTENCE step is 1 here (the site
-    // rewrites one more printed string) where the PRINTING step at the pins above is 3: this
-    // filter counts distinct corpus sentences, so a number copied from `units(gate)` would
-    // have been wrong by two (D451).
-    // 🆕🆕🆕 **D545 8 -> 10** — MEASURED: the site rewrites each of the two new clause-only
-    // strings to the empty string, as it does Miltank's. Here the sentence step (2) EQUALS the
-    // printing step (2), which is the case where a copied number is right by accident (D451).
     expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(10);
   });
 });
 
 describe("§3 — the ordering where the two splits meet", () => {
-  it("🛑 the site's order accounts for BOTH clauses; the reverse accounts for neither", () => {
-    // ⚠️ CONSTRUCTED STRING (see `BOTH`). No printing spells this.
+  it("the site's order accounts for BOTH clauses; the reverse accounts for neither", () => {
     expect(siteOrder(BOTH)).toBe(SAWK_TAIL);
     expect(deriveAttackDamageSuppression(siteOrder(BOTH))).toEqual({
       weakness: true,
@@ -506,12 +191,7 @@ describe("§3 — the ordering where the two splits meet", () => {
     expect(siteOrder(BOTH)).not.toBe(reversedOrder(BOTH));
   });
 
-  it("🛑 the requirement split REFUSES a gate-led compound, and the LAZY clause group is why", () => {
-    // `ATTACK_DOES_NOTHING` is `^If (.+?), this attack does nothing\.` — on BOTH
-    // the lazy group takes "you go second, you can't use this attack during your
-    // first turn. If your opponent's Active Pokémon isn't a Pokémon ex", which
-    // `ATTACK_REQUIREMENT_CLAUSES` does not carry, so the accounting guard says
-    // no. A GREEDY group would have matched the LAST does-nothing break instead.
+  it("the requirement split REFUSES a gate-led compound, and the LAZY clause group is why", () => {
     expect(splitAttackRequirementClause(BOTH)).toBeNull();
     expect(deriveAttackRequirement(BOTH)).toBeNull();
     // …and it becomes readable the moment the gate clause is off the front.
@@ -521,12 +201,7 @@ describe("§3 — the ordering where the two splits meet", () => {
     });
   });
 
-  it("🛑 BOTH orders fail in the SAFE direction — neither drops a sentence unreported", () => {
-    // The D278/D279 lesson as a property rather than a paragraph: a wrong order
-    // must leave MORE text on the loud path, never less. The residue of the
-    // reverse order is a SUPERSTRING of the site order's residue, both ways
-    // round, so no printed sentence can be silently deleted by getting the
-    // order wrong.
+  it("BOTH orders fail in the SAFE direction — neither drops a sentence unreported", () => {
     for (const text of [BOTH, REVERSED, SAWK, `${GATE_BAN} ${SAWK_TAIL}`]) {
       const site = siteOrder(text);
       const other = reversedOrder(text);
@@ -548,126 +223,41 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
   /** The three printed keys, as literals — `ATTACK_REQUIREMENT_CLAUSES` is
       module-private, so this is a labelled COPY tied to the live reader below. */
   const KEYS: readonly (readonly [string, number])[] = [
-    // 🛑 ZERO Standard-legal printings. All five printings of this sentence
-    // (Palafin `sv03-062`/`-200`, `sv04.5-124`/`-225`, `svp-036`) are
-    // `legal_standard = 0` — the row D125 built the family for is DEAD in
-    // Standard, and the table's "three rows / five printings" doc counts ids it
-    // NAMES rather than printings the pool can play.
     ["If this Pokémon didn't move from the Bench to the Active Spot this turn", 0],
-    // 🛑 2 legal printings, and NOT the card the table names. `sv03-117`
-    // Lycanroc is `legal_standard = 0`; the live printings are **Basculin
-    // `sv10.5w-024`/`-108` "Bared Fangs" ({W}, 50)**, so the row is neither a
-    // hapax nor Lycanroc's. The COUNT the row was priced at is right; the
-    // ATTRIBUTION is a set rotation old.
     [
       "If your opponent's Active Pokémon has no damage counters on it before this attack does damage",
       2,
     ],
-    // 2 legal printings — Sawk, and the only row whose named ids are still live.
     ["If your opponent's Active Pokémon isn't a Pokémon ex", 2],
-    // 🆕🆕 D365 — 2 legal printings, Iron Boulder `sv07-071`/`sv08.5-046`.
     ["If you don't have the same number of cards in your hand as your opponent", 2],
-    // 🆕🆕 D365 — 1 legal printing, Hop's Cramorant `sv09-138`. The family's
-    // NARROWEST row and its only parameterised one.
     ["If your opponent doesn't have exactly 3 or 4 Prize cards remaining", 1],
-    // 🆕🆕 D365 — 2 legal printings, Mesprit `sv08-079`/`sv08-204`, the row that
-    // makes `allOf` a DERIVED value.
     ["If you don't have Uxie and Azelf on your Bench", 2],
-    // 🆕🆕 D366 — **4 legal printings, the family's LARGEST row by printings and
-    // the ONLY one that bought a `BoardCondition` member.** Victini
-    // `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force" ({R}{R}, 120).
-    // ⚠️ It is also the first key in this list with NO apostrophe in it, which is
-    // what `clauseApostrophe.test.ts`'s completeness guard had to learn.
     ["If you have 4 or fewer Benched Pokémon", 4],
-    // 🆕🆕 D377 — Centiskorch `sv05-037` "Charring Breath" ({R}{R}, 180), 1 legal
-    // printing, on `opponentActiveBurned` — a member bought by the SAME slice for a
-    // BONUS row one table over. The third row in this table to spell a member the
-    // bonus table already reads (D363's Sawk, D365's Iron Boulder, now this), and the
-    // first whose two consequents were purchased together.
     ["If your opponent's Active Pokémon isn't Burned", 1],
-    // 🆕🆕 D378 — Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing", TWO legal
-    // printings, on `stadiumInPlay` — a member bought by the SAME slice for a BONUS
-    // row one table over (Probopass `sv10-098` "Mountain Drop"). The FOURTH row in
-    // this table to spell a member the bonus table already reads, and the FIRST whose
-    // cancel half is the BIGGER half: 2 printings here against 1 there.
     ["If there is no Stadium in play", 2],
-    // 🆕🆕 D379 — Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo" (NO Energy
-    // cost, 120), TWO legal printings, on `yourHandExactly` — and the FIRST row in
-    // this table whose member has NO bonus twin at all. D363's Sawk, D365's Iron
-    // Boulder, D377's Centiskorch and D378's Fan Rotom each spelled a member
-    // `CONDITIONAL_DAMAGE_CLAUSES` also reads; both consequents were asked again here
-    // and the bonus side is EMPTY, so all 2 printings arrive through this table.
-    // ⚠️ It is also the LAST row this table can gain from the current pool — see the
-    // rung below, where `unmapped` is now empty.
     ["If you don't have exactly 3 cards in your hand", 2],
   ];
 
-  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1, 2, 2", () => {
+  it("prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1, 2, 2", () => {
     for (const [key, expected] of KEYS) {
       const sentence = `${key}, this attack does nothing.`;
-      // The copy is tied to the live reader: a key that stopped being carried
-      // makes this null and the row fails here rather than silently scoring 0.
       expect(deriveAttackRequirement(sentence), key).not.toBeNull();
-      // ⚠️ PREFIX, not equality: since D363 the skeleton tolerates a trailing
-      // companion, so the Sawk row's printed string is the COMPOUND. Matching on
-      // equality scores that row 0 and would have shipped a false "dead row".
       const printed = corpus().filter(([, s]) => s === sentence || s.startsWith(`${sentence} `));
       expect(units(printed), key).toBe(expected);
     }
   });
 
-  it("🛑 TEN rows, NINE of them reachable in Standard, and 18 legal printings — the table SATURATES", () => {
-    // 🆕🆕 D366 — "six / five / 9" one commit ago, "three / two / 4" the commit
-    // before that; every one of the three numbers has now moved twice. The rung is
-    // unchanged in SHAPE, which is the point: it prices the table by
-    // `legal_standard` rather than by row count, so a slice that adds rows has to
-    // restate what the pool can actually play.
-    // 🆕🆕 D377 — "seven / six / 13" one commit ago. The three numbers have now moved
-    // four times, and this step is the first that adds a row whose member ALREADY
-    // EXISTED IN THE SAME COMMIT for a different consequent.
-    // 🆕🆕 D378 — "eight / seven / 14" one commit ago, the FIFTH move, and the biggest
-    // step this rung has taken on the PRINTINGS column since D366's four: +1 row and
-    // +2 printings, because the row's sentence is the only one in this table with two
-    // legal printings behind a member the same commit bought.
-    // 🆕🆕 D379 — "nine / eight / 16" one commit ago, the SIXTH move, and the LAST
-    // one this pool can produce: the table now carries every does-nothing opener the
-    // legal attack column prints, so the next move on this rung has to come from a
-    // set rotation rather than from a slice.
+  it("TEN rows, NINE of them reachable in Standard, and 18 legal printings — the table SATURATES", () => {
     const reachable = KEYS.filter(([, n]) => n > 0);
     expect(KEYS.length).toBe(10);
     expect(reachable.length).toBe(9);
     expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(18);
-    // The whole does-nothing OPENER population, and how much of it is mapped:
-    // 9 sentences / 18 units open with the skeleton, and 9 sentences / 18 units are
-    // carried. NOTHING is left unmapped — which is what expires the accounting
-    // guard's printed subject, not what makes the guard vacuous (see below).
-    // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the unmapped 3 / 5 -> 2 / 4, and the sentence
-    // that moved is the one this list NAMED as owed: *"…isn't Burned"*. The remaining
-    // two are a Stadium-PRESENCE read (which `yourStadiumInPlay` cannot answer — it
-    // reads §7.3 OWNERSHIP) and an exact hand-size read.
-    // 🆕🆕 D378 — 7 / 14 -> 8 / 16 and the unmapped 2 / 4 -> 1 / 2, and the sentence
-    // that moved is again the one this list NAMED as owed: the Stadium-PRESENCE read,
-    // built as `stadiumInPlay` — a NEW member beside `yourStadiumInPlay` rather than a
-    // widening of it, because that one has two consumers whose OWNERSHIP is
-    // load-bearing (D362: a widening is free, a rename is not).
-    // 🛑 🆕🆕 **D379 — `unmapped` IS EMPTY, AND THAT IS THE EXPIRY D378 WROTE DOWN
-    // ARRIVING ON SCHEDULE.** 8 / 16 -> 9 / 18 and the unmapped 1 / 2 -> **0 / 0**:
-    // the hand-size read was built as `yourHandExactly`, and every does-nothing
-    // OPENER the legal attack column prints is now carried. `sawkRequirementSplit`'s
-    // unmapped rider therefore has NO real printed subject left and has become a
-    // CONSTRUCTED near-miss ("exactly 4"), which that file and `fix-sawk`'s block both
-    // say in their own words. ⚠️ **SATURATION IS THE ONE STATE THIS RUNG CANNOT SEE
-    // THE DIFFERENCE FROM VACUITY IN**, so the line after the partition drives a
-    // sentence OUTSIDE the opener population and requires a refusal.
     const openers = corpus().filter(([, s]) => /^If .+?, this attack does nothing\./.test(s));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const mapped = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
     expect([mapped.length, units(mapped)]).toEqual([9, 18]);
     const unmapped = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
     expect([unmapped.length, units(unmapped)]).toEqual([0, 0]);
-    // 🛑 THE ANTI-VACUITY HALF: a reader that answered everything would satisfy both
-    // lines above. It does not — the constructed near-miss one parameter value over is
-    // refused, and so is a sentence with no skeleton at all.
     expect(
       deriveAttackRequirement(
         "If you don't have exactly 4 cards in your hand, this attack does nothing.",
@@ -681,11 +271,7 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
 });
 
 describe("§5 — on a board: the requirement is read BEFORE the split, and that is observable", () => {
-  it("🛑 CANCELS into a non-ex — which is only true because the read precedes the split", () => {
-    // attack.ts reads `deriveAttackRequirement(gated)` off the UNSPLIT string and
-    // only then computes `effect = requirementSplit.body`. Reversed, the reader
-    // would be handed the COMPANION sentence, `requirement` would be null, and
-    // 90 damage would land on a body the printed card says is immune.
+  it("CANCELS into a non-ex — which is only true because the read precedes the split", () => {
     expect(deriveAttackRequirement(SAWK_TAIL)).toBeNull();
     const after = mustApply(ready(6401, "fix-bigbody"), { type: "attack", seat: "p1", index: 0 });
     expect(after.events.find((e) => e.type === "ATTACK_FAILED")).toMatchObject({
@@ -696,12 +282,7 @@ describe("§5 — on a board: the requirement is read BEFORE the split, and that
     expect(types(after.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 the CONTROL that names none of these ids and still reddens: the split really fired", () => {
-    // `fix-sawk` index 1 prints the SAME leading requirement with a companion no
-    // reader resolves. If the split had not fired, the residue reported would be
-    // the WHOLE compound; if the split fired without the accounting guard, there
-    // would be no residue at all. It is the BODY alone, and the requirement
-    // still cancels.
+  it("the CONTROL that names none of these ids and still reddens: the split really fired", () => {
     const after = mustApply(ready(6427, "fix-bigbody"), { type: "attack", seat: "p1", index: 1 });
     const skipped = after.events.find((e) => e.type === "ATTACK_EFFECT_SKIPPED");
     expect(skipped).toMatchObject({ effect: "Then, spin the wheel of fate." });
@@ -711,35 +292,6 @@ describe("§5 — on a board: the requirement is read BEFORE the split, and that
   });
 });
 
-// 🆕🆕 D417 — THE FOURTH STRIPPER, AND IT OWES §2's MEASUREMENT OVER FOUR RATHER
-// THAN TWO. `splitAttackCancelClause` takes the printed *"If you can't, this attack
-// does nothing."* off the BACK of a compound and hands the head sentence to the
-// readers, so `attack.ts` now runs FOUR head/tail strippers in a fixed order at one
-// seam. §2 pinned the disjointness of the first two as a tripwire; three strippers
-// have six pairs, four have SIX MORE, and none of them had a number.
-//
-// 🛑 THE ANSWER IS THE SAME ONE, WIDER: **ALL SIX PAIRS ARE DISJOINT OVER ALL 1,732
-// LEGAL UNITS**, so the site's order among the four is unobservable on the catalog
-// and a generic composer is still scaffolding for a population of zero. That is the
-// measurement, and §6 is where it is a TRIPWIRE rather than a paragraph — the day a
-// printing carries two, exactly one pair reddens BY NAME.
-//
-// ⚠️ AND EACH REFUSAL IS ATTRIBUTED, NOT COUNTED. A matrix of zeroes is what a
-// suite of four dead functions also produces, so the section below states WHY each
-// stripper refuses the cancel family before it states that it does:
-//   • `splitAttackGateClause` matches a fixed CLOSED clause list at a SENTENCE
-//     BOUNDARY — LEADING, and since 🆕 **D541** TRAILING as well — and neither
-//     anaphoric printing opens with one OR ends with one. ⚠️ **THE REFUSAL DID NOT
-//     CHANGE WHEN THE POSITION SET DID**, which is why this is a RE-POINT and not a
-//     correction: the list is closed, so a clause that is not ON it cannot match at
-//     either end;
-//   • `splitAttackRequirementClause` is `^If`-anchored — that is the whole gap D380
-//     named and D417 closes, so its refusal here is the slice's own premise;
-//   • `splitAttackTrailingClause` requires its tail to be a sentence
-//     `deriveAttackEffect` CLAIMS, and a does-nothing clause is not one. **THIS IS
-//     THE ONLY PAIR THAT COULD PLAUSIBLY HAVE COLLIDED** — both split at the same
-//     end of the same string — and the condition that separates them is driven
-//     rather than asserted.
 describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", () => {
   /** The four, by name, in the order `attack.ts` runs them. */
   const STRIPPERS: readonly (readonly [string, (text: string) => unknown])[] = [
@@ -749,48 +301,29 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     ["trailing", splitAttackTrailingClause],
   ];
 
-  it("🛑 prices each stripper live off the corpus — 🆕 D541 7/17, 1/2, 4/5, 11/21 (🆕🆕 D545 gate → 9/19)", () => {
+  it("prices each stripper live off the corpus — D541 7/17, 1/2, 4/5, 11/21 ( D545 gate → 9/19)", () => {
     const priced = STRIPPERS.map(([name, split]) => {
       const rows = corpus().filter(([, s]) => split(s) !== null);
       return [name, rows.length, units(rows)] as const;
     });
-    // 🆕🆕 D417 — the fourth row is the new one; the first two are §2's figures
-    // re-derived through this section's own instrument, so the two sections cannot
-    // drift apart silently.
-    // 🆕🆕 D420 — the CANCEL row moves 1/1 → **4/5** and NO OTHER ROW MOVES, which is
-    // the shape this table exists to show: the widening is a CLOSED alternation on
-    // one anchor plus three rows in one table, so the three older strippers see
-    // exactly the strings they saw before. The hand-Energy cost family is 3 sentences
-    // / 4 printings.
-    // 🆕🆕🆕 **D541 — the GATE row moves 6/14 → 7/17 and NO OTHER ROW MOVES**, which is the
-    // shape this table exists to show: the widening is a second POSITION on one closed
-    // five-row list, so the three other strippers see exactly the strings they saw before.
-    // ⚠️ The gate row is the one whose SENTENCE and PRINTING steps disagree (1 vs 3) — each
-    // was measured at this site rather than carried across.
-    // 🆕🆕🆕 **D545 — the GATE row moves 7/17 → 9/19 and NO OTHER ROW MOVES**: two more rows
-    // on the same closed list (five → SEVEN rows; *"five-row"* above is D541's figure, and rows 6
-    // and 7 are COST clauses, not timing clauses), each a whole printed text, so the other three strippers see
-    // exactly the strings they saw before.
     expect(priced).toEqual([
       ["gate", 9, 19],
       ["requirement", 1, 2],
       ["cancel", 4, 5],
-      ["trailing", 12, 22], // 🆕🆕🆕 D574 11/21 → 12/22 — `COUNTER_MOVE_OPPONENT_ANY_WAY` claims the TAIL of Alakazam's compound (corpus FILE LINE 686, 1 printing), so the splitter admits it; no stripper changed, and the other three rows stand still. 🆕🆕 D435 10/19 → 11/21 — the delayed KNOCK-OUT anchor claims the TAIL of one more printed compound (corpus row 113, 2 printings); no stripper changed, and the other three rows stand still for a SECOND slice running. 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
+      ["trailing", 12, 22],
     ]);
     // …and every one of the four MOVES a string, which is what stops the matrix
     // below being a matrix of four dead functions.
     for (const [name, sentences] of priced) expect([name, sentences > 0]).toEqual([name, true]);
   });
 
-  it("🛑🛑 THE TRIPWIRE: 0 of 1,732 legal units are claimed by any TWO of the four", () => {
+  it("THE TRIPWIRE: 0 of 1,732 legal units are claimed by any TWO of the four", () => {
     const collisions: string[] = [];
     for (let i = 0; i < STRIPPERS.length; i += 1) {
       for (let j = i + 1; j < STRIPPERS.length; j += 1) {
         const [nameA, splitA] = STRIPPERS[i] ?? ["", () => null];
         const [nameB, splitB] = STRIPPERS[j] ?? ["", () => null];
         const both = corpus().filter(([, s]) => splitA(s) !== null && splitB(s) !== null);
-        // Named rather than summed: the day this fires, the message says WHICH pair
-        // and WHICH printing, which is the whole value of a tripwire.
         for (const [n, s] of both) collisions.push(`${nameA} x ${nameB} (${n}): ${s}`);
       }
     }
@@ -800,11 +333,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     expect((STRIPPERS.length * (STRIPPERS.length - 1)) / 2).toBe(6);
   });
 
-  it("🛑 the near-collision, ATTRIBUTED: the trailing splitter refuses a does-nothing tail", () => {
-    // `splitAttackCancelClause` and `splitAttackTrailingClause` split at the SAME
-    // end of the SAME string, so "they are disjoint" is worth nothing without the
-    // reason. The reason is one condition: the trailing splitter's tail must be a
-    // sentence `deriveAttackEffect` claims, and this clause is not.
+  it("the near-collision, ATTRIBUTED: the trailing splitter refuses a does-nothing tail", () => {
     expect(deriveAttackEffect(CANCEL_CLAUSE)).toBeNull();
     for (const [, s] of corpus().filter(([, s]) => s.endsWith(CANCEL_CLAUSE))) {
       expect(splitAttackTrailingClause(s), s).toBeNull();
@@ -814,9 +343,6 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
       expect(splitAttackRequirementClause(s), s).toBeNull();
       expect(s.startsWith("If "), s).toBe(false);
     }
-    // 🛑 AND THE CONVERSE, so the condition above is doing the work rather than the
-    // shape: change the tail to one `deriveAttackEffect` DOES claim and the trailing
-    // splitter takes the very string the cancel splitter refuses.
     const composable = `${CANCEL_HEAD} Discard 3 Energy from this Pokémon.`;
     expect(splitAttackCancelClause(composable)).toBeNull();
     expect(splitAttackTrailingClause(composable)).toEqual({
@@ -825,45 +351,24 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     });
   });
 
-  it("🛑 the ORDER among the four is UNOBSERVABLE on the catalog — the consequence", () => {
-    // §2's claim, one stripper wider: with every pair disjoint there is no printed
-    // string the four answer differently in any order, which is why the fourth
-    // stripper is a narrow anchored function and not a `splitHead` loop (D282's
-    // standing refusal, re-derived rather than inherited).
+  it("the ORDER among the four is UNOBSERVABLE on the catalog — the consequence", () => {
     for (const [, text] of corpus()) {
       expect(fourSiteOrder(text), text).toBe(fourReversedOrder(text));
     }
-    // The CONTROL that says both pipelines really run: each moves the strings its
-    // own stripper owns, and the cancel printing is moved by both.
     expect(fourSiteOrder(SAWK)).toBe(SAWK_TAIL);
     expect(fourSiteOrder(CANCEL_PRINTING)).toBe(CANCEL_HEAD);
     expect(fourReversedOrder(CANCEL_PRINTING)).toBe(CANCEL_HEAD);
-    // 🆕🆕 D417 — **17**, and it is NOT §2's 7 plus one. §2's pipeline runs two
-    // strippers and moves 7 sentences; this one runs four and moves **7 + 9 + 1**:
-    // D409's trailing composition moves nine on its own and had never been counted
-    // through this instrument, and the cancel printing is the one. The sum is
-    // asserted as its parts so a stripper that stopped moving anything is a red
-    // line here rather than a smaller total nobody reads.
-    // 🆕🆕 D420 — 17 → **20**, and the WHOLE step is the cancel term: 7 + 9 + **4**.
-    // The other two parts are unmoved literals in the same breath, so a widening that
-    // had leaked into the gate or the composition path reddens on the PART rather
-    // than only on the sum.
-    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(26); // 🆕🆕🆕 D574 25 → 26 — MEASURED: Alakazam's compound (file line 686) is rewritten by the TRAILING stripper now (its tail claimed). // 🆕🆕🆕 D545 23 → 25 — MEASURED: the two clause-only COST clauses (`:316`/`:324`) are rewritten to the empty string by the gate stripper. 🆕🆕🆕 D541 22 → 23 — MEASURED: the four-stripper seam rewrites ONE more SENTENCE (the trailing gate branch's only row), where the PRINTING pins above step by 3. The parts below are unmoved literals in the same breath, so a widening that leaked into another stripper reddens on the PART. // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
-    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(10); // 🆕🆕🆕 D545 8 → 10 — the same two rows through the two-stripper pipeline. 🆕🆕🆕 D541 7 → 8 — the SAME sentence, seen through the two-stripper pipeline; §2's own copy of this figure steps with it.
-    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(12); // 🆕🆕🆕 D574 11 → 12 (Alakazam, file line 686). 🆕🆕 D435 10 → 11. 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(26);
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(10);
+    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(12);
     expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(4);
   });
 
-  it("🛑 the reader and the splitter agree on exactly the same printings", () => {
-    // The site strips a clause it has ANSWERED — that pairing is the whole safety of
-    // the fourth stripper, and it holds because both functions run one guard. 🆕🆕
-    // D420 widened the anchor and added three rows; the pairing is what says the
-    // widening did not let the splitter run ahead of the table.
+  it("the reader and the splitter agree on exactly the same printings", () => {
     const split = corpus().filter(([, s]) => splitAttackCancelClause(s) !== null);
     const read = corpus().filter(([, s]) => deriveAttackCancelRequirement(s) !== null);
     expect(split.map(([, s]) => s)).toEqual(read.map(([, s]) => s));
     expect([read.length, units(read)]).toEqual([4, 5]);
-    // …and D417's printing is still one of them, named rather than counted.
     expect(read.map(([, s]) => s)).toContain(CANCEL_PRINTING);
   });
 });

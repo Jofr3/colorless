@@ -22,88 +22,11 @@ import {
   types,
 } from "./testFixtures";
 
-// D296 — THE `discardEnergy` DECLINE, AND THERE WAS NOTHING TO BUILD.
-//
-// FOUR legal printings, three sentences, all four ATTACKS:
-//   • Octillery `sv09-034` "Aqua Wash" ({W}, 20)
-//       "You may put an Energy attached to your opponent's Active Pokémon into
-//        their hand."
-//   • Unfezant `sv05-135` "Opposing Winds" ({C}{C}, 70) and Slowking
-//     `sv08.5-019` "Wash the Slate Clean" ({W}{C}{C}, 70) — ONE sentence, two
-//     printings:
-//       "You may put 2 Energy attached to your opponent's Active Pokémon into
-//        their hand."
-//   • Paldean Tauros `sv08-039` "Upthrusting Horns" ({C}{C}, 30)
-//       "You may put 2 Energy attached to your opponent's Active Stage 2
-//        Pokémon into their hand."
-//
-// ── ⚠️ THE INHERITED REFUSAL, RE-TYPED ───────────────────────────────────────
-// D295 measured this population and REFUSED all four, typing the blocker as
-// **MISSING: CODE** — *"THE BLOCKER FOR ALL FOUR IS ONE WORD: 'MAY'.
-// `discardEnergy` is MANDATORY BY CONSTRUCTION and its doc block says so in as
-// many words … so building this is a DELIBERATE RE-OPENING of a written
-// contract, not the filling of a gap."*
-//
-// 🛑 **THERE WAS NO MISSING CODE, AND THE CONTRACT WAS NEVER RE-OPENED.** The
-// decline these sentences want is not a rider on `discardEnergy` at all: it is
-// `optional` — D186's FOURTH GATE, with producers since D202 — and that op's own
-// doc block NAMES `discardEnergy` in its list of ops the wrapper must not double
-// up on. It names the exact MODE that must not, too: *"`discardEnergy
-// {kind:"upTo"}` … park with a legal EMPTY answer, so the decline the wrapper
-// grants is a decline their own prompt already offers. This op is for the inner
-// op that has NO empty answer."* The `total` scope these four print is precisely
-// that op. **THE WRAPPER WAS WRITTEN FOR THIS SENTENCE TEN SLICES BEFORE THE
-// SENTENCE WAS LOOKED AT**, and the paragraph D295 read is TRUE of the op it is
-// printed on and silent about the union member next to it.
-//
-// 🛑 THE GENERAL FORM, WHICH IS THE LESSON: **A CONTRACT WRITTEN ON ONE OP IS
-// NOT A CONTRACT ABOUT THE SENTENCE.** "This park has NO decline" is a fact
-// about a park. "You may" is a fact about a card. Reading the first as an answer
-// to the second cost this row a whole slice — and the type of the refusal was
-// wrong, not merely its conclusion: it was never MISSING CODE, it was a MISSING
-// COMPOSITION, which is the one kind of blocker that costs nothing to clear.
-//
-// ── WHY THE WRAPPER AND NOT `count: "any"` + `cap` ───────────────────────────
-// `discardEnergy` already carries a declinable mode (`count: "any"`, Chien-Pao
-// ex "Hail Blade") with an optional ceiling (`cap`, Mewtwo VSTAR "Psy Purge").
-// For Octillery's "an" the two builds would offer the IDENTICAL choice set
-// (0..1). For the three "2 Energy" printings they would not: `{count:"any",
-// cap:2}` legalises a pick of **ONE**, and "you may put 2" is a decline or a
-// pair, never a single. `§4` below drives that difference on a real board.
-//
-// ── WHAT IS ACTUALLY NEW ─────────────────────────────────────────────────────
-// ONE regex, ONE deriver arm, and ONE `BoardCondition` member
-// (`opponentActiveIsStage2`, reusing D262's `isStage2Pokemon` VERBATIM) for
-// Tauros's restricting adjective — the second mechanism D295 priced this row's
-// fourth printing at, and the price held. No new op, no new prompt kind, no new
-// choice kind, no new event, no `@colorless/schema` diff, no `src/` diff.
-//
-// ── THE CENSUS, RE-DERIVED (never inherited) ─────────────────────────────────
-// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-08,
-// `legal_standard = 1`:
-//   • `attacks_json LIKE '%into their hand%'` → **4** (these four; abilities 0)
-//   • `attacks_json LIKE '%Active Stage 2 Pok%'` → **1** (Tauros alone)
-//   • the wider `attacks_json LIKE '%attached to your opponent%'` sweep returns
-//     28 rows; the 24 that are not ours are the "for each Energy attached to
-//     your opponent's Active Pokémon" scaling family, which no anchor here can
-//     reach.
-// ⚠️ THREE ILLEGAL NEAR-MISSES ARE REAL PRINTINGS AND ARE PINNED BELOW:
-// Meowscarada `sv01-015` prints Octillery's sentence BYTE FOR BYTE at
-// `legal_standard = 0` (so the sentence's DERIVED population is 2 and its LEGAL
-// population is 1), and Omanyte `sv03.5-138`/`-180` "Tentacular Return" print
-// the MANDATORY twin — the same sentence with the two words "You may" removed.
-// Both Omanyte printings are illegal, which is why the anchor REQUIRES "You may"
-// instead of carrying an optional group: a `(?:You may )?` build would derive a
-// sentence with no Standard-legal printing behind it, i.e. author a card.
-
 const AN = "You may put an Energy attached to your opponent's Active Pokémon into their hand.";
 const TWO = "You may put 2 Energy attached to your opponent's Active Pokémon into their hand.";
 const TWO_STAGE2 =
   "You may put 2 Energy attached to your opponent's Active Stage 2 Pokémon into their hand.";
 
-/** The inner op, built once. `to: "hand"` is D295's field and `from:
-    "opponentActive"` is the hammer family's own arm — this row composes two
-    things that already existed and adds a third word in front of them. */
 function put(count?: number): EffectOp {
   return {
     op: "discardEnergy",
@@ -118,8 +41,6 @@ function wrapped(note: string, then: EffectOp[]): EffectOp[] {
   return [{ op: "optional", note, then }];
 }
 
-/** The three sentences with their LEGAL printing counts, kept as data so the
-    arithmetic is asserted rather than described. */
 const CLAUSES = [
   { text: AN, program: wrapped(AN, [put()]), legalPrintings: 1, ids: ["sv09-034"] },
   {
@@ -162,11 +83,6 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
   });
 
   it("wraps the SAME inner op the hammer arm already derives, plus `to` and the count", () => {
-    // The family's checkable claim: there is ONE action here and the printed
-    // "You may" is a gate in front of it. Read the gate apart rather than
-    // re-typing the op — the bare hammer sentence is D142's own anchor, and the
-    // only differences this row's inner op carries are the DESTINATION and the
-    // count, both of which are named here explicitly.
     const bare = deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.");
     expect(bare).toEqual([
       { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
@@ -182,10 +98,6 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
   });
 
   it("carries the printed sentence VERBATIM as the note", () => {
-    // The note is what both HUDs render as the dialog's only prose, so the
-    // assertion is byte equality with the catalog string. A mutant that rebuilt
-    // the sentence from the capture (`You may put ${n} Energy …`) passes for
-    // TWO and dies on AN, whose printed word is the article.
     for (const { text } of CLAUSES) {
       const top = deriveAttackEffect(text)?.[0];
       // Tauros's program is gated, so the ask is one level down — descend
@@ -211,8 +123,6 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
     expect(TWO_STAGE2).toBe(TWO.replace("Active Pokémon", "Active Stage 2 Pokémon"));
     const gated = deriveAttackEffect(TWO_STAGE2)?.[0];
     const ungated = deriveAttackEffect(TWO) ?? [];
-    // 🛑 The gate is the OUTER op and the "may" sits INSIDE it — the inversion
-    // of the printed word order that the arm's own block argues for.
     expect(gated?.op).toBe("conditionGate");
     expect(ungated[0]?.op).toBe("optional");
     // The gate's BODY is the ungated sentence's WHOLE program, with only the
@@ -231,32 +141,17 @@ describe("§0 — the anchor: 3 sentences, 4 legal printings, one regex", () => 
 describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
   /** REAL printed sentences from the same sweep. Every entry is a witness. */
   const NEAR_MISSES = [
-    // 🛑 THE MANDATORY TWIN — Omanyte sv03.5-138/-180 "Tentacular Return", both
-    // `legal_standard = 0`. This is the sentence a `(?:You may )?` group would
-    // eat, and deriving it would be authoring a card with no legal printing.
     "Put an Energy attached to your opponent's Active Pokémon into their hand.",
     "Put 2 Energy attached to your opponent's Active Pokémon into their hand.",
     // The SHUFFLE destination (Masquerain sv04-002 "Daunting Eyes") — the same
     // noun phrase, a different zone, and behind an until-tails loop.
     "Flip a coin until you get tails. For each heads, shuffle an Energy attached to your opponent's Active Pokémon into their deck.",
-    // The SCALING family, 24 legal printings on this exact noun phrase. Nothing
-    // is put anywhere; the phrase is a counter.
     "This attack does 20 more damage for each Energy attached to your opponent's Active Pokémon.",
     "This attack does 20 damage for each Energy attached to your opponent's Active Pokémon.",
     // The hammer's own bare sentence with the wrapper's prefix bolted on — a
     // "You may" over an op whose sentence this anchor does not read.
     "You may discard an Energy from your opponent's Active Pokémon.",
-    // The WHOLE-BOARD victim (Chill Teaser Toy sv08-166's body, D295) — a
-    // Trainer sentence, `opponentChosen` rather than `opponentActive`, and no
-    // attack deriver reads it.
     "You may put an Energy attached to 1 of your opponent's Pokémon into their hand.",
-    // ⚠️ NOT LISTED: "Put a Supporter card from your discard pile into your
-    // hand." (Phione sv06-055/-175 "Beckon"). It is the OWN-hand family the
-    // census separated out, and it DERIVES — through a different reader that
-    // predates this slice. Pinned as a POSITIVE below rather than as a
-    // near-miss, because a `toBeNull` there would assert the opposite of the
-    // truth.
-    // The wrong SEAT's hand on this op's own noun phrase.
     "You may put an Energy attached to your Active Pokémon into your hand.",
   ] as const;
 
@@ -267,11 +162,6 @@ describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
   });
 
   it("leaves the OWN-hand family exactly where it was — a positive, not a null", () => {
-    // The census separated "into their hand" (4 attacks — this row) from the
-    // sentences that put a card in YOUR OWN hand, and Phione `sv06-055`/`-175`
-    // "Beckon" is the attack member. It DERIVES, through a reader that predates
-    // this slice, so a `toBeNull` here would assert the opposite of the truth —
-    // and the claim that matters is that this slice did not disturb it.
     expect(
       deriveAttackEffect("Put a Supporter card from your discard pile into your hand."),
     ).not.toBeNull();
@@ -308,10 +198,6 @@ describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
   });
 
   it("folds the apostrophe — a U+2019 re-ingest must not un-derive the row", () => {
-    // The D136/D137 hardening every sibling on this noun phrase carries. The
-    // assertion is EQUALITY with the straight form, not merely "non-null": the
-    // curly variant must derive to the SAME program, note included — which is
-    // the one thing a byte-pin on the catalog string cannot say.
     for (const { text, program } of CLAUSES) {
       const curly = text.replace("opponent's", "opponent’s");
       expect(curly, text).not.toBe(text);
@@ -323,25 +209,6 @@ describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
   });
 });
 
-// ── The demonstrator pool. Synthetic `fix-*` bodies declared HERE, not in
-//    `testFixtures.ts` — D190/D199/D200's idiom: a fixture id naming a real
-//    printing must appear in `catalogManifest.ts`, generated off a LOCAL sqlite
-//    that holds none of these four sets. So `FIXTURE_POOL` is untouched and NO
-//    `fix-*` demonstrator is owed on the non-attack pool (D287's terms: Pokémon
-//    BODIES on a LOCAL `cardPool`). ──
-
-/** Octillery `sv09-034` "Aqua Wash" — the printed row, with the second attack
-    kept so "the derived program is on the attack the player declared" is
-    checkable rather than assumed.
-
-    ⚠️ EVERY COST IN THIS FILE IS FLATTENED TO {C}: the demonstrators need their
-    attacks PAYABLE out of `fix-energy`, and the cost is the one field of the
-    printed rows this slice does not read. Stated rather than silent, because a
-    fixture that quietly diverges from a print is exactly what
-    `catalogManifest.test.ts` exists to catch on the ids it can reach — and it
-    cannot reach these (none of `sv05`/`sv08`/`sv08.5`/`sv09` is in the local
-    catalog). Octillery's print is {W}; Slowking's is {W}{C}{C}; Tauros's is
-    {C}{C}. */
 const OCTILLERY: Card = battler("fix-aquawash", {
   hp: 110,
   attacks: [
@@ -350,8 +217,6 @@ const OCTILLERY: Card = battler("fix-aquawash", {
   ],
 });
 
-/** Slowking `sv08.5-019` "Wash the Slate Clean" — the 2-Energy sentence, and the
-    printing Unfezant `sv05-135` "Opposing Winds" shares byte for byte. */
 const SLOWKING: Card = battler("fix-washslate", {
   hp: 120,
   attacks: [{ name: "Wash the Slate Clean", cost: ["Colorless"], damage: 70, effect: TWO }],
@@ -363,14 +228,6 @@ const TAUROS: Card = battler("fix-upthrust", {
   attacks: [{ name: "Upthrusting Horns", cost: ["Colorless"], damage: 30, effect: TWO_STAGE2 }],
 });
 
-/** ⚠️ **THE ATTRIBUTION CONTROL IS IN THE DECK, NOT IN A COMMENT.** The same op,
-    the same arm, the same filter, NO wrapper and NO `to` — D142's printed hammer
-    twin. Every claim below about "the Energy went to the HAND" and "the player
-    was ASKED" is paired with a board where the identical action asks nothing and
-    sends the card to the PILE. Without it, a `to` that was silently ignored, or
-    an `optional` that spliced unconditionally, would be invisible from inside
-    this file: the Energy would still leave the Pokémon and the suite would still
-    be green. */
 const HAMMER_TWIN: Card = battler("fix-barewash", {
   hp: 110,
   attacks: [
@@ -383,10 +240,6 @@ const HAMMER_TWIN: Card = battler("fix-barewash", {
   ],
 });
 
-/** A Stage 2 DEFENDER, and its Basic twin. `stage` is the printed word the
-    condition reads (D262: NOT a chain count — a VSTAR sits two evolutions deep
-    and is not a Stage 2), so the pair differs in exactly that field plus the
-    `evolveFrom` a real Stage 2 carries. */
 const STAGE2_BODY: Card = battler("fix-stage2body", {
   hp: 200,
   stage: "Stage2",
@@ -448,10 +301,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** P1 to move on turn 3 (past §4), `attackerId` Active over an empty Bench,
-    `defenderId` opposite with `energy` attached in the order listed, and BOTH
-    hands emptied into their decks — so every hand count in this file is exact
-    rather than seed-dependent. */
 function matchup(
   seed: number,
   attackerId: string,
@@ -481,13 +330,6 @@ function matchup(
   return next;
 }
 
-/** ⚠️ **THE VICTIM'S ZONES ARE READ THROUGH THE WATCHED UIDS, NEVER THROUGH RAW
-    LENGTHS.** Every resolve that ends the turn is followed by P2's own
-    turn-start draw in the SAME batch, so a bare `hand.length` reports a decline
-    as a one-card gain and every count in this file would be off by one for a
-    reason that has nothing to do with the op. `watch` is the exact uid list the
-    defender had attached before the attack; the three numbers are that list's
-    fate. */
 function fateOf(state: GameState, watch: readonly string[]) {
   const side = state.players.p2;
   const attached = new Set(side.active?.energy ?? []);
@@ -545,9 +387,6 @@ describe("§2 — the ask: a printed card parks a confirm carrying its own sente
   });
 
   it("THE CONTROL: the hammer twin asks NOTHING and files the card in the PILE", () => {
-    // Same op, same arm, same filter, no wrapper and no `to`. This is the whole
-    // attribution argument for the file: everything §3 claims is a difference
-    // is measured against this board.
     const state = matchup(11, "fix-barewash", "fix-bigbody", [["fix-energy", 1]]);
     const watch = attachedUids(state);
     const { state: done, events } = attack(state);
@@ -568,8 +407,6 @@ describe("§3 — the answer: YES moves the card to the victim's HAND, NO moves 
     const { state: done, events } = answerConfirm(parked, true);
 
     expect(fateOf(done, watch)).toEqual({ attached: 0, inHand: 1, inDiscard: 0 });
-    // …and the ACTOR's own zones are untouched: the destination is a ZONE of the
-    // VICTIM's seat, never a crossing (D295's finding, driven from the other arm).
     expect(done.players.p1.hand).toHaveLength(0);
     expect(done.players.p1.discard).toHaveLength(0);
     const row = find(events, "ENERGY_DISCARDED");
@@ -582,10 +419,6 @@ describe("§3 — the answer: YES moves the card to the victim's HAND, NO moves 
   });
 
   it("NO moves NOTHING — and still finishes the turn", () => {
-    // The half that can be silently wrong. A build that spliced unconditionally
-    // (or read the boolean backwards) passes every accept assertion above; and a
-    // decline that dropped the queued epilogue would leave the game stuck on
-    // P1's turn with the damage already dealt.
     const state = matchup(11, "fix-aquawash", "fix-bigbody", [["fix-energy", 1]]);
     const watch = attachedUids(state);
     const { state: parked } = attack(state);
@@ -609,9 +442,6 @@ describe("§3 — the answer: YES moves the card to the victim's HAND, NO moves 
     const text = logFromEvents(events, ctx)
       .map((r) => (r.kind === "action" ? r.segments.map((seg) => seg.text).join("") : ""))
       .join("\n");
-    // D295's passive voice, reached from the ATTACK channel for the first time:
-    // the row is filed under the deck's OWNER and never credits the victim with
-    // the action.
     expect(text).toContain("hand");
     expect(text).not.toContain("discard pile");
     expect(text).not.toContain("Gary put");
@@ -637,10 +467,6 @@ describe("§4 — the COUNT: 'you may put 2' is a decline or a pair, never a sin
     if (picking.phase.kind !== "effect:choose") throw new Error("expected the discard park");
     const prompt = picking.phase.prompt;
     if (prompt.kind !== "discardEnergy") throw new Error("expected a discardEnergy prompt");
-    // 🛑 THE SCOPE IS `total: 2`, NOT `upTo`. This is the assertion that
-    // separates this build from the `{count:"any", cap:2}` one D295's blocker
-    // would have led to: an `upTo` scope legalises a pick of ONE, and the card
-    // does not print that answer.
     expect(prompt.scope).toEqual({ kind: "total", count: 2 });
     expect(prompt.discardable).toHaveLength(3);
     expect(prompt.note).toBe(
@@ -698,11 +524,6 @@ describe("§4 — the COUNT: 'you may put 2' is a decline or a pair, never a sin
   });
 
   it("KEEPS the interchangeable collapse — three identical Basic Energy ask NOTHING", () => {
-    // 🛑 The behaviour `{count:"any"}` would have thrown away: that mode offers
-    // every candidate DISTINCTLY (the count is what Hail Blade's damage reads),
-    // so three identical {C} would park three rows that all mean the same thing.
-    // The `total` scope collapses them to `count` representatives, so the pick
-    // is forced and resolves inline — one question (whether), never two.
     const state = matchup(47, "fix-washslate", "fix-bigbody", [["fix-energy", 3]]);
     const watch = attachedUids(state);
     const { state: parked } = attack(state);
@@ -712,10 +533,6 @@ describe("§4 — the COUNT: 'you may put 2' is a decline or a pair, never a sin
   });
 
   it("asks nothing at all when the defender holds NO Energy — but still asks WHETHER", () => {
-    // The wrapper is in front of the whiff, not behind it: the op's empty
-    // candidate set is a no-op, and the question was already asked. Stated
-    // because it is the one UX wart of the outer-wrapper shape and it is
-    // deliberate — the printed sentence puts the "may" first.
     const state = matchup(11, "fix-aquawash", "fix-bigbody", []);
     const { state: parked } = attack(state);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the confirm");
@@ -737,11 +554,7 @@ describe("§5 — the Stage 2 gate: the adjective is read BEFORE anybody is aske
     expect(fateOf(done, watch)).toEqual({ attached: 0, inHand: 2, inDiscard: 0 });
   });
 
-  it("🛑 asks NOTHING AT ALL against a Stage 1 defender — no confirm, no park", () => {
-    // The gate sits OUTSIDE the wrapper on purpose: "Stage 2" is a board fact
-    // settled before anybody is asked, so a build that gated INSIDE would park a
-    // Yes/No whose YES is a guaranteed no-op on every board the adjective
-    // excludes. A `stage`-blind condition passes the case above and fails here.
+  it("asks NOTHING AT ALL against a Stage 1 defender — no confirm, no park", () => {
     const state = matchup(11, "fix-upthrust", "fix-stage1body", [["fix-energy", 2]]);
     const watch = attachedUids(state);
     const { state: done, events } = attack(state);
@@ -761,9 +574,6 @@ describe("§5 — the Stage 2 gate: the adjective is read BEFORE anybody is aske
   });
 
   it("reads the PRINTED stage word, so the Stage 1 and Stage 2 bodies differ ONLY there", () => {
-    // D262's reading, pinned on the fixtures themselves: the two demonstrators
-    // are identical apart from `stage` and the name they evolve from, so the
-    // §5 pair above cannot be passing for a reason other than the adjective.
     expect(STAGE2_BODY.stage).toBe("Stage2");
     expect(STAGE1_BODY.stage).toBe("Stage1");
     expect(STAGE2_BODY.hp).toBe(STAGE1_BODY.hp);
@@ -792,12 +602,6 @@ describe("§6 — the wire and the record", () => {
   });
 
   it("MATCH_RECORD_VERSION STAYS 16 — driven both directions with a literal key anchor", () => {
-    // A parked `optional` rides `phase.cont` into the record, and the inner op
-    // now carries `to` (D295's field) and, for Tauros, a `cond` inhabitant that
-    // did not exist last slice. Neither is a new SHAPE: an old record cannot
-    // carry either and does not need to, because the ABSENCE already means what
-    // the old record meant. DRIVEN rather than asserted — the parked op's key
-    // list is the assertion.
     const state = matchup(11, "fix-aquawash", "fix-bigbody", [["fix-energy", 1]]);
     const { state: parked } = attack(state);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the confirm");
@@ -824,14 +628,7 @@ describe("§6 — the wire and the record", () => {
     expect(fateOf(fromRecord, watch)).toEqual(fateOf(live, watch));
   });
 
-  it("🛑 the new BoardCondition member NEVER REACHES THE RECORD — the gate resolves first", () => {
-    // The outer-gate shape's second consequence, and the one that decides the
-    // version question: `conditionGate` is evaluated and spliced by `runProgram`
-    // BEFORE anything parks, so the only op that persists is the `optional` the
-    // gate let through. A new `BoardCondition` inhabitant therefore cannot even
-    // appear in a `MatchRecord` from this row — which is a stronger statement
-    // than "adding an inhabitant owes no bump", and it is measured rather than
-    // argued.
+  it("the new BoardCondition member NEVER REACHES THE RECORD — the gate resolves first", () => {
     const state = matchup(11, "fix-upthrust", "fix-stage2body", [["fix-energy", 2]]);
     const { state: parked } = attack(state);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the confirm");
@@ -853,14 +650,6 @@ describe("§6 — the wire and the record", () => {
 
 describe("§7 — the version", () => {
   it("moved PAST 0.206.0 with the new BoardCondition member, and the two files agree", () => {
-    // A new `BoardCondition` inhabitant and a new deriver anchor are both
-    // behaviour a card can reach, so the engine version moves. The manifest and
-    // the exported constant are asserted TOGETHER — the tie is the assertion,
-    // and either drifting alone is the defect.
-    // 🆕 D297 moved it again (0.207.0 → 0.208.0), so this suite now asserts the
-    // TIE and the DIRECTION rather than re-stating a literal that belongs to
-    // whichever slice bumped it last. `tonguePull.test.ts` carries the literal —
-    // the same hand-off D296 made to this file.
     expect(manifest.version).toBe(engineVersion);
   });
 });

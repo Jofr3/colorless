@@ -15,97 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.156.0 → 0.157.0 — D241, LOOK AT THE TOP N: backlog row 11, and the slice
-// that paid the `DECK_TOP_REVEALED` fidelity debt the page had been carrying
-// since D224 named it.
-//
-// ✅ THE COUNT RE-DERIVES TO THE DIGIT FOR THE EIGHTH ROW RUNNING, and this is
-// the first of the eight where the row's own INHERITED figure was the thing
-// under test rather than a fresh number. The row says `33 = 15 (7 sentences) · 5
-// · 13`; the query returns 15 attack printings on 7 sentences, 3·3·3·2·2·1·1.
-// The SQL is on `effects.ts`'s constants, beside the arms it produced.
-//
-// ⚠️ AND THE VERB WAS SWEPT WIDER THAN THE ROW (D239's rule, third slice
-// running): `'*top card of your deck*'`, `'*top card of your opponent*'`,
-// `'*[Rr]eveal*deck*'` and `'*top * cards of*'` with the row's own GLOB excluded
-// return 32 further sentences and NOT ONE is this family. "Look at" and "Reveal"
-// are different verbs selecting different ops, which is D232's noun-vs-verb rule
-// holding from the other side.
-//
-// 🛑 THE PREDICTION, GRADED — **PART WRONG, SEVENTH SLICE RUNNING.** The resume
-// point predicted: TWO anchors; 9 of the 15; at least ONE new op field; no
-// `MATCH_RECORD_VERSION` bump; the count re-derives unchanged; and `redact.ts`
-// NON-ZERO "for the first time in eight slices".
-//   • 🛑 "TWO anchors" LOSES — there are **THREE**, and the third was free:
-//     `attachFromTop` has run since M5 and Lapras ex's sentence needed a READER
-//     and nothing else. The prediction reasoned about the two VERBS that write
-//     somewhere ("put back in any order" vs "put/attach/discard what you find")
-//     and both halves of that split were wrong: the reorder verb is the one this
-//     slice CANNOT read, and the "what you find" half is three destinations, not
-//     one.
-//   • 🛑 "9 of the 15" LOSES by one, and in the good direction: **10**.
-//   • ✅ "at least ONE new op field" — correct, and exactly one:
-//     `lookAtTopN.dest`.
-//   • ✅ "no `MATCH_RECORD_VERSION` bump" — correct, and the risk clause it
-//     flagged (*"`lookAtTopN` already parks, so its continuation shape is the
-//     risk"*) was the right thing to check: the park's `dest` was already a
-//     five-member union, so no continuation shape changed at all.
-//   • ✅ "the count re-derives unchanged at 15 on 7 sentences" — correct.
-//   • 🛑 "`redact.ts` NON-ZERO" LOSES, and the loss is the interesting one. The
-//     argument was that a deck-top look is a hidden-zone read D232's ruling did
-//     not cover. Measured at **ZERO**: `redactedPromptOf` resolves candidate
-//     identities to the ANSWERER ALONE, the prompt is redacted BY KIND, and its
-//     `dest` union has spelled every value this slice needs since `payFromHand`.
-//     **D232's precedent transfers to the deck top intact.** What did not
-//     transfer was the LOG's coverage — see below — which is where the debt
-//     actually was, and no read-site grep would have found it because the defect
-//     was an event that was never PUSHED.
-//
-// 🛑🛑 THE FIDELITY DEBT, SETTLED, AND THE ANSWER IS "THE LOG — BUT IT WAS
-// INCOMPLETE, NOT MIS-ROUTED." `coverage-backlog-legal.md` filed
-// `lookAtTopN`/`DECK_TOP_REVEALED` as the twin of the printed-reveal debt, on the
-// claim that taking this row would "ship a look the OPPONENT never sees". Priced
-// three ways:
-//   • the opponent's PROJECTION (`redact.ts`) — **no**. The looked-at cards were
-//     never face-up to anybody but the looker and they go back under a shuffle,
-//     so there is nothing for the other seat's board to hold. Putting them there
-//     would be a leak, not a fix.
-//   • the opponent's LOG — **yes, and it was already the channel**. D225 built
-//     the `reveal` rider and its two renders.
-//   • NEITHER — **no**, and this is what the debt was actually about: the row
-//     only ever fired when cards MOVED. The whiff (nothing up there matched) and
-//     the decline (looked, took none) emitted no event at all, so exactly the two
-//     paths where a player converts a look into pure private knowledge were the
-//     two the opponent could not see. **A look is a transfer of INFORMATION; the
-//     move is only its consequence.**
-// The event now fires on every path with `uids: []` on the empty ones, and
-// `sv09-084`'s "You may discard that card" is the printing that makes it matter:
-// its decline is a common, deliberate answer.
-//
-// ⚠️ FLAGGED AS AN ASSUMPTION RATHER THAN A RULING, with both sides recorded.
-// FOR: §1's shuffle-the-rest exists precisely so the knowledge is spent, which is
-// a claim about what the other player is entitled to know happened; and this
-// engine already announces a milled card the opponent never chose to see
-// (`DECK_TOP_DISCARDED`). AGAINST: no printed rule requires announcing a look
-// that moved nothing, and a paper game announces it only because the physical act
-// is visible. The other reading — fire only when cards move, i.e. what shipped
-// before this slice — is installed as a MUTANT (`scripts/mutation/mutants.ts`),
-// so choosing it back is a one-line change that turns this suite red by name.
-//
-// ⚠️ NO `actor` FIELD ON THE EVENT, and that was priced rather than skipped: its
-// sibling `DECK_TOP_DISCARDED` carries one (D136/D153) because a mill reads one
-// player's deck on another player's turn. Every `lookAtTopN` printing reads the
-// controller's OWN deck, so `actor === seat` on every path and the field would
-// have no observable meaning (D135). Row 11's opponent-deck sentences are exactly
-// what would buy it, and they are the residue below.
-// (🆕🆕🆕 D567 NOTE (D539): *"Every `lookAtTopN` printing reads the controller's OWN deck"* is
-// WITHDRAWN — Accompanying Flute `sv06-142` (`whose: "opponent"`) reads the opponent's, and the
-// event now carries `actor?` on that path only; every row THIS suite drives is own-deck and has none.)
-
-/** One printed sentence, its program, and the printings measured for it. Both
-    figures: `printings` over the whole remote catalog (3,786 rows / 20 sets),
-    `legalPrintings` over the Standard pool (2,021 rows) — a count without a
-    POPULATION and a LEGALITY is not a fact. */
 interface Clause {
   readonly text: string;
   readonly program: readonly EffectOp[];
@@ -113,10 +22,6 @@ interface Clause {
   readonly ids: readonly string[];
 }
 
-/** ⚠️ NAMED CONSTANTS RATHER THAN INDICES INTO `CLAUSES` — D237's rule:
-    `noUncheckedIndexedAccess` makes every `CLAUSES[i]` optional unless the array
-    is an `as const` TUPLE, and a tuple would make each `program` deeply readonly
-    and therefore no longer an `EffectOp`. */
 const BENCH_8: Clause = {
   text: "Look at the top 8 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
   program: [
@@ -126,8 +31,6 @@ const BENCH_8: Clause = {
   legalPrintings: 2,
   ids: ["sv05-072", "sv05-171"], // Reuniclus "Summoning Gate"
 };
-/** The SAME sentence at a different printed window — which is the whole reason
-    the window is a capture and not a literal. Two cards, four printings, one arm. */
 const BENCH_10: Clause = {
   text: "Look at the top 10 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
   program: [
@@ -160,47 +63,13 @@ const DISCARD_TOP: Clause = {
 
 const CLAUSES: readonly Clause[] = [BENCH_8, BENCH_10, ATTACH_20, DISCARD_TOP];
 
-/** 🛑 THE **ONE** LEGAL PRINTING THIS FAMILY STILL DOES **NOT** READ, with the
-    legal count and the reason. Pinned derived-to-null so the residue is a fact
-    about the code rather than a note in a doc.
-
-    🆕🆕 **D341 REMOVED FOUR OF THE FIVE — THE WHOLE ORDERED-ANSWER SHAPE.** This
-    block used to read *"ONE MECHANISM, NOT FIVE, AND IT IS A PROMPT KIND… that is
-    a bigger slice than this one"*, and it priced the slice exactly right: a new
-    prompt kind, a new wire schema member, a new redact arm, a new projection arm
-    and two dialogs is what `orderCards` cost. It also predicted the SECOND thing
-    those printings buy — *"a `whose` fork and the event's `actor` field both
-    arrive with those printings and not before"* — and both did, as
-    `reorderTop.side` and `DECK_TOP_REORDERED.actor`. **A RESIDUE NOTE THAT NAMES
-    THE MECHANISM AND ITS RIDERS IS A PRICE A LATER SLICE CAN SPEND**, and this one
-    was spent unchanged four decisions later. See `derivedReorderTop.test.ts`.
-
-    ⚠️ **WHAT IS LEFT IS ONE SENTENCE AND IT IS NOT AN ORDERING AT ALL** — the
-    second seat's deck under a *"you may"* whose consequent is a SHUFFLE of a deck
-    the actor does not own. `reorderTop.side` gave this family its first read of
-    another seat's deck, so the zone is no longer the blocker; what still blocks it
-    is the two-seat CONSENT (the actor asks, the owner shuffles), which is
-    `opponentMayDraw`'s shape pointed at a deck rather than a hand.
-
-    🛑 **D534 — THAT PREMISE WAS FALSE, AND THE ROW IS BUILT.** There is no consent:
-    the LOOKER decides, over their own `orderCards` prompt, whether the card goes back
-    or the deck is shuffled — *"have your opponent shuffle"* names who handles the
-    deck, not who chooses. It is D344's printed second arm one card wide:
-    `reorderTop{n:1, side:"opponent", otherwise:[shuffleDeck{whose:"opponent"}]}`
-    (`opponentTopLookShuffle.test.ts`). `UNREAD` is EMPTY; the sentence is pinned as
-    `BUILT_D534` below, derived non-null, so the rung that re-adds the row's total
-    still counts it. */
 const UNREAD: readonly (readonly [string, number, string])[] = [] as const;
 
-/** 🆕🆕🆕 D534 — the one sentence that left `UNREAD`, with its legal count. */
 const BUILT_D534 = {
   text: "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck.",
   legalPrintings: 1, // Inkay sv06.5-033
 } as const;
 
-/** Constructed near misses, kept apart from `UNREAD` because they have no
-    printing at all and would otherwise inflate its arithmetic. Each is a program
-    a plausible build would emit and this one must refuse. */
 const NEAR_MISSES: readonly (readonly [string, string])[] = [
   [
     "Look at the top 8 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck. Draw a card.",
@@ -214,22 +83,10 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
     "Look at the top 99 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
     "past `MAX_PRINTED_LOOK_WINDOW` — one malformed third-party row must not size a prompt",
   ],
-  // ⚠️⚠️ D240's SURVIVING MUTANT, RE-HOMED AS A CASE. `Number`'s grammar is wider
-  // than it looks: `Number("4e1")` is 40, `Number("0x28")` is 40, `Number("4.5")`
-  // is 4.5. Any capture that feeds `Number` owes a `\d+` AND a case proving it,
-  // and these are that case at BOTH window ceilings.
   [
     "Look at the top 4e1 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
     "EXPONENTIAL notation — `Number('4e1')` is 40, so a `.+` capture here would size a 40-card window off a string no card prints",
   ],
-  // 🛑 THE CASE THE MUTANT ASKED FOR, AND ITS FIRST RUN IS WHY IT EXISTS. The
-  // greedy-capture mutant on THIS pattern SURVIVED its first run, because every
-  // case above it lands outside `MAX_PRINTED_LOOK_WINDOW` or below the floor and
-  // is therefore refused by the GUARD rather than by the capture class — a
-  // refusal that would look identical on a build with no class at all. A
-  // FRACTIONAL window is the one value that passes both guards, so it is the only
-  // input that can tell the two builds apart. **A near-miss table can be full of
-  // cases and still prove nothing about the layer it names.**
   [
     "Look at the top 4.5 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
     "a FRACTIONAL window on the BENCH sentence — `Number('4.5')` is 4.5, which passes BOTH the floor and the ceiling, so this is the only case that distinguishes `\\d+` from `.+` here",
@@ -242,12 +99,6 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
     "Look at the top 4.5 cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck.",
     "a FRACTIONAL window — `Number('4.5')` is 4.5, and `deck.slice(0, 4.5)` is a silent truncation nobody authored",
   ],
-  // 🛑 THE SECOND CASE A SURVIVING MUTANT ASKED FOR. The dropped-`$` mutant on
-  // the ATTACH pattern survived its first run too: the trailing-clause case above
-  // is on the BENCH sentence only, and three anchors need three of it. **A
-  // near-miss written for one arm proves nothing about its siblings** — which is
-  // the same finding as the fractional window one axis over, arriving twice in
-  // one slice.
   [
     "Look at the top 20 cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck. Draw a card.",
     "a TRAILING CLAUSE on the ATTACH sentence — the terminal `$` is the ONLY thing refusing it, since the pattern is literal to its last byte and has no `[^.]` class to stop at the period",
@@ -270,7 +121,6 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
   ],
 ];
 
-// ── The board. `fix-trainerops` indices 55/56/57, appended by D241. ──
 const SUMMONING_GATE = 55;
 const LARIMAR_RAIN = 56;
 const DIG_IT_UP = 57;
@@ -343,27 +193,12 @@ describe("the anchors — four printed sentences, THREE arms", () => {
   });
 
   it("adds up: 10 of the row's 15 legal printings here, 4 more at D341, the last 1 at D534", () => {
-    // The arithmetic stated rather than described — a slice that quietly dropped
-    // one sentence would still pass every accept case above.
     expect(CLAUSES).toHaveLength(4);
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(10);
-    // 🆕 D341 — THE RESIDUE FELL 5 → **1** ON 3 → **1** SENTENCES. Four of the five
-    // were the ordered answer this file's own residue note priced, and they are
-    // read by `reorderTop` now (`derivedReorderTop.test.ts`, 4 legal on 2
-    // sentences). What is left is one sentence and it is not an ordering.
-    // 🆕🆕🆕 D534 — AND 1 → **0**: the last sentence is built (`BUILT_D534`), so
-    // `UNREAD` is empty and its loop is vacuous; the sentence is asserted non-null
-    // directly instead, so the claim does not rest on an empty loop.
     expect(UNREAD).toHaveLength(0);
     expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(0);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
     expect(deriveAttackEffect(BUILT_D534.text)).not.toBeNull();
-    // 🛑 THE ROW'S TOTAL IS RE-ADDED FROM ITS PARTS, NOT DECREMENTED: this file's
-    // 10 + D341's 4 + the 1 unread = 15 on 4 + 2 + 1 = 7 sentences — exactly what
-    // the backlog row measured, and the same 15/7 the pre-D341 split summed to.
-    // 🆕🆕🆕 D534 — re-derived with the new build counted: 10 + 4 + D534's 1 + 0
-    // unread = 15 on 4 + 2 + 1 + 0 = 7 sentences. The total holds; the unread part
-    // is zero.
     const D341_PRINTINGS = 4;
     const D341_SENTENCES = 2;
     const D534_SENTENCES = 1;
@@ -374,8 +209,6 @@ describe("the anchors — four printed sentences, THREE arms", () => {
         UNREAD.reduce((sum, [, legal]) => sum + legal, 0),
     ).toBe(15);
     expect(CLAUSES.length + D341_SENTENCES + D534_SENTENCES + UNREAD.length).toBe(7);
-    // …and the four D341 sentences are no longer null, which is the other half of
-    // the same claim: this rung must go red if that reader is ever removed.
     for (const text of [
       "Look at the top 4 cards of your deck and put them back in any order.",
       "Look at the top 5 cards of your opponent's deck and put them back in any order.",
@@ -385,9 +218,6 @@ describe("the anchors — four printed sentences, THREE arms", () => {
   });
 
   it("each id named above is a REAL Standard-legal printing count, not a paraphrase", () => {
-    // D183's rule: author and assert against the printed bytes. The ids are the
-    // provenance of the counts, so a row whose id list and count disagree is a
-    // census nobody ran.
     for (const clause of CLAUSES) {
       expect(clause.ids, clause.text).toHaveLength(clause.legalPrintings);
       expect(new Set(clause.ids).size).toBe(clause.ids.length);
@@ -401,9 +231,6 @@ describe("the anchors — four printed sentences, THREE arms", () => {
   });
 
   it("the two window ceilings are DIFFERENT numbers, and the catalog is why", () => {
-    // 🛑 The one place sharing `MAX_PRINTED_ATTACH_COUNT` would have been silently
-    // wrong: Lapras ex's printed window is 20, twice that ceiling, so the three
-    // printings would have derived to null and nobody would have been told why.
     expect(deriveAttackEffect(ATTACH_20.text)).not.toBeNull();
     expect(
       deriveAttackEffect(
@@ -418,55 +245,25 @@ describe("the anchors — four printed sentences, THREE arms", () => {
   });
 
   it("the BENCH filter is welded to the printed noun, so the benchable guard has nothing to do", () => {
-    // 🛑 D237's arm needs `BENCHABLE_RETRIEVAL_KINDS` because its noun comes out
-    // of a TABLE. This one cannot: the pattern spells "Pokémon" literally, so the
-    // only filter it can emit is `anyPokemon` — which is IN that set. Asserted
-    // from the outside rather than left in a comment.
     for (const clause of [BENCH_8, BENCH_10]) {
       const [look] = deriveAttackEffect(clause.text) as EffectOp[];
       expect(look).toMatchObject({ op: "lookAtTopN", filter: { kind: "anyPokemon" } });
     }
   });
 
-  it('🆕 D333 — "any number of" is the printed WORDS, and D241 spelled it as the window', () => {
-    // 🛑 **THIS CASE USED TO ASSERT THE OPPOSITE, AND THE REVERSAL IS DELIBERATE.**
-    // It was named *"'any number of' is the WINDOW, not a new union member"* and
-    // pinned `max: 8` / `max: 10`. D241's reasoning held as far as it went — the
-    // candidate set is a subset of the top `n`, so `max: n` is a bound that cannot
-    // bind — but `lookNote` reads this SAME field and captions `max > 1` as
-    // "up to N", so both printings told the player "put **up to 8** Pokémon onto
-    // your Bench" over a sentence that prints no number anywhere. D244 made the
-    // opposite call one op over for `moveEnergy` ("'any amount' is the PRINTED
-    // words and is spelled rather than resolved to the clamp"), and this arm now
-    // agrees with it. **A VALUE THAT IS EQUIVALENT AS A PREDICATE IS NOT
-    // NECESSARILY EQUIVALENT AS A CAPTION.**
+  it('D333 — "any number of" is the printed WORDS, and D241 spelled it as the window', () => {
     const [look8] = deriveAttackEffect(BENCH_8.text) as EffectOp[];
     const [look10] = deriveAttackEffect(BENCH_10.text) as EffectOp[];
     expect(look8).toMatchObject({ n: 8, max: "any" });
     expect(look10).toMatchObject({ n: 10, max: "any" });
   });
 
-  it("🆕 D333 — and it DRIVES: the prompt caps at the window's Pokémon, and says the printed words", () => {
-    // ⚠️ THE OLD PIN COULD NOT SEE EITHER HALF OF THIS, WHICH IS WHY IT IS
-    // REPLACED BY A DRIVER RATHER THAN RE-POINTED IN PLACE. It compared a field
-    // against a literal and stopped; both consequences of the field live on a
-    // parked prompt.
+  it("D333 — and it DRIVES: the prompt caps at the window's Pokémon, and says the printed words", () => {
     let state = ready(9, ["fix-basic-1"]);
-    // The board is WIDENED so the two readings can differ at all: 5 non-Pokémon
-    // over 3 Pokémon inside the top 8, so `max: n` resolves to 8 and `"any"`
-    // resolves to 3. On a window that is all Pokémon the two are equal and every
-    // assertion below would pass with the change reverted — D331's vacuous-guard
-    // rule, and this is the board narrow enough to catch it.
     state = toDeckTop(state, "p1", "fix-energy", 5);
     state = toDeckTop(state, "p1", "fix-duskull", 3);
     const parked = attack(state, SUMMONING_GATE).state;
-    // ⚠️ THE MUTANT THIS KILLS: resolving `"any"` against `top` (8) or against the
-    // printed window rather than against the group's own matches. The prompt would
-    // then count "0/8" over three rows and invite a pick that does not exist —
-    // `attachFromTopOffer`'s stated reason for clamping, one op over.
     expect(cardsPrompt(parked).max).toBe(3);
-    // ⚠️ AND THE CAPTION, which is the whole reason the member exists: the printed
-    // sentence carries no number, so neither may the note.
     expect(cardsPrompt(parked).note).toBe(
       "Look at the top 8 cards of your deck and put any number of Pokémon onto your Bench.",
     );
@@ -478,7 +275,6 @@ describe("the anchors — four printed sentences, THREE arms", () => {
     // and on the DECLINE a shuffle would scramble a top the player deliberately
     // kept, which is the opposite of what the card offers.
     expect(deriveAttackEffect(DISCARD_TOP.text)).toHaveLength(1);
-    // …where both bench printings DO carry it, off their own printed clause.
     expect(deriveAttackEffect(BENCH_8.text)?.[1]).toEqual({ op: "shuffleDeck" });
   });
 });
@@ -521,9 +317,6 @@ describe("Summoning Gate — the look that BENCHES", () => {
   });
 
   it("CLAMPS to the remaining Bench space — the set removed from the deck is the set that lands", () => {
-    // 🛑 The card-destruction shape `searchMove` was written against: four
-    // eligible Pokémon in the window, ONE free Bench slot. A build that sliced
-    // AFTER removing from the deck would strand three cards in neither zone.
     let state = ready(2, ["fix-basic-1", "fix-basic-1", "fix-basic-1", "fix-basic-1"]);
     state = toDeckTop(state, "p1", "fix-duskull", 4);
     const window8 = state.players.p1.deck.slice(0, 8);
@@ -531,9 +324,6 @@ describe("Summoning Gate — the look that BENCHES", () => {
     expect(picks).toHaveLength(4);
 
     const parked = attack(state, SUMMONING_GATE).state;
-    // 🆕 Card revision B01 — the clamp now binds at the OFFER too (`searchDeck`'s rule): the prompt's
-    // ceiling is the ONE free slot, so the four-card answer this rung used to send is refused by the
-    // validator, and the apply's own clamp stays as the belt behind it (a stale answer).
     expect(cardsPrompt(parked).max).toBe(1);
     expect(
       applyAction(parked, {
@@ -601,10 +391,7 @@ describe("Larimar Rain — the look that ATTACHES (attachFromTop, an op since M5
     // One {C} was attached for the cost; these two land on top of it.
     expect(done.players.p1.active?.energy).toContain(basic);
     expect(done.players.p1.active?.energy).toContain(special);
-    expect(types(events)).toContain("SHUFFLE"); // "Shuffle the other cards back"
-    // ⚠️ NOT `discardRest`: the printed leftovers clause here is a SHUFFLE, and
-    // Hydreigon's discard is the op's other printing. A build that shared one
-    // field would have emptied 18 cards into the pile.
+    expect(types(events)).toContain("SHUFFLE");
     expect(types(events)).not.toContain("DECK_TOP_DISCARDED");
   });
 });
@@ -633,7 +420,7 @@ describe("Dig It Up — the look that DISCARDS, and the decline that used to be 
     expect(types(events)).not.toContain("SHUFFLE");
   });
 
-  it("🛑 THE DECLINE IS ANNOUNCED — the fidelity fix, at the printing that needs it", () => {
+  it("THE DECLINE IS ANNOUNCED — the fidelity fix, at the printing that needs it", () => {
     let state = ready(6);
     state = toDeckTop(state, "p1", "fix-duskull", 1);
     const top = state.players.p1.deck[0] as string;
@@ -641,10 +428,7 @@ describe("Dig It Up — the look that DISCARDS, and the decline that used to be 
     const parked = attack(state, DIG_IT_UP).state;
     const { state: done, events } = resolveCards(parked, []); // the printed "you may", declined
 
-    expect(done.players.p1.deck[0]).toBe(top); // the card stayed, and stayed ON TOP
-    // …and the opponent is told the look happened. Before D241 this emitted
-    // NOTHING: the controller learned their top card for free and the log was
-    // silent about it.
+    expect(done.players.p1.deck[0]).toBe(top);
     expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       dest: "discard",
@@ -678,9 +462,6 @@ describe("log.ts — the row says WHERE, and says the empty look out loud", () =
       .join(" | ");
 
   it("distinguishes the three destinations rather than asserting 'in hand'", () => {
-    // 🛑 D237's defect one op over, caught before it shipped: the arm used to
-    // hard-code "in hand", so a benched look would have announced a card put in
-    // hand and a discarded one the same.
     expect(render({ type: "DECK_TOP_REVEALED", seat: "p1", uids: [uid] })).toContain("in hand");
     expect(render({ type: "DECK_TOP_REVEALED", seat: "p1", dest: "bench", uids: [uid] })).toContain(
       "onto their Bench",

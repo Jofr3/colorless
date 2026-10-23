@@ -25,27 +25,6 @@ import {
   types,
 } from "./testFixtures";
 
-// ── 🆕🆕🆕 D556 A — THE THIS-TURN SIDE-WIDE PRE-W/R BONUS (Black Belt's Training) ──
-//
-//   Black Belt's Training  sv08.5-096 / -097 / -098 / -099, sv09-143 / -144 / -145,
-//                          svp-219 / -220 (Supporter, 9 legal)
-//   "During this turn, attacks used by your Pokémon do 40 more damage to your
-//    opponent's Active Pokémon ex (before applying Weakness and Resistance)."
-//
-// ONE new op, `boostSideAttacksThisTurn { amount, target }`, appending to a REQUIRED
-// `TurnAllowances.sideAttackBonuses` (wiped by `freshAllowances()` at every
-// `startTurn`), read by ONE helper (continuous.ts `sideAttackBonusThisTurn`) at BOTH
-// pre-W/R sites — attack.ts's main hit and interpreter.ts `snipeActive` — seat-guarded
-// to the turn's owner, matched on the DEFENDING card, immune to a §9 lock, reported
-// inside `DAMAGE_DEALT.bonus`. `MATCH_RECORD_VERSION` 34 → 35 (THE EIGHTH POSITION).
-// Real ids on a LOCAL `cardPool` (D275); the attacker and defenders are file-local
-// DECLARED `d556-*` bodies in their OWN 60-card deck (D270). docs/decisions.md D556.
-//
-// Sections: §1 the print and the registry row · §2 the install · §3 the main hit ·
-// §4 the snipe site, the Bench and no-damage attacks · §5 the side, not a body ·
-// §6 expiry · §7 §9 immunity · §8 the seat guard and the sum · §9 the bytes and the
-// eighth position · §10 the log row.
-
 const BBT = [
   "sv08.5-096",
   "sv08.5-097",
@@ -149,7 +128,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [BBT[0]]: 4,
   ...Object.fromEntries(BBT.slice(1).map((id) => [id, 1])),
@@ -211,9 +189,6 @@ function localSetup(seed: number): GameState {
   return state;
 }
 
-/** TEST SURGERY — make sure one copy of `id` is in `seat`'s DECK: a copy in the hand
-    goes back to the deck's bottom; a PRIZED copy is swapped for the deck's bottom card
-    (the Prize row keeps its size). Every uid stays in exactly one zone. */
 function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
   const side = state.players[seat];
   if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
@@ -266,8 +241,6 @@ const activeFrom = (state: GameState, seat: Seat, id: string) =>
 const benchFrom = (state: GameState, seat: Seat, id: string) =>
   benchFromDeck(ensureInDeck(state, seat, id), seat, id);
 
-/** P1's turn 3: P1 fields `attacker` with two Energy, P2 fields `defender` and, when
-    asked, `p2Bench` benched Pokémon ex; P1 holds a Black Belt's Training (`printing`). */
 function ready(
   opts: { attacker?: string; defender?: string; p2Bench?: number; printing?: string } = {},
 ): GameState {
@@ -388,7 +361,7 @@ describe("§2 — the install: one entry on the bag, one row, no park, no rng", 
     expect(state.players.p2.active).toEqual(start.players.p2.active);
   });
 
-  it("🛑 R1 — with NO ex Active it still PLAYS and installs; the bonus simply never matches", () => {
+  it("R1 — with NO ex Active it still PLAYS and installs; the bonus simply never matches", () => {
     const { state, events } = played({ defender: "d556-wall" });
     expect(find(events, "SIDE_ATTACKS_BOOSTED")).toBeDefined();
     expect(state.allowances.sideAttackBonuses).toHaveLength(1);
@@ -441,7 +414,7 @@ describe("§3 — the main hit: +40 on an Active ex, before Weakness and Resista
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§4 — the snipe site pays it; the Bench and a no-damage attack never do", () => {
-  it("🛑 a chosen snipe landing on the ACTIVE ex (`snipeActive`) does 30 + 40 = 70", () => {
+  it("a chosen snipe landing on the ACTIVE ex (`snipeActive`) does 30 + 40 = 70", () => {
     const parked = attack(played({ p2Bench: 1 }).state, PICK_OFF).state;
     expect(parked.phase.kind).toBe("effect:choose");
     const row = find(pickActive(parked).events, "DAMAGE_DEALT");
@@ -506,7 +479,7 @@ describe('§6 — "during this turn": the next `startTurn` wipes it', () => {
     expect(back.allowances.sideAttackBonuses).toEqual([]);
   });
 
-  it("🛑 the NEXT turn's Strike does the printed 50 — the bonus did not survive the boundary", () => {
+  it("the NEXT turn's Strike does the printed 50 — the bonus did not survive the boundary", () => {
     const back = pass(pass(played().state, "p1"), "p2");
     const row = find(attack(back, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(50);
@@ -538,7 +511,7 @@ describe("§8 — the seat guard, and sources SUMMED", () => {
     expect(sideAttackBonusThisTurn(state, "p1", undefined, null)).toBe(0);
   });
 
-  it("🛑 a hit run for the OTHER seat mid-turn onto P1's Active ex is NOT paid P1's bonus", () => {
+  it("a hit run for the OTHER seat mid-turn onto P1's Active ex is NOT paid P1's bonus", () => {
     // P1 has played the Supporter on its own turn; its Active is now an ex. A program
     // run for P2 (a counterattack-shaped hit through `snipeActive`) lands on it: the bag
     // is P1's, so P2's 30 stays 30. Unguarded, it would read 70.
@@ -572,7 +545,7 @@ describe("§8 — the seat guard, and sources SUMMED", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 → 35)", () => {
-  it("🛑 the bag round-trips through JSON and still pays", () => {
+  it("the bag round-trips through JSON and still pays", () => {
     const state = played().state;
     const wire = JSON.stringify(state.allowances.sideAttackBonuses);
     expect(wire).toBe('[{"amount":40,"target":{"kind":"suffixPokemon","suffix":"ex"}}]');
@@ -580,7 +553,7 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     expect(find(attack(revived, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
   });
 
-  it("🛑 (i) A v34 ROLLBACK reading a v35 record mid-turn drops the +40 — NOT inert, so the version is owed", () => {
+  it("(i) A v34 ROLLBACK reading a v35 record mid-turn drops the +40 — NOT inert, so the version is owed", () => {
     // A v34 engine never reads the key, which is exactly this engine with the bag's
     // entries gone: the Supporter is spent (in the discard, `supporterPlayed` true) and
     // its effect is silently missing for the rest of the turn.
@@ -594,7 +567,7 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     expect(find(attack(v35, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
   });
 
-  it("🛑 (ii) A v35 engine reading a v34 bag (no key) THROWS on the turn owner's damaging attack and on the play — D326", () => {
+  it("(ii) A v35 engine reading a v34 bag (no key) THROWS on the turn owner's damaging attack and on the play — D326", () => {
     const start = ready();
     const { sideAttackBonuses: _dropped, ...v34Allowances } = start.allowances;
     const v34 = { ...start, allowances: v34Allowances } as unknown as GameState;

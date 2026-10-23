@@ -22,16 +22,8 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D637 — THE FOUR `me` ANTIQUE FOSSILS: 4 TEXTS / 4 PRINTINGS, MATCH_RECORD_VERSION 45 → 46 ──
-//
-// D635's drops: Antique Jaw Fossil `me03-068` "Intimidating Jaw", Antique Sail Fossil `me03-069` "Protective Sail",
-// Antique Armor Fossil `me05-072` "Protective Armor", Antique Skull Fossil `me05-073` "Spiny Skull". Each joins
-// `FOSSIL_IDS` on D576's `playAsPokemon`, its face off the catalog row (D581). Every id and text off the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`; before this slice the four ids were
-// only in D635's drop notes, the manifest, D581's face pins and the census. Driven on a LOCAL `cardPool` (D275) in
-// the suite's OWN 60-card deck (D270). The migration is apps/api `fossilsMigrationD637.test.ts`.
 
 const FOSSIL_RULE =
   "Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.\n\nAt any time during your turn, you may discard this card from play.";
@@ -65,7 +57,6 @@ const WALL = "d637-wall";
 const SNIPER = "fix-sniper"; // Spread Shot: 30 to the Active, 20 to each of the opponent's Benched Pokémon
 const ENERGY = "fix-energy";
 
-/** A fossil exactly as the catalog row arrives (D581: its printed `hp` and `abilities`). */
 function fossilRow(id: string, name: string): Card {
   const face = CATALOG_MANIFEST.trainerFaces[id];
   if (face === undefined) throw new Error(`no catalog face for ${id}`);
@@ -105,7 +96,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [JAW]: 2,
   [SAIL]: 2,
@@ -123,11 +113,6 @@ const DECK = deckOf({
   [WALL]: 23,
   [ENERGY]: 14,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {

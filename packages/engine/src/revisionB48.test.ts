@@ -9,30 +9,9 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  mustApply as must,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B48 (Attacks) ──
-//
-// The audit's one finding (docs/reference/card-revision.md "B48"), driven on a real board through
-// `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`, byte for byte
-// below). Every printing of *"Switch out your opponent's Active Pokémon to the Bench. (Your opponent
-// chooses the new Active Pokémon.)"* reaches interpreter.ts `case "opponentSwitchOut"`, which asks no
-// effect shield. The audit read Mist Energy `sv05-161` (*"Prevent all effects of attacks used by your
-// opponent's Pokémon done to the Pokémon this card is attached to."*) as stopping the switch-out.
-//
-// 🛑 DEFERRED, NOT CHANGED: the engine's answer is a RECORDED READING. D227 classified
-// `opponentSwitchOut` as `untouched` by an effects shield in preventBlock.test.ts's driven table
-// ("being switched out is not done to the Active — it is the consequence of another body being
-// promoted", `gust`'s argument), and that table drives the verdict in both directions. The user
-// deferred every ruling, so the reading stays and is pinned here.
-//   §1 every printing id, no shield: the printed switch (and damage) happens — each id is wired.
-//   §2 the D227 reading on a Mist Energy Active, PINNED: the damage lands and the switch still
-//      happens (Goad 'n' Grab's 160 then lands on the promoted body). Reversing the reading turns
-//      these rungs and preventBlock's `opponentSwitchOut` verdict red in the same commit.
-//   §3 the same op on the Trainer / Ability channels: Mist names attacks only, so Repel and
-//      Torrential Whirlpool switch it out under any reading; the channel's own shields (Fraxure
-//      "Unnerve", Mega Clefable ex "Luminous Wing") are pinned under the same D227 reading.
 
 const SWITCH_OUT =
   "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
@@ -59,7 +38,6 @@ const CLEFABLE = "mep-072";
 const FILLER = "b48-filler";
 const C = "b48-energy";
 
-/** [unit, printing ids, Pokémon, attack, cost, printed damage, printed text] — the local D1 rows. */
 type Row = [
   string,
   readonly string[],
@@ -132,9 +110,6 @@ const GOAD_ROW: Row = [
   GOAD,
 ];
 
-/** Every printing id → one attack-face, keyed on the real id so `programFor` and the attack
-    deriver see exactly what the catalog row would hand them. Typed energy is a Basic Colorless
-    stand-in for every cost symbol below, so each attacker is given its own typed Energy. */
 const LOCAL: Record<string, Card> = {};
 const ENERGY_FOR: Record<string, string> = {};
 for (const [, ids, name, attack, cost, damage, effect] of [
@@ -262,13 +237,6 @@ const cost = (id: string): string[] => {
   const attack = LOCAL[id]?.attacks?.[0];
   return (attack?.cost ?? []).map(() => ENERGY_FOR[id] ?? C);
 };
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** Run `action`, then answer every park with its first legal option (a "may" is accepted),
     each by the seat the park names as answerer. */

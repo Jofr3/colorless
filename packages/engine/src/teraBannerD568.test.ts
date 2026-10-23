@@ -31,27 +31,11 @@ import {
   setPrizes,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 import { koByEffectMarker } from "./types";
-
-// ── 🆕🆕🆕 D568 — THE TERA BANNER UNLOCK, SLICE 1: 19 PRINTINGS ─────────────────────────────
-//
-//   The datum      banners.ts `BANNER_BY_ID` (~~98~~ Tera ids) / `bannerOf` / cards.ts `isTeraPokemon`
-//                  (🆕🆕🆕 D582 (D539): *98 Tera ids* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)
-//   The rule       continuous.ts `benchShieldScan` — "As long as this Pokémon is on your Bench,
-//                  prevent all damage done to this Pokémon by attacks (both yours and your
-//                  opponent's)." — R-TB1 ⚠️ UNRULED (Feint Attack does not null it)
-//   Trainers (+9)  Sparkling Crystal sv07-142/sv08.5-129 (Tool, ACE SPEC), Tera Orb sv08-189,
-//                  Glass Trumpet sv07-135/sv08.5-110, Briar sv07-132/-163/-171, sv08.5-100
-//   Abilities (+7) Milotic ex "Sparkling Scales" sv08-042/-217/-237, Noctowl "Jewel Seeker"
-//                  sv07-115/sv08.5-078/svp-141, Azumarill "Glistening Bubbles" sv08-074
-//   Attacks (+3)   Ho-Oh sv08-019 "Shining Blaze", Regigigas sv08.5-086 "Jewel Breaker" (deriver
-//                  rows), Terapagos sv08-161 "Prism Charge" (a registry attack)
-//
-// Driven on REAL ids in a LOCAL `cardPool` (D275) — the table knows no `fix-*` id — with the
-// card bodies transcribed from the tcgdex card JSON (the audit's, 2026-09-30). Readings:
-// docs/decisions.md D568.
 
 const CYCLIZAR = "sv08-159"; // Cyclizar ex — Tera, Basic {C}; Break Through snipes the Bench
 const UMBREON = "sv08.5-060"; // Umbreon ex — Tera, Stage 1; Moon Mirage Confuses (an EFFECT)
@@ -427,7 +411,6 @@ LOCAL_CARDS[WATCHTOWER] = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [CYCLIZAR]: 2,
   [UMBREON]: 1,
@@ -461,18 +444,6 @@ const DECK = deckOf({
   [F]: 2,
   [FILLER]: 11,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -721,49 +692,33 @@ function playRejected(state: GameState, id: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the printed face (🆕🆕🆕 D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
-  // 🆕🆕🆕 D569 — RE-SCOPED TO THE TERA ROWS. The table now also carries the 86 Ancient/Future
-  // ids (Slice 2 part a, `paradoxBannerD569.test.ts` pins them), so "every id is Tera" and "every
-  // id is a legal Pokémon ex" are claims about the TERA rows only — a Paradox banner is printed on
-  // non-ex Pokémon and on Trainers too. `ids` is the Tera subset; the whole table is pinned beside.
+describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the printed face ( D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
   const ids = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
   const pool = new Map(LEGAL_EX_POOL.map((row) => [row[0], row] as const));
 
-  it("~~98~~ Tera ids (🆕 D569: beside 86 Ancient/Future ids — Slice 2 part a) (🆕🆕🆕 D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
-    // 🆕🆕🆕 D582 — 98 `sv` Tera ids, plus FIVE `me` Tera reprints (`me02.5-038`/`-057`/`-160`/
-    // `-179`/`-277`, each printed face checked on tcgdex's image and pinned BY ID in
-    // `reprintAliasMeD582.test.ts`): 103 Tera, 189 in all.
+  it("~~98~~ Tera ids ( D569: beside 86 Ancient/Future ids — Slice 2 part a) ( D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
     expect(ids.filter((id) => !id.startsWith("me"))).toHaveLength(98);
     expect(ids).toHaveLength(103);
-    // (🆕🆕🆕 D569 (D539): ~~Ancient/Future are Slice 2 and are NOT here~~ WITHDRAWN — they are
-    // here now: 98 + 86 = 184, three banner values.) (🆕🆕🆕 D582: 184 + 5 = 189.)
     expect(Object.keys(BANNER_BY_ID)).toHaveLength(189);
     expect(new Set(Object.values(BANNER_BY_ID))).toEqual(new Set(["Tera", "Ancient", "Future"]));
   });
 
-  it("🛑 every ~~TERA~~ `sv` TERA id is a Standard-legal Pokémon ex in the local pool (353 rows) (🆕🆕🆕 D582 (D539): *every TERA id* WITHDRAWN — the 5 `me` Tera ids are not in this `sv` pool; pinned by id in `reprintAliasMeD582.test.ts`)", () => {
+  it("every ~~TERA~~ `sv` TERA id is a Standard-legal Pokémon ex in the local pool (353 rows) ( D582 (D539): *every TERA id* WITHDRAWN — the 5 `me` Tera ids are not in this `sv` pool; pinned by id in `reprintAliasMeD582.test.ts`)", () => {
     expect(LEGAL_EX_POOL).toHaveLength(353);
     for (const row of LEGAL_EX_POOL) expect(row[1].endsWith(" ex"), row[0]).toBe(true);
-    // 🆕🆕🆕 D582 — the pool is the `sv` serie's (353 rows); the five `me` Tera ids are pinned BY ID
-    // in `reprintAliasMeD582.test.ts` (on a placeholder battler — no `me` face is a fixture or in
-    // this pool, so their printed faces are a recorded check on tcgdex's images, not a pin).
     for (const id of ids.filter((i) => !i.startsWith("me"))) expect(pool.has(id), id).toBe(true);
   });
 
-  it("🛑 REPRINT CONSISTENCY: legal printings sharing name, HP, attack and ability names agree on membership", () => {
+  it("REPRINT CONSISTENCY: legal printings sharing name, HP, attack and ability names agree on membership", () => {
     const groups = new Map<string, string[]>();
     for (const [id, name, hp, attacks, abilities] of LEGAL_EX_POOL) {
       const key = JSON.stringify([name, hp, attacks, abilities]);
       groups.set(key, [...(groups.get(key) ?? []), id]);
     }
-    // 🆕🆕🆕 D569 — membership is TERA membership (the Paradox ex reprints are consistent too, and
-    // pinned on their own pool in `paradoxBannerD569.test.ts`).
     const split = [...groups.values()].filter(
       (members) => new Set(members.map((id) => BANNER_BY_ID[id] === "Tera")).size > 1,
     );
     expect(split).toEqual([]);
-    // ⚠️ NOT VACUOUS: the Terapagos ex group is SEVEN printings, and dropping the one id the
-    // first source missed (`sv08.5-092`) splits it — the rung is the reason that id is here.
     const terapagos = [...groups.values()].find((members) => members.includes("sv08.5-092"));
     expect(terapagos?.sort()).toEqual(
       [
@@ -778,7 +733,7 @@ describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the
     );
   });
 
-  it("🛑 the two CORRECTIONS are pinned by name, and the promo additions by id", () => {
+  it("the two CORRECTIONS are pinned by name, and the promo additions by id", () => {
     // Removed: pokemon-tcg-data lists it as Tera; limitless and the printed face do not.
     expect(pool.get("sv08.5-028")?.slice(0, 4)).toEqual([
       "sv08.5-028",
@@ -831,14 +786,14 @@ describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§2 — THE PRINTED TERA RULE: a benched Tera Pokémon takes no damage from attacks", () => {
-  it("🛑 the OPPONENT's spread: the benched Tera body takes 0, its non-Tera neighbour 20", () => {
+  it("the OPPONENT's spread: the benched Tera body takes 0, its non-Tera neighbour 20", () => {
     const state = table({ p1: STRIKER, p2Bench: [TERAPAGOS_EX, FILLER] });
     const after = attack(state, 0).state;
     expect(bodyAt(after, "p2", 0).damage).toBe(0);
     expect(bodyAt(after, "p2", 1).damage).toBe(20);
   });
 
-  it('🛑 YOUR OWN attack too ("both yours and your opponent\'s"): the own-bench spread skips it', () => {
+  it('YOUR OWN attack too ("both yours and your opponent\'s"): the own-bench spread skips it', () => {
     const state = table({ p1: STRIKER, p1Bench: [CYCLIZAR, FILLER] });
     const after = attack(state, 1).state;
     expect(bodyAt(after, "p1", 0).damage).toBe(0);
@@ -851,18 +806,18 @@ describe("§2 — THE PRINTED TERA RULE: a benched Tera Pokémon takes no damage
     expect(bodyAt(attack(state, 2, benchRef("p2", 1)).state, "p2", 1).damage).toBe(30);
   });
 
-  it("🛑 the ACTIVE Tera Pokémon is NOT shielded — the rule is a Bench rule", () => {
+  it("the ACTIVE Tera Pokémon is NOT shielded — the rule is a Bench rule", () => {
     const state = table({ p1: FILLER, p2: TERAPAGOS_EX });
     const after = attack(state, 0).state;
     expect(bodyAt(after, "p2", "active").damage).toBe(10);
   });
 
-  it("🛑 damage COUNTERS are not damage: the Curse still lands on a benched Tera body", () => {
+  it("damage COUNTERS are not damage: the Curse still lands on a benched Tera body", () => {
     const state = table({ p1: STRIKER, p2Bench: [CYCLIZAR] });
     expect(bodyAt(attack(state, 3, benchRef("p2", 0)).state, "p2", 0).damage).toBe(30);
   });
 
-  it("🛑 a RULE, not an Ability: Team Rocket's Watchtower silences the {C} Tera body and it is still shielded", () => {
+  it("a RULE, not an Ability: Team Rocket's Watchtower silences the {C} Tera body and it is still shielded", () => {
     let state = table({ p1: STRIKER, p2Bench: [TERAPAGOS_EX] });
     state = stadium(state, "p1", WATCHTOWER);
     const benched = bodyAt(state, "p2", 0);
@@ -873,7 +828,7 @@ describe("§2 — THE PRINTED TERA RULE: a benched Tera Pokémon takes no damage
     expect(bodyAt(attack(state, 0).state, "p2", 0).damage).toBe(0);
   });
 
-  it('🛑 R-TB1 (⚠️ UNRULED): Feint Attack\'s "any effects on that Pokémon" does NOT null the printed rule', () => {
+  it('R-TB1 ( UNRULED): Feint Attack\'s "any effects on that Pokémon" does NOT null the printed rule', () => {
     const state = table({ p1: STRIKER, p2Bench: [CYCLIZAR, FILLER] });
     const benched = bodyAt(state, "p2", 0);
     expect(benchShieldedFromDamage(state, benched, "othersOnly")).toBe(true);
@@ -998,7 +953,6 @@ describe("§3 — the rows, exactly as authored", () => {
       per: 230,
       count: { kind: "boardCondition", cond: { kind: "opponentActiveIsBanner", banner: "Tera" } },
     });
-    // The deriver still refuses Prism Charge — it is the registry row that builds it.
     expect(deriveAttackEffect(POOL[TERAPAGOS]?.attacks?.[0]?.effect ?? "")).toBeNull();
   });
 
@@ -1014,7 +968,7 @@ describe("§3 — the rows, exactly as authored", () => {
     );
   });
 
-  it("🛑 the conditions, seat-relative and zone-exact", () => {
+  it("the conditions, seat-relative and zone-exact", () => {
     const inPlay = { kind: "yourBannerPokemonInPlay", banner: "Tera" } as const;
     const onBench = { kind: "yourBannerPokemonOnBench", banner: "Tera" } as const;
     const oppActive = { kind: "opponentActiveIsBanner", banner: "Tera" } as const;
@@ -1046,7 +1000,7 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
   const cost = (state: GameState, printed: readonly string[]) =>
     effectiveAttackCost(state, bodyAt(state, "p1", "active"), printed);
 
-  it("🛑 {R}{R}{C} with only {R}{C} attached is charged {R}{C} — a TYPED symbol goes, and the attack is payable", () => {
+  it("{R}{R}{C} with only {R}{C} attached is charged {R}{C} — a TYPED symbol goes, and the attack is payable", () => {
     const state = crystal(CYCLIZAR, [R, W]);
     const charged = cost(state, ["Fire", "Fire", "Colorless"]);
     expect(charged).toEqual(["Fire", "Colorless"]);
@@ -1069,7 +1023,7 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
     ]);
   });
 
-  it("🛑 a NON-Tera holder gets nothing (the printed noun), and no Crystal is the printed array itself", () => {
+  it("a NON-Tera holder gets nothing (the printed noun), and no Crystal is the printed array itself", () => {
     const printed = ["Fire", "Fire", "Colorless"];
     expect(cost(crystal(PIKACHU_EX, [R, W]), printed)).toEqual(printed);
     const bare = crystal(CYCLIZAR, [R, W], false);
@@ -1094,7 +1048,7 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
     ]);
   });
 
-  it("🛑 end to end: Cyclizar ex's Break Through ({C}{C}{C}) is declared with TWO Energy under a Crystal, refused without it", () => {
+  it("end to end: Cyclizar ex's Break Through ({C}{C}{C}) is declared with TWO Energy under a Crystal, refused without it", () => {
     const withCrystal = crystal(CYCLIZAR, [R, W]);
     expect(
       attackCostAt(withCrystal, "p1", bodyAt(withCrystal, "p1", "active"), 0, ["Fire", "Water"]),
@@ -1109,7 +1063,7 @@ describe("§4 — Sparkling Crystal: 1 Energy of ANY type off a Tera holder's at
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§5 — Tera Orb and Glass Trumpet", () => {
-  it("🛑 Tera Orb offers ONLY the deck's Tera Pokémon (never Terapagos, never Pikachu ex `sv08.5-028`)", () => {
+  it("Tera Orb offers ONLY the deck's Tera Pokémon (never Terapagos, never Pikachu ex `sv08.5-028`)", () => {
     let state = table();
     for (const id of [CYCLIZAR, TERAPAGOS_EX, UMBREON, CINDERACE, FLYGON])
       state = ensureCopies(state, "p1", id);
@@ -1130,7 +1084,7 @@ describe("§5 — Tera Orb and Glass Trumpet", () => {
     expect(all(events, "SHUFFLE").length).toBeGreaterThan(0);
   });
 
-  it("🛑 Glass Trumpet is REFUSED without a Tera Pokémon in play, and the reason is the printed clause", () => {
+  it("Glass Trumpet is REFUSED without a Tera Pokémon in play, and the reason is the printed clause", () => {
     const state = discard(table({ p1Bench: [PLAIN_C] }), "p1", R);
     expect(playRejected(state, TRUMPET)).toBe("PLAY_CONDITION_NOT_MET");
     // The REASON, not only the code: the refusal names the printed "only if" clause.
@@ -1146,7 +1100,7 @@ describe("§5 — Tera Orb and Glass Trumpet", () => {
     );
   });
 
-  it("🛑 with a Tera Pokémon in play: ONE attach park, the Benched {C} bodies only, max 2, one per body", () => {
+  it("with a Tera Pokémon in play: ONE attach park, the Benched {C} bodies only, max 2, one per body", () => {
     let state = table({ p1: CYCLIZAR, p1Bench: [PLAIN_C, FILLER, PLAIN_C] });
     state = discard(discard(state, "p1", R, 2), "p1", W, 1);
     const parked = play(state, TRUMPET).state;
@@ -1241,7 +1195,7 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     return play(state, BRIAR).state;
   }
 
-  it("🛑 the gate is EXACTLY 2: refused at 3 (and at 1), accepted at 2", () => {
+  it("the gate is EXACTLY 2: refused at 3 (and at 1), accepted at 2", () => {
     const at = (n: number) => setPrizes(table(), "p2", n);
     expect(playRejected(at(3), BRIAR)).toBe("PLAY_CONDITION_NOT_MET");
     expect(playRejected(at(1), BRIAR)).toBe("PLAY_CONDITION_NOT_MET");
@@ -1249,7 +1203,7 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     expect(all(events, "TRAINER_PLAYED")).toHaveLength(1);
   });
 
-  it("🛑 a Tera attacker (Cyclizar ex) Knocks Out the Active: ONE PRIZE_BONUS, +1, no ABILITY_TRIGGERED", () => {
+  it("a Tera attacker (Cyclizar ex) Knocks Out the Active: ONE PRIZE_BONUS, +1, no ABILITY_TRIGGERED", () => {
     const { events } = attack(briarBoard(CYCLIZAR, WEAK), 0);
     const bonus = all(events, "PRIZE_BONUS");
     expect(bonus).toHaveLength(1);
@@ -1257,19 +1211,19 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     expect(all(events, "ABILITY_TRIGGERED")).toEqual([]);
   });
 
-  it("🛑 a NON-Tera attacker (the Striker) Knocks Out the same Active: no bonus", () => {
+  it("a NON-Tera attacker (the Striker) Knocks Out the same Active: no bonus", () => {
     const { events } = attack(briarBoard(STRIKER, WEAK), 5);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(all(events, "PRIZE_BONUS")).toEqual([]);
   });
 
-  it("🛑 without Briar played this turn: no bonus (the datum is the turn's played Supporter)", () => {
+  it("without Briar played this turn: no bonus (the datum is the turn's played Supporter)", () => {
     const { events } = attack(briarBoard(CYCLIZAR, WEAK, { play: false }), 0);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(all(events, "PRIZE_BONUS")).toEqual([]);
   });
 
-  it("🛑 a BENCHED body Knocked Out by the Tera attacker's snipe: no bonus (the Active only)", () => {
+  it("a BENCHED body Knocked Out by the Tera attacker's snipe: no bonus (the Active only)", () => {
     const { events } = attack(
       briarBoard(CYCLIZAR, FILLER, { p2Bench: [WEAK] }),
       0,
@@ -1295,11 +1249,7 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     return { state: second.state, events: [...first.events, ...second.events] };
   }
 
-  it('🛑 "used by your Tera Pokémon" is the USER, not the spot: Flygon ex switched ITSELF out and still pays', () => {
-    // Reversing Storm: "130. You may switch this Pokémon with 1 of your Benched Pokémon." The
-    // switch lands BEFORE the Knock Out resolves, so at Knock Out time the Active is the
-    // (non-Tera) Filler — and the attack was still used by a Tera Pokémon. The bonus is read off
-    // `attackerUid` and its seat, never off `players[taker].active`.
+  it('"used by your Tera Pokémon" is the USER, not the spot: Flygon ex switched ITSELF out and still pays', () => {
     const { state, events } = reversingStorm(true);
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(state.cardIdByUid[topOf(bodyAt(state, "p1", "active"))]).toBe(FILLER);
@@ -1317,13 +1267,7 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     ]);
   });
 
-  it('🛑 the Checkup is not "damage from an attack": a Poison Knock Out of the Active pays nothing, with a Tera Pokémon Active', () => {
-    // A TERA attacker stands Active (Cyclizar ex) and Briar is played, so every conjunct but
-    // "by an attack" holds. ⚠️ What this end-to-end rung does and does NOT redden: the Checkup
-    // hands `koPrizeBonus` no `attackerUid` (flow.ts' Checkup batch omits it), so dropping
-    // `briarPrizeBonus`' `checkup` conjunct ALONE leaves this rung green — that conjunct is
-    // pinned by the unit rung below (`D568-briar-checkup-counts`). This rung pins the WIRING:
-    // a Checkup batch that started reading the Active as "the attacker" would pay here.
+  it('the Checkup is not "damage from an attack": a Poison Knock Out of the Active pays nothing, with a Tera Pokémon Active', () => {
     let state = briarBoard(CYCLIZAR, WEAK);
     state = withBody(state, "p2", "active", (p) => ({
       ...p,
@@ -1335,7 +1279,7 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     expect(all(events, "PRIZE_BONUS")).toEqual([]);
   });
 
-  it("🛑 `briarPrizeBonus`, conjunct by conjunct, on one Briar board", () => {
+  it("`briarPrizeBonus`, conjunct by conjunct, on one Briar board", () => {
     const state = briarBoard(CYCLIZAR, WEAK);
     const dying = bodyAt(state, "p2", "active");
     const attacker = topOf(bodyAt(state, "p1", "active"));
@@ -1406,7 +1350,7 @@ describe('§7 — Milotic ex "Sparkling Scales": damage AND effects from the opp
     expect(preventsAttackerBanner(["Tera"], undefined)).toBe(false);
   });
 
-  it("🛑 Umbreon ex (Tera) Moon Mirage into the Active Milotic ex: NO damage and NO Confusion", () => {
+  it("Umbreon ex (Tera) Moon Mirage into the Active Milotic ex: NO damage and NO Confusion", () => {
     let state = table({ p1: UMBREON, p2: MILOTIC });
     state = energize(state, "p1", "active", D, 3);
     const { state: after, events } = attack(state, 0);
@@ -1415,7 +1359,7 @@ describe('§7 — Milotic ex "Sparkling Scales": damage AND effects from the opp
     expect(all(events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
   });
 
-  it("🛑 the SAME attack into a non-Milotic Active lands both halves — the control", () => {
+  it("the SAME attack into a non-Milotic Active lands both halves — the control", () => {
     let state = table({ p1: UMBREON, p2: FILLER });
     state = energize(state, "p1", "active", D, 3);
     const after = attack(state, 0).state;
@@ -1423,12 +1367,12 @@ describe('§7 — Milotic ex "Sparkling Scales": damage AND effects from the opp
     expect(bodyAt(after, "p2", "active").conditions.rotation).toBe("confused");
   });
 
-  it("🛑 a NON-Tera attacker is not refused: the Striker's 300 lands on Milotic ex", () => {
+  it("a NON-Tera attacker is not refused: the Striker's 300 lands on Milotic ex", () => {
     const after = attack(table({ p1: STRIKER, p2: MILOTIC }), 5).state;
     expect(after.players.p2.discard.some((u) => after.cardIdByUid[u] === MILOTIC)).toBe(true);
   });
 
-  it("🛑 the `snipeActive` arm: Cinderace ex's Garnet Volley aimed at the ACTIVE Milotic ex does nothing, at a filler 180", () => {
+  it("the `snipeActive` arm: Cinderace ex's Garnet Volley aimed at the ACTIVE Milotic ex does nothing, at a filler 180", () => {
     const volley = (victim: string) => {
       let state = table({ p1: CINDERACE, p2: victim, p2Bench: [FILLER] });
       state = energize(
@@ -1471,7 +1415,7 @@ describe('§8 — Noctowl "Jewel Seeker" and Azumarill "Glistening Bubbles"', ()
     } as GameAction);
   }
 
-  it("🛑 evolved from the hand with a Tera Pokémon in play: the search parks, Trainer cards only, up to 2", () => {
+  it("evolved from the hand with a Tera Pokémon in play: the search parks, Trainer cards only, up to 2", () => {
     const { state } = evolveNoctowl(CYCLIZAR);
     const prompt = phasePrompt(state);
     if (prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${prompt.kind}`);
@@ -1480,13 +1424,13 @@ describe('§8 — Noctowl "Jewel Seeker" and Azumarill "Glistening Bubbles"', ()
       expect(POOL[state.cardIdByUid[uid] ?? ""]?.category).toBe("Trainer");
   });
 
-  it("🛑 …and with NO Tera Pokémon in play the Ability does nothing — no park, no search, no shuffle", () => {
+  it("…and with NO Tera Pokémon in play the Ability does nothing — no park, no search, no shuffle", () => {
     const { state, events } = evolveNoctowl(FILLER);
     expect(state.phase.kind).toBe("turn:action");
     expect(all(events, "SHUFFLE")).toEqual([]);
   });
 
-  it("🛑 Double-Edge costs {P} with a Tera Pokémon in play, its printed {P}{P}{P}{P} without", () => {
+  it("Double-Edge costs {P} with a Tera Pokémon in play, its printed {P}{P}{P}{P} without", () => {
     const withTera = energize(table({ p1: AZUMARILL, p1Bench: [TERAPAGOS_EX] }), "p1", "active", P);
     expect(attackCostAt(withTera, "p1", bodyAt(withTera, "p1", "active"), 0, ["Psychic"])).toEqual([
       "Psychic",
@@ -1508,11 +1452,7 @@ describe('§8 — Noctowl "Jewel Seeker" and Azumarill "Glistening Bubbles"', ()
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge", () => {
-  it("🛑 Ho-Oh +100 with a Tera Pokémon on YOUR BENCH — not a non-Tera ex, not the OPPONENT's Tera Active", () => {
-    // Ho-Oh is itself the Active here, so YOUR Active can never be a Tera Pokémon on this
-    // board; "an Active Tera is not on your Bench" is pinned zone-exactly by §3's
-    // `conditionHolds` rung (`activeOnly` → `onBench` false). What this board adds is the
-    // SEAT half: a Tera Pokémon in the OPPONENT's Active Spot does not count.
+  it("Ho-Oh +100 with a Tera Pokémon on YOUR BENCH — not a non-Tera ex, not the OPPONENT's Tera Active", () => {
     const blaze = (bench: readonly string[], p2?: string) => {
       let state = table({ p1: HO_OH, p1Bench: bench, ...(p2 === undefined ? {} : { p2 }) });
       state = energize(state, "p1", "active", R, 3);
@@ -1524,7 +1464,7 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
     expect(blaze([], CYCLIZAR)).toBe(100);
   });
 
-  it("🛑 Regigigas +230 into a Tera Active, printed 100 otherwise", () => {
+  it("Regigigas +230 into a Tera Active, printed 100 otherwise", () => {
     const breaker = (victim: string) => {
       let state = table({ p1: REGIGIGAS, p2: victim });
       state = energize(energize(state, "p1", "active", W, 2), "p1", "active", L, 2);
@@ -1534,7 +1474,7 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
     expect(breaker(PIKACHU_EX)).toBe(100);
   });
 
-  it("🛑 Prism Charge: one card PER TYPE, targets only the Tera bodies, the printed caption", () => {
+  it("Prism Charge: one card PER TYPE, targets only the Tera bodies, the printed caption", () => {
     let state = table({ p1: TERAPAGOS, p1Bench: [CYCLIZAR, FILLER, TERAPAGOS_EX] });
     state = energize(state, "p1", "active", W);
     for (const id of [R, W, L, P]) state = ensureCopies(state, "p1", id, 2);
@@ -1568,7 +1508,7 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
     expect(all(done.events, "SHUFFLE").length).toBeGreaterThan(0);
   });
 
-  it("🛑 Prism Charge with NO Tera Pokémon in play: nothing to attach to — no park, and the shuffle still runs", () => {
+  it("Prism Charge with NO Tera Pokémon in play: nothing to attach to — no park, and the shuffle still runs", () => {
     let state = table({ p1: TERAPAGOS, p1Bench: [FILLER] });
     state = energize(state, "p1", "active", W);
     const { state: after, events } = run(state, { type: "attack", seat: "p1", index: 0 });

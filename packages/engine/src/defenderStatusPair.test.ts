@@ -16,44 +16,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.325.0 → 0.326.0 — D424, THE TWO-STATUS PAIR: *"Your opponent's Active Pokémon
-// is now {X} and {Y}."* and its coin-flipped twin, TWO `applyStatus` ops in PRINTED
-// ORDER behind two new anchors and one shared helper.
-//
-// 🛑 **WHAT THIS SLICE IS ACTUALLY ABOUT IS THE PAIR IT REFUSES.** The printed
-// shape is trivial — two status words, two ops, a program `registry.ts` has shipped
-// for Dangerous Laser `sv06.5-058` since D257. What the shape does NOT advertise is
-// that `Asleep`, `Paralyzed` and `Confused` are three VALUES OF ONE FIELD
-// (`SpecialConditions.rotation`), so a bare `(X) and (Y)` over the five status words
-// would admit *"Asleep and Confused"* — a program whose second op silently
-// overwrites its first, which RESOLVES, emits two `STATUS_APPLIED` rows, and leaves
-// the board carrying ONE of the two printed conditions. That is a LIE THAT RESOLVES,
-// and the conventions are explicit that a wrong-but-plausible program is strictly
-// worse than an unbuilt one. §3 is the refusal and the population claim behind it.
-//
-// ⚠️ **THE WARRANT FOR A TEMPLATE RATHER THAN A LITERAL, MEASURED (D121).** Over the
-// committed `legal_standard = 1` attack column (640 sentences / 1,732 printings)
-// these two anchors claim 3 sentences / 5 printings carrying THREE DISTINCT PAIRS —
-// Burned+Confused (3), Confused+Poisoned (1), Paralyzed+Poisoned (1) — and BOTH
-// slots vary across them. D121 wants two printings with ONE token varying before a
-// parameter is justified; this has two tokens varying across three pairs, so the
-// warrant is satisfied on each axis separately (§2 asserts exactly that). A literal
-// would also have cost MORE here, not less: the bare form alone needs two of them,
-// because `splitAttackTrailingClause` reaches Confused+Poisoned through this same
-// anchor (§5).
-//
-// ⚠️ **THE CARDS, READ COLUMN BY COLUMN OFF THE REMOTE D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) ON 2026-08-26** — not off memory, and not
-// off the local catalog, which holds none of these four sets (978 cards / 6 sets:
-// `sv01`, `sv02`, `sv03`, `sv06.5`, `sve`, `swsh10.5`). Every fixture is therefore a
-// `fix-` key.
-
-/** The bare pair, byte-for-byte off corpus row 678. ⚠️ **THE APOSTROPHE IS ASCII
-    U+0027 AND THE `é` IS U+00E9 (`C3 A9`)** — measured with `hexdump -C` on the
-    corpus line, not assumed. A brief for an earlier slice asserted U+2019 for a
-    sibling sentence and was wrong; D423's was ASCII too. The anchors still carry the
-    `['’]` class as insurance, which is the repo idiom (D136/D137) and is what stops a
-    punctuation-only re-ingest from un-deriving every status attack at once. */
 const BURN_CONFUSE = "Your opponent's Active Pokémon is now Burned and Confused.";
 /** The coin-flipped twin at Confused+Poisoned — Ekans `sv05-100` "Poison Blend". */
 const FLIP_CONFUSE_POISON =
@@ -61,158 +23,25 @@ const FLIP_CONFUSE_POISON =
 /** The coin-flipped twin at Paralyzed+Poisoned — Glimmora `sv06-109` "Stun Poison". */
 const FLIP_PARALYZE_POISON =
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned.";
-/** 🆕🆕 D478 — corpus FILE LINE 263, 2 printings: this family's pair on HEADS with a
-    SINGLE status on TAILS. It is here because it is a genuine member of §2's sweep — its
-    heads arm is `FLIP_DEFENDER_STATUS_PAIR`'s program byte for byte — and because the slot
-    that used to hold it in `LEFT_LOUD` was refusing it for a reason that was never true. */
 const HEADS_PAIR_TAILS_SINGLE =
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.";
-/** The COMPOUND this slice claims WITHOUT writing an anchor for it — Accelgor
-    `sv09-013` "Poisonous Ploy". Head is `DEFENDER_STATUS_PAIR`'s, tail is D189's. */
 const CONFUSE_POISON_SWITCH =
   "Your opponent's Active Pokémon is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.";
 
-/** The three printed sentences of the same family this slice deliberately LEAVES on
-    the loud path, each with its reason. Every one is a REAL printing in the same
-    legal column — not a constructed near miss. */
 const LEFT_LOUD = {
-  /** 2 printings. A heads/tails compound with a DIFFERENT tail: `coinFlipGate`
-      carries no tails branch, so the mechanism is absent rather than the anchor
-      narrow.
-
-      🛑🛑 **D478 — THE PARAGRAPH ABOVE IS KEPT VERBATIM (D178) AND ITS SECOND CLAUSE WAS
-      FALSE ON THE DAY IT WAS WRITTEN.** `coinFlipGate.otherwise` shipped at **D269**
-      (`0.184.0 → 0.185.0`, Picnicker/Drasna), `interpreter.ts` splices it with the same
-      `unshift` that splices `then`, and `deriveAttackEffect` arm 6d has emitted a
-      two-armed gate since **D416** — three hundred lines below the anchor whose comment
-      said the mechanism was absent. What was missing was an ANCHOR and an ARM. D478 built
-      corpus FILE LINE 263; it derives to ONE gate with BOTH arms filled and is driven in
-      `flipStatusHeadsTails.test.ts`.
-
-      ⚠️ **THE SLOT IS RE-POINTED AND NOT DELETED (D418), ONTO THE SUBJECT THAT STILL HAS
-      THE OLD PROPERTY (D444).** The property is *a printed heads/tails compound whose
-      branches this reader does not claim*, and over all 640 corpus rows exactly **three**
-      sentences print both branches — file line 244 (built at D416), 263 (built here) and
-      **268**, which is what this slot now holds. Its tails branch is *"this attack does
-      nothing"*: an attack-level CANCEL resolving at the §8 declaration seam, which
-      `deriveAttackEffect` has nowhere to put, so it is blocked by a SEAM rather than by a
-      vocabulary and no widening of an anchor in this family can reach it.
-      ⚠️ It is now load-bearing in three files; a successor building it owes the re-point.
-
-      🛑🛑 **D499 — RE-POINTED A THIRD TIME, AND THE SLICE THAT DID IT IS THE ONE THE
-      PARAGRAPH ABOVE PREDICTED. THE D478 REASON IS KEPT VERBATIM AND IT WAS RIGHT ABOUT
-      ITS OWN CARRIER AND WRONG AS A CLAIM ABOUT THE ENGINE (D456/D457).** *"`deriveAttackEffect`
-      has nowhere to put a §8-seam cancel"* is TRUE and is still true — D499 does not
-      widen any anchor in this family, and `deriveAttackEffect(line 268)` is still
-      `null`. What the sentence does NOT say is the part that mattered: `deriveAttackCoinFlip`
-      is read IN FRONT of §8.5, at the very seam the cancel resolves at, and it has
-      carried a consequent PROGRAM on a coin member since D130. So the row was never
-      blocked by a seam — it was blocked by being priced against the wrong carrier, and
-      *"no widening of an anchor in this family can reach it"* was read as *"nothing can"*.
-
-      ⚠️ **THE OLD PROPERTY IS NOW EXHAUSTED, NOT MERELY MOVED.** All THREE printed
-      heads/tails compounds in the 640-row column (244, 263, 268) build, so D478's
-      subject class is EMPTY and there is nothing left to re-point onto inside it —
-      which is why this slot changes PROPERTY rather than subject, to D461's strictly
-      more durable one: **a witness whose blocker is DATA rather than a mechanism.** The
-      Ancient banner is printed on the card FACE and exists in no column of `cardSchema`
-      and no field of tcgdex's own model, so no reader at any width can claim this row;
-      the day it goes green, the thing that changed is the INGEST, which is exactly what
-      a witness should be able to tell you. Corpus FILE LINE 182, **1 printing** (not 2 —
-      the count is pinned off the corpus in §3 rather than carried).
-      🆕🆕🆕 D569 (D539): ~~blocker is DATA … no reader at any width … the thing that changed
-      is the INGEST~~ WITHDRAWN as the reason — `banners.ts` supplies the Ancient banner
-      since D569 with no ingest change. Iron Moth's sentence STAYS unread, on a MECHANISM:
-      `fromClass` is persisted, and an optional `AttackerClass.stage` would fall out of
-      0.452's `attackerMatchesStage` switch on rollback (an MRV bump, deferred — docs/decisions.md
-      D569 (e)). The witness still refuses; its blocker is now that, not data.
-      🆕🆕🆕 D575 — RE-POINTED (never deleted, D418): D575 BUILDS Iron Moth's sentence
-      (`AttackerClass.stage` "ancient", `MATCH_RECORD_VERSION` 37 → 38), so the slot now holds
-      Walking Wake `sv06-063` "Undulating Slice" (1 printing) — a residue sentence D575 leaves
-      unbuilt, VERIFIED before choosing (`readersClaiming` is []; no anchor in this file reaches
-      it). Its refusal is a MECHANISM again (a chosen counter count feeding the damage), not data.
-      (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.) */
   headsTails:
     "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
-  /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
-      VERBATIM BELOW BECAUSE IT WAS WRONG IN AN INSTRUCTIVE WAY (D178).**
-
-      D462 wrote, of corpus FILE LINE 264: *"`FLIP_DEFENDER_NOW` refuses it because a
-      COMMA sits where its `\.$` demands a period; the pair and triple anchors refuse it
-      because `(${STATUS_WORDS})` admits no comma and no verb. **Loosen any one of those
-      three and this sentence is claimed with its Energy discard silently thrown away.**"*
-
-      🛑 **TWO OF THE THREE ARE FALSE, AND ONE REGEX EACH DISPROVES THEM.** MEASURED over
-      the whole 640-row column: loosening `FLIP_DEFENDER_STATUS_PAIR`'s second slot to
-      `(.+)`, or dropping its `\.$`, claims line 263 and NOT line 264; and
-      `DEFENDER_STATUS_TRIPLE` claims exactly one row under EVERY single-axis loosening it
-      has, line 264 in none of them — it demands a SECOND comma that sentence never prints,
-      and its `^Your opponent` prefix refuses the flip clause besides. **The
-      `FLIP_DEFENDER_NOW` half was right**: dropping that `\.$` takes it from 2 rows / 29
-      printings to 6 / 35, line 264 among the four gained.
-
-      D464 then BUILT line 264 (`FLIP_DEFENDER_STATUS_THEN_DISCARD`), so this slot had to
-      move regardless — and it moves onto the set the same probe NAMES rather than onto
-      another guess. These are the THREE real printings that `DEFENDER_NOW`'s own `\.$`
-      refuses: corpus FILE LINES 685, 686 and 690, one printing each, every one a real
-      print whose second clause is an unbuilt mechanic. Drop that one byte and all three
-      are claimed with that clause silently thrown away — which is exactly the job this
-      slot has held since D424, pointed for the first time at an anchor that has it. */
-  dotAnchorTrio: [
-    // 🆕🆕🆕 **D501 — corpus FILE LINE 685 LEFT THIS LIST, AND IT WAS REMOVED RATHER
-    //    THAN THE LIST BEING SHORTENED SILENTLY.** It is now claimed WHOLE by
-    //    `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, so it is no longer LOUD and
-    //    cannot carry an ATTACK_EFFECT_SKIPPED control. ⚠️ ONLY THE LOUDNESS HALF OF THE
-    //    CLAIM ABOVE MOVED: `DEFENDER_NOW`'s `\.$` still refuses this string, and the new
-    //    anchor is a different regex — so the drift measurement the doc block quotes is
-    //    unchanged and the two survivors carry it. `confusionDamage.test.ts` §3 pins the
-    //    positive (which reader owns it now) so the transition is recorded rather than
-    //    disappearing into a shorter array (D418/D444/D449/D465).
-    // 🆕🆕🆕 **D574 — corpus FILE LINE 686 (Alakazam `sv06-082` "Strange Hacking") LEFT THIS LIST
-    //    TOO, REMOVED RATHER THAN THE LIST SHORTENED SILENTLY (D501's move, verbatim).** Its
-    //    tail is claimed by the NEW whole-sentence anchor `COUNTER_MOVE_OPPONENT_ANY_WAY` and the
-    //    compound COMPOSES behind the claimed Confusion head (`splitAttackTrailingClause`), so it is
-    //    no longer LOUD and cannot carry an ATTACK_EFFECT_SKIPPED control. ⚠️ ONLY THE LOUDNESS
-    //    HALF MOVED AGAIN: `DEFENDER_NOW`'s `\.$` still refuses it and `deriveAttackEffect` still
-    //    returns null on the WHOLE string — pinned on `COMPOSED_AT_D574` / in
-    //    `copyRemainderBundleD574.test.ts` §1. The one survivor (FILE LINE 690, Glimmora) is in the
-    //    NEXT MRV slice, so the loud control no longer leans on it alone: the recorded refusal
-    //    (FILE LINE 676, Mr. Mime, D445) rides beside it in the attribution loop.
-    //    🆕🆕🆕 D580 (D539): D445's refusal is RETIRED — Mr. Mime is BUILT as a REGISTRY row keyed by its id; no reader claims the sentence, so it still rides the loop unread (`recordedRefusal` / `RECORDED_REFUSAL` keep their historical names).
-    // 🆕🆕🆕 **D575 — corpus FILE LINE 690 (Glimmora `sv08-115` "Corrosive Shards"), THE LAST
-    //    SURVIVOR, LEFT THIS LIST — REMOVED RATHER THAN THE LIST SHORTENED SILENTLY (D501's move, a
-    //    third time).** It is claimed WHOLE by the NEW anchor `POISON_AND_BAR_HAND_ATTACH`
-    //    (`applyStatus` Poisoned + `markHandAttach { barred }`), so it is no longer LOUD. The list is
-    //    now EMPTY, and the rungs that walk it assert so explicitly (the vacuity guard) rather than
-    //    looping over nothing; the row is kept LIVE as `BUILT_AT_D575` for the `\.$` drift
-    //    measurement, which still holds of it (`DEFENDER_NOW`'s `\.$` refuses it; the new anchor
-    //    is a different regex).
-  ] as readonly string[],
-  /** 🆕🆕🆕 D574 — a REAL printing held by a RECORDED REFUSAL (corpus FILE LINE 676, Mr. Mime
-      `sv05-063` "Look-Alike Show", D445), outside every family the D574 pricing round ranks — the
-      attribution loop's stable witness, since `dotAnchorTrio`'s survivor is next in line (D540).
-      (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
+  dotAnchorTrio: [] as readonly string[],
   recordedRefusal:
     "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
 } as const;
 
-/** 🆕🆕🆕 D574 — the row that LEFT `dotAnchorTrio` (FILE LINE 686), kept LIVE so the `\.$` drift
-    measurement still names it (D418): refused WHOLE, drifted-not-strict, and composed now. */
 const COMPOSED_AT_D574 =
   "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.";
 
-/** 🆕🆕🆕 D575 — the LAST row that left `dotAnchorTrio` (FILE LINE 690, Glimmora "Corrosive Shards"),
-    kept LIVE so the `\.$` drift measurement still names it (D418): drifted-not-strict, and claimed
-    WHOLE now by its own anchor. */
 const BUILT_AT_D575 =
   "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.";
 
-/** 🛑 THE COLLISION SENTENCES, AND THEY ARE CONSTRUCTED — SAID OUT LOUD. No card
-    prints two rotation statuses together (§3 pins that on the POPULATION), so this
-    refusal can only ever be driven SYNTHETICALLY. That is the same standing as arm
-    5d's pronoun clause, which no card prints alone either, and it is stated here for
-    the reason the repo states it there: an arm with no printing behind it is a
-    deliberate choice, and an undeclared one reads as an accident. */
 const COLLISIONS = [
   "Your opponent's Active Pokémon is now Asleep and Confused.",
   "Your opponent's Active Pokémon is now Confused and Asleep.",
@@ -222,9 +51,6 @@ const COLLISIONS = [
   "Your opponent's Active Pokémon is now Paralyzed and Asleep.",
 ] as const;
 
-/** One seed for the whole suite: nothing here depends on a shuffle. The two flip
-    printings DO take a coin, and they are driven through both faces by seeding the
-    board rather than by stubbing the RNG — see §4. */
 const SEED = 11;
 
 function find<T extends GameEvent["type"]>(
@@ -240,12 +66,6 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** The two status words a derived program lands, or `null` when the program is not
-    a pair — looking THROUGH a `coinFlipGate` so the bare form and the flipped form
-    answer alike. It is the instrument §2 sweeps the whole column with, and it is
-    deliberately keyed on the OPS rather than on the sentence: a regex that had
-    drifted into a floating match would still be refused here, because what is
-    checked is what the reader RETURNED. */
 function statusPairOf(text: string): StatusName[] | null {
   const ops = deriveAttackEffect(text);
   if (ops === null) return null;
@@ -257,8 +77,6 @@ function statusPairOf(text: string): StatusName[] | null {
   return statuses.every((x): x is StatusName => x !== null) ? statuses : null;
 }
 
-/** Every attacker this suite declares, with the PRINTED index and the energy its
-    printed cost needs — read off the D1 row per printing (D144's rule). */
 const ATTACKERS = {
   ninetales: { card: "fix-ninetales", index: 0, energy: [{ id: "fix-fire-energy", count: 2 }] },
   houndoom: { card: "fix-tr-houndoom", index: 0, energy: [{ id: "fix-fire-energy", count: 1 }] },
@@ -315,12 +133,6 @@ function swing(state: GameState, attacker: Attacker, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index: ATTACKERS[attacker].index });
 }
 
-/** Re-text ONE attack on a board's OWN `cardPool` copy. ⚠️ **NOT A FIXTURE EDIT** —
-    `FIXTURE_POOL` is shared by every suite in this package and D412 reddened three
-    boards by widening a shared fixture. This mutates a per-board clone, so nothing
-    outside the calling `it` can see it. It exists for the sentences that have NO
-    printing — the rotation collisions of §3 — and for the two real printings this
-    slice deliberately left loud (§7). */
 function withEffect(state: GameState, cardId: string, effect: string): GameState {
   const card = state.cardPool[cardId];
   if (card === undefined) throw new Error(`no ${cardId} in pool`);
@@ -364,11 +176,6 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
   });
 
   it("…and Team Rocket's Houndoom sv10-038's, whose pair attack prints NO damage", () => {
-    // 🛑 THE SECOND BODY IS NOT DECORATION. This family's 3 legal printings are ONE
-    // distinct sentence across TWO cards, so a reader keyed on anything but the TEXT
-    // — an id, a type, a cost, the PRESENCE OF A DAMAGE KEY — would satisfy a
-    // one-card suite and fail here. Ninetales is {R}{R} for 90; this is a bare {R}
-    // with no `damage` key at all.
     expect(FIXTURE_POOL["fix-tr-houndoom"]).toMatchObject({
       stage: "Stage1",
       evolveFrom: "Team Rocket's Houndour",
@@ -412,27 +219,16 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     ]);
   });
 
-  it("🛑 the sentences are the CORPUS's bytes, and the apostrophe is ASCII U+0027", () => {
-    // D183's rule: author and assert against the printed bytes, never a paraphrase.
-    // The corpus IS the `legal_standard = 1` attack column, so this is the strongest
-    // available statement that the fixture text is the printed text.
+  it("the sentences are the CORPUS's bytes, and the apostrophe is ASCII U+0027", () => {
     const rows = new Map(legalAttackCorpus().map(([units, text]) => [text, units]));
     expect(rows.get(BURN_CONFUSE)).toBe(3);
     expect(rows.get(FLIP_CONFUSE_POISON)).toBe(1);
     expect(rows.get(FLIP_PARALYZE_POISON)).toBe(1);
     expect(rows.get(CONFUSE_POISON_SWITCH)).toBe(1);
-    // 🆕🆕 D499 — the slot moved to the DATA-blocked Ancient prevent (corpus FILE LINE
-    // (🆕🆕🆕 D569 (D539): "DATA-blocked" is WITHDRAWN as the reason — Iron Moth's prevent stays unread on its persisted attacker class; the slot still holds)
-    // 182) and the count moved WITH it, 2 → 1, read off the corpus rather than carried.
     expect(rows.get(LEFT_LOUD.headsTails)).toBe(1);
-    // 🆕 D464 — the trio replaces `paralyzedComma`; all three are corpus rows, 1 printing
-    // each (FILE LINES 685, 686, 690), and the transcription is asserted the same way.
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(rows.get(text)).toBe(1);
-    // 🆕🆕🆕 D575 — the trio is EMPTY now (Glimmora is built); the vacuity guard says so outright.
     expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
     expect(rows.get(BUILT_AT_D575)).toBe(1);
-    // 🆕🆕🆕 D574 — the row that left, and the recorded refusal that joined the loud loop: 1 each.
-    //    (🆕🆕🆕 D580 (D539): the refusal is retired — built as a registry row; the sentence is still unread, still 1.)
     expect(rows.get(COMPOSED_AT_D574)).toBe(1);
     expect(rows.get(LEFT_LOUD.recordedRefusal)).toBe(1);
     // The apostrophe byte, asserted rather than eyeballed.
@@ -444,9 +240,6 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
   });
 
   it("no registry row shadows any of them — the deriver is what answers", () => {
-    // D204's defect: `programFor(id)?.attack` reads the REGISTRY only, while attack
-    // programs resolve `registry ?? deriveAttackEffect`. If a row existed the arm
-    // would be dead code and this suite would be testing the row.
     for (const id of [
       "fix-ninetales",
       "fix-tr-houndoom",
@@ -464,39 +257,26 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — the derivation, parameterised on both axes", () => {
-  it("🛑 derives TWO `applyStatus` ops in PRINTED ORDER", () => {
-    // Two ops and not one op with a list: `applyStatus`'s `status` is a single
-    // `StatusName`. This is Dangerous Laser sv06.5-058's shipped registry program
-    // (`registry.ts`, the SAME sentence in the Trainer channel) reached from the
-    // attack side — cited rather than reinvented — and arm 5c's ops-in-printed-order
-    // rule.
+  it("derives TWO `applyStatus` ops in PRINTED ORDER", () => {
     expect(deriveAttackEffect(BURN_CONFUSE)).toEqual([
       { op: "applyStatus", target: "defender", status: "burned" },
       { op: "applyStatus", target: "defender", status: "confused" },
     ]);
   });
 
-  it("🛑 the ORDER is the PRINTED order, not a canonical one", () => {
+  it("the ORDER is the PRINTED order, not a canonical one", () => {
     // The sharpest single assertion in §2: if the arm sorted, normalised or
     // slot-ordered its two ops, this would still land both conditions and every
     // model assertion in §4 would still pass. Only the ORDER can see it.
     const printedFirst = deriveAttackEffect(BURN_CONFUSE) as { status: string }[];
     expect(printedFirst.map((o) => o.status)).toEqual(["burned", "confused"]);
-    // …and a sentence whose printed order is the OTHER way round comes back the
-    // other way round. `Confused and Poisoned` puts the ROTATION word first, where
-    // `Burned and Confused` puts it second — so between the two, neither
-    // "rotation first" nor "independent first" is a rule the arm could be using.
     const other = deriveAttackEffect(
       "Your opponent's Active Pokémon is now Confused and Poisoned.",
     ) as { status: string }[];
     expect(other.map((o) => o.status)).toEqual(["confused", "poisoned"]);
   });
 
-  it("🛑 BOTH SLOTS are parameters — the D121 warrant, on the printed pool", () => {
-    // The template-vs-literal call, made from the pool rather than asserted. THREE
-    // distinct pairs are printed and both slots move across them: slot X takes
-    // Burned, Confused and Paralyzed; slot Y takes Confused and Poisoned. A literal
-    // over a pool of one is what D121 refuses, and this is the opposite of that.
+  it("BOTH SLOTS are parameters — the D121 warrant, on the printed pool", () => {
     const distinct = new Set(
       legalAttackCorpus()
         .map(([, sentence]) => statusPairOf(sentence))
@@ -543,19 +323,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     ]);
   });
 
-  it("🛑 the anchors claim EXACTLY 3 sentences / 5 printings, and no more", () => {
-    // ⚠️ THE FALSE-POSITIVE SWEEP, over the WHOLE 640-sentence column rather than
-    // over the rows this slice went looking for. A `^…$` anchor that had drifted
-    // into a floating match would show up here and nowhere else.
-    // 🆕🆕 **D478 — 3 / 5 → 4 / 7, AND THE FOURTH IS A GENUINE MEMBER RATHER THAN A DRIFT.**
-    // `statusPairOf` reads the `then` list of a one-op `coinFlipGate`, and corpus FILE LINE
-    // 263's HEADS arm *is* this family's pair, byte for byte — so widening the expected set
-    // is the honest answer and narrowing the helper would have hidden a real inhabitant.
-    // ⚠️ **BUT THE WIDENING ALONE WOULD HAVE COST THIS SWEEP ITS GRIP ON THE NEW ROW**
-    // (D438): `statusPairOf` discards `otherwise`, so a build that dropped the tails branch
-    // entirely would still sit in this set and this rung would stay green. The second
-    // assertion is what keeps it — EXACTLY ONE of the four carries a second arm, and it is
-    // the one D478 built.
+  it("the anchors claim EXACTLY 3 sentences / 5 printings, and no more", () => {
     const hits = legalAttackCorpus().filter(([, sentence]) => statusPairOf(sentence) !== null);
     expect(hits.map(([, s]) => s).sort()).toEqual(
       [BURN_CONFUSE, FLIP_CONFUSE_POISON, FLIP_PARALYZE_POISON, HEADS_PAIR_TAILS_SINGLE].sort(),
@@ -570,17 +338,8 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(twoArmed.reduce((sum, [units]) => sum + units, 0)).toBe(2);
   });
 
-  it("🛑 the five REAL near misses stay on the loud path, and `\\.$` is why", () => {
-    // Each is a printing in the same legal column, not a constructed string.
-    // ⚠️ 🆕🆕 **D478 — `headsTails` IS THE ONE MEMBER THIS RUNG'S TITLE WAS NEVER ABOUT, AND
-    // SAYING SO IS THE POINT (D452).** The `dotAnchorTrio` really is refused by a `\.$`.
-    // The old `headsTails` was too, until D478 built it; its replacement (corpus FILE LINE
-    // 268) is refused by NO byte of any anchor here — it is refused because its tails
-    // branch resolves at a different SEAM. One rung, two mechanisms, and folding them
-    // under one title is exactly the mistake D464 corrected two anchors over.
+  it("the five REAL near misses stay on the loud path, and `\\.$` is why", () => {
     expect(deriveAttackEffect(LEFT_LOUD.headsTails)).toBeNull();
-    // 🆕🆕🆕 D575 — the VACUITY GUARD (D501): the survivor set is genuinely EMPTY, not skipped —
-    // its last member (Glimmora, FILE LINE 690) is claimed WHOLE now, by its OWN anchor.
     expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(deriveAttackEffect(text)).toBeNull();
     expect(deriveAttackEffect(BUILT_AT_D575)).toEqual([
@@ -593,13 +352,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(deriveAttackEffect(CONFUSE_POISON_SWITCH)).toBeNull();
   });
 
-  it("🆕🆕 D464 — and the byte is MEASURED: `DEFENDER_NOW` minus its `\\.$` claims all three", () => {
-    // 🛑 THE RUNG D462's PROSE NEEDED AND DID NOT HAVE. A doc block that names the byte
-    // refusing a sentence is one regex from being checked, and D462's named the wrong
-    // anchor for two of its three claims. This drives the claim instead of asserting it:
-    // the strict anchor takes 4 rows / 74 printings, and dropping ONE byte takes it to 16
-    // rows / 96 — the trio above among the twelve it gains, each with a second clause the
-    // engine cannot run. Both numbers come off the POPULATION, not off a specimen.
+  it("D464 — and the byte is MEASURED: `DEFENDER_NOW` minus its `\\.$` claims all three", () => {
     const W = "(?:Asleep|Burned|Confused|Paralyzed|Poisoned)";
     const strict = new RegExp(`^Your opponent['’]s Active Pokémon is now (${W})\\.$`);
     const drifted = new RegExp(`^Your opponent['’]s Active Pokémon is now (${W})`);
@@ -607,13 +360,10 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     const hit = (re: RegExp) => rows.filter(([, s]) => re.test(s));
     expect([hit(strict).length, hit(strict).reduce((a, [n]) => a + n, 0)]).toEqual([4, 74]);
     expect([hit(drifted).length, hit(drifted).reduce((a, [n]) => a + n, 0)]).toEqual([16, 96]);
-    // 🆕🆕🆕 D575 — the trio is empty; its last member rides on as `BUILT_AT_D575`.
     for (const text of [...LEFT_LOUD.dotAnchorTrio, COMPOSED_AT_D574, BUILT_AT_D575]) {
       expect(strict.test(text)).toBe(false);
       expect(drifted.test(text)).toBe(true);
     }
-    // …and the row this slot used to hold is NOT reachable from the list anchors at all,
-    // under any single-axis loosening — which is the half of D462's reason that was false.
     const CLAIMED_AT_D464 =
       "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.";
     for (const re of [
@@ -626,7 +376,6 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     ]) {
       expect(re.test(CLAIMED_AT_D464)).toBe(false);
     }
-    // …while the one anchor D462 named correctly DOES reach it once its `\.$` is gone.
     expect(
       new RegExp(`^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W})`).test(
         CLAIMED_AT_D464,
@@ -658,7 +407,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — the rotation collision, refused at the reader", () => {
-  it("🛑 refuses every pair that shares a `SpecialConditions` field", () => {
+  it("refuses every pair that shares a `SpecialConditions` field", () => {
     // Six constructed sentences: all three unordered rotation pairs, both ways
     // round. Each would otherwise derive to two ops whose second overwrites the
     // first — the program would RESOLVE and be a lie.
@@ -675,7 +424,7 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     }
   });
 
-  it("🛑 refuses a DOUBLED word for the same reason, not a second one", () => {
+  it("refuses a DOUBLED word for the same reason, not a second one", () => {
     // A word shares a slot with itself. The invariant is "both printed words are
     // observable on the model afterwards", and a doubled word lands ONE condition.
     for (const w of ["Burned", "Confused", "Poisoned", "Asleep", "Paralyzed"]) {
@@ -684,11 +433,6 @@ describe("§3 — the rotation collision, refused at the reader", () => {
   });
 
   it("…while a pair in TWO DIFFERENT slots is admitted even though nothing prints it", () => {
-    // 🛑 THE CONTROL THAT MAKES THE REFUSAL DISCRIMINATING. Without it, an arm that
-    // simply returned `null` for every pair would pass every line above. Burned and
-    // Poisoned occupy two different fields, so the pair is coherent — and no card
-    // prints it, which is exactly why it is the control and not a claim about the
-    // catalog.
     expect(
       deriveAttackEffect("Your opponent's Active Pokémon is now Burned and Poisoned."),
     ).toEqual([
@@ -697,14 +441,7 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     ]);
   });
 
-  it("🛑 PINNED ON THE POPULATION: ZERO printings carry a same-slot pair", () => {
-    // ⚠️ D423'S RULE, AND THE REASON THIS IS NOT A SPECIMEN GUARD. That slice found
-    // an absence pinned by asserting ONE constructed string derives to null; the
-    // assertion was true and the claim was false, and it sat green for 255 decisions
-    // while warning future slices away from correct work. So the claim here is
-    // quantified over the CORPUS — every sentence in the `legal_standard = 1` attack
-    // column — and it is what licenses the refusal above being unreachable from any
-    // real card.
+  it("PINNED ON THE POPULATION: ZERO printings carry a same-slot pair", () => {
     const ROTATION = ["Asleep", "Paralyzed", "Confused"];
     const WORD = "Asleep|Burned|Confused|Paralyzed|Poisoned";
     const anyPair = new RegExp(`(${WORD}) and (${WORD})`, "g");
@@ -728,7 +465,7 @@ describe("§3 — the rotation collision, refused at the reader", () => {
     ]);
   });
 
-  it("🛑 the refusal is LOUD — a collision reaches ATTACK_EFFECT_SKIPPED", () => {
+  it("the refusal is LOUD — a collision reaches ATTACK_EFFECT_SKIPPED", () => {
     // Refusing at the reader is only correct because `null` means "say so". This
     // drives the whole path: a body whose printed text is a collision keeps its
     // sentence, and the engine announces that it did not simulate it.
@@ -750,12 +487,7 @@ describe("§3 — the rotation collision, refused at the reader", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — both conditions land, asserted on the FIELDS", () => {
-  it("🛑 Burn and Confusion land in TWO DIFFERENT FIELDS, both observable", () => {
-    // ⚠️ ASSERTED ON THE FIELDS AND NOT ON A STATUS LIST. `presentStatuses` folds
-    // the three fields into one array, so a list assertion cannot tell "rotation is
-    // confused AND burned is true" from a board that happens to render the same way.
-    // The whole hazard this slice exists for is a SECOND WRITE TO ONE FIELD, and only
-    // the fields can see it.
+  it("Burn and Confusion land in TWO DIFFERENT FIELDS, both observable", () => {
     const { state, events } = swing(board("ninetales", "fix-titan"), "ninetales");
     expect(defenderConditions(state)).toEqual({
       rotation: "confused",
@@ -778,10 +510,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
-  it("🛑 BOTH SEATS — the same sentence read from p2 lands on p1's Active", () => {
-    // D213's rule, re-earned by D412: the server-side twin passing proves nothing
-    // about the other seat. `applyStatus`'s `target: "defender"` is resolved from the
-    // ATTACKING seat, so a hard-coded `p2` would pass every line above and fail here.
+  it("BOTH SEATS — the same sentence read from p2 lands on p1's Active", () => {
     const { state } = swing(board("ninetales", "fix-titan", { by: "p2" }), "ninetales", "p2");
     expect(defenderConditions(state, "p2")).toEqual({
       rotation: "confused",
@@ -798,7 +527,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
     });
   });
 
-  it("🛑 Poison lands with its COUNTER AMOUNT, not merely as a flag", () => {
+  it("Poison lands with its COUNTER AMOUNT, not merely as a flag", () => {
     // `poisonDamage` is a number, and `0` means "not Poisoned". A pair arm that set a
     // boolean would be invisible to a status-list assertion and visible here.
     const heads = flipBoard("ekans", true);
@@ -829,18 +558,10 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       confusionDamage: 30,
     });
     expect(all(tailsEvents, "STATUS_APPLIED")).toEqual([]);
-    // 🛑 THE GATE IS ALL-OR-NOTHING, which is the assertion a one-op flip arm could
-    // not have needed: a `coinFlipGate` that gated only its FIRST step would land
-    // Poison on tails and nothing here would otherwise notice.
     expect(find(tailsEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
-  it("🛑 order-independence where the model allows it: the pair is idempotent-safe", () => {
-    // The two ops touch disjoint fields, so applying them in either order reaches the
-    // same board. That is a property of the MODEL (a slot map), and it is what makes
-    // "printed order" a faithfulness claim rather than a correctness one — worth
-    // pinning, because the day it stops being true the refusal in §3 is the thing
-    // that has broken.
+  it("order-independence where the model allows it: the pair is idempotent-safe", () => {
     const forward = swing(board("ninetales", "fix-titan"), "ninetales").state;
     const reversed = swing(board("houndoom", "fix-titan"), "houndoom").state;
     expect(defenderConditions(forward)).toEqual(defenderConditions(reversed));
@@ -885,10 +606,6 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
     the flip arms, and a stub would answer about the stub. */
 function flipBoard(attacker: Attacker, wantHeads: boolean): GameState {
   for (let seed = 1; seed < 400; seed++) {
-    // ⚠️ A SEED MAY SIMPLY NOT WORK: the shuffle can leave the attacker or its
-    // Energy in HAND rather than in DECK, and the surgery helpers read the deck. A
-    // seed that cannot build the board is not a seed that flipped the wrong way, so
-    // it is skipped rather than counted.
     let candidate: GameState;
     try {
       candidate = board(attacker, "fix-titan", { seed });
@@ -906,12 +623,7 @@ function flipBoard(attacker: Attacker, wantHeads: boolean): GameState {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — the compound composes, without an anchor of its own", () => {
-  it("🛑 `splitAttackTrailingClause` now takes it — because its HEAD became claimed", () => {
-    // ⚠️ THIS IS THE SLICE'S ONE FREE PRINTING, AND IT IS A MEASUREMENT RATHER THAN A
-    // PREDICTION. Before the pair anchor landed this returned `null` (the head was
-    // claimed by nobody); the splitter itself did not change, and this slice wrote no
-    // line of composition code. That is the property D409 bought the splitter for —
-    // "every future compound whose clauses this file already reads" — observed.
+  it("`splitAttackTrailingClause` now takes it — because its HEAD became claimed", () => {
     expect(splitAttackTrailingClause(CONFUSE_POISON_SWITCH)).toEqual({
       head: "Your opponent's Active Pokémon is now Confused and Poisoned.",
       tail: "Switch this Pokémon with 1 of your Benched Pokémon.",
@@ -928,10 +640,7 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
     ]);
   });
 
-  it("🛑 …and the WHOLE printing resolves on a real board: both statuses AND the switch", () => {
-    // Driving it, not inferring it (D422: a cited precedent that is never driven is
-    // how a false claim propagates). The bench is deliberately KEPT here so the tail
-    // has somewhere to land.
+  it("…and the WHOLE printing resolves on a real board: both statuses AND the switch", () => {
     const before = board("accelgor", "fix-titan", { bench: true });
     const benchBefore = before.players.p1.bench.length;
     expect(benchBefore).toBeGreaterThan(0);
@@ -950,8 +659,6 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
     expect(activeCardId(state)).not.toBe("fix-accelgor");
     // and the printed damage still landed
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
-    // 🛑 NOTHING WAS SKIPPED: the whole sentence was accounted for, which is the
-    // difference between composition and a prefix match that ships half a card.
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 });
@@ -961,7 +668,6 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — a §11 effects block refuses the pair", () => {
-  /** D142's WIDE block, surgeried onto the defender for the installing turn. */
   function shielded(state: GameState, seat: Seat = "p2"): GameState {
     const active = state.players[seat].active;
     if (active === null) throw new Error("no defender to shield");
@@ -977,14 +683,7 @@ describe("§6 — a §11 effects block refuses the pair", () => {
     };
   }
 
-  it("🛑 TWO `ATTACK_EFFECT_PREVENTED` ROWS FOR ONE PRINTED SENTENCE — and that is CORRECT", () => {
-    // ⚠️ IT LOOKS LIKE A BUG AND IS NOT, SO IT IS PINNED RATHER THAN LEFT TO BE
-    // "FIXED" BY A SUCCESSOR (D421's rule: a decision that is not pinned is
-    // indistinguishable from an oversight). `interpreter.ts` states the rule in as
-    // many words — *"one ATTACK_EFFECT_PREVENTED row per refused op, because the
-    // alternative is an attack clause that silently does nothing"* — and this
-    // sentence is TWO ops. The row is per-OP, not per-SENTENCE, and a reader who
-    // collapsed them would be making a refusal quieter than the thing it refuses.
+  it("TWO `ATTACK_EFFECT_PREVENTED` ROWS FOR ONE PRINTED SENTENCE — and that is CORRECT", () => {
     const { state, events } = swing(shielded(board("ninetales", "fix-titan")), "ninetales");
     expect(all(events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(2);
     expect(all(events, "STATUS_APPLIED")).toEqual([]);
@@ -1000,8 +699,6 @@ describe("§6 — a §11 effects block refuses the pair", () => {
   });
 
   it("the single-status sentence next door gets exactly ONE row — the control", () => {
-    // 🛑 WITHOUT THIS, "two rows" is not a finding: an engine that emitted two rows
-    // for EVERY blocked effect would pass the line above. One op, one row.
     const single = withEffect(
       board("ninetales", "fix-titan"),
       "fix-ninetales",
@@ -1013,9 +710,6 @@ describe("§6 — a §11 effects block refuses the pair", () => {
   });
 
   it("a blocked pair is not a SKIPPED pair — the two loudnesses are different rows", () => {
-    // D140/D142's distinction: "I could not read this" and "I read it and a rule
-    // refused it" are different sentences, and conflating them would tell a player
-    // the card is unimplemented.
     const { events } = swing(shielded(board("ninetales", "fix-titan")), "ninetales");
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
@@ -1026,10 +720,7 @@ describe("§6 — a §11 effects block refuses the pair", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — the printed text stops being flagged, on every carrier", () => {
-  it("🛑 no `ATTACK_EFFECT_SKIPPED` on any of the five bodies", () => {
-    // Before this slice all five emitted it carrying the whole sentence. Both seats,
-    // because the skip marker is written at the declaration seam and a seat-shaped
-    // defect there would be invisible from p1 alone.
+  it("no `ATTACK_EFFECT_SKIPPED` on any of the five bodies", () => {
     for (const seat of ["p1", "p2"] as const) {
       for (const attacker of ["ninetales", "houndoom", "accelgor"] as const) {
         const b = board(attacker, "fix-titan", { by: seat, bench: attacker === "accelgor" });
@@ -1039,24 +730,13 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
   });
 
   it("…including on TAILS, where the gate fired and applied nothing", () => {
-    // A resolved-to-nothing clause must not print a "not simulated" row: loudness is
-    // owed to UNREAD text (D140), and this text was read.
     expect(
       find(swing(flipBoard("ekans", false), "ekans").events, "ATTACK_EFFECT_SKIPPED"),
     ).toBeUndefined();
   });
 
   it("the four sentences this slice LEFT are still flagged — the loud path still works", () => {
-    // 🛑 THE ATTRIBUTION CONTROL (D214). Without it, "no skip marker" could be true
-    // because the marker stopped being emitted at all. These are real printings the
-    // slice deliberately did not claim, and they must still be announced.
-    // 🆕 D464 — `paralyzedComma` was BUILT and is replaced by `dotAnchorTrio`; the
-    // control keeps its job and gains two members rather than losing one (D418).
     const b = board("ninetales", "fix-titan");
-    // 🆕🆕🆕 D574 — FILE LINE 686 left (composed now); the recorded refusal joins (see `LEFT_LOUD`).
-    //    (🆕🆕🆕 D580 (D539): the refusal is retired — Mr. Mime is built as a registry row; still unread by every reader.)
-    // 🆕🆕🆕 D575 — FILE LINE 690 left too (built), so the trio is EMPTY (asserted, not looped over
-    // silently), and `headsTails` holds Walking Wake now: the loop runs over TWO real printings.
     expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
     for (const text of [
       LEFT_LOUD.headsTails,
@@ -1088,18 +768,7 @@ describe("§8 — purity and the structural answers", () => {
     expect(JSON.stringify(frozen)).toBe(snapshot);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` STAYS 26, and it is DRIVEN rather than reasoned", () => {
-    // ⚠️ `MATCH_RECORD_VERSION` IS NOT EXPORTED FROM THIS PACKAGE (it lives in
-    // `apps/api/src/lobby/match.ts`), so the claim is DRIVEN, the way D421–D423 drove
-    // theirs. The bump trigger at this address is a PERSISTED structure gaining or
-    // renaming a required field. `applyStatus` resolves INLINE and never parks — it
-    // returns a new state directly — so this slice writes no new persisted shape and
-    // adds no field to `SpecialConditions`, whose three keys it only ever assigns.
-    //
-    // THE DRIVE: build the board, ROUND-TRIP IT THROUGH JSON (which is what
-    // persistence actually does to it), and replay the attack. If this slice had
-    // added anything to the persisted shape, the replayed board would differ from the
-    // live one or produce different rows.
+  it("`MATCH_RECORD_VERSION` STAYS 26, and it is DRIVEN rather than reasoned", () => {
     const live = board("ninetales", "fix-titan");
     const persisted = JSON.parse(JSON.stringify(live)) as GameState;
     const liveRun = swing(live, "ninetales");
@@ -1108,26 +777,15 @@ describe("§8 — purity and the structural answers", () => {
     expect(replayedRun.state.players.p2.active?.conditions).toEqual(
       liveRun.state.players.p2.active?.conditions,
     );
-    // …and the CONDITIONS record's key set is unmoved, asserted as a LITERAL rather
-    // than as a diff between two boards of ONE build — a diff is blind to a key that
-    // grew on both (D279). This slice reads all three and adds none.
     expect(Object.keys(liveRun.state.players.p2.active?.conditions ?? {}).sort()).toEqual([
       "burned",
-      // 🆕🆕🆕 D501 — `confusionDamage`: THE FIRST KEY EVER ADDED TO
-      // `SpecialConditions` SINCE P3-M3, and these five shipped key-set rungs across five
-      // suites are exactly what was holding that fact. The sentence above stays TRUE of
-      // the slice that wrote it (it added none); only the COUNT moved, and it is
-      // annotated rather than rewritten (D442/D466). `MATCH_RECORD_VERSION` 29 -> 30.
       "confusionDamage",
       "poisonDamage",
       "rotation",
     ]);
   });
 
-  it("🛑 there is no PARK on this path — the ops resolve inline", () => {
-    // D416's rule inverted: a suite whose boards never park cannot claim anything
-    // about parking, so the claim here is the opposite one — that this path HAS no
-    // park, which is what makes the version prediction true.
+  it("there is no PARK on this path — the ops resolve inline", () => {
     const { state } = swing(board("ninetales", "fix-titan"), "ninetales");
     expect(state.phase.kind).not.toBe("effect:choose");
   });

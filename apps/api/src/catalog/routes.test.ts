@@ -1,8 +1,3 @@
-// Catalog route behavior that doesn't need a real D1: query validation
-// (which runs before any DB access) and the KV cache middleware's hit/miss
-// protocol. The full data path runs against the real local D1 via
-// `wrangler dev` (see docs §6); D1 itself is not stubbed here.
-
 import { describe, expect, it } from "vitest";
 import type { Env } from "../env";
 import app from "../index";
@@ -113,7 +108,6 @@ describe("catalog KV cache middleware", () => {
       "nameExact=Joltik",
       "stage=Basic&stage=Stage1&trainerType=Item&energyType=Special",
       "serie=sv&illustrator=Naoyo%20Kimura&text=Poison",
-      // D198: repeatable like the other vocabulary dimensions.
       "suffix=ex&suffix=VMAX",
     ]) {
       const res = await app.request(`/cards?${query}`, {}, envWith(kv));

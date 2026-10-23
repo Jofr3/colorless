@@ -432,117 +432,30 @@ describe("placement", () => {
       damage: 0,
       conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 },
       retreatBlocked: false,
-      // …and no SELF-installed retreat lock either (D412), read the same way as
-      // the six stamps below rather than as the boolean above it: `retreatLocked`
-      // (continuous.ts) compares this stamp to `state.turn`, so `null` is "never
-      // locked" rather than "locked on turn 0". ⚠️ **TWO §11 RETREAT FIELDS AND
-      // ONE QUESTION** — the boolean one line up is the OPPONENT-side half and this
-      // stamp is the SELF-side one, and the pair is why `toEqual`'s exactness is
-      // doing more here than usual: a slice that added the second field and left
-      // this literal spelling only the first would have a fresh body asserting
-      // half of a two-field answer, which is precisely the D222 shape the field's
-      // own doc-comment warns about.
       retreatLockedTurn: null,
-      // A card entering play carries no effect of an attack (D142) — the only
-      // installation site is an attack's own effect program.
       attackBlock: null,
-      // …and no self-lock either (D143), for the same reason and read the same
-      // way: `attackLocked` compares the stamp to `state.turn`, so `null` is
-      // "never locked" rather than "locked on turn 0".
       attackLockedTurn: null,
-      // 🆕🆕🆕 …and no FLIP-TO-ATTACK lock (D547), read the same way: `attackFlipLocked`
-      // compares the stamp to `state.turn`, so `null` is "never locked". This exact
-      // `toEqual` is one of the places a v30 body (the key ABSENT) differs from a
-      // fresh v31 one — the distinction `MATCH_RECORD_VERSION` 30 -> 31 enforces.
       attackFlipLockTurn: null,
-      // 🆕🆕🆕 …nor a TWO-COIN one (D636, Jet of Ink — MRV 44 -> 45).
       attackTwoFlipLockTurn: null,
-      // …and no durated damage reduction (D147), read the same way again:
-      // `installedReductionOf` compares the stamp to `state.turn` and returns 0
-      // for a `null`, so a fresh body reduces nothing rather than reducing on
-      // turn 0. THIS ASSERTION IS THE THIRD STAMPED FIELD'S ONLY STRUCTURAL
-      // GUARD outside its own suite — `toEqual` is exact, so a field added to
-      // `makeInPlay` without a thought about what it means at placement fails
-      // here first.
       damageReduction: null,
-      // 🆕🆕 …and no attack-installed NO-WEAKNESS bar (D432), read the same way a
-      // sixth time: `installedNoWeakness` compares the stamp to `state.turn`, so a
-      // fresh body is Weak rather than un-Weak on turn 0. ⚠️ AND THIS `toEqual` IS
-      // WHY THE FIELD IS `number | null` RATHER THAN `number | undefined`: an
-      // exact object comparison tells "absent" from "present and null", which is
-      // the very distinction `MATCH_RECORD_VERSION` 26 -> 27 exists to enforce at
-      // the storage boundary.
       noWeaknessTurn: null,
-      // 🆕🆕 …and NO SCHEDULED counter placement (D434), which is the SEVENTH read of
-      // the same rule and the first one that is a RECORD rather than a stamp. That
-      // matters exactly here: `scheduledEffectDue` asks `scheduled !== null` and
-      // then dereferences `.turn`, so a body that reached this line with the key
-      // ABSENT would not read as "nothing scheduled" — it would THROW at the next
-      // Checkup. ⚠️ AND THIS `toEqual` IS WHY THE FIELD IS `… | null` RATHER THAN
-      // `… | undefined`: an exact object comparison tells "absent" from "present and
-      // null", which is the very distinction `MATCH_RECORD_VERSION` 27 -> 28 exists
-      // to enforce at the storage boundary.
       scheduledEffect: null,
       attackDamageDebuff: null,
-      // 🆕🆕🆕 …and no NEXT-TURN VULNERABILITY (D547): `installedVulnerabilityOf` asks
-      // `=== null` and then dereferences `.turn`, so a body reaching this line with the
-      // key ABSENT would THROW at the next hit — why it is `… | null` and required.
       damageVulnerability: null,
-      // 🆕🆕🆕 …and no attack has DAMAGED it (D630): `attackDamageTakenLastTurn` asks `!== null` and then
-      // dereferences `.turn`, so a body with the key ABSENT would THROW at a Juggernaut Horn (MRV 43 -> 44).
       attackDamageTaken: null,
-      // 🆕🆕🆕 …and no COST TAX and no KNOCK OUT BOUNTY (D549). `koPrizeBonus` asks
-      // `!== null` and then dereferences `.turn`, so a body reaching an Active Knock Out
-      // with `koBounty` ABSENT would THROW; `installedCostTaxOf` would silently read 0.
       costTaxTurn: null,
       koBounty: null,
-      // 🆕🆕🆕 D575 — the hand-attach mark (Glimmora's bar, Hypno's turn end), REQUIRED (37 -> 38):
-      // a placed Basic carries none.
       handAttachMark: null,
-      // 🆕🆕🆕 …and no WEAKNESS RETYPE (D552): `installedWeaknessRetypeOf` asks `=== null` and
-      // then dereferences `.turn`, so a body reaching a Weakness step with the key ABSENT would
-      // THROW — why it is `… | null` and required (MATCH_RECORD_VERSION 33 -> 34).
       weaknessRetype: null,
-      // …and no ARMED recoil (D152), read the same way a fifth time:
-      // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
-      // retaliates for nothing rather than retaliating on turn 0.
       installedRecoil: null,
-      // …and no PER-ATTACK bar (D154; a LIST since D165), read the same way a
-      // sixth time — and this is the one where "read the same way" stops being a
-      // formality: `lockedAttackIndexes` returns INDICES, and 0 is a real index,
-      // so an EMPTY list is the only thing separating a fresh body from one whose
-      // attack 0 is barred on turn 0. The field carries records and not a bare
-      // number for exactly that reason.
       lockedAttacks: [],
-      // …and no PER-ATTACK BUFF (D155), read the same way a seventh time and for
-      // the sixth field's reason exactly: `boostedAttackDamage` compares the stamp
-      // to `state.turn` AND the stored index to the declared one, so a `null`
-      // record is what keeps a fresh body's attack 0 from being paid +0 on turn 0
-      // — which is a difference of nothing today and of a number the moment the
-      // reader stops returning 0 on the way out.
       boostedAttack: null,
       markers: [],
       turnPlayed: 0,
-      // Placed Active from the HAND, which is not a move from the Bench — the
-      // one in-play Pokémon that never gets a `promotedTurn` stamp (D124).
       promotedTurn: null,
-      // 🆕🆕🆕 …and it has never gone down from the Active Spot (D636, Fall Back to Reload).
       benchedTurn: null,
-      // …and nothing has healed it either (D386): a card arriving from the hand
-      // carries no damage, so there is nothing for a heal to remove. The stamp's
-      // absence is `null` and not `0`, because turn 0 is a real turn number here.
       healedTurn: null,
-      // …and it has not EVOLVED either (D393): a card placed from the hand arrives
-      // as itself, and the one placement that is an evolution builds its body by
-      // spread in `evolveOnto` rather than through `makeInPlay`. `null` and not `0`
-      // for `healedTurn`'s reason one line up — turn 0 is a real turn number here.
       evolvedTurn: null,
-      // …and it has never ATTACKED either (D394): the one writer is `finishAttack`
-      // (flow.ts) and a body being placed in the setup phase has not been near it.
-      // `null` and not a record for the same reason again — absence of a record is
-      // the only thing that separates "never attacked" from "attacked on turn 0",
-      // and unlike the six stamps above this one is READ two turns after it is
-      // written, so a wrong absence would be wrong for longer.
       usedAttack: null,
     });
   });
@@ -701,10 +614,10 @@ describe("finishing setup", () => {
       stadiumPlayed: false,
       stadiumAbilityUsed: false,
       abilitiesUsed: [],
-      sideAttackBonuses: [], // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag starts empty
-      supporterPlayedUid: null, // 🆕🆕🆕 D564 — no Supporter played yet (REQUIRED, MRV 35 → 36)
-      endOfTurnHandDiscard: null, // 🆕🆕🆕 D564 — no Amarys discard pending (REQUIRED, MRV 35 → 36)
-      attackAgainUid: null, // 🆕🆕🆕 D570 — no Festival Lead attack-again window open (REQUIRED, MRV 36 → 37)
+      sideAttackBonuses: [],
+      supporterPlayedUid: null,
+      endOfTurnHandDiscard: null,
+      attackAgainUid: null,
     });
   });
 });

@@ -23,70 +23,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.327.0 → 0.328.0 — 🆕🆕 D426, THE OPPONENT-CHOOSES HAND DISCARD.
-//
-// *"Your opponent discards 2 cards from their hand."* (**4 legal printings**) and
-// *"Your opponent discards a card from their hand."* (**2**) — 2 sentences / **6
-// legal printings**, measured over `legalAttackCorpus()`: the committed
-// `legal_standard = 1` attack column, 640 sentences / 1,732 printings. §1 pins
-// both figures on the POPULATION rather than on a specimen (D423).
-//
-// 🛑 **THE HEART OF THIS SLICE IS THE REDACTION, AND EVERY OTHER SECTION IS
-// SUPPORT FOR IT.** This is the first park in the engine whose ANSWERER is not
-// the controller AND whose candidates are HIDDEN CARD IDENTITIES.
-//
-// ⚠️ **IT IS THE THIRD `decider` PRODUCER, NOT THE SECOND, AND THE WRONG ORDINAL
-// WAS INHERITED FROM TWO STALE DOC LINES RATHER THAN INVENTED** (D422: a stale
-// claim is read as a measurement). `RunResult.decider`'s own doc said
-// *"opponentMayDraw is the ONE producer"* and the `opponentMayDraw` case comment
-// said *"the ONE park whose ANSWERER is the other seat"* — both false since
-// **D227**, both corrected in this slice. Enumerated by reading `parkOrForce`'s
-// call sites rather than by counting:
-//   · `opponentMayDraw` (Ortega, M5) — a `mayDraw` prompt: a count and a caption,
-//     NO CANDIDATES AT ALL;
-//   · `opponentSwitchOut` (D227) — a `choosePokemon` prompt over the answerer's own
-//     Bench, whose candidates are `PokemonRef`s ALREADY PUBLIC on the redacted board;
-//   · this op — a `chooseCards` prompt over uids out of the answerer's HIDDEN HAND.
-// So the ordinal was wrong and the substantive claim was not: neither predecessor
-// puts a hidden identity behind the gate. The two shipped mechanisms cross here
-// for the first time:
-//
-//   · the `decider` → `phase.answerer` route (interpreter.ts → flow.ts
-//     `settleProgram` → `cardplay.ts`'s `resolveEffect` gate, `phaseView.ts`'s
-//     `waitingSeat`, `redact.ts`'s `redactedPromptOf`);
-//   · the hidden-candidate `chooseCards` resolution (`redactPrompt`), which turns
-//     each candidate uid into a full `RedactedCard`.
-//
-// If the second ran without the first, the ATTACKER's own wire snapshot would
-// carry a face-up list of the DEFENDER's hand — and, worse, the attacker could
-// answer it. §4 drives BOTH halves from BOTH chairs and asserts the absence on
-// the whole snapshot rather than on the prompt field alone.
-//
-// ⚠️ **THE CARRIER CARD IDS ARE UNRESOLVED AND ARE STATED AS SUCH RATHER THAN
-// INVENTED (D425).** This checkout has no D1 — no local sqlite, no remote
-// credentials — so the six printings behind these two sentences cannot be named.
-// The SENTENCES and their PRINTING COUNTS are measurable off the committed corpus
-// and are what §1 asserts. The fixture's two attack names ("Hand Purge", "Hand
-// Pinch") are this repo's own words and carry no claim about any card.
-//
-// ⚠️ **THE PATTERN THIS FAMILY WAS ENUMERATED WITH, PUBLISHED SO ITS EDGES ARE
-// VISIBLE (D424/D425).** The handoff's pattern was
-// `/opponent discards|opponent chooses|discards? [0-9a-z]+ cards?/i`; this file
-// re-ran the LOOSER `/their hand|opponent's hand/i` over all 640 sentences and
-// read every one of the 30 hits — §1 asserts that sweep rather than describing
-// it. What NEITHER pattern can see: a printing that names the discarding player
-// by anything but the word *opponent*, or that spells the destination as *"puts
-// … into the discard pile"*. Zero such rows exist in this column today; that is
-// the edge, stated rather than assumed.
-//
-// SEED-FREE: this op consumes no RNG. The one seed below feeds `driveSetup`'s
-// shuffle and nothing this file asserts depends on its value — every board
-// rebuilds the hand under test outright.
-
-/** The two printed sentences, byte for byte off `legalAttackCorpus()` (asserted
-    in §1, so a re-ingest disagrees with a line of this file rather than with a
-    number), with the program each derives to, its legal ATTACK-column printing
-    count, and its index on the shared demonstrator. */
 const CLAUSES = [
   {
     text: "Your opponent discards 2 cards from their hand.",
@@ -107,64 +43,8 @@ const CLAUSES = [
   index: number;
 }[];
 
-/** 🛑 THE ROWS THE FAMILY SWEEP FINDS AND D426 DID **NOT** TAKE — **THREE WHEN THIS
-    LIST WAS WRITTEN, TWO SINCE D486 BUILT THE SALANDIT COMPOUND** (see the note inside
-    the array, which keeps the retired reason rather than deleting it),
-    each with the reason it is a different slice. Measured after the arm landed
-    (§1 re-runs the measurement live), because D424 gained a printing by asking
-    exactly this question of the composition path and getting a yes.
+const DEFERRED: readonly (readonly [string, string, number])[] = [];
 
-    `[printed sentence, why it is left, legal printings]`. */
-const DEFERRED: readonly (readonly [string, string, number])[] = [
-  // 🆕🆕🆕 **D515 REMOVED THIS LIST'S SECOND ROW — THE §9.2 *"IF YOU DO"* COMPOUND IS BUILT**,
-  // and its recorded reason was TRUE IN EVERY CLAUSE ON THE DAY IT WAS CHECKED: *"an §9.2
-  // *If you do* whose CONSEQUENT is this op — the tail clause is unread, and the head (a
-  // bare hand cost with no destination printed) is unread too"*. Both halves are STILL
-  // unread standalone at this head, which is precisely why D515 claims the sentence with a
-  // WHOLE-SENTENCE anchor rather than through a splitter — so unlike D486's row, the
-  // reason here did not rot, it was simply not a refusal of the sentence (D473 had already
-  // measured the anchor; what blocked the row was `describeBranch` having no phrase for
-  // `opponentDiscardsFromHand`, which would have degraded the park's caption to the bare
-  // cost). ⚠️ **The reason is kept rather than deleted** (D178/D438), and the sentence
-  // moves to `BUILT_ELSEWHERE` below so all three lists still partition the family.
-  // 🆕🆕 **D486 REMOVED THIS LIST'S FIRST ROW — THE SALANDIT COMPOUND IS BUILT.** Its
-  // reason was *"the TAIL is an evolution-history gate over a MORE-cards fold —
-  // `deriveAttackEffect` claims neither, so `splitAttackTrailingClause` refuses it however
-  // readable the head becomes"*, and **every clause of that is still TRUE**: the tail is
-  // still claimed by nobody and the splitter still refuses the sentence. What was wrong is
-  // the INFERENCE — the row was never blocked on the splitter at all, and D486 claimed it
-  // WHOLE with a compound anchor in this very reader. ⚠️ **A refusal can be right about
-  // every fact it states and wrong about the only thing it is for.** The witness is
-  // RE-POINTED rather than deleted (D438/D444/D475): the tail fragment it named is now
-  // guarded below, and the sentence itself is driven in
-  // `evolvedDiscardCompound.test.ts`. The list is a TERM in the sums at the end of §1, so
-  // both of them move with it.
-  // 🆕🆕🆕 **D542 REMOVED THIS LIST'S LAST ROW — THE DECK-DESTINATION SHUFFLE IS BUILT,
-  // AND THE LIST IS NOW EMPTY.** Its recorded reason was *"this mechanism with a DIFFERENT
-  // DESTINATION (§15.E deck, plus a shuffle), and the op prints no `to` field — D231's
-  // unkillable-singleton rule is what kept it off"*, and **every clause of that was TRUE
-  // on the day it was written and is true still**: the destination really is different,
-  // the op really printed no `to`, and a one-valued destination really is the unkillable
-  // mutant D231 refuses. ⚠️ **UNLIKE D486's ROW THE REASON DID NOT ROT — IT EXPIRED.**
-  // What changed is the POPULATION the rule was quantified over: this printing is the
-  // SECOND reachable value, so the field became falsifiable and D231 stopped reaching it.
-  // The reason is carried into `BUILT_ELSEWHERE` rather than deleted (D178/D438), which
-  // is the house form the two entries there already use.
-  // 🛑 **AN EMPTY `DEFERRED` IS THE WORST STATE A LIST CAN BE IN SILENTLY** (D438/D444/
-  // D475): every `for (const … of DEFERRED)` below goes VACUOUSLY GREEN over it. Both
-  // such loops are re-pointed at this slice rather than left standing — see §1's title,
-  // its sums, and the rung at the end of this file, which now carries an explicit
-  // REPLACEMENT WITNESS instead of `DEFERRED[0]`.
-];
-
-/** 🆕🆕 **D486 — THE THIRD TERM THIS PARTITION NEEDED THE MOMENT A ROW LEFT `DEFERRED`
-    WITHOUT LEAVING THE CORPUS.** The family sweep below is a statement about the whole
-    printed column, so its five rows have to be accounted for by SOME list; before this
-    slice, `CLAUSES ∪ DEFERRED` was that accounting because *built here* and *unbuilt*
-    exhausted it. A row built by a LATER slice belongs to neither, and deleting it from
-    `DEFERRED` alone would have made the sweep red for the right reason and the partition
-    wrong for a subtle one — the family would silently have become four rows.
-    `opponentHandFamily.test.ts`'s `builtElsewhere` term, at its second address. */
 const BUILT_ELSEWHERE: readonly (readonly [string, string, number])[] = [
   [
     "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.",
@@ -183,17 +63,12 @@ const BUILT_ELSEWHERE: readonly (readonly [string, string, number])[] = [
   ],
 ];
 
-// ── The board. `fix-trainerops` indices 61-62, appended by D426. ─────────────
 const HAND_PURGE = 61; // the printed 2
 const HAND_PINCH = 62; // the printed 1
 const KNOCK_OFF = 26; // the RANDOM sibling — the who-chooses control
 
 const SEED = 20260827;
 
-/** Five DISTINCT ids. Distinctness is load-bearing twice over: the discarded
-    uids are read back individually, and §4 asserts that NONE of them appears in
-    the actor's snapshot — a hand of five copies of one card could not tell a leak
-    of one from a leak of all five. */
 const OPP_HAND = ["fix-item", "fix-tool", "fix-gatedsup", "fix-stadium", "fix-energy"] as const;
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
@@ -256,8 +131,6 @@ function parkedPrompt(state: GameState) {
   return prompt;
 }
 
-/** The flattened text of the one action row a batch produced that mentions this
-    family — the string a player actually reads. */
 function familyRow(state: GameState, events: GameEvent[], needle: string): string {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   const row = logFromEvents(events, ctx).find(
@@ -267,46 +140,19 @@ function familyRow(state: GameState, events: GameEvent[], needle: string): strin
   return row.segments.map((s) => s.text).join("");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE CENSUS, PINNED ON THE POPULATION (D423)
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the census, measured over the corpus rather than quoted", () => {
   it("both sentences are IN the legal attack column, at 4 and 2 printings", () => {
-    // The population, not a specimen: the corpus is queried for each sentence
-    // and the printing count comes off the ROW, so a re-ingest that moves either
-    // figure reddens here by name rather than leaving a prose count rotting.
     const corpus = legalAttackCorpus();
     for (const clause of CLAUSES) {
       const row = corpus.find(([, sentence]) => sentence === clause.text);
       expect(row, clause.text).toBeDefined();
       expect(row?.[0], clause.text).toBe(clause.legalPrintings);
     }
-    // 4 + 2 = 6, as ARITHMETIC over the rows rather than as a written total, so a
-    // re-census disagrees with a sentence rather than with a sum (D230's rule).
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(6);
     expect(CLAUSES.map((c) => c.legalPrintings)).toEqual([4, 2]);
   });
 
-  it("🛑 the WHOLE opponent-side hand-discard family is these two plus THREE, and no more", () => {
-    // ⚠️ ~~**THE TITLE'S "THREE" IS STILL RIGHT AND ITS PARTITION IS NOT** (D486): the
-    // three are now ONE built elsewhere and TWO still deferred, which is why the union
-    // below has three terms.~~
-    // ⚠️ **THAT SENTENCE WAS ALREADY STALE AT D542's HEAD AND NEITHER D515 NOR D541
-    // CAUGHT IT** — D515 moved the second row to `BUILT_ELSEWHERE` and left this comment
-    // saying ONE/TWO when the tree said TWO/ONE. It is a CLAIM about a partition, so it
-    // was swept like a value rather than corrected by inspection (D539).
-    // 🆕🆕🆕 **D542: THE TITLE'S "THREE" IS STILL RIGHT AND THE PARTITION IS NOW THREE
-    // BUILT ELSEWHERE AND ZERO DEFERRED.** The union below still has three terms, and
-    // `DEFERRED` contributes none of them — which is exactly why the two loops that
-    // iterate it had to be re-pointed in the same edit rather than left vacuously green.
-    // ⚠️ THE PUBLISHED PATTERN, RE-RUN LOOSER THAN THE HANDOFF'S (D424/D425).
-    // The brief enumerated with `/opponent discards|opponent chooses|discards?
-    // [0-9a-z]+ cards?/i`. This sweeps `/their hand|opponent's hand/i` — every
-    // sentence in the column that mentions either seat's hand at all, 30 rows —
-    // and then narrows to the ones that MOVE a card out of the OPPONENT's hand to
-    // a pile or a deck. That is a strictly wider net than the brief's, and it
-    // returns the same five rows, which is the check.
+  it("the WHOLE opponent-side hand-discard family is these two plus THREE, and no more", () => {
     const corpus = legalAttackCorpus();
     const mentionsAHand = corpus.filter(([, s]) => /their hand|opponent's hand/i.test(s));
     // The sweep is WIDE — if this shrank to five the narrowing below would be
@@ -316,9 +162,6 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
       .filter(([, s]) => /^Your opponent (?:discards|chooses)|your opponent discards/.test(s))
       .map(([, s]) => s)
       .sort();
-    // 🆕🆕 **D486 — THREE TERMS, NOT TWO.** See `BUILT_ELSEWHERE`: the partition has to
-    // close over the printed column, and a row built by a later slice is in neither of
-    // the two original lists.
     expect(family).toEqual(
       [
         ...CLAUSES.map((c) => c.text),
@@ -329,49 +172,18 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // …and the three lists are DISJOINT, which is what makes the union above a partition
     // rather than a coincidence that happens to have the right length.
     expect(new Set(family).size).toBe(family.length);
-    // 🛑 EVERY `BUILT_ELSEWHERE` ROW IS ACTUALLY BUILT — the half of the claim that rots
-    // silently if nobody executes it (D467's expiry-date rule, in the other direction).
     for (const [sentence] of BUILT_ELSEWHERE) {
       expect(deriveAttackEffect(sentence)).not.toBeNull();
     }
-    // ⚠️ THE EDGE, STATED: no printing in this column spells the destination as
-    // "into the discard pile", and none names the discarder by anything but the
-    // word "opponent". Both are asserted as ZERO on the population so the day one
-    // is printed this file goes red instead of silently under-counting.
     expect(corpus.filter(([, s]) => /into (?:the|their) discard pile/i.test(s))).toEqual([]);
   });
 
   it("this slice takes 2 of the 5, and the other 3 are ALL built elsewhere now", () => {
-    // D190b's exact-map-or-flag rule: every deferred row lands on the loud
-    // ATTACK_EFFECT_SKIPPED path rather than deriving half of what it prints.
-    // 🆕🆕🆕 **D542 — `DEFERRED` IS EMPTY, SO THIS LOOP IS NOW VACUOUS AND SAYS SO
-    // RATHER THAN PASSING QUIETLY** (D438/D444/D475: silently green is the worst state).
-    // It is KEPT, because it is the guard that reddens the day a new refusal is added to
-    // the list — and the assertion beside it is what makes the emptiness a MEASUREMENT.
     expect(DEFERRED).toHaveLength(0);
     for (const [sentence] of DEFERRED) expect(deriveAttackEffect(sentence)).toBeNull();
-    // …and the positive half the empty loop can no longer carry: every row this file
-    // knows about now DERIVES, which is the family closure stated as an assertion.
     for (const [sentence] of BUILT_ELSEWHERE) expect(deriveAttackEffect(sentence)).not.toBeNull();
-    // …and the remaining two sum to 2 printings, so the family is 7 + 2 = 9 and this
-    // slice's share is named rather than implied.
-    // 🆕🆕 **D486: THE DEFERRED SIDE LOST A ROW AND THE BUILT SIDE GAINED IT** — 3 → 2 and
-    // 6 → 7. The family TOTAL is unmoved at 9, which is the whole reason both halves are
-    // written: a count of the deferred rows alone cannot tell *"a row was built"* from
-    // *"a row left the corpus"*, and the closing sum can.
-    // 🆕🆕🆕 **D515: THE DEFERRED SIDE LOST ITS SECOND ROW AND `BUILT_ELSEWHERE` GAINED
-    // IT** — 2 → 1 and 7 → 8. The family TOTAL is unmoved at 9, which is the whole reason
-    // both halves are written: a count of the deferred rows alone cannot tell *"a row was
-    // built"* from *"a row left the corpus"*, and the closing sum can.
-    // 🆕🆕🆕 **D542: THE DEFERRED SIDE LOST ITS LAST ROW AND `BUILT_ELSEWHERE` GAINED
-    // IT** — 1 → 0 and 8 → 9. The family TOTAL is unmoved at 9, which is the whole reason
-    // both halves are written: a count of the deferred rows alone cannot tell *"a row was
-    // built"* from *"a row left the corpus"*, and the closing sum can. With the deferred
-    // side at ZERO the second line is the only one of the two that still carries any
-    // information, which is said here rather than discovered later.
     expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(0);
     expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 9).toBe(9);
-    // …and the 9 is ARITHMETIC over the rows rather than a written total (D230).
     expect(
       CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
         BUILT_ELSEWHERE.reduce((sum, [, , n]) => sum + n, 0) +
@@ -379,59 +191,11 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     ).toBe(9);
   });
 
-  it("🛑 NEITHER COMPOUND COMPOSES FOR FREE — measured AFTER the arm landed", () => {
-    // D424 gained a printing exactly this way: an arm landed, and a compound
-    // whose OTHER half was already read became admissible with no splitter
-    // change at all. So the question is asked here rather than assumed, and the
-    // answer this time is NO — `COMPOUND_ATTACK_UNITS` does not move.
-    //
-    // 🛑 THE REASON IS THE SPLITTER'S SECOND CONDITION, NOT ITS FIRST.
-    // `splitAttackTrailingClause` requires the TAIL to be claimed by
-    // `deriveAttackEffect` and the HEAD by SOME reader. This slice made a HEAD
-    // readable (the Salandit compound opens with the bare printed sentence) and
-    // a head is the half the splitter gives to the readers that were already
-    // reading — it buys nothing on its own.
-    //
-    // 🆕🆕 **D486 RE-POINTED THIS RUNG, AND THE THING IT PROVES CHANGED WITHOUT
-    // ITS VERDICT MOVING.** The Salandit compound is now claimed WHOLE by
-    // `deriveAttackEffect`, so `splitAttackTrailingClause` still returns null for
-    // it — **but at its FIRST condition (`claimedByAnyReader`, the shadow refusal)
-    // rather than at its second.** A rung that stays green for a new reason is a
-    // rung that has stopped measuring what it says it measures, so the two
-    // sentences are now asked SEPARATELY: the `If you do` compound keeps the
-    // original claim, and the Salandit one is asserted at the new condition.
-    //
-    // 🆕🆕🆕 **D515 RE-POINTED IT AGAIN, AND THE SAME MOVE TWICE IS THE FINDING.** The
-    // `If you do` compound is now claimed WHOLE too, so it crosses from the SECOND
-    // condition to the FIRST exactly as the Salandit row did at D486 — and this rung
-    // would have gone green for a new reason without saying so. ⚠️ **THE OLD
-    // DISCRIMINATION IS NOT LOST, IT IS MOVED** (D418's second half): the claim *"the
-    // splitter refuses this because its TAIL is unclaimed"* now lives on the REMAINING
-    // `DEFERRED` row, which is still unread by every reader, and the two built rows are
-    // asserted at the first condition. A rung with nothing left on the second condition
-    // would be a rung that had quietly stopped testing the splitter at all.
-    //
-    // 🆕🆕🆕 **D542 RE-POINTED IT A THIRD TIME, AND THIS TIME THE FAMILY RAN OUT OF
-    // SURVIVORS.** `DEFERRED` is now EMPTY, so the second condition had no carrier at all
-    // inside this family — `DEFERRED[0]?.[0] as string` would have been `undefined` and
-    // three assertions would have gone vacuous or thrown. ⚠️ **THE CONDITION IS KEPT AND
-    // THE WITNESS IS REPLACED FROM OUTSIDE THE FAMILY**, which is the only move left once
-    // a family closes: see `UNREAD` below for the row and for why that particular row.
-    // The alternative — deleting the three lines — would have retired the only thing in
-    // this file that still exercises the splitter's SECOND condition, which is D418's
-    // *"ask what the old claim caught"* answered in the direction that keeps it.
+  it("NEITHER COMPOUND COMPOSES FOR FREE — measured AFTER the arm landed", () => {
     const SALANDIT =
       "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.";
     const IF_YOU_DO = BUILT_ELSEWHERE[2]?.[0] as string;
-    // The HEAD of the Salandit compound is claimed — this is the thing D426
-    // actually changed, and it is asserted so the "no gain" verdict below cannot
-    // be confused with "nothing moved at all".
     expect(deriveAttackEffect("Your opponent discards a card from their hand.")).not.toBeNull();
-    // 🛑 **THE TAIL FRAGMENT IS STILL CLAIMED BY NOBODY, AND D486 KEPT IT THAT WAY
-    // ON PURPOSE** — *"2 more"* is an anaphor whose antecedent is the head's
-    // discard, so a standalone tail arm would let the splitter weld it behind any
-    // claimed head. This slot is the guard on that refusal, one file over from the
-    // suite that argues it.
     expect(
       deriveAttackEffect(
         "If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
@@ -440,36 +204,8 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     expect(
       deriveAttackEffect("If you do, your opponent discards a card from their hand."),
     ).toBeNull();
-    // Driven through the splitters themselves rather than inferred from their
-    // conditions, and through BOTH of the two that serve unresolved sentences
-    // (D425: the requirement and cancel splitters serve zero).
-    // 🛑 THE SECOND CONDITION, still carried by a row nobody reads. This is the claim
-    // D486 and D515 each took a sentence away from, kept alive on the survivor.
-    // 🆕🆕🆕 **D542 TOOK THE LAST ONE, SO THE WITNESS IS REPLACED RATHER THAN THE
-    // CONDITION DROPPED.** `DEFERRED` is now EMPTY, and `DEFERRED[0]?.[0] as string` would
-    // have evaluated to `undefined` and sent three assertions vacuous-or-throwing — the
-    // exact rot D486 and D515 each re-pointed this rung to avoid, arriving a third time.
-    // ⚠️ **THE REPLACEMENT IS DELIBERATELY OUTSIDE THIS FAMILY AND OUTSIDE EVERY FAMILY
-    // UNDER ACTIVE PRICING** (D540's recorded rule: a witness inside a priced family is a
-    // rung scheduled to expire). `censusAttackCorpus.ts` **file line 649** — 1 legal
-    // printing, `OPAQUE` at BOTH census caps, and its `/move any number of damage
-    // counters/` family is 2 rows of which BOTH are unread, so nothing about it is one
-    // slice away from moving. It is on no pricing list in the tree.
-    // 🆕🆕🆕 **D574 — RE-POINTED, BEFORE THE READER LANDED, AND ~~"both are unread … nothing about it is
-    // one slice away from moving. It is on no pricing list in the tree."~~ IS WITHDRAWN (D539)**: the
-    // D574 pricing round priced FILE LINE 649 (Sableye "Damage Collection") and D574 BUILDS it (and
-    // its sibling, Alakazam's tail), so the witness was a rung scheduled to expire — D540's rule,
-    // arriving. The replacement is corpus **FILE LINE 676**, Mr. Mime `sv05-063` "Look-Alike Show"
-    // (1 legal printing), held by a RECORDED REFUSAL (D445, `opponentHandScaling.test.ts`: its
-    // falsifier is a Trainer TEXT deriver, which does not exist) and outside every family the D574
-    // round ranks. It is a STRONGER carrier of this condition than the row it replaces: its HEAD
-    // (*"Your opponent reveals their hand."*) IS claimed and its TAIL is not, so the splitter refuses
-    // it for exactly the second condition's reason — not for having no claimed half at all.
-    // 🆕🆕🆕 D580 (D539): ~~"held by a RECORDED REFUSAL … its falsifier is a Trainer TEXT deriver"~~ — D445's refusal is RETIRED: Mr. Mime is BUILT at D580 as a REGISTRY row keyed by its id (the falsifier fired another way — every legal Supporter carries a program). No reader or splitter claims the sentence, so this witness and both its conditions stand.
     const UNREAD =
       "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
-    // The witness is asserted to BE in the corpus, so a re-ingest that retires the
-    // sentence reddens here instead of leaving the rung testing a string nothing prints.
     expect(legalAttackCorpus().some(([, s]) => s === UNREAD)).toBe(true);
     expect(resolvedByAnyReader(UNREAD)).toBe(false);
     expect(splitAttackTrailingClause(UNREAD)).toBeNull();
@@ -483,13 +219,7 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     }
   });
 
-  it("⚠️ NO APOSTROPHE ON EITHER SENTENCE, so the BEARING census stands still", () => {
-    // Both printings say *their hand* and never *your opponent's hand* — the
-    // possessive this family's other anchors all carry — so there is no `['’]`
-    // slot for a re-ingest to curl. `clauseApostrophe.test.ts`'s sweep moves on
-    // FIXTURE additions as well as reader ones (D425), and this slice adds two
-    // fixture sentences: the prediction that it does NOT move is asserted here
-    // rather than left as prose.
+  it("NO APOSTROPHE ON EITHER SENTENCE, so the BEARING census stands still", () => {
     for (const clause of CLAUSES) {
       expect(clause.text).not.toContain("'");
       expect(clause.text).not.toContain("’");
@@ -509,25 +239,15 @@ describe("§2 — deriveAttackEffect over both printed counts", () => {
   }
 
   it("reads the sentences OFF THE FIXTURE, not off this file's copies", () => {
-    // D183's rule: an arm written from a paraphrase passes a test written against
-    // the same paraphrase and matches no real card. The strings above are asserted
-    // to be the demonstrator's printed bytes, at the indices §3-§7 attack.
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
     for (const clause of CLAUSES) {
       expect(attacks[clause.index]?.effect).toBe(clause.text);
       expect(deriveAttackEffect(attacks[clause.index]?.effect ?? "")).toEqual(clause.ops);
-      // NO printed base damage on either — the fixture's declared divergence,
-      // asserted rather than described. Both sentences PARK, so a base-damage
-      // Knock Out would put a promotion prompt in front of the very
-      // `effect:choose` phase every case below reads.
       expect(attacks[clause.index]?.damage).toBeUndefined();
     }
   });
 
-  it("🛑 THE ABSENT GROUP IS THE ARTICLE, and the singular is 1 rather than a default", () => {
-    // `ATTACK_DRAW`'s reading. The two printed spellings are BOTH in the pool (4
-    // and 2 printings), which is what makes this a template over a population of
-    // two rather than a parameter warranted by one witness (D121).
+  it("THE ABSENT GROUP IS THE ARTICLE, and the singular is 1 rather than a default", () => {
     expect(deriveAttackEffect("Your opponent discards a card from their hand.")).toEqual([
       { op: "opponentDiscardsFromHand", count: 1 },
     ]);
@@ -546,9 +266,6 @@ describe("§2 — deriveAttackEffect over both printed counts", () => {
     // carries: a "discards 0 cards" sentence would derive to an attack that
     // reports a simulated effect and moves nothing.
     expect(deriveAttackEffect("Your opponent discards 0 cards from their hand.")).toBeNull();
-    // ⚠️ AND THE CONTROL, WITHOUT WHICH THE RUNG IS A TAUTOLOGY: the reader still
-    // says YES on the same axis one number up. A build that refused every numeric
-    // spelling would pass the line above and fail this one.
     expect(deriveAttackEffect("Your opponent discards 1 cards from their hand.")).toEqual([
       { op: "opponentDiscardsFromHand", count: 1 },
     ]);
@@ -562,13 +279,7 @@ describe("§2 — deriveAttackEffect over both printed counts", () => {
     }
   });
 
-  it("🛑 THE WHO-CHOOSES CONTROL: the RANDOM sibling still routes to its own op", () => {
-    // The discriminator no census can see, and the reason the pair sits on ONE
-    // body. Index 26 and index 62 are the same seat's hand, the same destination
-    // and the same count of one; the only difference in the world is whether
-    // anybody chooses. A build that routed either sentence to the other's op
-    // moves the same card to the same pile and is wrong about the whole
-    // mechanism — and every "the hand shrank" assertion in this repo would pass.
+  it("THE WHO-CHOOSES CONTROL: the RANDOM sibling still routes to its own op", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
     expect(attacks[KNOCK_OFF]?.effect).toBe("Discard a random card from your opponent's hand.");
     expect(deriveAttackEffect(attacks[KNOCK_OFF]?.effect ?? "")).toEqual([
@@ -590,7 +301,7 @@ describe("§2 — deriveAttackEffect over both printed counts", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — the answerer is the OPPONENT, not the actor", () => {
-  it("🛑 files the park under the CONTROLLER and the answer under the OWNER", () => {
+  it("files the park under the CONTROLLER and the answer under the OWNER", () => {
     const { state: parked, events } = attack(deepFreeze(ready()), HAND_PURGE);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(parked.phase.seat).toBe("p1"); // the controller — the program's owner
@@ -601,14 +312,7 @@ describe("§3 — the answerer is the OPPONENT, not the actor", () => {
     expect(find(events, "EFFECT_PENDING")?.note).toBe("Discard 2 cards from your hand.");
   });
 
-  it("🛑 the caption is in the ANSWERER's VOICE, not the printed sentence", () => {
-    // The one place this family's round-trip rule is broken, and it is broken on
-    // purpose: the card says *"YOUR OPPONENT discards 2 cards from their hand"*
-    // and the player reading this dialog IS that opponent. A verbatim caption
-    // would tell them to make someone else discard. `mayDrawNote` settled this at
-    // the engine's only other opponent-answered park; this is that rule's second
-    // use, and BOTH counts are read because a singular written as "1 card" would
-    // pass a probe on the plural alone.
+  it("the caption is in the ANSWERER's VOICE, not the printed sentence", () => {
     expect(parkedPrompt(attack(ready(), HAND_PURGE).state).note).toBe(
       "Discard 2 cards from your hand.",
     );
@@ -631,14 +335,10 @@ describe("§3 — the answerer is the OPPONENT, not the actor", () => {
     expect(prompt.min).toBe(2);
     expect(prompt.max).toBe(2);
     expect(prompt.dest).toBe("discard");
-    // ⚠️ THE CANDIDATE COUNT IS THE THING THAT MAKES §4 MEAN ANYTHING (D416): a
-    // board offering exactly `min` candidates auto-resolves and never parks, so a
-    // suite whose boards all field the minimum tests the FORCED arm exclusively.
-    // Five candidates for a pick of two is a real decision.
     expect(prompt.candidates.length).toBeGreaterThan(prompt.min);
   });
 
-  it("🛑 the CONTROLLER's answer is REFUSED, and the OWNER's is accepted", () => {
+  it("the CONTROLLER's answer is REFUSED, and the OWNER's is accepted", () => {
     // The `answerer` gate in `cardplay.ts`, driven from both chairs on one board.
     // The refusal alone would pass against a build that refused everyone.
     const state = ready();
@@ -660,13 +360,7 @@ describe("§3 — the answerer is the OPPONENT, not the actor", () => {
     expect(good.ok).toBe(true);
   });
 
-  it("🛑 the TURN does not move — `activeSeat` stays the attacker for both viewers", () => {
-    // `phaseViewOf`'s third way the deciding seat and the turn owner come apart,
-    // and this park is the FIRST to reach it with `resumeTail` also set (an
-    // attack's effect program parks with the epilogue queued). A board that
-    // handed the answering seat the turn glow would be lying about whose turn it
-    // is; a board that read the ACTIVE seat as the answerer would put the dialog
-    // on the wrong screen.
+  it("the TURN does not move — `activeSeat` stays the attacker for both viewers", () => {
     const { state: parked } = attack(ready(), HAND_PURGE);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(parked.phase.resumeTail).toBe(true);
@@ -682,22 +376,10 @@ describe("§3 — the answerer is the OPPONENT, not the actor", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — 🛑 THE REDACTION. The actor never sees the opponent's card identities.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§4 — the hidden hand stays hidden, before / during / after the park", () => {
-  /** Every uid in `hand`, in the JSON-quoted form the wire actually carries.
-      Quoted because uids are `p2#4`-shaped and `p2#4` is a PREFIX of `p2#42` —
-      a bare substring probe would report a leak that is not one, or miss one
-      that is. */
   const quoted = (uids: readonly string[]) => uids.map((u) => `"${u}"`);
 
-  it("🛑 the ACTOR's wire snapshot carries NO prompt and NONE of the uids", () => {
-    // THE SAFETY PROPERTY OF THE WHOLE SLICE, and it is asserted on the SNAPSHOT
-    // rather than on the prompt field: `redactedPromptOf` returning null proves
-    // the gate ran, and nothing else. What matters is that no candidate uid
-    // crosses the wire to the actor by ANY route.
+  it("the ACTOR's wire snapshot carries NO prompt and NONE of the uids", () => {
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const { state: parked } = attack(state, HAND_PURGE);
@@ -715,7 +397,7 @@ describe("§4 — the hidden hand stays hidden, before / during / after the park
     }
   });
 
-  it("🛑 …and the OWNER's snapshot carries the prompt WITH full identities", () => {
+  it("…and the OWNER's snapshot carries the prompt WITH full identities", () => {
     // The control, without which the case above passes against a redactor that
     // withheld the prompt from everybody — which is a soft-lock, not a fix.
     const state = ready();
@@ -737,11 +419,7 @@ describe("§4 — the hidden hand stays hidden, before / during / after the park
     expect(view.phase.prompt.dest).toBe("discard");
   });
 
-  it("🛑 a SPECTATOR gets nothing from either chair", () => {
-    // `redactPhase` nulls the prompt for a spectator before the answerer gate is
-    // even consulted, and this park is the first where that matters on BOTH
-    // sides: the answerer's own spectating projection must not open the hand
-    // either, or a stream would show it.
+  it("a SPECTATOR gets nothing from either chair", () => {
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const { state: parked } = attack(state, HAND_PURGE);
@@ -756,24 +434,13 @@ describe("§4 — the hidden hand stays hidden, before / during / after the park
   });
 
   it("BEFORE the attack the actor cannot see the hand either — the attribution control", () => {
-    // ⚠️ D214's rule: a check whose subject is a shared artifact needs an
-    // attribution control. `redactedSideOf` hides the opponent's hand
-    // UNCONDITIONALLY, so "no uid in the actor's snapshot" is true on the board
-    // BEFORE this op runs too — the case above would be green against a build
-    // that never opened the hand and never closed it. What this pins is that the
-    // baseline is the same, so the interesting claim is §4's LAST case: what
-    // changes after the answer.
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const wire = JSON.stringify(redactGame(state, "p1"));
     for (const needle of quoted(oppHand)) expect(wire).not.toContain(needle);
   });
 
-  it("🛑 AFTER the answer, exactly the DISCARDED cards become public — and no others", () => {
-    // The §2 public pile is the channel, and it is the ONLY thing that changes.
-    // This is the case that could not pass against a redactor that leaks (the
-    // rest of the hand would show) NOR against one that hides everything (the
-    // discarded pair would not).
+  it("AFTER the answer, exactly the DISCARDED cards become public — and no others", () => {
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const { state: parked } = attack(state, HAND_PURGE);
@@ -795,16 +462,7 @@ describe("§4 — the hidden hand stays hidden, before / during / after the park
     for (const card of view.board.opponent.hand) expect(card.cardId).toBe("hidden");
   });
 
-  it("🛑 the LOG says HOW MANY and never WHICH, from both seats", () => {
-    // `HAND_COST_PAID`'s convention — the row is about the zone the cards came
-    // FROM. The identities become public by the BOARD (the case above), so a log
-    // row naming them would be the second channel and the wrong one: it would
-    // survive a shuffle-back the pile would not.
-    // ⚠️ FILED UNDER THE DISCARDER. Every other cross-seat card move in `log.ts`
-    // files under the ACTOR, because the actor chose and moved. Here the actor
-    // chose NOTHING, so the active voice belongs to the owner — and the event
-    // carries no `actor` for a consumer to derive one from (D425's
-    // `DAMAGE_DEALT` defect, refused by construction).
+  it("the LOG says HOW MANY and never WHICH, from both seats", () => {
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const { state: parked } = attack(state, HAND_PURGE);
@@ -818,7 +476,6 @@ describe("§4 — the hidden hand stays hidden, before / during / after the park
     expect(row).toBe("discarded 2 cards from their hand");
     for (const uid of oppHand) expect(row).not.toContain(uid);
     for (const id of OPP_HAND) expect(row).not.toContain(id);
-    // The row's `who` chip is the OWNER, not the attacker.
     const ctx: LogContext = { names: NAMES, state: done, elapsed: formatElapsed(0) };
     const entry = logFromEvents(events, ctx).find(
       (r) => r.kind === "action" && r.segments.some((s) => s.text.includes("from their hand")),
@@ -856,9 +513,6 @@ describe("§5 — which cards moved, out of whose hand, into whose pile", () => 
     });
     // The pile: appended in pile order, on the OWNER's side.
     expect(done.players.p2.discard).toEqual(picked);
-    // 🛑 THE ACTOR'S OWN ZONES DID NOT MOVE — a build that discarded to `ctx.seat`
-    // would empty the attacker's pile-side instead, and every count assertion
-    // above would still pass.
     expect(done.players.p1.discard).toEqual(state.players.p1.discard);
     expect(done.players.p1.hand).toEqual(state.players.p1.hand);
     // Card conservation on the hand: `oppHand` minus the two, plus P2's own
@@ -871,8 +525,6 @@ describe("§5 — which cards moved, out of whose hand, into whose pile", () => 
   });
 
   it("the picked cards leave by IDENTITY, not by position — a middle pick", () => {
-    // A build that took `hand.slice(0, 2)` and ignored the answer passes every
-    // count assertion in this repo. Two interior positions, read back by uid.
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const { state: parked } = attack(state, HAND_PURGE);
@@ -889,12 +541,6 @@ describe("§5 — which cards moved, out of whose hand, into whose pile", () => 
   });
 
   it("the interpreter's apply arm re-derives the OWNER from `ctx`, not from the answer", () => {
-    // `ctx.seat` is the CONTROLLER at the apply — `resolveEffect` hands
-    // `phase.seat` to `settleProgram`, never the answerer — so the owner is
-    // re-derived exactly as the park derived it. Driven bare through
-    // `runProgram`/the phase rather than through an attack, from BOTH chairs, so
-    // a build that read the seat off the answer instead is caught on the seat
-    // where the two happen to differ.
     for (const attacker of ["p1", "p2"] as const) {
       const victim = other(attacker);
       const state = ready(OPP_HAND, attacker);
@@ -920,11 +566,7 @@ describe("§5 — which cards moved, out of whose hand, into whose pile", () => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — fewer than N, exactly N, and the empty hand", () => {
-  it("🛑 EXACTLY N is FORCED — the M1 no-choice rule, no park, both seats", () => {
-    // At `M === count` the printed count is met and there is exactly ONE answer
-    // to "which 2 of your 2", so nothing is asked. Driven from both chairs
-    // because the forced arm is the one place `otherSeat(ctx.seat)` is spelled
-    // twice in this op and a crossed copy would empty the ATTACKER's hand.
+  it("EXACTLY N is FORCED — the M1 no-choice rule, no park, both seats", () => {
     for (const attacker of ["p1", "p2"] as const) {
       const victim = other(attacker);
       const state = ready(["fix-item", "fix-tool"], attacker);
@@ -943,35 +585,20 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
     }
   });
 
-  it("🛑 FEWER than N is the SAME BRANCH and a DIFFERENT DECISION — the whole hand goes", () => {
-    // ⚠️ TWO DECISIONS SHARING ONE LINE, and both are pinned because a decision
-    // that is not pinned is indistinguishable from an oversight (D421). At
-    // `M === count` the player has no choice; at `M < count` the player has no
-    // choice AND the printed count CANNOT be met. §8.6 answers both — do as much
-    // as you can — so the hand of one gives up its one card under a printed 2,
-    // and the attack does not fail, park, or report a skip.
+  it("FEWER than N is the SAME BRANCH and a DIFFERENT DECISION — the whole hand goes", () => {
     const state = ready(["fix-stadium"]);
     const held = state.players.p2.hand[0] as string;
     const { state: done, events } = attack(deepFreeze(state), HAND_PURGE);
     expect(find(events, "FORCED_HAND_DISCARD")?.uids).toEqual([held]);
     expect(done.players.p2.discard).toEqual([held]);
     expect(done.phase.kind).not.toBe("effect:choose");
-    // ⚠️ NOT a failure and NOT a skip: the printed 2 could not be met and the
-    // card still did what it could.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("ATTACK_FAILED");
     // …and the count in the LOG is the count that MOVED, not the printed one.
     expect(familyRow(done, events, "from their hand")).toBe("discarded 1 card from their hand");
   });
 
-  it("🛑 an EMPTY hand is a SILENT NO-OP — no event, no park, no state change", () => {
-    // ⚠️ THE DECISION, WRITTEN DOWN AND DRIVEN: there is nothing to discard, so
-    // nothing is announced (the ATTACK_DECLARED row above already said the attack
-    // happened) and nothing is asked (there is no decision here for the M1 rule
-    // to retire). This is `randomFromOpponentHand`'s empty-hand ending and
-    // `payFromHandApply`'s `paid.length === 0` guard, arriving at one op from two
-    // directions. A row announcing a discard of zero cards would describe
-    // something that did not happen.
+  it("an EMPTY hand is a SILENT NO-OP — no event, no park, no state change", () => {
     for (const count of [1, 2]) {
       const state = ready([]);
       const events: GameEvent[] = [];
@@ -987,7 +614,6 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
       // rebuilt the side object would pass a zone-by-zone comparison.
       expect(result.state, `count ${count}`).toBe(state);
     }
-    // …and through a real attack, both printings: the turn simply ends.
     for (const index of [HAND_PURGE, HAND_PINCH]) {
       const { state: done, events } = attack(ready([]), index);
       expect(types(events)).not.toContain("FORCED_HAND_DISCARD");
@@ -1014,11 +640,7 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
     expect(parkedAtOne).toEqual([false, false, true, true, true, true]);
   });
 
-  it("🛑 the park's FLOOR is true by construction — `min` is never unanswerable", () => {
-    // Every board that could make `min: count` unanswerable was already swallowed
-    // by the forced arm, so this op needs no `lookAtTopN`-style clamp. Asserted
-    // over every parking hand size rather than argued: the offer is always at
-    // least the floor, and the floor is always the PRINTED count.
+  it("the park's FLOOR is true by construction — `min` is never unanswerable", () => {
     for (const n of [3, 4, 5]) {
       const prompt = parkedPrompt(attack(ready(OPP_HAND.slice(0, n)), HAND_PURGE).state);
       expect(prompt.min, `${n}`).toBe(2);
@@ -1028,10 +650,6 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
     }
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — BOTH PRINTINGS, BOTH SEATS, AND THE READ SITES THIS SLICE DOES NOT OWE
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — the sentences are CLAIMED, from either chair", () => {
   it("neither printing falls to ATTACK_EFFECT_SKIPPED, on either seat", () => {
@@ -1050,19 +668,10 @@ describe("§7 — the sentences are CLAIMED, from either chair", () => {
   });
 
   it("`programPlayable` owes NO whiff gate — and the CONTROL says the gate still bites", () => {
-    // The family's standing answer rather than an omission: that gate exists so a
-    // CARD PLAY is not spent on a program that can only whiff, attacks never
-    // consult it (§8 — the attack is already declared and paid for), and this op
-    // has no registry row. `randomFromOpponentHand` has no line there either.
-    // The condition that would reverse it: a Trainer or Ability printing this
-    // sentence — zero exist in the `effect`/ability columns today.
     const empty = ready([]);
     for (const count of [1, 2]) {
       expect(programPlayable(empty, [{ op: "opponentDiscardsFromHand", count }], "p1")).toBe(true);
     }
-    // ⚠️ AND THE CONTROL ON THE SAME BOARD, without which "true" could mean the
-    // gate answers true for everything: the op that DOES carry an opponent-hand
-    // gate refuses this very board.
     expect(programPlayable(empty, [{ op: "bottomFromOpponentHand" }], "p1")).toBe(false);
     // …and the attack is declarable into an empty hand regardless, which is the
     // other half of the point.
@@ -1101,22 +710,7 @@ describe("§8 — the structural answers", () => {
     expect(JSON.stringify(frozen)).toBe(snapshot);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` STAYS 26 — DRIVEN BOTH DIRECTIONS, not reasoned", () => {
-    // ⚠️ `MATCH_RECORD_VERSION` IS NOT EXPORTED FROM THIS PACKAGE (it lives in
-    // `apps/api/src/lobby/match.ts`), so the claim is DRIVEN the way D421-D425
-    // drove theirs. The bump trigger at this address is a PERSISTED structure
-    // gaining or RENAMING a required field.
-    //
-    // 🛑 **AND THE UNION RULE ALONE WOULD NOT HAVE SETTLED IT, WHICH IS WHY THIS
-    // CASE EXISTS.** Unlike D425's `spreadDamage`, THIS OP PARKS — so it reaches
-    // `EffectContinuation.pendingOp`, which IS persisted inside
-    // `MatchRecord.state.phase`. What makes the answer still 26 is that the op is
-    // a NEW INHABITANT of the `EffectOp` union (D125's widening): a v26 record
-    // cannot CONTAIN `{op:"opponentDiscardsFromHand"}` because no deploy that
-    // wrote one could author it, and every inhabitant a v26 record does contain
-    // still means what it meant. `decider` is not a new field either — it has been
-    // an OPTIONAL member of `RunResult`/`Phase.answerer` with a shipped producer
-    // (Ortega) since M5, and this slice adds a second producer to it.
+  it("`MATCH_RECORD_VERSION` STAYS 26 — DRIVEN BOTH DIRECTIONS, not reasoned", () => {
     const state = ready();
     const { state: parked } = attack(state, HAND_PURGE);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the park");

@@ -16,18 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: board conditions — ONE `BoardCondition` vocabulary with two
-// consumers, so a printed "if <board condition>" reads the same whether it gates
-// the PLAY or a step inside the program:
-//   • CardProgram.trainerPlayableIf — the printed "You can use this card only if …"
-//     legality gate, checked before the card leaves hand (Fighting Au Lait);
-//   • the `conditionGate` op — a mid-program branch spliced by runProgram like
-//     coinFlipGate, one-armed (Falkner) or with an `otherwise` (Grusha's
-//     "instead").
-// Every condition reads only PUBLIC state, so a gate emits no event and the HUD
-// may evaluate one client-side. Three real cards land, verified end to end
-// through playTrainer, plus fix-condgate (a FIXTURE proving a branch can park).
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -263,8 +251,6 @@ describe("M5 op-slice — Falkner (a one-armed conditionGate)", () => {
 
   it("emits NO event for the gate itself — a public condition is not news", () => {
     const played = play(playStadium(board(13), "p1"), "sv02-180");
-    // Only the play and the two draws; nothing announcing the branch taken (and
-    // in particular no coin-flip row, which the sibling gate would emit).
     expect(types(played.events)).toEqual(["TRAINER_PLAYED", "CARDS_DRAWN", "CARDS_DRAWN"]);
   });
 });
@@ -289,12 +275,6 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
   });
 
   it("takes the 5-arm only — the always-then / always-otherwise mutants both die", () => {
-    // NB this does NOT prove "exactly one arm ran": `drawUntilHandSize 7` then
-    // `5` is indistinguishable from `7` alone, so a run-BOTH mutant is equivalent
-    // here. What it pins is that the CONDITION is consulted at all — a gate hard-
-    // wired to `then` lands on 7, one hard-wired to `otherwise` lands on 5 when
-    // the 7-arm test above expects 7. The ordered-splice claims are pinned by
-    // fix-gateorder below, where the two arms draw distinguishable counts.
     const state = attachEnergy(handOnly(board(14), "p1", []), "p1", "active");
     const played = play(state, "sv02-184");
     expect(handCount(played.state, "p1")).toBe(5);
@@ -386,13 +366,6 @@ describe("M5 op-slice — the gate mechanism itself", () => {
   });
 
   it("evaluates AS OF the gate, splices the arm to the FRONT, and keeps the tail", () => {
-    // fix-gateorder: [attach an Energy, gate(noEnergyOnYourPokemon){then: draw 3,
-    // otherwise: draw 1 + draw 4}, draw 2]. The leading attach BREAKS the
-    // condition, so the correct run is the otherwise arm, in order, then the
-    // trailing draw — one ordered assertion, three distinct mutants killed:
-    //   • gate read against the program's ENTRY state → [3, 2]
-    //   • arm pushed to the BACK of the queue → [2, 1, 4]
-    //   • the queue tail dropped by the splice → [1, 4]
     let state = handOnly(board(18), "p1", []);
     state = handFromDeck(state, "p1", "fix-energy", 1); // the attach source
     const before = handCount(state, "p1");
@@ -426,8 +399,6 @@ describe("M5 op-slice — the gate mechanism itself", () => {
   });
 
   it("names the unmet condition in the reject message (the HUD tooltip copy)", () => {
-    // `conditionNote` is player-facing on both paths — the engine's reject pill
-    // and the greyed HUD row's tooltip — and nothing else asserts its wording.
     const state = handFromDeck(board(18), "p1", "sv02-181", 1);
     const uid = handUid(state, "p1", "sv02-181");
     const result = applyAction(state, { type: "playTrainer", seat: "p1", uid });

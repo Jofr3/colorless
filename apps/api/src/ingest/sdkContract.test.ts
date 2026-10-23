@@ -1,38 +1,4 @@
-// @tcgdex/sdk 2.9.0 vs our Zod boundary — the drift detector (D188).
-//
-// The SDK's TypeScript types are erased at runtime, so they can never be the
-// validation boundary (D5). But they ARE a claim about the payload, and this
-// file pins that claim against the two things we can check without network:
-// the committed live fixtures, and the SDK's own runtime model-building.
-//
-// Three kinds of assertion, all of which go RED on drift:
-//  1. runtime — every fixture the SDK transport would deliver still parses at
-//     the Zod boundary;
-//  2. runtime — the SDK's model layer MUTATES payloads (documented below),
-//     which is why ./source.ts uses the raw `client.fetch(...)` endpoints;
 //  3. compile-time — `@ts-expect-error` on each field the SDK's type omits but
-//     live data carries. TypeScript errors on an UNUSED expect-error, so the
-//     day the SDK adds one of these fields, `bun run check` fails and someone
-//     re-reads this file. That is the point.
-//
-// FINDINGS (SDK type ✗ vs live payload / our schema), all still true at 2.9.0:
-//  - `Card` declares NO `pricing`, NO `updated`, NO `variants_detailed` — all
-//    three are present on every committed card fixture, and `updated` is
-//    written to D1 by mapCard. Adopting the SDK type as the mapper's input
-//    would have silently dropped a column.
-//  - `Set` declares no `abbreviation`; live sv01 has `{"official":"SVI"}`.
-//  - `Serie` declares only `{id,name,logo?,sets}`; live `sv` also has
-//    `releaseDate`, `firstSet`, `lastSet`.
-//  - `variants` omits `wPromo`, which our schema models.
-//  - `VariantsDetailed` omits `pricing` (present on live variants) and makes
-//    `variantId` required; it adds `subtype`/`thirdParty`, which we strip.
-//  - `Card.item` is typed `{name: string; effect: string}` (both required) but
-//    live dp5-4 serves `item: {}`.
-//  - `Card.category` is `string`, not the three-way literal our discriminated
-//    union needs — the SDK is LOOSER here, which is the safe direction.
-//  - `Card.rarity`/`Card.legal` and `Set.cardCount.normal|reverse|holo` are
-//    required in the SDK, optional in our schema. Our schema is the more
-//    liberal of the two, so nothing the SDK can serve is rejected.
 
 import {
   type TcgdexCard,

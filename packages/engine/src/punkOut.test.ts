@@ -24,29 +24,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.64.0 → 0.65.0 — Wimpod swsh10.5-025 "Punk Out" (P3-M5 long tail, D114): "If
-// your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost."
-//
-// The TENTH and last open print on the retreat-COST seam, which closes at 10/10
-// within the ingested pool. What it turns on:
-//
-//   • a SELF-only set-to-zero with a CROSS-BOARD predicate — a shape with no
-//     precedent. Every retreat modifier before it either reached OTHER Pokémon
-//     through a dedicated aura scan (Lunar Zone D108, Trap Territory D111) or
-//     modified its holder through the seat-free `passivesOf` fold. This one
-//     modifies only its holder yet must look across the table, so it gets the
-//     sixth aura-family scan, `hasFreeRetreatSelf`, which reads the HOLDER's own
-//     passive and derives the seat purely so "your opponent" resolves — leaving
-//     `effectiveRetreatCost`'s signature and all FOUR of its readers untouched;
-//   • "in play" is Active + BENCH: no clause in the sentence scopes either end to
-//     the Active Spot, so a benched opposing V frees Wimpod just as an Active one
-//     does. Getting that wrong would be silent;
-//   • "Pokémon V" is LITERAL — `pokemonSuffixOf` matches " VMAX"/" VSTAR" before
-//     the bare " V" — so a VMAX or an ex across the table frees nothing;
-//   • and Wimpod is a BASIC, so this is the aura family's SECOND assertable §9
-//     POSITIVE (after D113's Snorlax): an Active Klefki's "Mischievous Lock"
-//     really does silence Punk Out and the printed 3 snaps back.
-
 const ABILITY_TEXT =
   "If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost.";
 
@@ -67,12 +44,6 @@ function vInPlay(state: GameState, seat: Seat): InPlayPokemon[] {
   });
 }
 
-/** Setup on P1's open turn with BOTH Active spots pinned to a neutral 200 HP
-    fix-bigbody, and BOTH boards asserted V-free. Pinning keeps the controls
-    seed-independent — PUNK_OUT_DECK carries the holder, a V, a VMAX, an ex and a
-    Klefki, any of which the mulligan-free starter could otherwise be, and each
-    would silently arm (or silence) the very predicate under test. Each displaced
-    starter lands on its own bench, which is what a retreat then promotes. */
 function board(seed: number): GameState {
   let state = driveSetup(seed, { p1: PUNK_OUT_DECK, p2: PUNK_OUT_DECK }, { first: "p1" });
   state = setActiveFromDeck(state, "p1", "fix-bigbody");
@@ -90,10 +61,6 @@ function activeOf(state: GameState, seat: Seat): InPlayPokemon {
   return active;
 }
 
-/** The body `benchFromDeck` just appended to `seat`'s bench, VERIFIED to be
-    `cardId` rather than trusted by slot: every bench here already holds the
-    starter the Active surgery displaced, and PUNK_OUT_DECK runs several copies of
-    each body — so a bare index could read a same-named neighbour instead. */
 function justBenched(state: GameState, seat: Seat, cardId: string): InPlayPokemon {
   const benched = state.players[seat].bench.at(-1);
   if (benched === undefined) throw new Error(`${seat} has an empty bench`);
@@ -118,10 +85,6 @@ describe("Punk Out — the registry data row (noRetreatCostSelf)", () => {
   });
 
   it("is the ONLY row carrying the field — the census claim", () => {
-    // REGISTRY itself is not exported, so the sweep runs over every id the engine
-    // can field (FIXTURE_POOL) plus the other NINE rows the local D1's
-    // `%retreat cost%` census returns: the two Stadiums, the four readers and the
-    // three Spidops ex printings. Wimpod is the tenth and the only self-only one.
     const seam = [
       "sv01-002",
       "sv01-019",
@@ -190,7 +153,6 @@ describe("Punk Out — the cross-board predicate", () => {
   });
 
   it("is YOUR OPPONENT's board — a V on Wimpod's own side frees nothing", () => {
-    // Both directions off one board: the same printing, benched on either side.
     const own = benchFromDeck(
       setActiveFromDeck(board(4), "p1", "swsh10.5-025"),
       "p1",
@@ -252,10 +214,6 @@ describe("Punk Out — SELF-only, not an aura", () => {
 
 describe("Punk Out — the §9 ability lock", () => {
   it("an Active Klefki silences it — the family's SECOND positive", () => {
-    // "Mischievous Lock" narrows to BASIC Pokémon on BOTH sides while Klefki is
-    // Active. Wimpod is a Basic, so unlike Stage 1 Clefable ex (D108) and Spidops
-    // ex (D111) it really is reachable — and here the silenced source IS the
-    // beneficiary, the passive being self-only.
     let locked = setActiveFromDeck(board(9), "p1", "sv01-096");
     locked = benchFromDeck(locked, "p1", "swsh10.5-025");
     const wimpod = justBenched(locked, "p1", "swsh10.5-025");

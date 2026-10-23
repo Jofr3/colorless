@@ -23,17 +23,8 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D618 — WP25b: THE REST OF THE `me` STADIUMS D606 DROPPED ──
-//
-// 3 printed texts / 8 `me` printings on three new registry objects: Battle Cage ×2 (the Bench
-// damage-counter shield, `StadiumEffects.benchCounterShield`; R-BCG1, R-BCG2), Mystery Garden ×3 (a
-// Stadium use with a discard cost, `drawUntilHandSize.per`; R-MYG1) and Forest of Vitality ×3 (the
-// Stadium evolution permission, `StadiumEffects.sameTurnEvolution`; R-FOV1). Every id and text measured
-// on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-09, `legal_standard = 1`. Dropped
-// and named: Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins, Ange Floette BUILT at D642 (Z1).], Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette. Driven on a LOCAL `cardPool`
-// (D275) in the suite's OWN 60-card deck (D270).
 
 const CAGE_TEXT =
   "Prevent all damage counters from being placed on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from the opponent's Pokémon. (Damage from attacks is still taken.)";
@@ -46,7 +37,6 @@ const CAGE = ["me02-085", "me02-116"] as const;
 const GARDEN = ["me01-122", "me01-172", "me02.5-194"] as const;
 const FOREST = ["me01-117", "me02.5-188", "me03-109"] as const;
 
-/** [name, the keyed printings, the printed text]. */
 const TEXTS: readonly (readonly [string, readonly string[], string])[] = [
   ["Battle Cage", CAGE, CAGE_TEXT],
   ["Mystery Garden", GARDEN, GARDEN_TEXT],
@@ -200,7 +190,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [CAGE[0]]: 1,
   [GARDEN[0]]: 1,
@@ -231,11 +220,6 @@ const DECK = deckOf({
   [SPECIAL]: 2,
   "fix-energy": 12,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's turn 2 (p1's FIRST turn) after p2 passed. */
 function opened(seed: number): GameState {
@@ -401,9 +385,7 @@ describe("D618 §1 — the programs: three objects over 8 printings", () => {
     );
   });
 
-  it("the dropped Stadiums stay unkeyed (🆕🆕🆕 D635 (D539): but Fossil Quarry, keyed since D635; 🆕🆕🆕 D642 (D539): WITHDRAWN — the other three are keyed since D642, the rung is inverted)", () => {
-    // 🆕🆕🆕 D635 (D539) — Fossil Quarry `me05-076` left this list (`fossilQuarryD635.test.ts`).
-    // 🆕🆕🆕 D642 (D539) — Dizzying Valley, Risky Ruins and Ange Floette: Z1 (`stadiumWatchedMeD642.test.ts`).
+  it("the dropped Stadiums stay unkeyed ( D635 (D539): but Fossil Quarry, keyed since D635; D642 (D539): WITHDRAWN — the other three are keyed since D642, the rung is inverted)", () => {
     for (const id of ["me02-088", "me01-127", "me04-075"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
   });

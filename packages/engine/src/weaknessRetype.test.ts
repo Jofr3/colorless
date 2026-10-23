@@ -28,40 +28,6 @@ import {
 } from "./testFixtures";
 import type { WeaknessRetype } from "./types";
 
-// 0.435.0 → 0.436.0 — 🆕🆕🆕 D552 (the RIDER), THE WEAKNESS RETYPE:
-//
-//   "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The
-//    amount of Weakness doesn't change.)"
-//
-// `censusAttackCorpus.ts` FILE LINE 629 (leading count column 1): 1 sentence / 1 legal
-// printing — OPAQUE at SUBMAX=12 before this slice, carried as "the rider for the NEXT record
-// bump" since D548 and taken WITH `:569`'s bump. Claimed WHOLE by `deriveAttackEffect` through
-// ONE new zero-capture anchor (`DEFENDER_WEAKNESS_RETYPED`, TWO `['’]` slots) and ONE new arm
-// (19f''') emitting ONE new op, `retypeDefenderWeakness { type: "Colorless" }` — D547's
-// `exposeDefender` cloned for holder, stamp and guards. The installer writes
-// `InPlayPokemon.weaknessRetype = { turn: T+2, type }` on the OPPONENT's Active; cards.ts
-// `weaknessOf` keeps the printed AMOUNT and swaps the TYPE, at BOTH Weakness sites, AFTER
-// their three null paths.
-//
-// RULINGS (docs/decisions.md D552, each with its reversal condition):
-//   R1 — the window is the stamp T+2; the printed "Until the end of" also covers the rest of
-//        the installing turn and the holder's own turn, where no Weakness step can reach the
-//        body (§3 pins the dead turns).
-//   R2 — ⚠️ UNRULED: a defender that prints NO Weakness stays not-weak (no amount to keep).
-//   R3 — the three null paths win: a nulled Weakness stays null (§4).
-//   R4 — on-target, so the main hit's `suppressTargetEffects` drops it and the PRINTED type
-//        applies; the snipe's `ignoreWR` nulls Weakness outright (§4).
-//   R5 — §10: retreat, a Switch, evolving, a forced switch and devolving each shed it; a
-//        same-window re-install of the same type is silent; only the FIRST printed entry is
-//        retyped (§5, §7).
-//
-// ⚠️ NO REAL CARD ID RESOLVES FOR THE SENTENCE ON THIS CHECKOUT (measured, `git grep`, D425:
-// no `registry.ts` or `catalogManifest.ts` row prints it). Its only `testFixtures.ts` carrier
-// is the DECLARED sweep fixture `fix-tideattach` (index 1), added by this slice for the
-// `FIXTURE_POOL` sweeps and unused here (`fix-nowk` index 2 printed it at HEAD and was moved
-// off it). Every board rides file-local DECLARED `d552-*` demonstrators in their own 60-card
-// deck (D270). The real card is UNMEASURED.
-
 const S629 =
   "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)";
 const P629: readonly EffectOp[] = [{ op: "retypeDefenderWeakness", type: "Colorless" }];
@@ -138,7 +104,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "d552-marker": 4,
   "d552-ember": 2,
@@ -273,7 +238,7 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
     expect(claimed.map(([, s]) => s)).toEqual([S629]);
   });
 
-  it("🛑 derives to the ONE op, by value, and `deriveAttackEffect` is the only claimant", () => {
+  it("derives to the ONE op, by value, and `deriveAttackEffect` is the only claimant", () => {
     expect(deriveAttackEffect(S629)).toEqual(P629);
     expect(claimants(S629)).toEqual(["deriveAttackEffect"]);
     expect(resolvedByAnyReader(S629)).toBe(true);
@@ -316,7 +281,7 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — the install writes `{ turn: T+2, type }` on the DEFENDER, and says so", () => {
-  it("🛑 the record is on P2's Active, stamped T+2 = 5, and the attacker carries none", () => {
+  it("the record is on P2's Active, stamped T+2 = 5, and the attacker carries none", () => {
     const { state } = installed();
     expect(state.turn).toBe(4);
     expect(body(state.players.p2.active).weaknessRetype).toEqual({ turn: 5, type: "Colorless" });
@@ -340,10 +305,6 @@ describe("§2 — the install writes `{ turn: T+2, type }` on the DEFENDER, and 
   });
 
   it("the installing attack's own 10 is dealt at the PRINTED Weakness (the ORDER keeps it there: the program installs AFTER DAMAGE_DEALT)", () => {
-    // attack.ts §8 step 4 runs the attack's own program AFTER the damage step, so the
-    // retype is written after the hit is already dealt. This rung is blind to the STAMP
-    // (a stamp of T or T+1 would still deal 10 here); §2's `{ turn: 5 }` rung and §3's
-    // window rungs are the ones that pin the stamp.
     const { events } = installed();
     const types = events.map((e) => e.type);
     expect(types.indexOf("DAMAGE_DEALT")).toBeGreaterThanOrEqual(0);
@@ -357,7 +318,7 @@ describe("§2 — the install writes `{ turn: T+2, type }` on the DEFENDER, and 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — live on T+2 only, and it re-points the TYPE while keeping the AMOUNT", () => {
-  it("🛑 T+2: a {C} attacker's 50 is ×2 → 100; a {R} attacker's 50 is NOT weak any more → 50", () => {
+  it("T+2: a {C} attacker's 50 is ×2 → 100; a {R} attacker's 50 is NOT weak any more → 50", () => {
     const window = inWindow(installed().state);
     expect(window.turn).toBe(5);
     expect(dealt(attack(window, STRIKE).events)).toBe(100);
@@ -379,12 +340,12 @@ describe("§3 — live on T+2 only, and it re-points the TYPE while keeping the 
     expect(dealt(attack(attackerAs(after, "d552-ember"), 0).events)).toBe(100);
   });
 
-  it("🛑 'The amount of Weakness doesn't change': a printed +20 {R} becomes +20 {C} → 70, not ×2", () => {
+  it("'The amount of Weakness doesn't change': a printed +20 {R} becomes +20 {C} → 70, not ×2", () => {
     const window = inWindow(installed({ defender: "d552-plus-wall" }).state);
     expect(dealt(attack(window, STRIKE).events)).toBe(70);
   });
 
-  it("⚠️ R2 (UNRULED): a defender that prints NO Weakness stays not-weak → 50", () => {
+  it("R2 (UNRULED): a defender that prints NO Weakness stays not-weak → 50", () => {
     const window = inWindow(installed({ defender: "d552-no-weak" }).state);
     expect(body(window.players.p2.active).weaknessRetype?.type).toBe("Colorless");
     expect(dealt(attack(window, STRIKE).events)).toBe(50);
@@ -411,12 +372,12 @@ describe("§3 — live on T+2 only, and it re-points the TYPE while keeping the 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — the three null paths win (R3), `suppressTargetEffects` drops it (R4), and the SNIPE site reads it", () => {
-  it("🛑 R3: 'isn't affected by Weakness or Resistance' — the retyped ×2 is NOT applied → 50", () => {
+  it("R3: 'isn't affected by Weakness or Resistance' — the retyped ×2 is NOT applied → 50", () => {
     const window = inWindow(installed().state);
     expect(dealt(attack(window, CLEAN).events)).toBe(50);
   });
 
-  it("🛑 R3: D432's installed no-Weakness bar on the same body (constructed) — null wins → 50", () => {
+  it("R3: D432's installed no-Weakness bar on the same body (constructed) — null wins → 50", () => {
     const window = inWindow(installed().state);
     const holder = body(window.players.p2.active);
     const barred = {
@@ -429,12 +390,12 @@ describe("§4 — the three null paths win (R3), `suppressTargetEffects` drops i
     expect(dealt(attack(barred, STRIKE).events)).toBe(50);
   });
 
-  it("🛑 R4: 'isn't affected by any effects on your opponent's Active Pokémon' — the PRINTED type applies → 50 from {C}", () => {
+  it("R4: 'isn't affected by any effects on your opponent's Active Pokémon' — the PRINTED type applies → 50 from {C}", () => {
     const window = inWindow(installed().state);
     expect(dealt(attack(window, SHRED).events)).toBe(50);
   });
 
-  it("🛑 THE SNIPE SITE (`snipeActive`), driven on its OWN board: a chosen 30 onto the Active is ×2 → 60", () => {
+  it("THE SNIPE SITE (`snipeActive`), driven on its OWN board: a chosen 30 onto the Active is ×2 → 60", () => {
     const window = inWindow(installed().state);
     const parked = attack(window, PICK_OFF).state;
     expect(parked.phase.kind).toBe("effect:choose");
@@ -505,7 +466,7 @@ describe("§5 — retreat, a Switch, evolution, a forced switch and devolution e
     expect(benchedRetyped(state, uid).weaknessRetype).toBeNull();
   });
 
-  it("🛑 EVOLVE on turn 4 (played): the evolved card keeps its PRINTED type at T+2 — {C} 50", () => {
+  it("EVOLVE on turn 4 (played): the evolved card keeps its PRINTED type at T+2 — {C} 50", () => {
     const victim = handFromDeck(installed().state, "p2", "d552-wall-evolved", 1);
     const { state } = mustApply(victim, {
       type: "evolve",
@@ -583,12 +544,8 @@ describe("§7 — a same-window re-install of the same type is silent; a differe
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — the v34 bytes and the v33 reject (D326/D124).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the version moved", () => {
-  it("🛑 v34: the record is in the serialized state, and a JSON round-trip still pays", () => {
+  it("v34: the record is in the serialized state, and a JSON round-trip still pays", () => {
     const window = inWindow(installed().state);
     const bytes = JSON.stringify(window);
     expect(bytes.includes('"weaknessRetype":{"turn":5,"type":"Colorless"}')).toBe(true);
@@ -596,26 +553,18 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
     expect(dealt(attack(revived, STRIKE).events)).toBe(100);
   });
 
-  it("🛑 v33-SHAPED body (the key genuinely ABSENT): the first main hit THROWS (D326)", () => {
+  it("v33-SHAPED body (the key genuinely ABSENT): the first main hit THROWS (D326)", () => {
     const revived = JSON.parse(JSON.stringify(inWindow(installed().state))) as GameState;
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v33 record looks like (D124).
     delete target.weaknessRetype;
     expect("weaknessRetype" in target).toBe(false);
-    // `undefined === null` is false, so the reader dereferences `.turn` of undefined — on
-    // every main hit that reads target effects into ANY v33 body, retyped or not (a
-    // `suppressTargetEffects` hit skips the reader and does not throw). Retiring the record (apps/api
-    // match.ts, THE SEVENTH POSITION) is the only safe answer.
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(
       TypeError,
     );
   });
 
   it("…and a ROLLBACK (v33) reading a v34 record DROPS the live retype: the {C} hit pays the printed 50", () => {
-    // ⚠️ AN ILLUSTRATION of THE SEVENTH POSITION's D456 test, evaluated on the revived bytes:
-    // a v33 `weaknessOf(attacker, defender)` has no third argument, so the retyped body is
-    // hit at its PRINTED type — a live effect silently missing, NOT inert. The red-capable
-    // proof in the engine is the mutant `D552-main-hit-retype-not-read`.
     const window = inWindow(installed().state);
     const revived = JSON.parse(JSON.stringify(window)) as GameState;
     const record = body(revived.players.p2.active).weaknessRetype as WeaknessRetype;

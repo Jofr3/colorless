@@ -17,70 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// D190 — TIER 1's REGISTRY-ONLY PROGRAMS — the Abilities and Trainers
-// whose printed effect maps ENTIRELY onto ops that already exist.
-//
-// ⚠️ WHY THIS TIER MATTERS OUT OF ALL PROPORTION TO ITS SIZE.
-// `docs/reference/coverage-backlog-legal.md`'s headline: of the **651
-// Standard-legal Ability / Trainer / Special-Energy printings**, exactly **6 are
-// built — 0.9 %**. Attack text is 806-of-1,732 built because a deriver ARM is a
-// text parser and its sentences transfer across sets. Abilities and Trainers have
-// **no deriver at all** — each one is a hand-authored registry row, forever — and
-// **172 of the registry's 178 ids are rotated out of Standard**. A row here is
-// the only thing that moves that 0.9 %, and every printing it serves has to be
-// COUNTED, because a row is keyed by CARD ID and serves exactly the ids it names.
-//
-// ⚠️⚠️ AND THE FINDING OF THIS SLICE IS WHAT DID **NOT** LAND. The census names
-// SEVEN registry-only programs across 29 printings. Re-deriving the list op by op
-// against the engine as it actually stands, **FOUR of the seven need engine code
-// that does not exist**, so they were DROPPED rather than approximated — the
-// *EXACT MAP OR FLAG* doctrine, whose whole content is that a registry row has no
-// deriver behind it to refuse what it cannot parse. Whatever is authored IS what
-// the card does, forever. An unauthored Ability at least surfaces loudly; a
-// wrong-but-plausible one does not. `DROPPED` below names each of the four, with
-// the exact missing piece, and asserts it stayed unbuilt.
-//
-// ✅ **ALL FOUR HAVE NOW BEEN COLLECTED, AND `DROPPED` IS EMPTY.** D221 paid for
-// Teal Dance's two fields (`attachEnergyFrom.toSelf` + `recordAs`) and landed its
-// 8 printings; D222 paid for Flashing Draw's one member (`discardEnergy
-// { from: "self" }`, plus the `programPlayable` `sourceUid` the member turned out
-// to need) and landed its 3; D223 paid for Carmine's
-// `CardProgram.trainerFirstTurnExempt` and landed its 4 — the biggest row by
-// printings; **D226 paid for N's Plan's `moveEnergy.anySource` and landed the last
-// 3**. All four moved from `DROPPED` to `PAID` and every assertion INVERTED — from
-// "no program" to "built, by exactly the piece this row predicted". The table is
-// now **0 dropped / 0 printings + 4 paid / 18**. ⚠️ The `needed` strings are KEPT
-// rather than deleted: they are the only record of what the census got wrong, and
-// D178's rule is that provenance is annotated, never overwritten.
-//
-// ⚠️ **AND THE PREDICTIONS ARE 4-FOR-4 TO THE FIELD**, which is the finding this
-// table exists to make measurable. Four of that session's other inherited flags
-// were wrong (D200's six cards, D206's grouped query, D207's already-present
-// union member); D190's `needs` column has matched the landed diff four times
-// running, so it is the one flag on this branch that has earned being read
-// literally.
-//
-// ⚠️ **AN EMPTY TABLE IS THE ONE STATE THIS FILE'S OWN ASSERTIONS COULD NOT
-// CATCH, SO `DROPPED.length` IS PINNED (D226).** Every check over `DROPPED` is a
-// `for` loop, and a `for` loop over `[]` passes for free — the exact vacuity
-// conventions.md forbids. The length is asserted to be 0 **and** the four PAID
-// rows to total 18, so deleting a row from either table (or quietly re-adding one
-// here) still goes red.
-//
-// ⚠️⚠️ **AND THE FAILURE MODE IT KEEPS REPEATING, NOW TWICE: THE FIELD IS RIGHT
-// AND THE READ SITES ARE MISSING.** D222's row named `discardEnergy.from:"self"`
-// and said nothing about the `programPlayable` gate that turned out to be the
-// larger half; D223's row named "a `CardProgram` flag read at that gate" and said
-// nothing about the OTHER TWO gates — both HUDs decide the turn-1 Supporter
-// greying themselves. **A `needs` string prices a FIELD; the slice pays for its
-// READ SITES.** Re-derive them before quoting a row's cost.
-//
-// What survives (of the LANDED tier): **3 programs / 11 Standard-legal
-// printings**, every count measured against the remote D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, of which 2,021
-// carry `legal_standard = 1`) on 2026-08-04.
-
-/** The three programs that survived, with their measured printing counts. */
 const LANDED = [
   {
     program: "Poison Point",
@@ -105,48 +41,9 @@ const LANDED = [
   },
 ] as const;
 
-/** ✅ **COLLECTED.** The rows below left `DROPPED` when a later slice paid for the
-    engine piece each named — which is the outcome this whole table was written to
-    make possible ("if a later slice pays for the missing engine piece, this is
-    where it comes to collect"). They are MOVED rather than deleted: the `needs`
-    string is the only record of what the census got wrong, and the assertion
-    under it flips from "still unbuilt" to "built, and by the piece this row
-    predicted" so the transition is loud in both directions.
-
-    ⚠️ **BOTH PREDICTIONS HELD EXACTLY — NO MORE AND NO FEWER.** D221 landed
-    `attachEnergyFrom.toSelf` (the UID target, sharing `sourceRef` with
-    `attachFromDeck.toSelf`) and `attachEnergyFrom.recordAs` (the §9.2 slot the
-    printed "in this way" reads), and nothing else. D222 landed
-    `discardEnergy { from: "self" }` on the same reader — and ONE thing the row
-    did not name, which is recorded here rather than smoothed over: the printed
-    "in order to use this Ability" makes it a COST, so `programPlayable` had to
-    learn `sourceUid` before the member was safe to author. The row named the op
-    correctly and under-priced the gate. See `tealDance.test.ts` /
-    `flashingDraw.test.ts`.
-
-    ⚠️ **AND D223 UNDER-PRICED IN THE SAME DIRECTION — TWICE RUNNING IS A PATTERN,
-    NOT AN ACCIDENT.** Carmine's row asked for *"a `CardProgram` flag read at that
-    gate"*, which is exactly what landed **in the engine** — and there are THREE
-    read sites, because both HUDs decide the turn-1 Supporter greying themselves
-    (`redact.ts` online, `GameHud.tsx` local). A flag honoured only by
-    `cardplay.ts` leaves the card engine-legal and unclickable on the one turn it
-    is printed for. **A `needs` string names a FIELD; the price is its READ SITES.**
-
-    `bought` is what each row's prediction BOUGHT, asserted against the live
-    program: it is per-row rather than shared, because two rows that paid for
-    different fields cannot be checked by one expectation without the check
-    quietly becoming "some op exists". ⚠️ D223 gave it a KIND, for the reason the
-    sentence above already gives: the first two rows bought an Ability OP and
-    Carmine bought a `CardProgram` FLAG, and no op expectation can stand in for a
-    flag without going vacuous. */
 type Bought =
   | { readonly kind: "abilityOp"; readonly op: Record<string, unknown> }
   | { readonly kind: "programFlag"; readonly field: "trainerFirstTurnExempt" }
-  /** D226 — a TRAINER op. The third kind, and it exists for the reason the second
-      one did: N's Plan's rider is on a `trainer[0]` op, and checking it through
-      the `abilityOp` arm would have read `abilities?.[0]` on a program that has no
-      abilities — `undefined`, which `toMatchObject` would have failed on for the
-      wrong reason and a future refactor could have made pass for none. */
   | { readonly kind: "trainerOp"; readonly op: Record<string, unknown> };
 const PAID = [
   {
@@ -179,15 +76,6 @@ const PAID = [
     ids: ["svp-182", "sv09-055", "sv09-163"],
     legal: 3,
     bought: { kind: "abilityOp", op: { op: "discardEnergy", from: "self" } } as Bought,
-    // "You must discard a Basic {L} Energy from THIS POKÉMON in order to use this
-    // Ability. Once during your turn, you may draw cards until you have 6 cards
-    // in your hand."
-    //
-    // ⚠️ RIGHT ABOUT THE OP, SHORT ABOUT THE GATE — and that is worth keeping.
-    // The member below is exactly what D222 built; what the row did not say is
-    // that "in order to use this Ability" makes the discard a COST, so
-    // `programPlayable` had to gain a `sourceUid` before the member could be
-    // authored safely. A `needs` string can under-price as well as over-price.
     needed:
       "a `from: 'self'` member on `discardEnergy`. The ones that exist are `opponentActive` / `opponentChosen` / `yourActive` / `yours` (+ the `opponentEach` sweep), and `yourActive` means 'this Pokémon' only inside an ATTACK, where the actor IS the Active. This Ability carries NO Active clause, so a BENCHED Kilowattrel would pay the cost off whichever body happens to be Active — and would be USABLE on a board where the Kilowattrel itself holds no {L} at all. Adding `activeOnly: true` to make `yourActive` correct would be inventing a printed clause the card does not have.",
   },
@@ -197,14 +85,6 @@ const PAID = [
     ids: ["sv06-145", "sv06-204", "sv06-217", "sv08.5-103"],
     legal: 4,
     bought: { kind: "programFlag", field: "trainerFirstTurnExempt" } as Bought,
-    // "If you go first, you may use this card during your first turn.\n\nDiscard
-    // your hand and draw 5 cards."
-    //
-    // ⚠️ RIGHT ABOUT THE FIELD, SHORT ABOUT ITS MIRRORS — the SECOND consecutive
-    // row to price a field and not its read sites. "That gate" is one of THREE:
-    // both HUDs grey the turn-1 Supporter row themselves (`redact.ts`,
-    // `GameHud.tsx`), so a flag the engine alone honours leaves the card legal and
-    // unclickable on the one turn it is printed for. See `carmine.test.ts`.
     needs:
       "⚠️ A CENSUS CLAIM THAT IS FLATLY WRONG, AND THE MOST EXPENSIVE ONE TO HAVE TRUSTED. The census says the first-turn clause is 'INERT — the engine has no going-first Supporter lock for it to lift'. The lock EXISTS and has since M4: cardplay.ts's Supporter branch returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`. Carmine's entire first sentence is an EXEMPTION from exactly that rule, so `trainer: [discardHand, drawCards 5]` would be REFUSED on the one turn the card is printed to be legal on — the card would be strictly worse than unbuilt. It needs a `CardProgram` flag read at that gate: a new FIELD on an existing mechanism, i.e. Tier 2.",
   },
@@ -217,52 +97,17 @@ const PAID = [
       kind: "trainerOp",
       op: { op: "moveEnergy", route: "benchToActive", anySource: true, max: 2 },
     } as Bought,
-    // "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon."
-    //
-    // ✅ RIGHT ABOUT THE OP **AND** ITS READ SITES — the first of the four whose
-    // row priced the whole slice, because it was the first written AFTER D222 and
-    // D223 taught this table to say "wire validator" out loud. It named the
-    // `validateChoice` arm and both HUD previews; what it did not name was a
-    // THIRD client read site (`projection.ts`'s wire→engine prompt rebuild, whose
-    // own doc promises the round-trip is exact), and the `ENERGY_MOVED` event,
-    // whose doc PROMISES all of one row's uids share a source — paid by emitting
-    // one row per source rather than by widening the event. See `nsPlan.test.ts`.
     needs:
       "a relaxation of `moveEnergy`'s SINGLE-SOURCE coupling. Every authored member so far prints 'from 1 of your Pokémon' (Energy Switch, Poppy, Armarouge, Exp. Share), and cardplay.ts's validator enforces it verbatim — 'every Energy must come from the same Pokémon'. N's Plan prints 'from your Benched POKÉMON', plural: one Energy off each of two benched bodies is a legal paper play and a rejected wire message here. A silent narrowing on a common line is a behavioural bug, not an approximation.",
   },
 ] as const;
 
-/** ⚠️ THE ONES THE CENSUS PRICED AS TIER 1 THAT ARE NOT — **EMPTY SINCE D226**,
-    all four having moved to `PAID` above. It named the printings each would have
-    bought and THE EXACT PIECE OF ENGINE each needed, which is what made it a work
-    order rather than an apology; every one of the four was collected by a later
-    slice, in the order D219 ranked them.
-
-    ⚠️ IT IS KEPT, NOT DELETED, AND ITS EMPTINESS IS ASSERTED RATHER THAN LOOPED
-    OVER. A `for` over `[]` is the vacuous guard conventions.md forbids, so the
-    length is pinned below and the four `PAID` rows are pinned to total the same
-    18 printings this table started with. The type annotation is what lets a
-    successor add a row back without re-deriving the shape. */
 const DROPPED: readonly {
   readonly program: string;
   readonly ids: readonly string[];
   readonly legal: number;
   readonly needs: string;
 }[] = [];
-
-// ── The demonstrator pool. Three synthetic `fix-*` bodies carry the three
-//    programs so each can be driven end to end.
-//
-//    ⚠️ THEY ARE DEFINED HERE, NOT IN `testFixtures.ts`, AND NOT AS REAL CARDS.
-//    A fixture id naming a real printing must appear in `catalogManifest.ts`
-//    (catalogManifest.test.ts case (c)), and that manifest is GENERATED off the
-//    LOCAL sqlite — `bun run scripts/catalog-manifest.ts` dies SQLITE_CANTOPEN in
-//    this clone, and the manifest it holds measures a 978-row / 6-set catalog
-//    containing none of sv05 / sv07 / sv08.5 / sv09 / sv10.5b. So the eleven
-//    printings cannot be fielded, and a real-card fixture would only make the
-//    manifest stale. `createGame` takes its `cardPool` as a PARAMETER, which is
-//    how a local pool stays local — `FIXTURE_POOL` is not touched, and the
-//    `fix-*` prefix is what the manifest's generator and checker both skip. ──
 
 const LOCAL_CARDS: Record<string, Card> = {
   /** fix-poisonpoint — a defender carrying the Poison Point trigger. No attacks:
@@ -313,10 +158,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** fix-retreat2 is the aura's beneficiary with NO Ability of its own, so a freed
-    cost on it is attributable to the aura rather than to anything it carries.
-    Nemona (sv01-180) is a REAL Supporter, here only to drive the going-first
-    Supporter lock the Carmine row died on. */
 const DECK = deckOf({
   "fix-attacker": 6, // Bite ({C}, 30) idx 0; Yawn (no damage) idx 2
   "fix-poisonpoint": 4,
@@ -400,8 +241,6 @@ describe("D190 — the registry-only programs that LANDED", () => {
       const first = programFor(ids[0] as string);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
-      // The demonstrator carries the SAME object, so what is driven below is
-      // literally what the eleven printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
     expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(11);
@@ -433,13 +272,6 @@ describe("D190 — the registry-only programs that LANDED", () => {
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
-    // ⚠️ THE MISTAKE AN AUTHOR ACTUALLY MAKES HERE, AND THE ONE THIS SLICE'S
-    // SIBLING (Tier 0) ENCOURAGES. Poison Point's antecedent is byte-identical to
-    // Armarouge's Scorching Armor, and Trade's shape is Tinkaton's; the reprint
-    // idiom says byte-identical text SHARES the object. These sentences are NOT
-    // byte-identical (a different status token, a different count), so sharing
-    // would be wrong — and would make a later edit to one card silently move
-    // another card that never printed the same words.
     expect(programFor("sv05-008")).not.toBe(programFor("sv03-044"));
     expect(programFor("sv09-098")).not.toBe(programFor("sv02-105"));
     expect(programFor("sv07-107")).not.toBe(programFor("sv03-082"));
@@ -449,7 +281,6 @@ describe("D190 — the registry-only programs that LANDED", () => {
     expect(programFor("sv02-105")?.abilities?.[0]?.program).not.toEqual(
       programFor("sv09-098")?.abilities?.[0]?.program,
     );
-    // Lunar Zone keeps its {P}; only the new row is {M}.
     expect(programFor("sv03-082")?.passive).toEqual({
       noRetreatCostAura: { requiresEnergyType: "Psychic" },
     });
@@ -643,15 +474,6 @@ describe("Metal Bridge — driven through the real engine", () => {
 
 describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 now PAID)", () => {
   it("the four that were PAID are built, by exactly the pieces their rows predicted", () => {
-    // ⚠️ THE OTHER DIRECTION OF THE ASSERTION BELOW, and it is what keeps this
-    // table from rotting into prose the day a successor collects on it. D221
-    // bought Teal Dance's 8 printings with `attachEnergyFrom.toSelf` +
-    // `recordAs`; D222 bought Flashing Draw's 3 with `discardEnergy.from:"self"`;
-    // D223 bought Carmine's 4 with `CardProgram.trainerFirstTurnExempt`; D226
-    // bought N's Plan's 3 with `moveEnergy.anySource` on the `benchToActive`
-    // route. Drop any of those and this goes red HERE as well as in the card's own
-    // suite, and the `needed` string above stops being history and becomes a work
-    // order again.
     for (const { program, ids, legal, bought } of PAID) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -659,9 +481,6 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
       const first = programFor(ids[0]);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
-      // ⚠️ A `switch` OVER THE UNION, NOT A CONJUNCTION OVER ITS MEMBERS (D222's
-      // own lesson, applied to the table that records it): a fourth `bought` kind
-      // fails to compile here rather than falling silently down the wrong arm.
       switch (bought.kind) {
         case "abilityOp":
           expect(
@@ -685,17 +504,6 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
   });
 
   it("has NOTHING left unbuilt — the table is empty, and that is asserted, not looped", () => {
-    // ⚠️ THIS USED TO BE THE MOST VALUABLE ASSERTION IN THE FILE — every id here
-    // was a real, Standard-legal, unsimulated printing that a session working from
-    // the census alone would have authored, and every one of the four programs
-    // would have been WRONG in a way no existing test would have caught, because
-    // the wrongness is a NARROWING of the printed rule rather than a crash. All
-    // four have since been collected, so the loop below runs zero times.
-    //
-    // 🛑 WHICH IS PRECISELY WHY THE LENGTH IS PINNED FIRST. A `for` over an empty
-    // array passes for free and would keep passing if a successor added a row here
-    // and then deleted the assertion's teeth by accident; the emptiness has to be
-    // the CLAIM, not a side effect of the data. Turn this red by adding any row.
     expect(DROPPED).toHaveLength(0);
     for (const { program, ids, legal } of DROPPED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
@@ -708,11 +516,6 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
         ).toBeUndefined();
       }
     }
-    // 18 when this table was written; Teal Dance's 8 moved to `PAID` at D221,
-    // Flashing Draw's 3 at D222, Carmine's 4 at D223 and N's Plan's 3 at D226, and
-    // 18 + 0 is asserted on both sides so a row cannot go missing from either —
-    // nor can a row be moved without the total being re-derived, which is the only
-    // thing keeping these two numbers honest.
     expect(DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(0);
     expect(PAID.reduce((n, p) => n + p.legal, 0) + DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(
       18,
@@ -720,16 +523,6 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 n
   });
 
   it("Carmine's blocker was REAL — the lock still FIRES for an UNEXEMPTED Supporter", () => {
-    // The census said Carmine's "If you go first, you may use this card during
-    // your first turn." is inert because "the engine has no going-first Supporter
-    // lock for it to lift". It has one. Shown with an ordinary Supporter — Nemona
-    // sv01-180, "Draw 3 cards.", whose program is the nearest relative of the one
-    // Carmine carries.
-    //
-    // ✅ D223 PAID FOR THE FLAG AND THIS TEST DID NOT CHANGE, WHICH IS THE POINT:
-    // the exemption is a property of the CARD, so the lock it lifts is still there
-    // for every Supporter that does not print the sentence. This is now the
-    // CONTROL for `carmine.test.ts` living in the file that predicted the cost.
     const state = localSetup(11, "p1"); // P1 goes first, so this IS turn 1
     expect(state.turn).toBe(1);
     expect(state.firstPlayer).toBe("p1");

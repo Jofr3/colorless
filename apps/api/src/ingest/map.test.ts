@@ -1,7 +1,3 @@
-// Mapping tests run on the committed verbatim tcgdex fixtures (see
-// packages/schema/src/tcgdex/__fixtures__): each payload is parsed with the
-// real Zod schema first, so these tests cover schema→row end to end.
-
 import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
@@ -72,10 +68,6 @@ describe("mapCard", () => {
       regulationMark: "G",
       hp: 220,
       stage: "Basic",
-      // D197 — this fixture is a "Miraidon ex", and the payload has carried
-      // `"suffix":"ex"` all along; ingest simply dropped it. Persisting it is
-      // what lets an EX/Mega selection become a server param instead of a
-      // client-side re-derivation off the card NAME.
       suffix: "ex",
       evolveFrom: null,
       typesJson: ["Lightning"],
@@ -129,11 +121,10 @@ describe("mapCard", () => {
     expect(row.typesJson).toBeNull();
     expect(row.attacksJson).toBeNull();
     expect(row.abilitiesJson).toBeNull();
-    expect(row.suffix).toBeNull(); // Pokémon-only, like stage (🆕 D581: not like hp — a fossil Trainer keeps its printed hp)
+    expect(row.suffix).toBeNull();
     expect(row.imageUrl).toBe("https://assets.tcgdex.net/en/sv/sv01/181");
   });
 
-  // 🆕 D581 — the Trainer branch keeps a printed Pokémon face (map.ts header).
   it("maps a fossil Trainer: hp and the printed Ability kept, the rest of the Pokémon face null", () => {
     const row = mapCard(tcgdexCardSchema.parse(cardTrainerFossil));
     expect(row.category).toBe("Trainer");
@@ -197,8 +188,6 @@ describe("mapCard", () => {
     expect(row.effect).not.toBeNull();
   });
 
-  // 🆕🆕🆕 D583 — tcgdex tags 14 legal Special Energies "Normal" (every `me` one; `sv` Reversal,
-  // Prism, Ignition). The verbatim Prism Energy payload (fetched 2026-10-07) is one of them.
   it('writes "Special" for a Normal-tagged Energy that prints rules text (Prism Energy sv10.5b-086)', () => {
     const card = tcgdexCardSchema.parse(cardEnergyNormalTag);
     expect(card.category === "Energy" ? card.energyType : null).toBe("Normal");
@@ -209,8 +198,6 @@ describe("mapCard", () => {
     expect(mapCard(tcgdexCardSchema.parse(cardEnergySpecial)).energyType).toBe("Special");
   });
 
-  // 🆕 D612 — every printed text goes through the engine's `normalizeCardText` (map.ts header).
-  // The raw texts are LOCAL D1 rows as tcgdex served them before the D612 re-ingest.
   it("writes tcgdex's markup in the `sv` spelling: attacks, Abilities and a Trainer's effect", () => {
     const base = tcgdexCardSchema.parse(cardPokemonAbility);
     if (base.category !== "Pokemon") throw new Error("fixture is a Pokémon");
@@ -264,14 +251,10 @@ describe("mapCard", () => {
     expect(mapCard({ ...trainer, effect: "Attach a Basic Fire Energy card." }).effect).toBe(
       "Attach a Basic {R} Energy card.",
     );
-    // A clean `sv` row maps byte for byte as before.
     expect(mapCard(base).attacksJson).toEqual(base.attacks);
     expect(mapCard(base).abilitiesJson).toEqual(base.abilities);
   });
 
-  // 🆕 D612 — the other two write sites: an Energy's rules text and a Trainer's printed attack. No
-  // Energy or Technical Machine row in the LOCAL D1 carries markup today; these texts are the
-  // verbatim fixtures with one tcgdex spelling spliced in, so a revert of either site to raw is seen.
   it("writes an Energy's rules text and a Trainer's printed attack in the `sv` spelling", () => {
     const energy = tcgdexCardSchema.parse(cardEnergySpecial);
     if (energy.category !== "Energy") throw new Error("fixture is an Energy");
@@ -305,10 +288,6 @@ describe("mapCard", () => {
   });
 
   it("normalises upstream 'None' sentinels to NULL instead of storing them", () => {
-    // The `mfb` set's payload shape (D194): upstream spells "this card has
-    // no rarity / no regulation mark" as the literal STRING "None", which
-    // `?? null` happily writes through. Overlaid on the real sv01-181
-    // Trainer fixture so the rest of the mapping stays honest.
     const card = tcgdexCardSchema.parse({
       ...(cardTrainer as Record<string, unknown>),
       rarity: "None",
@@ -322,10 +301,6 @@ describe("mapCard", () => {
     expect(row.illustrator).not.toBeNull();
   });
 
-  // D197 — `suffix` joins the sentinel-normalised VOCABULARY columns rather
-  // than the prose ones: it is a small closed set destined for a facet list,
-  // so a literal "None" would land in the rail as a dead chip exactly the way
-  // rarity's did (D194). Cheaper to guard at ingest than to discover later.
   it("normalises a 'None' suffix to NULL, and an absent one too", () => {
     const sentinel = mapCard(
       tcgdexCardSchema.parse({

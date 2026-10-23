@@ -19,53 +19,6 @@ import {
   mustApply,
 } from "./testFixtures";
 
-// D295 — CHILL TEASER TOY `sv08-166` (Item): THE DESTINATION AS ONE OPTIONAL
-// FIELD ON `discardEnergy`.
-//
-// "You can use this card only if you go second, and only during your first turn.
-//
-//  Put an Energy attached to 1 of your opponent's Pokémon into their hand."
-//
-// Re-queried in full at the remote D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08 rather than inherited:
-// `category = 'Trainer'`, **`trainer_type = 'Item'`** (the handoff predicted a
-// TOOL reaching `attachTool`, which would have made it a different surface and
-// not this slice at all), `legal_standard = 1`, `regulation_mark = 'H'`, ONE
-// printing and no reprint.
-//
-// 🛑 **TWO HALVES, AND ONLY ONE OF THEM IS NEW.**
-//   • THE GATE is Call Bell `sv08-165`'s `allOf[youGoSecond, yourFirstTurn]`,
-//     BYTE FOR BYTE. D280 built that combinator with exactly one consumer and
-//     said so out loud; this is the second, and it needed no widening of any
-//     kind. §1/§2 below drive it anyway — a shared gate that nobody drove on the
-//     second card is a gate that has been READ and not DRIVEN (D293's rule).
-//   • THE BODY is `discardEnergy { from: "opponentChosen", filter: anyEnergy }`
-//     — Crushing Hammer's own arm — plus `to: "hand"`.
-//
-// 🛑 **AND THE FINDING THAT RE-FRAMES THE ROW: `to` IS A ZONE, NOT A SEAT.** The
-// backlog has grouped this card with Mandibuzz and Illumise as a "cross-seat zone"
-// row since D282. `discardEnergyApply` already resolves EVERY zone it writes
-// against `discardVictimSeat` — the hammer family discards into the OPPONENT'S
-// OWN pile, never the actor's — so the seat question was answered before this
-// field existed. **THIS CARD CROSSES NO SEAT.** D294's
-// `bottomFromOpponentHand.dest` genuinely does (its source is one side and its
-// destination the other); this is a victim-zone widening the hammer arm had
-// already paid for, and §3's ATTRIBUTION CONTROL is what makes that visible from
-// inside this file.
-
-/** ⚠️ **THE CONTROL IS IN THE DECK, NOT IN A COMMENT.** `fix-hammer` is the SAME
-    op, the SAME `from` arm and the SAME filter with NO `to` — so every claim
-    below about "the Energy went to the hand" is paired with a board where the
-    identical action sends it to the PILE. Without it, a `to` that was silently
-    ignored (or one that had become the DEFAULT) would be invisible from inside
-    this file: the Energy would still leave the Pokémon and the suite would still
-    be green.
-
-    Two DISTINCT Special Energy prints so the pick is a real decision (the op
-    collapses interchangeable candidates, so two copies of one print force
-    nothing to be asked); two distinct Basic bodies so the opponent's board can
-    hold several. Deep on `fix-bigbody` so setup never mulligans at an arbitrary
-    seed — 24 Basics of 60, which is the thin-Basic warning D292 paid for. */
 const CHILL_DECK = deckOf({
   "fix-chillteaser": 4,
   "fix-hammer": 4, // THE ATTRIBUTION CONTROL — same op, same arm, PILE destination
@@ -80,10 +33,6 @@ const CHILL_DECK = deckOf({
 const decks = { p1: CHILL_DECK, p2: CHILL_DECK };
 const SEEDS = [11, 29, 47] as const;
 
-/** Setup with `first` going first, then `first` passes — so the board is TURN 2
-    and it belongs to the seat that went SECOND. That is the one board on which
-    both printed conjuncts hold, and it is the whole reason the gate is an
-    `allOf` rather than either leaf (D280). */
 function turnTwo(seed: number, first: Seat = "p2"): GameState {
   const state = driveSetup(seed, decks, { first });
   return mustApply(state, { type: "endTurn", seat: first }).state;
@@ -115,7 +64,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Every log row this batch renders, flattened — `Gary` is p2, the VICTIM. */
 function logText(state: GameState, events: readonly GameEvent[]): string {
   const ctx: LogContext = { names: { p1: "Ash", p2: "Gary" }, state, elapsed: "+00:00" };
   return logFromEvents(events, ctx)
@@ -130,10 +78,6 @@ function discardPrompt(state: GameState) {
   if (prompt.kind !== "discardEnergy") throw new Error(`wrong prompt: ${prompt.kind}`);
   return prompt;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. THE REGISTRY ROW — and the catalog claims it rests on.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("D295 — the registry row", () => {
   it("maps the ONE Standard-legal printing, plus the demonstrator, to ONE object", () => {
@@ -153,25 +97,18 @@ describe("D295 — the registry row", () => {
     ]);
   });
 
-  it("🛑 the GATE is Call Bell's, byte for byte — the combinator's SECOND consumer", () => {
-    // D280 built `allOf` for ONE card and recorded that as the honest cost. The
-    // second consumer arrives with the combinator UNCHANGED, which is the claim
-    // that paragraph was making and could not check.
+  it("the GATE is Call Bell's, byte for byte — the combinator's SECOND consumer", () => {
     expect(programFor("sv08-166")?.trainerPlayableIf).toEqual(
       programFor("sv08-165")?.trainerPlayableIf,
     );
   });
 
-  it("🛑 but the BODIES differ — it is not an alias and not a reprint", () => {
+  it("but the BODIES differ — it is not an alias and not a reprint", () => {
     expect(programFor("sv08-166")?.trainer).not.toEqual(programFor("sv08-165")?.trainer);
     expect(programFor("sv08-166")).not.toBe(programFor("sv08-165"));
   });
 
-  it("⚠️ it is an ITEM, so it carries a `trainer` program and NO passive", () => {
-    // The handoff predicted a TOOL. A Tool's program rides `passive` and reaches
-    // `attachTool`; an Item's rides `trainer` and reaches `playTrainer`. The
-    // NEGATIVE is what pins the surface — the positive alone would be green on a
-    // card that carried both.
+  it("it is an ITEM, so it carries a `trainer` program and NO passive", () => {
     const program = programFor("sv08-166");
     expect(program?.trainer).toBeDefined();
     expect(program?.passive).toBeUndefined();
@@ -180,11 +117,6 @@ describe("D295 — the registry row", () => {
   });
 
   it("no §4 SUPPORTER exemption rides this row — the ban's antecedent is false twice", () => {
-    // Call Bell's own paragraph, applying unchanged: D223's flag lifts a §4 ban on
-    // SUPPORTERS played turn 1 by the going-FIRST seat. This is an Item played on
-    // turn 2 by the going-SECOND seat, so the row carries no `passive` at all —
-    // which is a STRONGER statement than checking the one field, because it also
-    // rules out whichever sibling a future reader reaches for instead.
     expect(programFor("sv08-166")?.passive).toBeUndefined();
     expect(programFor("sv08-165")?.passive).toBeUndefined();
   });
@@ -195,14 +127,14 @@ describe("D295 — the registry row", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the printed gate — both conjuncts are load-bearing on a real board", () => {
-  it("✅ TURN 2, the seat that went SECOND — the one board where both hold", () => {
+  it("TURN 2, the seat that went SECOND — the one board where both hold", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     expect(state.turn).toBe(2);
     expect(mustPlay(state, "p1", "fix-chillteaser").ok).toBe(true);
   });
 
-  it("🛑 TURN 1 refuses — `yourFirstTurn` holds, `youGoSecond` does not", () => {
+  it("TURN 1 refuses — `yourFirstTurn` holds, `youGoSecond` does not", () => {
     // Turn 1 belongs to the seat that went FIRST by construction, so this is the
     // board where the second conjunct alone decides.
     let state = driveSetup(SEEDS[0], decks, { first: "p2" });
@@ -215,7 +147,7 @@ describe("the printed gate — both conjuncts are load-bearing on a real board",
     );
   });
 
-  it("🛑 TURN 4 refuses — `youGoSecond` holds, `yourFirstTurn` does not", () => {
+  it("TURN 4 refuses — `youGoSecond` holds, `yourFirstTurn` does not", () => {
     // The going-second seat's SECOND turn. Without this board, `youGoSecond`
     // alone would admit every turn of the game for that seat.
     let state = turnTwo(SEEDS[0]);
@@ -231,7 +163,7 @@ describe("the printed gate — both conjuncts are load-bearing on a real board",
     );
   });
 
-  it("🛑 A REFUSED PLAY COSTS NOTHING — the card stays in hand and no Energy moves", () => {
+  it("A REFUSED PLAY COSTS NOTHING — the card stays in hand and no Energy moves", () => {
     let state = driveSetup(SEEDS[1], decks, { first: "p2" });
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     const withCard = handFromDeck(state, "p2", "fix-chillteaser", 1);
@@ -244,8 +176,6 @@ describe("the printed gate — both conjuncts are load-bearing on a real board",
   });
 
   it("the wire GREYS the row on a barred board and lights it on turn 2", () => {
-    // Both transports, one board apiece — D293's rule that a HUD half is a claim
-    // until it is driven.
     let barred = driveSetup(SEEDS[0], decks, { first: "p2" });
     barred = attachFromDeck(barred, "p1", "fix-energy", 1);
     barred = handFromDeck(barred, "p2", "fix-chillteaser", 1);
@@ -267,7 +197,7 @@ describe("the printed gate — both conjuncts are load-bearing on a real board",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the attribution control — `fix-hammer` on the SAME board still uses the PILE", () => {
-  it("🛑 the UNMARKED op discards: the pile grows and the hand does not", () => {
+  it("the UNMARKED op discards: the pile grows and the hand does not", () => {
     // Without this, a `to` that had become the default — or one the apply ignored
     // in the other direction — would be invisible: the Energy leaves the Pokémon
     // either way.
@@ -286,9 +216,7 @@ describe("the attribution control — `fix-hammer` on the SAME board still uses 
     expect(done.players.p2.hand).not.toContain(uid);
   });
 
-  it("🛑 and its EVENT carries no `to` at all — the byte-identical old row", () => {
-    // The optional field is ABSENT rather than `"discard"`, so a record written
-    // before D295 reads back through this build unchanged.
+  it("and its EVENT carries no `to` at all — the byte-identical old row", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const { events } = mustPlay(state, "p1", "fix-hammer");
@@ -304,7 +232,7 @@ describe("the attribution control — `fix-hammer` on the SAME board still uses 
     ]);
   });
 
-  it("🛑 its PROMPT still says 'Discard' — the caption is the destination's, not the arm's", () => {
+  it("its PROMPT still says 'Discard' — the caption is the destination's, not the arm's", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-special", 1);
     state = attachFromDeck(state, "p2", "fix-special-2", 1);
@@ -318,7 +246,7 @@ describe("the attribution control — `fix-hammer` on the SAME board still uses 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the move — the Energy lands in the VICTIM's hand", () => {
-  it("✅ the Energy leaves the opponent's Active and enters the OPPONENT'S hand", () => {
+  it("the Energy leaves the opponent's Active and enters the OPPONENT'S hand", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const uid = activeEnergy(state, "p2")[0] as string;
@@ -331,15 +259,10 @@ describe("the move — the Energy lands in the VICTIM's hand", () => {
     expect(done.players.p2.hand.length).toBe(handBefore + 1);
   });
 
-  it("🛑 NOT the actor's hand — the mirror that separates a zone from a seat", () => {
-    // The whole reason this row is a ZONE widening: the destination is the
-    // VICTIM'S. A build that read the destination off `ctx.seat` would be green
-    // on every assertion above and red here.
+  it("NOT the actor's hand — the mirror that separates a zone from a seat", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const uid = activeEnergy(state, "p2")[0] as string;
-    // Measured AFTER the card is in hand, so the only delta the assertion can see
-    // is the Energy — the played Chill Teaser Toy leaving accounts for the −1.
     const withCard = handFromDeck(state, "p1", "fix-chillteaser", 1);
     const actorHandBefore = withCard.players.p1.hand.length;
     const done = mustApply(withCard, {
@@ -352,7 +275,7 @@ describe("the move — the Energy lands in the VICTIM's hand", () => {
     expect(done.players.p1.hand.length).toBe(actorHandBefore - 1);
   });
 
-  it("🛑 NOT the pile — neither seat's discard gains the Energy", () => {
+  it("NOT the pile — neither seat's discard gains the Energy", () => {
     let state = turnTwo(SEEDS[1]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const uid = activeEnergy(state, "p2")[0] as string;
@@ -365,7 +288,7 @@ describe("the move — the Energy lands in the VICTIM's hand", () => {
     expect(done.players.p1.discard).not.toContain(uid);
   });
 
-  it("🛑 the uid is in EXACTLY ONE zone afterwards — no duplication across zones", () => {
+  it("the uid is in EXACTLY ONE zone afterwards — no duplication across zones", () => {
     // A `hand` write that also appended to `discard` would leave the uid in two
     // places, which no later reader could untangle (a uid is the game's identity).
     let state = turnTwo(SEEDS[2]);
@@ -386,7 +309,7 @@ describe("the move — the Energy lands in the VICTIM's hand", () => {
     expect(side.hand.filter((u) => u === uid).length).toBe(1);
   });
 
-  it("✅ it reaches a BENCHED Pokémon too — `opponentChosen` names a SET", () => {
+  it("it reaches a BENCHED Pokémon too — `opponentChosen` names a SET", () => {
     // `opponentActive` would be the one-body arm. This one offers the whole side,
     // and a build that had narrowed to the Active would be green everywhere else
     // in this file.
@@ -443,7 +366,7 @@ describe("the pick — forced on one candidate, parked on two", () => {
     );
   });
 
-  it("🛑 and the caption is not merely different — it never says 'Discard'", () => {
+  it("and the caption is not merely different — it never says 'Discard'", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-special", 1);
     state = attachFromDeck(state, "p2", "fix-special-2", 1);
@@ -471,7 +394,7 @@ describe("the pick — forced on one candidate, parked on two", () => {
     expect(activeEnergy(done, "p2")).toEqual([other]);
   });
 
-  it("🛑 the park has NO decline — the sentence does not say 'you may'", () => {
+  it("the park has NO decline — the sentence does not say 'you may'", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-special", 1);
     state = attachFromDeck(state, "p2", "fix-special-2", 1);
@@ -483,7 +406,7 @@ describe("the pick — forced on one candidate, parked on two", () => {
     );
   });
 
-  it("🛑 an EMPTY opponent board refuses the play — the would-only-whiff gate", () => {
+  it("an EMPTY opponent board refuses the play — the would-only-whiff gate", () => {
     // `programPlayable`: no Energy anywhere on the far side, so the card could
     // only whiff and the play never leaves the hand.
     const state = turnTwo(SEEDS[0]);
@@ -496,7 +419,7 @@ describe("the pick — forced on one candidate, parked on two", () => {
     );
   });
 
-  it("⚠️ the ACTOR's own attached Energy is never a candidate", () => {
+  it("the ACTOR's own attached Energy is never a candidate", () => {
     // `from: "opponentChosen"` — a board where only the ACTOR holds Energy is the
     // empty board as far as this op is concerned, and the whiff gate proves it.
     let state = turnTwo(SEEDS[1]);
@@ -509,10 +432,6 @@ describe("the pick — forced on one candidate, parked on two", () => {
     );
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 6. THE EVENT AND THE LOG ROW.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("the event and the log row", () => {
   it('ENERGY_DISCARDED carries `to: "hand"`, with seat = the VICTIM and actor = the player', () => {
@@ -527,7 +446,7 @@ describe("the event and the log row", () => {
     expect(row?.uids).toEqual([uid]);
   });
 
-  it("🛑 no NEW event TYPE was invented for the destination", () => {
+  it("no NEW event TYPE was invented for the destination", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const { events } = mustPlay(state, "p1", "fix-chillteaser");
@@ -546,7 +465,7 @@ describe("the event and the log row", () => {
     expect(text).not.toContain("discarded");
   });
 
-  it("🛑 the CONTROL's log row is unchanged — it still says 'discarded'", () => {
+  it("the CONTROL's log row is unchanged — it still says 'discarded'", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const { state: done, events } = mustPlay(state, "p1", "fix-hammer");
@@ -555,7 +474,7 @@ describe("the event and the log row", () => {
     expect(text).not.toContain("into Gary's hand");
   });
 
-  it("⚠️ the row names the OWNER outright, so a mirror match cannot print it twice", () => {
+  it("the row names the OWNER outright, so a mirror match cannot print it twice", () => {
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const { state: done, events } = mustPlay(state, "p1", "fix-chillteaser");
@@ -579,10 +498,7 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
     return mustPlay(state, "p1", "fix-chillteaser").state;
   }
 
-  it("🛑 the persisted continuation's op carries EXACTLY these keys", () => {
-    // THE LITERAL KEY ANCHOR (D279's pairing rule): a diff between two boards
-    // from ONE build is blind to "every op grew a key", because the key is on
-    // both sides. This names them.
+  it("the persisted continuation's op carries EXACTLY these keys", () => {
     const phase = parked().phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const revived = JSON.parse(JSON.stringify(phase)) as {
@@ -592,7 +508,7 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
     expect(revived.cont.rest).toEqual([]);
   });
 
-  it("🛑 FORWARD: a version-16 continuation with NO `to` replays as the DISCARD PILE", () => {
+  it("FORWARD: a version-16 continuation with NO `to` replays as the DISCARD PILE", () => {
     // The direction the repo's rule actually tests — "can the PREVIOUS deploy's
     // RECORD hold the new TYPE". An old continuation has no `to`; this build
     // reads `undefined`; `undefined` IS the pile that record was written under.
@@ -615,7 +531,7 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
     expect(done.players.p2.hand).not.toContain(chosen);
   });
 
-  it("🛑 BACKWARD: a record written HERE round-trips through JSON and resolves the same", () => {
+  it("BACKWARD: a record written HERE round-trips through JSON and resolves the same", () => {
     const before = parked();
     const revived = JSON.parse(JSON.stringify(before)) as GameState;
     expect(revived.phase).toEqual(before.phase);
@@ -630,11 +546,6 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
   });
 
   it("no `GameState` field, no new `GameEvent` TYPE, no new error code", () => {
-    // What actually moved: an OPTIONAL field on an existing op (which an old
-    // continuation cannot carry and does not need) and an OPTIONAL field on
-    // `ENERGY_DISCARDED` — and `GameEvent` is not persisted at all (`MatchRecord`
-    // stores the RENDERED `SeatLogEntry[]`). Neither can make a version-16 record
-    // unreadable here.
     const state = turnTwo(SEEDS[0]);
     const keys = Object.keys(state).sort();
     expect(keys).toContain("phase");
@@ -642,25 +553,14 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. WHAT THIS SLICE REFUSED, WRITTEN AS TESTS.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("what this slice REFUSED and why", () => {
-  it("🛑 Illumise `sv06-010` still carries its GATE and NO body", () => {
-    // *"Shuffle 1 of your opponent's Benched Pokémon and all attached cards into
-    // their deck."* MISSING: **CODE** — an op that unmakes an IN-PLAY body (its
-    // whole stack, attached Energy and Tools, damage and status) back into a
-    // library zone. Nothing in this engine does that: §10 stacks only grow and KO
-    // is the one teardown, through the prize path. 🛑 **THIS IS WHY THE SPLIT
-    // TERM DID NOT MOVE 10 → 11**: the handoff's prediction had Illumise as its
-    // premise, and the premise failed.
+  it("Illumise `sv06-010` still carries its GATE and NO body", () => {
     const program = programFor("sv06-010");
     expect(program?.attackGate?.[0]).toBeDefined();
     expect(program?.attack).toBeUndefined();
   });
 
-  it("🛑 the `opponentEach` arm cannot carry `to` — unrepresentable, not undocumented", () => {
+  it("the `opponentEach` arm cannot carry `to` — unrepresentable, not undocumented", () => {
     // Giacomo's sweep. No printed sweep returns Energy to a hand, so the pairing
     // is made UNSPELLABLE (`to?: never`) rather than silently ignored — `count`'s
     // own rule on the same arm.
@@ -669,11 +569,7 @@ describe("what this slice REFUSED and why", () => {
     expect((sweep as { to?: unknown }).to).toBeUndefined();
   });
 
-  it("🛑 no `to` reaches an OWN-BOARD arm — the caption would have to invent text", () => {
-    // `yourActive` / `yours` / `self` are the printed attack COST family. No card
-    // prints "put an Energy attached to this Pokémon into your hand", so those
-    // three captions are left exactly as they were rather than growing a branch
-    // nothing can take.
+  it("no `to` reaches an OWN-BOARD arm — the caption would have to invent text", () => {
     for (const id of ["sv01-168", "sv03-143"]) {
       const ops = programFor(id);
       expect(ops, id).toBeDefined();
@@ -685,11 +581,6 @@ describe("what this slice REFUSED and why", () => {
 
 describe("the engine version", () => {
   it("moved PAST 0.206.0 — this suite asserts the TIE, not the literal", () => {
-    // 🆕 D296 — THE LITERAL MOVED AGAIN, TO `aquaWash.test.ts`, and this suite
-    // takes the shape D295 gave `lookForPrey.test.ts`: the tie and the DIRECTION
-    // only. D295's own note asked for exactly ONE owner of the current literal
-    // (`D275-engine-version-drifts-again` needs its assertion to be stale-able),
-    // and re-stating 0.206.0 here would have made this the second.
     expect(engineVersion).toBe(manifest.version);
     expect(engineVersion > "0.206.0").toBe(true);
   });

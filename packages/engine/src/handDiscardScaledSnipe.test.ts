@@ -24,71 +24,6 @@ import {
   typedEnergy,
 } from "./testFixtures";
 
-// 0.383.0 → 0.384.0 — 🆕🆕🆕 D489: THE HAND DISCARD WHOSE COUNT IS THE SNIPE'S MULTIPLIER.
-//
-//   file line 138 (2 printings)  "Discard up to 3 Energy cards from your hand. This
-//                                 attack does 60 damage to 1 of your opponent's Pokémon
-//                                 for each Energy card you discarded in this way.
-//                                 (Don't apply Weakness and Resistance for Benched
-//                                 Pokémon.)"
-//
-// 1 sentence / 2 legal printings over `legalAttackCorpus()`'s 640 / 1,732. The carrier
-// ids are UNRESOLVED in this checkout (no local D1) and are stated as such rather than
-// invented — D425's standing limitation.
-//
-// 🛑 **THE FIRST DELIVERABLE WAS AN AXIS DELETION, AND IT PRICED THE SLICE AT FIVE AXES
-// RATHER THAN ONE.** §2 runs the whole 2⁵ lattice — the SOURCE ZONE, the CHOSEN target,
-// the SCALING tail, the count NOUN and the W/R clarifier, each substituted onto its
-// nearest BUILT spelling — against all 13 `deriveAttack*` exports of
-// `attackReaderSurface()`. **Exactly ONE of the 32 points builds: the all-five
-// substitution.** No single, pair, triple or quadruple deletion reaches a claimed
-// string, so **no half of this sentence already shipped** — which is the opposite of
-// what the neighbouring built rows suggest, and the opposite of the handoff's read.
-//
-// 🛑 **THE HEAD IS `payFromHand` AND NOT A SEVENTH `discardEnergy.from` MEMBER.** All
-// six `from` members are BOARD scopes — that op's own doc block calls them *"a spot, a
-// side, a body and the side MINUS the spot"* — and every machine under them takes a
-// `PokemonRef`: `discardableEnergies` yields `{uid, from: PokemonRef}`, the §11 shield
-// filters those refs, `interchangeableCandidates` keys on the body, and the
-// `discardEnergy` PARK carries the refs across the wire. A hand card has no ref, so a
-// hand member would have changed the PROMPT's candidate shape (D457's five mirrors:
-// `packages/schema`, `redact.ts`, `projection.ts` and both HUDs) in order to say what
-// the `chooseCards` prompt already says. What `payFromHand` lacked was the printed
-// QUANTIFIER, and that is `discardEnergy.count`'s own D361 widening at the sibling op:
-// *a WIDENING is free; a GENERALISATION is not.*
-//
-// 🛑 **`snipeAmount` COULD ALREADY REACH A §9.2 SLOT AND NOBODY HAD ASKED.** The fold
-// has been a second, parallel one since Covetous Ivy (D448); `record` was in scope at
-// BOTH its call sites (`stepOp` takes it as a parameter, `applyChoice` takes it as a
-// parameter), so the third rider cost a fourth argument and four lines rather than a
-// channel. The refusal this overturns — *"there is no state field, no `EffectSlot` and
-// no `EffectContext` key that carries how many cards the previous op moved"* — was
-// right about `state` and `EffectContext` and wrong about the engine (D456's rule: a
-// refusal's scope is the carrier it was measured on).
-//
-// 🛑 **AND THE D420 STRUCTURAL GUARD GAINS A THIRD NAMED ESCAPE.** An attack-borne
-// `payFromHand` owes a printed cancel (D420) or a §9.2 gate on its own slot (D473).
-// This sentence prints neither and is honest because **a DECLINABLE payment cannot be
-// short** AND its consequent is a MULTIPLE of what it paid. Neither fact alone is
-// enough — *"Discard up to 3 cards from your hand. Knock Out your opponent's Active
-// Pokémon."* is declinable and would be a free Knock Out — and
-// `handEnergyCancel.test.ts` §5 drives that near-miss.
-//
-// ⚠️ **WHAT THIS SLICE COST, NAMED AS ZEROES SO THE CLAIM IS CHECKABLE:** ONE new
-// anchor, ONE new `deriveAttackEffect` arm, ONE new UNION ARM on a shipped op and ONE
-// OPTIONAL key on a shipped op. **ZERO** new `EffectOp` KINDS, `EffectSlot` members,
-// `CardFilter`/`DamageCountSource`/`BoardCondition` members, prompts, prompt fields,
-// choice kinds, events, error codes, `GameState`/`InPlayPokemon` fields, readers (the
-// surface stands still at **13**), registry rows, `FIXTURE_POOL` ids (file-local
-// `cardPool`, D414), `redact.ts` bytes, `packages/schema` bytes and
-// **`MATCH_RECORD_VERSION` bytes**.
-//
-// SEED-FREE: neither op consumes RNG. The one seed below feeds setup's shuffle, and
-// every board rebuilds the zones under test outright.
-
-/** The printed sentence, byte for byte off `legalAttackCorpus()` (§1 asserts it, so a
-    re-ingest disagrees with this line rather than with a number). Both apostrophes are
-    U+0027 — measured with `codePointAt` in §1 rather than by eye (D421/D440). */
 const PRINTED =
   "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
@@ -102,9 +37,6 @@ const SELF_DISCARD_SNIPE =
 const SCALED_SNIPE_ON_SELF =
   "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
-/** A residue sentence no reader claims, fielded as the LOUD control: it is what makes
-    "no `ATTACK_EFFECT_SKIPPED`" mean something on the boards where nothing scores. Its
-    refusal is asserted live in §1 rather than assumed (D480). */
 const LOUD = "Put this Pokémon and all attached cards into your hand.";
 
 /** The program the anchor derives. Written once and asserted against
@@ -159,7 +91,6 @@ const SEED = 20260909;
     fact the interpreter does rather than a name prefix that could drift. */
 const ENERGY_IDS = new Set(["d489-fire", "d489-water", "d489-grass", "d489-en-d", "d489-cost"]);
 
-// ── The board (D414: a file-local `cardPool`, no `FIXTURE_POOL` id). ─────────────────
 const HAND_PURGE = 0;
 const PLAIN_CUFF = 1;
 const LOUD_SWING = 2;
@@ -170,25 +101,11 @@ const D489_CARDS: Record<string, Card> = {
     types: ["Water"],
     hp: 300,
     attacks: [
-      // ⚠️ **NO PRINTED BASE DAMAGE, WHICH IS THE FAMILY'S SHAPE AND NOT A
-      // SIMPLIFICATION.** `damageChosen` is the whole hit here; `attack.ts`'s
-      // `programDamage` drops a printed base only for `damageDefender`, so a card that
-      // printed one would deal it to the DEFENDER *and* the snipe to the chosen body —
-      // which is exactly what `SELF_DISCARD_THEN_ANY_TARGET`'s seven printings do, all
-      // of them printing no base. The real carriers' `damage` field is UNRESOLVABLE in
-      // this checkout (no local D1) and is stated as such rather than guessed; what is
-      // measurable is that this arm introduces no new question, because the composition
-      // is byte-identical to that shipped family's.
       { cost: ["Colorless"], name: "Hand Purge", effect: PRINTED },
       { cost: ["Colorless"], name: "Plain Cuff", damage: 10 },
       { cost: ["Colorless"], name: "Borrowed Reach", effect: LOUD },
     ],
   }),
-  /** The DEFENDER, WEAK to the attacker's type. The weakness is what separates *"this
-      is attack damage"* from *"these are placed counters"* — a `deals`-less build deals
-      120 flat where the real one deals 240 (§6). Big enough that nothing this file's
-      correct readings do Knocks it Out; a KO would end the batch before the zones could
-      be read. */
   "d489-wall": battler("d489-wall", {
     name: "D489 Wall",
     types: ["Colorless"],
@@ -198,25 +115,10 @@ const D489_CARDS: Record<string, Card> = {
   /** The BENCHED victim — no weakness, so §8.5's *"not for Benched Pokémon"* is
       observable as a flat number beside the Active's doubled one. */
   "d489-bench": battler("d489-bench", { name: "D489 Bench", types: ["Colorless"], hp: 200 }),
-  /** The attack's own COST Energy, attached. §4 asserts it is STILL THERE afterwards —
-      *cost is a check, not a payment* (§8 step 2, D436) — which is also the rung that
-      goes red on a build that read the printed head as a BOARD discard. */
   "d489-cost": basicEnergy("d489-cost"),
-  /** 🛑 **THE HAND'S ENERGY, AND THEY CARRY THREE DIFFERENT PROVISIONS FOR A REASON
-      THE FIRST DRAFT OF THIS FILE GOT WRONG.** `cardIdentity` keys a BASIC Energy on
-      what it PROVIDES — `basic:${energyProvidesOf(card)}` — and not on its catalog id,
-      because the catalog prints one Basic Fire Energy under several ids. So five
-      *unnamed* `basicEnergy` fixtures are five copies of ONE interchangeable class, and
-      a `cap` of 3 offers exactly three of them: the board would have measured the
-      CEILING and said nothing whatever about the collapse. Three provisions make three
-      classes; `d489-water` ×3 is the class the ceiling is read on. (This is D448's
-      one-print rule at a hand instead of a board, and it was found by a red rung rather
-      than by reading.) */
   "d489-fire": typedEnergy("d489-fire", "Fire"),
   "d489-water": typedEnergy("d489-water", "Water"),
   "d489-grass": typedEnergy("d489-grass", "Grass"),
-  /** The pile's Energy — pre-seeded so *count the RECORD* and *count the PILE* are
-      different numbers (D488's rule: on an empty pile they are identical forever). */
   "d489-en-d": basicEnergy("d489-en-d"),
   /** The NON-Energy in hand. Without them the printed noun `Energy cards` is
       unfalsifiable: every candidate would match every filter. */
@@ -227,8 +129,6 @@ const D489_CARDS: Record<string, Card> = {
 
 const D489_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...D489_CARDS };
 
-/** Its own deck (D270/D412), 60 counted before the first run: 11 ids × 4 = 44, plus
-    `d489-water` ×12 and `d489-item-1` ×12 = 60. */
 const D489_DECK = deckOf({
   "d489-thrower": 4,
   "d489-wall": 4,
@@ -243,14 +143,6 @@ const D489_DECK = deckOf({
   "d489-item-3": 4,
 });
 
-/** 🛑 **THE HAND, AND EVERY CARD IN IT IS THERE FOR A MEASURED REASON (§5).** FIVE
-    Energy of THREE interchangeable classes and TWO Items:
-
-      • more than `cap` Energy, so *"up to 3"*, *"discard all Energy"* and *"discard
-        your hand"* are three different moves rather than one — the algebraic identity
-        a hand of exactly three Energy would have hidden (D486/D488);
-      • a class of THREE identical copies, so the collapse ceiling is observable;
-      • two NON-Energy, so the printed noun is falsifiable. */
 const HAND = [
   "d489-fire",
   "d489-water",
@@ -282,13 +174,6 @@ function openTable(first: Seat): GameState {
   return table;
 }
 
-/** Rebuild `seat`'s HAND and DISCARD PILE outright, in the exact orders named, and park
-    every card the setup shuffle dealt elsewhere in the DECK.
-
-    ⚠️ **THE HAND IS A ZONE UNDER TEST HERE, WHICH IS WHY IT IS REBUILT RATHER THAN
-    APPENDED TO.** D488's sibling helper rebuilt the deck and swept the leftovers into
-    the hand; that would be exactly wrong in this file — a residual Energy would join
-    the offer and move every number in §5 and §6 silently. */
 function withZones(
   state: GameState,
   seat: Seat,
@@ -313,10 +198,6 @@ function withZones(
   };
 }
 
-/** p1 owns TURN 2 with the Thrower Active, `hand` as its whole hand and `pile` as its
-    whole discard pile. The opponent fields an Active AND one Benched body, because
-    `opponentAny` is the printed scope and a lone Active would make the arity rung
-    vacuous (D416: count the candidates your boards actually offer). */
 function table(
   hand: readonly string[] = HAND,
   pile: readonly string[] = PILE,
@@ -354,10 +235,6 @@ function find<T extends GameEvent["type"]>(
 }
 const types_ = (events: GameEvent[]): string[] => events.map((e) => e.type);
 
-/** Every reader on the module surface, called by name — the D480/D482 oracle. Not
-    `programFor`, which answers a REGISTRY question and would call an attack "built" for
-    a card whose Ability happens to have a row (D204; `refusedPrintings.ts` has no attack
-    rows at all, re-checked at this head in §1). */
 function readersClaiming(text: string): string[] {
   return attackReaderSurface().filter((name) => {
     const read = (effects as unknown as Record<string, (t: string) => unknown>)[name];
@@ -422,13 +299,9 @@ describe("D489 §1 — the printed row, off the column rather than off this file
     const hit = rows.filter(([, s]) => s === PRINTED);
     expect(hit).toHaveLength(1);
     expect(units(hit)).toBe(2);
-    // D421/D440 — the byte, measured rather than eyeballed. The anchor spells `['’]`
-    // anyway (the family's rule), so this rung is what tells a re-ingest from a typo.
     const apostrophes = [...PRINTED].flatMap((ch, i) => (ch === "'" || ch === "’" ? [i] : []));
     expect(apostrophes).toHaveLength(2);
     for (const at of apostrophes) expect(PRINTED.codePointAt(at)).toBe(0x27);
-    // The three real siblings this file reasons against are printed too — a refusal
-    // measured against a constructed string is a claim about the reader, not the pool.
     for (const text of [BOARD_DISCARD_SCALED, SELF_DISCARD_SNIPE, SCALED_SNIPE_ON_SELF]) {
       expect(
         rows.some(([, s]) => s === text),
@@ -444,19 +317,13 @@ describe("D489 §1 — the printed row, off the column rather than off this file
         /^Discard up to \d+ Energy cards from your hand\./.test(s) && readersClaiming(s).length > 0,
     );
     expect(taken).toEqual([[2, PRINTED]]);
-    // …and exactly ONE reader owns it. Two claimants on one sentence is a real state
-    // (D445) and is not this one; asserting the SET rather than a boolean is what makes
-    // a widened neighbour redden here (D438's polarity rule).
     expect(readersClaiming(PRINTED)).toEqual(["deriveAttackEffect"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
-    // The LOUD control really is unread, checked live rather than assumed (D480).
     expect(readersClaiming(LOUD)).toEqual([]);
   });
 
   it("the reader surface stands still at THIRTEEN — no reader was added", () => {
-    // The arm lands inside `deriveAttackEffect`. A fourteenth reader would move census
-    // figures in 40 files and is exactly what this rung exists to make loud (D418/D444).
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
   });
 
@@ -469,11 +336,6 @@ describe("D489 §1 — the printed row, off the column rather than off this file
 });
 
 describe("D489 §2 — AXIS DELETION: which half of this sentence already shipped?", () => {
-  // 🛑 THE WHOLE SECTION IS ONE MEASUREMENT AND IT IS THE ONE D483/D488 SHOW YOU CANNOT
-  // SKIP. Each axis is substituted onto its nearest BUILT spelling — deleting a clause
-  // outright would confound "this axis is the blocker" with "the remainder is not a
-  // sentence" — and every point is run against ALL 13 readers, not against
-  // `deriveAttackEffect` alone.
   const AXES: readonly (readonly [string, (s: string) => string])[] = [
     ["FILTER", (s) => s.replace("3 Energy cards", "3 {G} Energy cards")],
     ["ZONE", (s) => s.replace("from your hand", "from your Pokémon")],
@@ -497,23 +359,7 @@ describe("D489 §2 — AXIS DELETION: which half of this sentence already shippe
     return { mask, names, text };
   });
 
-  it("🛑 exactly THREE of the 32 points build, and TWO of them are this slice's own anchor", () => {
-    // 🛑 **THE MEASUREMENT THAT PRICED THE SLICE WAS TAKEN BEFORE THE BUILD AND CANNOT
-    // BE RE-TAKEN AFTER IT.** At the base commit (`f7b44a2`) **ZERO** of the 32 points
-    // built: the printed sentence was refused by all 13 readers and so was every
-    // single, pair, triple and quadruple substitution, leaving exactly ONE point that
-    // built — the all-five, which lands on `ENERGY_DISCARD_SCALED_DAMAGE`. That is the
-    // number that says *no half of this sentence already shipped*, and it is stated as
-    // HISTORY rather than smuggled into a rung that can no longer produce it.
-    //
-    // 🛑 **WHAT SURVIVES AS A LIVE CLAIM IS STRICTLY STRONGER THAN "one point builds",
-    // AND IT IS THE ONE THAT REDDENS ON AN OVERREACH** (D438/D444): of the 32 points,
-    // the ones that build are exactly the two THIS anchor owns — the printed sentence
-    // and its clarifier-less twin, which is the one optional group in the pattern — plus
-    // the all-five substitution, which belongs to the sibling. **Every point that
-    // changes the ZONE, the CHOSEN target, the COUNT NOUN or the FILTER without changing
-    // all four is still refused**, so an anchor loosened on any of those four axes
-    // reddens here.
+  it("exactly THREE of the 32 points build, and TWO of them are this slice's own anchor", () => {
     const building = lattice.filter(({ text }) => readersClaiming(text).length > 0);
     expect(building.map(({ names }) => names.join("+") || "PRINTED")).toEqual([
       "PRINTED",
@@ -541,12 +387,7 @@ describe("D489 §2 — AXIS DELETION: which half of this sentence already shippe
     ]);
   });
 
-  it("🛑 no SINGLE, PAIR, TRIPLE or QUADRUPLE substitution reaches a claimed string", () => {
-    // Stated by ARITY rather than as one blanket, because the arities are what a
-    // successor will want: a slice that had believed "the head already ships" or "the
-    // scaled snipe already ships" would have priced this at one axis.
-    // The two points this slice's own anchor owns are excluded BY NAME rather than by
-    // a `.filter(built)`, which would make the rung true under any build at all.
+  it("no SINGLE, PAIR, TRIPLE or QUADRUPLE substitution reaches a claimed string", () => {
     const OURS = new Set(["", "W/R"]);
     for (const arity of [0, 1, 2, 3, 4]) {
       const points = lattice.filter(({ names }) => names.length === arity);
@@ -564,59 +405,22 @@ describe("D489 §2 — AXIS DELETION: which half of this sentence already shippe
     }
   });
 
-  it("🛑 this row is ALONE: no other residue sentence shares either of its two blockers", () => {
-    // D483's cluster split 2+2 and D488's pair held; the question is not rhetorical.
-    // The two blockers are (i) a HAND-source recording discard and (ii) a chosen-target
-    // hit whose amount reads a §9.2 slot. Measured over the whole column at this head.
+  it("this row is ALONE: no other residue sentence shares either of its two blockers", () => {
     const rows = legalAttackCorpus();
     const residue = rows.filter(([, s]) => !resolvedByAnyReader(s));
-    // (i) 🛑 **ONE other unread sentence opens with a hand discard, and it does NOT
-    //     share a blocker with this one — D483's rule, and the first draft of this rung
-    //     asserted the set was EMPTY and was wrong.** *"Discard a card from your hand.
-    //     If you do, your opponent discards a card from their hand."* is D473's shipped
-    //     head shape (`payFromHand {count: 1, to: "discard", recordAs: "paid"}`) behind
-    //     a §9.2 gate — the head this slice did not have to touch. Its blocker is the
-    //     TAIL: `opponentDiscardsFromHand` builds STANDALONE (measured below) and the
-    //     compound is claimed by no reader and by neither splitter, so what it needs is
-    //     a whole-sentence anchor over a `recordGate`, not a quantifier and not a fold.
-    //     **A shared printed phrase is not a shared blocker.**
-    //
-    //     🆕🆕🆕 **D515 BUILT IT, AND THE REASON RECORDED HERE WAS RIGHT IN EVERY
-    //     CLAUSE** — *"what it needs is a whole-sentence anchor over a `recordGate`, not
-    //     a quantifier and not a fold"* is precisely what D515 wrote: one anchor, one
-    //     arm, one `describeBranch` case, and no part of THIS slice's mechanism. So the
-    //     rung is RE-POINTED rather than deleted (D438/D444/D475): the residue set is
-    //     now EMPTY on this pattern, and the two facts that made the row a non-sibling —
-    //     the consequent builds standalone, and neither splitter composes the compound —
-    //     are asserted on the SENTENCE itself so they keep discriminating.
     const GATED_OPPONENT_DISCARD =
       "Discard a card from your hand. If you do, your opponent discards a card from their hand.";
     const handDiscards = residue.filter(([, s]) => /^Discard [^.]* from your hand\./.test(s));
     expect(handDiscards.map(([, s]) => s)).toEqual([]);
     expect(deriveAttackEffect(GATED_OPPONENT_DISCARD)).not.toBeNull();
-    // …and its blocker, named rather than asserted: the consequent alone DOES build, and
-    // it did before this slice and before D515 — which is why *"a shared printed phrase
-    // is not a shared blocker"* survives the row being built.
     expect(deriveAttackEffect("Your opponent discards a card from their hand.")).toEqual([
       { op: "opponentDiscardsFromHand", count: 1 },
     ]);
     expect(effects.splitAttackGateClause(GATED_OPPONENT_DISCARD)).toBeNull();
     expect(effects.splitAttackTrailingClause(GATED_OPPONENT_DISCARD)).toBeNull();
-    // (ii) the other unread chosen-target scaled hits, and each names a DIFFERENT
-    //      blocker — so building them is not this slice and this slice does not free
-    //      them. Named rather than counted (D400/D463: a grouped refusal is N refusals).
     const scaledChosen = residue.filter(
       ([, s]) => /for each/i.test(s) && /to 1 of your opponent/.test(s),
     );
-    // 🆕🆕🆕 **D530 — THE LAST MEMBER LEFT, AND A BARE `toEqual([])` WOULD BE VACUOUS (D418):**
-    // an empty residue is equally true under a reader widened to swallow the whole family. The
-    // refusal here read *"the ARITY OF THE FOLD: `snipeAmount` would need a fourth argument that
-    // does not exist until `applyChoice`, and the prompt could not quote its own number"* — a
-    // description of ONE call site, not a blocker: the argument EXISTS at both sites that deal
-    // damage (`candidates[]` at the forced branch, `choice.refs` at `applyChoice`), each pick
-    // folding ITS OWN counters, and the caption quotes the printed RULE (D489's `handCostPhrase`
-    // precedent). Re-pointed onto the OP: the row derives WITH the per-target rider — which is
-    // `false` on a reader that ate it flat — and the family filter is asserted empty BESIDE it.
     const TARGET_COUNTER_SNIPE =
       "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     expect(rows.some(([, s]) => s === TARGET_COUNTER_SNIPE)).toBe(true);
@@ -640,10 +444,7 @@ describe("D489 §3 — the READING: two ops in printed order, and what each byte
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
   });
 
-  it("🛑 a printed 0 in EITHER position stays LOUD, each against its own twin", () => {
-    // Two printed numbers, two positivity questions, asserted separately — and each
-    // refusal is ONE CHARACTER from a sentence that resolves in the same `it`, so no
-    // other byte can be blamed for it (D399).
+  it("a printed 0 in EITHER position stays LOUD, each against its own twin", () => {
     for (const [bad, good] of [
       [
         PRINTED.replace("up to 3 Energy", "up to 0 Energy"),
@@ -659,10 +460,7 @@ describe("D489 §3 — the READING: two ops in printed order, and what each byte
     }
   });
 
-  it("🛑 every GENERALISATION of this anchor claims the same 1 sentence / 2 printings", () => {
-    // D472's rule, run rather than asserted: a wider anchor that claims no additional
-    // row is pure risk, so none of these is taken. The measurement is kept as a RUNG
-    // (D477) so the override is a decision a successor can re-run and reverse.
+  it("every GENERALISATION of this anchor claims the same 1 sentence / 2 printings", () => {
     const rows = legalAttackCorpus();
     const wider: readonly (readonly [string, RegExp])[] = [
       [
@@ -700,47 +498,25 @@ describe("D489 §3 — the READING: two ops in printed order, and what each byte
     }
   });
 
-  it("🛑 the W/R clarifier is OPTIONAL, which is the family's rule and not this anchor's choice", () => {
-    // Every one of this file's snipe anchors spells it `(?: \(…\))?` — §8.5 makes it
-    // true regardless and older printings omit it, so a mandatory copy here would refuse
-    // on an ERA rather than on a mechanism. The rung above measured that the mandatory
-    // form claims the SAME row, so this is a legibility call recorded rather than a
-    // free win (D477).
+  it("the W/R clarifier is OPTIONAL, which is the family's rule and not this anchor's choice", () => {
     const bare = PRINTED.replace(" (Don't apply Weakness and Resistance for Benched Pokémon.)", "");
     expect(deriveAttackEffect(bare)).toEqual(PROGRAM);
     expect(legalAttackCorpus().some(([, s]) => s === bare)).toBe(false);
   });
 
-  it("🛑 LEADING TEXT stays LOUD — the `^` is what refuses it, and nothing else", () => {
-    // D464: a `^`-end refusal CAN be demonstrated on the loud path, where a `$`-end one
-    // cannot (once a sentence derives, D409's trailing splitter composes it behind any
-    // claimed tail through a path that is neither the anchor nor the arm). So this rung
-    // exists on one end only, and says so.
-    //
-    // ⚠️ D452's one-axis rule: the prefix ENDS A SENTENCE and is itself a claimed
-    // printed clause, so the ONLY thing separating this string from the printed one is
-    // the leading run of bytes — not a capital, not a case, not a punctuation mark.
-    // With the `^` deleted the anchor eats this compound and the leading damage clause
-    // is silently dropped, which is the defect the caret prevents.
+  it("LEADING TEXT stays LOUD — the `^` is what refuses it, and nothing else", () => {
     const LEADING = `Draw a card. ${PRINTED}`;
     expect(deriveAttackEffect("Draw a card.")).not.toBeNull();
     expect(deriveAttackEffect(LEADING)).toBeNull();
     expect(readersClaiming(LEADING)).toEqual([]);
-    // …and the corpus prints no such compound, so nothing is refused that a card needs.
     expect(legalAttackCorpus().some(([, t]) => t !== PRINTED && t.includes(PRINTED))).toBe(false);
   });
 
-  it("🛑 STRUCTURALLY DISJOINT from all three neighbours, with no guard anywhere", () => {
-    // D467's first preference. Each neighbour demands a run of bytes at `^` that this
-    // one cannot produce, and vice versa — so nothing is placed first and there is no
-    // lookahead to rot. Asserted from BOTH sides, per D467.
+  it("STRUCTURALLY DISJOINT from all three neighbours, with no guard anywhere", () => {
     expect(deriveAttackEffect(SELF_DISCARD_SNIPE)?.[0]?.op).toBe("discardEnergy");
     expect(deriveAttackEffect(BOARD_DISCARD_SCALED)?.[0]?.op).toBe("discardEnergy");
     expect(deriveAttackEffect(SCALED_SNIPE_ON_SELF)?.[0]?.op).toBe("damageChosen");
     expect(deriveAttackEffect(PRINTED)?.[0]?.op).toBe("payFromHand");
-    // …and the three neighbours' programs are pairwise unequal to this one, which is
-    // strictly stronger than four `toBeNull`s and cannot go green by accident when a
-    // sibling anchor lands (D449).
     for (const other of [SELF_DISCARD_SNIPE, BOARD_DISCARD_SCALED, SCALED_SNIPE_ON_SELF]) {
       expect(deriveAttackEffect(PRINTED)).not.toEqual(deriveAttackEffect(other));
     }
@@ -758,24 +534,14 @@ describe("D489 §4 — the DECLINABLE payment: the offer, the ceiling and the no
     expect(prompt.min).toBe(0);
     expect(prompt.max).toBe(3);
     expect(prompt.dest).toBe("discard");
-    // 🛑 THE CAPTION IS THE PRINTED HEAD SENTENCE, BYTE FOR BYTE, and it is built from
-    // the very fields the op carries — so a park whose heading says "up to 3" while the
-    // op lost its `cap` is a byte string this deploy cannot write (D457's witness rule).
     expect(prompt.note).toBe("Discard up to 3 Energy cards from your hand.");
     expect(PRINTED.startsWith(prompt.note)).toBe(true);
-    // FIVE candidates: the Energy, all three copies of the interchangeable class, and
-    // NEITHER Item. Read as a multiset of ids so the rung says WHICH cards, not how many
-    // (D488: a candidate no board separates by quantity is separated by contents).
     expect(prompt.candidates.map((uid) => idOf(uid, parked)).sort()).toEqual(
       ["d489-fire", "d489-water", "d489-water", "d489-water", "d489-grass"].sort(),
     );
   });
 
-  it("🛑 the interchangeable class is NOT collapsed below the cap — three copies, three rows", () => {
-    // `discardEnergy`'s stated reason, verbatim: *"the COUNT is what the damage reads,
-    // so three identical {W} must offer three pickable rows, not one."* A collapse to
-    // one would cap this attack at 60 damage on a hand that can pay for 180, and the
-    // BOARD would look identical — only the offer says so.
+  it("the interchangeable class is NOT collapsed below the cap — three copies, three rows", () => {
     const { state: parked } = swing(table(), HAND_PURGE);
     const prompt = handPrompt(parked);
     const bs = prompt.candidates.filter((uid) => idOf(uid, parked) === "d489-water");
@@ -783,10 +549,7 @@ describe("D489 §4 — the DECLINABLE payment: the offer, the ceiling and the no
     expect(new Set(bs).size).toBe(3);
   });
 
-  it("🛑 the attacker's ATTACHED cost Energy is never on offer, and is still attached afterwards", () => {
-    // *Cost is a check, not a payment* (§8 step 2, D436) — and the sharper claim: this
-    // is a HAND discard, so a build that read the printed head as a BOARD discard would
-    // strip the attacker. Both halves are driven.
+  it("the attacker's ATTACHED cost Energy is never on offer, and is still attached afterwards", () => {
     const start = table();
     const { state: parked } = swing(start, HAND_PURGE);
     const prompt = handPrompt(parked);
@@ -823,8 +586,6 @@ describe("D489 §4 — the DECLINABLE payment: the offer, the ceiling and the no
       expect(rejected.ok, JSON.stringify(uids)).toBe(false);
       if (!rejected.ok) expect(rejected.error.code).toBe("BAD_EFFECT_CHOICE");
     }
-    // …and exactly `cap` IS legal, which is the control that keeps the rung above from
-    // passing on a build that refuses everything (D424).
     expect(
       applyAction(parked, {
         type: "resolveEffect",
@@ -834,7 +595,7 @@ describe("D489 §4 — the DECLINABLE payment: the offer, the ceiling and the no
     ).toBe(true);
   });
 
-  it("🛑 an EMPTY offer whiffs inline: no park, an empty slot, and no snipe at all", () => {
+  it("an EMPTY offer whiffs inline: no park, an empty slot, and no snipe at all", () => {
     // A hand with no Energy at all. The recording op files `[]` — the whiff every
     // recording op takes — so the fold reads an honest 0 and `damageChosen` returns
     // before it builds a prompt. **The attack asks for no target and deals nothing.**
@@ -848,10 +609,7 @@ describe("D489 §4 — the DECLINABLE payment: the offer, the ceiling and the no
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 a single candidate STILL PARKS — the printed `up to` is a decision at every non-empty hand", () => {
-    // D297's rule and `discardEnergy.count: "any"`'s standing behaviour. The M1
-    // no-choice shortcut retires a prompt whose answers are the SAME state; under an
-    // *"up to"* the answers are "60 damage" and "nothing", which are two boards.
+  it("a single candidate STILL PARKS — the printed `up to` is a decision at every non-empty hand", () => {
     const { state: parked } = swing(table(["d489-fire", "d489-item-1"], PILE), HAND_PURGE);
     const prompt = handPrompt(parked);
     expect(prompt.candidates).toHaveLength(1);
@@ -860,10 +618,6 @@ describe("D489 §4 — the DECLINABLE payment: the offer, the ceiling and the no
 });
 
 describe("D489 §5 — the board arithmetic, computed BEFORE it is asserted", () => {
-  // D482/D485: name the boards on which two candidate implementations differ BEFORE
-  // designing the suite, and prove the chosen board separates them. Each row is what a
-  // candidate reading would answer on the main board with TWO Energy discarded, aimed
-  // at the BENCHED body (flat, no W/R).
   const PER = 60;
   const PICKED = 2;
   const PILE_ENERGY_BEFORE = 2;
@@ -879,11 +633,7 @@ describe("D489 §5 — the board arithmetic, computed BEFORE it is asserted", ()
     ["the record is lost across the park", 0],
   ];
 
-  it("🛑 the six candidate readings answer SIX different numbers on this board", () => {
-    // The empty-pile board would make readings 1 and 4 identical (2 = 0 + 2), which is
-    // the board a suite writes by default — D488's finding, re-earned. The hand of
-    // exactly three Energy would make readings 1 and 3 identical. Both are pre-empted
-    // by the fixture, and this rung is what says so in numbers.
+  it("the six candidate readings answer SIX different numbers on this board", () => {
     expect(READINGS.map(([, n]) => n)).toEqual([120, 60, 180, 240, 420, 0, 0]);
     const distinct = new Set(READINGS.map(([, n]) => n));
     // SIX distinct values over SEVEN readings: the two zeroes collide by construction
@@ -892,9 +642,7 @@ describe("D489 §5 — the board arithmetic, computed BEFORE it is asserted", ()
     expect(distinct.size).toBe(6);
   });
 
-  it("🛑 the fixture's composition is a MEASUREMENT, not a preference", () => {
-    // D485's rule: assert the near-misses, so a successor cannot quietly simplify the
-    // board back into one that proves nothing.
+  it("the fixture's composition is a MEASUREMENT, not a preference", () => {
     expect(HAND.filter((id) => ENERGY_IDS.has(id)).length).toBeGreaterThan(CAP);
     expect(HAND.filter((id) => !ENERGY_IDS.has(id)).length).toBeGreaterThan(0);
     expect(HAND.filter((id) => id === "d489-water")).toHaveLength(3);
@@ -904,7 +652,7 @@ describe("D489 §5 — the board arithmetic, computed BEFORE it is asserted", ()
 });
 
 describe("D489 §6 — the boards: two parks, one sentence", () => {
-  it("🛑 discard TWO, hit the BENCH for 120 — flat, and the pile keeps its own cards", () => {
+  it("discard TWO, hit the BENCH for 120 — flat, and the pile keeps its own cards", () => {
     const start = table();
     const { state: parked } = swing(start, HAND_PURGE);
     const prompt = handPrompt(parked);
@@ -930,9 +678,6 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     const snipe = snipePrompt(paid);
     expect(snipe.candidates).toHaveLength(2);
     expect(snipe.candidates.map((r) => r.seat)).toEqual(["p2", "p2"]);
-    // 🛑 THE CAPTION QUOTES THE FOLDED AMOUNT — 120, not the op's printed 60. A caption
-    // that quoted `op.amount` would tell the player the wrong number on every board
-    // where the fold is not 1 (D448's own rung, one rider over).
     expect(snipe.note).toContain("120");
     expect(snipe.note).not.toContain("60 damage");
     const bench = snipe.candidates.find((r) => r.spot.spot !== "active");
@@ -950,7 +695,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 the same two cards aimed at the ACTIVE take WEAKNESS — 240, which is what `deals` buys", () => {
+  it("the same two cards aimed at the ACTIVE take WEAKNESS — 240, which is what `deals` buys", () => {
     // The pair that separates *"this is attack damage"* from *"these are placed
     // counters"*: a `deals`-less build puts 120 flat counters on a body whose Weakness
     // doubles a real hit. Same board, same pick, different target.
@@ -968,7 +713,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     expect(done.players.p2.bench[0]?.damage).toBe(0);
   });
 
-  it("🛑 discard THREE — the cap is spent, and 180 is not the pile's number", () => {
+  it("discard THREE — the cap is spent, and 180 is not the pile's number", () => {
     const { state: parked } = swing(table(), HAND_PURGE);
     const prompt = handPrompt(parked);
     const { state: paid } = answerCards(parked, uidsOf(parked, prompt.candidates, "d489-water", 3));
@@ -977,16 +722,10 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     const { state: done, events } = answerBody(paid, bench);
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
     expect(done.players.p2.bench[0]?.damage).toBe(180);
-    // …and the pile now holds 5 Energy, so a build counting the PILE would have said
-    // 300. Named rather than left implicit (D400).
     expect(idsIn(done, "p1", "discard").filter((id) => ENERGY_IDS.has(id))).toHaveLength(5);
   });
 
-  it("🛑 DECLINE the discard and the attack asks for no target at all", () => {
-    // The printed *"up to"* floor of zero, driven. An empty answer files an empty slot,
-    // `snipeAmount` folds to 0, and `damageChosen` returns BEFORE it builds a prompt —
-    // so there is no second park, no `DAMAGE_DEALT` and no `COUNTERS_PLACED`. This is
-    // the ending the D420 escape rests on: **nothing is bought when nothing is paid.**
+  it("DECLINE the discard and the attack asks for no target at all", () => {
     const { state: parked } = swing(table(), HAND_PURGE);
     const { state: done, events } = answerCards(parked, []);
     expect(types_(events)).not.toContain("HAND_COST_PAID");
@@ -999,14 +738,12 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 the LOUD control still fires, so a silent board means something", () => {
-    // D214's attribution control: without it, "no `ATTACK_EFFECT_SKIPPED`" above is
-    // green on a build that stopped emitting the row at all.
+  it("the LOUD control still fires, so a silent board means something", () => {
     const { events } = swing(table(), LOUD_SWING);
     expect(types_(events)).toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 a PLAIN attack on the same board is unaffected — the control for every zero above", () => {
+  it("a PLAIN attack on the same board is unaffected — the control for every zero above", () => {
     const { state: done, events } = swing(table(), PLAIN_CUFF);
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 20 });
     expect(done.players.p2.active?.damage).toBe(20);
@@ -1015,15 +752,9 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
 });
 
 describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", () => {
-  // 🛑 THE ADDRESS DOES PERSIST AND THE REACHABILITY ARGUMENT IS FALSE HERE (D463's
-  // rule: pick the argument SHAPE that is true). This is a TWO-PARK program: the
-  // payment writes `phase.cont.pendingOp` with the snipe in `rest`, and the snipe then
-  // writes its own continuation. So both new bytes genuinely reach a saved
-  // `MatchRecord`. The claim is the SERIALIZED ALPHABET (D462): no v29 deploy could
-  // write either byte, and ABSENT still means what the v29 writer meant.
   const ctx = { seat: "p1" as Seat, invokedBy: "attack" as const };
 
-  it("🛑 the program really does park TWICE, and the record rides between the two", () => {
+  it("the program really does park TWICE, and the record rides between the two", () => {
     const start = table();
     const { state: parked } = swing(start, HAND_PURGE);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -1042,7 +773,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
     expect(paid.phase.cont.record?.discarded).toHaveLength(2);
   });
 
-  it("🛑 a v29 PAYMENT (exact `count`, no `cap`) still means an exact payment", () => {
+  it("a v29 PAYMENT (exact `count`, no `cap`) still means an exact payment", () => {
     // The LOSS direction: reconstruct the bytes a v29 writer could have written and
     // replay them through the real interpreter. An exact `count: 2` must still be
     // mandatory — `min === max` — because that is what those bytes meant.
@@ -1055,10 +786,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
     expect(run.prompt.note).toBe("Discard 2 Energy cards from your hand.");
   });
 
-  it("🛑 a v29 SNIPE (no `perRecorded`) still deals its printed amount, unscaled", () => {
-    // The other half of the loss direction. A record that lost the rider must resolve
-    // to the board a v29 deploy produced — 60, not 0 and not 120 — which is what makes
-    // the key a WIDENING (D125/D334) rather than a re-meaning (D359).
+  it("a v29 SNIPE (no `perRecorded`) still deals its printed amount, unscaled", () => {
     const state = table();
     const events: GameEvent[] = [];
     const run = runProgram(state, V29_SNIPE, ctx, events, { discarded: ["x", "y"] });
@@ -1077,9 +805,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
     expect(resumed.state.players.p2.bench[0]?.damage).toBe(60);
   });
 
-  it("🛑 and the NEW bytes on the SAME board answer differently — the control for both", () => {
-    // Both directions or neither (D441). A rung that only drives the old bytes passes
-    // on a build that ignores the new ones.
+  it("and the NEW bytes on the SAME board answer differently — the control for both", () => {
     const state = table();
     const events: GameEvent[] = [];
     const run = runProgram(state, [PROGRAM[1] as EffectOp], ctx, events, { discarded: ["x", "y"] });
@@ -1098,12 +824,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
     expect(resumed.state.players.p2.bench[0]?.damage).toBe(120);
   });
 
-  it("🛑 an EMPTY record makes the new rider deal nothing and ask nothing", () => {
-    // The third v29-shaped board: the rider is present but the slot is empty, which is
-    // exactly what a lost `cont.record` would produce on a resume. It must NOT degrade
-    // into the unscaled hit — that would be the plausible wrong answer D421 says to
-    // design against, and it is what separates "the record rides the park" from "the
-    // fold defaults to 1".
+  it("an EMPTY record makes the new rider deal nothing and ask nothing", () => {
     const state = table();
     const events: GameEvent[] = [];
     const run = runProgram(state, [PROGRAM[1] as EffectOp], ctx, events, {});
@@ -1115,13 +836,7 @@ describe("D489 §7 — `MATCH_RECORD_VERSION` stays 29, driven over v29 bytes", 
 });
 
 describe("D489 §8 — the DESCRIBER obligation, discharged rather than asserted", () => {
-  it("🛑 `withConsequence` is UNREACHABLE for this program, and the reason is the CALL PATH", () => {
-    // D478's rule: describer obligations follow the call path, not the op's category.
-    // The handoff expected "real work here, because this op parks" — a category
-    // argument. `withConsequence` returns the prompt unchanged unless the QUEUE holds a
-    // `recordGate` on the slot the parking op files, and this program's queue holds one
-    // op: the snipe. So `describeBranch` and `describeCondition` are never called, and
-    // the note the player sees is `payFromHandNote`'s alone.
+  it("`withConsequence` is UNREACHABLE for this program, and the reason is the CALL PATH", () => {
     const { state: parked } = swing(table(), HAND_PURGE);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.cont.rest.map((op) => op.op)).toEqual(["damageChosen"]);
@@ -1134,12 +849,9 @@ describe("D489 §8 — the DESCRIBER obligation, discharged rather than asserted
 
 describe("D489 §9 — the census this row moves, and the summands it does not", () => {
   it("the resolving corpus gains ONE sentence and TWO printings", () => {
-    // ⚠️ THE TWO STEPS DISAGREE, 1 vs 2 — the one file line carries 2 legal printings,
-    // so a pass that copied one number into the other kind of site would be wrong at
-    // half of them (D451/D464).
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([600, 1663]); // (🆕🆕🆕 **D579 +1 sentence / +1 printing — THE CENSUS CLOSE-OUT** — Koraidon `sv08-116` "Unrelenting Onslaught", claimed WHOLE by `deriveAttackDamageBonus` through one `CONDITIONAL_DAMAGE_CLAUSES` literal; Walking Wake `sv06-063` is a REGISTRY row and moves no reader figure.) (🆕🆕🆕 **D575 +6 sentences / +6 printings — THE MRV-38 ATTACK SLICE** — `deriveAttackEffect`'s six new whole-sentence anchors claim `censusAttackCorpus.ts` file lines 177 (Hypno "Daydream"), 181 (Miraidon "C.O.D.E.: Protect"), 182 (Iron Moth "Anachronism Repulsor"), 346 (N's Sigilyph "Victory Symbol"), 394 (Team Rocket's Blipbug "Searching Eyes") and 690 (Glimmora "Corrosive Shards", the compound claimed WHOLE) — one printing each, so the sentence and printing steps AGREE. A READER move.) (🆕🆕🆕 **D574 +3 sentences / +5 printings — THE COPY-FAMILY REMAINDER + SABLEYE** — `deriveAttackCopy`'s two RESOLVE-TIME anchors claim `censusAttackCorpus.ts` file lines 434 and 131 WHOLE (Haughty Order ×3, Seek Inspiration) and `deriveAttackEffect`'s new anchor claims file line 649 (Sableye "Damage Collection"). Alakazam (686) composes through the TRAILING seam and Malamar (489) is a REGISTRY row — neither is a reader move. A READER move; the sentence step (3) and the printing step (5) DISAGREE, so each site was classified by its unit.) (🆕🆕🆕 **D573 +4 sentences / +9 printings — THE COPY-ATTACK SUBSTITUTION** — `deriveAttackCopy`, the FOURTEENTH reader, claims `censusAttackCorpus.ts` file lines 77, 78, 80 and 245 WHOLE: Night Joker ×4, Foul Play ×2 + Metronome, Gemstone Mimicry, Try to Imitate. A READER move; the sentence step (4) and the printing step (9) DISAGREE, so each site was classified by its unit.) (🆕🆕🆕 **D569 +4 sentences / +6 printings — THE PARADOX BANNER READERS** — Koraidon `sv05-119`/`svp-091` "Primordial Beatdown" (`IN_PLAY_BODY_NOUNS` "Ancient Pokémon"), Roaring Moon `sv05-109`/`sv08.5-065` "Vengeance Fletching" (`DISCARD_PILE_NOUNS` "Ancient card"), Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher" (two literal `CONDITIONAL_DAMAGE_CLAUSES` rows), all over `banners.ts`' widened table (582/1636 → 586/1642)) (🆕🆕🆕 **D568 +2 sentences / +2 printings — THE TWO TERA CLAUSES, NOW THAT THE BANNER HAS A WRITER** — Ho-Oh `sv08-019` "Shining Blaze" (*"If you have any Tera Pokémon on your Bench, this attack does 100 more damage."*) and Regigigas `sv08.5-086` "Jewel Breaker" (*"If your opponent's Active Pokémon is a Tera Pokémon, this attack does 230 more damage."*), one legal printing each, two literal `CONDITIONAL_DAMAGE_CLAUSES` rows over `banners.ts` (580/1634 → 582/1636)) (🆕🆕🆕 **D552 +2 sentences / +2 printings — THE PRE-DAMAGE SELF ATTACH BEHIND A MULTIPLIER HEAD, AND THE WEAKNESS RETYPE** — `censusAttackCorpus.ts` **file lines 569 and 629** (leading count column `1` each; card ids UNRESOLVED on this checkout — measured, never invented, D425): `:569` claimed WHOLE by `deriveAttackDiscardScaledBoost`'s THIRD member `selfHandAttach` (attach-then-damage inside the program), `:629` by `deriveAttackEffect` through ONE new anchor `DEFENDER_WEAKNESS_RETYPED` as ONE new op `retypeDefenderWeakness` — a READER move: reader arm 578/1632 → 580/1634, raw residue 62/100 → 60/98, `BUILT.attack` 1688 → 1690; registry 10/16, gate 9/19, trailing 11/21 UNMOVED; engine 0.435.0 → 0.436.0, `MATCH_RECORD_VERSION` 33 → 34. ⚠️ THE SENTENCE STEP (2) AND THE PRINTING STEP (2) AGREE this slice — the case where a copied number is right BY ACCIDENT, so every site was classified by the quantity its D550 note names (D426/D451). THIS SITE: reader arm 578/1632 → 580/1634.)  // (🆕🆕🆕 **D550 +1 sentence / +1 printing — THE OPPONENT-FLIPPED PER-TAILS SNIPE ON THE OPPONENT'S BENCH COUNT** — `censusAttackCorpus.ts` **file line 669** (leading count column `1`; card id UNRESOLVED on this checkout — measured, never invented, D425), claimed WHOLE by `deriveAttackCoinFlip` (a NINTH member `opponentPerTails` over a NULLARY `AttackFlipCount.opponentBench`) AND by `deriveAttackDamageSuppression`'s THIRD compound arm off ONE anchor, `ATTACK_OPPONENT_BENCH_TAILS` — a READER move: reader arm 577/1631 → 578/1632, raw residue 63/101 → 62/100, `BUILT.attack` 1687 → 1688, PHRASE-24 1/1 → 0/0; registry 10/16, gate 9/19, trailing 11/21 UNMOVED; engine 0.434.0 → 0.435.0, `MATCH_RECORD_VERSION` HOLDS at 33. ⚠️ THE SENTENCE STEP (1) AND THE PRINTING STEP (1) AGREE this slice — the case where a copied number is right BY ACCIDENT, so every site was classified by the quantity its D549 note names (D426/D451). THIS SITE: reader arm 577/1631 → 578/1632.)  // (🆕🆕🆕 **D549 +4 sentences / +4 printings — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK** — `censusAttackCorpus.ts` **file lines 171, 149, 169 and 170** (leading count column `1` each; card ids UNRESOLVED on this checkout — measured, never invented, D425), claimed WHOLE by `deriveAttackEffect` alone through FOUR new anchors as THREE new ops (`taxDefender`, `bountyDefender`, `lockSideAttacks`) — a READER move: reader arm 573/1627 → 577/1631, raw residue 67/105 → 63/101, `BUILT.attack` 1683 → 1687; registry 10/16, gate 9/19, trailing 11/21 UNMOVED; engine 0.433.0 → 0.434.0, `MATCH_RECORD_VERSION` 32 → 33. ⚠️ THE SENTENCE STEP (4) AND THE PRINTING STEP (4) AGREE this slice — the case where a copied number is right BY ACCIDENT, so every site was classified by the quantity its D548 note names (D426/D451). THIS SITE: reader arm 573/1627 → 577/1631.)  // (🆕🆕🆕 **D548 +1 sentence / +2 printings — CRESCENT PURGE, THE FACE-UP PRIZE** — `censusAttackCorpus.ts` **file line 664**, Cresselia `sv06.5-021` "Crescent Purge", claimed WHOLE by `deriveAttackOptionalCostBoost`'s FIFTH cost row (`turnPrizeFaceUp` behind `yourFaceDownPrizeRemains`); engine 0.432.0 → 0.433.0, `MATCH_RECORD_VERSION` 31 → 32. ⚠️ THE SENTENCE STEP (1) AND THE PRINTING STEP (2) DIFFER. THIS SITE: reader arm 572/1625 → 573/1627.)  // (🆕🆕🆕 **D547 +2 sentences / +4 printings — THE FLIP-TO-ATTACK LOCK AND THE NEXT-TURN VULNERABILITY** — `censusAttackCorpus.ts` **file lines 176 and 150** (leading count column `2` each), *“During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.”* (TWO sentences in ONE row) and *“During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).”*, **2 rows / 4 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so both suites ride file-local declared `d547-*` demonstrators), claimed WHOLE by `deriveAttackEffect` through TWO new anchors (`DEFENDER_FLIP_ATTACK_LOCK`, `DEFENDER_VULNERABLE_NEXT_TURN`) as TWO new ops (`flipLockAttack`, `exposeDefender`) on TWO new REQUIRED `InPlayPokemon` fields — a READER move: reader arm 570/1621 → 572/1625, raw residue 70/111 → 68/107, `BUILT.attack` 1677 → 1681; registry 10/16, gate 9/19, trailing 11/21 UNMOVED; engine 0.431.0 → 0.432.0, `MATCH_RECORD_VERSION` 30 → 31. ⚠️ **THE SENTENCE STEP (2) AND THE PRINTING STEP (4) DIFFER**, so no copied number is right by accident; every site was classified by the quantity its D546 note names (D426/D451). THIS SITE: reader arm 570/1621 → 572/1625.)  // (🆕🆕🆕 **D546 +2 sentences / +2 printings — THE ALL-ATTACKS NEXT-TURN BUFF** — `censusAttackCorpus.ts` **file lines 76 and 148** (leading count column `1` each), *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* and the same sentence at 100 behind *“Both Active Pokémon are now Asleep.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides file-local declared `d546-*` demonstrators), claimed WHOLE by `deriveAttackEffect` through ONE new whole-sentence anchor (`SELF_EVERY_ATTACK_BOOST`, ONE `['’]` slot, an optional Sleep prefix) as `attack: null` on the SHIPPED `boostAttack` op — no new `EffectOp` member, no new `InPlayPokemon` field — a READER move: reader arm 568/1619 → 570/1621, raw residue 72/113 → 70/111, `BUILT.attack` 1675 → 1677; registry 10/16, gate 9/19, trailing 11/21, `SPLIT_ATTACK_UNITS` 19 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED (19 READ at `censusAtHead.test.ts:8169`); engine 0.430.0 → 0.431.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP ARE BOTH 2 — THE ONE SHAPE WHERE A COPIED NUMBER IS RIGHT BY ACCIDENT**, so every site was measured by the quantity it pins, not copied (D426/D451). THIS SITE: reader arm 568/1619 → 570/1621.)  // (🆕🆕🆕 **D544 +1 sentence / +2 printings — THE NAMED ATTACK'S BASE DAMAGE, OVERRIDDEN FOR ONE WINDOW** — `censusAttackCorpus.ts` **file line 166** (leading count column `2`), *“During your next turn, this Pokémon's Hyper Fang attack's base damage is 240.”*, **1 sentence / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrator `d544-fang`), claimed WHOLE by `deriveAttackEffect` through ONE new whole-sentence anchor (`SELF_ATTACK_BASE_SET`, TWO `['’]` slots, name and number CAPTURED) as a `base: true` RIDER on the SHIPPED `boostAttack` op — no new `EffectOp` member, no new `InPlayPokemon` field — a READER move: reader arm 567/1617 → 568/1619, raw residue 73/115 → 72/113, `BUILT.attack` 1671 → 1673; registry 10/16, gate 7/17, trailing 11/21, `SPLIT_ATTACK_UNITS` 17 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED (17 READ at `censusAtHead.test.ts:8159` — the “14” in D543's annotation beside this one has been stale since D541 moved the constant); engine 0.428.0 → 0.429.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — THEY DISAGREE**, so no number may be copied from one kind of site into another (D426/D451). THIS SITE: reader arm 567/1617 → 568/1619.)  // (🆕🆕🆕 **D543 +1 sentence / +2 printings — THE CHOSEN POKÉMON TOOL DISCARD AT THE PROGRAM TAIL** — `censusAttackCorpus.ts` **file line 136** (leading count column `2`), *“Discard up to 2 Pokémon Tools from your opponent's Pokémon.”*, **1 sentence / 2 legal printings** (card ids UNRESOLVED on this checkout — stated unresolved, never invented, D425 — so the suite rides the file-local declared demonstrator `d543-stripper`), claimed WHOLE by `deriveAttackEffect` through ONE new whole-sentence anchor (`ATTACK_DISCARD_TOOLS_UP_TO`, ONE `['’]` slot at index 48, count CAPTURED) as ONE new `EffectOp` member `discardTools{count}` parking on ONE new `EffectPrompt` kind — a READER move: reader arm 566/1615 → 567/1617, raw residue 74/117 → 73/115, `BUILT.attack` 1669 → 1671; registry 10/16, gate 7/17, trailing 11/21, `SPLIT_ATTACK_UNITS` 14 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.427.0 → 0.428.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — THEY DISAGREE**, so no number may be copied from one kind of site into another (D426/D451). THIS SITE: reader arm 566/1615 → 567/1617.)  // (🆕🆕🆕 **D542 +1 sentence / +1 printing — THE OPPONENT-CHOSEN HAND SHUFFLE** — `censusAttackCorpus.ts` **file line 665** (`legalAttackCorpus()` index 612, leading count column `1`), *“Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.”*, **1 sentence / 1 legal printing**, claimed WHOLE by `deriveAttackEffect` through ONE new anchor and ONE new arm returning a COMPOSITION of two shipped ops — so it leaves through the RAW READER summand and the registry / gate-split / trailing-split summands all stand still. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1, WHICH IS THE ONE CASE WHERE A COPIED NUMBER IS RIGHT BY ACCIDENT — so THIS SITE WAS MEASURED rather than inherited from its neighbour** (D426/D451).)  (🆕🆕🆕 **D540 +1 sentence / +1 printing — THE DEVOLUTION WITH A PICK IN IT, AND THE `/[Dd]evolv/` FAMILY CLOSES** — `censusAttackCorpus.ts` **row 87** (`legalAttackCorpus()` index 34, leading count column `1`), *"Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand."*, **1 sentence / 1 legal printing** (no card id resolves on this checkout — stated unresolved, never invented, D425 — so the suite rides the file-local declared demonstrators `d540-*`), claimed by `deriveAttackEffect` through ONE new anchor `DEVOLVE_CHOSEN_TO_HAND` and arm 41-ter into ONE new FIELD-FREE `EffectOp` member `devolveChosen` — a READER move: reader arm 564/1613 → 565/1614, raw residue 76/119 → 75/118, `BUILT.attack` 1664 → 1665, residue 49/68 → 48/67; registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` 14, `COMPOUND_ATTACK_UNITS` 21 and `attackReaderSurface()` 13 UNMOVED; engine 0.424.0 → 0.425.0, `MATCH_RECORD_VERSION` HELD at 30 (D125's widening at a persisted address — and this op DOES park, so a record really can hold it, which is why the version claim rests on the widening and not on parking). ⚠️ THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 1 — they AGREE for the first time in six slices, which is the one case where a copied number would be right by accident, so every site was measured.)  // (🆕🆕🆕 **D539 +1 sentence / +2 printings — THE NAMED-BODY MULTIPLIER WITH A NAMED-BODY OWN-SIDE SPREAD BEHIND IT** — `censusAttackCorpus.ts` **FILE LINE 595** (`legalAttackCorpus()` index 542), *"This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 2 legal printings** (card ids UNRESOLVED on this checkout — stated unresolved, never invented, D425 — so the suite rides the file-local declared demonstrators `d539-*`), claimed by TWO readers off ONE `effect` string through ONE new whole-compound anchor carrying a `\2` BACKREFERENCE (`NAMED_BODIES_MULTIPLY_SPREAD`) — `deriveAttackDamageMultiplier` for the × fold and `deriveAttackEffect` for `damageChosen` with the FOURTH `target` member `yourAny` and `count: "all"`, plus the NINTH `IN_PLAY_BODY_NOUNS` exact key — a READER move: reader arm 563/1611 → 564/1613, raw residue 77/121 → 76/119, `BUILT.attack` 1662 → 1664; registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` 14, `COMPOUND_ATTACK_UNITS` 21 and `attackReaderSurface()` 13 UNMOVED; engine 0.423.0 → 0.424.0, `MATCH_RECORD_VERSION` HELD at 30 (a WIDENING at a persisted address, D125's free case — and `count: "all"` NEVER PARKS, so no record that can exist holds the new value). ⚠️ THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — they disagree for the FIFTH slice running (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2, D538 1-vs-3), so a pass that copied one number into the other kind of site would be wrong in half of them. THIS SITE: 563/1611 → 564/1613.)  // (🆕🆕🆕 **D538 +1 sentence / +3 printings — THE COUNTER PLACEMENT WHOSE AMOUNT IS A PAYLOAD AND WHOSE TAIL SHUFFLES THE VERY CARDS IT COUNTED** — `censusAttackCorpus.ts` **FILE LINE 412** (`legalAttackCorpus()` index 359), *"Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck."*, **1 sentence / 3 legal printings** (card ids UNRESOLVED on this checkout — stated unresolved, never invented, D425 — so the suite rides the file-local declared demonstrator `d538-pile-sniper`), claimed by `deriveAttackEffect` through ONE new whole-sentence TWO-capture anchor (`COUNTER_PUT_SCALED_BY_PILE`, declared with the counter-put family, ONE `['’]` slot) as arm **23b-bis** emitting THREE ops — `damageChosen{perDiscardPileCard}` + `discardPileRetrieval{max:"all"}` + `shuffleDeck`, with ONE `CardFilter` object shared by the first two — a READER move: reader arm 562/1608 → 563/1611, raw residue 78/124 → 77/121, `BUILT.attack` 1659 → 1662; registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` 14 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.422.0 → 0.423.0, `MATCH_RECORD_VERSION` HELD at 30 (a NEW OPTIONAL KEY is D125's WIDENING and `max: "all"` is a PURE ADDITION to a value domain — and BOTH bytes are written into the record, through `phase.cont.pendingOp` and `phase.cont.rest` respectively). ⚠️ THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — they disagree for the FOURTH slice running (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2), so a pass that copied one number into the other kind of site would be wrong in half of them. THIS SITE: 562/1608 → 563/1611.)  // (🆕🆕🆕 **D537 +1 sentence / +2 printings — KEEP THREE, SHUFFLE THE REST: THE ONLY SENTENCE IN THIS CORPUS WHOSE PICK NAMES THE BODIES THAT *STAY* — ONE NEW `EffectOp` MEMBER `returnBenchedRest` AND ONE INTERPRETER WRITER** — `censusAttackCorpus.ts` **FILE LINE 84** (`legalAttackCorpus()` index 31), *"Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck."*, **1 sentence / 2 legal printings** (card ids UNRESOLVED on this checkout — stated unresolved, never invented, D425 — so the suite rides the file-local declared demonstrator `d537-bencher`), claimed by `deriveAttackEffect` through ONE new ONE-capture whole-sentence anchor (`CHOOSE_KEEP_SHUFFLE_REST`, beside `RETURN_BENCHED`, THREE `['’]` slots — two possessives AND the contraction in "didn't") as arm **42-bis** emitting ONE `returnBenchedRest{keep:3}` — a READER move: reader arm 561/1606 → 562/1608, raw residue 79/126 → 78/124, `BUILT.attack` 1657 → 1659; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.421.0 → 0.422.0, `MATCH_RECORD_VERSION` HELD at 30 (a new op MEMBER is D125's WIDENING — and this op PARKS, so the byte IS written into `phase.cont.pendingOp`). ⚠️ THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — they disagree for the third slice running (D535 1-vs-2, D536 1-vs-3), so a pass that copied one number into the other kind of site would be wrong in half of them. THIS SITE: 561/1606 → 562/1608.)  // (🆕🆕🆕 **D536 +1 sentence / +3 printings — THE BODY THAT LEAVES PLAY WITHOUT BEING KNOCKED OUT — ONE NEW FIELD-FREE `EffectOp` MEMBER `discardDefender` AND ONE INTERPRETER WRITER** — `censusAttackCorpus.ts` **FILE LINE 100** (`legalAttackCorpus()` index 47), *"Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards."*, **1 sentence / 3 legal printings** (Moltres ex `sv10-031`/`-208`/`-229` — the ids ARE resolved on this checkout and are used as ids; the printed BASE DAMAGE is NOT, so it is driven on the file-local declared demonstrator `d536-moltres`, D425), claimed by `deriveAttackEffect` through ONE new ZERO-capture anchor (`TR_ENERGY_COST_THEN_DISCARD_DEFENDER`, beside `HAND_COST_THEN_OPPONENT_DISCARD`) as `discardEnergy{from:"yourActive", filter:{byName "Team Rocket's Energy"}, recordAs:"discarded"}` gated through the FIRST shipped `recordGate{slot:"discarded"}` into the new `discardDefender` — a READER move: reader arm 560/1603 → 561/1606, raw residue 80/129 → 79/126, `BUILT.attack` 1654 → 1657; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.420.0 → 0.421.0, `MATCH_RECORD_VERSION` HELD at 30 (a new op MEMBER is D125's WIDENING; the op never parks and is FIELD-FREE). ⚠️ THE SENTENCE STEP AND THE PRINTING STEP DISAGREE AT 1 AND 3 — harder than D535's 1-and-2, so a pass that copied one number into the other kind of site would be wrong in half of them. THIS SITE: 560/1603 → 561/1606.)  // (🆕🆕🆕 **D535 +1 sentence / +2 printings — THE PICK-WITH-REPLACEMENT SNIPE — ZERO NEW VOCABULARY: SIX `damageChosen` OPS AT `count: 1`, THE LITERAL `CHOSEN_ANY_TARGET` ALREADY AUTHORS** — `censusAttackCorpus.ts` **FILE LINE 81** (`legalAttackCorpus()` index 28), *"Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance."*, **1 sentence / 2 legal printings** (card ids UNRESOLVED on this checkout — no D1, no catalog sqlite — stated unresolved, never invented, D425), claimed by `deriveAttackEffect` through ONE new TWO-capture anchor (`ATTACK_PICK_WITH_REPLACEMENT_SNIPE`, beside `CHOSEN_ANY_TARGET`) as SIX `damageChosen{target:"opponentAny", amount:20, count:1, source:"attack", deals, ignoreWR}` parks — a READER move: reader arm 559/1601 → 560/1603, raw residue 81/131 → 80/129; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.419.0 → 0.420.0, `MATCH_RECORD_VERSION` HELD at 30 (D237's POPULATION change — the op literal already ships, so the serialized alphabet does not grow). ⚠️ THE SENTENCE STEP AND THE PRINTING STEP DISAGREE AT 1 AND 2 — the legal column prints this sentence TWICE.)  // (🆕🆕🆕 **D534 +1 sentence / +1 printing — THE ONE-CARD LOOK AT THE OPPONENT's DECK WITH A PRINTED SHUFFLE — `shuffleDeck` GAINS THE OPTIONAL KEY `whose: "opponent"` and `reorderTop` PARKS A ONE-CARD WINDOW WHEN ITS TWO ARMS DIFFER** — `censusAttackCorpus.ts` **FILE LINE 401**, *"Look at the top card of your opponent's deck. You may have your opponent shuffle their deck."*, **1 sentence / 1 legal printing** (Inkay `sv06.5-033`; no id on this checkout, D425), claimed by `deriveAttackEffect` through ONE new zero-capture anchor (`ATTACK_OPPONENT_TOP_LOOK_SHUFFLE`, beside `ATTACK_REORDER_TOP`) as `reorderTop{n:1, side:"opponent", otherwise:[shuffleDeck{whose:"opponent"}]}` — a READER move: reader arm 558/1600 → 559/1601, raw residue 82/132 → 81/131; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.418.0 → 0.419.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1.)  // (🆕🆕🆕 **D532 +1 sentence / +1 printing — THE CROSS-SEAT DISCARD-PILE ATTACH — `attachEnergyFrom` GAINS THE OPTIONAL KEY `whose: "opponent"` (on the op AND on `AttachTargetRiders`, read through ONE resolver)** — `censusAttackCorpus.ts` **FILE LINE 70** (`legalAttackCorpus()` index 17), *"Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like."*, **1 sentence / 1 legal printing** (Grafaiai `sv08-121`; no id on this checkout, D425), claimed by `deriveAttackEffect` through ONE new zero-capture anchor (`ATTACK_OPPONENT_DISCARD_ATTACH`, beside the factory-built `DISCARD_ATTACH`) as D360's spread ONE KEY OVER — a READER move: reader arm 557/1599 → 558/1600, raw residue 83/133 → 82/132; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.417.0 → 0.418.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1.)  // (🆕🆕🆕 **D531 +1 sentence / +1 printing — THE BOARD-TYPED HAND SEARCH — `searchDeck` GAINS THE PARK-TIME RIDER `typedAsAttachedBasicEnergy`** — `censusAttackCorpus.ts` **FILE LINE 483** (`legalAttackCorpus()` index 430), *"Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."*, **1 sentence / 1 legal printing** (sv07-065 per the retired D231 deferral; no id on this checkout, D425), claimed by `deriveAttackEffect` through ONE new zero-capture anchor (`ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`, beside `ATTACK_HAND_SEARCH_BENCH_COUNT`) whose rider the park resolves against the SOURCE body's attached Basic Energy — a READER move: reader arm 556/1598 → 557/1599, raw residue 84/134 → 83/133; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.416.0 → 0.417.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1.)  // (🆕🆕🆕 **D530 +1 sentence / +1 printing — THE TARGET-COUNTER-SCALED BENCH SNIPE — A FOURTH `damageChosen` RIDER, `perDamageCounterOnTarget`, READ PER REF AT THE ANSWER** — `censusAttackCorpus.ts` **FILE LINE 551** (`legalAttackCorpus()` index 498), *"This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 1 legal printing** (no id on this checkout, D425), claimed by `deriveAttackEffect` through ONE new anchor (`BENCHED_SNIPE_TARGET_COUNTERS`, beside `BENCHED_SNIPE_TAKEN_PRIZES`, disjoint by TAIL) as arm 6b′ — a READER move: reader arm 555/1597 → 556/1598, raw residue 85/135 → 84/134; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.415.0 → 0.416.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1.) (🆕🆕🆕 **D528 +1 sentence / +1 printing — THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER** — `censusAttackCorpus.ts` **FILE LINE 215**, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, **1 sentence / 1 legal printing** (no id on this checkout, D425), claimed by `deriveAttackCoinFlip` through ONE new anchor (`ATTACK_COIN_ATTACH_UP_TO_HEADS`, beside D525's, disjoint by VERB) as the SHIPPED member `programPerHeads` over ONE copy of D358's discard-spread op `attachEnergyFrom { source: "discard", energyType: "Lightning", benchOnly: true, declinable: true }` — H independent DECLINABLE parks over the Bench at `attack.ts`'s EXISTING fold (the distribution reading D358/D360 give "up to N … in any way you like", with N = heads); ZERO new op/filter/prompt/event/member vocabulary, NO fold or interpreter bytes, `MATCH_RECORD_VERSION` HELD at 30 (what parks is D358's op bytes). ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1 (measured off the corpus row at THIS head, D451/D461), so every chain moves by ONE.) (🆕🆕🆕 **D527 +1 sentence / +1 printing — THE DYNAMIC-max HAND SEARCH — `searchDeck.max` GAINS THE LITERAL `"yourBenchCount"`, A SECOND WIDENING AT D514's PERSISTED ADDRESS** — `censusAttackCorpus.ts` **FILE LINE 454**, *"Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand. Then, shuffle your deck."*, **1 sentence / 1 legal printing** (svp-188 — no id on this checkout, D425), claimed by `deriveAttackEffect` through ONE new anchor (`ATTACK_HAND_SEARCH_BENCH_COUNT`, a SEPARATE literal beside `ATTACK_HAND_SEARCH`, zero captures) as EXACTLY the sibling's two-op shape with the literal in `max` — `[{op:"searchDeck", filter:{kind:"anyCard"}, dest:"hand", max:"yourBenchCount"}, {op:"shuffleDeck"}]` — resolved at the park's `sized` map (`interpreter.ts`, where D514's `"any"` resolves) against the ATTACKER's Bench length at STEP time, captioned with the PRINTED phrase; ZERO new op/filter/prompt/event vocabulary, ONE persisted-field WIDENING with `MATCH_RECORD_VERSION` HELD at 30 (driven over a reconstructed v30 numeric op). ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 (measured off the corpus row at THIS head, D451/D461), so every chain moves by ONE in both units. READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 553/1595 → 554/1596.) (🆕🆕🆕 **D526 +1 sentence / +1 printing — THE THREE-TIER HEADS LADDER — ZERO VOCABULARY, AN EIGHTH `AttackCoinFlip` MEMBER** — `censusAttackCorpus.ts` **FILE LINE 218**, *"Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 50 more damage. If all of them are heads, this attack does 80 more damage."*, **1 sentence / 1 legal printing** (no id on this checkout — D425), claimed by `deriveAttackCoinFlip` through ONE new anchor (`ATTACK_COIN_BONUS_LADDER`, beside D525's) as the EIGHTH member `bonusLadder {flips: printed 3, ladder: [20, 50, 80]}`, spent at `attack.ts`'s EXISTING damage fold as ONE table lookup (exclusive tiers: 1 head → +20, 2 → +50, 3 → +80, 0 → nothing — NOT cumulative, NOT per-heads), ZERO new op/filter/prompt/event vocabulary. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 (measured off the corpus row at THIS head, D451/D461) — the first single-unit sweep since D521, so every chain moves by ONE in both units. READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 552/1594 → 553/1595. `MATCH_RECORD_VERSION` HELD at 30: the member is never serialized.) (🆕🆕🆕 **D525 +1 sentence / +2 printings — THE HEADS COUNT READ AS AN "UP TO" CEILING BY ONE OP — ZERO VOCABULARY, A SEVENTH `AttackCoinFlip` MEMBER** — `censusAttackCorpus.ts` **FILE LINE 219**, *"Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand."*, **1 sentence / 2 legal printings** (Oinkologne; neither printing's id is on this checkout — D425), claimed by `deriveAttackCoinFlip` through ONE new anchor (`ATTACK_COIN_RETRIEVAL_UP_TO_HEADS`, beside D476's) as the SEVENTH member `retrievalUpToHeads {flips: printed 3, filter: anyCard, dest: hand}`, spent at `attack.ts`'s fold as ONE shipped `discardPileRetrieval {anyCard, hand, max: heads}` appended to the program when heads > 0 — the interpreter's own "up to" park (`chooseCards {min 0, max H}`), ZERO new op/filter/prompt/event vocabulary. ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2** (measured off the corpus row at THIS head, D451/D461), so every SENTENCE chain moves by ONE and every PRINTING chain by TWO — a pass that copied one number into the other kind of site would be wrong in half of them (D431/D419). READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 551/1592 → 552/1594. `MATCH_RECORD_VERSION` HELD at 30: the member is never serialized.) (🆕🆕🆕 **D524 +1 sentence / +1 printing — THE PURPOSE-CONNECTIVE OPTIONAL-COST BOOST WITH THE ALL-SELF-ENERGY-TO-HAND COST — ZERO VOCABULARY** — `censusAttackCorpus.ts` **FILE LINE 652**, *"You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage."*, **1 sentence / 1 legal printing** (the printing's card is unresolvable on this checkout — D425), claimed by `deriveAttackOptionalCostBoost` through a SECOND SKELETON (`OPTIONAL_COST_PURPOSE_BOOST`, the purpose connective *"to have this attack do N more damage"* beside D381's `. If you do, `) over ONE new cost-table row (`OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND` → gate `yourActiveEnergyAtLeast 1`, op `discardEnergy yourActive anyEnergy all → hand`), assembled by the UNCHANGED `optionalCostBoostProgram`: D405's op at `all`, D383's gate at 1, D381's payoff and ZERO new vocabulary. ✅ **THE SENTENCE STEP AND THE PRINTING STEP AGREE, 1 and 1** (measured off the corpus row at THIS head, D451/D461), so every chain moves by ONE in BOTH units. READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 550/1591 → 551/1592. `MATCH_RECORD_VERSION` HELD at 30: zero new serialized bytes.) (🆕🆕🆕 **D523 +1 sentence / +1 printing — THE DECK-DESTINATION DISCARD-PILE RETRIEVAL ("Shuffle … from your discard pile into your deck") — ZERO VOCABULARY, AND A REFUSAL WHOSE PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN** — `censusAttackCorpus.ts` **FILE LINE 485**, *"Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck."*, **1 sentence / 1 legal printing** (the printing's card is unresolvable on this checkout — D425), claimed by `deriveAttackEffect` through the new `ATTACK_DISCARD_SHUFFLE_BACK` anchor (directly under D237's `ATTACK_DISCARD_RETRIEVAL`) and the arm directly after the D237 arm, deriving `[{op:"discardPileRetrieval",filter:{kind:"basicEnergy",energyType:"Water"},dest:"deck",max:3},{op:"shuffleDeck"}]` — PAL PAD's registry shape with the hand twin's own filter: TWO shipped ops and ZERO new vocabulary; the refusal that kept the row unbuilt (*"no attack sentence in the catalog spells"* the deck destination) was FALSE of the legal attack column, while its rule (a different verb is a different family) was right and is honoured by a separate anchor. ✅ **THE SENTENCE STEP AND THE PRINTING STEP AGREE, 1 and 1** (measured off the corpus row at THIS head, D451/D461), so every chain moves by ONE in BOTH units. READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 549/1590 → 550/1591. `MATCH_RECORD_VERSION` HELD at 30: zero new serialized bytes.) (🆕🆕🆕 **D522 +1 sentence / +1 printing — THE STADIUM-GATED BENCH SPREAD WITH THE STADIUM DISCARD — ZERO VOCABULARY, AND A REFUSAL RIGHT ABOUT THE OP AND WRONG ABOUT THE READER** — `censusAttackCorpus.ts` **FILE LINE 293**, *"If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 1 legal printing** (Ting-Lu `sv06-110`, whose base and cost are unresolvable on this checkout — D425), claimed by `deriveAttackEffect` through the new `STADIUM_GATED_BENCH_SPREAD` anchor (directly under D380's `MAY_DISCARD_STADIUM`) and arm 43-bis, deriving `[{op:"conditionGate",cond:{kind:"stadiumInPlay"},then:[{op:"spreadDamage",target:"opponentBench",amount:30},{op:"discardStadium"}]}]` — arm 43's exact shape minus the `optional`: THREE shipped ops and ZERO new vocabulary; the refusal that kept the row unbuilt was right about the OP (`discardStadium`, D380) and wrong about the READER (the middle clause is a SECOND HIT — the shipped body-set `spreadDamage` — never a bonus, so no `AttackBonusConsequent` join could read it; D521 (2)'s premise rule). ✅ **THE SENTENCE STEP AND THE PRINTING STEP AGREE, 1 and 1** (measured off the corpus row at THIS head, D451/D461), so every chain moves by ONE in BOTH units. READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 548/1589 → 549/1590. `MATCH_RECORD_VERSION` HELD at 30: zero new serialized bytes.) (🆕🆕🆕 **D521 +1 sentence / +2 printings — THE TWO-COIN BOTH-TAILS RECOIL — ZERO VOCABULARY, AND A REFUSAL WRONG IN ITS CARRIER** — `censusAttackCorpus.ts` **FILE LINE 202**, *"Flip 2 coins. If both of them are tails, this Pokémon also does 90 damage to itself."*, **1 sentence / 2 legal printings**, claimed by `deriveAttackEffect` through the new `FLIP_TWO_BOTH_TAILS_SELF_DAMAGE` anchor (beside D145's one-coin `FLIP_TAILS_SELF_DAMAGE`) and the arm directly after D145's, deriving `[{op:"coinFlipGate",coins:2,onTails:true,then:[{op:"damageSelf",amount:90}]}]` — ONE shipped op behind D355's shipped `coins` field and ZERO new vocabulary; the refusal that kept the row unbuilt named the wrong carrier (`AttackFlipCount` is `deriveAttackCoinFlip`'s damage-count type; a one-body recoil behind a coin is a GATE, not a count — D520 (2)'s premise rule). ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 2** — one sentence, two legal printings (measured off the corpus row at THIS head, D451/D461) — so a pass that copied one number into the other kind of site would be wrong in half of them. READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 547/1587 → 548/1589. `MATCH_RECORD_VERSION` HELD at 30: zero new serialized bytes.) (🆕🆕🆕 **D520 +1 sentence / +1 printing — THE FOUR-ZONE DAMAGED-BODY SPREAD, AND D507's REFUSAL OVERTURNED IN VERDICT AND CARRIER** — `censusAttackCorpus.ts` **FILE LINE 601**, *"This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 1 legal printing**, claimed by `deriveAttackEffect` through the new `SPREAD_EACH_DAMAGED_FOUR_ZONE` anchor and arm 6-iii, deriving `[{op:"conditionGate",cond:{kind:"opponentActiveDamaged"},then:[{op:"damageDefender",amount:50}]},{op:"spreadDamage",target:"yourBench",amount:50,damagedOnly:true},{op:"spreadDamage",target:"opponentBench",amount:50,damagedOnly:true}]` — THREE shipped ops and ZERO new vocabulary: the Active predicate is the shipped ONE-BODY `BoardCondition` `opponentActiveDamaged` inside the shipped `conditionGate`, NOT a per-body rider on `damageDefender`'s flat arm (D507 priced it on that rider; the verdict AND the carrier were wrong — D479's third mode), the Benches are D507's two `damagedOnly` spreads, and *"except for this Pokémon"* is STRUCTURAL. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1** — measured off the corpus row at THIS head rather than assumed (D451/D461). READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 546/1586 → 547/1587. `MATCH_RECORD_VERSION` HELD at 30: zero new serialized bytes.) (🆕🆕🆕 **D519 +1 sentence / +1 printing — THE BODIES IN PLAY THAT ARE ALREADY HURT, A COUNT NARROWED BY A BOARD FACT** — `censusAttackCorpus.ts` **FILE LINE 596**, *"This attack does 50 damage for each of your Pokémon that has any damage counters on it."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` through the new `IN_PLAY_DAMAGED_BODY_MULTIPLY` anchor and a `damagedOnly` rider on `DamageCountSource.pokemonInPlay`, deriving `{per:50,count:{kind:"pokemonInPlay",seat:"you",filter:{kind:"anyPokemon"},damagedOnly:true}}`. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1 HERE** — measured off the corpus row at THIS head rather than carried from D518, whose two steps were 1 vs 2 (D451/D461). READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader arm steps 545/1585 → 546/1586. 🛑 **ZERO NEW UNION MEMBERS**: `DamageCountSource` stands still at 20, and the price is ONE anchor, ONE reader arm, ONE optional boolean and ONE argument. The count takes `hasAnyDamageCounters` — the SAME call behind the three shipped op riders — so predicate ⟺ count ≥ 1 holds by construction.**) (🆕🆕🆕 **D518 +1 sentence / +2 printings — THE §12 SPECIAL-CONDITION TALLY ON THE DEFENDING ACTIVE** — `censusAttackCorpus.ts` **FILE LINE 537**, *"This attack does 100 damage for each Special Condition affecting your opponent's Active Pokémon."*, **1 sentence / 2 legal printings**, claimed by `deriveAttackDamageMultiplier` through ONE new anchor (`OPPONENT_CONDITION_COUNT_MULTIPLY`) and ONE new `DamageCountSource` member (`specialConditionsOnOpponentActive`, the **20th**), whose walk is `presentStatuses` — the SAME projection the shipped `opponentActiveHasSpecialCondition` predicate folds, so *predicate ⟺ count ≥ 1* holds BY CONSTRUCTION rather than by two readers agreeing. 🛑 **THE SHIPPED PREDICATE COULD NOT PAY THIS ROW**: `DamageCountSource.boardCondition` is the 0-or-1 INDICATOR (D115), whose ceiling is `per` at every `per`, while this sentence pays `per` per CONDITION and a body can carry THREE. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 2**, so a `.length` site takes +1 where a `units(…)` site takes +2 — measured off the corpus row rather than copied between the two kinds of site (D451/D461). READER summand ALONE — registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved — and the reader surface stands still at **13**.) (🆕🆕🆕 **D517 +1 sentence / +1 printing — THE PRIZE-GATED PARALYSIS** — `censusAttackCorpus.ts` **FILE LINE 342**, *"If you have exactly 1 Prize card remaining, your opponent's Active Pokémon is now Paralyzed."*, **1 sentence / 1 legal printing**, claimed WHOLE by `deriveAttackEffect` arm 6a-iii through ONE new anchor (`SELF_PRIZE_GATE_PARALYZE`) and ONE new `BoardCondition` member (`yourPrizesRemaining`, the **61st**) — the seat mirror of `opponentPrizesRemaining`, whose `counts` shape it copies byte for byte. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1**, measured off the corpus row at this head rather than assumed from the row being singular (D451/D461). 🛑 **THE CONSEQUENT WAS ALREADY BUILT AND THE GATE WAS THE WHOLE BLOCKER** — the bare *"Your opponent's Active Pokémon is now Paralyzed."* resolved through this very reader to this very `applyStatus` op before the slice. RAW summand ALONE — no registry row, no gate split, no trailing split (registry 10/16, gate 5/13, trailing 11/21 all re-measured unmoved) — and the reader surface stands still at **13**.) (🆕🆕🆕 **D516 +1 sentence / +1 printing — THE DRAW COUNT THAT READS THE OPPONENT'S HAND** — `censusAttackCorpus.ts` **FILE LINE 487**, *"Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand."*, **1 sentence / 1 legal printing**, claimed WHOLE by `deriveAttackEffect` through the new `SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND` anchor and arm 44c, deriving `[{op:"handRefresh",who:"you",draw:{kind:"opponentHandSize"}}]`. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1** — measured off the corpus row, not assumed (D451/D461/D466). ONE anchor, ONE arm, ONE `HandRefreshDraw` member (the FIFTH) and ONE evaluator arm in `handRefreshDrawCount`, which is the SOLE consumer that switches on the draw kind — established by DELETING the arm and reading `tsc` (D512's census-by-compile-error), not by grep. 🛑 **THE REFUSAL THAT ORDERED THIS WAS 37 DECISIONS OLD AND RIGHT IN EVERY CLAUSE**: `SHUFFLE_HAND_DRAW`'s block (D479) said this row *"needs a fifth member"* and drove the refusal as its own falsifier — D515's rule that a refusal naming WHAT IS MISSING ages well, paid at a second address one slice later. ⚠️ **THE COUNT IS A MEMBER OF `HandRefreshDraw` AND NOT A `DamageCountSource`** even though `cardsInOpponentHand` spells the identical printed phrase at corpus file line 564: that union's only evaluator is `attack.ts`'s `scaledAttackDamage`, FOUR of whose six parameters are attack-declaration facts that do not exist on the Trainer and Ability paths authoring every other `handRefresh`. [🆕🆕🆕 D599 (D539): "only evaluator" is WITHDRAWN, kept as written — interpreter.ts `stepOp`'s `drawCards.per` arm, a Trainer path, evaluates `cardsInOpponentHand` for Emma `me04-077`/`-107` through the same `countCardsInHand` walk; union-wide the claim was already stale since the D557/D569 `opponentBenchCount`/`pokemonInPlay` Extracts.] `AttackFlipCount` (*"Deliberately not a `DamageCountSource` arm"*) and `MaxHpScale` already made the same call in writing — four count vocabularies, zero embeddings. ✅ **ZERO new ops, op fields, op VALUES on shipped fields, prompts, choice kinds, events, error codes, `CardFilter`/`BoardCondition` members, registry rows, `FIXTURE_POOL` ids, `redact.ts` bytes or `packages/schema` bytes**; RAW summand ALONE — no registry row, no gate split, no trailing split — and the reader surface stands still at **13**. **`MATCH_RECORD_VERSION` STAYS 30, ARGUED AT THE HARD ADDRESS**: the serialized alphabet DOES grow (a fifth `draw.kind` no v30 deploy can write), so D452's *"this byte already ships"* out does NOT apply and the claim rests on REACHABILITY alone (D450) — re-measured over ALL TEN `handRefresh` producers, every one of which places the op, or the gate holding it, as the SOLE top-level op, so no `phase.cont.pendingOp` or `rest` can ever hold it. Driven in the LOSS direction in `handRefreshOpponentHand.test.ts` §8.)  // (🆕🆕🆕 **D515 +1 sentence / +1 printing — THE THIRD MEMBER OF D473’s PRINTED *“Discard a card from your hand. If you do, …”* FAMILY, AND THE BLOCKER WAS THE DESCRIBER RATHER THAN THE ANCHOR** — `censusAttackCorpus.ts` **FILE LINE 103**, *"Discard a card from your hand. If you do, your opponent discards a card from their hand."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackEffect`. 🛑 **D473 MEASURED THIS ROW AND NAMED ITS BLOCKER IN WRITING, AND THE NAMED ONE WAS THE RIGHT ONE.** `HAND_COST_THEN_DRAW`’s block records D472’s whole-corpus measurement — widening that anchor’s consequent to `(.+)` claims this row and NO OTHER — and refuses it because `interpreter.ts`’s `describeBranch` had no phrase for `opponentDiscardsFromHand`: with none, `withConsequence` returns the prompt unchanged and the parking payment’s caption degrades to the bare *"Discard a card from your hand."*, **BYTE-IDENTICAL to an UNGATED payment’s**, while a census would record the row built. DRIVEN on both sides of the new case in `handCostOpponentDiscard.test.ts` §5 rather than quoted. The whole price is ONE anchor, ONE arm and ONE `describeBranch` case. ✅ **ZERO new ops, op fields, op values, prompts, prompt fields, choice kinds, events, error codes, `CardFilter`/`BoardCondition` members, registry rows, `FIXTURE_POOL` ids or `packages/schema` bytes** — `payFromHand` + `recordGate` + `opponentDiscardsFromHand` is three shipped ops in the shipped order. 🆕 **THE LATTICE CHANGES SHAPE IN BOTH DIRECTIONS AT ONCE** (D513/D514): OPENER × GATE × CONSEQUENT × COUNT reads **6 of 16 → 7 of 16** over the residue predicate with flips `6·6·2·0` → `7·7·1·1`, so CONSEQ moves ONTO zero as the widening retires a cell while COUNT moves OFF it as the narrowing creates one — and the owed *"printed zero times"* measurement (the 640-sentence column prints NO gated plural) is paid in that suite’s §1. `MATCH_RECORD_VERSION` **HELD at 30** on the SERIALIZED-ALPHABET argument (D452/D462/D463); reachability is FALSE here because the payment parks, and the loss direction is driven.) (🆕🆕🆕 **D514 +1 sentence / +2 printings — THE PRINTED *“any number of”* AND A PROPER NAME AS THE DECK-SEARCH NOUN** — `censusAttackCorpus.ts` **FILE LINE 657**, *"You may search your deck for any number of Fennel cards, reveal them, and put them into your hand. Then, shuffle your deck."*, **1 sentence / 2 legal printings**, claimed by `deriveAttackEffect`. 🛑 **TWO BLOCKERS AND THEY ARE A CONJUNCTION, MEASURED**: the 2⁴ lattice reads `0/1 · 0/4 · 1/6 · 2/4 · 1/1` (**4 of 16**) with COUNT and NOUN each flipping the verdict at **4 of 8** cells and OPENER and REVEAL at **0 of 8** — D507's eighth shape — and **16 of 16 with every axis at 0 of 8 after**. **The `You may` wrapper the standing pricing named as a THIRD mechanism was already FREE and had been since D231.** ✅ **ZERO new `CardFilter` members**: `byName { cardNoun }` has spelled *"⟨Name⟩ cards"* since D264 and `ATTACK_BENCH_SEARCH` has captured a proper name into `byName` since D230 — the NAMED deck search shipped as a reader arm 284 decisions before this row, one destination over. ONE op-field WIDENING (`searchDeck.max: number | "any"`, `lookAtTopN.max`'s D333 member at a third op) and ONE new resolver (`namedCardNounFilter`, ordered LAST behind the closed noun table and REFUSING the three printed BANNERS, which is the one axis D440 refused `^(.+) card$` on). ✅ ZERO new ops, prompt kinds, choice kinds, events, error codes, registry rows or `packages/schema` bytes. `MATCH_RECORD_VERSION` **HELD at 30**.) (🆕🆕🆕 **D513 +1 sentence / +1 printing — THE PRINTED *“of different types”*, THE FIRST DISTINCTNESS CONSTRAINT THIS ENGINE READS** — `censusAttackCorpus.ts` **FILE LINE 473**, *"Search your deck for up to 3 Basic Energy cards of different types, reveal them, and put them into your hand. Then, shuffle your deck."*, **1 sentence / 1 legal printing** (Sylveon ex `sv06.5-050`), claimed by `deriveAttackEffect`. 🛑 **THE ANCHOR WAS NEVER THE BLOCKER** — `ATTACK_HAND_SEARCH`'s `([^,.]+?)` noun group has captured `Basic Energy cards of different types` WHOLE since D231 and the sentence died one step later in `HAND_SEARCH_PLURAL.get`, so the new optional group MOVES a phrase out of the noun rather than admitting a sentence the pattern refused (D510's rule, paid a second time). ✅ **ZERO new `CardFilter` members — and no widening of that union could EVER have reached this row**, because `matchesFilter` narrows each card INDEPENDENTLY while *“of different types”* is a predicate on the ANSWER SET. It rides D332's shipped `chooseCards.caps` instead — one cap of ONE per `energyProvidesOf` cell — so **ZERO** new prompt fields, validator branches or client mirrors. `MATCH_RECORD_VERSION` **HELD at 30**.) (🆕🆕🆕 **D512 +1 sentence / +2 printings — THE BOTH-SIDES BODY COUNT NARROWED BY TWO PRINTED NAME FRAGMENTS** — `censusAttackCorpus.ts` **FILE LINE 583**, *"This attack does 40 damage for each Pokémon in play that has \"Koffing\" or \"Weezing\" in its name (both yours and your opponent's)."*, **1 sentence / 2 legal printings**, claimed by `deriveAttackDamageMultiplier` over ONE new anchor (`IN_PLAY_BOTH_SIDES_NAME_MULTIPLY`), ONE new `CardFilter` member (`pokemonNameContaining`) and ONE new `DamageCountSource` member (`bothSidesPokemonInPlay` — the FIRST both-sides count in that union to carry a `CardFilter`; `bothSidesBenchCount` and `bothActivesEnergyCount` are both BARE, because their printed nouns carry no adjective and this one's is NARROWED in print). 🛑 **THE SHIPPED ANCHORS WERE RUN AGAINST THE ROW FIRST AND ALL FOUR REFUSE IT AT THE PATTERN** — the OPPOSITE answer to D510's one row up, and the reason this row genuinely owed a pattern: every in-play anchor requires the literal `for each of your ` and this sentence's head is SEATLESS, with the side named by a trailing parenthetical. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE AT 1 AND 2**, measured at this head rather than carried (D451/D461). RAW summand ALONE: no registry row, no gate split and no trailing split — re-measured unmoved at registry 10/16, gate 5/13, trailing 11/21.) (🆕🆕🆕 **D510 +1 sentence / +2 printings — THE DISCARD PILE NARROWED BY A PRINTED NAME FRAGMENT** — `censusAttackCorpus.ts` **FILE LINE 543**, *"This attack does 20 damage for each Supporter card that has \"Team Rocket\" in its name in your discard pile."*, **1 sentence / 2 legal printings**, claimed by `deriveAttackDamageMultiplier` through ONE new `CardFilter` member (`supporterNameContaining`) and ONE PARAMETERISED noun in `discardPileFilter` — **ZERO new anchors**, because D440’s shipped `DISCARD_PILE_COUNT_MULTIPLY` had matched this row since it was written and the NOUN RESOLVER was the blocker. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE AT 1 AND 2** — a TWO-printing sentence, the opposite of D508 one entry down, measured at this head rather than carried (D451/D461). RAW summand ALONE: registry 10/16, gate 5/13 and trailing 11/21 all re-measured unmoved.) (🆕🆕🆕 **D508 +1 sentence / +1 printing — THE DISCARD PILE NARROWED BY A PRINTED ATTACK NAME** — `censusAttackCorpus.ts` **FILE LINE 542**, *"This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` over ONE new anchor (`DISCARD_PILE_ATTACK_NAME_MULTIPLY`) crossing D440's `cardsInDiscardPile` count with D446's `attackNamePokemon` filter — **ZERO new members in either union, ZERO evaluator bytes**. READER summand ALONE; registry, gate and trailing stand still at 10/16, 5/13, 11/21.) (🆕🆕🆕 **D507 +2 sentences / +2 printings — THE SPREAD THAT HITS **BOTH** BENCHES, AND THE OPTIONAL PRINTED CLAUSE THAT NARROWS IT TO THE ALREADY-DAMAGED BODIES** — `censusAttackCorpus.ts` **FILE LINES 515 and 526**, *"This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)"* and *"This attack also does 40 damage to each Benched Pokémon **that has any damage counters on it** (both yours and your opponent's). (Don't apply…)"*, **2 sentences / 2 legal printings**, both claimed by `deriveAttackEffect` arm **6-ii** over ONE new anchor (`SPREAD_EACH_BOTH_BENCH`) whose OPTIONAL GROUP *is* the rider. 🛑 **THE BOTH-SIDES HALF COSTS NO TYPE AT ALL: it is a TWO-OP PROGRAM OF THE SAME OP** — `spreadDamage { yourBench }` then `spreadDamage { opponentBench }` — which is D482's shipped answer to the identical question one zone over, so `spreadDamage.target` gains **NO third member** and `counterEachAll`'s `filter` + `side` shape was refused rather than copied (D448/D449/D465's thrice-refused widening, same class). The op gains ONE OPTIONAL BOOLEAN RIDER, `damagedOnly` — `counterEachAll`'s own name on its own predicate `hasAnyDamageCounters`, D505's idiom one rider later. **ZERO** new `EffectOp` members, op KINDS, readers (surface unmoved at **13**), `CardFilter`/`BoardCondition`/`DamageCountSource` members, prompts, choice kinds, parks, events, error codes, `GameState`/`InPlayPokemon` fields, registry rows, `FIXTURE_POOL` ids (file-local `cardPool`, D414), `redact.ts` bytes, `packages/schema` bytes or `MATCH_RECORD_VERSION` bytes. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 2 AND 2**, MEASURED at this head rather than carried (D451/D461/D465) — both rows are 1-printing sentences. RAW summand ALONE: no registry row, no gate split, no trailing split — all three re-measured unmoved at registry 10/16, gate 5/13, trailing 11/21.) (🆕🆕🆕 **D505 +1 sentence / +3 printings — THE PRIZE-SCALED BENCH SPREAD, THE MISSING CELL OF A SHIPPED 2×2** — `censusAttackCorpus.ts` **FILE LINE 517**, *"This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 3 legal printings**, claimed by `deriveAttackEffect` arm **6-i** over ONE new anchor (`SPREAD_EACH_BENCH_TAKEN_PRIZES`) and ONE OPTIONAL BOOLEAN RIDER on the SHIPPED `spreadDamage` (`perTakenPrize` — D448's own name spelled on a second op, so `snipeAmount`'s structural parameter folds it UNCHANGED). **ZERO** new `EffectOp` members, op KINDS, readers (surface unmoved at **13**), prompts, choice kinds, parks, events, `GameState`/`InPlayPokemon` fields, registry rows, `FIXTURE_POOL` ids or `MATCH_RECORD_VERSION` bytes. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 3**, so a `.length` site takes +1 where a `units(…)` site takes +3 — the largest single printing step left in the residue's spread family, and the reason this row was worth taking before smaller ones (D451, re-paid again).) (🆕🆕🆕 **D500 +1 sentence / +1 printing — THE PRINTED CARD CATEGORY `Basic`, WHICH IS `Special`'s COMPLEMENT AND NOT A TENTH TYPE** — `censusAttackCorpus.ts` **FILE LINE 580**, *"This attack does 40 damage for each Basic Energy attached to this Pokémon."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` through **ONE ROW in `CLAUSE_ENERGY_TOKENS`** — the anchor `SELF_ENERGY_MULTIPLY` already admitted the token and the refusal lived one step later, in `attachedEnergyFilter`. **ZERO new anchors, ZERO new readers (surface unmoved at 13), ZERO new ops, ZERO new op FIELDS, ZERO new `DamageCountSource` members, ZERO new `FIXTURE_POOL` ids and ZERO `packages/schema` bytes.** ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1** — the row is 1/1 — and that was VERIFIED at both kinds of site rather than assumed from the row being singular (D451/D461).) (🆕🆕🆕 **D491 +1 sentence / +1 printing — THE ONLY DRAW IN THE COLUMN WHOSE SUBJECT IS NOT THE CONTROLLER** — corpus FILE LINE **199**, *"Each player draws 3 cards."*, claimed WHOLE by `deriveAttackEffect` through ONE new anchor over `drawCards` + ONE optional key `who?: "eachPlayer"`; reader surface still **13**. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1, measured.)   // 🆕🆕🆕 **D490 +1 sentence / +2 printings — THE MILL OF BOTH DECKS, SCALED BY THE ENERGY AMONG WHAT IT MILLED** (`censusAttackCorpus.ts` FILE LINE 130; the LAST unbuilt member of the `discarded in this way` family, claimed by `deriveAttackDiscardScaledBoost`'s new `eachDeckMill` member — the reader SURFACE stands still at 13). ⚠️ THE TWO STEPS DISAGREE, 1 AND 2.
+    expect([resolved.length, units(resolved)]).toEqual([600, 1663]);
     expect(rows).toHaveLength(640);
     expect(units(rows)).toBe(1732);
   });

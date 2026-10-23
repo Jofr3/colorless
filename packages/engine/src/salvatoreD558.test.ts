@@ -15,23 +15,8 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D558 — SALVATORE: D309's BODY-CHOICE EVOLVE WITH A PRINTED NOUN RIDER ──
-//
-//   Salvatore  sv05-160 / -202 / -212  Supporter  "Search your deck for a card that has no
-//              Abilities and evolves from 1 of your Pokémon, and put it onto that Pokémon to
-//              evolve it. Then, shuffle your deck. You can use this card on a Pokémon you put
-//              down when you were setting up to play or on a Pokémon that was put into play
-//              this turn."
-//
-// Duosion's program (`evolveFromDeckChosen` → `shuffleDeck`) with ONE optional key,
-// `noAbilities`, threaded body narrowing → answer → offer → move. Every rung is driven BOTH
-// WAYS on a real id, on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
-// Readings: R-SV1 (UNRULED) the going-second first turn is allowed, inherited from D307;
-// R-SV2 "no Abilities" is `abilities` empty or absent. MATCH_RECORD_VERSION HOLDS at 35 —
-// DRIVEN in §5 by a parked Salvatore revived from JSON and by an old record with no key.
-// docs/decisions.md D558.
 
 const SALVATORE = ["sv05-160", "sv05-202", "sv05-212"] as const;
 const SALVATORE_TEXT =
@@ -61,8 +46,6 @@ const LOCAL_CARDS: Record<string, Card> = {
   [SEED]: battler(SEED, { name: "D558 Seed", hp: 300, types: ["Grass"] }),
   [OTHER]: battler(OTHER, { name: "D558 Other", hp: 300, types: ["Grass"] }),
   [FILLER]: battler(FILLER, { name: "D558 Filler", hp: 300, types: ["Colorless"] }),
-  // R-SV2 — `null` (the catalog's Ability-free row) and `[]` (a hand-built one) are both
-  // "no Abilities"; a non-empty list is not.
   [BLOOM]: stage1(BLOOM, "D558 Bloom", "D558 Seed", null),
   [BLOOM_EMPTY]: stage1(BLOOM_EMPTY, "D558 Bloom Empty", "D558 Seed", []),
   [BLOOM_ABLE]: stage1(BLOOM_ABLE, "D558 Bloom Able", "D558 Seed", ABILITY as Card["abilities"]),
@@ -71,7 +54,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [SALVATORE[0]]: 2,
   [SALVATORE[1]]: 1,
@@ -86,12 +68,6 @@ const DECK = deckOf({
   "fix-energy": 24,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with p2 going first; returns p1's turn 2 — p1's FIRST turn, going second (R-SV1). */
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -118,9 +94,6 @@ function opened(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-/** TEST SURGERY — `seat`'s hand, deck and prizes re-dealt: the hand becomes `hand`, the
-    deck holds EXACTLY `deck` (in order), the Prize row keeps its size, and every other
-    card goes to the discard pile. Every uid stays in exactly one zone. */
 function arrange(
   state: GameState,
   seat: Seat,
@@ -153,8 +126,6 @@ function arrange(
   };
 }
 
-/** p1's turn 2: Active `active`, Bench `bench`, a hand of one Salvatore (`printing`) and a
-    deck of exactly `deck`. */
 function table(
   active: string,
   bench: readonly string[],

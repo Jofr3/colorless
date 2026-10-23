@@ -14,21 +14,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.36.0 → 0.37.0 — the "×"/multiply family's benched-TARGET sibling.
-//
-// Wo-Chien ex sv02-027 "Covetous Ivy": "This attack does 60 damage to 1 of your
-// opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't
-// apply Weakness and Resistance for Benched Pokémon.)" — a CHOSEN single Benched
-// target (not the Defender), so it derives to a `damageChosen` op (count 1) rather
-// than the pre-W/R fold Pecharunt uses. Two new fields: `deals` (the hit is ATTACK
-// DAMAGE — DAMAGE_DEALT with the benched reduction passive, not a flat placed
-// counter) and `perTakenPrize` (the amount is 60 × the opponent's TAKEN Prizes,
-// read from state; 0 taken → no damage and no pick).
-//
-// fix-bramble carries the SAME derived text at per 40 (a synthetic probe fielded as
-// the attacker), the only thing that pins the interpreter multiplies the CAPTURED
-// amount rather than a hard-coded 60.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -236,17 +221,12 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
     expect(after.phase.seat).toBe("p1");
     const { state: done } = mustApply(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    // An attack KO ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (unlike the mid-turn Ability snipe, which resumes it).
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(done.players.p1.prizes).toHaveLength(5); // full 6 → took 1 for the KO
     expect(done.players.p2.bench).toHaveLength(0);
   });
 
   it("is ATTACK DAMAGE — a benched reduction passive applies, but never Weakness (§8.5)", () => {
-    // A benched Bouffalant ("Bouffer", −20 after W/R) takes 60 × 1 = 60, REDUCED to
-    // 40 — the `deals` branch runs spreadDamage's reduction, where the put-counter
-    // snipe (a flat placed counter) would not. Weakness/Resistance stay null: a
-    // Benched target never doubles (§8.5). This is the whole point of `deals`.
     const state = covetous(7, {
       attacker: "sv02-027",
       energy: 3,

@@ -18,18 +18,8 @@ import {
   setActiveFromDeck,
   setPrizes,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D599 — WP24a: TWO WP24 SUPPORTERS ──
-//
-// 4 `me` Supporter printings / 2 printed texts. Anthea & Concordia is Briar's shape at 3 (the
-// card-level `supporterKoPrizeBonus`, attacker `ownerPokemon` N) behind a six-name `allOf` play
-// gate; Emma is `revealOpponentHand` then `drawCards` with the NEW `per` member
-// `cardsInOpponentHand`. Texts measured on the LOCAL D1, 2026-10-08, `legal_standard = 1` on every
-// row; driven on the real ids in a LOCAL `cardPool` (D275). The WP24 texts this slice does NOT key
-// are pinned unbuilt in §1 (five dropped, two left for WP24b). 🆕🆕🆕 D617 (D539): four of the five dropped
-// are built at D617 (WP24b) and §1 pins them keyed; Gladion's Final Battle, Acerola's Mischief and Roxie's
-// Performance stay unkeyed. [🆕🆕🆕 D621 (D539): ~~"stay unkeyed"~~ — built at D621 (WP24c); §1 pins all 20 keyed.]
 
 const ANTHEA = "me02.5-182";
 const EMMA = "me04-077";
@@ -48,7 +38,6 @@ const TEXTS: readonly (readonly [readonly string[], string, string])[] = [
   ],
 ];
 
-/** The WP24 printings this slice leaves unkeyed: dropped (vocabulary beyond the brief) and WP24b. */
 const NOT_KEYED: Readonly<Record<string, readonly string[]>> = {
   "AZ's Tranquility": ["me04-076", "me04-106", "me04-120"],
   "Gladion's Final Battle": ["me05-077", "me05-108", "me05-118"],
@@ -75,11 +64,9 @@ describe("D599 §1 — the faces: 4 `me` printings / 2 texts, one object per tex
     expect(objects.size).toBe(2);
   });
 
-  it("the other 20 WP24 printings (7 texts) ~~stay unkeyed~~ (🆕🆕🆕 D617 (D539): WITHDRAWN — WP24b keys 9 of them: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen; ~~Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unkeyed~~ 🆕🆕🆕 D621 (D539): WITHDRAWN — WP24c keys those three: all 20 are keyed)", () => {
+  it("the other 20 WP24 printings (7 texts) ~~stay unkeyed~~ ( D617 (D539): WITHDRAWN — WP24b keys 9 of them: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen; ~~Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unkeyed~~ D621 (D539): WITHDRAWN — WP24c keys those three: all 20 are keyed)", () => {
     const ids = Object.values(NOT_KEYED).flat();
     expect(ids).toHaveLength(20);
-    // 🆕🆕🆕 D617 — the four texts WP24b built (supportersMeD617.test.ts) are keyed now.
-    // 🆕🆕🆕 D621 — and the three WP24c built (sideStateMeD621.test.ts): every text here is keyed.
     for (const id of ids) expect(programFor(id), id).toBeDefined();
   });
 });
@@ -134,7 +121,7 @@ const N_ZORUA = "d599-nszorua"; // an N's Pokémon NOT among the six
 const PLAIN = "d599-plain";
 const VICTIM = "d599-victim";
 const FILLER = "d599-filler";
-const FOSSIL = "sv07-129"; // Antique Cover Fossil, the real row: in HAND it is an Item, not a Pokémon (R-EM2)
+const FOSSIL = "sv07-129";
 const ITEM = "d599-item";
 
 const hitter = (id: string, name: string): Card =>
@@ -156,8 +143,6 @@ const LOCAL: Record<string, Card> = {
   [PLAIN]: hitter(PLAIN, "D599 Plain"),
   [VICTIM]: battler(VICTIM, { name: "D599 Victim", hp: 30 }),
   [FILLER]: battler(FILLER, { name: "D599 Filler", hp: 300 }),
-  /** The catalog's face, built as `antiqueFossilsD576.test.ts`'s `fossilRow`: `cardOfUid` gives it
-      the Pokémon face only in an in-play stack (D576), so in a hand it stays the Item. */
   [FOSSIL]: {
     ...trainerCard(
       FOSSIL,
@@ -182,16 +167,9 @@ const DECK = deckOf({
   [FOSSIL]: 2,
   [ITEM]: 3,
   "fix-fire-energy": 17,
-  "fix-energy": 6, // the prize row (p1Turn)
+  "fix-energy": 6,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup, then P1's own turn (P2 went first and passed); both hands emptied into the deck and the six
-    `fix-energy` cards made each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 5999, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -392,8 +370,6 @@ describe("D599 §6 — the ids: real `me` ids in a LOCAL pool", () => {
 });
 
 describe("D599 §7 — `describeBranch` is silent on the new member (a gate branch holding it gets no caption)", () => {
-  // No shipped program puts this member inside a `recordGate.then`; a hand-built one asks the
-  // describer directly, beside the D557 member as the control that the scan reaches the branch.
   const gated = (per: Extract<EffectOp, { op: "drawCards" }>["per"]): EffectOp[] => [
     { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
     {

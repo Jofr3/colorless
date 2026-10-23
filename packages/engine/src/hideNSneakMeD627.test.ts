@@ -22,23 +22,8 @@ import {
   setBenchDamage,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D627 — H1: THE HIDE 'N' SNEAK ARCHETYPE ─────────────────────────────────────────────────────
-//
-// 4 `me` Pokémon print the Ability "Hide 'n' Sneak" (Poltchageist `me05-005`, Sinistcha `me05-006`, Shuppet
-// `me05-033`, Banette `me05-034`), and four attack texts read it (LOCAL D1, 2026-10-10, `legal_standard = 1`):
-//
-//   Hide 'n' Sneak ×4   — one registry object, `passive { preventAttackEffects, preventAbilityEffects }` (both shipped).
-//   Vengeful Anchor ×3  — Dhelmise `mep-084`, `me05-039` / `-091`: +140 behind the NEW `BoardCondition`
-//                         `yourDiscardPokemonWithAbilityNamedAtLeast` at 4 (a `CONDITIONAL_DAMAGE_CLAUSES` row).
-//   Matcha Spin         — Sinistcha: the member at 6, a `conditionGate` around arm 23e's counter fold.
-//   Furtive Drop        — Poltchageist: the singular "Place 1 damage counter on your opponent's Active Pokémon."
-//   Spiritual End       — Spiritomb `me05-035`: the member at 13, then D530's `perDamageCounterOnTarget` on a
-//                         2-pick placement (3 more per counter: the quadruple). R-SPE1 ⚠️ UNRULED.
-//
-// R-HNS1 ⚠️ UNRULED: the count reads the PRINTED Ability names on the Pokémon faces in your discard pile; a
-// Trainer face (an Antique fossil) never counts; no in-play Ability lock reaches a discarded card.
 
 const HIDE_N_SNEAK =
   "Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)";
@@ -97,7 +82,6 @@ describe("D627 §2 — the readings", () => {
       per: 140,
       count: { kind: "boardCondition", cond: gate(4) },
     });
-    // A threshold no row prints stays unread (literal rows, not a template).
     expect(deriveAttackDamageBonus(VENGEFUL_ANCHOR.replace("4 or more", "5 or more"))).toBeNull();
     // The curly apostrophe is folded by the clause lookup.
     expect(deriveAttackDamageBonus(VENGEFUL_ANCHOR.replaceAll("'", "’"))).toEqual(
@@ -190,8 +174,8 @@ const DHEL = "me05-039";
 const DRAG = "d627-phantom-diver";
 const DUSKNOIR = "sv06.5-020"; // "Cursed Blast" — 13 counters on 1 of the opponent's Pokémon (an Ability)
 const FLUTTER = "sv05-078"; // "Midnight Fluttering" — the opponent's Active has no Abilities
-const FOSSIL = "d627-fossil"; // a Trainer face printing the Ability (an Antique fossil's shape)
-const CURLY = "d627-curly"; // a Pokémon face printing the name with U+2019
+const FOSSIL = "d627-fossil";
+const CURLY = "d627-curly";
 const FILLER = "d627-filler";
 const WEAK = "d627-weak";
 const P = "d627-psychic";
@@ -314,11 +298,6 @@ const DECK = deckOf({
   [P]: 27,
 });
 const BOARD_IDS = new Set(Object.keys(LOCAL).filter((id) => id !== P));
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(deepFreeze(state), action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);

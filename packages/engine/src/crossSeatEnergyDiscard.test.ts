@@ -17,41 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// D361 — THE CROSS-SEAT ENERGY DISCARD: three printed sentences, ONE widened
-// anchor plus ONE new one, and ZERO new vocabulary anywhere in the engine.
-//
-// THE MEASUREMENT THAT CHOSE THIS ROW (re-derived, not inherited). The legal
-// attack corpus is 640 sentences / 1,732 printings; the NINE readers together
-// resolved 320 / 1,177 at D360's head — and 1,177 is `BUILT.attack`'s own
-// committed RAW summand, which is the cross-check that makes the rest
-// believable. So the residue was 320 sentences / 555 printings, its largest
-// BARE-IMPERATIVE block was `Discard …` at 39 sentences / 71 printings, and
-// inside that block the cross-seat Energy discard is FOUR sentences / NINE
-// Standard-legal printings:
-//
-//   ✅ "Discard a Special Energy from your opponent's Active Pokémon."        4
-//        Victini `sv05-030` "Singe Off", Farfetch'd `sv06-132` "Mach Cut",
-//        Cobalion `sv10.5b-066`/`-144` "Righteous Edge"
-//   ✅ "Discard a {R} Energy from your opponent's Active Pokémon."            2
-//        Ducklett `sv10.5w-025`/`-109` "Firefighting"
-//        (+ Growlithe `sv03.5-058`, "{W}", `legal_standard = 0` — same arm)
-//   ✅ "Discard all Special Energy from all of your opponent's Pokémon."      2
-//        Ceruledge `sv08-035`/`-197` "Cursed Edge"
-//   🛑 "Discard an Energy from your opponent's Active Pokémon **ex**."        1
-//        Turtonator `sv08-137` "Fully Singe" — REFUSED, see §6.
-//
-// 🛑 THE PRODUCER SET WAS CLOSED BEFORE A LINE MOVED, WHICH IS THE STEP D358 AND
-// D359 BOTH SKIPPED. `grep 'op: "discardEnergy"'` over non-test source returns
-// object literals in exactly TWO files — `effects.ts` (this deriver) and
-// `registry.ts` (hand-authored programs). `interpreter.ts`'s five hits are all
-// `Extract<EffectOp, …>` TYPE positions, i.e. CONSUMERS. §5 walks both producers.
-//
-// ⚠️ AND THE WALK IS RECURSIVE, FOR D360's REASON ONE OP OVER: a top-level
-// filter over `deriveAttackEffect`'s output reports 8 sentences / 76 printings
-// carrying `discardEnergy` and a recursive one reports 12 / 92, the difference
-// being the `coinFlipGate`-, `optional`- and `conditionGate`-NESTED instances. A
-// FLAT WALK IS THE SAME CLASS OF ERROR AS A ONE-PRODUCER WALK, ONE LEVEL DOWN.
-
 /** Every `discardEnergy` op inside an arbitrarily nested program — the recursive
     flatten §5's biconditional needs, and the reason it cannot be a `.filter`. */
 function discardOps(node: unknown, out: Record<string, unknown>[] = []): Record<string, unknown>[] {
@@ -108,18 +73,10 @@ function findAll<T extends GameEvent["type"]>(
 const SPECIAL_ACTIVE = "Discard a Special Energy from your opponent's Active Pokémon.";
 const TYPED_ACTIVE = "Discard a {R} Energy from your opponent's Active Pokémon.";
 const SWEEP_ALL = "Discard all Special Energy from all of your opponent's Pokémon.";
-/** Giacomo `sv02-182`, a REGISTRY Supporter row. The sharpest near-miss any
-    anchor in `effects.ts` has: the engine already BUILDS this sentence from the
-    other producer, at a different count. */
 const GIACOMO_PRINTED = "Discard a Special Energy from each of your opponent's Pokémon.";
 
 describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor and one NEW one", () => {
   it("all three derive, and the FILTER is read off the printed NOUN PHRASE", () => {
-    // 🛑 THE CLAIM THIS SECTION EXISTS FOR. The three sentences share a
-    // byte-identical tail; the ONLY thing that varies is what is taken. A build
-    // that collapsed the noun phrase to `anyEnergy` would strip a Basic Energy
-    // off a defender on every one of these eight printings — the wrong card
-    // coming off a real board, which §2 and §3 then drive.
     expect(deriveAttackEffect(SPECIAL_ACTIVE)).toEqual([
       { op: "discardEnergy", from: "opponentActive", filter: { kind: "specialEnergy" } },
     ]);
@@ -140,11 +97,7 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     ]);
   });
 
-  it("🛑 THE BARE FORM'S PROGRAM IS BYTE-IDENTICAL — that is what makes this a WIDENING", () => {
-    // A widening is free only if the sentences that already derived derive the
-    // SAME THING. Both capture groups are `undefined` on the printed article, so
-    // the spread emits the two-key object it has emitted since D41 — no `count`,
-    // no third key, and `anyEnergy` rather than a narrowed filter.
+  it("THE BARE FORM'S PROGRAM IS BYTE-IDENTICAL — that is what makes this a WIDENING", () => {
     const bare = deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.");
     expect(bare).toEqual([
       { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
@@ -169,12 +122,6 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
   });
 
   it("the TYPE is a PARAMETER — every code in the map resolves, and its own name resolves identically", () => {
-    // 🛑 THE OTHER HALF OF THE FILTER CLAIM, and the one a hardcoded
-    // `energyType: "Fire"` passes §1's first case on. The repo's settled
-    // convention (asserted for the SELF form in `providesEnergy.test.ts`) is that
-    // the alternation is built FROM `ENERGY_TYPE_BY_CODE`, never from the printed
-    // subset — so `{L}` derives here even though no card prints it on this shape,
-    // and a tenth energy type costs zero lines.
     for (const [code, type] of Object.entries(ENERGY_TYPE_BY_CODE)) {
       const expected = [
         {
@@ -195,10 +142,6 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     // Non-vacuity: the loop above must have driven more than one type, or a
     // hardcoded map of size 1 would satisfy it.
     expect(Object.keys(ENERGY_TYPE_BY_CODE).length).toBe(9);
-    // Colorless is deliberately not in the map (§6.1) — it is the conservative
-    // provision FALLBACK, so a `{C}` filter would quietly match every unauthored
-    // Special. It must stay on the LOUD skipped path here as it does on the self
-    // form.
     expect(
       deriveAttackEffect("Discard a {C} Energy from your opponent's Active Pokémon."),
     ).toBeNull();
@@ -208,8 +151,6 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
   });
 
   it("the apostrophe hardening covers all three, so a punctuation-only re-ingest cannot un-derive them", () => {
-    // D136/D137's rule, which every sibling on this noun phrase carries. The
-    // sweep's `opponent's` is in its own anchor and needs its own class.
     expect(deriveAttackEffect(SPECIAL_ACTIVE.replace("'", "’"))).toEqual(
       deriveAttackEffect(SPECIAL_ACTIVE),
     );
@@ -223,9 +164,6 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
   });
 
   it("all EIGHT printings are in the corpus at the counts this slice claims", () => {
-    // The population claim, driven rather than written in the header. The corpus
-    // is `legal_standard = 1` only, which is why Growlithe's rotated `{W}`
-    // printing is NOT here and is named in §6 instead.
     const corpus = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     expect(corpus.get(SPECIAL_ACTIVE)).toBe(4);
     expect(corpus.get(TYPED_ACTIVE)).toBe(2);
@@ -252,9 +190,6 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
-    // 🛑 THE ASSERTION THAT KILLS A WIDENED FILTER: exactly the two Specials are
-    // offered. Under `anyEnergy` this list is four long and the player can strip
-    // a Basic the card does not name.
     expect(
       parked.phase.prompt.discardable.map((d) => parked.cardIdByUid[d.uid] ?? "?").sort(),
     ).toEqual(["fix-special", "fix-special-2"]);
@@ -312,9 +247,6 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
 
 describe("D361 §3 — the TYPED arm: PROVISION, not print, and on THEIR side", () => {
   it("takes a {R}-PROVIDING Energy and leaves {W} and {C} alone — including the WILDCARD", () => {
-    // 🛑 THE CASE THAT MAKES `providesEnergy` THE RIGHT FILTER RATHER THAN
-    // `basicEnergy`: Luminous is a SPECIAL Energy and it IS a {R} Energy while it
-    // sits alone, so it must be offered. A print-based reading misses it.
     let state = ready(4);
     state = attachFromDeck(state, "p2", "fix-fire-energy", 1);
     state = attachFromDeck(state, "p2", "sv02-191", 1); // Luminous — provides every type
@@ -344,12 +276,7 @@ describe("D361 §3 — the TYPED arm: PROVISION, not print, and on THEIR side", 
     ]);
   });
 
-  it("🛑 PROVISION IS HOST-DEPENDENT — a DEMOTED Luminous is no longer a {R} Energy", () => {
-    // The same card on the same spot, one attachment different. Luminous provides
-    // every type ALONE and only {C} beside another Special, so the second Special
-    // takes it back out of the offer. This is the case a card-only reading of the
-    // filter cannot produce, and it is why `matchesAttached` evaluates per Energy
-    // ON ITS HOST.
+  it("PROVISION IS HOST-DEPENDENT — a DEMOTED Luminous is no longer a {R} Energy", () => {
     let state = ready(5);
     state = attachFromDeck(state, "p2", "sv02-191", 1);
     state = attachFromDeck(state, "p2", "fix-special", 1); // demotes Luminous to {C}
@@ -378,11 +305,7 @@ describe("D361 §3 — the TYPED arm: PROVISION, not print, and on THEIR side", 
 });
 
 describe('D361 §4 — the SWEEP: `count: "all"` is EVERY match on EVERY body, not one each', () => {
-  it("🛑 strips ALL Special Energy from ALL of their Pokémon, INLINE, and asks nothing", () => {
-    // 🛑 THE CLAIM `count: "all"` BUYS, AND THE ONE GIACOMO'S SHAPE CANNOT MAKE.
-    // Their Active holds TWO Specials and their Bench holds one. Giacomo's
-    // one-per-body sweep takes 2 (and PARKS, because two Specials on one body is
-    // a real pick); this sentence takes all 3 and asks nothing.
+  it("strips ALL Special Energy from ALL of their Pokémon, INLINE, and asks nothing", () => {
     let state = ready(6);
     state = benchFromDeck(state, "p2", "fix-basic-1");
     state = attachFromDeck(state, "p2", "fix-special", 1);
@@ -396,11 +319,6 @@ describe('D361 §4 — the SWEEP: `count: "all"` is EVERY match on EVERY body, n
     // INLINE: the `count === "all"` branch fires before the scope split, so this
     // never parks, never prompts and never crosses the wire.
     expect(done.phase.kind).not.toBe("effect:choose");
-    // ⚠️ `ENERGY_DISCARDED` IS ONE ROW PER BODY CARRYING A `uids[]`, not one row
-    // per Energy — so TWO rows for THREE Energy is the shape that proves both
-    // halves at once: the sweep reached two distinct bodies AND took everything
-    // matching on each. A per-Energy count could not tell "3 off the Active" from
-    // "2 + 1 across the board", which is the exact distinction this arm exists for.
     const rows = findAll(events, "ENERGY_DISCARDED");
     expect(rows).toHaveLength(2);
     expect(rows.flatMap((r) => r.uids)).toHaveLength(3);
@@ -442,12 +360,7 @@ describe('D361 §4 — the SWEEP: `count: "all"` is EVERY match on EVERY body, n
 });
 
 describe("D361 §5 — the SHAPE RULE over BOTH producers, stated so neither can drift", () => {
-  it('🛑 EVERY `opponentEach` discard carries EITHER no count OR `"all"` — never a number', () => {
-    // The biconditional the type widening makes checkable, walked over BOTH
-    // producers with a RECURSIVE flatten. A number on this arm would be silently
-    // ignored by the interpreter (the scope is `{kind:"each"}` regardless), which
-    // is exactly what `count?: never` was written to prevent — and `"all"` is the
-    // one value that is NOT ignored, because it takes a different branch.
+  it('EVERY `opponentEach` discard carries EITHER no count OR `"all"` — never a number', () => {
     const ops: Record<string, unknown>[] = [];
     for (const id of registryCardIds()) discardOps(programFor(id), ops);
     for (const [, text] of legalAttackCorpus()) discardOps(deriveAttackEffect(text), ops);
@@ -457,11 +370,6 @@ describe("D361 §5 — the SHAPE RULE over BOTH producers, stated so neither can
       expect(typeof op.count === "number", JSON.stringify(op)).toBe(false);
       expect(op.count === undefined || op.count === "all", JSON.stringify(op)).toBe(true);
     }
-    // 🛑 BOTH ARMS NON-EMPTY, WHICH IS WHAT STOPS THE LOOP ABOVE BEING VACUOUS —
-    // and each arm's population names its own printed reason:
-    //   • `undefined` = "a Special Energy from EACH" (Giacomo, the REGISTRY),
-    //   • `"all"`     = "ALL Special Energy from ALL of" (Ceruledge, the DERIVER).
-    // A partition, not a tautology: every sweep is in exactly one arm.
     const oneEach = sweeps.filter((o) => o.count === undefined);
     const allOfIt = sweeps.filter((o) => o.count === "all");
     expect(oneEach.length).toBeGreaterThan(0);
@@ -470,11 +378,6 @@ describe("D361 §5 — the SHAPE RULE over BOTH producers, stated so neither can
   });
 
   it("the two producers AGREE on the one sentence they both express — Mawile's op IS the derived one", () => {
-    // 🛑 D360's LESSON, ONE OP OVER. `Discard a Special Energy from your
-    // opponent's Active Pokémon.` is printed on Mawile's ABILITY (registry,
-    // `sv03-143`) and on four ATTACKS (derived). Before this slice the two
-    // producers could not disagree because only one of them expressed it; now
-    // both do, so the agreement is asserted rather than assumed.
     const fromRegistry = programFor("sv03-143")?.triggered?.[0]?.program?.[0];
     const fromDeriver = (deriveAttackEffect(SPECIAL_ACTIVE) as EffectOp[])[0];
     expect(fromRegistry).toMatchObject({
@@ -500,11 +403,7 @@ describe("D361 §5 — the SHAPE RULE over BOTH producers, stated so neither can
 });
 
 describe("D361 §6 — what the anchors REFUSE, and every refusal is a real catalog row or a measured absence", () => {
-  it("🛑 the SWEEP anchor refuses GIACOMO's printed wording — a REGISTRY row must stay off the derived path", () => {
-    // The sharpest near-miss in the file: the engine already BUILDS this sentence
-    // from the other producer, at a DIFFERENT COUNT. A loose `(all|each)` here
-    // would not merely over-derive — it would put one printed sentence on two
-    // producers that disagree about how many Energy come off.
+  it("the SWEEP anchor refuses GIACOMO's printed wording — a REGISTRY row must stay off the derived path", () => {
     expect(deriveAttackEffect(GIACOMO_PRINTED)).toBeNull();
     // And the registry really does build it, so the clash is live rather than
     // hypothetical. (This also proves the string above is the printed one.)
@@ -518,39 +417,15 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
 
   it("refuses every near-miss — each one a real catalog row, or an absence that was MEASURED", () => {
     for (const text of [
-      // ── UNPRINTED CROSS-PRODUCTS. `a` pairs with `Active` and `all` pairs with
-      //    `all of your opponent's Pokémon`; neither crossing returns a single row
-      //    on any of the three columns, so a `(a|all) × (Active|all of)` matrix
-      //    would have derived two sentences nobody prints.
       "Discard all Special Energy from your opponent's Active Pokémon.",
       "Discard a Special Energy from all of your opponent's Pokémon.",
-      // 🆕🛑 **THE STRING THE SWEEP ANCHOR'S *SECOND* WORD DEFENDS, AND ITS
-      //     ABSENCE HERE WAS A REAL GAP THE `--decision D361` PROBE FOUND.**
-      //     `D361-sweep-anchor-swallows-giacomos-wording` loosens `all of` to
-      //     `(all|each) of` and SURVIVED the first probe — because Giacomo prints
-      //     *"Discard **a** Special Energy from each of…"* and the mutated anchor
-      //     still requires *"all"*, so it never reached the sentence the row's
-      //     `what` names. **THE ANCHOR IS DEFENDED BY TWO INDEPENDENT PRINTED
-      //     WORDS**, and only a string that loosens the SECOND one can prove the
-      //     second one is load-bearing. This sentence is printed by nobody — the
-      //     catalog has `a … each of` (Giacomo, Trainer) and `all … all of`
-      //     (Ceruledge, attack) and NEITHER crossing — so refusing it is refusing
-      //     to author a card, and asserting it kills the mutant honestly.
-      //     ⚠️ A ROW COUNT IS NOT A COVERAGE MAP: the row existed, the claim was
-      //     true, and nothing checked the half of it the mutation actually moved.
       "Discard all Special Energy from each of your opponent's Pokémon.",
-      // ── THE FLIP TWINS, AND THEIR ABSENCE IS THE EVIDENCE. The catalog prints
-      //    the flipped form for `an Energy` (23 printings / 12 legal) and prints
-      //    ZERO flipped Special or typed variants. Widening
-      //    `FLIP_OPPONENT_ACTIVE_DISCARD` alongside would author a card.
       "Flip a coin. If heads, discard a Special Energy from your opponent's Active Pokémon.",
       "Flip a coin. If heads, discard a {R} Energy from your opponent's Active Pokémon.",
       // ── Krookodile `sv01-117`: a repeat count this engine cannot express, and it
       //    ENDS in the bare pattern's exact words. Refused by the leading `^` AND
       //    by the lowercase mid-sentence "discard".
       "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
-      // ── A compound the widening now sits next to: Tool AND Special Energy, plus
-      //    a `Before doing damage` ordering. One legal printing, deliberately LOUD.
       "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
       // ── The opponent's BOARD (Crushing Hammer / Tool Scrapper wording) is the
       //    TRAINER arm — `opponentChosen`, not `opponentActive`, and no attack
@@ -569,23 +444,7 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
     }
   });
 
-  it("🆕 TURTONATOR `sv08-137` — D361's REFUSAL WAS PAID AT D362, AND THE ADJECTIVE STILL DOES ALL THE WORK", () => {
-    // 🛑 THIS CASE WAS A REFUSAL AND IS NOW A PURCHASE, WHICH IS WHY IT IS
-    // REWRITTEN RATHER THAN DELETED. D361 asserted this sentence derived to
-    // `null` and priced the reason: *"Discard an Energy from your opponent's
-    // Active Pokémon **ex**."* needs an ex-ONLY board narrowing, and the nearest
-    // existing condition `{ kind: "opponentActiveIsExOrV" }` is strictly WIDER
-    // (ex **or V**), so reusing it would strip a Pokémon V the card does not
-    // print. That reasoning was right and the ratio was wrong: D361 called it
-    // "ONE new union member for ONE printing", then measured the predicate at
-    // **8 sentences / 13 printings** against the wider member's **4 / 6** and
-    // inverted its own recommendation. D362 bought `opponentActiveIsEx`.
-    //
-    // ⚠️ AND A GUARD KEYED ON A PREDECESSOR'S REFUSAL IS EXACTLY WHAT A
-    // RED-SURFACE PREDICTION BUILT FROM CENSUS FIGURES AND POOL-KEYED COUNTS DOES
-    // NOT REACH. This file went red unpredicted at D362; running the PLANNED
-    // ANCHOR over every string literal in `packages/engine/src` would have found
-    // it, and that step was skipped. Recorded here so the next slice runs it.
+  it("TURTONATOR `sv08-137` — D361's REFUSAL WAS PAID AT D362, AND THE ADJECTIVE STILL DOES ALL THE WORK", () => {
     expect(deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon ex.")).toEqual(
       [
         {
@@ -596,20 +455,12 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
         },
       ],
     );
-    // The bare sentence one word shorter STILL derives, and now the claim is
-    // sharper than "it is not null": it derives to a DIFFERENT program — no gate
-    // at all — so the printed adjective is the whole behavioural difference,
-    // exactly as it was the whole refusal before.
     expect(deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon.")).toEqual([
       { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
     ]);
   });
 
   it("the ROTATED typed printing derives anyway — rotation decides who may PLAY a card, not what it SAYS", () => {
-    // Growlithe `sv03.5-058` "Vaporize" prints the identical typed shape with
-    // `{W}` and is `legal_standard = 0`. It is NOT in this slice's 8-printing
-    // figure (the corpus is legal-only) and the arm covers it regardless — D358's
-    // lesson applied prospectively rather than discovered afterwards.
     expect(deriveAttackEffect("Discard a {W} Energy from your opponent's Active Pokémon.")).toEqual(
       [
         {
@@ -619,8 +470,6 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
         },
       ],
     );
-    // And it is genuinely absent from the legal corpus, which is what makes the
-    // sentence above a claim rather than a slogan.
     expect(
       legalAttackCorpus().some(
         ([, s]) => s === "Discard a {W} Energy from your opponent's Active Pokémon.",

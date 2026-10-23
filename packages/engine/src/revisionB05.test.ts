@@ -14,20 +14,10 @@ import {
   setActiveFromDeck,
   setDamage,
   trainerCard,
+  must,
 } from "./testFixtures";
 
-// ── CARD REVISION, BATCH B05 (Items) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B05"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect`,
-// byte for byte below):
-//   §1 Potion `mfb-33` — the undated `mfb` reprint (B04's `mfb-34` Switch's twin defect) had no
-//      registry row and was refused as TRAINER_NOT_SIMULATED, although it is
-//      `legal_standard_effective = 1` since 714256b3: `legal_standard = 0`, print_key
-//      `1a6334c9d86eec4e`, shared with the authored `sv01-188` and `me03-083`.
-
 const POTION_TEXT = "Heal 30 damage from 1 of your Pokémon.";
-/** Every Potion printing on the local D1 (measured 2026-10-19), the authored twin first. */
 const POTION_IDS = ["sv01-188", "me03-083", "mfb-33"] as const;
 
 const BODY = "b05-body";
@@ -58,13 +48,6 @@ const DECK = deckOf({
   "fix-energy": 43, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 505, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

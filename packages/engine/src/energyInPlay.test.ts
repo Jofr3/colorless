@@ -22,64 +22,12 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.71.0 → 0.72.0 — the BOARD-WIDE Energy count (D121). One card, one clause,
-// and no new arithmetic: Absol sv06.5-030 "Darkfall", "If you have at least 3
-// {D} Energy in play, this attack does 50 more damage." It rides D115's 0-or-1
-// indicator through the existing additive fold, so this slice adds no op, no
-// event, no registry row and no change to attack.ts.
-//
-//   `yourEnergyInPlayAtLeast { energy, count }` — a LITERAL table row, matched
-//   before either template runs.
-//
-// THE ONE WORD THIS SUITE EXISTS TO PIN:
-//
-//   "IN PLAY" IS NOT "ATTACHED".
-//
-// D118 built "If this Pokémon has any <energy> Energy attached" — nine printings
-// across four cards, every one of them scoped to a single Pokémon. This sentence
-// changes one word and means the whole side of the table. The predicate underneath
-// is deliberately the SAME (provision, not the printed name, computed on the
-// holder); only the fold over it is new. So the headline case here is 3 Darkness
-// Energy on the BENCH with nothing countable on Absol at all — armed, though the
-// attacker carries none of it — and its mirror, an opponent's three scoring
-// nothing.
-//
-// THE SECOND CALL, and the reason this is a row rather than a pattern:
-//
-//   TWO TOKENS VARY, SO D118'S TEMPLATE RULE DOES NOT APPLY (D119's corollary).
-//
-// The threshold and the energy could both move, and there is nothing to
-// generalise FROM: "at least" and "Energy in play" are each a HAPAX in the
-// ingested 978 cards / 6 sets — this sentence and nowhere else. A template would be
-// parameterising over a pool of one on both axes at once. The member is still
-// parameterised, because `conditionHolds` genuinely compares a count against a
-// threshold; what is literal is the TABLE KEY. Both halves are asserted below:
-// the parameters carry real values, and a spelled-out or re-thresholded rewrite
-// of the same sentence does NOT resolve.
-
-/** The printed sentence, pinned here and asserted char-for-char against
-    FIXTURE_POOL below. Absol carries no authored attack (see the ZERO-rows
-    block), so the sentence IS the wiring: a drifted character does not throw, it
-    drops the card back onto the loud ATTACK_EFFECT_SKIPPED path and silently
-    stops paying the bonus at the exact moment it would have mattered. */
 const DARKFALL = "If you have at least 3 {D} Energy in play, this attack does 50 more damage.";
 
-/** Two REAL sentences from the same pool that this clause must not be confused
-    with, quoted verbatim as the near-miss witnesses.
-
-    Orthworm is the sharper of the two: it prints a threshold, a brace code and
-    the word "Energy" — everything but the scope — and means ONE Pokémon. Slither
-    Wing prints "in play" on the very same skeleton and means Pokémon rather than
-    Energy; it is also the clause `energyClause.test.ts`'s loud witness was
-    re-pointed at when this slice mapped Absol. */
 const ORTHWORM = "If this Pokémon has 3 or more {M} Energy attached, it gets +100 HP.";
 const SLITHER_WING =
   "If your opponent has any Future Pokémon in play, this attack does 120 more damage.";
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -96,28 +44,10 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** The clause sentence at an arbitrary threshold, energy token and bonus — the
-    constructor behind every CONSTRUCTED case below. The defaults deliberately do
-    NOT match the printing on any axis (30 rather than 50), so a fold that
-    hard-coded the printed amount would survive a same-amount probe. */
 function inPlayClause(count: number, token: string, per = 30): string {
   return `If you have at least ${count} ${token} Energy in play, this attack does ${per} more damage.`;
 }
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4) — with BOTH Active spots
-    pinned to a neutral 200 HP fix-bigbody.
-
-    The pin is BY NAME (`active:`) rather than by whatever Basic the deal put
-    first in hand, and it does two jobs here. It makes the defender arithmetically
-    clean (200 HP, Colorless, no Weakness, no Resistance), and it makes the BENCH
-    known: `setActiveFromDeck` displaces the sitting Active onto the bench, so
-    under every attacker below the bench is exactly `[fix-bigbody]` — one body,
-    carrying no Energy until a case attaches some.
-
-    Critically, the deal itself puts NO Energy in play. Setup only fields Basics,
-    so at this point `countEnergyInPlay` is 0 on both sides regardless of seed,
-    and that is asserted rather than assumed in the first board case. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -134,29 +64,10 @@ function boardP2(seed: number): GameState {
   return mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
 }
 
-/** Absol in the Active Spot, its {C} cost paid with a plain COLORLESS Energy.
-
-    That choice is the suite's load-bearing default, not a convenience: Darkfall
-    costs a bare {C}, so paying it with a Darkness Energy would put a COUNTED card
-    on the attacker in every single case and quietly confound "in play" with
-    "attached" in the direction this clause is most likely to be wrong. fix-energy
-    provides Colorless and only Colorless, so it pays the cost and counts zero,
-    which is what lets a case put all three countable cards on the Bench. The
-    other reading — the attacker's own cost Energy is in play too, and when it is
-    Darkness it counts — gets its own case rather than being the default. */
 function absol(state: GameState, seat: Seat): GameState {
   return attachFromDeck(setActiveFromDeck(state, seat, "sv06.5-030"), seat, "fix-energy", 1);
 }
 
-/** Put `count` Darkness Energy on the seat's bench[0] — a body that is in play,
-    holds Energy and can never attack with it, which is the whole point.
-
-    It seeds a holder first when the seat has none. `board` leaves both benches
-    EMPTY (the pinned starter is what the deal opened with, so nothing is
-    displaced); a bench body appears only where a surgery fielded an attacker over
-    the top of it. The seats this suite arms and the seats it fields an attacker
-    on are deliberately not always the same — that is what the asymmetry cases
-    are — so the holder cannot be assumed. */
 function benchDark(state: GameState, seat: Seat, count: number): GameState {
   const seeded =
     state.players[seat].bench.length > 0 ? state : benchFromDeck(state, seat, "fix-bigbody");
@@ -184,8 +95,6 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
     // index-keyed negative to run; here there is no second index to run it on, so
     // the honest assertion is that the array has length 1 and the clause is at 0.
     expect(FIXTURE_POOL["sv06.5-030"]?.attacks).toHaveLength(1);
-    // The catalog row has `abilities_json` NULL — not an empty array — so nothing
-    // on this card reaches a passive or a §9 gate.
     expect(FIXTURE_POOL["sv06.5-030"]?.abilities).toBeNull();
   });
 
@@ -200,20 +109,9 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
   });
 
   it("keeps the fixture facts the ENERGY cases ride on", () => {
-    // The three Energy lines are the entire experiment. If any of them stopped
-    // providing what it provides, every number below would move for a reason that
-    // has nothing to do with the clause.
-    // The elemental type of a Basic Energy is read off its NAME, not off
-    // `energyType` — that field carries tcgdex's Basic/Special axis ("Normal"),
-    // which is a different question. Both are pinned so the distinction is on the
-    // page: these two cards differ in exactly one word of one string.
     expect(FIXTURE_POOL["fix-darkness-energy"]?.name).toBe("Darkness Energy");
     expect(FIXTURE_POOL["fix-darkness-energy"]?.category).toBe("Energy");
     expect(FIXTURE_POOL["fix-darkness-energy"]?.energyType).toBe("Normal");
-    // fix-energy's name is its ID, which is the point: it names no element, so
-    // provision falls back to Colorless and it counts zero for every type. That
-    // is the property the cost-paying default rests on, and the first board case
-    // asserts it as a count rather than trusting this row.
     expect(FIXTURE_POOL["fix-energy"]?.name).toBe("fix-energy");
     expect(FIXTURE_POOL["fix-energy"]?.category).toBe("Energy");
     expect(FIXTURE_POOL["sv02-191"]?.name).toBe("Luminous Energy"); // the wildcard
@@ -229,18 +127,11 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
   });
 
   it("pins the sentence's BYTES — this clause is PURE ASCII, 75 and 75", () => {
-    // The family's simplest byte claim, and the strongest for it: this sentence
-    // names no Pokémon, so there is no "Pokémon" to carry a precomposed é, and it
-    // has no possessive, so there is no apostrophe of either kind to drift into
-    // its typographic twin. Code points and bytes are therefore EQUAL, which is a
-    // single assertion that no non-ASCII character crept in anywhere.
     expect(DARKFALL.length).toBe(75);
     expect(utf8Bytes(DARKFALL)).toBe(75);
     expect(DARKFALL).not.toContain("Pokémon");
     expect(DARKFALL).not.toContain("'");
     expect(DARKFALL).not.toContain("’");
-    // The energy token is the brace CODE, in literal ASCII braces — the sv-era
-    // notation (D118). The name form does not appear.
     expect(DARKFALL).toContain("{D}");
     expect(DARKFALL).not.toContain("Darkness");
   });
@@ -268,27 +159,14 @@ describe("derivation — the clause resolves to a parameterised member", () => {
   });
 
   it("takes the bonus N from the SENTENCE, not from the card", () => {
-    // The row maps a clause; the amount comes from the outer skeleton's second
-    // capture, which is what lets one row serve a second printing at a different
-    // bonus the day one lands.
     const rewritten = DARKFALL.replace("does 50 more", "does 10 more");
     expect(deriveAttackDamageBonus(rewritten)).toMatchObject({ per: 10 });
   });
 
   it("is a LITERAL row, so a re-thresholded rewrite does NOT resolve", () => {
-    // The assertion that this slice's central design call is real. If the clause
-    // had been built as a template, all three of these would resolve; because it
-    // is a row keyed on the whole printed clause, only the printed threshold does.
-    // The day a second threshold prints, a template can be added OVER this row
-    // without re-interpreting it (rows are matched first) — that is the point of
-    // the two-pass resolver, and this test is what would then have to change.
     expect(deriveAttackDamageBonus(inPlayClause(1, "{D}"))).toBeNull();
     expect(deriveAttackDamageBonus(inPlayClause(2, "{D}"))).toBeNull();
     expect(deriveAttackDamageBonus(inPlayClause(4, "{D}"))).toBeNull();
-    // The printed 3 is the ONE threshold that resolves, and it resolves at any
-    // bonus — the row keys the CLAUSE, and the amount comes from the outer
-    // skeleton's second capture (the case two tests up). So the boundary between
-    // "mapped" and "loud" runs through the threshold token alone.
     expect(deriveAttackDamageBonus(inPlayClause(3, "{D}"))).toMatchObject({
       per: 30,
       count: {
@@ -299,27 +177,15 @@ describe("derivation — the clause resolves to a parameterised member", () => {
   });
 
   it("is a LITERAL row, so the OTHER energy tokens do not resolve either", () => {
-    // The second axis. D118's template accepts all nine brace codes and all nine
-    // names because exactly one token varies there; here two do, so none of these
-    // has a row and every one falls through to the loud path.
     for (const token of ["{G}", "{R}", "{W}", "{L}", "{P}", "{F}", "{M}", "{Y}", "Special"]) {
       expect(deriveAttackDamageBonus(inPlayClause(3, token, 50))).toBeNull();
     }
-    // Including the SPELLED-OUT form of the very energy this clause names. The
-    // swsh10.5 sets spell names out (D118) and would print it this way; that
-    // printing does not exist today and is not silently accepted in advance.
     expect(deriveAttackDamageBonus(inPlayClause(3, "Darkness", 50))).toBeNull();
   });
 
   it("refuses the one-word rewrite that turns it into D118's clause", () => {
-    // "in play" → "attached" is the whole difference between this member and its
-    // sibling, and neither string may be read as the other. The attached form is
-    // scoped to one Pokémon and has its own (differently shaped) sentence, so this
-    // constructed hybrid belongs to nobody.
     const attached = DARKFALL.replace("in play", "attached");
     expect(deriveAttackDamageBonus(attached)).toBeNull();
-    // While the sentence D118 actually owns still derives — so the anchor is not
-    // what refused the hybrid.
     expect(
       deriveAttackDamageBonus(
         "If this Pokémon has any {D} Energy attached, this attack does 50 more damage.",
@@ -347,18 +213,7 @@ describe("derivation — the clause resolves to a parameterised member", () => {
     // substring or a keyword matcher would take it.
     expect(deriveAttackDamageBonus(ORTHWORM)).toBeNull();
     expect(deriveAttackEffect(ORTHWORM)).toBeNull();
-    // Slither Wing sv06.5-026: "in play" on the SAME skeleton, counting Pokémon
-    // rather than Energy, and blocked on an ingest change besides (the catalog
-    // drops the Ancient/Future tag). This is the clause energyClause.test.ts's
-    // loud witness now points at, so it is asserted unmapped in two suites.
-    // (🆕🆕🆕 D569 (D539): Slither Wing RESOLVES now — a literal row over `banners.ts`, "the catalog drops
-    // the tag" still TRUE — so the near-miss is pinned at its new value, and the loud banner
-    // witness is the deferred Ancient clause.)
     expect(deriveAttackDamageBonus(SLITHER_WING)?.per).toBe(120);
-    // 🆕🆕🆕 D579 (D539) — "the loud banner witness is the deferred Ancient clause" is WITHDRAWN: the
-    // Ancient clause RESOLVES now (Koraidon `sv08-116`, a literal row over the seat-level
-    // `GameState.recentAttackers`, pinned at its value). The loud witness is RE-POINTED to a
-    // CONSTRUCTED clause no row carries — the Ancient row's FUTURE twin.
     expect(
       deriveAttackDamageBonus(
         "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
@@ -386,12 +241,6 @@ describe("derivation — the clause resolves to a parameterised member", () => {
 
 describe("ZERO registry rows — every damage number below is text", () => {
   it("gives the id no authored attack program", () => {
-    // attack.ts resolves an attack as `programFor(id)?.attack?.[index] ?? derive`,
-    // so a single authored ATTACK row would WIN and every damage number below
-    // would keep passing while testing nothing about the printed sentence. The
-    // load-bearing assertion is on `?.attack` (D118's correction: a card can carry
-    // an abilities-only row and still derive all of its attacks); today the whole
-    // entry is absent, and only the first has to stay that way.
     expect(programFor("sv06.5-030")?.attack).toBeUndefined();
     expect(programFor("sv06.5-030")).toBeUndefined();
   });
@@ -419,10 +268,6 @@ describe("Darkfall — the threshold on a real board", () => {
   });
 
   it("at THREE it pays — 20 + 50 = 70, from a Bench the attacker never touched", () => {
-    // THE HEADLINE CASE. Absol carries one Colorless and nothing else; all three
-    // Darkness Energy sit on a benched fix-bigbody that cannot attack with them.
-    // A member that read "attached to your Active" — one word away in the printed
-    // text and the shape D118 built — would score 20 here.
     const state = benchDark(absol(board(3), "p1"), "p1", 3);
     expect(state.players.p1.active?.energy).toHaveLength(1);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3);
@@ -438,9 +283,6 @@ describe("Darkfall — the threshold on a real board", () => {
   });
 
   it("at FOUR it still pays — a THRESHOLD, not an exact count", () => {
-    // The D119 contrast, and the case that catches `=== cond.count`. Its sibling
-    // `opponentPrizesRemaining` reads set MEMBERSHIP because the printed word is
-    // "exactly"; the printed word here is "at least", so above the line is true.
     const state = benchDark(absol(board(4), "p1"), "p1", 4);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
@@ -502,11 +344,6 @@ describe("Darkfall — the threshold on a real board", () => {
   });
 
   it("folds BEFORE Weakness — (20 + 50) × 2 = 140, against the control's 40", () => {
-    // The §8.5 order. Absol is a Darkness Pokémon and its clause is
-    // DEFENDER-INDEPENDENT, which is what makes it the right attacker here: the
-    // Bench arms the bonus while the Weakness doubles it, and the two layers
-    // cannot be confused for each other. A fold that applied the bonus after the
-    // multiplier would read 20 × 2 + 50 = 90.
     const armed = benchDark(
       absol(setActiveFromDeck(board(10), "p2", "fix-darkness-weak"), "p1"),
       "p1",
@@ -530,9 +367,6 @@ describe("Darkfall — the threshold on a real board", () => {
   });
 
   it("flags no ATTACK_EFFECT_SKIPPED in EITHER direction", () => {
-    // The D110 payoff: `effectSimulated` flips purely because the clause RESOLVED,
-    // so the printed "+" stops being flagged whether or not the condition holds.
-    // Scoring 20 is a correct answer here, not an unsimulated one.
     const armed = mustApply(benchDark(absol(board(12), "p1"), "p1", 3), {
       type: "attack",
       seat: "p1",
@@ -546,10 +380,6 @@ describe("Darkfall — the threshold on a real board", () => {
 
 describe("PROVISION, not the printed name — D118's predicate folded over the board", () => {
   it("a wildcard Luminous counts as a {D} Energy", () => {
-    // Two Basic Darkness plus one Luminous alone on the same body. Luminous
-    // provides every type while it is the only Special attached, so it is a {D}
-    // Energy for this clause exactly as it is a {D} Energy for a cost — the D118
-    // rule, and the reason the predicate lives beside the provision code.
     const state = attachBenchFromDeck(
       benchDark(absol(board(20), "p1"), "p1", 2),
       "p1",
@@ -563,11 +393,6 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
   });
 
   it("a SECOND Luminous on the same body DISARMS it — one more card, less damage", () => {
-    // The suite's sharpest case, and one a name-matching read cannot produce.
-    // Nothing is removed and nothing moves: a card is ADDED, the two Specials
-    // demote each other to {C}, neither counts any more, and the same attacker on
-    // the same board scores 20 instead of 70. Provision is a board fact, so the
-    // count is too.
     const state = attachBenchFromDeck(
       benchDark(absol(board(21), "p1"), "p1", 2),
       "p1",
@@ -585,10 +410,6 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
   });
 
   it("demotion is PER POKÉMON — two Luminous on two bodies both count", () => {
-    // The control for the case above. Provision is computed on the HOLDER, so a
-    // Luminous on the Active and a Luminous on the Bench are each the only
-    // Special on their own Pokémon and each stays a wildcard. Plus one Basic
-    // Darkness makes three.
     const state = attachBenchFromDeck(
       attachFromDeck(setActiveFromDeck(board(22), "p1", "sv06.5-030"), "p1", "sv02-191", 1),
       "p1",
@@ -646,10 +467,6 @@ describe("countEnergyInPlay — the helper, directly", () => {
   });
 
   it("counts the SPECIAL class as well as a type", () => {
-    // The arm the pool prints no sentence for today. It costs nothing (the class
-    // predicate is `isSpecialEnergy`, the same list Luminous's own condition is
-    // evaluated against) and it answers correctly if a printing lands, so it is
-    // asserted rather than left untested.
     const state = attachBenchFromDeck(
       benchDark(absol(board(33), "p1"), "p1", 2),
       "p1",
@@ -714,11 +531,6 @@ describe("conditionHolds / conditionNote — the member on its own", () => {
   });
 
   it("does NOT byte-round-trip to the printed clause — and that is deliberate", () => {
-    // D119's cluster round-tripped because its clauses print no glyphs. This one
-    // prints "{D}", a card-face symbol, and the note renders the NAME (D118's
-    // rule) because a reject message and a HUD tooltip are read by a person off
-    // the board. So the note differs from the printed clause in exactly one token
-    // and in no other way — asserted both ways rather than left to a reader.
     const note = conditionNote({ kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 });
     const printed = DARKFALL.slice("If ".length, DARKFALL.indexOf(", this attack"));
     expect(printed).toBe("you have at least 3 {D} Energy in play");

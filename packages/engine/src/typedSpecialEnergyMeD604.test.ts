@@ -21,17 +21,9 @@ import {
   deckOf,
   setActiveFromDeck,
   specialEnergy,
+  must,
 } from "./testFixtures";
 import type { InPlayPokemon, PokemonTarget } from "./types";
-
-// ── 🆕🆕🆕 D604 — WP18: THE MEGA EVOLUTION TYPED SPECIAL ENERGIES ──
-//
-// The 8 unbuilt `me` Special Energies, one printing each, on eight new `energy` objects. Every id and
-// text measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard
-// = 1`, `energy_type = 'Normal'` on each (D583: `isSpecialEnergy` reads the printed text). Each provides
-// its printed type on ANY holder; its one rule applies only on a holder of that type (the NEW
-// `EnergyProgram.holderType`, continuous.ts `energyRulesApply`, R-TE1). New: `energyFreesRetreat`,
-// `EnergyOnAttach.benchSearch` (R-TP1) and `returnAfterAttackDiscard: "hand"` (R-NF1).
 
 const GROWING = "me03-086";
 const ROCKY = "me03-087";
@@ -156,7 +148,6 @@ const CONFUSE = "Your opponent's Active Pokémon is now Confused.";
 const SPREAD =
   "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
-/** The catalog face exactly as tcgdex hands it (D583): a Special Energy tagged "Normal". */
 function face(id: string, name: string, effect: string): Card {
   return { ...specialEnergy(id, name, effect), energyType: "Normal" };
 }
@@ -229,18 +220,11 @@ const DECK = deckOf({
   [GENGAR]: 1,
   "fix-energy": 6,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 function ok(result: ReturnType<typeof applyAction>) {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result;
 }
 
-/** Setup (P2 first), then P1's second turn; both hands back into the decks and the Prizes swapped out
-    for deck filler, so every named card is findable (D603's `p1Turn`). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6041, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

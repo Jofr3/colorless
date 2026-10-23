@@ -15,14 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: moveEnergy (§6 manual Energy movement) — move Energy between your
-// own Pokémon. Two real cards land on it, verified end to end:
-//   • Energy Switch (sv01-173, Item) — move a Basic Energy, own → own;
-//   • Poppy (sv03-193, Supporter) — move up to 2 any Energy, own → own.
-// The interpreter's first op with two COUPLED decisions (which Energy + where):
-// it parks on ONE compound moveEnergy prompt and applies ATOMICALLY on resolve.
-// Own→own only; the fixed-endpoint / opponent-side / on-KO riders layer later.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -241,11 +233,6 @@ describe("M5 op-slice — moveEnergy", () => {
   });
 
   it("rejects the SAME Energy named twice — one card cannot fill two of a max", () => {
-    // Pre-existing wire rule with no test until now (surfaced by the D43 review's
-    // mutation run: deleting the duplicate-uid guard left the whole suite green).
-    // Poppy moves "up to 2", so a repeated uid passes the count check and would
-    // otherwise reach moveEnergyApply, which moves by uid — a Set membership test
-    // that silently applies ONE move for a two-Energy answer.
     let state = board(11);
     state = benchFromDeck(state, "p1", "fix-basic-2");
     state = attachFromDeck(state, "p1", "fix-energy", 1);

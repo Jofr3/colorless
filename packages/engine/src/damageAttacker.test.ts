@@ -14,20 +14,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.48.0 → 0.49.0 — the `damageAttacker` reactive-recoil row (P3-M5, D98):
-// "If this Pokémon is in the Active Spot and is damaged by an attack from your
-// opponent's Pokémon (even if this Pokémon is Knocked Out), put N damage counters
-// on the Attacking Pokémon." — Cacnea/Cacturne "Counterattack Quills" (30) and
-// Stunfisk "Custom Trap" (50, only while a Pokémon Tool is attached).
-//
-// Modelled as a defender-side PASSIVE (the shape of damageReductionAfterWR),
-// NOT a new op or trigger: attack.ts folds it in right after DAMAGE_DEALT,
-// placing flat counters (outside the §8.5 W/R pipeline) on the Attacking Pokémon
-// when `dealt > 0`, BEFORE finishAttack's both-board §8.1 sweep. So "even if
-// Knocked Out" is free, and a lethal retaliation KOs the attacker, prized to the
-// defender. The "in the Active Spot" clause is enforced by the read site — only
-// the main-hit Active defender retaliates.
-
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
 
@@ -85,11 +71,6 @@ describe("Counterattack Quills — 3 counters on the attacker when damaged (§9)
     expect(damage).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
     expect(done.players.p2.active?.damage).toBe(30); // 60 HP — survives, no KO
 
-    // …then the recoil: 30 flat counters on the ATTACKER (this seat's Active),
-    // emitted RIGHT after the hit as a COUNTERS_PLACED labelled by the MECHANISM.
-    // ⚠️ `source` was `"ability"` here until 0.90.0 — true of Counterattack Quills
-    // and false of the Tool that shares this exact code path (D141). The label is
-    // the same for BOTH now, which is the whole point: the read site sums them.
     const recoil = find(events, "COUNTERS_PLACED");
     expect(recoil).toMatchObject({ seat: "p1", amount: 30, source: "counterattack" });
     expect(attackerDamage(done)).toBe(30); // 120 HP attacker — survives
@@ -206,9 +187,6 @@ describe("Custom Trap — Stunfisk's recoil is gated on a Pokémon Tool", () => 
 
     const { state: done, events } = mustApply(state, bite);
 
-    // 50 and not 70: Vitality Band is an INERT Tool here (it grants no recoil of
-    // its own), so this is the gate firing rather than the D141 sum — the sum has
-    // its own case in `counterattack.test.ts`, on a Tool that DOES grant one.
     expect(find(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 50,

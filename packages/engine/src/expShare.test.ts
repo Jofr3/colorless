@@ -27,72 +27,12 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.115.0 → D171 — Exp. Share sv01-174 (P3-M5 long tail), the THIRD and LAST
-// consumer of the KO antecedent D158 censused, and the first card in this engine
-// whose printed sentence is carried by a POKÉMON TOOL attached to a body OTHER
-// than the one the sentence is about:
-//
-//   "When your Active Pokémon is Knocked Out by damage from an attack from your
-//    opponent's Pokémon, you may move a Basic Energy from that Pokémon to the
-//    Pokémon this card is attached to."              (Trainer/Tool, `effect`)
-//
-// ⚠️ THE CENSUS IS THIS SESSION'S OWN QUERY, over ALL THREE text columns against
-// the local D1 (2026-08-03, 978 rows / 6 sets). `LIKE '%Knocked Out by damage
-// from an attack%'` returns SIX rows — D158's figure, D162's re-run and D164's
-// third confirmation, now a FOURTH:
-//
-//   sv03-197  Vengeful Punch (Trainer/Tool, `effect`)          → D158
-//   sv01-174  Exp. Share     (Trainer/Tool, `effect`)          → THIS
-//   sv01-114  Lucario        (Pokemon,      `attacks_json`)    → NOT this family
-//   sv06.5-037/-083/-091  Munkidori ex (Pokemon, `abilities_json`) → D164
-//
-// Excluding Lucario (D164's correction — "during your opponent's LAST turn",
-// retrospective, board-wide, type-filtered, no possessive) the family is FIVE
-// printings / THREE sentences, and with this slice it is CLOSED at 5/5 authored
-// but for the ONE deliberate abstention (`sv01-114`, kept as the live
-// fall-through witness in conditionClause.test.ts).
-//
-// ⚠️ AND A SEVENTH ROW THE CENSUS PATTERN CANNOT SEE, RECORDED RATHER THAN
-// ABSORBED. Corviknight sv02-148 "Accelerate" prints "If your opponent's Pokémon
-// is Knocked Out by damage from THIS ATTACK, during your opponent's next turn,
-// prevent all damage from and effects of attacks done to this Pokémon."
-// (`attacks_json`). That is a DIFFERENT antecedent — the KO is *caused by* the
-// attack being resolved rather than *suffered by* the reader, and its consequent
-// is a durated self-prevention — so it belongs to no member of this family. It
-// has no registry row. [🆕🆕🆕 D639 (D539): its sentence is READ since D639 — `opponentKnockedOutByDamage`.] Every run of this census since D158 has been blind to it
-// because the pattern says "from an attack" and this row says "from this attack".
-//
-// ⚠️ THE SHAPE — WHY NEITHER EXISTING KO SEAM SERVES THIS, WHICH IS THE SLICE.
-//   • `koTrigger` is a TEMPORAL IMPOSSIBILITY, not a widening problem.
-//     `collectKnockOuts` queues every koTrigger AFTER `knockOut` has run for the
-//     whole batch, and `knockOut` discards the dying stack WHOLE — so the Energy
-//     this sentence moves is already in the discard pile.
-//   • `koRecoilOf` (Vengeful Punch's site) IS before `knockOut`, deliberately —
-//     but it is SYNCHRONOUS and cannot park, and this consequent is a choice.
-//   So the seam is a SIBLING OF `damagedTrigger`: a new `koToolTrigger` stage,
-//   seeded by attack.ts ahead of the attackEpilogue, run under the DAMAGED seat,
-//   folded through settleProgram with `resumeTail`.
-//
-// ⚠️ AND THE REAL COST WAS THAT NOTHING RAN A TOOL'S `triggered` PROGRAM. The
-// bearer is a SURVIVING body; the dying one is only the Energy's source. All
-// three existing detection sites miss it — `onKnockOutTrigger` reads the KO'd
-// body's top card, `triggersOf` reads any body's top card (a Tool is never a
-// stack top), and `passivesOf` is the only site that walks `pokemon.tools` but
-// folds `passive` into NUMBERS (🆕🆕🆕 D562 CORRECTION (D539): ~~"the only site that
-// walks `pokemon.tools`"~~ was true at D171 and is WITHDRAWN at HEAD — D558's retreat/cost
-// scans, D562's consumable scans and `damagedToolTriggersOf` walk them too, every EFFECT
-// walk through continuous.ts `toolsInEffect`). Hence `koToolTriggersOf`, a FOURTH site, and the
-// group of cases below that drives its two deliberate refusals.
-
-/** The printed sentence, byte-for-byte off the local D1 row (2026-08-03). */
 const EXP_SHARE =
   "When your Active Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, you may move a Basic Energy from that Pokémon to the Pokémon this card is attached to.";
 /** Vengeful Punch's, kept verbatim because the point is that the ANTECEDENT is
     the same and only the consequent moved the whole design. */
 const VENGEFUL_PUNCH =
   "If the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, put 4 damage counters on the Attacking Pokémon.";
-/** Corviknight's, so the seventh row is a STRING in the repo rather than a note
-    in a census the next slice has to re-run. */
 const ACCELERATE =
   "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.";
 
@@ -147,13 +87,6 @@ interface FieldOpts {
   attackerHolder?: number;
 }
 
-/** P2 (going first) fields the DEFENDER — the dying Active, the bench, the Tool
-    and the Energy — then the turn passes to P1, who fields the attacker with one
-    {C} attached. The mirror of `ohNoYouDont.test.ts`'s `field`, deliberately, so
-    the two suites' boards over one printed antecedent are comparable.
-
-    SEED-FREE in the sense that matters: this card flips no coin, and every body
-    on both boards is placed by surgery rather than dealt. */
 function field(seed: number, opts: FieldOpts = {}): GameState {
   let state = driveSetup(seed, { p1: EXP_SHARE_DECK, p2: EXP_SHARE_DECK }, { first: "p2" });
   // — the DEFENDER's board (p2) —
@@ -236,10 +169,6 @@ describe("the printed datum — re-queried, not inherited", () => {
         ],
       },
     ]);
-    // ⚠️ IT HAS NO `passive`, WHICH IS THE WHOLE DIFFERENCE FROM ITS TWO
-    // NEIGHBOURS. Rocky Helmet and Vengeful Punch are passives and nothing else;
-    // this is a program and nothing else. A `passive` here would mean the slice
-    // had found a way to say "move a card the player chooses" as a number.
     expect(programFor("sv01-174")?.passive).toBeUndefined();
     expect(programFor("sv01-193")?.triggered).toBeUndefined();
     expect(programFor("sv03-197")?.triggered).toBeUndefined();
@@ -250,18 +179,10 @@ describe("the printed datum — re-queried, not inherited", () => {
     expect(card?.category).toBe("Trainer");
     expect(card?.trainerType).toBe("Tool");
     expect(card?.effect).toBe(EXP_SHARE);
-    // The row carries NO attacks and NO abilities — the sentence lives in
-    // `effect`, which is the column this family's censuses keep mis-reading.
     expect(card?.attacks ?? []).toEqual([]);
     expect(card?.abilities ?? []).toEqual([]);
-    // The GENERATED manifest is an independent second reading of the same row —
-    // it comes from the sqlite, not from this file — so the NAME is checked by a
-    // path that cannot inherit a typo from the fixture.
     expect(CATALOG_MANIFEST.printed["sv01-174"]).toEqual({
       name: "Exp. Share",
-      // `types` joined this row at D173. A Trainer prints none, and the empty
-      // array is asserted rather than skipped: this is the one manifest row this
-      // file reads WHOLE, so a field added to it must be answered for here.
       types: [],
       attacks: [],
       abilities: [],
@@ -274,28 +195,20 @@ describe("the printed datum — re-queried, not inherited", () => {
     expect(deriveAttackEffect(EXP_SHARE)).toBeNull();
   });
 
-  it("⚠️ it shares Vengeful Punch's ANTECEDENT exactly, and only the CONSEQUENT moved", () => {
+  it("it shares Vengeful Punch's ANTECEDENT exactly, and only the CONSEQUENT moved", () => {
     // Both Tools, both read at the same instant, both refusing the same KOs. The
     // clause below is the shared half, word for word.
     const shared = "Knocked Out by damage from an attack from your opponent's Pokémon";
     expect(EXP_SHARE).toContain(shared);
     expect(VENGEFUL_PUNCH).toContain(shared);
     expect(FIXTURE_POOL["sv03-197"]?.effect).toBe(VENGEFUL_PUNCH);
-    // …and the two clauses that are NOT shared are exactly the two that cost this
-    // printing everything: whose body the sentence is about, and what it does.
     expect(EXP_SHARE).toContain("your Active Pokémon"); // the SUBJECT is another body
     expect(VENGEFUL_PUNCH).toContain("the Pokémon this card is attached to is Knocked Out");
     expect(EXP_SHARE).toContain("you may move a Basic Energy"); // a CHOICE, not a number
     expect(VENGEFUL_PUNCH).toContain("put 4 damage counters");
   });
 
-  it("⚠️ CORVIKNIGHT sv02-148 is a SEVENTH row this census cannot see — recorded, not absorbed", () => {
-    // "Knocked Out by damage from THIS attack" — the KO is CAUSED BY the attack
-    // being resolved, not SUFFERED BY the card's owner, and the consequent is a
-    // durated self-prevention. A different antecedent family, deliberately
-    // unmapped, and pinned here so the next census does not rediscover it.
-    // 🆕🆕🆕 D639 (D539): "deliberately unmapped" is WITHDRAWN, kept as written — the sentence is READ since
-    // D639 (Shadowy Side Kick / Critical Slash, `opponentKnockedOutByDamage`); `sv02-148` itself is not in the pool.
+  it("CORVIKNIGHT sv02-148 is a SEVENTH row this census cannot see — recorded, not absorbed", () => {
     expect(FIXTURE_POOL["sv02-148"]).toBeUndefined();
     expect(ACCELERATE).toContain("Knocked Out by damage from this attack");
     expect(ACCELERATE).not.toContain("from an attack");
@@ -304,10 +217,6 @@ describe("the printed datum — re-queried, not inherited", () => {
     expect(programFor("sv02-148")).toBeUndefined();
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// The board scan — the slice's real decision, driven directly.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("koToolTriggersOf — the FOURTH detection site", () => {
   it("finds a Tool on a BENCHED body, keyed on the ACTIVE's uid", () => {
@@ -324,7 +233,7 @@ describe("koToolTriggersOf — the FOURTH detection site", () => {
     expect(found[0]?.toolUid).not.toBe(found[0]?.holderUid);
   });
 
-  it("⚠️ SKIPS the KO'd body — a self-attached Exp. Share names no second Pokémon", () => {
+  it("SKIPS the KO'd body — a self-attached Exp. Share names no second Pokémon", () => {
     const state = field(12, { holder: "active" });
     const koed = state.players.p2.active?.stack.at(-1) as string;
     expect(state.players.p2.active?.tools).toHaveLength(1); // it IS attached
@@ -348,17 +257,8 @@ describe("koToolTriggersOf — the FOURTH detection site", () => {
     expect(koToolTriggersOf(state, "p1", koed)).toEqual([]);
   });
 
-  it("⚠️ the three EXISTING sites cannot see this card, which is why the fourth exists", () => {
-    // `passivesOf` is the only pre-D171 site that walks `pokemon.tools`, and it
-    // folds `passive` — which this card does not have — into NUMBERS. Asserted
-    // through the registry rather than by calling it, because the claim is about
-    // the SHAPE of what that fold can carry, not about one board's total.
+  it("the three EXISTING sites cannot see this card, which is why the fourth exists", () => {
     expect(programFor("sv01-174")?.passive).toBeUndefined();
-    // `onKnockOutTrigger` / `triggersOf` both key on a TOP CARD, and a Tool is
-    // never one — so no `triggered` timing other than this card's own would be
-    // reachable from a Tool at all. The registry-wide guard: every
-    // `onAllyActiveKnockOut` producer in the pool is a Tool, and no Tool carries
-    // any OTHER trigger timing (which would silently never fire).
     for (const id of Object.keys(FIXTURE_POOL)) {
       const card = FIXTURE_POOL[id];
       const triggered = programFor(id)?.triggered ?? [];
@@ -391,8 +291,6 @@ describe("the park — who is asked, and what resumes", () => {
     expect(after.phase.resumeTail).toBe(true);
     expect(after.phase.prompt.kind).toBe("moveEnergy");
     expect(find(events, "EFFECT_PENDING")?.seat).toBe("p2");
-    // ⚠️ AND THE DYING BODY IS STILL ON THE BOARD, which is the whole seam: the
-    // Energy this card moves has not been discarded yet.
     expect(after.players.p2.active).not.toBeNull();
     expect(types(events)).not.toContain("KNOCKED_OUT");
     // The attackEpilogue is sitting behind the park, waiting to do the KO.
@@ -412,8 +310,6 @@ describe("the park — who is asked, and what resumes", () => {
     // DESTINATION — the Tool's HOLDER, by uid, and only it.
     expect(prompt.destinations).toEqual([{ seat: "p2", spot: { spot: "bench", index: 0 } }]);
     expect(prompt.max).toBe(1);
-    // The note is the printed second half, so the prompt is the only thing that
-    // names this card to a player (a Tool emits no ABILITY_TRIGGERED row).
     expect(prompt.note).toBe(
       "Move a Basic Energy from that Pokémon to the Pokémon this card is attached to.",
     );
@@ -435,7 +331,7 @@ describe("the park — who is asked, and what resumes", () => {
     expect(after.phase.kind).toBe("ko:takePrizes");
   });
 
-  it('⚠️ THE DECLINE IS FREE — the printed "you may", answered with an empty pick', () => {
+  it('THE DECLINE IS FREE — the printed "you may", answered with an empty pick', () => {
     const state = field(24);
     const [energy] = victimEnergy(state);
     const { state: parked } = mustApply(state, bite);
@@ -470,10 +366,6 @@ describe("the park — who is asked, and what resumes", () => {
   });
 
   it("the projection shows the TURN OWNER acting while the KO'd player answers", () => {
-    // `resumeTail` marks a mid-tail park, so `activeSeat` is read off the pending
-    // queue (koParkActiveSeat) rather than off phase.seat — the same reading the
-    // on-KO and damaged triggers already get. Without it the HUD would show the
-    // KO'd player as the one whose turn it is.
     const state = field(26);
     const { state: parked } = mustApply(state, bite);
     const view = phaseViewOf(parked, "p2");
@@ -492,9 +384,6 @@ describe("the park — who is asked, and what resumes", () => {
 
 describe("the antecedent — each clause refused on its own board", () => {
   it('"is Knocked Out": a NON-lethal attack seeds the stage and moves nothing', () => {
-    // ⚠️ THE LETHALITY RE-CHECK, and it is the reason the stage cannot answer its
-    // own condition at the seed: the Tool is present, so the stage IS queued at
-    // damage time, and only the run-time re-read refuses it.
     const state = field(31);
     const [energy] = victimEnergy(state);
     const { state: after, events } = mustApply(state, yawn); // no damage at all
@@ -513,11 +402,6 @@ describe("the antecedent — each clause refused on its own board", () => {
   });
 
   it("\"from your OPPONENT'S Pokémon\": the ATTACKER's own holder pays nothing", () => {
-    // The possessive, driven by putting Exp. Share on the ATTACKING side and
-    // Knocking Out a body on the ATTACKER's own board — a `damageSelf` shape the
-    // epilogue sweeps too. Here the simpler witness: the attacker's Tool is not
-    // consulted when the DEFENDER dies, because the stage is seeded for the
-    // defender's seat alone.
     const state = field(33, { holder: null, attackerHolder: 0 });
     const { state: after, events } = mustApply(state, bite);
     expect(types(events)).toContain("KNOCKED_OUT");
@@ -526,9 +410,6 @@ describe("the antecedent — each clause refused on its own board", () => {
   });
 
   it('"by damage from an attack": a CHECKUP KO never reaches this stage', () => {
-    // Poison finishes the Active between turns. `runCheckup` calls
-    // `collectKnockOuts` directly and nothing seeds a koToolTrigger, so the
-    // clause is discharged by PLACEMENT — D158's mechanism, third printing.
     let state = field(34);
     const [energy] = victimEnergy(state);
     state = mustApply(state, yawn).state; // a real attack that deals NO damage
@@ -585,9 +466,7 @@ describe("the antecedent — each clause refused on its own board", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the seam", () => {
-  it("⚠️ the stage is seeded ONLY when the board carries the Tool", () => {
-    // The pending queue of every other attack is byte-identical to pre-D171, and
-    // that is what makes the seed gate a gate rather than an overhead.
+  it("the stage is seeded ONLY when the board carries the Tool", () => {
     const bare = field(41, { holder: null, victim: "fix-bigbody" });
     const { state: after } = mustApply(bare, bite);
     expect(after.pending).toEqual([]);
@@ -600,13 +479,7 @@ describe("the seam", () => {
     expect(types(events)).not.toContain("ENERGY_MOVED");
   });
 
-  it("⚠️ FIRES ON AN ATTACK THAT DEALT NO MAIN DAMAGE — the seed is not `dealt > 0`", () => {
-    // Mimikyu "Ghost Eye" has NO printed `damage` field: the §8.5 pipeline is
-    // skipped whole (`dealt` is never computed, and no damagedTrigger is even
-    // considered), and the KO comes from the EFFECT PROGRAM's 7 counters. The
-    // printed condition is the Knock Out, not the hit — so copying the reactive
-    // trigger's `dealt > 0` gate would switch this card off against the one
-    // attacker in the pool that can prove the difference.
+  it("FIRES ON AN ATTACK THAT DEALT NO MAIN DAMAGE — the seed is not `dealt > 0`", () => {
     const state = field(45, {
       attacker: "sv02-097",
       attackerEnergy: ["fix-psychic-energy", "fix-energy"],
@@ -622,12 +495,7 @@ describe("the seam", () => {
     expect(after.players.p2.bench.some((p) => p.energy.includes(energy as string))).toBe(true);
   });
 
-  it("⚠️ the HOLDER can die in the SAME batch and still be paid first", () => {
-    // Spread Shot kills the 30 HP Active and puts 20 on each benched body. The
-    // holder here is a fix-victim (30 HP) already at 10, so the same swing is
-    // lethal for it too — and this stage runs BEFORE the sweep, so the Energy
-    // moves onto a Pokémon that is about to be Knocked Out. Both cards then go to
-    // the discard together, which is what "one simultaneous batch" means.
+  it("the HOLDER can die in the SAME batch and still be paid first", () => {
     let state = field(42, {
       bench: ["fix-victim"],
       attacker: "fix-sniper",
@@ -654,22 +522,10 @@ describe("the seam", () => {
     expect(after.players.p2.discard).toContain(energy);
   });
 
-  it("⚠️ §9 DOES NOT REACH IT — a Tool is not an Ability", () => {
-    // Klefki "Mischievous Lock" ("each Basic Pokémon in play, both yours and your
-    // opponent's, has no Abilities") sits Active on the ATTACKER's side, so the
-    // aura is live over the whole board. `triggersOf` would suppress a triggered
-    // Ability here; `koToolTriggersOf` deliberately has no such gate, for
-    // `passivesOf`'s stated reason. The Tool still fires.
-    // ⚠️ THE VICTIM IS PRE-DAMAGED TO 20 SINCE D173, and the reason is the fixture
-    // fix rather than this card: Klefki used to carry a SUBSTITUTED Bite ({C}, 30)
-    // that Knocked Out a 30 HP fix-victim outright. It now carries its own printed
-    // "Joust" ({C}, 10), so the 20 is what makes the hit lethal. `isLethallyDamaged`
-    // is what the stage re-reads, and 20 + 10 = 30 = HP satisfies it exactly.
+  it("§9 DOES NOT REACH IT — a Tool is not an Ability", () => {
     const state = setDamage(field(43, { attacker: "sv01-096" }), "p2", 20);
     const koed = state.players.p2.active?.stack.at(-1) as string;
     const holderUid = state.players.p2.bench[0]?.stack.at(-1) as string;
-    // ⚠️ THE LOCK IS PROVED LIVE FIRST, so the positive below cannot be vacuous:
-    // the HOLDER is a Basic and its uid really is in the suppressed set.
     const locked = disabledAbilityUids(state);
     expect(locked.has(holderUid)).toBe(true);
     expect(locked.has(koed)).toBe(true);
@@ -711,11 +567,7 @@ describe("the seam", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the voice", () => {
-  it("⚠️ the ENERGY_MOVED row names the DYING Pokémon by UID, not by its spot", () => {
-    // The defect this slice found: `logFromEvents` renders against the POST-state,
-    // where `{spot:"active"}` no longer names the source — on a board that
-    // auto-promotes it names the Pokémon that REPLACED it. The event carries
-    // `fromUid`, and the row reads it.
+  it("the ENERGY_MOVED row names the DYING Pokémon by UID, not by its spot", () => {
     const state = field(51, { bench: ["fix-bigbody"] });
     const [energy] = victimEnergy(state);
     const { state: parked } = mustApply(state, bite);
@@ -724,14 +576,10 @@ describe("the voice", () => {
     expect(moved?.fromUid).toBe(parked.players.p2.active?.stack.at(-1));
     const rows = render(events, after);
     expect(rows.some((r) => r.text === "moved 1 energy from fix-victim to fix-bigbody")).toBe(true);
-    // …and the promoted Pokémon is NOT what the row names, which is the whole
-    // point (the sole benched body was force-promoted by the KO).
     expect(rows.every((r) => !r.text.includes("from fix-bigbody to fix-bigbody"))).toBe(true);
   });
 
   it("emits NO ABILITY_TRIGGERED row — a Tool has no Ability to trigger", () => {
-    // D141's rule at the neighbouring recoil arm, verbatim: the prompt and the
-    // ENERGY_MOVED row are the whole of what a reader is told.
     const state = field(52);
     const [energy] = victimEnergy(state);
     const { state: parked, events: parkEvents } = mustApply(state, bite);
@@ -748,10 +596,6 @@ describe("the voice", () => {
         {
           type: "ENERGY_MOVED",
           seat: "p1",
-          // 🆕 D443 — `actor === seat` is the own-board reading, and this rung is
-          // now also the CONTROL for the cross-board arm: it pins that the row a
-          // same-seat move renders is byte-identical to the one it rendered before
-          // the field existed.
           actor: "p1",
           uids: ["e1"],
           from: { spot: "bench", index: 0 },
@@ -769,12 +613,7 @@ describe("the voice", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the structural questions", () => {
-  it('⚠️ `attachTool` no longer keys "simulated" on `passive` alone', () => {
-    // The gate that belonged to ONE term (D169's lesson, second sighting): every
-    // Tool authored before this one expressed its sentence as continuous numbers,
-    // so "has a passive" and "is simulated" were the same predicate by accident.
-    // Exp. Share has NO passive — the old gate would have refused to attach a card
-    // the engine fully simulates.
+  it('`attachTool` no longer keys "simulated" on `passive` alone', () => {
     let state = driveSetup(61, { p1: EXP_SHARE_DECK, p2: EXP_SHARE_DECK }, { first: "p1" });
     state = handFromDeck(state, "p1", "sv01-174", 1);
     const uid = handUid(state, "p1", "sv01-174");
@@ -792,20 +631,10 @@ describe("the structural questions", () => {
   });
 
   it("PARK? YES. PERSIST? NO — `MATCH_RECORD_VERSION` stays 11", () => {
-    // D124's test is DIRECTIONAL: can the PREVIOUS deploy's record hold the shape
-    // the new code expects? `GameState.pending` IS persisted — a park mid-attack
-    // is a live, reachable, stored position — but an old record cannot CONTAIN a
-    // `koToolTrigger` (nothing wrote one), and every kind it can contain is still
-    // handled. The `moveEnergy` `route` change is a WIDENED ENUM on an op that can
-    // sit in `phase.cont`, which D124 explicitly excludes; no REQUIRED field was
-    // added to anything persisted. The absolute value is pinned in
-    // `apps/api/src/lobby/match.test.ts`; this case pins the REASON.
     const state = field(62);
     const { state: parked } = mustApply(state, bite);
     // The park is a resting state that a record would hold…
     expect(parked.phase.kind).toBe("effect:choose");
-    // …and the queue behind it holds NO new stage kind: the koToolTrigger popped
-    // itself before running, so the stored `pending` is entirely pre-D171 kinds.
     expect(parked.pending.map((s: PendingStage) => s.kind)).toEqual(["attackEpilogue"]);
     // The one place the new kind is observable is BETWEEN the seed and the drain,
     // which no action boundary can land inside.
@@ -861,14 +690,8 @@ describe("the structural questions", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The family, after D171.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("the KO-antecedent family after D171", () => {
   it("every authored member of the family is accounted for, by SITE", () => {
-    // Three sentences, three sites, and the sites are different BECAUSE the
-    // consequents are — which is this family's whole lesson across D158/D164/D171.
     const sites: Record<string, string> = {
       "sv03-197": "passive.damageAttackerOnKo → flow.ts koRecoilOf (synchronous)",
       "sv06.5-037": "triggered.onKoPrizeReduction → flow.ts planPrizes (inside the sweep)",

@@ -18,18 +18,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 8 — the mid-turn-damage snipe (§9): a damaging Ability that puts
-// counters on CHOSEN opponent Benched Pokémon and can Knock one Out MID-TURN
-// (the actor keeps their turn). Two representatives:
-//   • Hawlucha "Flying Entry" — a TRIGGERED Ability (onPlayToBench) that chooses
-//     2 of the opponent's Benched Pokémon, 1 counter each (parks on a MULTI-
-//     Pokémon prompt when the opponent has >2 Benched, forced otherwise);
-//   • Meowscarada ex "Bouquet Magic" — an ACTIVATED Ability with the engine's
-//     first activation COST (discard a Basic {G} Energy), 3 counters on 1 of the
-//     opponent's Benched Pokémon.
-// The KO sweep lives in the shared settleProgram (flow.ts): a completed board
-// program that placed lethal damage resolves through resolveMidTurnKnockOuts.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -44,10 +32,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** p1 (going first) and p2 both on SNIPE_DECK with fix-basic-1 Actives, on
-    turn 1 (the returned state). The opponent's Bench — the snipe targets — is
-    surgery-placed per test. Playing a Basic to the Bench / using an Ability are
-    legal on turn 1, and the opponent's setup Bench is a legal target. */
 function snipeBoard(seed: number): GameState {
   return driveSetup(
     seed,
@@ -109,11 +93,6 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
   });
 
   it("still ASKS at a Bench of exactly 2 — a 'you may' has a decision left at every size", () => {
-    // The Bench being no bigger than the printed number takes the WHICH question
-    // away, not the WHETHER one, and Hawlucha prints "you may". Auto-taking here
-    // would honour that word only when the opponent has 3+ Benched Pokémon —
-    // and a small Bench is where declining is most likely to matter (a counter
-    // can KO a body the opponent is happy to lose, or free a Bench slot).
     let state = snipeBoard(SEED);
     state = benchFromDeck(state, "p2", "fix-basic-1");
     state = benchFromDeck(state, "p2", "fix-basic-1"); // exactly 2 → both, or none
@@ -239,10 +218,6 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
   });
 
   it("'you may choose 2' is ALL-OR-NOTHING — one of the two is refused", () => {
-    // The printed number is exact: a card says "up to" when a partial answer is
-    // legal, and Hawlucha does not. Its "you may" buys the DECLINE (the test
-    // below), not a smaller pick — so 1 of 2 is rejected while 0 and 2 are
-    // accepted, and the prompt carries `min === max === 2` + `declinable`.
     let state = snipeBoard(SEED);
     state = benchFromDeck(state, "p2", "fix-basic-1");
     state = benchFromDeck(state, "p2", "fix-basic-1");
@@ -266,11 +241,6 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       },
       "BAD_EFFECT_CHOICE",
     );
-    // A PADDED pick is the shape that would defeat the all-or-nothing rule, and
-    // it is the membership check — not the floor — that has to stop it: two
-    // distinct refs satisfy min and max, but one of them is the opponent's
-    // ACTIVE, which `placeSnipe` would silently drop, leaving a player
-    // who picked "1 of 2" after all.
     expectErr(
       parked,
       {
@@ -377,10 +347,6 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       abilityName: "Bouquet Magic",
     });
     expect(find(events, "ABILITY_USED")?.ability).toBe("Bouquet Magic");
-    // The cost is now the Ability program's first op (payFromHand), so
-    // it announces HAND_COST_PAID — and, its candidates being interchangeable
-    // Basic {G} Energy, it resolves without a prompt of its own, exactly as the
-    // pre-op `AbilityCost` field did.
     const paid = find(events, "HAND_COST_PAID");
     expect(paid?.uids).toEqual([grassUid]);
     // The Energy left hand for the discard pile.
@@ -426,11 +392,6 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
   });
 
   it("'on 1 of your opponent's Benched Pokémon' is NOT 'up to 1' — the empty pick is refused", () => {
-    // The bug this floor exists for: the cost is already paid and IRREVERSIBLE
-    // by the time the prompt appears, so a legal empty answer would let a player
-    // discard a Basic {G} Energy and place nothing at all. Nothing on the card
-    // says "up to" — its printed "you may" is the Ability's activation, spent by
-    // choosing to use it — so the pick is mandatory and there is no decline.
     let state = snipeBoard(SEED);
     state = setActiveFromDeck(state, "p1", "sv02-015");
     state = handFromDeck(state, "p1", "fix-grass-energy", 1);

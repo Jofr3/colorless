@@ -14,26 +14,8 @@ import {
   setActiveFromDeck,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B20 (Abilities) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B20"), driven on
-// a real board through `applyAction` and asserted against the PRINTED text (local D1
-// `abilities_json` / `attacks_json`, byte for byte below):
-//   §1 Munkidori ex `sv06.5-037` / `-083` / `-091` "Oh No You Don't" — "If this Pokémon is Knocked
-//      Out BY DAMAGE from an attack …": a damage-free "that Pokémon is Knocked Out" (Mega Absol ex
-//      `me01-086` "Terminal Period", a `knockOutDefender` doom carrying D414's marker) still took 1
-//      fewer Prize. flow.ts `koPrizeReduction` asked only the two seat clauses; it now asks
-//      `koByOpponentAttack` — the predicate Shadowy Concealment, Amulet of Hope and (since B08)
-//      Lillie's Pearl / Legacy Energy read — so a `lethalByEffect` body reduces nothing.
-//   §2 the AUDITED finding on the same unit (and on Miraidon "Photon Cord"): a Knock Out from damage
-//      COUNTERS an opponent's attack placed still counts as "by damage". That is the recorded
-//      reading R-PD1 ⚠️ UNRULED (D598, docs/progress.md: "only a `knockOutDefender` doom is
-//      excluded, so a Knock Out from damage counters an opponent's attack PLACED counts as 'by
-//      damage' … reversal: mark counter-placement lethality like `knockOutDefender`'s, for every
-//      reader of the boundary at once") and the user deferred every ruling, so it is NOT changed.
-//      It is PINNED here so the day R-PD1 is reversed this rung goes red in the same commit.
 
 const OH_NO_TEXT =
   "If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card.";
@@ -42,7 +24,6 @@ const TERMINAL_TEXT =
 const CLAW_TEXT = "Your opponent reveals their hand, and you discard a card you find there.";
 const HANDS_TEXT = "Choose 2 of your opponent's Pokémon and put 3 damage counters on each of them.";
 
-/** Every Munkidori ex printing on the local D1 (measured 2026-10-19): one body, three rarities. */
 const MUNKIDORI_IDS = ["sv06.5-037", "sv06.5-083", "sv06.5-091"] as const;
 const PECHARUNT = "sv06.5-039";
 const ABSOL = "me01-086";
@@ -111,13 +92,6 @@ const DECK = deckOf({
   "fix-energy": 19, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 2020, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -165,9 +139,6 @@ function p1Turn(): GameState {
   return state;
 }
 
-/** P1's Active is `attacker` with three `energy` (both attacks paid); P2's Active is the Munkidori
-    ex printing `holder` with `damage`, and P2's Bench holds Pecharunt ex (the printed board clause,
-    "if you have any Pecharunt ex in play") and one Filler. */
 function board(holder: string, attacker: string, energy: string, damage: number): GameState {
   let state = clearBench(setActiveFromDeck(p1Turn(), "p1", attacker), "p1");
   state = attachFromDeck(state, "p1", energy, 3);
@@ -199,7 +170,7 @@ describe('B20 §1 — Munkidori ex "Oh No You Don\'t": a damage-free Knock Out i
   });
 
   it.each(MUNKIDORI_IDS)(
-    '🛑 %s: Terminal Period\'s "that Pokémon is Knocked Out" (no damage) reduces NOTHING — P1 takes both Prizes',
+    '%s: Terminal Period\'s "that Pokémon is Knocked Out" (no damage) reduces NOTHING — P1 takes both Prizes',
     (id) => {
       const { events } = mustApply(board(id, ABSOL, DARK, 60), terminalPeriod);
       expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);
@@ -213,7 +184,7 @@ describe('B20 §1 — Munkidori ex "Oh No You Don\'t": a damage-free Knock Out i
   );
 
   it.each(MUNKIDORI_IDS)(
-    "🛑 %s, the control: Claw of Darkness's 200 damage Knocks it Out BY DAMAGE, and P1 takes 1 fewer",
+    "%s, the control: Claw of Darkness's 200 damage Knocks it Out BY DAMAGE, and P1 takes 1 fewer",
     (id) => {
       const { events } = mustApply(board(id, ABSOL, DARK, 60), clawOfDarkness);
       expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
@@ -232,7 +203,7 @@ describe('B20 §1 — Munkidori ex "Oh No You Don\'t": a damage-free Knock Out i
   );
 });
 
-describe('B20 §2 — R-PD1 ⚠️ UNRULED, pinned and NOT changed: a Knock Out from counters an attack placed counts as "by damage"', () => {
+describe('B20 §2 — R-PD1 UNRULED, pinned and NOT changed: a Knock Out from counters an attack placed counts as "by damage"', () => {
   it("Mischievous Hands' 3 counters on a 200-damage Munkidori ex take 1 fewer Prize (the recorded reading)", () => {
     const state = board("sv06.5-037", MIMIKYU, PSYCHIC, 200);
     const parked = mustApply(state, mischievousHands).state;
@@ -251,7 +222,6 @@ describe('B20 §2 — R-PD1 ⚠️ UNRULED, pinned and NOT changed: a Knock Out 
     });
     expect(ofType(events, "DAMAGE_DEALT")).toEqual([]);
     expect(ofType(events, "KNOCKED_OUT")).toHaveLength(1);
-    // R-PD1: the boundary excludes only `knockOutDefender`'s doom. Reversing it flips this to 2.
     expect(ofType(events, "PRIZES_OWED")).toEqual([{ type: "PRIZES_OWED", seat: "p1", count: 1 }]);
   });
 });

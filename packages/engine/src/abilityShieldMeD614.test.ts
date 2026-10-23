@@ -20,16 +20,8 @@ import {
   setConditions,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D614 — WP37b: THE ABILITY-EFFECT SHIELD ──
-//
-// Mega Clefable ex `mep-072`, `me03-031` / `-103` / `-119` "Luminous Wing" (LOCAL D1, 2026-10-09,
-// `legal_standard = 1`): one registry object, `passive.preventAbilityEffects`. A Pokémon Ability's program
-// carries `EffectContext.invokedBy: "ability"` and the §11 funnel refuses its effects on the holder; the
-// Ability share of a recoil on the Attacking Pokémon and Magma Surge's extra Burn counters are refused too.
-// Two new readings, both ⚠️ UNRULED: R-LW1 (§8, continuous Ability auras are not refused) and R-LW2 (§7, an
-// Ability lock on the holder switches the shield off).
 
 const LUMINOUS_WING =
   "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.";
@@ -86,8 +78,6 @@ const LOCAL: Record<string, Card> = {
         damage: "120+",
         effect: SHOOTING_MOONS,
       },
-      // A test-only second row with no effect text: attack.ts's own main hit. (Shooting Moons is
-      // re-homed into `damageDefender`, so its hit is interpreter.ts `snipeActive`'s.)
       { name: "D614 Hit", cost: ["Colorless"], damage: 30 },
     ],
   } as Partial<Card>),
@@ -219,11 +209,6 @@ const DECK = deckOf({
   [D]: 10,
 });
 const BOARD_IDS = new Set(Object.keys(LOCAL).concat(ROCKY_HELMET));
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
   const result = applyAction(deepFreeze(state), action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
@@ -515,7 +500,7 @@ describe("D614 §6 — what the shield does not refuse: attacks, and its own sid
   });
 });
 
-describe("D614 §7 — R-LW2 ⚠️ UNRULED: an Ability lock on the holder switches the shield off", () => {
+describe("D614 §7 — R-LW2 UNRULED: an Ability lock on the holder switches the shield off", () => {
   it("under Flutter Mane's Midnight Fluttering the Active Clefable takes Cursed Blast's counters", () => {
     const result = run(
       table([FLUTTER, DUSKNOIR], [CLEF]),
@@ -526,7 +511,7 @@ describe("D614 §7 — R-LW2 ⚠️ UNRULED: an Ability lock on the holder switc
   });
 });
 
-describe("D614 §8 — R-LW1 ⚠️ UNRULED: a continuous Ability aura is not refused", () => {
+describe("D614 §8 — R-LW1 UNRULED: a continuous Ability aura is not refused", () => {
   it("Trap Territory still adds {C} to its Retreat Cost", () => {
     const state = table([CLEF], [FILLER, SPIDOPS]);
     const active = state.players.p1.active as NonNullable<GameState["players"]["p1"]["active"]>;

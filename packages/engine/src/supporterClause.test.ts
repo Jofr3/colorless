@@ -21,77 +21,12 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.73.0 → 0.74.0 — the SUPPORTER-PLAYED clause (D123). Pikachu swsh10.5-027
-// "Buddy Bolt", "If you played a Supporter card from your hand during this turn,
-// this attack does 30 more damage." One card, one clause, one printing, no
-// reprint. It rides D115's 0-or-1 indicator through the existing additive fold,
-// so this slice adds no op, no event, no registry row, no continuous.ts helper
-// and no change to attack.ts.
-//
-//   `youPlayedSupporterThisTurn` — a BARE TAG on a LITERAL table row.
-//
-// WHY IT COSTS ZERO NEW STATE, which is the thing that could most easily have
-// gone the other way:
-//
-//   §7.2's ONE-SUPPORTER-PER-TURN CAP IS ALREADY TRACKED, as
-//   `state.allowances.supporterPlayed` — set by `playTrainer` (cardplay.ts) and
-//   cleared by `freshAllowances()` on every `startTurn`.
-//
-// So the printed "during this turn" is not a new clock to build; it is precisely
-// the lifetime the allowances bag already has. No field is added to
-// `TurnAllowances`, none to `PlayerSide`, no serializer changes and
-// `MATCH_RECORD_VERSION` does not move. The three exhaustive `toEqual` pins over
-// the whole allowances bag (turn.test.ts, attack.test.ts, setup.test.ts) are
-// untouched by this slice, which is the mechanical proof of that claim.
-//
-// D116's PRONOUN RULE DOES NOT APPLY, for the first time in this family: the
-// printed subject is "you", and a seat-relative predicate reads that as printed.
-// The clause table translates nothing here, and `conditionNote` round-trips to
-// the printed clause byte for byte — the first note in the family that drops
-// nothing at all.
-//
-// THE ONE REAL DESIGN CALL — THE SEAT GUARD, which is why this suite exists:
-//
-//   `GameState.allowances` is a SINGLE BAG, not a per-seat record. It describes
-//   whoever owns the CURRENT turn.
-//
-// `conditionHolds(state, seat, cond)` is seat-relative, and it has consumers
-// where `seat` is NOT the turn owner — a `conditionGate` op running under a
-// koTrigger / damagedTrigger stage evaluates during the OPPONENT's turn (the
-// `resumeTail` case on the `effect:choose` phase). Read unguarded, the bag would
-// answer "your OPPONENT played a Supporter" as "you played a Supporter". So the
-// arm proves ownership FIRST, through `phaseViewOf(state, seat).activeSeat`, THE
-// one exhaustive switch over `Phase` — never a turn-parity re-derivation, which
-// phaseView.ts's own module header forbids for exactly the case that breaks it.
-// A checkup-origin `ko:*` park has `activeSeat` null, so the predicate reads
-// FALSE for BOTH seats: "during this turn" is vacuous between turns, and that is
-// the intended reading.
-//
-// THE NEAR-MISS IS REAL AND IT IS AN ABILITY: Crobat sv06.5-029's "Shadowy
-// Envoy" is the pool's ONLY other "you played" sentence, and it differs twice
-// over — it names a SPECIFIC card, and it says "this turn" without the "during".
-// The whole-sentence anchor refuses it on either difference alone.
-
-/** The printed sentence, pinned here and asserted char-for-char against
-    FIXTURE_POOL below. Pikachu carries no authored program at all (see the
-    ZERO-rows block), so the sentence IS the wiring: a drifted character does not
-    throw, it drops the card back onto the loud ATTACK_EFFECT_SKIPPED path and
-    silently stops paying the bonus. */
 const BUDDY_BOLT =
   "If you played a Supporter card from your hand during this turn, this attack does 30 more damage.";
 
-/** The REAL near-miss from the same pool — Crobat sv06.5-029's "Shadowy Envoy",
-    the only other card in 978 that prints "you played". It is an ABILITY, it
-    names a SPECIFIC Supporter rather than the card class, and it writes "this
-    turn" WITHOUT the "during" that Buddy Bolt carries. Any one of the three
-    would be enough; the whole-sentence anchor never has to choose. */
 const SHADOWY_ENVOY =
   "Once during your turn, if you played Janine's Secret Art from your hand this turn, you may draw cards until you have 8 cards in your hand.";
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -108,24 +43,10 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** The clause sentence at an arbitrary bonus — the constructor behind the
-    CONSTRUCTED cases below. The default deliberately does NOT match the printing
-    (80 rather than 30), so a fold that hard-coded the printed amount would
-    survive a same-amount probe. */
 function supporterClause(per = 80): string {
   return `If you played a Supporter card from your hand during this turn, this attack does ${per} more damage.`;
 }
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4) AND the §4 first-turn
-    Supporter ban is behind us, which matters more here than usual: `playTrainer`
-    rejects a Supporter on turn 1 with FIRST_TURN_SUPPORTER, so a turn-1 board
-    could not arm this clause at all.
-
-    Both Active spots are pinned to a neutral 200 HP fix-bigbody. Pikachu is a
-    BASIC and could open, but pinning keeps every case off the deal, and pinning
-    both sides keeps the defender's Weakness out of every case that is not about
-    Weakness. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -135,19 +56,10 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** `board`, then handed over to P2 — P1 passes into P2's turn 3, which is equally
-    unrestricted. The clause is seat-relative (it reads whether YOU played a
-    Supporter), and a P1-only suite cannot tell "reads your own turn" apart from
-    "reads p1's". */
 function boardP2(seed: number): GameState {
   return mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
 }
 
-/** Pikachu in the seat's Active Spot with Buddy Bolt's {L}{C}{C} paid — the
-    typed symbol from a Lightning Basic, the two generic ones from the plain
-    Colorless Basic. Surgery for the BODY only; the clause itself is never armed
-    by surgery anywhere in this suite (see `playNemona`). The displaced
-    fix-bigbody lands on the Bench. */
 function pikachu(state: GameState, seat: Seat): GameState {
   const placed = setActiveFromDeck(state, seat, "swsh10.5-027");
   return attachFromDeck(
@@ -158,12 +70,6 @@ function pikachu(state: GameState, seat: Seat): GameState {
   );
 }
 
-/** Arm the clause THE ONLY WAY IT CAN BE ARMED: a real `playTrainer` action on a
-    real Supporter. `allowances.supporterPlayed` is written by `playTrainer` and
-    by nothing else, so there is no surgical shortcut here of the kind the Tool
-    and Energy clauses had — which is exactly what makes these board cases
-    end-to-end. Nemona draws 3, touching nothing any predicate in this slice
-    reads. */
 function playNemona(state: GameState, seat: Seat): GameState {
   const withCard = handFromDeck(state, seat, "sv01-180", 1);
   const played = mustApply(withCard, {
@@ -222,13 +128,8 @@ describe("the printed sentence — the fixture-text-verbatim guard", () => {
     // the byte count, so the claim is about the characters and not the total.
     for (const ch of BUDDY_BOLT) expect(ch.codePointAt(0)).toBeLessThan(128);
     expect(BUDDY_BOLT).not.toContain("é");
-    // No apostrophe of EITHER kind, so the anchor never has to pick — the pool's
-    // "your opponent's" clauses carry the ASCII one and this row carries neither.
     expect(BUDDY_BOLT).not.toContain("'"); // U+0027
-    expect(BUDDY_BOLT).not.toContain("’"); // U+2019
-    // The near-miss COMPANION proves the ASCII claim is about THIS string rather
-    // than the module being clean by accident: Crobat's sentence carries a real
-    // ASCII apostrophe in "Janine's".
+    expect(BUDDY_BOLT).not.toContain("’");
     expect(SHADOWY_ENVOY).toContain("Janine's");
     expect(utf8Bytes(SHADOWY_ENVOY)).toBe(SHADOWY_ENVOY.length);
   });
@@ -281,8 +182,6 @@ describe("the near-misses stay LOUD", () => {
       // prints, and neither is what §7.2's cap tracks.
       "you played an Item card from your hand during this turn",
       "you played a Stadium card from your hand during this turn",
-      // The CROSS-BOARD rewrite. The pool does not print it, and if it ever does
-      // it is a different member reading the other seat's turn — not this row.
       "your opponent played a Supporter card from your hand during this turn",
       "your opponent played a Supporter card from their hand during this turn",
       // The possessive moved — "their hand" is the cross-board half.
@@ -357,9 +256,6 @@ describe("the board — Buddy Bolt through a real attack", () => {
   });
 
   it("scores 60 once a REAL playTrainer has landed the Supporter", () => {
-    // Played through the real §7.2 path, not surgery — the TRAINER_PLAYED row is
-    // the proof, and `playTrainer` is the only writer of the flag the clause
-    // then reads.
     const withCard = handFromDeck(pikachu(board(11), "p1"), "p1", "sv01-180", 1);
     const played = mustApply(withCard, {
       type: "playTrainer",
@@ -378,9 +274,6 @@ describe("the board — Buddy Bolt through a real attack", () => {
   });
 
   it("is TURN-SCOPED — a Supporter played LAST turn arms nothing this turn", () => {
-    // The assertion that matters: the flag's lifetime is the turn, and nothing
-    // in this slice had to build that lifetime — `freshAllowances()` on
-    // startTurn already owns it.
     const armed = playNemona(pikachu(board(11), "p1"), "p1");
     expect(armed.allowances.supporterPlayed).toBe(true);
     const backAround = mustApply(mustApply(armed, { type: "endTurn", seat: "p1" }).state, {
@@ -463,10 +356,6 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
   });
 
   it("GUARDS THE SEAT — the non-owner reads FALSE off the very same bag", () => {
-    // THE POINT OF THE SLICE. `state.allowances` is one bag describing the TURN
-    // OWNER, and `conditionHolds` is asked for a seat. On this state the flag is
-    // true and the turn is p1's, so an unguarded read would answer TRUE for p2 —
-    // "your opponent played a Supporter" reported as "you played a Supporter".
     const armed = playNemona(pikachu(board(11), "p1"), "p1");
     expect(armed.allowances.supporterPlayed).toBe(true);
     expect(armed.phase).toEqual({ kind: "turn:action", seat: "p1" });
@@ -475,10 +364,6 @@ describe("conditionHolds / conditionNote — the member read directly", () => {
   });
 
   it("is FALSE for BOTH seats on a checkup-origin ko:* park (activeSeat null)", () => {
-    // Between turns nobody owns one, so "during this turn" has no turn to be
-    // during. A checkup-origin park is the case phaseView.ts's header calls out:
-    // the tail has already drained (only startTurn is left queued), so turn
-    // PARITY would name the just-ended seat and answer TRUE for them.
     const armed = playNemona(pikachu(board(11), "p1"), "p1");
     const parked: GameState = {
       ...armed,

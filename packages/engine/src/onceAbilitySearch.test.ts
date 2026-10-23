@@ -17,28 +17,8 @@ import {
   trainerCard,
   typedEnergy,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, PART B: THE DECK SEARCHES ──
-//
-// Three of the slice's seven printed texts, 5 of its 12 legal printings (part A is
-// `onceAbilities.test.ts`), each `CHAMPIONS_CALL`'s template with ONE noun changed:
-//
-//   Mamoswine ex    sv09-079 / sv09-174  "Mammoth Hauler"         — a Pokémon
-//   Sawsbuck        sv05-017 / sv05-166  "Changing Seasons"       — a Stadium card
-//   Ethan's Quilava sv10-033             "Bonded by the Journey"  — an Ethan's Adventure card
-//
-// Every one prints "search your deck for a(n) …, reveal it, and put it into your
-// hand. Then, shuffle your deck." — `searchDeck { max: 1, dest: "hand", reveal: true }`
-// then `shuffleDeck`. ⚠️ THE ONE BEHAVIOUR LINE OUTSIDE THE REGISTRY is
-// `retrieveNoun`'s byName article: "Ethan's Adventure" is the first VOWEL-INITIAL name
-// its cardNoun seam has met, and D553 withdrew the claim that none could (§5 pins the
-// caption).
-//
-// Real ids on a LOCAL `cardPool` (D275), no `fix-*` demonstrator; the Stage 1 / Stage 2
-// bodies keep their printed stage and are SEATED by surgery as a Basic would be (D243).
-// Ethan's Adventure itself rides at its REAL id `sv10-165` (a registry Supporter since
-// D337) with its printed name, ASCII apostrophe, so the `byName` match is the real one.
 
 const MAMMOTH_TEXT =
   "Once during your turn, you may search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.";
@@ -153,11 +133,6 @@ const DECK = deckOf({
   [FILLER]: 16,
   [ENERGY]: 12,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** p1 on its own (unrestricted) turn 2 — p2 went first and passed. */
 function p1Turn(seed = 5530): GameState {
@@ -447,13 +422,7 @@ describe("D553 B §5 — the caption, and the article D553 had to compute", () =
     });
   }
 
-  it('🛑 the article is COMPUTED off the name (D553 withdrew the consonant-only claim): the live singular reads "an"', () => {
-    // The caption above is the only singular this seam reaches today. Arven's
-    // Greedent's "Arven's Sandwich" — the seam's first producer, and ALSO
-    // vowel-initial — prints "up to 2 … cards" and reaches the PLURAL only, which is
-    // how the withdrawn claim ("every printed card name in this seam is
-    // consonant-initial") survived: it was never true of the names, only of the
-    // singulars any card could reach.
+  it('the article is COMPUTED off the name (D553 withdrew the consonant-only claim): the live singular reads "an"', () => {
     const note = parkOf(mustApply(benched(QUILAVA), use("Bonded by the Journey")).state).note;
     expect(note.startsWith("Search your deck for an Ethan's Adventure card")).toBe(true);
     expect(note).not.toContain(" a Ethan's");

@@ -5,34 +5,6 @@ import type { GameState, Seat } from "./index";
 import { redactGame } from "./redact";
 import { MIXED_DECK, driveSetup } from "./testFixtures";
 
-// 🆕🆕🆕 D543 PART 0 — THE `upTo` DISCARD SCOPE, WHICH THE WIRE NEVER HAD.
-//
-// 🛑 **NO RUNG AT HEAD CROSSED AN `upTo` SCOPE THROUGH THE REDACTOR, AND THAT IS
-// EXACTLY WHY THE DEFECT SHIPPED.** `redact.test.ts` pins one discard prompt and
-// one scope — `{ kind: "total", count: 1 }` — which is a case that never broke.
-// `redactedScopeOf` was a two-arm TERNARY: `total` got its own branch and
-// EVERYTHING ELSE returned `{ kind: "each" }`. So D359's `upTo` — the one
-// DECLINABLE discard scope, shipped in the engine since D359 and produced live by
-// Chien-Pao ex "Hail Blade" and Mewtwo VSTAR "Psy Purge" — crossed the wire as a
-// MANDATORY one-per-Pokémon pick. The remote dialog then demanded an exact answer
-// to a declinable question, and the server refused whatever it sent.
-//
-// 🛑 **THE `satisfies DiscardScope` ON THAT TERNARY WAS THE CAMOUFLAGE, AND THE
-// GENERALISATION IS THE POINT OF THIS FILE.** It typed the two-arm expression's
-// OUTPUT against the ENGINE union. A `satisfies` on a RESULT can say only *"this
-// value inhabits that type"*: it cannot say *"every input was considered"* (that is
-// a `never` floor) and it cannot say *"this is the WIRE shape"* (that is the
-// annotated return type). Both mandatory members are structurally legal
-// `RedactedDiscardScope`s, so the assertion was GREEN on a value that had already
-// lost the information the wire needed. **A `satisfies` against the SOURCE union is
-// not an exhaustiveness check.**
-//
-// 🛑 **AND THE WIRE HALF IS THE HALF NO ENGINE ASSERTION CAN SEE.** Even a correct
-// redactor could not have sent an `upTo`, because `redactedDiscardScopeSchema` had
-// two of the engine's three members. Every rung below that calls `safeParse` is
-// driving the SCHEMA, not the engine — the seam `packages/engine` cannot reach on
-// its own.
-
 const CONT: EffectContinuation = {
   pendingOp: { op: "opponentMayDraw", count: 1 },
   rest: [],
@@ -57,10 +29,6 @@ const P1_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
 const P2_ACTIVE = { seat: "p2", spot: { spot: "active" } } as const;
 const P2_BENCH0 = { seat: "p2", spot: { spot: "bench", index: 0 } } as const;
 
-/** All THREE engine members, named once. The `satisfies` here is doing the job the
-    one in `redactedScopeOf` could not: it is on a LIST of inputs, so a fourth
-    `DiscardScope` member leaves this array short and every rung below under-drives
-    — which is why §1 also asserts the length against a literal. */
 const EVERY_SCOPE = [
   { kind: "total", count: 2 },
   { kind: "each" },
@@ -92,19 +60,13 @@ const toolPrompt = (scope: DiscardScope): EffectPrompt => ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§1 — the scope union crosses whole, in both prompts", () => {
-  it("🛑 the ENGINE union has THREE members and the WIRE union now has three too", () => {
-    // Pinned on BOTH sides rather than on one: a wire member with no engine twin is
-    // a shape nothing can produce, and an engine member with no wire twin is what
-    // this slice found. The wire count is read off the schema LIVE.
+  it("the ENGINE union has THREE members and the WIRE union now has three too", () => {
     expect(EVERY_SCOPE).toHaveLength(3);
     const wireKinds = redactedDiscardScopeSchema.options.map((o) => o.shape.kind.value);
     expect([...wireKinds].sort()).toEqual([...EVERY_SCOPE.map((s) => s.kind)].sort());
   });
 
-  it("🛑 EVERY scope round-trips through the redactor UNCHANGED — the table", () => {
-    // The whole table, both prompt kinds. The `upTo` row is the one that was red
-    // before Part 0 and the `each` row is the one that would go red if the fix had
-    // over-corrected — neither is a spot check.
+  it("EVERY scope round-trips through the redactor UNCHANGED — the table", () => {
     for (const scope of EVERY_SCOPE) {
       for (const make of [energyPrompt, toolPrompt]) {
         const prompt = make(scope);
@@ -113,7 +75,7 @@ describe("§1 — the scope union crosses whole, in both prompts", () => {
     }
   });
 
-  it("🛑 THE SCHEMA ACCEPTS the `upTo` wire value — the half no engine rung can see", () => {
+  it("THE SCHEMA ACCEPTS the `upTo` wire value — the half no engine rung can see", () => {
     const sent = promptFor(toolPrompt({ kind: "upTo", max: 3 }), "p1");
     const parsed = redactedEffectPromptSchema.safeParse(sent);
     expect(parsed.success).toBe(true);
@@ -126,10 +88,7 @@ describe("§1 — the scope union crosses whole, in both prompts", () => {
     expect(redactedDiscardScopeSchema.safeParse({ kind: "upTo" }).success).toBe(false);
   });
 
-  it("🛑 THE COLLAPSE IS VISIBLE: an `upTo` prompt does NOT cross as `each`", () => {
-    // The mutant `D543-wire-scope-collapses-upto` restores the ternary. This is the
-    // assertion that dies, stated as the NEGATIVE it actually is — `toEqual` on the
-    // whole prompt would also pass if `max` merely drifted.
+  it("THE COLLAPSE IS VISIBLE: an `upTo` prompt does NOT cross as `each`", () => {
     const sent = promptFor(toolPrompt({ kind: "upTo", max: 3 }), "p1");
     if (sent === null || sent.kind !== "discardTools") throw new Error("expected the prompt");
     expect(sent.scope.kind).toBe("upTo");
@@ -146,7 +105,7 @@ describe("§1 — the scope union crosses whole, in both prompts", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — the redactor's no-alias purity contract reaches the new member", () => {
-  it("🛑 the wire scope is a FRESH object, never the engine prompt's own", () => {
+  it("the wire scope is a FRESH object, never the engine prompt's own", () => {
     // Every branch of `redactPrompt` copies by value so no wire frame holds a
     // reference into live game state. A `switch` arm that returned `scope` itself
     // would satisfy every `toEqual` above and break this one alone.

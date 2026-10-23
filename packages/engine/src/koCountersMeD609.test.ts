@@ -19,21 +19,8 @@ import {
   setBenchDamage,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D609 — WP36: THE `me` KO / DAMAGE-COUNTER ATTACKS ─────────────────────────────────────────
-//
-// 4 attack sentences / 8 `me` printings newly reader-built, every other text on the 8 cards already
-// built, so all 8 are finished. Every id and text off the LOCAL D1, 2026-10-08, `legal_standard = 1`;
-// no id was referenced in the tree before this slice except Mega Absol ex `me01-086` (D582 / D592).
-//
-//   Terminal Period ×3 — `conditionGate` on the new `opponentActiveDamageCountersExactly` → `knockOutDefender`.
-//   Bring Down ×3      — `knockOutChosen` at the new `target: "anyExceptSelf"` with `leastHpRemaining` (R-BD1).
-//   Snow Coating       — `counterEachAll` with the new `perDamageCounterOnTarget` (10 per counter: the double).
-//   Sneaky Placement   — the singular "Place 1 damage counter on", D592's synonym and D449's anchor widened.
-//
-// WP36's other two texts need vocabulary beyond the brief and are dropped, named in §1.
-// [🆕🆕🆕 D639 (D539): both BUILT at D639 (K3 + R1, `koSweepMeD639.test.ts`); §1's pin is inverted.]
 
 const TERMINAL_PERIOD =
   "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.";
@@ -42,7 +29,6 @@ const BRING_DOWN =
 const SNOW_COATING = "Double the number of damage counters on each of your opponent's Pokémon.";
 const SNEAKY_PLACEMENT = "Place 1 damage counter on 1 of your opponent's Pokémon.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [TERMINAL_PERIOD, ["me01-086", "me01-161", "me01-180"]],
   [BRING_DOWN, ["me01-041", "me01-142", "mep-002"]],
@@ -50,7 +36,6 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [SNEAKY_PLACEMENT, ["me02-046"]],
 ];
 
-/** WP36's rest, dropped and named: [text, ids, the vocabulary it needs]. [🆕🆕🆕 D639 (D539): both BUILT at D639.] */
 const WP36_REST: readonly (readonly [string, readonly string[]])[] = [
   // a Knock Out SWEEP over every opponent body at or under an HP threshold (no op walks and KOs).
   [
@@ -77,11 +62,10 @@ describe("D609 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(8);
   });
 
-  it("WP36's rest stays unbuilt: 2 texts / 3 printings, named (🆕🆕🆕 D639: both BUILT — K3 + R1)", () => {
+  it("WP36's rest stays unbuilt: 2 texts / 3 printings, named ( D639: both BUILT — K3 + R1)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP36_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      // 🆕🆕🆕 D639 (D539): "stays unbuilt" is WITHDRAWN — `koSweepMeD639.test.ts` reads both; still unkeyed.
       expect(resolvedByAnyReader(text), text).toBe(true);
       for (const id of ids) expect(programFor(id), id).toBeUndefined();
     }
@@ -139,7 +123,7 @@ describe("D609 §2 — the readings", () => {
     expect(deriveAttackEffect(`${SNOW_COATING} Draw a card.`)).toBeNull();
   });
 
-  it("Sneaky Placement: the singular is D449's put at 1; the Active singular stays unread (🆕🆕🆕 D627 (D539): built since D627)", () => {
+  it("Sneaky Placement: the singular is D449's put at 1; the Active singular stays unread ( D627 (D539): built since D627)", () => {
     const one = [
       { op: "damageChosen", target: "opponentAny", amount: 10, count: 1, source: "attack" },
     ];
@@ -154,16 +138,11 @@ describe("D609 §2 — the readings", () => {
     expect(deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Pokémon.")).toEqual([
       { ...one[0], amount: 20 },
     ]);
-    // The other singular `me` sentence is rewritten and stays unbuilt.
-    // 🆕🆕🆕 D627 (D539): "stays unbuilt" is WITHDRAWN, kept as written — Poltchageist "Furtive Drop" is
-    // built by H1 (`COUNTER_PUT_ON_DEFENDER` at the singular, `hideNSneakMeD627.test.ts` §2).
     expect(deriveAttackEffect("Place 1 damage counter on your opponent's Active Pokémon.")).toEqual(
       [{ op: "damageActive", amount: 10, source: "attack" }],
     );
     expect(deriveAttackEffect(SNEAKY_PLACEMENT.replace("1 damage", "0 damage"))).toBeNull();
-    // Number agreement: the singular is read at exactly 1 (D449's "the singular noun" control).
     expect(deriveAttackEffect("Put 2 damage counter on 1 of your opponent's Pokémon.")).toBeNull();
-    // The lower-case mid-sentence row is not widened.
     expect(
       normaliseMeWording("Then, place 1 damage counter on 1 of your opponent's Pokémon."),
     ).toBe("Then, place 1 damage counter on 1 of your opponent's Pokémon.");
@@ -249,11 +228,6 @@ const DECK = deckOf({
   "fix-energy": 26,
 });
 const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), "fix-unaware"]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

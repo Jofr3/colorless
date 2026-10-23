@@ -18,22 +18,10 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D565 — FOUR ABILITIES (and Ruffian, in `ruffianD565.test.ts`) ──
-//
-//   Misty's Psyduck        sv10-045 / sv10-193  "Flustered Leap"    — on the Bench: mill the BOTTOM card; if you
-//                                                                      did, attachments discarded, self on deck TOP
-//   Team Rocket's Orbeetle sv10-089 / sv10-198  "Rocket Brain"      — as often as you like: 1 counter from a Team
-//                                                                      Rocket's Pokémon to another of your Pokémon
-//   Farfetch'd             sv06-132             "Impromptu Carrier" — played to the Bench: search a Tool, attach it
-//   Palafin                sv06-060             "Zero to Hero"      — Active → Bench, once per turn: switch in a
-//                                                                      Palafin ex from the deck, IN PLACE
-//
-// Every card is driven end-to-end on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN
-// deck (D270). Texts, stats and legality off tcgdex (the audit's card JSON), 2026-09-28. Readings
-// R-FL, R-IC1, R-IC2, R-ZH1, R-ZH2: docs/decisions.md D565.
 
 const PSYDUCK = ["sv10-045", "sv10-193"] as const;
 const ORBEETLE = ["sv10-089", "sv10-198"] as const;
@@ -207,7 +195,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [PSYDUCK[0]]: 2,
   [PSYDUCK[1]]: 1,
@@ -234,18 +221,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -555,30 +530,24 @@ describe("§1 — the prints and the registry rows", () => {
     }
   });
 
-  it('🛑 `benchOnly` is carried by exactly Flustered Leap\'s two ids, and NO row pairs it with `activeOnly` (🆕🆕🆕 D602 (D539): "exactly Flustered Leap\'s two ids" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` "Sunrise"; 🆕🆕🆕 D603: plus Linoone `me02-082` "Excited Dash")', () => {
+  it('`benchOnly` is carried by exactly Flustered Leap\'s two ids, and NO row pairs it with `activeOnly` ( D602 (D539): "exactly Flustered Leap\'s two ids" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` "Sunrise"; D603: plus Linoone `me02-082` "Excited Dash")', () => {
     const benchOnly: string[] = [];
     for (const id of registryCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
         if (ability.benchOnly === true) benchOnly.push(id);
-        // Unsatisfiable: no spot is both. A row with both could never be used.
         expect(ability.activeOnly && ability.benchOnly === true, id).toBe(false);
       }
     }
-    // 🆕🆕🆕 D602 — Solgaleo `30th-105` "Sunrise" prints the same Bench clause (`SUNRISE`).
-    // 🆕🆕🆕 D603 — Linoone `me02-082` "Excited Dash" prints it too (`EXCITED_DASH`).
-    // 🆕🆕🆕 D628 — Larry's Komala `me02.5-175` "Lethargic Charge" prints it too (`LETHARGIC_CHARGE`).
-    // 🆕🆕🆕 D636 — Clawitzer `me01-038` / `-141` "Fall Back to Reload" too (`FALL_BACK_TO_RELOAD`).
     expect(benchOnly.sort()).toEqual(
       [...PSYDUCK, "30th-105", "me02-082", "me02.5-175", "me01-038", "me01-141"].sort(),
     );
   });
 
-  it('the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone (🆕🆕🆕 D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 "Last-Ditch Catch" carries the widened `"sharedByName"`)', () => {
+  it('the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone ( D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 "Last-Ditch Catch" carries the widened `"sharedByName"`)', () => {
     const locked = registryCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === true),
     );
     expect(locked).toEqual([PALAFIN]);
-    // 🆕🆕🆕 D628 — the name-scoped lock, read by `runBoardTrigger` (onBenchMoveMeD628.test.ts §2).
     const shared = registryCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === "sharedByName"),
     );
@@ -601,7 +570,7 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     return toBottom(state, "p1", COLORLESS);
   }
 
-  it("🛑 from the Bench: the bottom card is discarded, the attachments are discarded, the Psyduck goes on TOP", () => {
+  it("from the Bench: the bottom card is discarded, the attachments are discarded, the Psyduck goes on TOP", () => {
     const before = leapBoard();
     const psyduck = top(bodyAt(before, "p1", 0));
     const attached = [...bodyAt(before, "p1", 0).energy, ...bodyAt(before, "p1", 0).tools];
@@ -628,7 +597,7 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     ]);
   });
 
-  it('🛑 "on top of" is a POSITION: no SHUFFLE row and the RNG does not move', () => {
+  it('"on top of" is a POSITION: no SHUFFLE row and the RNG does not move', () => {
     const before = leapBoard();
     const { state, events } = run(before, use("Flustered Leap", bench(0)));
     expect(all(events, "SHUFFLE")).toHaveLength(0);
@@ -647,7 +616,7 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     );
   });
 
-  it("🛑 from the Active Spot it is REFUSED `ABILITY_BENCH_ONLY` — the mirror of `activeOnly`", () => {
+  it("from the Active Spot it is REFUSED `ABILITY_BENCH_ONLY` — the mirror of `activeOnly`", () => {
     const state = table(PSYDUCK[1]);
     expect(refused(state, use("Flustered Leap", ACTIVE))).toEqual({
       code: "ABILITY_BENCH_ONLY",
@@ -655,7 +624,7 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     });
   });
 
-  it("🛑 the online HUD: the benched row is lit, the Active row is greyed", () => {
+  it("the online HUD: the benched row is lit, the Active row is greyed", () => {
     const state = table(PSYDUCK[0], [PSYDUCK[1]]);
     const phase = redactGame(state, "p1").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action");
@@ -689,12 +658,6 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
   });
 
   it("R-FL (UNRULED half): the SAME card replayed later in the turn stays locked by its `${uid}:Flustered Leap` key", () => {
-    // ⚠️ UNRULED, pinned as what the engine DOES and not as what the rules say. The
-    // uid-keyed lock is older than D565 and serves every Ability; Flustered Leap is the
-    // first card that makes this board easy to reach. Common TCG practice treats a card
-    // that left play and came back as a NEW Pokémon whose "Once during your turn" may be
-    // used again (the reason Crobat V prints its own "more than 1 Dark Asset" clause) —
-    // recalled, not quoted. If a ruling confirms that, this rung flips to "usable".
     const { state: leapt } = run(leapBoard(), use("Flustered Leap", bench(0)));
     const psyduck = leapt.players.p1.deck[0] as string;
     // Draw it (surgery: the top card into the hand) and play it back onto the Bench.
@@ -727,7 +690,7 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → own)', () => {
-  it("🛑 both questions forced: the damaged Orbeetle gives ONE counter to the one other body", () => {
+  it("both questions forced: the damaged Orbeetle gives ONE counter to the one other body", () => {
     const state = damaged(table(ORBEETLE[0], [FILLER]), "p1", "active", 30);
     const orbeetle = top(bodyAt(state, "p1", "active"));
     const filler = top(bodyAt(state, "p1", 0));
@@ -743,7 +706,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
     ]);
   });
 
-  it("🛑 AS OFTEN AS YOU LIKE: three uses in one turn move three counters", () => {
+  it("AS OFTEN AS YOU LIKE: three uses in one turn move three counters", () => {
     let state = damaged(table(ORBEETLE[0], [FILLER]), "p1", "active", 30);
     for (let i = 0; i < 3; i++) state = run(state, use("Rocket Brain", ACTIVE)).state;
     expect(bodyAt(state, "p1", "active").damage).toBe(0);
@@ -752,7 +715,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
     expect(refused(state, use("Rocket Brain", ACTIVE)).code).toBe("NO_LEGAL_TARGET");
   });
 
-  it("🛑 the SOURCE must be a Team Rocket's Pokémon: a damaged non-Team-Rocket body is never offered", () => {
+  it("the SOURCE must be a Team Rocket's Pokémon: a damaged non-Team-Rocket body is never offered", () => {
     const state = damaged(damaged(table(ORBEETLE[0], [FILLER, TR_MON]), "p1", 0, 50), "p1", 1, 20);
     const { state: after } = run(state, use("Rocket Brain", ACTIVE));
     // One damaged TR body (the Fixmon on Bench 1) — forced; two destinations — parked.
@@ -776,7 +739,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
     expect(refused(alone, use("Rocket Brain", ACTIVE)).code).toBe("NO_LEGAL_TARGET");
   });
 
-  it("🛑 TWO damaged sources: question 1 parks, its answer buys question 2, the second answer moves", () => {
+  it("TWO damaged sources: question 1 parks, its answer buys question 2, the second answer moves", () => {
     const state = damaged(
       damaged(table(ORBEETLE[0], [TR_MON, FILLER]), "p1", "active", 30),
       "p1",
@@ -815,7 +778,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
     expect(bodyAt(after, "p1", 0).damage).toBe(10);
   });
 
-  it("🛑 a LETHAL move is swept mid-turn and the Prize goes to the OPPONENT", () => {
+  it("a LETHAL move is swept mid-turn and the Prize goes to the OPPONENT", () => {
     const start = damaged(damaged(table(ORBEETLE[0], [FRAIL]), "p1", "active", 30), "p1", 0, 20);
     const frail = top(bodyAt(start, "p1", 0));
     const p1Prizes = start.players.p1.prizes.length;
@@ -864,7 +827,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
     return { uid, ...run(before, { type: "playBasicToBench", seat: "p1", uid }) };
   }
 
-  it("🛑 playing it to the Bench parks the search: dest `attach`, the printed note, SIMULATED Tools only (R-IC1)", () => {
+  it("playing it to the Bench parks the search: dest `attach`, the printed note, SIMULATED Tools only (R-IC1)", () => {
     const board = ensureInDeck(
       ensureInDeck(table(FILLER), "p1", VITALITY_BAND),
       "p1",
@@ -882,7 +845,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
     expect(offered.has(UNSIMULATED_TOOL)).toBe(false);
   });
 
-  it("🛑 the answer attaches the Tool to the Farfetch'd, files TOOL_ATTACHED and then shuffles", () => {
+  it("the answer attaches the Tool to the Farfetch'd, files TOOL_ATTACHED and then shuffles", () => {
     const board = ensureInDeck(table(FILLER), "p1", VITALITY_BAND);
     const { state, uid } = played(board);
     const p = prompt(state);
@@ -909,7 +872,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
     expect(all(events, "SHUFFLE")).toHaveLength(1);
   });
 
-  it("🛑 R-IC1's ONE predicate: the same unsimulated Tool is refused from the HAND (TRAINER_NOT_SIMULATED)", () => {
+  it("R-IC1's ONE predicate: the same unsimulated Tool is refused from the HAND (TRAINER_NOT_SIMULATED)", () => {
     const board = setHand(table(FILLER), "p1", [UNSIMULATED_TOOL]);
     const uid = board.players.p1.hand[0] as string;
     expect(
@@ -917,7 +880,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
     ).toBe("TRAINER_NOT_SIMULATED");
   });
 
-  it("🛑 an UNSIMULATED Tool answered over the wire is refused (not among the candidates)", () => {
+  it("an UNSIMULATED Tool answered over the wire is refused (not among the candidates)", () => {
     const board = ensureInDeck(
       ensureInDeck(table(FILLER), "p1", VITALITY_BAND),
       "p1",
@@ -937,7 +900,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
     expect(all(events, "SHUFFLE")).toHaveLength(1);
   });
 
-  it("🛑 R-IC2: the HAND-PLAY Tool bar does not apply — under Jellicent ex the hand attach is refused, the search attaches", () => {
+  it("R-IC2: the HAND-PLAY Tool bar does not apply — under Jellicent ex the hand attach is refused, the search attaches", () => {
     const board = ensureInDeck(table(FILLER, [], JELLICENT_EX), "p1", VITALITY_BAND);
     const handBand = setHand(board, "p1", [VITALITY_BAND]);
     const bandUid = handBand.players.p1.hand[0] as string;
@@ -1006,7 +969,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     promoteBenchIndex: 0,
   });
 
-  it("🛑 a RETREAT fires it: the Palafin ex takes the top of the SAME body, everything else rides along", () => {
+  it("a RETREAT fires it: the Palafin ex takes the top of the SAME body, everything else rides along", () => {
     const before = heroBoard();
     const was = bodyAt(before, "p1", "active");
     const palafin = top(was);
@@ -1014,7 +977,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
       (u) => before.cardIdByUid[u] === PALAFIN_EX[1],
     ) as string;
     const { state, events } = run(before, retreat(before));
-    expect(state.phase.kind).toBe("turn:action"); // R-ZH1: no park — the "you may" resolves YES
+    expect(state.phase.kind).toBe("turn:action");
     const now = bodyAt(state, "p1", 0);
     expect(now.stack).toEqual([was.stack[0], ex]);
     expect(now.damage).toBe(30);
@@ -1030,12 +993,12 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
       { type: "POKEMON_SWAPPED_FROM_DECK", seat: "p1", fromUid: palafin, toUid: ex },
     ]);
     expect(all(events, "SHUFFLE")).toHaveLength(1);
-    expect(state.rngState).not.toEqual(before.rngState); // the shuffle is real, not only a row
+    expect(state.rngState).not.toEqual(before.rngState);
     expect(all(events, "POKEMON_EVOLVED")).toHaveLength(0);
     expect(state.allowances.abilitiesUsed).toContain(`${palafin}:Zero to Hero`);
   });
 
-  it('🛑 "THIS Pokémon": only the body that MOVED fires — a second Palafin already on the Bench does not', () => {
+  it('"THIS Pokémon": only the body that MOVED fires — a second Palafin already on the Bench does not', () => {
     // Two Palafin: the Active retreats (and swaps), the benched one stays a Palafin.
     let state = heroBoard();
     state = benchFromDeck(ensureInDeck(state, "p1", PALAFIN), "p1", PALAFIN);
@@ -1052,7 +1015,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     expect(render(events, state)).toContain("p1: switched Palafin with Palafin ex from their deck");
   });
 
-  it("🛑 a SWITCH (an Item, `switchInto`) fires it too", () => {
+  it("a SWITCH (an Item, `switchInto`) fires it too", () => {
     const before = heroBoard();
     const { state, events } = playFromHand(before, SWITCH);
     const after =
@@ -1064,7 +1027,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     expect(events.length).toBeGreaterThan(0);
   });
 
-  it("🛑 R-ZH2: a FAILED search (no Palafin ex) still shuffles AND spends the lock", () => {
+  it("R-ZH2: a FAILED search (no Palafin ex) still shuffles AND spends the lock", () => {
     const before = heroBoard(false);
     const palafin = top(bodyAt(before, "p1", "active"));
     const { state, events } = run(before, retreat(before));
@@ -1075,7 +1038,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     expect(state.allowances.abilitiesUsed).toContain(`${palafin}:Zero to Hero`);
   });
 
-  it("🛑 ONCE during your turn: moved to the Bench a second time the same turn, it does not fire again", () => {
+  it("ONCE during your turn: moved to the Bench a second time the same turn, it does not fire again", () => {
     // Retreat with no Palafin ex (spends the lock), then Switch it back in and out again.
     let state = run(heroBoard(false), retreat(heroBoard(false))).state;
     const palafin = top(bodyAt(state, "p1", 0));
@@ -1106,7 +1069,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     expect(final.state.players.p1.deck).toContain(ex);
   });
 
-  it("🛑 \"during your turn\": dragged to the Bench by the OPPONENT's Boss's Orders, it does not fire", () => {
+  it("\"during your turn\": dragged to the Bench by the OPPONENT's Boss's Orders, it does not fire", () => {
     let state = heroBoard();
     state = run(state, { type: "endTurn", seat: "p1" }).state;
     state = setHand(state, "p2", [BOSS]);
@@ -1125,7 +1088,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     expect(all([...played.events, ...after.events], "POKEMON_SWAPPED_FROM_DECK")).toHaveLength(0);
   });
 
-  it('🛑 THE CENSUS HOLDER: Scramble Switch\'s "the Pokémon you moved to your Bench" is re-keyed to the swapped body', () => {
+  it('THE CENSUS HOLDER: Scramble Switch\'s "the Pokémon you moved to your Bench" is re-keyed to the swapped body', () => {
     const before = heroBoard();
     const { state } = playFromHand(before, SCRAMBLE);
     // The switch pick is forced (one benched body); the Energy move parks (up to "any").
@@ -1163,7 +1126,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings, driven)", () => {
-  it("🛑 a PARKED Rocket Brain (question 1) round-trips through JSON and resumes to both questions", () => {
+  it("a PARKED Rocket Brain (question 1) round-trips through JSON and resumes to both questions", () => {
     const state = damaged(
       damaged(table(ORBEETLE[0], [TR_MON, FILLER]), "p1", "active", 30),
       "p1",
@@ -1180,7 +1143,6 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
     });
     const second = run(revived, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
     if (second.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    // The engine-written first answer rides the continuation, a D125 optional key.
     expect(second.phase.cont.pendingOp).toEqual({
       op: "moveCounterOwnChosen",
       ownerPokemon: "Team Rocket",
@@ -1191,7 +1153,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
     expect(bodyAt(done, "p1", "active").damage).toBe(40);
   });
 
-  it('🛑 a PARKED Impromptu Carrier search (`dest: "attachToSelf"`, prompt `"attach"`) round-trips and resumes', () => {
+  it('a PARKED Impromptu Carrier search (`dest: "attachToSelf"`, prompt `"attach"`) round-trips and resumes', () => {
     const board = ensureInDeck(table(FILLER), "p1", VITALITY_BAND);
     const before = setHand(board, "p1", [FARFETCHD]);
     const parked = run(before, {

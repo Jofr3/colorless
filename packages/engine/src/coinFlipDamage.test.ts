@@ -22,100 +22,8 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.76.0 → 0.77.0 — the PRINTED COIN FLIP (D126). "Flip a coin. If heads, this
-// attack does N more damage." (20 printings) and "Flip a coin. If tails, this
-// attack does nothing." (11 printings) — Litwick sv03-036 "Firebreathing"
-// ({R}, 10+) and Tarountula sv01-018 "Surprise Attack" ({G}, 30).
-//
-//   31 PRINTINGS ON TWO REGEXES AND ZERO NEW VOCABULARY.
-//
-// Ten slices of this family bought a printed CLAUSE table and, usually, a
-// `BoardCondition` member to answer one of its rows. This slice buys NEITHER, and
-// the reason is worth stating precisely: THE CLAUSE IS A FIXED LITERAL, and A COIN
-// FACE IS NOT A BOARD FACT. "heads" is drawn from `rngState` at resolution; no
-// state answers it, nothing on the board can be asked about it, and there is
-// consequently nothing to look up. So there is no `Map`, no `BoardCondition`
-// member, no `DamageCountSource` member, and no state field — two anchored
-// regexes and a two-member union is the whole vocabulary cost.
-//
-// `scaledAttackDamage` IS DELIBERATELY UNTOUCHED. It stays a pure function of the
-// board, and the flip's contribution rides into the §8.5 pipeline as a local
-// `coinBonus`. A `DamageCountSource.coinFlip` member would have made that fold
-// impure — every consumer of the vocabulary suddenly needing an rng — to model a
-// thing the vocabulary is not for. The zero-vocabulary block below is what pins
-// this mechanically, in the only way a test can: BOTH sentences are refused by
-// `deriveAttackRequirement`, so neither reached a clause table at all.
-//
-// HEADS AND TAILS ARE ONE SLICE, and `AttackCoinFlip` is a 2-MEMBER UNION rather
-// than two independent readers. They are ONE MECHANISM — a single flip taken
-// BEFORE the §8.5 pipeline — read from two ends: heads adds the printed N, tails
-// cancels. The union makes their mutual exclusivity STRUCTURAL, which is the fact
-// that lets `attack.ts` match one value and never flip twice. Built as two slices,
-// the flip's site, its event and its fold would each have been designed twice.
-//
-// WHERE THE FLIP SITS is the other half of the design, and it is D125's rule
-// applied a second time: a derived shape is classified by WHERE IN RESOLUTION IT
-// LANDS. An effect PROGRAM runs at attack.ts's tail, strictly after §8.5 — it can
-// neither raise a number already computed nor retract damage already dealt — so a
-// flip that GATES damage must run in FRONT of the pipeline, at the same site as
-// §8 step 3's confusion flip. Two consequences the cases below assert directly:
-//
-//   (1) THE BONUS FOLDS PRE-WEAKNESS. Litwick's heads 10 lands alongside the base
-//       10 BEFORE Weakness, so a ×2 Fire body takes (10 + 10) × 2 = 40, not
-//       10 × 2 + 10 = 30. Two numbers that cannot be confused for one another.
-//
-//   (2) THE TURN STILL ENDS on a tails cancel. An attack that did nothing is an
-//       attack that was USED — the same rule the confusion and requirement paths
-//       already carried, and the reason `finishAttack` is reused here too.
-//
-// THE MODIFIER TRAP IS THE ONE THING THIS SUITE EXISTS TO CATCH. Every heads
-// printing carries a printed "10+"-style damage marker, which `parseAttackDamage`
-// splits into base 10 + modifier "+" — and that modifier IS the flip's N. The coin
-// reader therefore has to be a term in `modifierSimulated` as well as in
-// `effectSimulated`; miss the first and all 20 printings resolve PERFECTLY while
-// still emitting a loud ATTACK_EFFECT_SKIPPED row. The no-skipped-row block below
-// is the assertion that fails when that term is dropped.
-//
-// AND THE REST OF THE COIN FAMILY STAYS LOUD. The pool's flip printings run well
-// past these two sentences, and this suite pins WHICH PROPERTY refuses each of the
-// near ones — the `$` anchor for the second-consequent and extra-branch prints,
-// the `^Flip a coin\.` literal for the multi-flip prints, and the CONSEQUENT for
-// the 16 "…is now Paralyzed." printings, which are the slice's only real
-// double-read risk because `deriveAttackEffect` already claims them.
-//
-// 0.79.0 → 0.80.0 (D129) TOUCHED THIS FILE IN EXACTLY ONE PLACE, and it is a
-// CARDINALITY change: `bonusOnHeads` gained a `flips: AttackFlipCount`, so these 20
-// printings now read `{ kind: "printed", count: 1 }` where they used to carry no
-// such field — which is what they always were implicitly. Nothing else about the
-// slice moved: same two regexes, same union members, same site, same fold, same
-// KEPT printed base. The reason for the widening is that "Flip a coin until you get
-// tails. This attack does 30 more damage for each heads." (Bouffalant sv03-174) is
-// THIS member's consequent over an unbounded count — only the SOURCE of the number
-// differs, which is D128's rule applied to the other member. The `ONE_FLIP` constant
-// below names the value once so the diff stayed mechanical.
-//
-// One witness in this file moved with it: the unbounded printing that stood as a
-// REFUSAL under "a DIFFERENT NUMBER OF FLIPS" is the sentence D129 mapped, so that
-// case is now held by Magikarp sv02-042 ("Flip 2 coins. If both of them are heads,
-// this attack does 20 more damage.") — a sharper witness for the same claim, since
-// its consequent is FIREBREATHING's word for word. A witness quietly deleted when
-// its subject gets built is a witness that was never load-bearing.
-
-/** Tarountula sv01-018 "Surprise Attack", verbatim, and pinned char-for-char
-    against FIXTURE_POOL below. ELEVEN printings share it. Tarountula carries no
-    authored program (see the ZERO-rows block), so the sentence IS the wiring: a
-    drifted character does not throw, it drops the card back onto the loud
-    ATTACK_EFFECT_SKIPPED path and lets a flat 30 land unconditionally. */
 const SURPRISE_ATTACK = "Flip a coin. If tails, this attack does nothing.";
 
-/** 🆕🆕 **D499** — Squawkabilly `sv01-162` "Fly" (the id is `effects.ts`'s D142 block's,
-    UNRESOLVABLE in this checkout, so the SENTENCE is the citation): corpus FILE LINE
-    268, **1 sentence / 2 legal printings**. `SURPRISE_ATTACK` is its literal prefix,
-    which is the whole point of the rung below — the two differ on exactly ONE axis,
-    the appended heads consequent (D427). ⚠️ The bare `SURPRISE_ATTACK` above says
-    **11 printings**; measured off `legalAttackCorpus()` at this head it is **16**, and
-    that figure is pinned in `cancelThenPrevent.test.ts` §1 rather than corrected into
-    prose in two places (D490: read a printing count off the corpus, never type it). */
 const SECOND_CONSEQUENT_BUILT =
   "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.";
 
@@ -123,37 +31,12 @@ const SECOND_CONSEQUENT_BUILT =
     printed N values, and the sentence whose "+" marker the reader consumes. */
 const FIREBREATHING = "Flip a coin. If heads, this attack does 10 more damage.";
 
-/** Every printed N the "…does N more damage." sentence carries across the pool's
-    20 printings. Seven values, and the deriver has to read each one off the SAME
-    regex — there is no table, so a value it refused would be a value it could not
-    represent at all. */
 const PRINTED_BONUSES = [10, 20, 30, 50, 60, 80, 90] as const;
 
-/** U+00A0, spelled as an ESCAPE rather than typed. A non-breaking space is
-    byte-different from an ASCII one and INVISIBLE in a diff, so the near-miss
-    cases below name it instead of carrying it — the mistake this guards against
-    is exactly the mistake a literal would make in this file. */
 const NBSP = "\u00a0";
 
-/** The flip COUNT every printing in THIS slice carries, as the value D129 made it.
-    `bonusOnHeads` was `{ kind, per }` when D126 built it — one flip, implicitly —
-    and D129 WIDENED it to carry an `AttackFlipCount`, because "Flip a coin until
-    you get tails. This attack does 30 more damage for each heads." (Bouffalant
-    sv03-174) is the SAME consequent over an unbounded count. Only the SOURCE of the
-    number moved: these 20 printings still take exactly ONE flip, still KEEP their
-    printed base, and still fold `heads × per` at the same pre-W/R step. `printed 1`
-    is what they always were implicitly, now written down. Naming the value once,
-    here, is what keeps the widening a CARDINALITY change rather than a rewrite of
-    this file — every expectation below reads `flips: ONE_FLIP` and the slice's own
-    claims are untouched. */
 const ONE_FLIP = { kind: "printed", count: 1 } as const;
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it.
-    Copied rather than shared with attackRequirement.test.ts, where it is local for
-    the same reason: testFixtures.ts is a fixture module, not a string library. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -187,14 +70,6 @@ const FLIP_INDEX = 0;
     and every case that uses it asserts it SAW both rather than trusting the loop. */
 const SEEDS = 24;
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4).
-
-    Both Active spots are pinned to the neutral 200 HP fix-bigbody, which has NO
-    Weakness at all: every case that is not about Weakness therefore measures the
-    printed number and nothing else, and no defender here can be Knocked Out by a
-    10/20/30. The pin also makes the board a known shape on EVERY seed, which is
-    what the sweeps below depend on. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -234,9 +109,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     const attack = FIXTURE_POOL["sv01-018"]?.attacks?.[FLIP_INDEX];
     expect(attack?.effect).toBe(SURPRISE_ATTACK);
     expect(attack?.name).toBe("Surprise Attack");
-    // A FLAT 30, a NUMBER — the cancel consequent adds nothing, so there is no
-    // printed damage marker at all and `modifierSimulated` is never in play on
-    // this half of the slice. The exact contrast with Litwick's string "10+".
     expect(attack?.damage).toBe(30);
     expect(typeof attack?.damage).toBe("number");
     expect(attack?.cost).toEqual(["Grass"]);
@@ -248,10 +120,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     const attack = FIXTURE_POOL["sv03-036"]?.attacks?.[FLIP_INDEX];
     expect(attack?.effect).toBe(FIREBREATHING);
     expect(attack?.name).toBe("Firebreathing");
-    // "10+" — a STRING, and the load-bearing field of the whole slice. The "+" is
-    // the printed marker the coin reader consumes; typed as a number it would
-    // parse to a bare 10 with no modifier and the missed-`modifierSimulated`
-    // regression would become invisible.
     expect(attack?.damage).toBe("10+");
     expect(typeof attack?.damage).toBe("string");
     expect(attack?.cost).toEqual(["Fire"]);
@@ -276,8 +144,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(FIXTURE_POOL["sv03-036"]?.weaknesses).toEqual([{ type: "Water", value: "×2" }]);
     expect(FIXTURE_POOL["sv03-036"]?.resistances).toBeNull();
 
-    // The Weakness defender is FIRE-weak, which is Litwick's type and NOT
-    // Tarountula's — the whole reason one deck serves both ends of the slice.
     expect(FIXTURE_POOL["fix-weak"]?.weaknesses).toEqual([{ type: "Fire", value: "×2" }]);
     expect(FIXTURE_POOL["fix-weak"]?.hp).toBe(60);
     // …and the neutral defender has none at all, so the non-Weakness cases read
@@ -287,11 +153,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
   });
 
   it("pins the BYTES — and that both sentences are PURE ASCII", () => {
-    // THE FAMILY'S FIRST PRINTED TEXT WITH NO é IN IT. Every predecessor sentence
-    // says "Pokémon" at least once and carries the invariant
-    // `bytes = codePoints + count("Pokémon")`; these two name no Pokémon at all,
-    // so bytes and code points are EQUAL. The census confirms it: no curly
-    // apostrophe, no non-breaking space, no accented character anywhere in either.
     expect(SURPRISE_ATTACK.length).toBe(48);
     expect(utf8Bytes(SURPRISE_ATTACK)).toBe(48);
     expect(FIREBREATHING.length).toBe(55);
@@ -302,12 +163,9 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
       expect([...sentence].filter((ch) => (ch.codePointAt(0) ?? 0) >= 128)).toEqual([]);
       expect(sentence).not.toContain("é");
       expect(sentence).not.toContain("’"); // U+2019 — the pool holds zero of them
-      expect(sentence).not.toContain(NBSP); // the invisible drift
-      // The shared leading sentence, char-for-char: the literal the multi-flip
-      // printings are refused on.
+      expect(sentence).not.toContain(NBSP);
       expect(sentence.startsWith("Flip a coin. ")).toBe(true);
       expect(sentence.endsWith(".")).toBe(true);
-      // No trailing or leading whitespace on the printed row.
       expect(sentence).toBe(sentence.trim());
     }
     expect(SURPRISE_ATTACK).toContain("If tails,");
@@ -324,8 +182,6 @@ describe("deriveAttackCoinFlip — two sentences, ZERO new vocabulary", () => {
       const text = `Flip a coin. If heads, this attack does ${per} more damage.`;
       expect(deriveAttackCoinFlip(text)).toEqual({ kind: "bonusOnHeads", flips: ONE_FLIP, per });
     }
-    // …and Litwick's own printing is the smallest of them, derived off the string
-    // rather than off a rebuilt template.
     expect(deriveAttackCoinFlip(FIREBREATHING)).toEqual({
       kind: "bonusOnHeads",
       flips: ONE_FLIP,
@@ -354,28 +210,10 @@ describe("deriveAttackCoinFlip — two sentences, ZERO new vocabulary", () => {
   });
 
   it("buys ZERO NEW VOCABULARY — neither sentence reaches a clause table", () => {
-    // THE HEADLINE OF THE SLICE, stated the only way a test can state it: the
-    // clause-table reader REFUSES both sentences, so no `BoardCondition` member
-    // was consulted, none was added, and no row was written. `deriveAttackRequirement`
-    // is the sharpest witness because Tarountula's sentence ENDS in exactly the
-    // string that reader's skeleton claims ("this attack does nothing.") — it is
-    // refused at the anchor, by the flip sentence in front, and not by a table.
     expect(deriveAttackRequirement(SURPRISE_ATTACK)).toBeNull();
     expect(deriveAttackRequirement(FIREBREATHING)).toBeNull();
     expect(SURPRISE_ATTACK.endsWith("this attack does nothing.")).toBe(true);
     expect(SURPRISE_ATTACK.startsWith("If ")).toBe(false);
-    // The union's own shape says the same thing structurally: NO member of it
-    // carries a `cond`, a `count`, or anything else that would have to be answered
-    // off the board. A coin face is not a board fact.
-    //
-    // D129 ADDED A KEY HERE AND THE CLAIM IS UNCHANGED. `bonusOnHeads` now carries
-    // `flips` (the widening this file's ONE_FLIP names), and `{ kind: "printed",
-    // count: 1 }` is a LITERAL — it is answered by the sentence, not by the state,
-    // exactly like the `per` beside it. What the assertion is about is the ABSENCE
-    // of `cond` and `count`: those are the two field names the clause vocabulary and
-    // `DamageCountSource` use, and neither has ever appeared on this union. The key
-    // list is spelled out per member rather than loosened to "at least these", so a
-    // future field that DID have to be answered off the board would fail here.
     for (const text of [SURPRISE_ATTACK, FIREBREATHING]) {
       const flip = deriveAttackCoinFlip(text);
       if (flip === null) throw new Error("unreachable");
@@ -391,13 +229,8 @@ describe("deriveAttackCoinFlip — two sentences, ZERO new vocabulary", () => {
   });
 
   it("is EXCLUSIVE by construction — no string is both members", () => {
-    // The union is what makes "at most one flip per attack" structural rather than
-    // a rule attack.ts has to keep. The two anchors cannot both match: one
-    // requires "If heads, this attack does <digits> more damage.", the other
-    // "If tails, this attack does nothing.", and neither is a substring shape.
     expect(deriveAttackCoinFlip(SURPRISE_ATTACK)?.kind).toBe("cancelOnTails");
     expect(deriveAttackCoinFlip(FIREBREATHING)?.kind).toBe("bonusOnHeads");
-    // The crossed sentences — real English, no printing — are refused outright.
     expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does nothing.")).toBeNull();
     expect(
       deriveAttackCoinFlip("Flip a coin. If tails, this attack does 10 more damage."),
@@ -424,11 +257,9 @@ describe("deriver disjointness — a fourth reader that crosses none of the othe
     const representatives = [
       // deriveAttackEffect — a plain status op (Tarountula's own family neighbour).
       "Your opponent's Active Pokémon is now Paralyzed.",
-      // deriveAttackDamageBonus — D122's Tool clause (Greedent sv01-152).
       "If this Pokémon has a Pokémon Tool attached, this attack does 80 more damage.",
       // deriveAttackDamageMultiplier — the Prize-count "×" shape.
       "This attack does 50 damage for each Prize card your opponent has taken.",
-      // deriveAttackRequirement — D125's Palafin sentence.
       "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
     ];
     for (const sentence of representatives) {
@@ -445,11 +276,6 @@ describe("deriver disjointness — a fourth reader that crosses none of the othe
 
 describe("the rest of the coin family stays LOUD", () => {
   it("refuses a SECOND CONSEQUENT riding the same flip — at the `$` anchor", () => {
-    // Real printings, each one the mapped sentence with something appended. The
-    // trailing period is INSIDE the anchor, so an extra clause or an extra
-    // sentence denies the match outright — which is exactly right: the engine
-    // would resolve the damage and silently drop the heal / the Confusion / the
-    // can't-attack rider.
     for (const text of [
       // Floette sv01-092 — a heal riding the same heads branch.
       "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.",
@@ -463,22 +289,6 @@ describe("the rest of the coin family stays LOUD", () => {
       expect(deriveAttackCoinFlip(text)).toBeNull();
       expect(text.startsWith("Flip a coin. ")).toBe(true); // reached the anchor
     }
-    // 🆕🆕🛑 **D499 — THE FOURTH ENTRY LEFT THIS LIST BECAUSE IT IS BUILT, AND THE
-    // CLAIM IT CARRIED IS RE-POINTED RATHER THAN DELETED (D418/D438).** It was
-    // Squawkabilly `sv01-162` "Fly" — corpus FILE LINE 268, *"Flip a coin. If tails,
-    // this attack does nothing. If heads, during your opponent's next turn, prevent
-    // all damage from and effects of attacks done to this Pokémon."* — and it sat
-    // here to prove that `ATTACK_COIN_CANCEL`'s `\.$` refuses a second consequent
-    // appended to the mapped sentence.
-    //
-    // ⚠️ **A `toBeNull` COULD NOT SURVIVE THE BUILD AND A BARE `not.toBeNull` WOULD
-    // HAVE DISARMED IT** — that is true under a loosened `$` and under the real build
-    // alike (D438's polarity rule). So the rung now names the OWNER by VALUE: the
-    // string must derive to `cancelOnTailsElseProgram`, which is the answer ONLY the
-    // compound arm gives. Drop `ATTACK_COIN_CANCEL`'s `\.$` and that anchor — read
-    // FIRST, deliberately (see its arm's block in effects.ts) — claims the compound
-    // as a bare `cancelOnTails`, and this line reddens with the old discrimination
-    // intact and a strictly sharper failure message.
     expect(deriveAttackCoinFlip(SECOND_CONSEQUENT_BUILT)).toEqual({
       kind: "cancelOnTailsElseProgram",
       ops: [{ op: "preventDamage", effects: true }],
@@ -495,41 +305,12 @@ describe("the rest of the coin family stays LOUD", () => {
   });
 
   it("refuses a DIFFERENT NUMBER OF FLIPS — at the literal `^Flip a coin\\.`", () => {
-    // Real printings whose mechanism is a MULTI-flip tally. Each is refused on the
-    // opening sentence itself, which is the guard that matters: their consequents
-    // are close cousins of the mapped one — one of them is this slice's consequent
-    // WORD FOR WORD — and a reader anchored only on the consequent would claim all
-    // three and flip exactly once for a card that prints two or three.
-    //
-    // THE WITNESS MOVED, IT WAS NOT DELETED. Bouffalant sv03-174 ("Flip a coin until
-    // you get tails. …30 more damage for each heads.") stood here as the unbounded
-    // tally until D129 mapped it, so its slot is now held by Magikarp sv02-042, which
-    // is a SHARPER witness for this case's actual claim: its consequent is
-    // FIREBREATHING's consequent verbatim ("this attack does 20 more damage."), only
-    // the number differs, and the sentence is still unmapped. If the `^Flip a coin\.`
-    // literal ever loosened, Magikarp is the first printing that would silently
-    // resolve as a ONE-flip bonus — paying out on a single head where the card
-    // demands two.
-    // 🆕🆕🆕 D526 — BISHARP LEFT THE `toBeNull` LOOP AND IS RE-POINTED RATHER THAN DELETED (D178/D418's
-    // second half). Its stepped payout table is BUILT at D526 as the EIGHTH `AttackCoinFlip` member
-    // (`bonusLadder`, anchor `ATTACK_COIN_BONUS_LADDER`, corpus FILE LINE 218 — the LEGAL row prints
-    // 20/50/80; these 20/60/120 bytes are the pool's Bisharp sv03-149 and are KEPT as the
-    // digit-capture witness: two printings of one skeleton with the tokens varying, D413/D121). What
-    // this rung asserted was never "nothing reads it" — it was **`^Flip a coin\.` does not swallow a
-    // multi-coin sentence**, and that claim is kept for BOTH strings below (`startsWith` false), with
-    // Magikarp's null STANDING as the control: a `^Flip a coin\.` literal that loosened would read
-    // Magikarp back as a ONE-flip `bonusOnHeads`, and this loop is what would go red.
     const magikarp = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
-    // Bisharp sv03-149 — THREE coins with a stepped payout table (BUILT at D526, see above).
     const bisharp =
       "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.";
     for (const text of [magikarp, bisharp]) {
       expect(text.startsWith("Flip a coin. ")).toBe(false); // the opening sentence differs
     }
-    // Magikarp sv02-042 (+ its sv02-203 reprint) — TWO coins gating D126's own consequent, and the
-    // closest live near-miss this slice has: STILL null on this reader (the control).
-    // 🆕🆕🆕 D634 (D539): WITHDRAWN — the all-heads gate is BUILT (Bewear `me01-112` "Hyper Lariat",
-    // `bonusOnAllHeads`), so Magikarp reads as that member, never as a one-flip `bonusOnHeads`.
     expect(deriveAttackCoinFlip(magikarp)).toEqual({
       kind: "bonusOnAllHeads",
       flips: { kind: "printed", count: 2 },
@@ -542,30 +323,15 @@ describe("the rest of the coin family stays LOUD", () => {
       flips: { kind: "printed", count: 3 },
       ladder: [20, 60, 120],
     });
-    // 🆕🆕 D413 — MELMETAL swsh10.5-046 LEFT THAT LIST, AND IT IS RE-POINTED RATHER
-    // THAN DELETED, BECAUSE THE CLAIM IT WAS MAKING IS STILL THE ONE THAT MATTERS.
-    // Its sentence used to be refused by everything; D413 maps it. What this rung
-    // asserted was never "nothing reads it" — it was **`^Flip a coin\.` does not
-    // swallow a TWO-coin sentence**, and asserting that POSITIVELY is strictly
-    // stronger than asserting a null: a null goes green the day the whole family
-    // stops resolving, and `count: 2` does not. If the single-flip literal were ever
-    // loosened, this reads back `count: 1` and pays out on one head where the card
-    // demands two — the exact defect the paragraph above describes.
     expect(
       deriveAttackCoinFlip("Flip 2 coins. This attack does 90 more damage for each heads."),
     ).toEqual({ kind: "bonusOnHeads", flips: { kind: "printed", count: 2 }, per: 90 });
-    // Magikarp's tail really IS this slice's consequent, so the null above is the
-    // OPENING doing the work and not the consequent.
     expect(
       "Flip 2 coins. If both of them are heads, this attack does 20 more damage.".endsWith(
         "this attack does 20 more damage.",
       ),
     ).toBe(true);
     expect(FIREBREATHING.endsWith("this attack does 10 more damage.")).toBe(true);
-    // …and the sentence that used to sit here is now READ, by D129's unbounded arm,
-    // to the same member this slice owns over a different flip count. Stated here
-    // rather than dropped: a witness quietly deleted when its subject gets built is a
-    // witness that was never load-bearing. (Its own suite is untilTailsFlip.test.ts.)
     expect(
       deriveAttackCoinFlip(
         "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
@@ -574,16 +340,6 @@ describe("the rest of the coin family stays LOUD", () => {
   });
 
   it("refuses the PARALYSIS flip — the slice's ONLY real double-read risk", () => {
-    // 16 printings, and the one case where a loose reader would not merely be
-    // quiet but WRONG TWICE OVER. `deriveAttackEffect` ALREADY claims this
-    // sentence as a `coinFlipGate` program, which attack.ts runs at its tail with
-    // a flip of its own. If `deriveAttackCoinFlip` also claimed it, the attack
-    // would consume TWO rngState steps and emit TWO ATTACK_EFFECT_COIN_FLIP
-    // events for one printed "Flip a coin." — the faces could even disagree.
-    //
-    // What refuses it is the CONSEQUENT: "your opponent's Active Pokémon is now
-    // Paralyzed" is neither "this attack does N more damage" nor "this attack
-    // does nothing", so neither anchor can reach it.
     const paralysisFlip = "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.";
     expect(deriveAttackCoinFlip(paralysisFlip)).toBeNull();
     // ASSERTED EXPLICITLY, not implied: the OTHER reader really does own it, so
@@ -614,8 +370,6 @@ describe("constructed near-misses stay LOUD", () => {
       "Flip a coin. If tails, this attack does nothing",
       // "!" for "." — the same one-character difference from the other side.
       "Flip a coin. If tails, this attack does nothing!",
-      // The CONSEQUENT ALONE, with no flip in front — the degenerate string a
-      // substring matcher would happily claim, and the one D125's reader owns.
       "If heads, this attack does 10 more damage.",
       "If tails, this attack does nothing.",
       // Leading text pins `^`.
@@ -661,10 +415,6 @@ describe("constructed near-misses stay LOUD", () => {
     expect(
       deriveAttackCoinFlip(`Flip a coin.${NBSP}If heads, this attack does 10 more damage.`),
     ).toBeNull();
-    // A CURLY APOSTROPHE variant. Neither mapped sentence contains an apostrophe
-    // at all, so this is built on the nearest family sentence that does — and the
-    // point stands: the pool holds ZERO U+2019, so a hand-retyped near-miss is the
-    // only way one enters the codebase.
     expect(
       deriveAttackCoinFlip(
         "Flip a coin. If heads, your opponent’s Active Pokémon is now Paralyzed.",
@@ -685,10 +435,6 @@ describe("ZERO registry rows — the cards flip straight off their printed text"
 
 describe("Litwick — the heads BONUS through a REAL attack, both faces", () => {
   it("deals 20 on heads and 10 on tails, and flips exactly ONCE either way", () => {
-    // THE CENTRAL CASE. Both faces of one printed flip, reached by sweeping seeds
-    // rather than by injecting an rngState — so the flip is a REAL flip taken by
-    // the engine at the real site, and the assertion covers what the engine
-    // REPORTED as well as what it did.
     let sawHeads = false;
     let sawTails = false;
     for (let seed = 0; seed < SEEDS && !(sawHeads && sawTails); seed++) {
@@ -779,9 +525,6 @@ describe("Tarountula — the tails CANCEL through a REAL attack, both faces", ()
         expect(types(events).indexOf("ATTACK_EFFECT_COIN_FLIP")).toBeLessThan(
           types(events).indexOf("ATTACK_FAILED"),
         );
-        // THE TURN STILL ENDS. An attack that did nothing is an attack that was
-        // USED — the same claim attackRequirement.test.ts makes for D125's gate,
-        // and asserted the same way: the TURN_ENDED event AND the phase it left.
         expect(types(events)).toContain("TURN_ENDED");
         expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
       }
@@ -792,11 +535,6 @@ describe("Tarountula — the tails CANCEL through a REAL attack, both faces", ()
 
 describe("the fold order — the heads bonus lands BEFORE Weakness", () => {
   it("deals (10 + 10) × 2 = 40 into a Fire-weak body, not 10 × 2 + 10 = 30", () => {
-    // THE ARITHMETIC THAT PINS THE FOLD SITE. `coinBonus` is the attack's OWN
-    // printed extra, so it joins `scaled` at the pre-W/R step; folded after
-    // Weakness it would read 30, and folded as a post-damage effect op it could
-    // not exist at all. 40 and 30 cannot be confused for one another, and both sit
-    // under fix-weak's 60 HP so neither outcome is a Knock Out.
     let sawHeads = false;
     let sawTails = false;
     for (let seed = 0; seed < SEEDS && !(sawHeads && sawTails); seed++) {
@@ -829,10 +567,6 @@ describe("the fold order — the heads bonus lands BEFORE Weakness", () => {
 
 describe("rngState — exactly ONE flip's worth is consumed", () => {
   it("threads the flip back into rngState and consumes nothing more", () => {
-    // The flip the engine MUST take, computed by hand off the pre-attack state and
-    // compared to the post-attack one (checkup.test.ts's pattern). This is the
-    // assertion that catches a double flip: two steps would leave `after.rngState`
-    // at `rng2`, not `rng1`.
     for (const field of [litwickActive, tarountulaActive]) {
       const state = field(board(3), "p1");
       const [face, rng1] = flipCoin(state.rngState);
@@ -851,10 +585,6 @@ describe("rngState — exactly ONE flip's worth is consumed", () => {
   });
 
   it("does not double-flip with §8's CONFUSION check — an unconfused attacker flips once", () => {
-    // The two flips live at the same site, one gate apart, and the confusion one
-    // is the older. An UNCONFUSED attacker must never emit its event and must
-    // never consume its step — asserted here rather than assumed, because the
-    // D126 block was inserted between the confusion check and the pipeline.
     const state = tarountulaActive(board(5), "p1");
     expect(state.players.p1.active?.conditions.rotation).toBe("none");
     const [, rng1] = flipCoin(state.rngState);
@@ -871,11 +601,6 @@ describe("rngState — exactly ONE flip's worth is consumed", () => {
 
 describe("effectSimulated / modifierSimulated — no loud row on EITHER face", () => {
   it("emits NO ATTACK_EFFECT_SKIPPED for either card, heads or tails", () => {
-    // THE COVERAGE WIN, and the case that catches a missed `modifierSimulated`
-    // term. Litwick prints "10+", so `parseAttackDamage` hands attack.ts a
-    // modifier "+" — and the coin reader is the thing that consumes it. A build
-    // that only added the `effectSimulated` term would resolve every number in
-    // this file correctly and STILL fail here, on all four boards.
     let sawHeads = false;
     let sawTails = false;
     for (let seed = 0; seed < SEEDS && !(sawHeads && sawTails); seed++) {
@@ -903,11 +628,6 @@ describe("effectSimulated / modifierSimulated — no loud row on EITHER face", (
 
 describe("ATTACK_FAILED — the THREE reasons stay distinguishable", () => {
   it("renders a DISTINCT log row for coinFlip, requirement and confusion", () => {
-    // The enum widening's user-visible half, now three wide. Each reason is
-    // followed by something different — "confusion" by its own COUNTERS_PLACED
-    // row, "requirement" by nothing at all, "coinFlip" by nothing but PRECEDED by
-    // the ATTACK_EFFECT_COIN_FLIP that already named the face — so each line has a
-    // different job and none may collapse into another.
     const state = tarountulaActive(board(0), "p1");
     const uid = activeUid(state, "p1");
     const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:07" };
@@ -924,8 +644,6 @@ describe("ATTACK_FAILED — the THREE reasons stay distinguishable", () => {
     expect(requirementRow).toContain("its condition was not met");
     expect(coinRow).toContain("did nothing");
     expect(coinRow).toContain("coin flip");
-    // The coin row does NOT repeat the face — the row in front of it already said
-    // it, and the log's copy for that row is shared with the Trainer flips.
     expect(coinRow).not.toContain("tails");
     expect(coinRow).not.toContain("Confused");
   });
@@ -948,7 +666,7 @@ describe("ATTACK_FAILED — the THREE reasons stay distinguishable", () => {
     }
     if (rendered === null) throw new Error("no seed in range produced a tails cancel");
     expect(rendered).toHaveLength(2);
-    expect(rendered[0]).toContain("tails"); // the shared flip row names the face
+    expect(rendered[0]).toContain("tails");
     expect(rendered[1]).toContain("did nothing"); // and this one names the consequence
   });
 });

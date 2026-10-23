@@ -25,18 +25,8 @@ import {
   setBenchDamage,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D607 — WP28a: THE FIRST HALF OF THE SCALING COUNT SOURCES ──────────────────────────────
-//
-// 8 printed attack texts / 14 `me` printings, all attacks, no registry key. Three NEW nullary
-// `DamageCountSource` members, one evaluator arm each — `energyInPlayBothSides` (Delphox ×2),
-// `toolsInPlayBothSides` (Bronzong), `basicEnergyTypesOnYourBoard` (Sylveon ex ×3) — and four texts on
-// SHIPPED members: Beedrill ex ×2 and Paldean Tauros (`pokemonInPlay`, two new body-map keys), Raticate
-// ×2 (`damageCountersOnYourBench`, the "Rattata" key on a widened anchor), Tinkaton (`energyOnOpponent`
-// on the penalty fold) and Beautifly ×2 (`cardsInOpponentHand`, the comma-joined reveal and an
-// "Energy card" noun). Every id and text off the LOCAL D1, 2026-10-08, `legal_standard = 1`; no id
-// was referenced in the tree before this slice (Delphox's two carry an Ability key since D591).
 
 const ENERGIZED_STORM = "This attack does 30 damage for each Energy attached to all Pokémon.";
 const TOOL_DROP = "This attack does 40 damage for each Pokémon Tool attached to all Pokémon.";
@@ -53,7 +43,6 @@ const WINDUP_SWING =
 const ENERGY_STRAW =
   "Your opponent reveals their hand, and this attack does 80 damage for each Energy card you find there.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [ENERGIZED_STORM, ["mep-074", "me04-013"]],
   [TOOL_DROP, ["me02-072"]],
@@ -65,7 +54,6 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [ENERGY_STRAW, ["me02.5-013", "me02.5-219"]],
 ];
 
-/** WP28's other half (WP28b), named: each needs vocabulary beyond this slice. [🆕🆕🆕 D623 (D539): five are built at D623 — Kyogre, Igglybuff, Pikachu, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there.] [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630.] [🆕🆕🆕 D633 (D539): Doublade ×3 BUILT at D633.] */
 const WP28B: readonly (readonly [string, number])[] = [
   [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
@@ -76,7 +64,6 @@ const WP28B: readonly (readonly [string, number])[] = [
     1,
   ],
   ["This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.", 1],
-  // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06); the clean sentence is still unread. [🆕🆕🆕 D623 (D539): WITHDRAWN — Pika Chain is read at D623, on the body-map key "Pikachu and Pikachu ex".]
   ["This attack does 40 damage for each of your Pikachu and Pikachu ex in play.", 1],
   [
     "This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.",
@@ -104,11 +91,8 @@ describe("D607 §1 — the texts: 8 attack sentences / 14 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(14);
   });
 
-  it("WP28b stays unbuilt: 7 texts / 11 printings, named (🆕🆕🆕 D623 (D539): WITHDRAWN — five are built at D623; Doublade ×3 and Okidogi stay unbuilt) (🆕🆕🆕 D630 (D539): Okidogi built at D630; only Doublade ×3 stays) (🆕🆕🆕 D633 (D539): Doublade ×3 built at D633; none stays)", () => {
+  it("WP28b stays unbuilt: 7 texts / 11 printings, named ( D623 (D539): WITHDRAWN — five are built at D623; Doublade ×3 and Okidogi stay unbuilt) ( D630 (D539): Okidogi built at D630; only Doublade ×3 stays) ( D633 (D539): Doublade ×3 built at D633; none stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
-    // 🆕🆕🆕 D623 — the two texts still unread; the other five are `scalingCountsMeD623.test.ts`'s.
-    // 🆕🆕🆕 D630 (D539) — one now: Okidogi (`WP28B[6]`) is reader-built at D630 (M1); Doublade stays. [🆕🆕🆕 D633: no longer]
-    // 🆕🆕🆕 D633 (D539) — none now: Doublade (`WP28B[0]`) is reader-built at D633 (O1).
     const stillUnbuilt = new Set<string | undefined>([]);
     for (const [text, n] of WP28B) {
       expect([text, me.get(text)]).toEqual([text, n]);
@@ -209,7 +193,6 @@ describe("D607 §2 — the readings", () => {
         "This attack does 10 damage for each damage counter on all of your Benched Raticate.",
       ),
     ).toBeNull();
-    // The period-joined reveal still reads (the `sv` Trainer-card row).
     expect(
       deriveAttackDamageMultiplier(
         "Your opponent reveals their hand. This attack does 50 damage for each Trainer card you find there.",
@@ -391,11 +374,6 @@ const DECK = deckOf({
   "fix-energy": 15,
 });
 const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), "fix-blend"]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

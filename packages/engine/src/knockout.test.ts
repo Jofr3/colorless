@@ -17,14 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 4 — the Knock Out generalized off the Active. Two reaches the old
-// engine could not: BENCH Knock Outs (a spread attack finishing a Benched
-// Pokémon, resolved by the shared board sweep in flow.ts collectKnockOuts) and
-// MID-TURN Knock Outs that RESUME the actor's turn (evolve-below-HP — see the
-// characterization test in stadiumTool.test.ts). This suite drives the spread
-// path end to end; the fix-sniper's "Spread Shot" does 30 to the Active AND 20
-// to each of the opponent's Benched Pokémon (effect text the deriver reads).
-
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first turn with no §4 attack restriction. */
 function p1Turn2(seed: number): GameState {
@@ -65,10 +57,6 @@ describe("spreadDamage — the derived spread op", () => {
   });
 
   it("derives the flat 'also' rider (Cetoddle sv02-053 'Avalanche') to the same op", () => {
-    // Avalanche does 30 to the Active (the attack's own `damage` field) THEN
-    // this secondary spread; the "also" is emphasis of the main hit, not a
-    // different op — it derives to the identical `spreadDamage`. Verbatim card
-    // text from the live SV pool, so the deriver reads a real print.
     expect(
       deriveAttackEffect(
         "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",

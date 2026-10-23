@@ -13,23 +13,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: the discardEnergy op's ATTACK ARMS. No new op — two extensions of
-// the D41 hammer / D42 self-discard work, both DERIVED from the printed sentence,
-// so the slice lands its cards with ZERO registry rows:
-//
-//   • the hammer family's ATTACK TWINS — "Discard an Energy from your opponent's
-//     Active Pokémon", bare (Pincurchin, Gumshoos, Dragonite V) and behind a coin
-//     flip (Dedenne, Maschiff, Tympole, Yveltal). The existing `opponentActive`
-//     arm, now reached from an attack, so a decision about the OPPONENT's board
-//     parks mid-attack for the first time (D42's attackEpilogue carries the tail);
-//   • the EXACT-N self-discard — `count` widens from `"all"` to any number
-//     ("Discard 2 Energy from this Pokémon" — Corviknight, Slither Wing;
-//     "Discard 3" — Koraidon). The prompt's `scope` becomes
-//     `{kind:"total",count}`, and the interchangeable-candidate collapse keeps
-//     `count` representatives per class instead of one, so every way of splitting
-//     the count across distinguishable Energy stays reachable while identical
-//     copies beyond the count still never make it into a question.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -120,8 +103,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     expect(deriveAttackEffect("Discard 3 Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 3 },
     ]);
-    // The article stays the one-Energy op (no `count` at all), so D42's shape is
-    // untouched — the two spellings are not two ways to say the same thing here.
     expect(deriveAttackEffect("Discard an Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
     ]);
@@ -129,27 +110,13 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
 
   it("refuses the sentences it still cannot express", () => {
     for (const text of [
-      // Krookodile (sv01-117): a REPEAT count off a flip-until-tails loop. It ends
-      // in the twin's exact words, so only the anchor keeps it off a single silent
-      // discard — the loudest failure this slice could have.
       "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
       // Sandaconda (sv01-120): the count is fine, the rider after it is not.
       "Discard 2 Energy from this Pokémon. If you discarded any Energy in this way, your opponent shuffles their Active Pokémon and all attached cards into their deck.",
-      // (The TYPED sentences this list used to hold — Arcanine ex, Kilowattrel,
-      // the Pokémon GO wording — derive now, through the `providesEnergy` filter
-      // that reads what an Energy PROVIDES on its host. See providesEnergy.test.ts.)
-      // Not a printed card, and a silent no-op is the worst possible derivation.
       "Discard 0 Energy from this Pokémon.",
       // The opponent's BOARD (Crushing Hammer's wording) is the Trainer arm, which
       // no attack prints — it would need `opponentChosen`, not `opponentActive`.
       "Discard an Energy from 1 of your opponent's Pokémon.",
-      // ANCHORS, pinned directly. Krookodile above does NOT pin them: it is
-      // refused by the leading `^` AND by its lowercase mid-sentence "discard",
-      // so either guard alone still refuses it. Each string below keeps the
-      // pattern's own CAPITALISED first word, so it is the anchor and nothing
-      // else that refuses it — drop a `^` or a `$` and every one of these derives
-      // to a program that silently implements HALF a card, which is the whole
-      // safety argument for a whole-sentence deriver.
       "This attack does 30 damage. Discard 2 Energy from this Pokémon.",
       "Discard 2 Energy from this Pokémon. Then, flip a coin.",
       "This attack does 20 damage to each of your opponent's Benched Pokémon. Discard an Energy from your opponent's Active Pokémon.",
@@ -248,8 +215,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
   });
 
   it("two identical Energy on the defender ask nothing — the collapse reaches the opponent too", () => {
-    // The D42 collapse keys on (host, what a Basic PROVIDES), so two prints of
-    // the same Basic type are one candidate wherever they sit.
     const state = matchup(
       4,
       "sv02-072",
@@ -268,10 +233,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
   });
 
   it("still strips a defender the same attack Knocked Out — the sweep runs after the answer", () => {
-    // fix-victim has 30 HP, so Needle Crush's 70 is lethal. §8 resolves the whole
-    // attack before the §8.1 Knock Out check, so the defender is still on the
-    // board holding its Energy when the effect asks — the question is legal, if
-    // academic (the rest of the stack follows it into the pile a moment later).
     const state = matchup(
       5,
       "sv02-072",
@@ -338,14 +299,11 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       if (find(events, "ATTACK_EFFECT_COIN_FLIP")?.result !== "heads") continue;
       parkedSomewhere = true;
       expect(after.phase.kind).toBe("effect:choose");
-      // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
       expect(after.pending).toEqual([
         {
           kind: "attackEpilogue",
           seat: "p1",
           uid: find(events, "ATTACK_DECLARED")?.uid,
-          // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
-          // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
           attack: find(events, "ATTACK_DECLARED")?.attack,
         },
       ]);
@@ -362,7 +320,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 2 },
       { id: "fix-energy", count: 1 },
     ]);
-    // ⚠️ INDEX 1 — Smashing Wing's PRINTED number, behind "Iron Smasher" (D173).
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     const prompt = discardPrompt(parked);
     expect(prompt.note).toBe("Discard 2 Energy from this Pokémon.");
@@ -379,7 +336,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       seat: "p1",
       choice: { kind: "discardEnergy", uids: picks },
     });
-    // ONE event per affected Pokémon, so two cards off one host is one row.
     const discarded = findAll(events, "ENERGY_DISCARDED");
     expect(discarded).toHaveLength(1);
     expect(discarded[0]?.uids).toEqual(picks);
@@ -397,7 +353,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 3 },
       { id: "fix-energy", count: 1 },
     ]);
-    // ⚠️ INDEX 1 — Rampaging Fang's PRINTED number, behind "Claw Slash" (D173).
     const { state: parked } = mustApply(choice, { type: "attack", seat: "p1", index: 1 });
     const prompt = discardPrompt(parked);
     expect(prompt.note).toBe("Discard 3 Energy from this Pokémon.");
@@ -439,7 +394,6 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       { id: "fix-fighting-energy", count: 2 },
       { id: "fix-energy", count: 1 },
     ]);
-    // ⚠️ INDEX 1 — Smashing Wing's PRINTED number (D173).
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     const offered = discardPrompt(parked).discardable.map((d) => d.uid);
     const [first, second, third] = offered as [string, string, string];

@@ -29,81 +29,10 @@ import {
   types,
 } from "./testFixtures";
 
-// 🆕🆕 D381 — THE REVERSED OPTIONAL BOOST: D316's SENTENCE WITH ITS TWO HALVES
-// SWAPPED, ON ZERO NEW OPS.
-//
-// D316 read *"You may do {N} more damage. If you do, {drawback}"* — the antecedent
-// is the PAYOFF and the consequent is the cost. This slice reads the same sentence
-// the other way round: the antecedent is the COST and the consequent is the extra
-// damage it buys.
-//
-//   Cetitan ex `sv10-065` / `sv10-210` "Crushing Press" ({W}{W}{W}{C}, `140+`)
-//     "You may discard a Stadium in play. If you do, this attack does 140 more damage."
-//
-// **TWO legal printings, and every mechanism they need already shipped**:
-// `discardStadium` and `stadiumInPlay` are D380's and D378's, `optional` is D186's,
-// `conditionGate` is older than all three. What this slice buys is a READING — which
-// is exactly why the number that prices it is HOW MANY REFUSED SENTENCES IT CLAIMS,
-// measured before and after: the family is **7 sentences / 14 printings** and **3
-// sentences / 9 printings were refused at D380's head**; this reader claims **1 / 2**
-// and leaves **2 / 7** refused. §1 asserts both columns of all three figures.
-//
-// ### THE FOUR SHAPE QUESTIONS, ANSWERED FROM THE CATALOG BEFORE ANYTHING WAS SPELLED
-//
-// 1. **A SEPARATE READER, NOT A SECOND ANCHOR ON `deriveAttackOptionalBoost`, AND THE
-//    CATALOG DECIDED IT.** The family partitions by which half is the cost, and the
-//    partition is total: all FOUR forward sentences buy their bonus with a consequent
-//    that can ALWAYS be paid (shuffle yourself away, hurt yourself, forgo next turn's
-//    attack), so their reading needs no precondition; all THREE reversed ones lead
-//    with a cost that can be UNPAYABLE (a Stadium to discard, three Energy to shuffle
-//    away, a face-down Prize to turn up). **THE PRECONDITION IS WHAT THE SWAP MEANS**,
-//    so `AttackOptionalCostBoost` carries a `cond` the forward reading would never
-//    populate — and the two arms come out in the opposite order (question 4).
-//    §2 drives the partition rather than asserting it from this comment.
-// 2. **THE COST-SIDE TABLE IS A TABLE FROM ITS FIRST ROW** (`retrieveNoun`'s rule):
-//    `optionalCostOps` dispatches over closed `^…$` anchors and returns BOTH the ops
-//    and the board fact that makes them payable, so the next printed cost is a row.
-// 3. 🛑 **THE EMPTY ZONE, AND HERE IT IS NOT COSMETIC.** With no Stadium in play a
-//    confirm assembled without the gate would offer a "yes" that discards NOTHING and
-//    still pays the printed **+140** — a free 140, which is D380's stakeless dialog
-//    with damage at stake. §5 drives an empty zone and requires **140, not 280**.
-// 4. 🛑 **THE COST GOES IN FRONT OF THE HIT, AND THE ORDER IS OBSERVABLE ON A BOARD
-//    THIS POOL CAN BUILD.** `boostedArms` emits `[damageDefender(base + bonus),
-//    ...ops]` because the FORWARD sentence prints payoff-then-drawback; this one
-//    prints discard-then-damage. Neutralization Zone `sv06.5-060` prevents damage to
-//    a no-Rule-Box Pokémon **from an attacking Pokémon ex** — and Cetitan ex is one —
-//    so on that board the printed order deals **280** and the swapped order deals
-//    **0** and then discards the Stadium that stopped it. §4 drives both ends.
-//    ⚠️ A vacated `hpDelta` Stadium moves a MAXIMUM between the two hits as well, but
-//    all three of those printings are `sv08`/`sv10` and outside the six sets
-//    `CATALOG_MANIFEST` covers, so that half is NAMED rather than driven (D205).
-//
-// ⚠️ **THE VACUITY MODES, NAMED BEFORE THE BUILD AND EACH DRIVEN ON A BOARD:**
-//   • the reader could claim everything — **the saturation trap** (D379). §2 re-pairs
-//     each refused half with a half this reader DOES read, so each refusal is driven
-//     from OUTSIDE the population and is attributable to ONE half;
-//   • either gate could lose its `otherwise` and every board with a Stadium on it
-//     would still pass — §4 and §5 assert the printed **140** on a declined confirm
-//     AND on an empty zone;
-//   • the arms could be built in `boostedArms`' order and every board WITHOUT
-//     Neutralization Zone would still pass — §4's Zone board is the only rung that
-//     separates them, which is why the fixture is named `Fixceti ex`;
-//   • the whole reading could be dropped and the sentence would go back to the
-//     skipped-effect path — §3 pins the program byte-for-byte and §4 asserts the
-//     attack does NOT emit `ATTACK_EFFECT_SKIPPED`.
-//
-// WHAT SHIPS: **1 new reader**, **1 new exported assembler**, **1 cost-table row**,
-// **1 fixture**, **1 deck**. ZERO new `EffectOp` members, ops, events, prompts,
-// choice kinds, `BoardCondition` members, error codes or `packages/schema` bytes —
-// so `MATCH_RECORD_VERSION` stays **22**: every op this program contains could
-// already appear in a v22 record, so no v22 byte string means anything different
-// under this engine.
-
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-/** The TEN live readers, run as one. `censusAtHead.test.ts`'s nine plus this slice's. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -115,73 +44,25 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
-  // 🆕🆕 D419 — the TWELFTH reader (D417, `deriveAttackCancelRequirement`), which
-  // this list never had.
-  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
-  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
-  // `];`, and appending moves that anchor without a character of it changing —
-  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
   deriveAttackCancelRequirement,
-  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-  // array's LAST entries plus its closing bracket, and appending moves that anchor
-  // without a character of it changing.
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
-/** THE SENTENCE THIS SLICE BUYS, byte-for-byte from the committed corpus. */
 const CETITAN = "You may discard a Stadium in play. If you do, this attack does 140 more damage.";
 
-/** …and the ONE it leaves, with the mechanism it is waiting on. Kept as data because
-    §6 drives it: a successor who widens either anchor to swallow it reddens here by
-    name.
-
-    🆕🆕 **D383 EMPTIED HALF OF THIS AND THE ENTRY MOVED TO `TAKEN_SINCE` RATHER THAN
-    BEING DELETED** (D178: provenance is annotated, never overwritten). It read *"an
-    Energy→OWN-DECK op AND a Bench-snipe consequent"* — and BOTH halves of that price
-    were the wrong size. See `TAKEN_SINCE`. */
-/*  🆕🆕🆕 **D548 EMPTIED IT, AND THE ENTRY MOVED TO `TAKEN_SINCE` RATHER THAN BEING DELETED**
-    (D178). It read, verbatim: *"A FACE-UP PRIZE on `PlayerState` — a persisted-shape
-    change, so `MATCH_RECORD_VERSION` on top of the engine bump."* The persisted-shape half
-    was RIGHT (`MATCH_RECORD_VERSION` 31 → 32) and the type was WRONG: the engine's is
-    `PlayerSide` (`faceUpPrizes`); `PlayerState` is the lobby's seat type. See
-    `TAKEN_SINCE.prize`. The object stays (typed wide, so the loops below still compile and
-    each carries a `toHaveLength(0)` guard rather than going silently vacuous — D542 (9)). */
 const STILL_OWED: Readonly<Record<string, string>> = {};
 
-/** 🆕🆕 D383 — THE ROW THAT LEFT `STILL_OWED`, ASSERTED RESOLVED rather than merely
-    removed. `stadiumPresence.test.ts` grew the same list at D382 for the same reason:
-    a refusal list can be made green by SHORTENING it, so every departed row owes a
-    positive claim in its place.
-
-    Wellspring Mask Ogerpon ex `sv06-064`/`-194`/`-213`/`sv08.5-027`/`-152`
-    "Torrential Pump" ({W}{C}{C}, flat **100**), **5 legal printings** — D381's own
-    reading widened at its CONSEQUENT, on ZERO new readers. **THE PRICE D381 WROTE
-    DOWN WAS WRONG IN BOTH DIRECTIONS**: the "Energy→own-deck op" is one optional
-    VALUE on `discardEnergy.to`, the "Bench-snipe consequent" was already built (the
-    payoff anchor shares its regex BODY with `deriveAttackEffect`'s `ALSO_BENCHED_SNIPE`
-    and differs only in the case of the leading word), and what it actually cost is a
-    `BoardCondition` member D381 never named. */
 const TAKEN_SINCE = {
   energy:
     "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-  /** 🆕🆕🆕 D548 — Cresselia `sv06.5-021` "Crescent Purge", **2 legal printings**, the fifth
-      cost row (`crescentPurge.test.ts`). The LAST member of `STILL_OWED`. */
   prize:
     "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
 } as const;
 
 const FAMILY = /^You may .*If you do,/;
 
-/** The EIGHTH member of the widened family, and the one the handoff's `/If you do,/`
-    census could not see: the connective is a condition on the COST's own effect
-    rather than a bare *"if you do"*. Refused, and named so §1 can drive it.
-    ✅ 🆕🆕 **D385 BUILT IT** — the sentence above is kept as written (D178) because the
-    census claim it makes is still true; what changed is that §1's two REFUSAL rungs
-    are now claims about the reading. */
 const HAND_DISCARD =
   "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.";
 const BEACH_COURT = "sv01-167";
@@ -189,22 +70,12 @@ const NEUTRALIZATION_ZONE = "sv06.5-060";
 
 // ── boards ─────────────────────────────────────────────────────────────────────
 
-/** Put `stadiumId` into `seat`'s hand and play it — the shared §7.3 zone then carries
-    `owner: seat`. ⚠️ **A CONSTRUCTED `state.stadium` WOULD HAVE BEEN GREEN AND DEAD**
-    (D310/D314/D318, and D380 at this exact seam): what is under test is that the
-    Stadium the RULES put in the zone is the one the confirm takes out of it. */
 function playStadium(state: GameState, seat: Seat, stadiumId: string): GameState {
   const withCard = handFromDeck(state, seat, stadiumId, 1);
   const uid = handUid(withCard, seat, stadiumId);
   return mustApply(withCard, { type: "playTrainer", seat, uid }).state;
 }
 
-/** Setup, then P1's turn 2 (P2 went first and passed) — P1's first unrestricted turn,
-    so the attack step is legal (§4). **P2 IS ALWAYS THE STADIUM'S OWNER** and P1
-    always the attacker, so the two seats differ in the fixture before any assertion
-    is made about either (D380's finding: a seat defect hides inside a symmetric
-    board). P1's Active is Cetitan ex, paid {W}{W}{W}{C}; P2's is `fix-titan`, whose
-    340 HP survives the boosted 280 and whose name carries NO Rule Box. */
 function board(seed: number, stadiumId: string | null = null): GameState {
   let state = driveSetup(
     seed,
@@ -233,45 +104,21 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** THREE SEEDS (D270's rule). Nothing on this seam flips a coin. */
 const SEEDS = [7001, 7013, 7027] as const;
 
 describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", () => {
-  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
-    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
-    // it could sit short of the module indefinitely — which is precisely the state
-    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
-    // D418. A guard in another file guards that file's copy alone.
-    //
-    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
-    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
-    // off the MODULE surface, so no edit here can move a census number again. What
-    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
-    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
-    // module and from this list in the SAME commit, and the figures would then move
-    // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 the family is 7 sentences / 14 printings, and it partitions 5 forward / 2 reversed… ", () => {
+  it("the family is 7 sentences / 14 printings, and it partitions 5 forward / 2 reversed… ", () => {
     const family = corpus().filter(([, s]) => FAMILY.test(s));
     expect([family.length, units(family)]).toEqual([7, 14]);
-    // D316's four, which were already resolving at D380's head.
     const forward = family.filter(([, s]) => deriveAttackOptionalBoost(s) !== null);
     expect([forward.length, units(forward)]).toEqual([4, 5]);
-    // …and the reversed half. 🆕🆕 D383 — **1 / 2 -> 2 / 7**, because the PAYOFF half
-    // became a table. The reader is unchanged and so is its anchor: what moved is that
-    // `optionalCostPayoff` now has a second row.
     const reversed = family.filter(([, s]) => deriveAttackOptionalCostBoost(s) !== null);
-    // 🆕🆕🆕 D548 — **2 / 7 → 3 / 9**: the face-up Prize (2 printings) joins the reversed
-    // half through the COST table's fifth row; the family (7 / 14) and the forward half
-    // (4 / 5) are unmoved, and 4 + 3 = 7, 5 + 9 = 14 — the whole family now reads.
     expect([reversed.length, units(reversed)]).toEqual([3, 9]);
-    // 🛑 THE TWO READERS ARE MUTUALLY EXCLUSIVE ON EVERY PRINTED MEMBER, which is the
-    // property that lets attack.ts SUM its terms instead of choosing between them.
     for (const [, s] of family) {
       expect(
         [deriveAttackOptionalBoost(s), deriveAttackOptionalCostBoost(s)].filter((r) => r !== null)
@@ -281,47 +128,32 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     }
   });
 
-  it("🛑 …the refused half went 3 sentences / 9 printings → 1 / 2, in TWO slices", () => {
+  it("…the refused half went 3 sentences / 9 printings → 1 / 2, in TWO slices", () => {
     const family = corpus().filter(([, s]) => FAMILY.test(s));
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
-    // AFTER. 🆕🆕 D383 — the sole survivor is the one `STILL_OWED` row and nothing else.
-    // 🆕🆕🆕 D548 — **1 / 2 → 0 / 0**: `STILL_OWED` is empty and so is the refused half —
-    // and the positive rung below (the departed row RESOLVES) is what stops this going
-    // green by shortening (D383).
     expect([refused.length, units(refused)]).toEqual([0, 0]);
     expect(refused.map(([, s]) => s)).toEqual([]);
     expect(Object.values(STILL_OWED)).toHaveLength(0);
     expect(resolvedByAnyReader(TAKEN_SINCE.prize)).toBe(true);
-    // BEFORE, re-derived rather than quoted: drop this reader from the set and the
-    // refused half is the head D380 handed over — 3 sentences / 9 printings.
     const withoutThisReader = (text: string): boolean =>
       READERS.filter((read) => read !== deriveAttackOptionalCostBoost).some(
         (read) => read(text) !== null,
       );
     const before = family.filter(([, s]) => !withoutThisReader(s));
     expect([before.length, units(before)]).toEqual([3, 9]);
-    // …and the delta is exactly the TWO sentences this reader claims — D381's, and
-    // 🆕🆕 D383's, which is the second row of the payoff table rather than a second
-    // reader. **THE READER IS THE UNIT OF THIS SUBTRACTION, NOT THE SLICE**, which is
-    // why the arithmetic here is 3 -> 1 across two commits and not 3 -> 2 -> 1.
     expect(
       before
         .filter(([, s]) => !refused.some(([, r]) => r === s))
         .map(([, s]) => s)
         .sort(),
-    ).toEqual([CETITAN, TAKEN_SINCE.energy, TAKEN_SINCE.prize].sort()); // 🆕🆕🆕 D548 — the third: 3 -> 0 across three commits.
+    ).toEqual([CETITAN, TAKEN_SINCE.energy, TAKEN_SINCE.prize].sort());
   });
 
   it("the sentence carries TWO printings, and no near spelling hides behind it", () => {
     const rows = corpus().filter(([, s]) => s === CETITAN);
     expect([rows.length, units(rows)]).toEqual([1, 2]);
-    // The census asked for the WORD rather than the phrase (D310/D311): every legal
-    // attack sentence that carries "If you do," AND "Stadium" at all is this one.
     const both = corpus().filter(([, s]) => s.includes("If you do,") && s.includes("Stadium"));
     expect(both.map(([, s]) => s)).toEqual([CETITAN]);
-    // …and the offer is spelled ONE way. Two records carry a leading "You may discard"
-    // over a Stadium — D380's bare imperative and this compound — for FOUR printings
-    // between them, and neither spells the noun lower-case or possessive.
     const offered = corpus().filter(([, s]) => /^You may discard .{0,20}stadium/i.test(s));
     expect([offered.length, units(offered)]).toEqual([2, 4]);
     expect(offered.map(([, s]) => s).sort()).toEqual(
@@ -329,52 +161,24 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     );
   });
 
-  it("🛑 …and the FAMILY IS EIGHT WHEN THE CONNECTIVE IS SHORTENED, not seven", () => {
-    // 🛑 **ASK THE CENSUS TWICE — ONCE WITH THE LITERAL SHORTENED TO THE PART A
-    // SPELLING CANNOT CHANGE** (D310/D311's rule, and the resume point's census was a
-    // FLOOR on this family for exactly the reason that rule names). `/If you do,/` is
-    // the connective FOUR of the five reversed printings happen to print; relaxing it
-    // to a bare sentence break finds an EIGHTH record the handoff's figure could not
-    // see.
+  it("…and the FAMILY IS EIGHT WHEN THE CONNECTIVE IS SHORTENED, not seven", () => {
     const strict = corpus().filter(([, s]) => FAMILY.test(s));
     const wide = corpus().filter(([, s]) => /^You may .*\. If /.test(s));
     expect([strict.length, units(strict)]).toEqual([7, 14]);
     expect([wide.length, units(wide)]).toEqual([8, 15]);
-    // …and the difference is ONE record, named, refused, and refused for a mechanism
-    // rather than for its connective: the cost is a HAND discard this engine cannot
-    // spell as an attack step, and the consequent is conditional on HOW MANY cards it
-    // moved — a record of the cost's own effect, not a board fact read before it.
     const extra = wide.filter(([, s]) => !strict.some(([, t]) => t === s));
     expect(extra.map(([n, s]) => [n, s])).toEqual([[1, HAND_DISCARD]]);
-    // ✅ 🆕🆕 **D385 TOOK IT, AND THE TWO REFUSAL RUNGS THAT STOOD HERE ARE RE-AIMED
-    // RATHER THAN DELETED.** This rung used to assert `resolvedByAnyReader(HAND_DISCARD)`
-    // was FALSE and that re-pairing the hand cost with `If you do,` was refused BY THE
-    // COST HALF. D385 widened the connective to a closed alternation of two and added
-    // the cost row, so BOTH claims are now false — and neither `find` moved a character,
-    // which is D384's premise-rot in the TEST file set. What the rung is ABOUT survives
-    // untouched: the census question (*"ask it once with the connective shortened"*)
-    // found a record the family regex could not see, and that is still exactly what the
-    // three lines above measure.
     expect(resolvedByAnyReader(HAND_DISCARD)).toBe(true);
     expect(deriveAttackOptionalCostBoost(HAND_DISCARD)).toEqual({
       cond: { kind: "yourHandNotEmpty" },
       ops: [{ op: "discardHand" }],
       payoff: { kind: "moreDamage", bonus: 120 },
     });
-    // 🛑 AND THE COST HALF IS WHAT CLAIMS IT, not the connective alone — the same
-    // synthetic re-pairing §2 uses, so the claim is attributable to one half. The hand
-    // cost reads under BOTH connectives (they are one reading — see
-    // `OPTIONAL_COST_CONNECTIVE`), and an UNKNOWN cost is still refused under both.
     expect(
       deriveAttackOptionalCostBoost(
         "You may discard your hand. If you do, this attack does 120 more damage.",
       ),
     ).toEqual(deriveAttackOptionalCostBoost(HAND_DISCARD));
-    // 🆕🆕🆕 D548 — THE UNKNOWN-COST CONTROL IS RE-POINTED BY VALUE (D438): the face-up
-    // Prize cost is a TABLE ROW now, so under BOTH connectives it READS (they are one
-    // reading — the fifth row's gate is exactly its payability, D385's obligation), and the
-    // "unknown cost under the second connective" control moves to the nearest miss that is
-    // still unknown — an OPPONENT's Prize, the one-axis side swap.
     expect(
       deriveAttackOptionalCostBoost(
         "You may turn 1 of your face-down Prize cards face up. If you discarded any cards in this way, this attack does 80 more damage.",
@@ -393,14 +197,11 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
     expect(deriveAttackOptionalCostBoost(CETITAN)).toEqual({
       cond: { kind: "stadiumInPlay" },
       ops: [{ op: "discardStadium" }],
-      // 🆕🆕 D383 — `bonus: 140` became `payoff: {kind, bonus}`. The KIND is what
-      // `attack.ts` reads to decide whether the printed base is re-homed, so a payoff
-      // that silently defaulted would delete a hit rather than mis-report a number.
       payoff: { kind: "moreDamage", bonus: 140 },
     });
   });
 
-  it("🆕🆕 D383 — and the SECOND printed payoff reads as the SAME shape, one row over", () => {
+  it("D383 — and the SECOND printed payoff reads as the SAME shape, one row over", () => {
     expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.energy)).toEqual({
       // The one new `BoardCondition` member, carrying the digit the anchor CAPTURED.
       cond: { kind: "yourActiveEnergyAtLeast", count: 3 },
@@ -414,24 +215,11 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
         },
         { op: "shuffleDeck" },
       ],
-      // 🆕🆕 D399 — `count` is the shared fragment's second capture. All 5 printings
-      // of this payoff spell "1 of", so the value is the one this reader always
-      // built; what changed is that it is READ rather than remembered.
       payoff: { kind: "benchSnipe", amount: 120, count: 1 },
     });
   });
 
-  it("🛑 the COST half's refusal is the COST's, not the reminder text's", () => {
-    // 🛑 THE SATURATION TRAP, REFUSED (D379). Both remaining printings carry a
-    // trailing parenthetical, so a `\.$` anchor would refuse them BY ACCIDENT and the
-    // suite would read green while claiming nothing. So each half is re-paired with a
-    // half this reader DOES read, and the sentences below are SYNTHETIC on purpose —
-    // no card prints them, which is the whole point of driving a refusal from outside
-    // the population.
-    // 🆕🆕🆕 D548 — THE SYNTHETIC BARE PRIZE SENTENCE NOW DERIVES (the reminder is an
-    // OPTIONAL suffix behind the fifth cost row), so this refusal is replaced by its
-    // NEAREST MISSES rather than flipped: the wrong ZONE (an opponent's Prize), the wrong
-    // COUNT (2), and the reminder behind a NON-prize cost — plus the positive rung.
+  it("the COST half's refusal is the COST's, not the reminder text's", () => {
     expect(
       deriveAttackOptionalCostBoost(
         "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage.",
@@ -452,10 +240,6 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
         "You may discard a Stadium in play. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
       ),
     ).toBeNull();
-    // 🆕🆕 D383 — THE ENERGY COST IS NO LONGER A REFUSAL AND THE ROW WAS REPLACED
-    // RATHER THAN DELETED. Its two NEAREST misses take its place, and both are the
-    // mistakes this row's anchor is actually protecting against: the wrong BODY and
-    // the wrong ZONE. Synthetic on purpose — no card prints either.
     expect(
       deriveAttackOptionalCostBoost(
         "You may shuffle 3 Energy attached to your opponent's Active Pokémon into your deck. If you do, this attack does 120 more damage.",
@@ -486,7 +270,6 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
       ],
       payoff: { kind: "moreDamage", bonus: 120 },
     });
-    // …and the other control, unchanged: the SAME payoff behind D381's own cost.
     expect(
       deriveAttackOptionalCostBoost(
         "You may discard a Stadium in play. If you do, this attack does 80 more damage.",
@@ -498,11 +281,7 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
     });
   });
 
-  it("🛑 the PAYOFF half's refusal is the PAYOFF's, on a cost the table reads", () => {
-    // 🆕🆕 D383 — the benched snipe is now a ROW, so the refusals move to ITS nearest
-    // misses: the zone word dropped (`opponentAny`, a different op) and the count
-    // moved off 1. Both are shapes `deriveAttackEffect` reads under OTHER anchors, so
-    // a payoff table that claimed them would be answering another arm's question.
+  it("the PAYOFF half's refusal is the PAYOFF's, on a cost the table reads", () => {
     expect(
       deriveAttackOptionalCostBoost(
         "You may discard a Stadium in play. If you do, this attack also does 120 damage to 1 of your opponent's Pokémon.",
@@ -532,33 +311,24 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
     ).toBeNull();
   });
 
-  it("🛑 the anchor is WHOLE-SENTENCE at BOTH ends, so a compound printing is refused", () => {
-    // 🆕🆕🆕 D548 — the loop is EMPTY now, and says so rather than going vacuous (D542 (9)).
+  it("the anchor is WHOLE-SENTENCE at BOTH ends, so a compound printing is refused", () => {
     expect(Object.values(STILL_OWED)).toHaveLength(0);
     for (const sentence of Object.values(STILL_OWED)) {
       expect(deriveAttackOptionalCostBoost(sentence), sentence).toBeNull();
     }
-    // 🆕🆕 D383 — and the ATTRIBUTION CONTROL that stops this rung passing because the
-    // list got shorter: the row that LEFT it is asserted to resolve.
     expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.energy)).not.toBeNull();
-    // 🆕🆕🆕 D548 — …and the second row that left it. Its trailing REMINDER is the one
-    // trailing sentence the anchor does accept, as an exact suffix behind its own cost row;
-    // any OTHER trailing sentence still denies it.
     expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.prize)).not.toBeNull();
     expect(deriveAttackOptionalCostBoost(`${TAKEN_SINCE.prize} Draw a card.`)).toBeNull();
-    // A leading or trailing sentence denies it, exactly as it denies D316's reader.
     expect(deriveAttackOptionalCostBoost(`Draw a card. ${CETITAN}`)).toBeNull();
     expect(deriveAttackOptionalCostBoost(`${CETITAN} Draw a card.`)).toBeNull();
-    // …and the bare D380 sentence, which stops at the first period.
     expect(deriveAttackOptionalCostBoost("You may discard a Stadium in play.")).toBeNull();
   });
 
-  it("🛑 the OTHER NINE readers refuse it, which is what makes ten readers one answer", () => {
+  it("the OTHER NINE readers refuse it, which is what makes ten readers one answer", () => {
     for (const read of READERS) {
       if (read === deriveAttackOptionalCostBoost) continue;
       expect(read(CETITAN), read.name).toBeNull();
     }
-    // …and this reader refuses all four of D316's, from the other side.
     for (const [, s] of corpus().filter(([, s]) => deriveAttackOptionalBoost(s) !== null)) {
       expect(deriveAttackOptionalCostBoost(s), s).toBeNull();
     }
@@ -589,11 +359,7 @@ describe("§3 — the program, pinned byte-for-byte: two gates, and BOTH carry a
     expect(optionalCostBoostProgram(reading, 140, CETITAN)).toEqual(expected);
   });
 
-  it("🛑 the DECLINE arm is the printed base and NOT nothing, on both gates", () => {
-    // The one piece of behaviour `boostedArms` carries, paid twice here. An absent arm
-    // on either gate would silently delete a 140-damage attack — which is the
-    // difference from D380's bare "You may", whose `otherwise` is rightly ABSENT
-    // because its whole printed content is the discard.
+  it("the DECLINE arm is the printed base and NOT nothing, on both gates", () => {
     const reading = deriveAttackOptionalCostBoost(CETITAN);
     if (reading === null) throw new Error("expected the reading");
     const gate = optionalCostBoostProgram(reading, 140, CETITAN)[0];
@@ -608,8 +374,6 @@ describe("§3 — the program, pinned byte-for-byte: two gates, and BOTH carry a
   });
 
   it("the base TRACKS the attack rather than being pinned, and the bonus is CAPTURED", () => {
-    // Every printing of this family carries a real printed base, and the capture is
-    // what keeps the assembler correct for a second printing rather than for this one.
     for (const trial of [0, 30, 140, 250]) {
       const reading = deriveAttackOptionalCostBoost(CETITAN);
       if (reading === null) throw new Error("expected the reading");
@@ -636,15 +400,10 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
       seat: "p1",
       note: CETITAN,
     });
-    // 🛑 NOTHING HAS BEEN DEALT YET — the whole hit moved inside the gate, which is
-    // what makes §8.5 run ONCE on the number the answer decided.
     expect(types(parked.events)).not.toContain("DAMAGE_DEALT");
 
     const done = say(parked.state, true);
     expect(done.state.stadium).toBeNull();
-    // The OWNER's pile, asserted as an EXTENSION of its own former contents (D380's
-    // repair — "contains the uid" and "grew by one" are both true of a cross-seat
-    // write on a symmetric board).
     expect(done.state.players.p2.discard).toEqual([
       ...parked.state.players.p2.discard,
       stadium.uid,
@@ -656,15 +415,8 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
   });
 
   it.each(SEEDS)(
-    "seed %i — 🛑 NEUTRALIZATION ZONE: the order is observable, and it is 280",
+    "seed %i — NEUTRALIZATION ZONE: the order is observable, and it is 280",
     (seed) => {
-      // 🛑🛑 **THE RUNG THAT SEPARATES THE PRINTED ORDER FROM `boostedArms`' ORDER, AND
-      // THE ONLY ONE THAT CAN.** Neutralization Zone `sv06.5-060` prevents damage to a
-      // Pokémon WITHOUT a Rule Box from an attacking Pokémon **ex**. `fix-titan` has no
-      // Rule Box and `Fixceti ex` is an ex, so while the Zone is in the shared zone this
-      // attack deals NOTHING. Discard first and the hit lands for 280; hit first and it
-      // is prevented for 0 and the Zone is then discarded by an attack that did nothing.
-      // Every board in this file that carries Beach Court instead is green EITHER WAY.
       const before = board(seed, NEUTRALIZATION_ZONE);
       const stadium = before.stadium;
       if (stadium === null) throw new Error("expected P2's Stadium in the zone");
@@ -706,7 +458,6 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
     const stadium = before.stadium;
     if (stadium === null) throw new Error("expected P2's Stadium in the zone");
     const done = say(attack(before).state, false);
-    // 🛑 THE DEFECT `optional`'s own doc names: a confirm that silently applies on "no".
     expect(done.state.stadium).toEqual(stadium);
     expect(done.state.players.p2.discard).not.toContain(stadium.uid);
     expect(types(done.events)).not.toContain("STADIUM_DISCARDED");
@@ -715,12 +466,8 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
   });
 
   it.each(SEEDS)(
-    "seed %i — 🛑 an EMPTY zone is not asked at all, and pays 140 rather than 280",
+    "seed %i — an EMPTY zone is not asked at all, and pays 140 rather than 280",
     (seed) => {
-      // 🛑 THE RUNG A DROPPED `conditionGate` REDDENS ON, AND IT IS TWO RUNGS AT ONCE:
-      // without the gate the program parks a confirm on an empty zone whose "yes"
-      // discards NOTHING and still pays the +140 — a **FREE 140**, which is D380's
-      // stakeless dialog with damage at stake.
       const before = board(seed, null);
       expect(before.stadium).toBeNull();
       const result = attack(before);
@@ -737,11 +484,6 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
   it.each(SEEDS)(
     "seed %i — ONE §8.5 hit, never two: exactly one DAMAGE_DEALT per answer",
     (seed) => {
-      // D316's arithmetic, inherited: Weakness DISTRIBUTES over a split hit but
-      // Resistance and the defender's reduction are SUBTRACTIONS paid once per hit, so a
-      // base landed pre-program AND a bonus landed inside the gate would emit two rows
-      // for one printed number. `scaledBase` is 0 for this reader for exactly that
-      // reason, and this is the observation that would catch its removal.
       for (const yes of [true, false]) {
         const done = say(attack(board(seed, BEACH_COURT)).state, yes);
         expect(types(done.events).filter((t) => t === "DAMAGE_DEALT")).toHaveLength(1);
@@ -753,8 +495,7 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the ONE remaining printing stays LOUD, waiting on a named mechanism (🆕🆕🆕 D548: NONE remains — the mechanism was built)", () => {
-    // 🆕🆕🆕 D548 — the loop is EMPTY, and the guard says so (D542 (9)).
+  it("the ONE remaining printing stays LOUD, waiting on a named mechanism ( D548: NONE remains — the mechanism was built)", () => {
     expect(Object.values(STILL_OWED)).toHaveLength(0);
     for (const sentence of Object.values(STILL_OWED)) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
@@ -762,18 +503,13 @@ describe("§6 — what this slice did NOT buy", () => {
     const left = corpus().filter(([, s]) =>
       (Object.values(STILL_OWED) as readonly string[]).includes(s),
     );
-    // 🆕🆕 D383 — 2 / 7 -> 1 / 2. 🆕🆕🆕 D548 — 1 / 2 -> 0 / 0.
     expect([left.length, units(left)]).toEqual([0, 0]);
-    // 🆕🆕🆕 D548 — RE-POINTED BY OWNER (D438): the row left `STILL_OWED` for `TAKEN_SINCE`,
-    // and its printing count is asserted there, beside a POSITIVE resolution rung.
     expect(
       corpus()
         .filter(([, s]) => s === TAKEN_SINCE.prize)
         .map(([n]) => n),
     ).toEqual([2]);
     expect(resolvedByAnyReader(TAKEN_SINCE.prize)).toBe(true);
-    // 🛑 AND THE DEPARTED ROW IS ASSERTED RESOLVED, WHICH IS WHAT KEEPS THE RUNG ABOVE
-    // FROM GOING GREEN BY BEING SHORTENED (D382's repair, one file over).
     expect(resolvedByAnyReader(TAKEN_SINCE.energy)).toBe(true);
     expect(
       corpus()
@@ -785,16 +521,11 @@ describe("§6 — what this slice did NOT buy", () => {
   it("bought no new op and no new BoardCondition member — every step already existed", () => {
     const reading = deriveAttackOptionalCostBoost(CETITAN);
     if (reading === null) throw new Error("expected the reading");
-    // D380's op and D378's member, reached through a new reading. Asserted by driving
-    // the OTHER producer of the same op on the same board shape and comparing: the
-    // bare imperative derives `discardStadium` alone, and this program's cost arm is
-    // that same step.
     expect(deriveAttackEffect("Discard a Stadium in play.")).toEqual(reading.ops);
     expect(reading.cond).toEqual({ kind: "stadiumInPlay" });
   });
 
   it("bought no registry row — the reading reaches the board through attack text only", () => {
-    // Both printings are ATTACKS, which is what makes attack.ts the whole read site.
     const rows = corpus().filter(([, s]) => s === CETITAN);
     expect(units(rows)).toBe(2);
     expect(rows).toHaveLength(1);

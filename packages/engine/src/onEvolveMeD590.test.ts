@@ -19,19 +19,8 @@ import {
   setDamage,
   toDeckTop,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D590 — WP05: THE `me` ON-EVOLVE ABILITIES AND THE MANDATORY SELF-SHUFFLE ──
-//
-// 10 printed texts / 16 `me` printings: nine "Once during your turn, when you play this Pokémon from
-// your hand to evolve 1 of your Pokémon, you may use this Ability." Abilities keyed on nine new
-// `onEvolve` objects (13 printings), and the attack sentence *"Shuffle this Pokémon and all attached
-// cards into your deck."* read by `deriveAttackEffect` (3 printings). Every id and text measured on
-// the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07, `legal_standard = 1`; no id
-// was referenced anywhere in the tree before this slice. Flygon ×3 "Sandy Flapping" (`me02-053`,
-// `me02-101`, `mep-016`) is NOT built: its KO half needs an Active-Spot / by-attack gate on an
-// `onKnockOut` program. [🆕🆕🆕 D626 (D539): Flygon ×3 BUILT at D626 (K1): `activeOnly` is read for an on-KO
-// program, beside D598's `byOpponentAttack` — `koTriggerRestMeD626.test.ts`.] No `me` row is a fixture, so the printed faces are carried HERE.
 
 const HEAD =
   "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability.";
@@ -59,7 +48,6 @@ const LOKIX = "me02-010";
 const SHEDINJA = "me01-061";
 const CASCOON = "me02.5-014";
 
-/** [Ability name, text, the keyed printings]. */
 const ABILITIES: readonly (readonly [string, string, readonly string[]])[] = [
   ["Psychic Draw", PSYCHIC_DRAW_3, ALAKAZAM],
   ["Psychic Draw", PSYCHIC_DRAW_2, [KADABRA]],
@@ -141,8 +129,6 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     // The four whose printed consequent `deriveAttackEffect` reads: the same program.
     for (const id of [HARIYAMA, NINJASK[0], PRIMARINA[0], TINKATUFF]) {
       const text = ABILITIES.find(([, , ids]) => ids.includes(id))?.[1] as string;
-      // 🆕 Card revision B19 — Hariyama's gust carries `optional` (the printed "you may use this
-      // Ability" on an auto-fired trigger is the pick's decline); the derived op is otherwise the same.
       const derived = deriveAttackEffect(consequent(text));
       expect(triggerOf(id)?.program, id).toEqual(
         id === HARIYAMA ? derived?.map((op) => ({ ...op, optional: true })) : derived,
@@ -162,7 +148,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     ]);
   });
 
-  it('Flygon ×3 "Sandy Flapping" is ~~not keyed (its KO half)~~ keyed since D626 with both halves (🆕🆕🆕 D626 (D539)), and no printed attack is registry-keyed', () => {
+  it('Flygon ×3 "Sandy Flapping" is ~~not keyed (its KO half)~~ keyed since D626 with both halves ( D626 (D539)), and no printed attack is registry-keyed', () => {
     for (const id of ["me02-053", "me02-101", "mep-016"])
       expect(
         programFor(id)?.triggered?.map((t) => t.trigger),
@@ -398,11 +384,6 @@ const DECK = deckOf({
   "fix-energy": 10,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup (P2 first), then P1's turn 4 — §4: nobody evolves on a first turn; both hands back into the
     decks and the Prizes swapped out for deck cards, so every named card is findable. */
 function p1Turn(): GameState {
@@ -433,8 +414,6 @@ function p1Turn(): GameState {
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
-    // Every Prize is swapped for a Filler or a Colorless Energy from the deck, so each named card is
-    // findable and the Prize row keeps its six cards (an empty row ends the game at the next check).
     let deck = [...side.deck, ...side.hand];
     const prizes = side.prizes.map((u) => {
       if ([FILLER, "fix-energy"].includes(state.cardIdByUid[u] as string)) return u;
@@ -778,7 +757,6 @@ describe("D590 §10 — Jumping Shot and Aqua Return: the damage, then the attac
       for (const uid of uids) expect(after.players.p1.deck, uid).toContain(uid);
       expect(after.players.p1.deck).toHaveLength(deck + uids.length);
       expect(after.players.p1.discard).toEqual([]);
-      // The emptied Active Spot is filled from the Bench (§8.1's promotion seam, D312) and the turn passes.
       expect(top(after, after.players.p1.active)).toBe(FILLER);
       expect(after.players.p1.bench).toHaveLength(0);
       expect(after.turn).toBe(state.turn + 1);

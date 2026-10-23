@@ -23,27 +23,8 @@ import {
   setActiveFromDeck,
   setConditions,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D629 — S1: THE REST OF THE SNIPE / SPREAD WORDING ────────────────────────────────────────────
-//
-// D608's WP30 rest (8 texts / 8 printings), re-ranked as S1 at D625. 7 texts / 7 printings are built here;
-// every id and text off the LOCAL D1, 2026-10-10, `legal_standard = 1`:
-//
-//   Bug's Cannon / Hydro Jet — the any-target hit × the attacker's Energy of ONE type (the NEW
-//                       `damageChosen.perTypedEnergyOnSelf`, folded in interpreter.ts `snipeAmount`).
-//   Lightning Crash   — discard all {L} Energy (D477's `providesEnergy` filter), then the any-target hit.
-//   Tar Cannon        — the does-nothing requirement printed SECOND (`ATTACK_DOES_NOTHING_SECOND`), on the
-//                       shipped `yourBasicEnergyInDiscardAtLeast`; the body is the snipe plus its clarifier.
-//   Chilling Wings / Kaboom Needles — `COMPOUND_CLAUSE_BREAK` breaks after `.)` too, so the sentence after
-//                       the Benched clarifier is the trailing clause (D409's composition).
-//   Assassin's Magic  — the shipped Benched counter placement behind the clause-table gate.
-//
-// Dropped and named: Deoxys `me04-032` "Psyspear" — its gate reads the declared attack's effective cost
-// (D436's `extraEnergyUnitsBeyondCost`), which no `BoardCondition` answers (D368) and `EffectContext` does
-// not carry.
-// [🆕🆕🆕 D645 (D539): BUILT at D645 — the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at
-// declaration by attack.ts `resolveDeclarationGates` (no ctx key); `lastOneOffsMeD645.test.ts`.]
 
 const CLARIFIER = " (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const BUGS_CANNON = `This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon.${CLARIFIER}`;
@@ -56,7 +37,6 @@ const ASSASSINS_MAGIC =
   "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
 const PSYSPEAR = `If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon.${CLARIFIER}`;
 
-/** [attack text, the printing that prints it] — the seven built sentences. */
 const SENTENCES: readonly (readonly [string, string])[] = [
   [BUGS_CANNON, "me02-008"],
   [HYDRO_JET, "me05-014"],
@@ -75,14 +55,13 @@ describe("D629 §1 — the texts", () => {
       expect([id, me.get(text)]).toEqual([id, 1]);
       expect(sv.has(text), id).toBe(false);
       expect(programFor(id), id).toBeUndefined();
-      // The two compounds compose (the census's `trailing` arm); the other five are claimed whole.
       const composed = text === CHILLING_WINGS || text === KABOOM_NEEDLES;
       expect([id, resolvedByAnyReader(text)]).toEqual([id, !composed]);
       expect([id, splitAttackTrailingClause(text) !== null]).toEqual([id, composed]);
     }
   });
 
-  it("Psyspear ~~stays unbuilt, named: no reader~~, no composition, no key (🆕🆕🆕 D645 (D539): WITHDRAWN — reader-built at D645, `lastOneOffsMeD645.test.ts`)", () => {
+  it("Psyspear ~~stays unbuilt, named: no reader~~, no composition, no key ( D645 (D539): WITHDRAWN — reader-built at D645, `lastOneOffsMeD645.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get(PSYSPEAR)).toBe(1);
     expect(resolvedByAnyReader(PSYSPEAR)).toBe(true);
@@ -345,11 +324,6 @@ const DECK = deckOf({
   "fix-energy": 16,
 });
 const BOARD_IDS = new Set(Object.keys(LOCAL).filter((id) => id !== FILLER));
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

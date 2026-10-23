@@ -12,58 +12,8 @@ import {
   mustApply,
 } from "./testFixtures";
 
-// D223 — CARMINE, and the `CardProgram` FLAG that lifts §4's going-first
-// Supporter lock for exactly one card.
-//
-// "If you go first, you may use this card during your first turn.
-//
-//  Discard your hand and draw 5 cards."
-//
-// ⚠️ **THE THIRD OF D190's FOUR `DROPPED` ROWS TO BE COLLECTED**, and the biggest
-// by printings: **4 Standard-legal** (`sv06-145`, `sv06-204`, `sv06-217`,
-// `sv08.5-103` — all four byte-identical, remote D1 `colorless`, 2026-08-05).
-//
-// ⚠️ **AND THE ONE ROW OF THAT TABLE WHOSE CENSUS ENTRY WAS FLATLY WRONG.**
-// `coverage-backlog-legal.md` prices this card at "1 registry program" and calls
-// the first sentence *"**inert** — no going-first Supporter lock exists to lift"*.
-// The lock has existed since M4 (`cardplay.ts` returns `FIRST_TURN_SUPPORTER` on
-// `state.turn === 1`), so `trainer: [discardHand, drawCards 5]` alone would have
-// REFUSED this card on the one turn it is printed to be legal on — a card
-// strictly worse than unbuilt, which is the *EXACT MAP OR FLAG* doctrine's own
-// worked example and the reason D190 dropped the row rather than approximate it.
-//
-// ⚠️ **THE `needs` STRING NAMED THE FIELD AND NOT ITS MIRRORS — THE SECOND SLICE
-// RUNNING (D222 WAS THE FIRST).** *"a `CardProgram` flag read at that gate"* is
-// right about the engine and silent about the fact that **three** places decide
-// whether a Supporter is available on turn 1: `cardplay.ts`'s refusal, and the
-// two HUD row-lighting mirrors (`redact.ts` `redactedTrainersOf` online,
-// `GameHud.tsx` `playableTrainers` local). A flag read only by the engine leaves
-// Carmine ENGINE-LEGAL AND UNCLICKABLE on turn 1 — the afford-then-reject defect
-// with its sign flipped, and the quieter direction of it, because nobody clicks a
-// row that looks dead. **Re-derive the READ SITES, not just the field.**
-//
-// ⚠️ WHAT THIS SUITE CAN PUT RED, SAID UP FRONT (the guard rule, conventions.md):
-// * Deleting the §4 gate outright (instead of exempting one card) fails the
-//   Nemona CONTROL, which shares every board below with Carmine.
-// * Exempting §7.2 as well as §4 — the natural over-reach, since the two `err`s
-//   are adjacent — fails "a turn-1 Carmine still spends the Supporter".
-// * Reading the flag as first-turn state rather than as a property of the CARD
-//   fails "Nemona is still banned on turn 1 AFTER Carmine has resolved".
-// * Widening the exemption past Supporters fails the turn-1 ATTACK ban.
-// * Authoring `drawCards 5` without the flag, or the flag without the id rows,
-//   fails the play itself; authoring PROFESSORS_RESEARCH's 7 fails the hand size.
-// * Dropping EITHER HUD mirror fails its own row-lighting test — and the online
-//   one is asserted against the same `redactGame` call that lights Nemona, so it
-//   cannot pass by the whole list being enabled.
-
-/** The four Standard-legal printings, measured against the remote D1 `colorless`
-    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-05: `legal_standard = 1`
-    on all four, and one distinct `effect` string across them. */
 const CARMINE_IDS = ["sv06-145", "sv06-204", "sv06-217", "sv08.5-103"] as const;
 
-/** The printed effect, byte for byte — authored against the print rather than a
-    paraphrase (D183's class). The blank line between the sentences is the
-    catalog's own `\n\n`. */
 const CARMINE_TEXT =
   "If you go first, you may use this card during your first turn.\n\nDiscard your hand and draw 5 cards.";
 
@@ -85,8 +35,6 @@ function play(state: GameState, seat: Seat, uid: string) {
   return applyAction(state, { type: "playTrainer", seat, uid });
 }
 
-/** The wire trainer row for `cardId` in the acting viewer's turn:action phase —
-    the ONLINE HUD's row-lighting, read through the engine's own redactor. */
 function wireRow(state: GameState, seat: Seat, cardId: string) {
   const phase = redactGame(state, seat).phase;
   if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
@@ -100,8 +48,6 @@ describe("D223 — the registry rows", () => {
     for (const id of CARMINE_IDS) {
       expect(programFor(id), `${id} left Carmine`).toBe(first);
     }
-    // A duplicated id would make the count lie about the coverage this slice
-    // bought, which is the one number a reader carries away from it.
     expect(new Set(CARMINE_IDS).size).toBe(4);
     expect(programFor("fix-carmine"), "the demonstrator is not Carmine").toBe(first);
   });
@@ -116,10 +62,6 @@ describe("D223 — the registry rows", () => {
   });
 
   it("is NOT Professor's Research — the near-twin keeps its 7 and gains no flag", () => {
-    // ⚠️ THE MISTAKE THIS KILLS IS THE CHEAP ONE: reusing PROFESSORS_RESEARCH (an
-    // identical second sentence) would draw 7 and, worse, a later edit adding the
-    // flag to the shared object would hand the §4 exemption to a card that never
-    // printed it — four ids silently gaining a licence.
     const professors = programFor("sv01-189");
     expect(professors?.trainer).toEqual([{ op: "discardHand" }, { op: "drawCards", count: 7 }]);
     expect(professors?.trainerFirstTurnExempt).toBeUndefined();
@@ -127,14 +69,6 @@ describe("D223 — the registry rows", () => {
   });
 
   it("gives the flag to the cards that PRINT the sentence, and to nothing else", () => {
-    // The population that may carry the exemption is exactly the population that
-    // prints the sentence. ⚠️ UPDATED BY D224, WHICH IS THE POINT OF THE ROW: at
-    // D223 that population was Carmine's four ids alone and this test said so;
-    // Team Rocket's Proton (sv10-177/-227) prints the same first sentence and was
-    // authored at D224 with ZERO new engine code, spending exactly this flag. A
-    // row appearing here without a printing behind it is still a real defect —
-    // Professor's Research (the near-twin second sentence), Nemona and Boss's
-    // Orders are the controls that would catch a flag put on the wrong object.
     const PROTON_IDS = ["sv10-177", "sv10-227", "fix-proton"] as const;
     const exempt = [
       ...CARMINE_IDS,
@@ -156,11 +90,6 @@ describe("D223 — the registry rows", () => {
 
 describe("§4 — the printed exemption, driven through playTrainer", () => {
   it("plays on TURN 1, on a board where BOTH halves of 'if you go first' are real", () => {
-    // The printed conditional has two halves and the suite asserts both as state
-    // rather than reasoning about one: p1 IS the going-first seat, and turn 1 IS
-    // p1's turn. (The engine reads only the turn number, because turn 1 is p1's
-    // BY CONSTRUCTION — see the going-second case below, which drives that claim
-    // instead of restating it.)
     const state = deepFreeze(turnOne(3, "p1"));
     expect(state.turn).toBe(1);
     expect(state.firstPlayer).toBe("p1");
@@ -172,9 +101,6 @@ describe("§4 — the printed exemption, driven through playTrainer", () => {
   });
 
   it("…while the CONTROL Supporter on the SAME board is still refused (§4 holds)", () => {
-    // ⚠️ THE ASSERTION THAT STOPS "DELETE THE GATE" FROM PASSING. Nemona
-    // (sv01-180, "Draw 3 cards.") prints no exemption and sits in the same deck,
-    // in the same hand, on the same turn.
     const armed = handFromDeck(turnOne(3, "p1"), "p1", "sv01-180", 1);
     const refused = play(armed, "p1", handUid(armed, "p1", "sv01-180"));
     expect(refused.ok).toBe(false);
@@ -199,9 +125,6 @@ describe("§4 — the printed exemption, driven through playTrainer", () => {
   });
 
   it("still SPENDS the Supporter for the turn — §7.2 is not exempted", () => {
-    // ⚠️ THE OVER-REACH THIS KILLS: the two `err`s are adjacent in cardplay.ts, so
-    // exempting the second along with the first is a one-character mistake. The
-    // printed sentence licenses the TIMING, not a second Supporter.
     let state = handFromDeck(turnOne(3, "p1"), "p1", "fix-carmine", 2);
     const [firstUid, secondUid] = handUids(state, "p1", "fix-carmine", 2) as [string, string];
     state = mustApply(state, { type: "playTrainer", seat: "p1", uid: firstUid }).state;
@@ -219,9 +142,6 @@ describe("§4 — the printed exemption, driven through playTrainer", () => {
   });
 
   it("is a property of the CARD, not of the turn — Nemona stays banned after it resolves", () => {
-    // ⚠️ THE IMPLEMENTATION THIS KILLS: lifting §4 by setting a flag on the STATE
-    // when Carmine resolves. That would read identically on Carmine itself and
-    // would open the turn for every other Supporter in hand.
     let state = handFromDeck(turnOne(3, "p1"), "p1", "fix-carmine", 1);
     state = mustApply(state, {
       type: "playTrainer",
@@ -264,13 +184,6 @@ describe("the 'if you go first' half — driven, because the engine does not spe
   });
 
   it("cannot become a going-SECOND licence: turn 1 is never that seat's to act on", () => {
-    // ⚠️ THIS IS THE HALF THE ENGINE CONDITION LEAVES IMPLICIT, DRIVEN RATHER THAN
-    // ARGUED. `cardplay.ts` tests only `state.turn === 1`, because turn 1 belongs
-    // to `state.firstPlayer` by construction (phaseViewOf: odd turns are the first
-    // player's) and `turnGate` has already proved the actor owns the phase. So the
-    // going-second seat's Carmine on turn 1 is refused BEFORE the Supporter branch
-    // is reached at all — there is no board on which the missing conjunct matters,
-    // which is exactly why adding it would be a guard that cannot go red.
     const state = turnOne(4, "p2");
     const armed = handFromDeck(state, "p1", "fix-carmine", 1);
     const refused = play(armed, "p1", handUid(armed, "p1", "fix-carmine"));
@@ -295,9 +208,6 @@ describe("the 'if you go first' half — driven, because the engine does not spe
 
 describe("the HUD mirror — the read site the census row did not name", () => {
   it("lights Carmine's wire row on turn 1 while greying the control in the SAME call", () => {
-    // ⚠️ ONE `redactGame` CALL, TWO ROWS, OPPOSITE ANSWERS. Asserted together so
-    // the test cannot pass by the whole list having been enabled — the failure a
-    // "Carmine is not disabled" assertion on its own would sail through.
     let state = handFromDeck(turnOne(3, "p1"), "p1", "fix-carmine", 1);
     state = handFromDeck(state, "p1", "sv01-180", 1);
     expect(state.turn).toBe(1);
@@ -306,8 +216,6 @@ describe("the HUD mirror — the read site the census row did not name", () => {
       uid: handUid(state, "p1", "fix-carmine"),
       name: "fix-carmine",
       disabled: false,
-      // The §4 timing is self-evident and carries no tooltip either way; an
-      // ENABLED row must carry none at all.
       reason: null,
       rareCandy: false,
     });
@@ -329,8 +237,6 @@ describe("the HUD mirror — the read site the census row did not name", () => {
 
 describe("the printed bytes", () => {
   it("pins the sentence the flag and the program were authored from", () => {
-    // D183's class: an arm written from a PARAPHRASE passes a test written against
-    // the same paraphrase and matches no real card. This is the catalog's string.
     expect(CARMINE_TEXT).toContain(
       "If you go first, you may use this card during your first turn.",
     );

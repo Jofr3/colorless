@@ -18,21 +18,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D605 — WP34: COIN (THE REST) ──
-//
-// 5 printed attack texts / 12 `me` printings. Three new pieces: a flip count by name in play
-// (`AttackFlipCount.pokemonInPlay` over `byName` for Maushold; `damageChosen.perHeadsInPlay` for
-// Tauros), a per-target flip spread (`damageChosen.flipEach`, Mega Zygarde ex) and "choose a Special
-// Condition" (four labelled `optional` confirms behind the coin gate, Grafaiai). Mega Audino ex is the
-// bare search-and-attach sentence repeated per heads. Every id and text measured on the LOCAL D1,
-// 2026-10-08, `legal_standard = 1`; no id was referenced in the engine before this slice. Dropped and
-// named: Watchog `me04-071` / `-097` (a revealed-hand pick shuffled into the deck — a new
-// `bottomFromOpponentHand.dest`) and Ditto `mep-106` / `30th-115` (a deck Pokémon swapped in for the
-// attacker) — §2 keeps them unbuilt. [🆕🆕🆕 D634 (D539): Watchog is BUILT at D634 (C1, the new
-// `bottomFromOpponentHand.dest: "deck"`); only Ditto stays unbuilt.] [🆕🆕🆕 D641 (D539): Ditto BUILT at D641 (W1,
-// `switchWithDeckChosen`); §2's pin is inverted.]
 
 const T = {
   together:
@@ -45,7 +32,6 @@ const T = {
     "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
 } as const;
 
-/** [text, legal `me` printings, the ids]. */
 const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
   [T.together, 2, ["me04-069", "me04-096"]],
   [T.zero, 5, ["mep-071", "me03-047", "me03-104", "me03-120", "me03-124"]],
@@ -212,8 +198,6 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
   });
 
   it("arm 46b with the sixth row: 3 heads × 6 consequents = 18 crossings build, exactly 6 are printed", () => {
-    // 🆕🆕🆕 D634 (D539): these are D605's six rows; the table has EIGHT now (Challenging Delivery,
-    // Reversing Gust) — `coinRestMeD634.test.ts` §2 pins the 24 crossings and 8 printed.
     const heads = [
       "Flip a coin. If heads, ",
       "Flip 2 coins. If both of them are heads, ",
@@ -236,11 +220,9 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
     expect(crossings.filter((text) => printed.has(text)).sort()).toEqual([...printedGates].sort());
   });
 
-  it("Watchog and Ditto are unbuilt (🆕🆕🆕 D634: Watchog is built at D634; Ditto stays unbuilt; 🆕🆕🆕 D641: Ditto is built at D641)", () => {
+  it("Watchog and Ditto are unbuilt ( D634: Watchog is built at D634; Ditto stays unbuilt; D641: Ditto is built at D641)", () => {
     const me = new Set(meAttackCorpus().map(([, text]) => text));
     for (const [why, text] of Object.entries(DROPPED)) {
-      // 🆕🆕🆕 D634 (D539): Watchog is reader-built at D634 (C1).
-      // 🆕🆕🆕 D641 (D539): and Ditto at D641 (W1, `switchWithDeckChosen`) — both are built now.
       expect(resolvedByAnyReader(text), why).toBe(true);
       expect(me.has(text), why).toBe(true);
     }
@@ -317,12 +299,6 @@ const DECK = deckOf({
   "fix-energy": 26,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4 with both hands back in the decks (D595's idiom). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6051, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

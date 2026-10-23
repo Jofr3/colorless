@@ -7,21 +7,8 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
+import { FIXTURE_POOL, battler, deckOf, typedEnergy, must, mustApply as run } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D579 — WALKING WAKE `sv06-063` "UNDULATING SLICE" (attack index 1, 1 legal printing) ──
-//
-// {W}{W}{C}, `20×`: *"Put up to 9 damage counters on this Pokémon. This attack does 20 damage for
-// each damage counter you placed in this way."* A REGISTRY row (`UNDULATING_SLICE`): the
-// ALWAYS-parked quantity pick `putCountersOnSelfChosen { upTo: 9 }` (`takeVerb: "put"`), which files
-// ONE `"placed"` entry per counter, then a TOP-LEVEL `damageDefender { per: 20, count: "placed" }`
-// — top-level so attack.ts `programDamage` drops the printed `20×` base. Readings (decisions.md
-// D579 (a)): R-W1 a self-KO is allowed and the hit is still dealt (both Knock Outs swept by the
-// existing epilogue); R-W2 0 placed deals 0; R-W3 Weakness / Resistance apply ONCE to 20 × n.
-//
-// The card is a LOCAL face on the REAL id, transcribed from the audit's card JSON (tcgdex), so
-// `programFor` and `banners.ts` read it exactly as they read the catalog row.
 
 const WAKE = "sv06-063";
 const AURORA_GAIN = "Heal 20 damage from this Pokémon.";
@@ -98,18 +85,6 @@ const DECK = deckOf({
   [W]: 8,
   "fix-energy": 20,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -243,8 +218,6 @@ function prompt(state: GameState) {
   return state.phase.prompt;
 }
 
-/** Declare Undulating Slice on `board`, answer the park with `answer`; the defender's and the
-    attacker's damage read off the state the answer leaves (before any Knock Out sweep moves them). */
 function sliced(board: GameState, answer: GameAction): { state: GameState; events: GameEvent[] } {
   const parked = run(board, slice);
   return run(parked.state, answer);
@@ -267,7 +240,7 @@ describe("D579 Walking Wake §1 — the registry row, and the sentence stays REG
 });
 
 describe('D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`, `takeVerb: "put"`', () => {
-  it("🛑 the lone candidate does NOT auto-resolve the quantity: the prompt is the whole question", () => {
+  it("the lone candidate does NOT auto-resolve the quantity: the prompt is the whole question", () => {
     const { state } = run(table({ p1: wake(), p2: { id: WALL } }), slice);
     expect(prompt(state)).toEqual({
       kind: "choosePokemon",
@@ -281,7 +254,7 @@ describe('D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`,
     expect(active(state, "p2").damage).toBe(0);
   });
 
-  it('🛑 the WIRE carries the verb, and the wire SCHEMA keeps `"put"` (a strict literal would refuse the frame)', () => {
+  it('the WIRE carries the verb, and the wire SCHEMA keeps `"put"` (a strict literal would refuse the frame)', () => {
     const { state } = run(table({ p1: wake(), p2: { id: WALL } }), slice);
     const wire = redactGame(state, "p1").phase;
     if (wire.kind !== "effect:choose" || !("prompt" in wire))
@@ -301,7 +274,7 @@ describe('D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`,
 });
 
 describe("D579 Walking Wake §3 — `take` counters on itself, 20 × that many to the Defender", () => {
-  it("🛑 3 put: 30 on Walking Wake (a flat COUNTERS_PLACED, source self), 60 to the Defender — the printed 20× base NOT on top", () => {
+  it("3 put: 30 on Walking Wake (a flat COUNTERS_PLACED, source self), 60 to the Defender — the printed 20× base NOT on top", () => {
     const board = table({ p1: wake(), p2: { id: WALL } });
     const { state, events } = sliced(board, put(3));
     expect(active(state, "p1").damage).toBe(30);
@@ -317,13 +290,13 @@ describe("D579 Walking Wake §3 — `take` counters on itself, 20 × that many t
     ]);
   });
 
-  it("🛑 an ABSENT `take` is the printed 9: 90 on itself, 180 dealt", () => {
+  it("an ABSENT `take` is the printed 9: 90 on itself, 180 dealt", () => {
     const { state } = sliced(table({ p1: wake(), p2: { id: WALL } }), put());
     expect(active(state, "p1").damage).toBe(90);
     expect(active(state, "p2").damage).toBe(180);
   });
 
-  it("🛑 R-W2 — the DECLINE puts none and DEALS NONE (the 20× base does not leak through)", () => {
+  it("R-W2 — the DECLINE puts none and DEALS NONE (the 20× base does not leak through)", () => {
     const { state, events } = sliced(table({ p1: wake(), p2: { id: WALL } }), decline);
     expect(active(state, "p1").damage).toBe(0);
     expect(active(state, "p2").damage).toBe(0);
@@ -343,19 +316,19 @@ describe("D579 Walking Wake §3 — `take` counters on itself, 20 × that many t
 });
 
 describe("D579 Walking Wake §4 — R-W3: Weakness and Resistance apply ONCE to 20 × n", () => {
-  it("🛑 a Water-weak Defender takes (20 × 3) × 2 = 120", () => {
+  it("a Water-weak Defender takes (20 × 3) × 2 = 120", () => {
     const { state } = sliced(table({ p1: wake(), p2: { id: WEAK } }), put(3));
     expect(active(state, "p2").damage).toBe(120);
   });
 
-  it("🛑 a Water-resistant Defender takes 20 × 3 − 30 = 30, NOT 3 × (20 − 30) = 0 — one hit, one subtraction", () => {
+  it("a Water-resistant Defender takes 20 × 3 − 30 = 30, NOT 3 × (20 − 30) = 0 — one hit, one subtraction", () => {
     const { state } = sliced(table({ p1: wake(), p2: { id: RESIST } }), put(3));
     expect(active(state, "p2").damage).toBe(30);
   });
 });
 
 describe("D579 Walking Wake §5 — R-W1: Walking Wake may Knock ITSELF Out, and the hit still lands", () => {
-  it("🛑 60 already on it + 9 put = 150 ≥ 130: it is Knocked Out AND the Defender takes 180", () => {
+  it("60 already on it + 9 put = 150 ≥ 130: it is Knocked Out AND the Defender takes 180", () => {
     const board = table({ p1: wake(60), p2: { id: WALL }, p1Bench: [{ id: FILLER }] });
     const { state, events } = sliced(board, put(9));
     const kos = events.filter((e) => e.type === "KNOCKED_OUT");
@@ -368,7 +341,7 @@ describe("D579 Walking Wake §5 — R-W1: Walking Wake may Knock ITSELF Out, and
     if (state.phase.kind === "ko:takePrizes") expect(state.phase.seat).toBe("p2");
   });
 
-  it("🛑 BOTH Knock Outs are swept by the one epilogue: the 100-HP Defender falls to the same 9-counter hit", () => {
+  it("BOTH Knock Outs are swept by the one epilogue: the 100-HP Defender falls to the same 9-counter hit", () => {
     const board = table({
       p1: wake(60),
       p2: { id: FRAIL },

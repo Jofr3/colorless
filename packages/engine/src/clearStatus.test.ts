@@ -20,69 +20,17 @@ import {
   setDamage,
 } from "./testFixtures";
 
-// 0.119.0 → 0.120.0 — the DISCRETE `recovers from all Special Conditions` family
-// (P3-M5 long tail, D177). ONE new op (`clearStatus`), TWO entry points:
-//
-//   "This Pokémon recovers from all Special Conditions."
-//        (Gardevoir ex sv01-086 / -228 / -245 "Miracle Force" — an ATTACK)
-//   "Once during your turn, you may use this Ability. Your Active Pokémon
-//    recovers from all Special Conditions."
-//        (Blissey sv01-145 "Busybody Nurse" — an activated ABILITY)
-//
-// ⚠️ FOUR PRINTINGS / TWO SENTENCES, AND BOTH NUMBERS WERE RE-DERIVED RATHER THAN
-// INHERITED (D174 measured them in passing; this slice re-ran the query). See
-// `THE CENSUS` below for the SQL, the scope, and the FIFTH row the wider verb
-// turned up that is NOT this family.
-//
-// ⚠️ HOW THIS FAMILY WAS MISSED FOR FIFTEEN DECISIONS, WHICH IS THE FINDING THIS
-// FILE EXISTS TO KEEP: **A CENSUS IS ONLY AS WIDE AS ITS VERBS.** Every sweep of
-// the §12 family since D159 matched "can't be affected" / "can't be {condition}".
-// The COLUMN coverage was right — all three text columns, D172's own rule — and
-// the PREDICATE was short by one `LIKE '%recovers from%'`, which returns four
-// printings nobody had counted. Column coverage is the axis this repo learned to
-// check; verb coverage is the one it had not.
-//
-// WHAT IS ACTUALLY NEW HERE, and why this is not therapeuticEnergy.test.ts with a
-// Pokémon:
-//   • THE FIRST DISCRETE CLEAR THE ENGINE HAS EVER HAD FROM A PROGRAM. Before
-//     this, every §12 clear was either a PLACEMENT (`noConditions()` on retreat /
-//     evolve / switch) or a CHECKUP step. `clearStatus` is neither: it is an op an
-//     attack or an Ability RUNS, at a moment the printed text names.
-//   • IT IS THE OPPOSITE SIGN OF THE ONLY OTHER §12 WRITER. `applyStatus` has been
-//     the engine's single writer of a condition since M3; this is its inverse, and
-//     the two now sit side by side in the interpreter with the same resolution,
-//     the same early returns and opposite directions.
-//   • THE TWO HALVES ANSWER §9 DIFFERENTLY. An Ability-lock aura kills Busybody
-//     Nurse and cannot touch Miracle Force — one op, one seat resolution, two
-//     verdicts — which is the sharpest available statement that the SUPPRESSION
-//     question belongs to the entry point and not to the op.
-//   • THE ATTACK HALF CANNOT REACH TWO OF THE FIVE CONDITIONS IT NAMES, and that
-//     is a property of §8 rather than of this slice (`THE UNREACHABLE HALF`).
-
 /** The two printed sentences, byte-for-byte off the local D1 rows. */
 const MIRACLE_FORCE = "This Pokémon recovers from all Special Conditions.";
 const BUSYBODY_NURSE =
   "Once during your turn, you may use this Ability. Your Active Pokémon recovers from all Special Conditions.";
 
-/** The FIFTH row `%recovers from%` returns, and it is NOT this family: the
-    CONTINUOUS, NAMED-SET recovery D174 built as `PassiveEffects.statusRecovery`.
-    Pinned here as a string so the next census greps the repo and finds the
-    distinction already drawn (D171's Corviknight move). */
 const THERAPEUTIC_ENERGY =
   "The Pokémon this card is attached to recovers from being Asleep, Confused, or Paralyzed and can't be affected by those Special Conditions.";
 
-/** ⚠️ AND THE SIXTH, WHICH IS THE NEAR-MISS THE WIDENED VERB ACTUALLY FOUND. Muk
-    sv01-127 "Poison Sacs" is the NEGATIVE form of this sentence — a modifier on
-    §10's evolution clear, carrying no op and no moment of its own — and it is
-    DELIBERATELY NOT BUILT (see effects.ts `SELF_RECOVERS_ALL`). Named rather than
-    left, so a future census counts it once instead of rediscovering it. */
 const POISON_SACS =
   "Your opponent's Poisoned Pokémon don't recover from that Special Condition when they evolve or devolve.";
 
-/** The three printings of the ATTACK half. All three carry BYTE-IDENTICAL text,
-    which is why one anchored deriver arm covers the family and only ONE of them
-    (the base printing) has a registry row — and that row is for a different
-    Ability entirely (`Psychic Embrace`). */
 const GARDEVOIR_PRINTINGS = ["sv01-086", "sv01-228", "sv01-245"] as const;
 
 /** The five §12 conditions, in the `presentStatuses` order. "All Special
@@ -107,9 +55,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** Every attacker this suite declares, with the printed INDEX read off the local
-    D1 per printing (D144's rule). The `fix-statuser` indices are the fixture's
-    own, verified against its `attacks` array. */
 const ATTACKS = {
   hypnosis: { card: "fix-statuser", index: 0 }, // → the DEFENDER is Asleep
   confuseRay: { card: "fix-statuser", index: 1 }, // → the DEFENDER is Confused
@@ -177,10 +122,6 @@ function conditionsOf(state: GameState, seat: Seat) {
   return state.players[seat].active?.conditions;
 }
 
-/** The bench slot holding `cardId`, as a target. NEVER a hard-coded index: this
-    pool's boards are built by surgery that pushes the setup starter onto the bench
-    first, so "bench[0]" means whatever `driveSetup` happened to place — the exact
-    wrong-index habit D173 spent a slice unwinding. `nth` picks among duplicates. */
 function benchSlot(state: GameState, seat: Seat, cardId: string, nth = 0): PokemonTarget {
   const hits = state.players[seat].bench.flatMap((pokemon, index) => {
     const top = pokemon.stack[pokemon.stack.length - 1];
@@ -218,29 +159,7 @@ function logLines(state: GameState, events: GameEvent[]): string[] {
   return logRows(state, events).map((row) => row.text);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE CENSUS — re-derived, not inherited.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("THE CENSUS", () => {
-  // Local D1, 978 cards / 6 sets (sv01 258 / sv02 279 / sv03 230 / sv06.5 99 /
-  // sve 24 / swsh10.5 88), 2026-08-04, over ALL THREE text columns:
-  //
-  //   select id, name from cards
-  //    where lower(coalesce(effect,'')) like '%recovers from%'
-  //       or lower(coalesce(abilities_json,'')) like '%recovers from%'
-  //       or lower(coalesce(attacks_json,'')) like '%recovers from%';
-  //   -- 5 rows: sv01-086 / sv01-228 / sv01-245 Gardevoir ex, sv01-145 Blissey,
-  //   --         sv02-193 Therapeutic Energy
-  //
-  // FOUR of the five are this family (2 sentences); the fifth is D174's
-  // CONTINUOUS, named-set recovery. Eight other spellings of the verb — "is
-  // cured", "cured of", "removes all Special", "heal all Special", "no longer
-  // affected", "recovered from", "is now cured", "recover from" outside Muk's
-  // negative — return ZERO new rows, and `%special condition%` adds only three
-  // unrelated readers (Vivillon sv01-010 inflicts one, Sableye sv02-136 scales
-  // damage off one, Muk sv01-127 modifies the evolution clear). The family is
-  // CLOSED at four printings on this catalog.
   it("all four printings are in the pool, and each carries the family's sentence VERBATIM", () => {
     for (const id of GARDEVOIR_PRINTINGS) {
       const attacks = FIXTURE_POOL[id]?.attacks ?? [];
@@ -280,19 +199,13 @@ describe("THE CENSUS", () => {
     // matched all three; `^…$` matches exactly one.
     expect(deriveAttackEffect(THERAPEUTIC_ENERGY)).toBeNull(); // continuous, NAMED set
     expect(deriveAttackEffect(POISON_SACS)).toBeNull(); // the NEGATIVE form
-    expect(deriveAttackEffect(BUSYBODY_NURSE)).toBeNull(); // the ABILITY half — registry, not deriver
-    // A mid-sentence clause and a lowercase subject: both are what `^This` plus
-    // the absence of /i buys, and both are latent rather than live (no catalog row
-    // prints either today), which is exactly when a guard is worth pinning.
+    expect(deriveAttackEffect(BUSYBODY_NURSE)).toBeNull();
     expect(deriveAttackEffect(`Discard an Energy from this Pokémon. ${MIRACLE_FORCE}`)).toBeNull();
     expect(deriveAttackEffect("this Pokémon recovers from all Special Conditions.")).toBeNull();
     expect(deriveAttackEffect("This Pokémon recovers from all Special Conditions")).toBeNull();
   });
 
   it("FIXTURE_POOL swept SEPARATELY: exactly four ids print the family's sentence", () => {
-    // D172's rule — the pool is its own population, and a census that reads only
-    // the catalog cannot see a fixture that carries a clause the card does not
-    // (or, as this family found out at D174, a fixture that DROPS one it does).
     const carriers = Object.entries(FIXTURE_POOL)
       .filter(([, card]) => (card.attacks ?? []).some((a) => a.effect === MIRACLE_FORCE))
       .map(([id]) => id)
@@ -303,9 +216,6 @@ describe("THE CENSUS", () => {
   });
 
   it("ONE registry row for the whole family — the ATTACK half needs none", () => {
-    // Blissey is the only card here `programFor` has to answer for. All three
-    // Gardevoir printings DO have a registry row, and it is for `Psychic Embrace`
-    // — proof that the attack half rides the deriver rather than that row.
     expect(programFor("sv01-145")?.abilities).toHaveLength(1);
     for (const id of GARDEVOIR_PRINTINGS) {
       expect(programFor(id)?.attack).toBeUndefined();
@@ -348,12 +258,7 @@ describe("the ATTACK half — Miracle Force", () => {
     expect(find(done.events, "STATUS_CLEARED")).toMatchObject({ statuses: ["confused"] });
   });
 
-  it("⚠️ TAILS: the attack does not resolve, so the recovery does not happen either", () => {
-    // §8 step 3 returns before the effect program is even looked up. This is the
-    // sharpest statement available that the recovery is an EFFECT OF THE ATTACK
-    // and not a property of declaring it — a Confused Gardevoir cannot cure its
-    // own Confusion by trying, which is the printed rule and a live footgun for
-    // anyone tempted to run the clear at declaration time.
+  it("TAILS: the attack does not resolve, so the recovery does not happen either", () => {
     const seed = seedFlipping("tails", (s) => gardevoir({ rotation: "confused" }, { seed: s }));
     const done = swing(gardevoir({ rotation: "confused" }, { seed }), "miracleForce");
     expect(find(done.events, "ATTACK_FAILED")).toMatchObject({ reason: "confusion" });
@@ -375,10 +280,6 @@ describe("the ATTACK half — Miracle Force", () => {
   });
 
   it("driven END TO END: the opponent's Toxic lands, the next attack recovers it", () => {
-    // No `setConditions` anywhere on this path. p1 opens and passes, p2's "Toxic"
-    // Poisons Gardevoir for 20/checkup, the Checkup ticks it once, and p1's own
-    // Miracle Force takes it off — so the condition, its damage and its removal
-    // are all the engine's, and the ONE thing surgery placed is the energy.
     let state = driveSetup(SEED, { p1: CLEAR_STATUS_DECK, p2: CLEAR_STATUS_DECK }, { first: "p1" });
     state = setActiveFromDeck(state, "p1", "sv01-086");
     state = energised(state, "p1");
@@ -411,8 +312,6 @@ describe("the ATTACK half — Miracle Force", () => {
       burned: false,
       confusionDamage: 30,
     });
-    // The sentence WAS read — a derived program ran and found nothing — so the
-    // unsimulated-text row must not fire (D139's distinction).
     expect(find(done.events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
@@ -441,26 +340,13 @@ describe("the ATTACK half — Miracle Force", () => {
     const row = logRows(done.state, done.events).find((r) => r.text.includes("recovered"));
     expect(row?.who).toBe("p1");
     expect(row?.text).toContain("recovered from");
-    // One vocabulary word for one printed verb: the CONTINUOUS half (sv02-193)
-    // renders through the same log arm, which is D131's widen-don't-add rule
-    // holding on the read side as well as the write side.
     expect(logLines(done.state, done.events).filter((l) => l.includes("recovered"))).toHaveLength(
       1,
     );
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ⚠️ THE UNREACHABLE HALF — what the ATTACK entry point structurally cannot do.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("⚠️ the ATTACK half cannot reach TWO of the five conditions it names", () => {
-  // "All Special Conditions" is five, and Miracle Force can only ever remove
-  // THREE of them. Asleep and Paralyzed are the §12 rotation states that block
-  // DECLARING an attack (§8), so a Gardevoir carrying either never gets to run
-  // its own recovery. This is not a gap in the op — it is the rulebook — and it
-  // is asserted rather than left in a comment because it is exactly the kind of
-  // claim a later slice would otherwise "fix" by moving the clear earlier.
+describe("the ATTACK half cannot reach TWO of the five conditions it names", () => {
   for (const rotation of ["asleep", "paralyzed"] as const) {
     it(`refuses the declaration while ${rotation} — the recovery never runs`, () => {
       const state = gardevoir({ rotation });
@@ -504,17 +390,12 @@ describe("the ABILITY half — Busybody Nurse", () => {
     expect(find(done.events, "ABILITY_USED")).toMatchObject({ ability: "Busybody Nurse" });
   });
 
-  it('⚠️ works from the BENCH — the print says "your Active Pokémon", not "this Pokémon"', () => {
-    // The SUBJECT of the recovery and the BEARER of the Ability are two different
-    // bodies (Exp. Share's shape, D171). `activeOnly: false` is what carries that,
-    // and getting it wrong would have silently required Blissey to be the very
-    // Pokémon it is meant to nurse — a card that could never do its own job.
+  it('works from the BENCH — the print says "your Active Pokémon", not "this Pokémon"', () => {
     const state = blisseyBoard("bench", { poisonDamage: 10 });
     expect(state.players.p1.active?.stack).toBeDefined();
     const activeBefore = activeUid(state, "p1");
     const done = mustApply(state, nurse(benchSlot(state, "p1", "sv01-145")));
     expect(conditionsOf(done.state, "p1")?.poisonDamage).toBe(0);
-    // The row names the ACTIVE (the body that recovered), not the bench Blissey.
     expect(find(done.events, "STATUS_CLEARED")?.uid).toBe(activeBefore);
     expect(find(done.events, "ABILITY_USED")?.uid).not.toBe(activeBefore);
   });
@@ -533,11 +414,6 @@ describe("the ABILITY half — Busybody Nurse", () => {
   });
 
   it("USABLE with nothing to recover from — the Potion doctrine, and it is a CHOICE", () => {
-    // `useAbility` refuses a program that could only whiff, and "the Active is
-    // clean" is a public board fact of the Crushing Hammer shape. The gate is
-    // deliberately NOT extended here (see the registry row): the printed sentence
-    // names no precondition, exactly as Potion's does not. The use is legal, spends
-    // the once-per-turn, and says nothing.
     const done = mustApply(blisseyBoard("active"), nurse());
     expect(find(done.events, "ABILITY_USED")).toBeDefined();
     expect(find(done.events, "STATUS_CLEARED")).toBeUndefined();
@@ -569,12 +445,6 @@ describe("the ABILITY half — Busybody Nurse", () => {
 
 describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says why", () => {
   it("neither printing writes `statusRecovery` — there is no source for a sweep to read", () => {
-    // `recoverStatuses` is driven off `passivesOf(...).statusRecovery`, a CATALOG
-    // value contributed by a live CONTINUOUS source. Both bodies here fold to the
-    // empty list, so a sweep over this board would clear nothing at all — and the
-    // conditions come off anyway. That is reason (1) of the three: THE DRIVER IS
-    // WRONG. Reusing the sweep would mean writing a synthetic passive onto the
-    // board so a function could read it back off.
     const gard = gardevoir({ burned: true });
     const bliss = blisseyBoard("active", { burned: true });
     for (const state of [gard, bliss]) {
@@ -587,13 +457,6 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
   });
 
   it("the clear is TOTAL, where the continuous half is PER-CONDITION", () => {
-    // Reason (3): THE SET IS WRONG. `recoverStatuses` filters the present
-    // conditions against the ones the SOURCE names — which is what makes a
-    // Therapeutic Energy wake a body and leave its Burn ticking. "All Special
-    // Conditions" names none, so `noConditions()` is the whole clear, and passing
-    // an all-five list into a filter designed to narrow is a filter written to be
-    // inert. Driven with a rotation state, Poison AND Burn on one body at once,
-    // which is the maximum §12 can hold (one rotation slot).
     const done = mustApply(
       blisseyBoard("active", {
         rotation: "asleep",
@@ -613,19 +476,12 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
   });
 
   it("ONE seat, not two — reason (2), THE SCOPE IS WRONG, stated on a board", () => {
-    // `recoverStatuses` is a two-seat board sweep restoring a board-wide
-    // invariant. This op is one body named by the printed subject. Both halves are
-    // asserted above to leave the opponent alone; here the claim is made about the
-    // op's own shape — a single STATUS_CLEARED, whichever entry point ran it.
     let state = blisseyBoard("active", { burned: true });
     state = setConditions(state, "p2", { burned: true });
     expect(findAll(mustApply(state, nurse()).events, "STATUS_CLEARED")).toHaveLength(1);
   });
 
   it("ONE vocabulary word for one printed verb — both halves say `recovered`", () => {
-    // What IS shared with the continuous half, and deliberately: the `reason`. The
-    // card says "recovers" in both mouths, log.ts renders one row for both, and a
-    // second reason would have been a second rendering of the same word (D131).
     const fromAttack = find(
       swing(gardevoir({ burned: true }), "miracleForce").events,
       "STATUS_CLEARED",
@@ -636,7 +492,6 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
     );
     expect(fromAttack?.reason).toBe("recovered");
     expect(fromAbility?.reason).toBe("recovered");
-    // …and it is the reason D174 introduced, not a sixth one invented here.
     expect(["benched", "evolved", "wokeUp", "burnCured", "paralysisEnded"]).not.toContain(
       fromAttack?.reason,
     );
@@ -648,12 +503,7 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the lock reaches the ABILITY half and cannot touch the ATTACK half", () => {
-  it("⚠️ a live Klefki kills Gardevoir's Ability and leaves its ATTACK's recovery intact", () => {
-    // The sharpest board this family can build, because it is ONE body: under a
-    // live "Mischievous Lock" the very same Gardevoir ex is refused `Psychic
-    // Embrace` (§9) and still recovers through `Miracle Force`. An attack is not
-    // an Ability, so the suppression question belongs to the ENTRY POINT and not
-    // to `clearStatus` — which is why no §9 check appears in the op at all.
+  it("a live Klefki kills Gardevoir's Ability and leaves its ATTACK's recovery intact", () => {
     let state = gardevoir({ burned: true });
     state = setActiveFromDeck(state, "p2", "sv01-096"); // Klefki Active — the aura is Active-only
     expectErr(
@@ -667,13 +517,6 @@ describe("§9 — the lock reaches the ABILITY half and cannot touch the ATTACK 
   });
 
   it("…and it kills Busybody Nurse, which is the same seam with the other verdict", () => {
-    // ⚠️ REACHABLE HERE BECAUSE THE FIXTURE IS A BASIC. Klefki's lock is
-    // stage-gated ("Basic Pokémon"), and the printed Blissey is a Stage 1; this
-    // pool simplifies every body to a Basic (declared in the fixture's doc block
-    // and in `catalogManifest.test.ts`). So what this case measures is that the
-    // ABILITY half rides the EXISTING §9 seam with nothing written for it — a
-    // property of `useAbility`, which is stage-blind — and NOT a claim that a real
-    // Klefki can lock a real Blissey. The case above needs no such caveat.
     let state = blisseyBoard("active", { burned: true });
     state = setActiveFromDeck(state, "p2", "sv01-096");
     expectErr(state, nurse(), "ABILITY_DISABLED");
@@ -681,29 +524,11 @@ describe("§9 — the lock reaches the ABILITY half and cannot touch the ATTACK 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The structural questions (D124 / D142 / D150 / D155 / D159 / D169).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("the structural questions", () => {
   it("PARK? NO. PERSIST? NO — MATCH_RECORD_VERSION stays 11", () => {
-    // D124's test is DIRECTIONAL (D171): can the PREVIOUS deploy's RECORD hold the
-    // shape the new code expects? A NEW OP is the case that usually forces a bump,
-    // because a parked program lives inside `GameState.phase` — and this one CANNOT
-    // park. `clearStatus` is synchronous, field-free and single-step: neither
-    // producer wraps it in anything that parks (the attack derives it alone, the
-    // Ability's program is exactly `[{ op: "clearStatus" }]`), so no record written
-    // by the previous deploy can hold it and no record this deploy writes can
-    // either. Nothing else reaches `GameState`: the op writes `conditions`, which
-    // has held the same three keys since M1, and `STATUS_CLEARED` rides `GameEvent`,
-    // which `MatchRecord` does not store (it stores the RENDERED log). The `reason`
-    // union did not even widen — "recovered" already existed (D174).
     const done = mustApply(blisseyBoard("active", { burned: true }), nurse());
     const active = done.state.players.p1.active;
     if (active === null) throw new Error("no Active");
-    // 🆕🆕🆕 D501 — `confusionDamage` is the FIRST key added to `SpecialConditions`
-    // since P3-M3; the rung is widened rather than relaxed, so it still reddens on a
-    // sixth key. `MATCH_RECORD_VERSION` 29 -> 30.
     expect(Object.keys(active.conditions).sort()).toEqual([
       "burned",
       "confusionDamage",
@@ -715,35 +540,18 @@ describe("the structural questions", () => {
   });
 
   it("the op is FIELD-FREE, and that is D104's minimal shape rather than an oversight", () => {
-    // No `target`: both printed subjects resolve to `ctx.seat`'s Active. No
-    // `statuses`: "all Special Conditions" is the printed quantifier over the
-    // closed union, and the ONE printing in this catalog that names a SUBSET is a
-    // different (continuous) mechanism with its own field. The day a printing says
-    // "your opponent's Active Pokémon recovers…" is the day the field is warranted,
-    // with two readings in hand rather than one guessed at.
     expect(deriveAttackEffect(MIRACLE_FORCE)).toEqual([{ op: "clearStatus" }]);
     expect(Object.keys((deriveAttackEffect(MIRACLE_FORCE) ?? [])[0] ?? {})).toEqual(["op"]);
     expect(ALL_STATUSES).toHaveLength(5);
   });
 
   it("§11: NOT gated by a defender's block — the op touches only the attacker", () => {
-    // `attackEffectRefused` refuses effects done TO the body carrying a "prevent
-    // all damage from and effects of attacks" block. This op touches the ATTACKER's
-    // own Active, which is never that body (a block is live during its holder's
-    // OPPONENT's turn, and `preventDamage` only ever installs on its own Active).
-    // A gate here would ask the defender for permission to heal yourself.
     const state = gardevoir({ burned: true });
     expect(state.players.p1.active?.attackBlock).toBeNull();
     expect(conditionsOf(swing(state, "miracleForce").state, "p1")?.burned).toBe(false);
   });
 
   it("MECHANISM DID NOT EXIST — and the measurement is the ENTRY POINT, not the clear", () => {
-    // D159's fourth question. The engine could already clear conditions (three
-    // `noConditions()` placements and four Checkup steps) and could already
-    // announce a "recovered" row (D174). What it had NEVER had is a PROGRAM that
-    // clears: every clear before this was a placement or a phase step, reachable
-    // only by moving a Pokémon or by ending a turn. The witness is that both new
-    // producers are ops in an `EffectOp[]` — one derived, one authored.
     expect(deriveAttackEffect(MIRACLE_FORCE)).toEqual([{ op: "clearStatus" }]);
     expect(programFor("sv01-145")?.abilities?.[0]?.program).toEqual([{ op: "clearStatus" }]);
   });

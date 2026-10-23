@@ -92,7 +92,6 @@ describe("LuaSimulator over a TableSource", () => {
     expect(after[0]?.filter((_, i) => i !== 0 && i !== 9 && i !== 10)).toEqual(
       before[0]?.filter((_, i) => i !== 0 && i !== 9 && i !== 10),
     );
-    // The `L` row names the source's mode; everything else is the seam's.
     const rest = (r: string[][]) => r.slice(1).filter((x) => x[0] !== "L");
     expect(rest(after)).toEqual(rest(before));
   });

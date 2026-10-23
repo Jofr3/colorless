@@ -27,45 +27,6 @@ import {
   setPrizes,
 } from "./testFixtures";
 
-// 0.113.0 → 0.114.0 — THE FIRST ATTACK-COST DISCOUNT AND ITS SURCHARGE SIBLING
-// (P3-M5 long tail, D169). One mechanism, opposite signs, two printings:
-//
-//   "As long as this Pokémon is in the Active Spot, attacks used by your
-//    opponent's Active Pokémon cost {C} more."      (Seismitoad sv03-052
-//                                                    "Quaking Zone")
-//   "This Pokémon's attacks cost Colorless less for each Prize card your
-//    opponent has taken."                           (Radiant Charizard
-//                                                    swsh10.5-011 "Excited Heart")
-//
-// ⚠️ THE FAMILY CLOSES AT 3/3 AND THE THIRD MEMBER WAS ALREADY BUILT. Censused as
-// its own question against the local D1 (978 cards / 6 sets, 2026-08-03, all three
-// text columns): the printed strings "cost {C} more" / "cost Colorless less" occur
-// on THREE rows over THREE distinct sentences — these two ABILITIES plus Pokémon
-// League Headquarters sv03-192, a STADIUM (`StadiumEffects.basicAttackCostSurcharge`,
-// shipped in M4). `attacks_json` contributes nothing to this family: no attack in
-// the pool modifies a cost.
-//
-// ⚠️ BOTH SIGNS WERE ALREADY EXPRESSIBLE, AND NO TYPE CHANGED. `effectiveAttackCost`
-// returns `readonly string[]` of literal energy symbols with "Colorless" a
-// distinguished member — `costMet` (attack.ts) buckets it by exactly that string
-// compare — so a surcharge APPENDS and a discount REMOVES. (🆕🆕🆕 D568 (D539): `costMet`
-// now lives in cards.ts, re-exported from attack.ts; and ONE discount now CAN remove a typed
-// symbol — Sparkling Crystal's any-type Energy, `anyTypeCostRemoval`, teraBannerD568.test.ts
-// §4. Every {C} term this suite drives is still Colorless-only.) **The array floors
-// itself**: a removal loop can only remove symbols that are present, so a 6-Prize
-// discount against a printed {W}{W} leaves {W}{W}. That is the sharpest structural
-// difference from `effectiveRetreatCost`, whose cost is a NUMBER and which must
-// clamp at `Math.max(0, …)`. Driven below rather than asserted in prose.
-//
-// ⚠️ AND THE ONE BEHAVIOUR CHANGE TO EXISTING CODE IS A GATE THAT MOVED. The old
-// body opened `if (top === undefined || !isBasicPokemon(top)) return cost;` — a
-// clause belonging to League HQ's printed "each BASIC Pokémon in play" and to
-// nothing else. Neither new sentence prints a stage, and Seismitoad is itself a
-// STAGE 2, so a surviving early return would have switched the surcharge off
-// against every Stage 1/2 Active it aims at. The Basic test is now a per-TERM gate
-// (`stadiumRetreatDelta`'s move, one seam over), and the board that separates the
-// two — a Stage 2 facing a Stage 2 under League HQ — is driven below.
-
 /** The printed sentences, byte-for-byte off the fielded rows. */
 const QUAKING_ZONE =
   "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost {C} more.";
@@ -77,22 +38,8 @@ const COMBUSTION_BLAST = ["Fire", "Colorless", "Colorless", "Colorless", "Colorl
 /** Seismitoad's one attack, index 0. */
 const ECHOED_VOICE = ["Water", "Water"] as const;
 
-/** One seed for the whole suite: nothing in this family flips a coin, so a seed
-    table would describe a shuffle rather than a rule (D143's move, inherited by
-    every long-tail slice since). */
 const SEED = 7;
 
-// ⚠️ THE DECK LIVES HERE AND NOT IN `testFixtures.ts`, WHICH IS A DEVIATION WORTH
-// ONE PARAGRAPH. Every other suite's 60 is a `testFixtures` export; this one is
-// built from the exported `deckOf` in this file, for two reasons that both point
-// the same way. The cast this slice needs — both printings PLUS League HQ PLUS a
-// §9 lock each — exists in no current deck and spans three of them
-// (`RADIANT_LOCK_DECK` has the Charizard, `PER_ATTACK_BUFF_DECK` the Seismitoad
-// and Ting-Lu ex, `STADIUM_TOOL_DECK` the Stadium), and every one of those is
-// dealt off a pinned shuffle that growing it would move. And no fixture CARD is
-// owed: all five real ids below were already fielded verbatim, with their printed
-// Abilities and with the simplification stated out loud beside each. The web-side
-// `GameHud.dom.test.tsx` already builds its 60 this way, so the idiom is not new.
 const ATTACK_COST_DECK = deckOf({
   "swsh10.5-011": 4, // Radiant Charizard — "Excited Heart": the DISCOUNT, on a BASIC
   "sv03-052": 4, // Seismitoad — "Quaking Zone": the SURCHARGE, on a STAGE 2
@@ -111,12 +58,6 @@ function active(state: GameState, seat: Seat, cardId: string): GameState {
   return clearBench(setActiveFromDeck(state, seat, cardId), seat);
 }
 
-/** Setup on P1's turn 3 (two passes past the §4 first-turn ban), both seats on the
-    same 60, both Active spots NORMALISED to the inert 340 HP body and both benches
-    emptied — so every board below is exactly what its own surgeries put on it. The
-    normalisation is not cosmetic: three of this deck's Basics carry Abilities that
-    would otherwise arrive as a starter (a Klefki in the opposing spot silences
-    Excited Heart outright). */
 function board(): GameState {
   let state = driveSetup(SEED, { p1: ATTACK_COST_DECK, p2: ATTACK_COST_DECK }, { first: "p1" });
   state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
@@ -153,11 +94,6 @@ describe("the registry rows", () => {
     expect(programFor("sv03-052")).toEqual({
       passive: { opponentActiveAttackCostSurcharge: 1 },
     });
-    // ⚠️ PASSIVE-ONLY, AND THE ABSENCE IS THE ASSERTION. The card's ATTACK
-    // ("Echoed Voice", D155's per-attack damage buff) is derived from its printed
-    // text by `deriveAttackEffect`; the attack seam reads
-    // `programFor(id)?.attack?.[index]` FIRST and an `attack` map here would have
-    // silently taken that derivation over.
     expect(programFor("sv03-052")?.attack).toBeUndefined();
   });
 
@@ -165,8 +101,6 @@ describe("the registry rows", () => {
     expect(programFor("swsh10.5-011")).toEqual({
       passive: { attackCostDiscountPerOpponentPrize: 1 },
     });
-    // Same absence, same reason: "Combustion Blast" carries D154's per-attack LOCK
-    // in its printed text and `perAttackLock.test.ts` drives it off that derivation.
     expect(programFor("swsh10.5-011")?.attack).toBeUndefined();
   });
 
@@ -186,10 +120,6 @@ describe("the registry rows", () => {
     expect(FIXTURE_POOL["sv03-052"]?.stage).toBe("Stage2");
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// THE DISCOUNT — the slice's one real novelty.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("Excited Heart — the DISCOUNT", () => {
   it("takes nothing off at 0 taken Prizes, and returns the PRINTED ARRAY ITSELF", () => {
@@ -220,10 +150,6 @@ describe("Excited Heart — the DISCOUNT", () => {
   });
 
   it("SELF-FLOORS past the last Colorless — 6 taken still owes {R}, never a negative", () => {
-    // ⚠️ THE STRUCTURAL CLAIM OF THE WHOLE SLICE, DRIVEN. `effectiveRetreatCost`
-    // needs `Math.max(0, …)` because its cost is a NUMBER; this cost is an ARRAY,
-    // and the removal loop simply runs out of Colorless to spend itself on. There
-    // is no floor in `effectiveAttackCost` and this is why none is owed.
     let state = active(board(), "p1", "swsh10.5-011");
     state = opponentTook(state, "p2", 6);
     expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(6);
@@ -330,11 +256,6 @@ describe("Quaking Zone — the cross-board SURCHARGE", () => {
   });
 
   it("is STAGE-AGNOSTIC on the target — the regression the moved Basic gate owes", () => {
-    // ⚠️ THIS IS THE BOARD THAT WOULD HAVE PASSED SILENTLY UNDER THE OLD FOLD. Two
-    // Seismitoads facing each other: both targets are STAGE 2, so the surviving
-    // `!isBasicPokemon(top)` early return would have returned the printed cost and
-    // dropped the aura entirely — on the one card whose own stage guarantees the
-    // case comes up.
     let state = active(board(), "p1", "sv03-052");
     state = active(state, "p2", "sv03-052");
     expect(effectiveAttackCost(state, activeOf(state, "p1"), ECHOED_VOICE)).toEqual([
@@ -360,15 +281,6 @@ describe("Quaking Zone — the cross-board SURCHARGE", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE FOLD — three sources, two signs, one array.
-// (🆕🆕🆕 D568 (D539): "three sources" is WITHDRAWN as a count of the whole seam —
-// `effectiveAttackCost` now folds a FOURTH source, applied last: Sparkling Crystal's
-// any-type removal (`anyTypeCostRemoval`, teraBannerD568.test.ts §4), which reads the
-// holder's attached Energy and can take a TYPED symbol. It stays true of the three {C}
-// sources this block drives — Stadium, aura, discount — none of which is Tera-gated.)
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("effectiveAttackCost — the ± fold", () => {
   it("nets a surcharge against a discount: +1 − 2 leaves ONE {C} off the print", () => {
     let state = active(board(), "p1", "swsh10.5-011");
@@ -385,11 +297,6 @@ describe("effectiveAttackCost — the ± fold", () => {
   });
 
   it("EXACT CANCELLATION returns the printed array itself — the two-fields proof", () => {
-    // ⚠️ THE ASSERTION THAT REFUSES A SIGN-OVERLOADED FIELD. +1 and −1 must sum to
-    // "no change", and a single field carrying both directions could not tell this
-    // board apart from a board with no modifier at all — which is exactly the
-    // failure a `<= 0` early return produces (D163). The reference identity is the
-    // pin: the fold recognised the net as zero rather than rebuilding the array.
     let state = active(board(), "p1", "swsh10.5-011");
     state = active(state, "p2", "sv03-052");
     state = opponentTook(state, "p2", 1);
@@ -397,8 +304,6 @@ describe("effectiveAttackCost — the ± fold", () => {
     expect(effectiveAttackCost(state, activeOf(state, "p1"), printed)).toBe(printed);
   });
 
-  // 🆕🆕🆕 D568 (D539): "ALL THREE" is all three {C} sources, not the whole seam — a fourth,
-  // Sparkling Crystal's any-type removal, is driven in teraBannerD568.test.ts §4.
   it("folds ALL THREE {C} sources — Stadium + aura − discount (D568: the any-type fourth is teraBannerD568 §4)", () => {
     let state = active(board(), "p1", "swsh10.5-011");
     state = active(state, "p2", "sv03-052");
@@ -453,10 +358,6 @@ describe("effectiveAttackCost — the ± fold", () => {
   });
 
   it("floors at the printed typed symbols even with the Stadium adding — net −4 on {W}{W}", () => {
-    // A Stage 2 body carrying Charizard's discount cannot exist in the pool, so the
-    // flooring case with a surcharge present is driven on the printed cost the
-    // holder does NOT have: `effectiveAttackCost` takes the cost as an argument, and
-    // this is the arm where "remove more Colorless than exist" has to be total.
     let state = active(board(), "p1", "swsh10.5-011");
     state = opponentTook(state, "p2", 6);
     expect(effectiveAttackCost(state, activeOf(state, "p1"), ["Water", "Water"])).toEqual([
@@ -488,9 +389,6 @@ describe("§9 suppression — and the two cards need different locks", () => {
   });
 
   it("Klefki CANNOT reach Quaking Zone — Seismitoad is a Stage 2", () => {
-    // D113's rule: the reachability follows the SOURCE's stage. Mischievous Lock
-    // silences "Basic Pokémon in play", and this holder is not one — the negative
-    // that explains why the second lock below is a different card.
     let state = active(board(), "p1", "sv01-096");
     state = active(state, "p2", "sv03-052");
     expect(disabledAbilityUids(state).has(topUid(activeOf(state, "p2")) ?? "")).toBe(false);
@@ -579,12 +477,6 @@ describe("redactedAttacksOf — payability AND the cost the player is shown", ()
   });
 
   it("carries `effectiveCost` BESIDE the printed `cost` once a discount bites", () => {
-    // ⚠️ THE DIVERGENCE THIS FIELD CLOSES. `playable` has been computed from the
-    // EFFECTIVE cost since this projection was written, while `cost` published the
-    // PRINTED one and nothing carried the difference. Harmless while the pool's only
-    // modifier was a SURCHARGE (a greyed button and no explanation); wrong in the
-    // worse direction the moment a DISCOUNT can light the button up while the dots
-    // still show a cost the player has not paid.
     const state = opponentTook(active(board(), "p1", "swsh10.5-011"), "p2", 2);
     const row = attackRows(state, "p1")[0];
     expect(row?.cost).toEqual([...COMBUSTION_BLAST]);
@@ -614,10 +506,6 @@ describe("redactedAttacksOf — payability AND the cost the player is shown", ()
   });
 
   it("every row it emits still parses as a RedactedAttack — and so does one without the field", () => {
-    // The backward-compatibility claim, driven rather than asserted: the field is
-    // OPTIONAL, so a frame written before it existed is still valid. That is also
-    // the whole reason no `MATCH_RECORD_VERSION` question arises — this shape is a
-    // wire projection rebuilt from `GameState` every frame and persisted nowhere.
     const state = opponentTook(active(board(), "p1", "swsh10.5-011"), "p2", 2);
     for (const row of attackRows(state, "p1")) {
       expect(redactedAttackSchema.safeParse(row).success).toBe(true);

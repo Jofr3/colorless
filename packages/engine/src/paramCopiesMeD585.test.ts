@@ -15,17 +15,8 @@ import {
   handFromDeck,
   mustApply,
   setActiveFromDeck,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D585 — WP19: PARAMETER COPIES OF PASSIVES AND ABILITIES ──
-//
-// 19 `me` printings / 8 printed texts, each a built `sv` program's op or field at the
-// printed parameter (an Energy type, an amount, the printed name, a board condition).
-// Measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07,
-// `legal_standard = 1` on every `me` row. No `me` row is a fixture, so the printed bytes are
-// carried HERE and the face rung rebuilds each `me` text from its twin's through the stated
-// edits. The `me` wording "you may use this Ability. X" is the `sv` wording "you may x": the
-// same rule (an activated Ability's "you may" is the decision to use it).
 
 /** [me ids, twin id, printed Ability name, me text, twin text, edits]. Each edit is [twin
     phrase, me phrase]; applied in order, they turn the twin's text into the `me` text. */
@@ -292,7 +283,6 @@ const ability = (id: string, name: string): Partial<Card> => ({
   abilities: [{ type: "Ability", name, effect: text(id) }],
 });
 
-/** The LOCAL pool (D275's idiom): the real ids, printed names, texts, HP and attacks. */
 const LOCAL: Record<string, Card> = {
   "me03-024": body(
     "me03-024",
@@ -387,11 +377,6 @@ const DECK = deckOf({
   "fix-psychic-energy": 4,
   "fix-lightning-energy": 3,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own turn (P2 went first and passed). Every card the boards below pull is
     returned to the deck first, so the surgery never depends on the deal. */

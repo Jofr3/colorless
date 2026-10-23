@@ -19,73 +19,6 @@ import {
   walkProgram,
 } from "./testFixtures";
 
-// 0.143.0 → 0.144.0 — D227, THE OPPONENT-CHOSEN SWITCH-OUT: row 4 of
-// `coverage-backlog-legal.md`, and the FIRST op whose whole content is WHO
-// ANSWERS.
-//
-// "Switch out your opponent's Active Pokémon to the Bench. (Your opponent
-// chooses the new Active Pokémon.)" — 10 Standard-legal printings bare, 13 across
-// the three sentences these arms read.
-//
-// 🛑 THE BOARD MOVE IS `gust`'s, BYTE FOR BYTE. `opponentSwitchOut` calls the same
-// `switchInto` on the same seat over the same candidate set and emits the same
-// `POKEMON_SWITCHED` row. The ONLY difference is a `decider` on the park — so this
-// file's job is not "did something move" (the gust suite already owns that), it is
-// **WHOSE QUESTION IT IS**, on every board where that is observable. Every case
-// below that could pass on a crossed build is paired with one that could not.
-//
-// ⚠️ THE `needs` CELL WAS RE-DERIVED BEFORE THE SLICE OPENED, PER conventions.md,
-// AND IT WAS HALF WRONG IN THE CHEAP DIRECTION. It read: *"cross-seat
-// `decider`/`answerer` machinery already exists; the op and the HUD offer do
-// not."*
-//   • **The machinery: TRUE.** `opponentMayDraw` has carried `decider` since 0.x;
-//     `settleProgram` files `phase.answerer`, `resolveEffect` gates on it,
-//     `phaseViewOf` moves `waitingSeat` and WITHHOLDS the prompt from everyone
-//     else.
-//   • **The op: TRUE.** It did not exist.
-//   • 🛑 **The HUD offer: FALSE — IT COST NOTHING.** `choosePokemon` is already
-//     dialoged on BOTH surfaces, `acting` follows `waitingSeat`, and
-//     `redactedRefOf` carries an ABSOLUTE `seat`, so the answerer sees their own
-//     bodies with the "opponent" badge correctly absent. **Zero client lines.**
-//     That is the fourth `needs` cell on this branch to overstate a cost — D199's
-//     was the first (7 printings hidden behind one word).
-//
-// ⚠️ AND THE COUNT WAS RIGHT WHILE THE EDIT ESTIMATE WAS NOT. The row priced "14
-// printings for ~4 regex arms + 1 op". 14 legal printings is EXACT (re-derived
-// below), but the fourth arm is not an arm: Grimmsnarl `sv07-096`'s "If you do,
-// this attack does 160 damage to the new Active Pokémon" is a SECOND §8.5 hit on
-// a body that is not the captured defender, which lives in `attack.ts` in front of
-// the interpreter. **13 for 3 arms + 1 op**, with the 14th pinned unread below.
-//
-// ⚠️ A THIRD FINDING, FROM SWEEPING ALL THREE TEXT COLUMNS RATHER THAN THE ONE
-// THE ROW CENSUSED: `sv10.5w-023`/`-107` print the ABILITY twin of Iron Bundle's
-// compound (2 legal). They are REGISTRY rows, not arms, and are deliberately left
-// for their own slice — an activated Ability is a card PLAY and goes through
-// `programPlayable`, which has no arm for this op and must not get a speculative
-// one. Recorded in `coverage-backlog-legal.md`.
-// 🆕🆕🆕 D587 (D539): "no arm for this op" is WITHDRAWN — Repel `me01-126` prints the op ALONE
-// on a Trainer, so `programPlayable` gained `gust`'s empty-Bench line for it (§5's seam rung).
-// 🆕🆕🆕 D555 — **"DELIBERATELY LEFT FOR THEIR OWN SLICE" IS WITHDRAWN (D539): D555 IS
-// THAT SLICE.** `TORRENTIAL_WHIRLPOOL` (registry.ts) keys both ids on Interjet's
-// program byte for byte, so a card PLAY now reaches this op — behind `recordGate`,
-// after `switchActive`, whose own `programPlayable` arm gates the use. The second
-// half STAYS TRUE: `programPlayable` gets no `opponentSwitchOut` arm (an empty
-// opponent Bench leaves the self-switch playable; the opponent is never asked).
-// [🆕🆕🆕 D587 (D539): "gets no arm" is WITHDRAWN for the TOP-LEVEL op (Repel); the
-// parenthesis stays true — the `recordGate`-nested op is not scanned.]
-// §5's seam rung is RE-POINTED (D418) from `FIXTURE_POOL`'s top-level ops to a deep
-// walk over `registryCardIds()`, which is what can actually see the new producer.
-
-/** The three sentences this slice reads, with the program each derives to and the
-    LEGAL printing count measured for it. Census re-derived (not inherited) on
-    2026-08-05 against the remote D1 `colorless` — 3,786 rows / 20 sets, 2,021
-    `legal_standard = 1` — over `json_each(attacks_json)` +
-    `json_extract(value,'$.effect')`, with `GLOB` rather than `LIKE` because
-    SQLite's `LIKE` is ASCII case-insensitive and has cost this repo a census.
-
-    Both figures are given per row: `printings` over the whole remote catalog,
-    `legalPrintings` over the Standard pool. A count without a population AND a
-    legality is not a fact. */
 const CLAUSES = [
   {
     text: "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
@@ -122,20 +55,9 @@ const BARE = 0;
 const MAY = 1;
 const COMPOUND = 2;
 
-/** Grimmsnarl `sv07-096` "Goad 'n' Grab" — the family's 14th legal printing, which
-    D227 deliberately did not read and **D228 BUILT**. It stays named here because
-    it is part of the same census: this file's arithmetic is 13 + 1 = 14 either
-    way, and what moved is which side of the `+` the 1 sits on. Its program is
-    asserted in `derivedNewActiveDamage.test.ts`; what is asserted HERE is only
-    that D227's three anchors still refuse it, which is the property that keeps the
-    two slices' sentences disjoint. */
 const DAMAGE_RIDER =
   "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) If you do, this attack does 160 damage to the new Active Pokémon.";
 
-/** The four gust-plus-damage-rider sentences that shared the 14th's mechanism —
-    ALSO BUILT AT D228, and kept here for the same reason: "one slice for 8
-    printings" was a measured claim, and the measurement is what the next reader
-    needs to check the promise against what landed. */
 const GUST_DAMAGE_RIDERS = [
   [
     "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
@@ -159,16 +81,11 @@ const GUST_DAMAGE_RIDERS = [
     identically, so the curly one is always written where a reader can see it. */
 const RSQUO = "’";
 
-// ── The board. Indices 9-12 on `fix-trainerops`, appended by D227. ──
 const KICK_AWAY = 9;
 const WINDING_WAVES = 10;
 const INTERJET = 11;
 const GOAD_N_GRAB = 12;
-/** The self-switch D189 appended at 5 — the CONTROL for every "whose question is
-    it" case: same prompt kind, same file, opposite seat. */
 const SLIP_AWAY = 5;
-/** The GUST D181 appended at 2 — the second control, and the sharper one: same
-    CANDIDATE SET as this slice's op, answered by the other player. */
 const TAUNT = 2;
 
 function board(seed: number): GameState {
@@ -209,24 +126,11 @@ describe("the three anchors — one new op, and two compositions of things that 
   });
 
   it("adds up: 13 of the family's 14 legal printings, across 3 sentences", () => {
-    // The arithmetic stated rather than described — a slice that quietly dropped
-    // one anchor would still pass every accept case above.
     expect(CLAUSES).toHaveLength(3);
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(13);
     expect(CLAUSES[BARE].legalPrintings).toBe(10);
     expect(CLAUSES[MAY].legalPrintings).toBe(2);
     expect(CLAUSES[COMPOUND].legalPrintings).toBe(1);
-    // …and the 14th is the damage rider, so the FAMILY total is 14 and the row's
-    // own count holds exact while its edit estimate does not.
-    //
-    // ⚠️ D228 BUILT THE 14th, AND WHAT THIS LINE ASSERTS CHANGED SHAPE RATHER THAN
-    // BEING DELETED. It used to read `toBeNull()` — a claim about the whole
-    // deriver, which stops being true the moment a sibling slice lands. What is
-    // still THIS file's claim, and is the one that matters for keeping two slices'
-    // sentences disjoint, is that none of the THREE ANCHORS ABOVE claims it: the
-    // rider is the bare sentence plus a tail, so a bare anchor that lost its `$`
-    // would swallow it and silently drop 160 damage (a live mutant, and the reason
-    // this is asserted rather than assumed).
     expect(deriveAttackEffect(DAMAGE_RIDER)).not.toEqual(CLAUSES[BARE].program);
     expect(deriveAttackEffect(DAMAGE_RIDER)?.[0]).toEqual({
       op: "opponentSwitchOut",
@@ -235,15 +139,10 @@ describe("the three anchors — one new op, and two compositions of things that 
   });
 
   it("only the BARE arm invents an op; the other two COMPOSE", () => {
-    // The honest price of the slice, asserted: one new union member, and two arms
-    // whose programs are built entirely out of ops that shipped in earlier slices
-    // (`optional` D186, `switchActive`+`recordAs`+`recordGate` D206/D172).
     const kinds = (ops: readonly EffectOp[]): string[] => ops.map((o) => o.op);
     expect(kinds(CLAUSES[BARE].program)).toEqual(["opponentSwitchOut"]);
     expect(kinds(CLAUSES[MAY].program)).toEqual(["optional"]);
     expect(kinds(CLAUSES[COMPOUND].program)).toEqual(["switchActive", "recordGate"]);
-    // The compound's shape IS Prime Catcher's registry program with the two ends
-    // swapped — one printed action read off two seams, D132's inventory rule.
     const primeCatcher = programFor("sv05-157")?.trainer ?? [];
     expect(kinds(primeCatcher)).toEqual(["gust", "recordGate"]);
   });
@@ -262,9 +161,6 @@ describe("the three anchors — one new op, and two compositions of things that 
   });
 
   it("the COMPOUND's antecedent is the bare self-switch plus one recording key", () => {
-    // The other composition claim, in the other direction: the first op differs
-    // from D189's standalone self-switch by `recordAs` and by nothing else, so a
-    // reader of the compound is looking at a program it already understands.
     const [first] = deriveAttackEffect(CLAUSES[COMPOUND].text) ?? [];
     expect(first).toEqual({ op: "switchActive", recordAs: "moved" });
     expect(deriveAttackEffect("Switch this Pokémon with 1 of your Benched Pokémon.")).toEqual([
@@ -273,12 +169,6 @@ describe("the three anchors — one new op, and two compositions of things that 
   });
 
   it("accepts BOTH apostrophes on all three — deliberately, not accidentally", () => {
-    // ⚠️ THE FIRST DRAFT OF THESE ANCHORS HAD NO CURLY CLASS, reasoning from D189's
-    // call on the self-switch (which carries NO apostrophe) and from a measured
-    // zero in today's catalog. `clauseApostrophe.test.ts` turned red on it, and
-    // the rule is the one it enforces: a sentence that CONTAINS an apostrophe must
-    // derive identically under a re-ingest that curls it. A measured zero in the
-    // catalog is not a reason to narrow a PARSER.
     for (const { text, program } of CLAUSES) {
       const curled = text.replaceAll("'", RSQUO);
       expect(curled).not.toBe(text);
@@ -295,10 +185,6 @@ describe("the three anchors — one new op, and two compositions of things that 
   it("hands no clause to the coin reader, and reads no near-miss of its own", () => {
     for (const { text } of CLAUSES) expect(deriveAttackCoinFlip(text), text).toBeNull();
     expect(deriveAttackCoinFlip(DAMAGE_RIDER)).toBeNull();
-    // The two real sentences closest to this family that mean something else. The
-    // second is the same mechanic written from the OTHER end (0 legal, rotated),
-    // and it is a live witness that the anchor is keyed to the printed bytes and
-    // not to the idea.
     for (const text of [
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
       "Your opponent chooses 1 of their Benched Pokémon and switches it with their Active Pokémon. The new Active Pokémon is now Asleep.",
@@ -310,21 +196,11 @@ describe("the three anchors — one new op, and two compositions of things that 
   it("refuses the anchor, punctuation and case rewrites — the parenthetical included", () => {
     const bare = CLAUSES[BARE].text;
     const rewrites = [
-      // The parenthetical dropped. It is REMINDER text and the anchor matches it
-      // anyway, because it is the only thing in the printed bytes that tells this
-      // sentence from a gust. No catalog row drops it (measured: 0 of 33).
       "Switch out your opponent's Active Pokémon to the Bench.",
       // …and the parenthetical alone, which is not a sentence the engine reads.
       "(Your opponent chooses the new Active Pokémon.)",
       // A leading clause — the shape a `$`-only build eats.
       `Draw a card. ${bare}`,
-      // A trailing clause — the shape a `^`-only build eats. ⚠️ D228 SWAPPED THE
-      // WITNESS HERE, and the reason is worth a line: this row used to be the
-      // family's real 14th printing (Grimmsnarl's damage rider), which is now
-      // BUILT — so "derives to null" is no longer the property being asserted
-      // about it. What this row must still pin is that the BARE anchor does not
-      // swallow a tail, so it carries a tail no card prints, and the built rider's
-      // disjointness from this anchor is asserted in the arithmetic case above.
       `${bare} Draw a card.`,
       // Case, which these readers commit to.
       bare.toLowerCase(),
@@ -340,48 +216,14 @@ describe("the three anchors — one new op, and two compositions of things that 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. THE FIXTURE — the printings, present and pinned
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("PROVENANCE — the demonstrator carries all three of this slice's sentences, and the 14th beside them", () => {
   it("fields the family at indices 9-12, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 48 at D236 (43 at D235, 35 at D234, 29 at D232, 25 at D231, 20 at D230, 17 at D229, 14
-    // at D228, 13 at D227): D228's ungated rider was appended at 13, D229's three
-    // energy-move sentences at 14-16, D230's three bench searches at 17-19,
-    // D231's five hand searches at 20-24, D232's four opponent-hand sentences at
-    // 25-28, D234's six discard-pile attaches at 29-34 and D235's eight
-    // deck-search attaches at 35-42, and 9-12 did not move — which is what every
-    // constant in this file depends on.
-    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
-    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
-    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
-    // inserts.
-    // 🆕🆕 **63 AT D426**, which appended **61-62** — the opponent-chooses hand
-    // discard (*"Your opponent discards 2 cards from their hand."* / *"…a card…"*).
-    // `opponentHandDiscard.test.ts` owns them, and the append-never-insert
-    // discipline this whole paragraph exists for holds again: 0-60 are addressed by
-    // constant in a dozen sibling suites and every one of them still means what it
-    // meant. ⚠️ NO ORDINAL IS CLAIMED (*"the Nth slice"*) — the running count above
-    // was last written at D241 and was already one append behind by D246, which is
-    // exactly how a count in a comment rots. The LENGTH is the executable half and
-    // it is the line below.
-    // 🆕🆕 **68 AT D443**, which appended **66-67** — the OPPONENT-BOARD pair
-    // (`derivedOpponentEnergyMove.test.ts` owns them). TWELVE sibling suites carry
-    // this pin and all twelve were stepped in one pass, as D442 stepped eleven.
-    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
-    // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
-    // same length pin and ALL of them were stepped in one pass (D431): a green run
-    // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
-    // (🆕🆕🆕 D569 (D539): "DATA-BLOCKED rather than merely unbuilt" is WITHDRAWN — the real printings (Miraidon `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written REGISTRY attack over `banners.ts`; the DERIVERS still refuse the sentence, so index 71 stays an unread control and this pin is unchanged)
+    expect(attacks).toHaveLength(73);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);
     expect(attacks[GOAD_N_GRAB]?.effect).toBe(DAMAGE_RIDER);
-    // D181's and D189's indices are untouched, which is what "appended" means and
-    // what nine cases in the sibling suite depend on.
     expect(attacks[TAUNT]?.effect).toBe(
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
     );
@@ -389,18 +231,6 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
   });
 
   it("▶️ D228 BUILT THE 14th — it no longer STAYS LOUD, and the board says which", () => {
-    // ⚠️ THIS CASE USED TO ASSERT THE OPPOSITE, AND KEEPING IT (INVERTED) IS THE
-    // POINT. D227 pinned the gap on a live board — one `ATTACK_EFFECT_SKIPPED`
-    // row, nobody asked, the opponent's Active unmoved — precisely so the day it
-    // was built would show up HERE rather than as a quietly deleted test. The
-    // three assertions below are the same three, each flipped.
-    //
-    // 🛑 AND ONE OF THEM CANNOT BE MERELY FLIPPED, WHICH IS THE FINDING. The old
-    // case read `DAMAGE_DEALT.length > 0` and called it "its printed BASE damage
-    // lands (the attack works)" — off a `damage: 130` D227's fixture INVENTED.
-    // `sv07-096` prints no base damage at all (re-read off the remote D1), so the
-    // fixture is corrected and this board now has exactly ONE damage row: the
-    // rider's own 160, against the body the opponent promoted.
     const state = ready(31, 1, 2);
     const wasActive = activeUid(state, "p2");
     deepFreeze(state);
@@ -410,7 +240,6 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
     expect(phaseViewOf(parked.state, "p2").waitingSeat).toBe("p2");
     // Nothing has been dealt yet — the whole sentence is behind the answer.
     expect(all(parked.events, "DAMAGE_DEALT")).toHaveLength(0);
-    // …and no loud row anywhere, on either half.
     expect(all(parked.events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     const target = parked.state.players.p2.bench[0];
     const done = mustApply(parked.state, {
@@ -418,10 +247,6 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
       seat: "p2",
       choice: { kind: "pokemon", ref: { seat: "p2", spot: { spot: "bench", index: 0 } } },
     });
-    // The 160 landed on the PROMOTED body, not on the one that left — and this
-    // board's Bench is `fix-basic-1` at 60 HP, so it is also a Knock Out, which is
-    // why the promoted body is read off the EVENT rather than off `players.p2`
-    // (there is no Active there to read once the rider resolves).
     const dealt = all(done.events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(1);
     expect(dealt[0]?.uid).toBe(target?.stack[0]);
@@ -434,29 +259,18 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
   });
 
   it("the four sentences the 14th shared its mechanism with are built too", () => {
-    // D227 priced the split-out row at 8 legal printings — Grimmsnarl plus these
-    // four — and this is the arithmetic held against what landed. The programs
-    // themselves belong to `derivedNewActiveDamage.test.ts`; what is checked here
-    // is only that the count the promise was made with is the count that was paid.
     let riderPrintings = 1; // Grimmsnarl itself
     for (const [text, legal] of GUST_DAMAGE_RIDERS) {
       expect(deriveAttackEffect(text), text).not.toBeNull();
       riderPrintings += legal;
     }
     expect(riderPrintings).toBe(8);
-    // …and the distinction D227's block warned the builder about held: the rider
-    // is genuine ATTACK damage, where the counter-put sentence one op over is not
-    // and never became it (`damageActive`'s own doc: "an effect, not damage").
     const counterPut = deriveAttackEffect(
       "Put 5 damage counters on your opponent's Active Pokémon.",
     );
     expect(counterPut).toEqual([{ op: "damageActive", amount: 50, source: "attack" }]);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. THE POINT OF THE SLICE — whose question is it?
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("end to end — the OPPONENT answers, and that is the whole op", () => {
   it("PARKS on the opponent's Bench with the opponent as ANSWERER", () => {
@@ -467,9 +281,6 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
 
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    // 🛑 THE ASSERTION THE WHOLE SLICE IS ABOUT. `seat` is the CONTROLLER (the turn
-    // is still p1's and every reader of that field means the program's owner);
-    // `answerer` is the seat that must send the resolveEffect.
     expect(parked.phase.seat).toBe("p1");
     expect(parked.phase.answerer).toBe("p2");
     expect(parked.phase.resumeTail).toBe(true);
@@ -487,14 +298,11 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
     // Nothing has moved yet, and the attacker is still where it was.
     expect(activeUid(parked, "p1")).toBe(attacker);
     expect(parked.pending).toEqual([
-      // 🆕 D394 — the stage names the ATTACK as well as the attacker.
       { kind: "attackEpilogue", seat: "p1", uid: attacker, attack: "Kick Away" },
     ]);
   });
 
-  it("🛑 REFUSES the CONTROLLER's answer, and accepts the opponent's", () => {
-    // The negative control the slice exists for, and the one a build that dropped
-    // the `decider` would fail: without it p1 answers and p2 is never asked.
+  it("REFUSES the CONTROLLER's answer, and accepts the opponent's", () => {
     const { state: parked } = mustApply(ready(42, 1, 2), {
       type: "attack",
       seat: "p1",
@@ -513,10 +321,6 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
   });
 
   it("the GUST is the same board and the OTHER answerer — the crossed-build control", () => {
-    // ⚠️ THE PAIR THAT MAKES THE `decider` LOAD-BEARING. Same seed, same board,
-    // same candidate set, same prompt kind: only the seat that owes the answer
-    // differs. A build that copied `gust` verbatim would produce the RIGHT board
-    // and hand the question to the wrong player, and nothing but this pair sees it.
     const { state: gusted } = mustApply(ready(43, 1, 3), {
       type: "attack",
       seat: "p1",
@@ -540,8 +344,6 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
   });
 
   it("moves the OPPONENT's Active, never the attacker's — the other crossed build", () => {
-    // The seat mutant one level down: `switchInto` on the wrong side would leave
-    // a legal-looking board with the opposite effect.
     const state = ready(44, 2, 1);
     const attacker = activeUid(state, "p1");
     const wasActive = activeUid(state, "p2");
@@ -615,14 +417,7 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
     const forController = phaseViewOf(parked, "p1");
     expect(forController.waitingSeat).toBe("p2");
     expect(forController.activeSeat).toBe("p1");
-    // 🛑 WITHHELD FROM THE CONTROLLER. Without this the attacker's own
-    // client would render a dialog for a question it may not answer —
-    // afford-then-reject, the class this repo has closed twice.
     expect(forController.pendingDecision).toBeNull();
-    // ⚠️ AND THE CANDIDATES REACH THE ANSWERER AS THEIR OWN BODIES — the fact that
-    // makes the existing `choosePokemon` dialog correct here with no change. The
-    // online HUD badges a candidate "opponent" when `ref.seat !== seat`; for this
-    // park that comparison is false for every row.
     const decision = forOpponent.pendingDecision;
     if (decision?.kind !== "effectChoose") throw new Error("expected effectChoose");
     expect(decision.prompt.kind).toBe("choosePokemon");
@@ -660,21 +455,7 @@ describe("end to end — the printed 'You may', two questions to two people", ()
     expect(choosing.phase.answerer).toBe("p2");
   });
 
-  it("🆕🆕 D422 — ASKS ON AN EMPTY OPPONENT BENCH TOO, and the YES does nothing", () => {
-    // 🛑 THE PRECEDENT D422 CITED, WHICH WAS **UNDRIVEN WHEN IT CITED IT**. D422
-    // builds the mirror of this sentence on the ATTACKER's own seat (*"You may
-    // switch this Pokémon with 1 of your Benched Pokémon."*) and had to decide
-    // what an EMPTY Bench does under an `optional` wrapper, because `optional`
-    // ALWAYS parks while the inner op no-ops silently at zero candidates. It chose
-    // to ACCEPT the ask, "for consistency with the shipped mirror" — and the
-    // shipped mirror's empty-Bench board was asserted nowhere. Two cases up, the
-    // BARE sentence's empty-Bench board IS driven (`toHaveLength(0)` on
-    // `ATTACK_EFFECT_SKIPPED`), but the bare op never asks, so it says nothing at
-    // all about the wrapped one.
-    //
-    // ⚠️ CITING AN UNPINNED PRECEDENT IS HOW A FALSE CLAIM PROPAGATES, so it is
-    // pinned here, in the file that owns the sentence, rather than only in D422's.
-    // The behaviour is the SAME on both seats and now both are boards.
+  it("D422 — ASKS ON AN EMPTY OPPONENT BENCH TOO, and the YES does nothing", () => {
     const state = ready(53, 1, 0);
     const before = [activeUid(state, "p1"), activeUid(state, "p2")];
     expect(state.players.p2.bench).toHaveLength(0);
@@ -698,9 +479,6 @@ describe("end to end — the printed 'You may', two questions to two people", ()
     expect(all(events, "POKEMON_SWITCHED")).toHaveLength(0);
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     expect(types(events)).toContain("TURN_ENDED");
-    // ⚠️ THE CONTROL THAT MAKES THE ABOVE MEAN SOMETHING: the SAME seed with a
-    // STOCKED opponent Bench reaches the opponent's park off the same YES. Without
-    // it, "the yes did nothing" would be equally true of a broken wrapper.
     const { state: stocked } = mustApply(ready(53, 1, 2), {
       type: "attack",
       seat: "p1",
@@ -745,9 +523,6 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
     expect(ownPark.phase.answerer).toBeUndefined();
     if (ownPark.phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(ownPark.phase.prompt.candidates.every((ref) => ref.seat === "p1")).toBe(true);
-    // ⚠️ AND THE NOTE CARRIES THE CONSEQUENCE, because `withConsequence` found the
-    // gate reading this op's slot. Without the `describeBranch` arm the dialog
-    // would describe half the card.
     expect(ownPark.phase.prompt.note).toBe(
       "Switch to which Benched Pokémon? If you do, switch out your opponent's Active Pokémon to the Bench.",
     );
@@ -764,12 +539,7 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
     expect(oppPark.phase.prompt.note).toBe("Choose your new Active Pokémon.");
   });
 
-  it("🛑 an EMPTY attacker Bench skips the consequent — the gate driven, not argued", () => {
-    // ⚠️ THE FIRST BOARD ON WHICH `parkOrForce`'s ZERO-CANDIDATE ENDING IS
-    // OBSERVABLE. D189 made it REACHABLE from an attack; nothing until this card
-    // could SEE the difference, because no printing put a §9.2 gate behind it. The
-    // antecedent files nothing, `recordGateHolds` reads the empty slot as false,
-    // and the opponent is never asked — which is the printed "If you do".
+  it("an EMPTY attacker Bench skips the consequent — the gate driven, not argued", () => {
     const state = ready(62, 0, 3);
     const attacker = activeUid(state, "p1");
     const wasActive = activeUid(state, "p2");
@@ -787,9 +557,6 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
     // The attack was USED — the gate is a printed condition, not a failure.
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     expect(types(events)).toContain("TURN_ENDED");
-    // ⚠️ THE CONTROL THAT MAKES THE CASE ABOVE MEAN SOMETHING: the SAME board with
-    // ONE benched body runs the consequent all the way to the opponent's park. If
-    // the gate were vacuous both boards would look alike; they do not.
     const { state: reached } = mustApply(ready(62, 1, 3), {
       type: "attack",
       seat: "p1",
@@ -805,32 +572,15 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the seam — the gates and surfaces this op deliberately does not touch", () => {
-  it("~~`programPlayable` gets NO arm~~ — the one card PLAY that reaches the op (D555) reaches it behind `switchActive`'s gate (🆕🆕🆕 D587 (D539): WITHDRAWN — Repel `me01-126` is a top-level producer and the arm is written)", () => {
-    // `gust` has one (an empty opponent Bench makes Boss's Orders unplayable), and
-    // copying it here would have been the vacuous guard conventions.md forbids:
-    // this op is derived from ATTACK text only, and §8 declares an attack against
-    // its ENERGY COST, never against whether its effect can accomplish anything.
-    // Driven both ways so the asymmetry is a fact rather than a plan.
+  it("~~`programPlayable` gets NO arm~~ — the one card PLAY that reaches the op (D555) reaches it behind `switchActive`'s gate ( D587 (D539): WITHDRAWN — Repel `me01-126` is a top-level producer and the arm is written)", () => {
     const state = ready(71, 1, 0);
     expect(state.players.p2.bench).toHaveLength(0);
     expect(programPlayable(state, [{ op: "gust" }], "p1")).toBe(false);
-    // 🆕🆕🆕 D587 — WAS `.toBe(true)`: Repel `me01-126` (`REPEL`) is the bare op on a Trainer, so the
-    // gate refuses it on an empty opponent Bench, `gust`'s line one op over.
     expect(programPlayable(state, [{ op: "opponentSwitchOut" }], "p1")).toBe(false);
     // …and the ATTACK on the same board is used, not refused — the difference the
     // predicate above is about.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_AWAY });
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
-    // No registry row prints this op today, which is what keeps the arm's absence
-    // honest rather than lucky. [🆕🆕🆕 D587 (D539): WITHDRAWN — `REPEL` prints it; see above.]
-    // 🆕🆕🆕 D555 — **FALSE AT THIS HEAD, AND THE CHECK THAT STOOD HERE COULD NOT SAY
-    // SO** (kept above verbatim, D539). It walked `FIXTURE_POOL`'s TOP-LEVEL `trainer`
-    // and `abilities` ops, so Samurott's op — a REAL id outside the pool, nested in a
-    // `recordGate.then` — was invisible to it twice over and the rung stayed vacuously
-    // green. RE-POINTED (D418): a DEEP walk (`walkProgram`) over EVERY registry key and
-    // every program-bearing surface, pinned to the exact producer set. The arm's absence
-    // is still honest: both producers put the op behind `recordGate` on `switchActive`'s
-    // `"moved"`, and `switchActiveTargets` is what `programPlayable` asks.
     const authored = registryCardIds().filter((id) => {
       const card = programFor(id);
       const programs: EffectOp[][] = [
@@ -841,7 +591,6 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
       ];
       return programs.some((ops) => walkProgram(ops).some((op) => op.op === "opponentSwitchOut"));
     });
-    // 🆕🆕🆕 D587 — plus Repel `me01-126`, the op ALONE at a Trainer's top level (the gated one).
     expect([...authored].sort()).toEqual(["me01-126", "sv10.5w-023", "sv10.5w-107"]);
     expect(programFor("me01-126")?.trainer).toEqual([{ op: "opponentSwitchOut" }]);
     for (const id of ["sv10.5w-023", "sv10.5w-107"]) {
@@ -852,10 +601,6 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
   });
 
   it("carries NO `recordAs`, and the absence is a fact about the catalog", () => {
-    // Its two siblings both record, because a printed "If you do" reads their
-    // result. No printing puts THIS op on the antecedent side — Iron Bundle puts it
-    // on the consequent — so a slot here would be a field no gate could read and
-    // no test could kill.
     const bare = deriveAttackEffect(CLAUSES[BARE].text)?.[0];
     expect(bare).toEqual({ op: "opponentSwitchOut" });
     expect(Object.keys(bare ?? {})).toEqual(["op"]);

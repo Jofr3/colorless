@@ -32,94 +32,18 @@ import {
   basicEnergy,
   deckOf,
   itemTrainer,
+  must,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
-// 0.401.0 → 0.402.0 — 🆕🆕🆕 D515: THE THIRD MEMBER OF D473's FAMILY, AND THE BLOCKER
-// WAS THE DESCRIBER RATHER THAN THE ANCHOR.
-//
-// ── THE PRINTED SENTENCE ─────────────────────────────────────────────────────
-//   `censusAttackCorpus.ts` FILE LINE 103 — "Discard a card from your hand. If you
-//     do, your opponent discards a card from their hand."          **1 printing**
-//
-// 🛑 **D473 MEASURED THIS ROW, NAMED ITS BLOCKER IN WRITING, AND LEFT IT — AND THE
-// BLOCKER IT NAMED WAS THE RIGHT ONE.** `HAND_COST_THEN_DRAW`'s doc block records
-// D472's whole-corpus measurement: widening that anchor's consequent to `(.+)` claims
-// exactly this row and no other, *"whose consequent is a different op that
-// `describeBranch` has no phrase for, so the park's caption would silently degrade to
-// the bare cost while the sentence read as claimed."* §5 DRIVES that degradation on a
-// hand-built program instead of quoting it — D446's rule, a predicted SHAPE is not the
-// measurement that predicted it — and the measured caption of the ungated payment and
-// of the un-described gate are **the same bytes**, which is why the loss is silent.
-//
-// 🛑 **SO THE WHOLE PRICE IS ONE ANCHOR, ONE ARM AND ONE `describeBranch` CASE.** The
-// three ops were all shipped and all composed before: `payFromHand` (the only op that
-// removes a CHOSEN card from the controller's own hand), `recordGate` (§9.2's
-// op-result branch, Miriam/Dendra/Kofu since D148) and `opponentDiscardsFromHand`,
-// which `deriveAttackEffect`'s own OPPONENT-CHOOSES arm has produced since D426 and
-// D486's gated increment produces under a `conditionGate`. **ZERO** new `EffectOp`
-// members, op FIELDS, op VALUES, prompts, prompt fields, choice kinds, events, error
-// codes, `BoardCondition`/`CardFilter` members, clause-table rows, registry rows,
-// `packages/schema` bytes, `redact.ts` bytes or `FIXTURE_POOL` ids. The reader surface
-// stays 13.
-//
-// ── 🛑 THE BOARD IS THE ONE THING THAT IS GENUINELY NEW ──────────────────────
-// This is a derived ATTACK program that can park TWICE, for TWO DIFFERENT SEATS, with
-// the second park behind a §9.2 gate on the first one's filing: the controller picks
-// which card to pay, and then — only if they paid — the OPPONENT picks which card to
-// discard, because `opponentDiscardsFromHand` sets `decider: owner`. §4 measures that
-// the column contains exactly ONE such program (this one) rather than claiming a
-// FIRST (D452: a refusal that names a first has an expiry date), and drives both
-// parks end to end.
-//
-// ── WHY THE CONSEQUENT'S COUNT IS SPELLED OUT AND NOT CAPTURED ───────────────
-// The sibling anchor captures `(\d+)` because the column prints 2 and 3 on one
-// skeleton. Here the GATED form is printed once, at "a card" — §1 measures the
-// alternation `(a card|\d+ cards)` over all 640 rows and it claims the identical 1
-// sentence / 1 printing, so the capture would buy nothing and ship a group no printing
-// can falsify (D231). ⚠️ **THAT IS A NARROWING, AND THE LATTICE PRICES IT**: the COUNT
-// axis moves from 0 of 8 to 1 of 8 in the flip table across this slice (D513), so the
-// slice owes one *"printed zero times"* measurement and §1 pays it.
-//
-// ── THE LATTICE, BOTH SIDES AND BOTH PREDICATES (D489/D503/D505) ─────────────
-// OPENER × GATE × CONSEQUENT × COUNT, 16 distinct strings, run over the RESIDUE
-// PREDICATE (`resolvedByAnyReader` + `REGISTRY_ATTACKS` + both splitters) and over the
-// readers alone:
-//
-//   builds()      PRE  0/1 · 1/4 · 2/6 · 2/4 · 1/1 = 6/16   flips  6 · 6 · 2 · 0
-//                 POST 1/1 · 1/4 · 2/6 · 2/4 · 1/1 = 7/16   flips  7 · 7 · 1 · 1
-//   readers only  PRE  0/1 · 1/4 · 1/6 · 0/4 · 0/1 = 2/16   flips  2 · 2 · 2 · 0
-//                 POST 1/1 · 1/4 · 1/6 · 0/4 · 0/1 = 3/16   flips  3 · 3 · 1 · 1
-//
-// 🛑 THE TWO READINGS DISAGREE AT **4 OF 16 POINTS** — D503's finding, paying out
-// again: every one of the four is an OPENER-substituted, gate-less point that
-// `splitAttackTrailingClause` composes out of a claimed head and a claimed tail, and
-// the arm this slice writes touches none of them. The subtraction is keyed on the
-// derived VALUE and not on the anchor (D505): the arm claims **exactly one** of the 16
-// points, asserted in both directions in §1.
-//
-// 🆕 AND THE SHAPE CHANGES ACROSS THE SLICE IN BOTH DIRECTIONS AT ONCE (D513/D514).
-// CONSEQ moves 2 → 1 (the widening retires a cell) while COUNT moves 0 → 1 (the
-// narrowing creates one). No axis is DEGENERATE — all 16 points are distinct strings,
-// asserted — and no axis is inert either.
-
-/** THE SENTENCE, byte for byte off `legalAttackCorpus()` — §1 asserts that. */
 const GATED_DISCARD =
   "Discard a card from your hand. If you do, your opponent discards a card from their hand.";
 
-/** The two rows the same anchor family already claims (D473, file lines 101/102) and
-    the two STANDALONE opponent-hand discards D426 claims (file lines 614/615). They
-    are the positive controls: the mechanism on both ends of this sentence already
-    shipped, and §1 drives that rather than asserting it in a comment. */
 const DRAW2 = "Discard a card from your hand. If you do, draw 2 cards.";
 const DRAW3 = "Discard a card from your hand. If you do, draw 3 cards.";
 const BARE_ONE = "Your opponent discards a card from their hand.";
 const BARE_TWO = "Your opponent discards 2 cards from their hand.";
 
-/** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
-    "unread" is unread by the WHOLE engine and not by the one reader it is about.
-    ⚠️ SPLICED BEFORE THE LAST ENTRY RATHER THAN APPENDED where it ever grows, D419's
-    rule — mutant `find` strings quote an array's last entries plus its closing `];`. */
 const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -133,7 +57,6 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
@@ -150,16 +73,12 @@ const program = (discarded: number): EffectOp[] => [
 ];
 
 describe("D515 §1 — the sentence, measured live over the legal column", () => {
-  it("🛑 the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
-    // D417/D419's guard: a hand-kept copy of a module-derived surface cannot go red,
-    // it can only go quiet, so the DIFF and the COUNT are pinned separately.
+  it("the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the row is really in the column, ONCE, at ONE printing — and so are its four controls", () => {
-    // The attribution control (D183/D456): without it every rung below could be green
-    // against a paraphrase no card prints.
     for (const [text, printings] of [
       [GATED_DISCARD, 1],
       [DRAW2, 1],
@@ -172,7 +91,7 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
     }
   });
 
-  it("🛑 the ANCHOR's whole reach is 1 sentence / 1 printing, measured", () => {
+  it("the ANCHOR's whole reach is 1 sentence / 1 printing, measured", () => {
     const anchored = legalAttackCorpus().filter(([, s]) =>
       /^Discard a card from your hand\. If you do, your opponent discards a card from their hand\.$/.test(
         s,
@@ -182,11 +101,7 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
     expect(anchored.map(([, s]) => s)).toEqual([GATED_DISCARD]);
   });
 
-  it("🛑 CAPTURING THE COUNT would claim the IDENTICAL row, so the group is pure RISK", () => {
-    // D472's rule, run rather than described, and it is the OPPOSITE answer from the
-    // sibling anchor's: there the column prints two counts on one skeleton and the
-    // capture is warranted (D121); here it prints one, so a group would be a token no
-    // printing can falsify (D231's unkillable singleton).
+  it("CAPTURING THE COUNT would claim the IDENTICAL row, so the group is pure RISK", () => {
     const wide = legalAttackCorpus().filter(([, s]) =>
       /^Discard a card from your hand\. If you do, your opponent discards (?:a card|\d+ cards) from their hand\.$/.test(
         s,
@@ -196,59 +111,37 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
     expect(wide.map(([, s]) => s)).toEqual([GATED_DISCARD]);
   });
 
-  it("🛑 THE *PRINTED ZERO TIMES* MEASUREMENT THE FLIP TABLE OWES — the gated PLURAL", () => {
-    // 🛑 D513/D514's rule, paid rather than argued. This slice NARROWS: it spells the
-    // consequent's count out instead of capturing it, and the lattice records the price
-    // as the COUNT axis moving from 0 of 8 to 1 of 8. An axis that flips anywhere is a
-    // LITERAL the anchor carries, and every such literal owes the measurement below.
-    // ⚠️ Unlike D514's, this axis is INSIDE the axis set, so the instrument prices it
-    // directly and the measurement is a confirmation rather than a substitute.
+  it("THE *PRINTED ZERO TIMES* MEASUREMENT THE FLIP TABLE OWES — the gated PLURAL", () => {
     const gatedPlural = legalAttackCorpus().filter(([, s]) =>
       /^Discard a card from your hand\. If you do, your opponent discards \d+ cards from their hand\.$/.test(
         s,
       ),
     );
     expect(gatedPlural).toEqual([]);
-    // …and the plural is not UNEXPRESSIBLE, only unprinted HERE: the STANDALONE form
-    // prints it four times and D426's arm reads it. Without this half the rung above
-    // would read as "the engine cannot do two", which is false.
     expect(deriveAttackEffect(BARE_TWO)).toEqual([{ op: "opponentDiscardsFromHand", count: 2 }]);
   });
 
-  it("🛑 `deriveAttackEffect` is its ONLY reader — the other TWELVE refuse it", () => {
+  it("`deriveAttackEffect` is its ONLY reader — the other TWELVE refuse it", () => {
     expect(deriveAttackEffect(GATED_DISCARD)).not.toBeNull();
     for (const read of READERS) {
       if (read === deriveAttackEffect) continue;
       expect(read(GATED_DISCARD), read.name).toBeNull();
     }
-    // …and no splitter composes it either, so the whole-sentence anchor is the only
-    // route in and the RAW and RESIDUE summands move together (D444/D457).
     expect(splitAttackGateClause(GATED_DISCARD)).toBeNull();
     expect(splitAttackRequirementClause(GATED_DISCARD)).toBeNull();
     expect(splitAttackCancelClause(GATED_DISCARD)).toBeNull();
     expect(splitAttackTrailingClause(GATED_DISCARD)).toBeNull();
   });
 
-  it("🛑 NEITHER HALF IS READ ALONE — the whole-sentence anchor is WARRANTED", () => {
-    // D489's lattice at weight 1, in the form the splitter cares about: the trailing
-    // splitter needs the HEAD claimed by some reader and the TAIL by
-    // `deriveAttackEffect`, and this sentence supplies neither. That is why the row
-    // was in `OPAQUE` and not in a `COMPOUND-*` class, and it is the reason the anchor
-    // welds both ends rather than composing.
+  it("NEITHER HALF IS READ ALONE — the whole-sentence anchor is WARRANTED", () => {
     expect(resolvedByAnyReader("Discard a card from your hand.")).toBe(false);
     expect(resolvedByAnyReader("If you do, your opponent discards a card from their hand.")).toBe(
       false,
     );
-    // …the positive control, so "refuses everything" is excluded: capitalise the
-    // consequent and drop the gate and D426's arm takes it whole.
     expect(resolvedByAnyReader(BARE_ONE)).toBe(true);
   });
 
-  it("🛑 THE LATTICE: 16 DISTINCT points, and this arm claims EXACTLY ONE of them", () => {
-    // D505's subtraction rule — key the rider on the derived VALUE, never on the
-    // anchor — plus its converse, or the subtraction is circular. The axes are
-    // OPENER × GATE × CONSEQUENT × COUNT and every point is spelled from a BUILT
-    // spelling (D489), so no point is refused merely for not being a sentence.
+  it("THE LATTICE: 16 DISTINCT points, and this arm claims EXACTLY ONE of them", () => {
     const OPENER = ["Discard a card from your hand.", "Draw 2 cards."] as const;
     const consequent = (op: 0 | 1, count: 0 | 1): string =>
       op === 0
@@ -273,8 +166,6 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
         }
       }
     }
-    // 🛑 NO DEGENERATE AXIS (D491): the bit set and the point set are the same size,
-    // so the table is 2⁴ and not a smaller one reported repeatedly.
     expect(points).toHaveLength(16);
     expect(new Set(points).size).toBe(16);
     // THE RIDER: the derived value this arm produces, not the regex that produces it.
@@ -286,14 +177,9 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
       return gate.then.length === 1 && gate.then[0]?.op === "opponentDiscardsFromHand";
     });
     expect(mine).toEqual([GATED_DISCARD]);
-    // …and the converse: the three OTHER points the readers claim are the sibling
-    // anchor's, unmoved by this slice. Readers-only reads 3 of 16 after, 2 before.
     expect(points.filter((s) => resolvedByAnyReader(s)).sort()).toEqual(
       [GATED_DISCARD, DRAW2, "Discard a card from your hand. If you do, draw 1 cards."].sort(),
     );
-    // 🛑 D503's DIVERGENCE, DRIVEN: four points build under the residue predicate and
-    // under NO reader, every one of them through `splitAttackTrailingClause`, and this
-    // slice touches none. A readers-only lattice would have reported a different shape.
     const splitOnly = points.filter(
       (s) => !resolvedByAnyReader(s) && splitAttackTrailingClause(s) !== null,
     );
@@ -311,14 +197,10 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
 describe("D515 §2 — the program, and every refusal pinned on ONE printed byte", () => {
   it("derives THREE SHIPPED OPS in printed order, with the printed article as the count", () => {
     expect(deriveAttackEffect(GATED_DISCARD)).toEqual(program(1));
-    // …and it is NOT the sibling's program, so the pair of anchors really discriminate
-    // rather than one of them shadowing the other (D404's rule at a sibling pair).
     expect(deriveAttackEffect(GATED_DISCARD)).not.toEqual(deriveAttackEffect(DRAW2));
   });
 
-  it("🛑 the GATE's slot is the PAYMENT's slot — the two halves cannot drift apart", () => {
-    // The single fact the sentence turns on, asserted as an IDENTITY rather than as two
-    // literals, so a slice that renames the slot moves them together or reddens.
+  it("the GATE's slot is the PAYMENT's slot — the two halves cannot drift apart", () => {
     const [cost, gate] = deriveAttackEffect(GATED_DISCARD) as EffectOp[];
     expect(cost?.op === "payFromHand" ? cost.recordAs : undefined).toBe("paid");
     expect(gate?.op === "recordGate" ? gate.slot : undefined).toBe("paid");
@@ -331,11 +213,9 @@ describe("D515 §2 — the program, and every refusal pinned on ONE printed byte
     expect(gate?.op === "recordGate" ? gate.contains : "x").toBeUndefined();
   });
 
-  it("🛑 each near-miss differs on ONE axis and each is refused for THAT axis", () => {
-    // D399/D427's rule. THE POSITIVE CONTROL FIRST, so "refuses everything" is excluded.
+  it("each near-miss differs on ONE axis and each is refused for THAT axis", () => {
     expect(deriveAttackEffect(GATED_DISCARD)).not.toBeNull();
     for (const text of [
-      // …the CONDITION alone: "If you can't" is D417's CANCEL clause, a different seam.
       "Discard a card from your hand. If you can't, your opponent discards a card from their hand.",
       // …the CONSEQUENT'S COUNT alone — the axis the lattice prices at 1 of 8.
       "Discard a card from your hand. If you do, your opponent discards 2 cards from their hand.",
@@ -368,11 +248,6 @@ describe("D515 §2 — the program, and every refusal pinned on ONE printed byte
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. A file-local `cardPool` (D414/D452), so no `FIXTURE_POOL` id is added
-// and `opponentResistanceBonus.test.ts`'s id ladder takes a ZERO term.
-// ─────────────────────────────────────────────────────────────────────────────
-
 const SWAPPER = "d515-swapper";
 const WALL = "d515-wall";
 const ENERGY = "d515-energy";
@@ -403,11 +278,6 @@ const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
 const DECK = deckOf({ [SWAPPER]: 8, [WALL]: 8, [ENERGY]: 20, [ITEM]: 24 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function mustStep(state: GameState, action: Parameters<typeof applyAction>[1]) {
   const result = applyAction(state, action);
   if (!result.ok) {
@@ -416,7 +286,6 @@ function mustStep(state: GameState, action: Parameters<typeof applyAction>[1]) {
   return { state: result.state, events: [...result.events] };
 }
 
-/** Setup driven against the LOCAL pool (D275's idiom). */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -468,16 +337,6 @@ function fund(state: GameState, s: Seat): GameState {
   };
 }
 
-/** Set `seat`'s hand to exactly these card ids, one uid each, and return the rest to
-    the deck.
-
-    🛑 **THE IDS ARE NAMED RATHER THAN COUNTED, AND THE REASON IS `payFromHand`'s
-    INTERCHANGEABLE COLLAPSE (D464).** `handCostCandidates` keeps at most `count`
-    copies of each `cardIdentity`, so a three-card hand of three copies of one card
-    offers ONE candidate and `parkOrForce` resolves it inline — a board built by
-    counting cards off the deck bottom would silently test the FORCED path while
-    reading as the parked one (D416's rule: count the candidates your boards actually
-    offer). Naming distinct ids is what makes the park a park. */
 function handOfIds(state: GameState, seat: Seat, cardIds: readonly string[]): GameState {
   const side = state.players[seat];
   let rest = [...side.deck, ...side.hand];
@@ -513,10 +372,7 @@ const hands = (state: GameState): [p1: number, p2: number] => [
 ];
 
 describe("D515 §3 — the BOARD: two parks, two seats, and the gate between them", () => {
-  it("🛑 the CONTROLLER parks first, and the caption is the whole printed sentence", () => {
-    // D473's §5 rung, one consequent over — and unlike there, the caption is only the
-    // printed sentence because this slice added the `describeBranch` case. §5 drives
-    // the other side of that.
+  it("the CONTROLLER parks first, and the caption is the whole printed sentence", () => {
     const parked = mustStep(
       handOfIds(handOfIds(fielded(8), "p1", THREE), "p2", THREE),
       attack,
@@ -527,15 +383,11 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
     expect(phase.prompt.note).toBe(GATED_DISCARD);
     expect([phase.prompt.min, phase.prompt.max]).toEqual([1, 1]);
     expect(phase.prompt.dest).toBe("discard");
-    // …and the CONTROLLER answers it. `answerer` is ABSENT for a controller-answered
-    // park (it is the field `opponentDiscardsFromHand` sets and this op does not), so
-    // its absence is the assertion rather than a value — which is also what keeps this
-    // phase serializing byte-identically to every pre-D52 park.
     expect(phase.seat).toBe("p1");
     expect(phase.answerer).toBeUndefined();
   });
 
-  it("🛑🛑 answering it hands the SECOND park to the OPPONENT, and the gate is why", () => {
+  it("answering it hands the SECOND park to the OPPONENT, and the gate is why", () => {
     const parked = mustStep(
       handOfIds(handOfIds(fielded(12), "p1", THREE), "p2", THREE),
       attack,
@@ -552,10 +404,6 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
     const second = next.phase;
     if (second.kind !== "effect:choose") throw new Error("expected a SECOND effect:choose");
     if (second.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
-    // 🛑 THE SEAT FLIPS, and `seat` does NOT — it still names the program's controller.
-    // `opponentDiscardsFromHand` sets `decider: owner`, and that one field is what keeps
-    // the opponent's hidden hand out of the controller's prompt and the choice out of
-    // the controller's hands.
     expect(second.seat).toBe("p1");
     expect(second.answerer).toBe("p2");
     expect(second.prompt.note).toBe("Discard a card from your hand.");
@@ -582,14 +430,7 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
     expect([settled.players.p1.discard.length, settled.players.p2.discard.length]).toEqual([1, 1]);
   });
 
-  it("🛑 AN EMPTY HAND BUYS NOTHING — the gate, not a cancel, is what makes this honest", () => {
-    // `attack.ts` never calls `handCostUnmet`, so an attack-borne `payFromHand` pays
-    // what it finds. The sentence prints no cancel; the §9.2 gate is the whole of the
-    // answer, and this is the board that shows it: nothing paid, nothing bought.
-    //
-    // ⚠️ THE DISCARD PILES ARE THE READING, NOT THE HANDS (D491). A settled attack ENDS
-    // THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] inside the same action, so the defender's turn-start draw lands before
-    // this state is observed and p2's HAND comes back one HIGHER than it went in.
+  it("AN EMPTY HAND BUYS NOTHING — the gate, not a cancel, is what makes this honest", () => {
     const empty = mustStep(handOfIds(handOfIds(fielded(13), "p1", []), "p2", THREE), attack).state;
     expect(empty.phase.kind).not.toBe("effect:choose");
     expect([empty.players.p1.discard.length, empty.players.p2.discard.length]).toEqual([0, 0]);
@@ -605,7 +446,7 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
     expect([forced.players.p1.discard.length, forced.players.p2.discard.length]).toEqual([1, 1]);
   });
 
-  it("🛑 an OPPONENT with an empty hand is a silent whiff, and the payment still happens", () => {
+  it("an OPPONENT with an empty hand is a silent whiff, and the payment still happens", () => {
     // §8.6's "do as much as you can" at the far end of the program: `take === 0` is a
     // no-op with no event and no park. The card was still paid — which is the printed
     // order, and the reason the gate reads the PAYMENT rather than the discard.
@@ -636,11 +477,7 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
     return result.state;
   }
 
-  it("🛑 EXACTLY ONE derived attack program parks for BOTH SEATS behind a §9.2 gate", () => {
-    // D452/D443's rule: do not claim a FIRST, measure the CLASS. The predicate is
-    // structural — a `recordGate` whose branch holds an op the interpreter hands to the
-    // other seat — so a second such row has to be classified here rather than inheriting
-    // this sentence's argument.
+  it("EXACTLY ONE derived attack program parks for BOTH SEATS behind a §9.2 gate", () => {
     const crossSeatGated = legalAttackCorpus().filter(([, text]) => {
       const derived = deriveAttackEffect(text);
       if (derived === null) return false;
@@ -654,8 +491,7 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
     expect(units(crossSeatGated)).toBe(1);
   });
 
-  it("🛑 the OTHER two members of the family are UNMOVED — this anchor claims neither", () => {
-    // D404's wrong-arm trap, asked of a sibling pair that shares nine printed words.
+  it("the OTHER two members of the family are UNMOVED — this anchor claims neither", () => {
     expect(deriveAttackEffect(DRAW2)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
@@ -668,7 +504,7 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
     ]);
   });
 
-  it("🛑 the PROGRAM and the SENTENCE agree on the board — the real interpreter, not a shape", () => {
+  it("the PROGRAM and the SENTENCE agree on the board — the real interpreter, not a shape", () => {
     // The derived program run end to end against the hand-written one: if the anchor
     // ever derived a different program this diverges on cards moved rather than on JSON.
     const board = handOfIds(handOfIds(fielded(15), "p1", THREE), "p2", THREE);
@@ -691,12 +527,7 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
 });
 
 describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BOTH WAYS", () => {
-  it("🛑🛑 an UNDESCRIBED gate branch degrades the caption to the BARE COST, byte for byte", () => {
-    // 🛑 THIS IS THE DEFECT THE SLICE PAYS FOR, DEMONSTRATED ON A LIVE BOARD. Put an op
-    // `describeBranch` has no phrase for inside the gate and `withConsequence` returns
-    // the prompt unchanged — so the player is asked to discard a card and told NOTHING
-    // about what it buys. The two captions below are the same bytes, which is why the
-    // loss is silent and why a census would have recorded the row built.
+  it("an UNDESCRIBED gate branch degrades the caption to the BARE COST, byte for byte", () => {
     const board = handOfIds(handOfIds(fielded(16), "p1", THREE), "p2", THREE);
     const noteOf = (ops: EffectOp[]): string => {
       const result = runProgram(board, ops, { seat: "p1" }, []);
@@ -707,24 +538,16 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
     const bare = [{ op: "payFromHand", count: 1, to: "discard", recordAs: "paid" }] as EffectOp[];
     const undescribed = [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // `revealOpponentHand` is a shipped op with no `describeBranch` case — the exact
-      // position `opponentDiscardsFromHand` was in before this slice.
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "revealOpponentHand" }] },
     ] as EffectOp[];
     expect(noteOf(undescribed)).toBe(noteOf(bare));
     expect(noteOf(undescribed)).toBe("Discard a card from your hand.");
-    // …and THE ARM THIS SLICE ADDS is what separates them. Same gate, same slot, same
-    // payment — one op different, and the caption becomes the printed sentence.
     expect(noteOf(program(1))).toBe(GATED_DISCARD);
     expect(noteOf(program(1))).not.toBe(noteOf(bare));
   });
 
-  it("🛑 the PLURAL branch is unreachable from any printing and is DRIVEN anyway", () => {
-    // D455's correction to three false "recorded as an equivalent mutant" claims in
-    // `interpreter.ts`: a line nothing executes is not covered by saying so. §1 measures
-    // that no printing composes a gated plural; this drives the branch from a hand-built
-    // program, so the ternary is a tested line rather than a declared survivor.
+  it("the PLURAL branch is unreachable from any printing and is DRIVEN anyway", () => {
     const board = handOfIds(handOfIds(fielded(17), "p1", THREE), "p2", THREE);
     const result = runProgram(board, program(2), { seat: "p1" }, []);
     if (result.kind !== "parked") throw new Error("expected a park");
@@ -739,21 +562,11 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
 });
 
 describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIVEN", () => {
-  it("🛑 the SERIALIZED ALPHABET: every byte this arm can write, a v30 deploy could write", () => {
-    // 🛑 D452/D462/D463's SHAPE, and it is the true one here — say which (D463: pick the
-    // argument shape that is true, not the one you used last). No new op, no new op
-    // FIELD and no new op VALUE: `payFromHand{count,to,recordAs}` has shipped since
-    // Dendra, `recordGate{slot,then}` since Miriam, and `opponentDiscardsFromHand{count}`
-    // since D426 — which also means this is NOT D125's absent-key question (no key was
-    // added) and NOT D359's widening question (no field changed type). What is new is a
-    // COMPOSITION of shipped ops, and `recordGate.then` is typed `EffectOp[]`: it could
-    // already hold this member on the day v30 was written.
+  it("the SERIALIZED ALPHABET: every byte this arm can write, a v30 deploy could write", () => {
     const emitted = JSON.stringify(deriveAttackEffect(GATED_DISCARD));
     expect(emitted).toBe(
       '[{"op":"payFromHand","count":1,"to":"discard","recordAs":"paid"},{"op":"recordGate","slot":"paid","then":[{"op":"opponentDiscardsFromHand","count":1}]}]',
     );
-    // …REACHABILITY IS FALSE HERE AND SAYING SO IS THE POINT (D463): the payment parks,
-    // so the continuation really is persisted. Driven rather than argued.
     const parked = mustStep(
       handOfIds(handOfIds(fielded(18), "p1", THREE), "p2", THREE),
       attack,
@@ -764,11 +577,7 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
     expect(JSON.parse(JSON.stringify(phase.cont.rest))).toEqual([program(1)[1]]);
   });
 
-  it("🛑 the LOSS direction, driven: a truncated `rest` degrades into a DIFFERENT board", () => {
-    // D458/D463's rule — when the slice parks, the loss direction stops being a
-    // formality. A record whose `rest` was dropped resumes as a bare payment: the
-    // controller's card is discarded and the OPPONENT keeps their hand, which is an
-    // observably different board from the one this deploy writes.
+  it("the LOSS direction, driven: a truncated `rest` degrades into a DIFFERENT board", () => {
     const parked = mustStep(
       handOfIds(handOfIds(fielded(19), "p1", THREE), "p2", THREE),
       attack,
@@ -790,10 +599,6 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
       seat: "p1",
       choice: { kind: "cards", uids: [chosen] },
     }).state;
-    // The whole record hands the SECOND park to p2; the truncated one ends the effect.
-    // The whole record hands the SECOND park to p2; the truncated one ends the effect,
-    // the attack, and the turn — so p2 never discards and their hand comes back HIGHER
-    // by the turn-start draw (D491).
     expect(whole.phase.kind).toBe("effect:choose");
     expect(whole.phase.kind === "effect:choose" ? whole.phase.answerer : undefined).toBe("p2");
     expect(lost.phase.kind).not.toBe("effect:choose");

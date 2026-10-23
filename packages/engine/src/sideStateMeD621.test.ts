@@ -16,18 +16,8 @@ import {
   setConditions,
   setPrizes,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D621 — WP24c + WP23: PERSISTED SIDE STATE ──
-//
-// 16 `me` Trainer printings / 5 printed texts on five NEW objects (registry.ts D621 block):
-// Gladion's Final Battle and Premium Power Pro (the NEW `SideAttackBonus.attacker`), Acerola's
-// Mischief (`installChosenAttackShield` → `PlayerSide.chosenAttackShield`, R-AM1), Roxie's
-// Performance (`lockSideRetreat` → `PlayerSide.sideRetreatLock`, R-RP1) and Dawn (Larry's Skill's
-// `also` search). Texts measured on the LOCAL D1, 2026-10-09, `legal_standard = 1` on every row;
-// driven on the real ids in a LOCAL `cardPool` (D275). Iron Defender `me01-118` / `me05-110` is
-// dropped (an Item whose two plays stack on a persisted record D564 overwrites) [🆕🆕🆕 D630 (D539): BUILT at
-// D630 on the summed list, `persistedRecordsMeD630.test.ts`].
 
 const GLADION = "me05-077";
 const PPP = "me01-124";
@@ -85,7 +75,7 @@ describe("D621 §1 — the faces: 16 `me` printings / 5 texts, one object per te
     expect(objects.size).toBe(5);
   });
 
-  it("Iron Defender (dropped) stays unkeyed (🆕🆕🆕 D630 (D539): WITHDRAWN — keyed at D630 on the summed list, `persistedRecordsMeD630.test.ts`)", () => {
+  it("Iron Defender (dropped) stays unkeyed ( D630 (D539): WITHDRAWN — keyed at D630 on the summed list, `persistedRecordsMeD630.test.ts`)", () => {
     for (const id of ["me01-118", "me05-110"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["trainer"]);
   });
@@ -160,17 +150,17 @@ describe("D621 §2 — the registry programs, field for field", () => {
 // ── ON A BOARD ──
 
 const PLAIN = "d621-plain"; // a Basic {C}, no Rule Box
-const MIDDLE = "d621-middle"; // a Stage 1 {C} from D621 Plain
-const TOP = "d621-top"; // a Stage 2 {C} from D621 Middle
-const BRUTE = "d621-brute"; // "D621 Brute ex", a Basic Pokémon ex
+const MIDDLE = "d621-middle";
+const TOP = "d621-top";
+const BRUTE = "d621-brute";
 const FIGHTER = "d621-fighter"; // a Basic {F}
 const WALL = "d621-wall"; // the defender, 900 HP
 const RAIDER = "d621-raider"; // a non-ex attacker: 60 + Paralyzed; a 30 snipe
-const RAIDER_EX = "d621-raider-ex"; // "D621 Raider ex", the same attacks
-const MEGA = "d621-mega"; // "Mega D621 ex", a Mega Evolution Pokémon ex, the same attacks
+const RAIDER_EX = "d621-raider-ex";
+const MEGA = "d621-mega";
 const FILLER = "d621-filler";
-const CROWN_EX = "d621-crown-ex"; // "D621 Crown ex": the `ignoreWR` attacks of five real Pokémon ex (R-AM2, retired at D622)
-const SCOOP_UP = "sv06-162"; // Scoop Up Cyclone (D561): a body leaves play by a real action
+const CROWN_EX = "d621-crown-ex";
+const SCOOP_UP = "sv06-162";
 
 const HIT = 50;
 const JOLT = 60;
@@ -193,7 +183,6 @@ const RAIDER_ATTACKS: Card["attacks"] = [
     name: "Dive",
     effect: "Put 6 damage counters on your opponent's Benched Pokémon in any way you like.",
   },
-  // Cofagrigus "Extended Damagriiigus" (D216): a counter MOVE onto a chosen opponent body.
   {
     cost: [],
     name: "Swap",
@@ -202,7 +191,6 @@ const RAIDER_ATTACKS: Card["attacks"] = [
   },
 ];
 
-/** R-AM2's board: every `ignoreWR` shape a Pokémon ex prints (LOCAL D1 `attacks_json`, byte for byte). */
 const SHOTELS = 50;
 const CROWN_ATTACKS: Card["attacks"] = [
   // Iron Crown ex "Twin Shotels" (sv05-081 …): the FEINT form — "or by any effects on those Pokémon".
@@ -302,15 +290,9 @@ const DECK = deckOf({
   [CROWN_EX]: 2,
   [SCOOP_UP]: 1,
   "fix-fire-energy": 12,
-  "fix-energy": 6, // the prize row
+  "fix-energy": 6,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Hands and prize rows reset: every hand back into the deck, the six `fix-energy` the prize row. */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {
@@ -711,9 +693,6 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(hit.players.p1.bench[index]?.damage).toBe(30);
   });
 
-  // ── R-AM2 (UNRULED): `ignoreWR` attacks from a Pokémon ex, both forms, both channels ──
-  // [🆕🆕🆕 D622 (D539): R-AM2 is RETIRED — the bare tail is stopped (`wrOnly`); the Feint form still passes.]
-
   /** Picks `refs` at every parked prompt of `foe`'s attack `index` (one pick per prompt when `each`). */
   function crown(window: GameState, index: number, refs: unknown[], each = false) {
     let { state, events } = attack(window, "p2", index);
@@ -742,10 +721,7 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(all(active.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
   });
 
-  // 🆕🆕🆕 D622 (D539): R-AM2 RETIRED. The rung below pinned the gap ("Oil Salvo and Severe Squall
-  // land", 120 / 60 / 60); the bare tail is `wrOnly` since D622 and the shield stops it. Same boards,
-  // flipped numbers; `bareTailD622.test.ts` drives all four bare texts and the in-flight v43 park.
-  it("R-AM2 ~~the BARE tail passes it too, by D400/D492's reading of `ignoreWR`~~ (🆕🆕🆕 D622: retired) — Oil Salvo and Severe Squall are stopped by the shield", () => {
+  it("R-AM2 ~~the BARE tail passes it too, by D400/D492's reading of `ignoreWR`~~ ( D622: retired) — Oil Salvo and Severe Squall are stopped by the shield", () => {
     const salvo = crown(benchShielded(CROWN_EX), 1, [bench(0)], true);
     expect(salvo.state.players.p1.bench[0]?.damage).toBe(0);
     const parked = acerola(PLAIN, [BRUTE], CROWN_EX).state;
@@ -757,9 +733,6 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(squall.state.players.p1.bench[0]?.damage).toBe(0);
     const lone = attack(endTurn(acerola(BRUTE, [], CROWN_EX).state, "p1"), "p2", 2);
     expect(lone.state.players.p1.active?.damage).toBe(0);
-    // 🆕🆕🆕 D625 (D622 MINOR 2) — the three `damage` lines above compare 0 with the 0 each body starts at, so they
-    // cannot tell "the shield stopped it" from "nothing was aimed there". The DAMAGE_DEALT rows can: every hit
-    // was aimed at the shielded body and PREVENTED, 0 dealt (Oil Salvo's six 20s, Severe Squall's 60 twice).
     const rows = (events: readonly GameEvent[]) =>
       events.flatMap((e) => (e.type === "DAMAGE_DEALT" ? [[e.base, e.prevented, e.dealt]] : []));
     expect(rows(salvo.events)).toEqual(Array.from({ length: 6 }, () => [20, true, 0]));

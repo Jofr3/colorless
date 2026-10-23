@@ -21,77 +21,15 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.326.0 → 0.327.0 — D425, THE OWN-SIDE BENCH-WIDE SPREAD:
-//
-//   "This attack also does {N} damage to each of your Benched Pokémon.
-//    (Don't apply Weakness and Resistance for Benched Pokémon.)"
-//
-// 3 sentences / 5 legal printings (10 ×3, 20 ×1, 30 ×1) over `legalAttackCorpus()`'s
-// 640 sentences / 1,732 printings — the `legal_standard = 1` attack column.
-//
-// 🛑 **ZERO NEW ANCHORS, ZERO NEW READERS: THE POSSESSIVE BECAME A CAPTURE.**
-// `SPREAD_EACH_BENCH` has claimed the opponent-side twin since the `spreadDamage`
-// op existed. D425 replaced its literal `your opponent's` with the alternation
-// `(your opponent['’]s|your)` and the shipped arm resolves `target` off group 2. A
-// second `SPREAD_EACH_YOUR_BENCH` regex would have been this one with two words
-// changed — D416's copied-function hazard, where the corpus goes QUIET rather than
-// red — and would have let a future "also" rider or apostrophe class drift onto one
-// wording and not the other.
-//
-// 🛑 **AND THE OP'S `target` WAS DEAD CODE UNTIL THIS SLICE.** It was the singleton
-// literal `"opponentBench"`, and `interpreter.ts`'s arm read `op.amount` alone. The
-// field documented an intention nothing checked. Widening the union is what turns
-// forgetting to read it into a type error.
-//
-// ⚠️⚠️ **THE MECHANISM THE SENTENCE DOES NOT ADVERTISE, AND THE WHOLE REASON THIS
-// FILE IS LONG: THIS IS THE FIRST ATTACK IN THE ENGINE WHOSE OWN DAMAGE CAN KNOCK
-// OUT ITS USER'S OWN POKÉMON, AND A KNOCKED OUT POKÉMON GIVES THE *OPPONENT* A
-// PRIZE.** Every producer of `spreadDamage` before D425 hit the other side of the
-// table, so §8.1's own-side path had never been reached from an attack's own
-// damage. §6 and §7 DRIVE it — the Prize, the game end, the promotion question and
-// D189's addressing invariant — rather than inheriting any of it from a comment.
-// The engine needed no new code for a single one of the four.
-//
-// ⚠️ **WHAT *DID* NEED A MECHANISM WAS THE LOG (§9).** `log.ts` rendered every
-// `DAMAGE_DEALT` row under `otherSeat(event.seat)`, which encodes *"whoever was
-// damaged, the OTHER player did it"* — D222's negated-closed-world shape on a log
-// row. It was true of every board this engine could produce and true BY ACCIDENT:
-// all four write sites aimed across the table, and `damageSelf`, the one op that
-// does not, emits `COUNTERS_PLACED` and never this row. So the row credited the
-// DEFENDER with damage the ATTACKER had just done to its own Bench, and
-// `DAMAGE_DEALT` gained a REQUIRED `by: Seat`.
-//
-// ⚠️ **THE APOSTROPHE BYTE IS MEASURED, NOT REMEMBERED (D421).** `hexdump -C` on
-// `censusAttackCorpus.ts` line 516 returns `44 6f 6e 27 74` — `Don't` with U+0027,
-// never U+2019 — and the own-side sentence carries NO possessive at all, so that
-// contraction is its ONLY apostrophe slot. §1 pins both halves.
-
-/** One seed for the whole suite. Nothing declared here flips a coin, and every
-    Active, benched body, damage total and Prize row is placed by surgery — so a
-    seed table would describe a shuffle rather than a rule (D143's move, inherited
-    by every spread suite since). */
 const SEED = 5;
 
-/** The three printed own-side sentences, transcribed off `censusAttackCorpus.ts`
-    lines 516 / 521 / 524. `AMOUNTS` is the axis D121's template warrant is met on:
-    three DISTINCT amounts are printed, so the `(\d+)` capture has three witnesses
-    in the pool and is not a template over a population of one. */
 const AMOUNTS = [10, 20, 30] as const;
 const own = (n: number) =>
   `This attack also does ${n} damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`;
-/** The SHIPPED opponent-side twin, the sentence this anchor has always claimed —
-    the control without which every "the own side is read" rung below would be
-    consistent with a reader that claims everything (D424's rule). */
 const opp = (n: number) =>
   `This attack also does ${n} damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`;
 
-/** The attack indices this suite drives, keyed by name so no case addresses a fold
-    by number. `fix-tremor` carries BOTH possessives of ONE shape at ONE amount, so
-    the SIDE is the only difference between its two indices — which is what makes a
-    wrong-side build fail rather than pass. */
 const TREMOR = { home: 0, away: 1 } as const;
-/** The two REAL carriers, at their printed indices. Both were in `FIXTURE_POOL`
-    before this slice as DECLARED-UNSIMULATED siblings (D170, D129). */
 const QUAKE = { krookodile: 1, tyranitar: 1 } as const;
 
 const ENERGY: Record<string, { id: string; count: number }[]> = {
@@ -103,10 +41,6 @@ const ENERGY: Record<string, { id: string; count: number }[]> = {
   ],
 };
 
-/** `by`'s opponent opens and passes, so the attacking seat carries no §4 first-turn
-    restriction. BOTH Actives are placed by surgery and BOTH benches are cleared to
-    nothing: every number this suite measures is a POPULATION over a bench, so a body
-    the setup shuffle happened to place would silently move the answer. */
 function board(attacker: string, defender: string, by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -134,8 +68,6 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index });
 }
 
-/** Every `DAMAGE_DEALT` row in order, flattened to the three fields every case
-    below reads: who owns the damaged body, who DEALT it, and how much landed. */
 function damage(events: GameEvent[]): { seat: Seat; by: Seat; dealt: number }[] {
   return events.flatMap((e) =>
     e.type === "DAMAGE_DEALT" ? [{ seat: e.seat, by: e.by, dealt: e.dealt }] : [],
@@ -151,25 +83,12 @@ function rendered(state: GameState, events: GameEvent[]): { who: string; text: s
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — the printed data, and the byte that D421 got wrong from memory.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the printed data: three amounts, two real cards, one constructed pair", () => {
   it("the corpus prints exactly these three sentences at exactly these counts", () => {
-    // 🛑 **PINNED ON THE POPULATION, NOT ON A SPECIMEN (D423).** The claim is not
-    // "this hand-written string derives" — that would be green forever and would
-    // mean nothing about the pool. It is that the committed `legal_standard = 1`
-    // attack column holds these three rows at these printing counts and no other
-    // row of this shape at all.
     const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     expect(rows.get(own(10))).toBe(3);
     expect(rows.get(own(20))).toBe(1);
     expect(rows.get(own(30))).toBe(1);
-    // …and the family is CLOSED at three: every corpus row whose text is an
-    // own-side "each of your Benched" spread is one of these three. The predicate
-    // is deliberately looser than the anchor (no "also", no W/R tail, no leading
-    // "This attack"), so a fourth wording would be caught rather than excluded.
     const family = legalAttackCorpus().filter(
       ([, s]) => /damage to each of your Benched Pokémon/.test(s) && !/opponent/.test(s),
     );
@@ -177,32 +96,16 @@ describe("§1 — the printed data: three amounts, two real cards, one construct
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(5);
   });
 
-  it("🛑 the apostrophe byte is U+0027 and there is exactly ONE slot", () => {
-    // ⚠️ **D421 ASSERTED THIS FROM MEMORY AND WAS WRONG.** Measured with
-    // `hexdump -C` on `censusAttackCorpus.ts` line 516: `… 28 44 6f 6e 27 74 …` —
-    // `(Don't`, U+0027 APOSTROPHE. The é in "Pokémon" is `c3 a9`, U+00E9, which is
-    // the OTHER byte this family has always cared about.
+  it("the apostrophe byte is U+0027 and there is exactly ONE slot", () => {
     const sentence = own(10);
     expect(sentence).toContain("Don't");
     expect(sentence).not.toContain("’");
     expect(sentence).toContain("Pokémon");
-    // ⚠️ **AND THE COUNT OF SLOTS IS THE POINT, not just the byte.** The
-    // opponent-side twin carries TWO apostrophe positions (the possessive and the
-    // contraction); the own-side sentence carries ONE, because the possessive is
-    // exactly the token D425 turned into a capture. A slice reasoning about this
-    // family from the shipped sentence alone would predict two.
     expect(sentence.split(/['’]/).length - 1).toBe(1);
     expect(opp(10).split(/['’]/).length - 1).toBe(2);
   });
 
   it("the two REAL carriers print it at their printed index, and were carried UNSIMULATED", () => {
-    // 🛑 **NO FIXTURE WAS WRITTEN FOR THE 20 OR THE 30.** Both have been in
-    // `FIXTURE_POOL` for hundreds of decisions as DECLARED-UNSIMULATED siblings —
-    // D129 carried Krookodile's "Earthquake" and D170 carried Tyranitar's, each
-    // stating the gap out loud rather than hiding it behind a card that looks fully
-    // simulated (D169's convention). D425 is what makes those admissions expire,
-    // and `benchCounterMultiply.test.ts` / `benchBodyScaling.test.ts` carry the
-    // re-pointed rungs.
     expect(FIXTURE_POOL["sv01-117"]?.attacks?.[QUAKE.krookodile]).toMatchObject({
       name: "Earthquake",
       cost: ["Fighting", "Fighting"],
@@ -218,10 +121,6 @@ describe("§1 — the printed data: three amounts, two real cards, one construct
   });
 
   it("`fix-tremor` carries BOTH possessives of ONE shape, and the SIDE is the only difference", () => {
-    // 🛑 **THIS IS WHY THE FIXTURE IS A PAIR AND NOT A CARD.** Same cost, same
-    // printed damage, same amount, same attacker, same board, two indices — a build
-    // that resolved `target` to the wrong bench passes every single-index probe in
-    // the repo and fails this one. §4 drives the pair on one board.
     expect(FIXTURE_POOL["fix-tremor"]?.attacks).toEqual([
       {
         cost: ["Colorless", "Colorless"],
@@ -255,11 +154,6 @@ describe("§1 — the printed data: three amounts, two real cards, one construct
 
 describe("§2 — one anchor, two possessives, three amounts", () => {
   it("reads all THREE printed amounts onto the attacker's own Bench", () => {
-    // 🛑 **D121's TEMPLATE WARRANT IS MET ON THE AMOUNT AXIS BY THE POOL ITSELF**:
-    // three DISTINCT amounts are printed on three distinct sentences, so the
-    // `(\d+)` capture has three witnesses and is not a template over a population
-    // of one. Writing three literals would have cost three arms for the same
-    // behaviour and would have refused the fourth amount a future set prints.
     for (const n of AMOUNTS) {
       expect(deriveAttackEffect(own(n))).toEqual([
         { op: "spreadDamage", target: "yourBench", amount: n },
@@ -267,12 +161,7 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     }
   });
 
-  it("⚠️ …and the SHIPPED opponent-side twin is UNMOVED — the control this rung needs", () => {
-    // 🛑 **WITHOUT THIS THE RUNG ABOVE IS A TAUTOLOGY (D424).** "The own side is
-    // read" passes trivially under a build that answers `"yourBench"` for
-    // EVERYTHING, which is precisely the defect a shared anchor makes easy. The
-    // twin is asserted at the same three amounts, off the same regex, in the same
-    // breath.
+  it("…and the SHIPPED opponent-side twin is UNMOVED — the control this rung needs", () => {
     for (const n of AMOUNTS) {
       expect(deriveAttackEffect(opp(n))).toEqual([
         { op: "spreadDamage", target: "opponentBench", amount: n },
@@ -294,9 +183,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
   });
 
   it("the W/R parenthetical is optional on BOTH wordings, and nothing else changed", () => {
-    // The tail was optional for the opponent-side form before this slice; sharing
-    // one anchor is what makes it optional for the own-side form too, with no
-    // second place for it to be forgotten.
     expect(
       deriveAttackEffect("This attack also does 10 damage to each of your Benched Pokémon."),
     ).toEqual([{ op: "spreadDamage", target: "yourBench", amount: 10 }]);
@@ -305,17 +191,12 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
         "This attack also does 10 damage to each of your opponent's Benched Pokémon.",
       ),
     ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 10 }]);
-    // …and the CURLY spelling of the contraction, on the family's standing reason
-    // (a re-ingest could curl them). The byte in the corpus is U+0027 today.
     expect(deriveAttackEffect(own(10).replace("Don't", "Don’t"))).toEqual([
       { op: "spreadDamage", target: "yourBench", amount: 10 },
     ]);
   });
 
   it("refuses the near-misses — and ADMITS one on the same axis beside each", () => {
-    // ⚠️ **EVERY REFUSAL RUNG OWES A NEIGHBOURING ADMISSION ON THE SAME AXIS
-    // (D424)**, or it passes under a reader that refuses everything. Each pair
-    // below moves ONE token and states what the anchor is actually keyed on.
     const pairs: readonly (readonly [string, string, string])[] = [
       // possessive: an owner word this sentence never prints ↔ the two it does
       [
@@ -323,57 +204,16 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
         "This attack also does 10 damage to each of my Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         own(10),
       ],
-      // quantifier: "1 of" is a CHOICE and a different op ↔ "each of" is this one
-      // 🆕🆕🆕 **D447 CHANGED THIS ROW'S SENTENCE WITHOUT CHANGING ITS AXIS, AND THE FIRST
-      // REPLACEMENT WAS ALSO WRONG.** *"1 of your Benched Pokémon"* is BUILT now, as
-      // `damageChosen {target: "yourBench"}`, so asserting null would pin a refusal the
-      // engine does not make (D444). The obvious substitute — *"2 of"* — is ALSO read:
-      // D399 made the count a CAPTURE, so every numeral on that axis resolves, and the
-      // rung went red a second time before this comment was written. What genuinely
-      // refuses is a quantifier WORD neither anchor spells: `SPREAD_EACH_BENCH` is keyed
-      // on the literal "each of" and the snipe fragment on `\d+ of`, and "all of" is
-      // neither. ⚠️ **THE AXIS IS UNCHANGED — a quantifier this family is not keyed on —
-      // and that is the only thing that had to survive the substitution.**
       [
         "`all of` (a quantifier neither anchor spells)",
         "This attack also does 10 damage to all of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         own(10),
       ],
-      // scope: a noun that names NO owner and NO seat scope ↔ the one-sided form
-      // 🆕🆕🆕 **D507 RE-POINTED THIS ROW AND THE AXIS IS UNCHANGED (D178/D418/D438 —
-      // re-point, do not delete).** The sentence this row used to carry — *"each Benched
-      // Pokémon (both yours and your opponent's)"*, corpus FILE LINE 515 — is BUILT now,
-      // by `SPREAD_EACH_BOTH_BENCH` and arm 6-ii, so asserting null would pin a refusal
-      // the engine no longer makes (D444's rule, which has now caught three rows in this
-      // one `it(`). **THE BARE OWNERLESS NOUN IS STILL REFUSED, AND BY BOTH ANCHORS AT
-      // ONCE**: this one is keyed on the literal `each of ` plus a possessive, and the
-      // new one is keyed on the printed `(both yours and your opponent's)` parenthetical,
-      // which this string drops. ⚠️ **D438's SECOND HALF, ASKED RATHER THAN ASSUMED —
-      // what could the old claim catch that this one cannot?** The old string is claimed
-      // by arm 6-ii today, so a mutation to THIS anchor could not be seen through it in
-      // either direction; the new string is refused by a DIFFERENT byte of each anchor,
-      // so it discriminates both. The both-sides row's own near-miss ladder now lives in
-      // `bothBenchSpread.test.ts` §2.
       [
         "`each Benched Pokémon` with no owner and no seat scope",
         "This attack also does 10 damage to each Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         own(10),
       ],
-      // a trailing clause continues the sentence past the anchor's `\.`
-      // 🆕🆕🆕 **D505 RE-POINTED THIS ROW ONTO THE OWN SIDE, AND THE AXIS IS UNCHANGED
-      // (D178/D418/D438 — re-point, do not delete).** The sentence this row used to
-      // carry — the OPPONENT-side scaled tail, corpus FILE LINE 517 — is BUILT now, by
-      // `SPREAD_EACH_BENCH_TAKEN_PRIZES` and arm 6-i, so asserting null would pin a
-      // refusal the engine no longer makes (D444's rule, which is how this row's
-      // predecessors were caught twice before). **THE OWN-SIDE SCALED SPELLING IS NOT
-      // PRINTED IN THIS COLUMN AND IS STILL REFUSED** — by both anchors at once: this
-      // one's whole-sentence `\.` right after `Pokémon`, and the new one's SPELLED
-      // `your opponent['’]s`. ⚠️ **AND D438's SECOND HALF, ASKED RATHER THAN ASSUMED:
-      // what could the old claim catch that this one cannot?** The old string is claimed
-      // by arm 6-i today, so a mutation that dropped this anchor's `\.` could not be
-      // seen through it either way — the discrimination that genuinely moved is
-      // *"which arm owns the scaled sentence"*, and it lives in
-      // `scaledBenchSpread.test.ts` §2 as a program equality rather than a null.
       [
         "a SCALED tail, own side — refused by BOTH anchors",
         "This attack also does 10 damage to each of your Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -390,68 +230,10 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     }
   });
 
-  it("🛑 the OTHER unbuilt own-side shapes are STILL unbuilt — priced, not swept in", () => {
-    // ⚠️ **AN ABSENCE PINNED ON THE POPULATION (D423), and it is what keeps this
-    // slice's scope honest.** These sentences are real corpus rows this slice
-    // deliberately did NOT take, each for a stated reason:
-    //   · `1 of your Benched` (2 printings, at 10 and 40) PARKS a `choosePokemon`
-    //     on the attacker's OWN bench — `parkOrForce`'s doctrine (0 = silent
-    //     no-op, 1 = forced, ≥2 = park), which is a different mechanism from a
-    //     spread and a different op (`damageChosen`);
-    //   · `each Benched Pokémon (both yours and your opponent's)` (1) and its
-    //     damage-counter-filtered sibling (1) need a THIRD `target` value plus a
-    //     two-board fold, and the filtered one needs a per-body predicate as well.
-    // Their marginal SITE cost is not near zero (D424's test), so they are left and
-    // named. If a later slice claims one, this rung goes RED, which is the point.
-    // 🛑🛑 **D447 FIRED THE FALSIFIER THIS RUNG PROMISED, AND IT WENT RED EXACTLY AS
-    // THE PARAGRAPH ABOVE SAID IT WOULD** — *"If a later slice claims one, this rung goes
-    // RED, which is the point."* Two of the four were claimed: the `1 of your Benched`
-    // pair, at 10 and 40, is now `damageChosen {target: "yourBench", count: 1}`, read
-    // through the SHARED snipe fragment's new possessive capture rather than through any
-    // new anchor. ⚠️ **AND THE PRICE D425 QUOTED WAS WRONG IN ONE DIRECTION AND RIGHT IN
-    // THE OTHER**: the `parkOrForce` doctrine really is a different mechanism from a
-    // spread (right), but its marginal SITE cost was NOT the barrier — `snipeTargets`,
-    // `ownBenchRefs` and the whole `damageChosen` park already existed, and the slice
-    // cost one union member, one ternary, one funnel arm, one caption arm and a
-    // seat-parametric `placeSnipe`. **THE TWO SURVIVING ROWS ARE UNTOUCHED AND KEEP
-    // THEIR ORIGINAL REASON** (a THIRD `target` value plus a two-board fold, and a
-    // per-body predicate on top for the filtered one), which is what stops this rung
-    // decaying into a list of whatever is unbuilt today.
-    // 🛑🛑🛑 **D507 FIRED THE FALSIFIER A SECOND TIME, AND IT ALSO FALSIFIED THE PRICE
-    // THIS PARAGRAPH HAD BEEN CARRYING SINCE D425.** The two surviving rows are claimed —
-    // and NOT by *"a THIRD `target` value plus a two-board fold"*. `spreadDamage.target`
-    // is still the same two-member union it has been since D425: the both-sides reading
-    // is a TWO-OP PROGRAM of the op that already shipped (D482's answer to the identical
-    // question one zone over), and the filtered row's per-body predicate is ONE OPTIONAL
-    // RIDER whose name and whose function both already shipped on `counterEachAll`
-    // (`damagedOnly`, `hasAnyDamageCounters`). ⚠️ **SO THE REFUSAL WAS RIGHT ABOUT THE
-    // ROWS AND WRONG ABOUT THE MECHANISM FOR 82 DECISIONS** — D466's rule at a third
-    // address: a refusal is not an assertion, so its REASON can be false for years and
-    // nothing goes red. Only the ROW LIST was ever checked.
-    // 🛑 **AND THE POPULATION IS RE-POINTED RATHER THAN EMPTIED**, because a `for` over
-    // `[]` is the vacuous guard `conventions.md` forbids (D226). What stands in its place
-    // is the row that is genuinely still refused on this axis, with the reason D507
-    // MEASURED rather than guessed — see `bothBenchSpread.test.ts` §8.
-    // 🛑🛑🛑 **🆕🆕🆕 D520 — THE FALSIFIER FIRED A THIRD TIME, AND THE LIST IS EMPTY.** Corpus
-    // FILE LINE 601 (the one row below) is BUILT — and NOT by *"a `damagedOnly` rider on
-    // `damageDefender`'s FLAT arm"*: the Active predicate is the shipped ONE-BODY
-    // `BoardCondition` `opponentActiveDamaged` in a `conditionGate`, the benches are D507's
-    // two `damagedOnly` spreads, and *"except for this Pokémon"* is STRUCTURAL. D507's
-    // reason, quoted below, was wrong in verdict AND carrier for 13 decisions. ⚠️ **A `for`
-    // over `[]` is the vacuous guard D226 forbids**, so the population is RE-POINTED rather
-    // than emptied: what stands in its place is the THREE COMPOSED PROGRAMS this axis has
-    // produced (6a-bis, 6-ii, 6-iii), each asserted to its whole program, with
-    // `spreadDamage.target` asserted STILL two-valued — the invariant every refusal on this
-    // rung was protecting, and the thing a successor who "widened `target`" would redden.
-    //   (D507's reason, kept as the record: "corpus FILE LINE 601. FOUR ZONES, not two: it
-    //   reaches both ACTIVES, where §8.5 applies Weakness and Resistance, and `spreadDamage`
-    //   is bench-only … Composing it is D482's shape plus a `damagedOnly` rider on
-    //   `damageDefender`'s FLAT arm, which is this engine's most-produced damage op, for ONE
-    //   printing.")
+  it("the OTHER unbuilt own-side shapes are STILL unbuilt — priced, not swept in", () => {
     const stillUnbuilt: readonly string[] = [];
     const composed: readonly (readonly [string, readonly EffectOp[]])[] = [
       [
-        // 6a-bis (D482): the whole-side spread — Active through the flat arm, bench flat.
         "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         [
           { op: "damageDefender", amount: 30 },
@@ -459,7 +241,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
         ],
       ],
       [
-        // 6-ii (D507): both benches, the damaged rider on both legs.
         "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
         [
           { op: "spreadDamage", target: "yourBench", amount: 40, damagedOnly: true },
@@ -467,7 +248,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
         ],
       ],
       [
-        // 6-iii (D520): four zones — the gated flat arm, then both damaged benches.
         "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
         [
           {
@@ -490,9 +270,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     // `spreadDamage.target` is STILL `"opponentBench" | "yourBench"` — every composition
     // above reaches an Active through `damageDefender`, never through a third member.
     expect([...targets].sort()).toEqual(["opponentBench", "yourBench"]);
-    // 🆕🆕🆕 D507 — the two that LEFT THIS SLICE, pinned on the other side of the same
-    // predicate with their WHOLE programs, so the transition is recorded and a successor
-    // that widened `spreadDamage.target` instead reddens here (D444).
     for (const [text, amount, rider] of [
       [
         "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -511,8 +288,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
         { op: "spreadDamage", target: "opponentBench", amount, ...rider },
       ]);
     }
-    // 🆕🆕🆕 D447 — the two that LEFT, pinned on the other side of the same predicate
-    // so this rung records the transition rather than quietly shrinking (D444).
     for (const s of [
       "This attack also does 10 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "This attack also does 40 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -534,7 +309,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       expect(rows.get(s), `is a real corpus row: ${s}`).toBeGreaterThanOrEqual(1);
       expect(resolvedByAnyReader(s), `still unbuilt: ${s}`).toBe(false);
     }
-    // …and the three D425 DID take are on the other side of the same predicate.
     for (const n of AMOUNTS) expect(resolvedByAnyReader(own(n))).toBe(true);
   });
 });
@@ -545,9 +319,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
 
 describe("§3 — `target` is a union now, and the record version does not move", () => {
   it("both values are inhabited by PRINTED sentences, not just by the type", () => {
-    // ⚠️ A union member no printing produces is a value no board can reach, which
-    // is the shape D205 removed rather than tested around. Both members are reached
-    // here from the catalog's own text.
     const seen = new Set<string>();
     for (const [, text] of legalAttackCorpus()) {
       for (const op of (deriveAttackEffect(text) ?? []) as EffectOp[]) {
@@ -557,20 +328,9 @@ describe("§3 — `target` is a union now, and the record version does not move"
     expect([...seen].sort()).toEqual(["opponentBench", "yourBench"]);
   });
 
-  it("🛑 the version PREDICTION, driven both directions: this is a WIDENING", () => {
-    // **DIRECTION 1 — the old value still means what it meant.** A v26 record could
-    // hold `{op:"spreadDamage", target:"opponentBench", amount:N}`. Under this
-    // deploy that value is still in the union and still resolves to the opponent's
-    // Bench, byte for byte. That is D125's widening test, not D309's rename case:
-    // the old key's presence AND its absence both mean what the writer said.
+  it("the version PREDICTION, driven both directions: this is a WIDENING", () => {
     const old: EffectOp = { op: "spreadDamage", target: "opponentBench", amount: 20 };
     expect(deriveAttackEffect(opp(20))).toEqual([old]);
-    // **DIRECTION 2 — the op cannot be IN a record at all, which makes it doubly
-    // safe.** `EffectOp`s reach `MatchRecord.state` only through
-    // `EffectContinuation.pendingOp`, and only a PARKING op is ever written there.
-    // `spreadDamage`'s interpreter arm returns `{ done: … }` unconditionally, so no
-    // board can park on it — asserted here by resolving all five printings to
-    // completion with an empty `pending` tail and no prompt.
     for (const [id, index] of [
       ["fix-tremor", TREMOR.home],
       ["sv01-117", QUAKE.krookodile],
@@ -587,15 +347,6 @@ describe("§3 — `target` is a union now, and the record version does not move"
         id,
       ).toEqual([]);
     }
-    // ⚠️ **AND THE STRONGER HALF OF THE SAME CLAIM IS THE COMPILER'S, NOT A
-    // BOARD'S.** `PendingStage["kind"]` has no member that resumes a parked effect
-    // at all — a parked program lives in `phase.cont`, and reaching it needs
-    // `phase.kind === "effect:choose"`, which the loop above refuses on every
-    // printing. An earlier draft of this rung asserted
-    // `pending.some((s) => s.kind === "effect")`; `tsc` rejected it as a comparison
-    // with no overlap, which is a better proof than the assertion would have been
-    // and is recorded here rather than deleted (D424's preference for a refusal the
-    // type system re-derives).
   });
 });
 
@@ -624,11 +375,7 @@ describe("§4 — every own benched body, and NOT the opponent's", () => {
     expect(done.players.p2.bench.map((b) => b.damage)).toEqual([0, 0]);
   });
 
-  it("🛑 ONE card, ONE amount, ONE board, TWO indices — the side is the ONLY difference", () => {
-    // 🛑 **THE DEFECT A READER CANNOT SEE.** A build that resolved the own-side
-    // sentence to `"opponentBench"` derives, interprets, damages a Bench, emits the
-    // right number of rows and passes every single-index case in this repo. It
-    // fails here and only here, because the two indices differ in nothing else.
+  it("ONE card, ONE amount, ONE board, TWO indices — the side is the ONLY difference", () => {
     const start = bench(
       bench(board("fix-tremor", "fix-titan"), "p1", ["fix-titan", "fix-titan"]),
       "p2",
@@ -672,12 +419,7 @@ describe("§4 — every own benched body, and NOT the opponent's", () => {
     }
   });
 
-  it("🛑 no ATTACK_EFFECT_SKIPPED in EITHER direction — the sentence is not loud any more", () => {
-    // The other half of "the clause was read". Before D425 the own-side wording fell
-    // to the loud skip path and the log carried its whole printed text; a build that
-    // derived the op but ALSO flagged the sentence would be built-but-dead (D420's
-    // shape). Driven on a populated bench AND on an empty one, because the skip is
-    // decided by the DERIVATION and must not depend on whether anything was hit.
+  it("no ATTACK_EFFECT_SKIPPED in EITHER direction — the sentence is not loud any more", () => {
     for (const populated of [true, false]) {
       for (const index of [TREMOR.home, TREMOR.away]) {
         const start = populated
@@ -717,15 +459,7 @@ describe("§4 — every own benched body, and NOT the opponent's", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — Weakness is genuinely not applied on the Bench", () => {
-  it("🛑 a ×2 Weakness body DOUBLES on the Active and stays FLAT on the Bench — one board", () => {
-    // 🛑 **THE SAME CARD IN BOTH ZONES, IN ONE DECLARATION.** `fix-fighting-weak`
-    // prints ×2 Fighting and `fix-tremor` is a Fighting attacker, so:
-    //   · across the table, in the Active Spot, the main hit's 30 becomes 60 —
-    //     which proves the §8.5 Weakness step is LIVE on this board;
-    //   · on the attacker's own Bench, the very same card takes the splash's 10
-    //     FLAT.
-    // Without the first half, "the bench body took 10" is consistent with an engine
-    // that applies no Weakness anywhere, and the rung would be a tautology (D424).
+  it("a ×2 Weakness body DOUBLES on the Active and stays FLAT on the Bench — one board", () => {
     const state = bench(board("fix-tremor", "fix-fighting-weak"), "p1", ["fix-fighting-weak"]);
     const { events } = swing(state, TREMOR.home);
     const rows = events.flatMap((e) => (e.type === "DAMAGE_DEALT" ? [e] : []));
@@ -737,19 +471,12 @@ describe("§5 — Weakness is genuinely not applied on the Bench", () => {
   });
 
   it("…and the OPPONENT-side splash is flat on a ×2 body too — the shipped half is unmoved", () => {
-    // The control for the control: nothing about D425 changed the opponent-side
-    // arm's W/R behaviour, and a shared function makes that easy to break in one
-    // direction only.
     const state = bench(board("fix-tremor", "fix-titan"), "p2", ["fix-fighting-weak"]);
     const { events } = swing(state, TREMOR.away);
     const rows = events.flatMap((e) => (e.type === "DAMAGE_DEALT" ? [e] : []));
     expect(rows[1]).toMatchObject({ seat: "p2", base: 10, dealt: 10, weakness: null });
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — 🛑 THE MECHANISM THE SENTENCE DOES NOT ADVERTISE.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () => {
   /** The attacker's own benched `fix-fighting-weak` at 190 of 200, so Tyranitar's
@@ -760,17 +487,10 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
     return state;
   }
 
-  it("🛑 §8.1 Knocks Out the ATTACKER's own benched body and owes the PRIZE to the OPPONENT", () => {
-    // 🛑 **THE RULE, AND THE ENGINE NEEDED NO NEW CODE FOR IT.** `finishAttack`
-    // already sweeps `[defender, attacker]` and `collectKnockOutPass` already calls
-    // `knockOut` with `otherSeat(entry.ref.seat)` as the prize seat, so the batch
-    // parks on `ko:takePrizes` for the seat that did NOT attack. Driven rather than
-    // inherited from either comment: before this slice no attack's own damage could
-    // reach the own-side branch of that sweep at all.
+  it("§8.1 Knocks Out the ATTACKER's own benched body and owes the PRIZE to the OPPONENT", () => {
     const { state, events } = swing(selfLethal(), QUAKE.tyranitar);
     expect(events.flatMap((e) => (e.type === "KNOCKED_OUT" ? [e.seat] : []))).toEqual(["p1"]);
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
-    // …and the OPPONENT actually takes it: their row shrinks, the attacker's does not.
     expect(state.players.p1.prizes).toHaveLength(6);
     expect(state.players.p2.prizes).toHaveLength(6);
     const { state: taken } = mustApply(state, {
@@ -784,12 +504,7 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
     expect(taken.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 a BENCHED Knock Out owes NO promotion — verified, not assumed", () => {
-    // The brief's third question, and it is answerable straight off the queue:
-    // `knockOut`'s benched branch returns `[takePrizes]` and no `promote`, because
-    // the Bench compacts and no spot is left empty. The ACTIVE branch returns both,
-    // which is the discrimination — so this rung asserts the ABSENCE beside a board
-    // where the presence is visible (§6's next case).
+  it("a BENCHED Knock Out owes NO promotion — verified, not assumed", () => {
     const { state } = swing(selfLethal(), QUAKE.tyranitar);
     expect(state.pending.filter((s) => s.kind === "promote")).toEqual([]);
     expect(state.pending.map((s) => s.kind)).toEqual([
@@ -803,14 +518,7 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
     expect(state.players.p1.bench).toHaveLength(1);
   });
 
-  it("🛑 BOTH boards in ONE batch, and §8.1's Prize ORDER holds", () => {
-    // ⚠️ **A NEW ROUTE TO A BATCH THAT WAS ONLY EVER REACHABLE THROUGH RECOIL.**
-    // Krookodile's 180 Knocks Out a ×2 Fighting Active across the table while its
-    // own 30 finishes its own benched teammate — one attack, two seats, one batch.
-    // §8.1 says *"the player whose turn it is takes their Prize card(s) first"*, so
-    // the ATTACKER's prize (for the defender's body) is queued ahead of the
-    // DEFENDER's (for the attacker's own body), and only the defender — whose ACTIVE
-    // died — is owed a promotion.
+  it("BOTH boards in ONE batch, and §8.1's Prize ORDER holds", () => {
     let state = bench(board("sv01-117", "fix-fighting-weak"), "p1", ["fix-fighting-weak"]);
     state = setBenchDamage(state, "p1", 0, 190);
     const { state: done, events } = swing(state, QUAKE.krookodile);
@@ -825,19 +533,7 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
     ]);
   });
 
-  it("⚠️ D189 — the attack changed its OWN board and the epilogue still addresses the attacker", () => {
-    // 🛑 **D189's PRECEDENT IS THE SHAPE TO FEAR AND IT IS PROVEN, NOT REASONED.**
-    // That slice broke an invariant `finishAttack` relied on by deriving a
-    // self-switch: the epilogue addressed the Attacking Pokémon BY SPOT, and the
-    // spot had moved. D425 also changes the attacker's own board mid-resolution —
-    // it deletes a body from the attacker's own Bench inside the §8.1 batch — so
-    // the question has to be asked again.
-    //
-    // It is safe, and the reason is structural rather than incidental:
-    // `spreadDamage` only ever reads and rewrites `side.bench`, and the declared
-    // attacker is the ACTIVE. The proof is the `usedAttack` stamp — written by
-    // `finishAttack` against `attackerUid`, AFTER the sweep — landing on the right
-    // body with the right printed name while that seat's bench is a body shorter.
+  it("D189 — the attack changed its OWN board and the epilogue still addresses the attacker", () => {
     const { state } = swing(selfLethal(), QUAKE.tyranitar);
     expect(state.players.p1.active?.usedAttack).toMatchObject({ name: "Earthquake" });
     expect(state.players.p1.bench).toHaveLength(1);
@@ -847,10 +543,6 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
   });
 
   it("a full-HP own benched body SURVIVES a splash that would otherwise be lethal", () => {
-    // The §8.1 KO-survival clamp is asked of the DAMAGED body, so it reaches the
-    // attacker's own bench exactly as it reaches the opponent's — no special case,
-    // and this rung is what says so. `fix-titan` is 340 HP and a 20 splash cannot
-    // touch it, which is the un-KO-able control the deck carries it for.
     const state = bench(board("swsh10.5-043", "fix-titan"), "p1", ["fix-titan"]);
     const { state: done, events } = swing(state, QUAKE.tyranitar);
     expect(types(events)).not.toContain("KNOCKED_OUT");
@@ -863,12 +555,7 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — the game ends on a Prize the attacker handed over", () => {
-  it("🛑 the OPPONENT wins outright when their last Prize comes off the attacker's own KO", () => {
-    // ⚠️ **THE WIN-CONDITION PATH, DRIVEN.** `evaluateWin` fires on
-    // `prizes.length === 0` for a seat, and the seat that empties its row here is
-    // the one that never attacked. With exactly one Prize left the pick is FORCED,
-    // so the batch resolves straight through: `PRIZES_TAKEN` then `GAME_OVER`, with
-    // no park in between.
+  it("the OPPONENT wins outright when their last Prize comes off the attacker's own KO", () => {
     let state = bench(board("swsh10.5-043", "fix-titan"), "p1", ["fix-fighting-weak", "fix-titan"]);
     state = setBenchDamage(state, "p1", 0, 190);
     state = setPrizes(state, "p2", 1);
@@ -889,9 +576,6 @@ describe("§7 — the game ends on a Prize the attacker handed over", () => {
   });
 
   it("…and with TWO Prizes left it parks instead, which is the control on the rung above", () => {
-    // Without this, "the game ended" is consistent with an engine that ends the
-    // game on any own-side Knock Out at all. The only difference between the two
-    // boards is the size of the Prize row.
     let state = bench(board("swsh10.5-043", "fix-titan"), "p1", ["fix-fighting-weak", "fix-titan"]);
     state = setBenchDamage(state, "p1", 0, 190);
     state = setPrizes(state, "p2", 2);
@@ -907,17 +591,8 @@ describe("§7 — the game ends on a Prize the attacker handed over", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — the log row, which is a claim with the same standing as a predicate.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§8 — `DAMAGE_DEALT.by`, and the row it stopped getting wrong", () => {
-  it("🛑 the own-side splash is voiced by the ATTACKER, not by the defender", () => {
-    // 🛑 **THE DEFECT THIS FIELD EXISTS FOR.** `log.ts` read the dealer as
-    // `otherSeat(event.seat)` until D425. On the board below that renders the
-    // splash under **Wren**, crediting the DEFENDER with damage **Ember's**
-    // Krookodile had just done to Ember's own Bench — a false row, in the direction
-    // that misreads the board.
+  it("the own-side splash is voiced by the ATTACKER, not by the defender", () => {
     const state = bench(board("sv01-117", "fix-titan"), "p1", ["fix-fighting-weak"]);
     const { state: done, events } = swing(state, QUAKE.krookodile);
     expect(rendered(done, events)).toEqual([
@@ -929,12 +604,7 @@ describe("§8 — `DAMAGE_DEALT.by`, and the row it stopped getting wrong", () =
     ]);
   });
 
-  it("⚠️ …and every PRE-D425 row still renders under the opposite seat — the control", () => {
-    // ⚠️ **RE-POINTING A CLAIM CAN DROP THE DISCRIMINATION IT CARRIED (D418).** The
-    // old line was `otherSeat(event.seat)`; if `by` were simply `event.seat`
-    // everywhere, the rung above would pass and every shipped row would be wrong.
-    // So the opponent-side arm is asserted beside it, on a board where the two
-    // answers differ.
+  it("…and every PRE-D425 row still renders under the opposite seat — the control", () => {
     const state = bench(board("fix-tremor", "fix-titan"), "p2", ["fix-titan"]);
     const { state: done, events } = swing(state, TREMOR.away);
     expect(rendered(done, events).slice(0, 3)).toEqual([
@@ -951,10 +621,6 @@ describe("§8 — `DAMAGE_DEALT.by`, and the row it stopped getting wrong", () =
   });
 
   it("`by` equals `otherSeat(seat)` on every board that is not an own-side spread", () => {
-    // The compatibility claim, driven rather than asserted in prose: the field is a
-    // pure addition for the whole shipped pool, so no existing log row moved. The
-    // sweep runs the main hit, the opponent-side spread and the own-side spread on
-    // one seat and checks the identity holds on exactly the first two.
     const opponentSide = swing(
       bench(board("fix-tremor", "fix-titan"), "p2", ["fix-titan"]),
       TREMOR.away,

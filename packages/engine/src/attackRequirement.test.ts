@@ -27,98 +27,21 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.75.0 → 0.76.0 — the REQUIREMENT skeleton (D125). "If <clause>, this attack
-// does nothing." — Palafin sv03-062/-200 "Justice Kick" ({W}{W}, 210) and
-// Lycanroc sv03-117 "Finishing Fang" ({F}, 90).
-//
-//   A NEW CONSEQUENT IS A NEW SKELETON, NOT A NEW VOCABULARY.
-//
-// Ten slices built "If <clause>, this attack does N more damage." out of one
-// skeleton and one growing table of clauses. This is the family's SECOND
-// consequent, and the headline is what it did NOT cost: ZERO new `BoardCondition`
-// members. Both rows reuse a fact an earlier slice already bought —
-// `yourActivePromotedThisTurn` (D124) and `opponentActiveDamaged` (D115) — which
-// is why the "same members, two tables" block below is the most load-bearing
-// derivation case in this file. It proves the two consequents SHARE A VOCABULARY
-// WITHOUT SHARING A TABLE: `deriveAttackDamageBonus` on Revavroom ex's real
-// positive sentence and `deriveAttackRequirement` on Palafin's real negative one
-// return the SAME cond, reached through two lookups that never touch.
-//
-// THE POLARITY LIVES IN THE SKELETON. Every "does nothing" clause in the pool is
-// a NEGATIVE sentence, because a card prints "does nothing" precisely to state a
-// REQUIREMENT and English states a requirement by naming its failure. So the
-// table reads the printed negative and hands back the POSITIVE fact required, and
-// attack.ts cancels when that fact is ABSENT — no `{ kind: "not", cond }` member,
-// no recursion in the vocabulary, no negated phrasing owed by `conditionNote`.
-//
-// WHERE THE GATE SITS IS THE OTHER HALF OF THE DESIGN, and it is what this suite's
-// board cases exist to pin. A cancel cannot be an `EffectOp`: a program runs at
-// attack.ts's tail, strictly AFTER the §8.5 pipeline, and no op can retract damage
-// already dealt. The gate therefore sits in FRONT of the pipeline, reusing §8's
-// confusion-tails ending (`ATTACK_FAILED` → `finishAttack`) minus the self-damage.
-// Two consequences the cases below assert directly:
-//
-//   (1) LYCANROC'S TRAILING QUALIFIER IS FREE. "…has no damage counters on it
-//       BEFORE THIS ATTACK DOES DAMAGE" needs no modelling, because the check runs
-//       before the damage exists. An undamaged defender cannot bootstrap the
-//       clause with the very hit the clause gates.
-//
-//   (2) THE TURN STILL ENDS. A cancelled attack is an attack that was USED — the
-//       same rule the confusion path already carried, and the reason
-//       `finishAttack` is reused rather than an early `return next`.
-//
-// AND THE REST OF THE FAMILY STAYS LOUD. 19 printings in the pool say "this attack
-// does nothing"; exactly 3 (these) are whole sentences of the mapped shape. The
-// other 16 are refused, and this suite pins WHICH PROPERTY refuses each one — the
-// ANCHOR for the multi-sentence and coin-flip prints, the TABLE for a clause that
-// reaches it and misses. Both facts matter independently: a regression that
-// loosened the anchor would still be caught by the table, and vice versa.
-
-/** Palafin sv03-062/-200 "Justice Kick", verbatim, and pinned char-for-char
-    against FIXTURE_POOL below. Palafin carries no authored program (see the
-    ZERO-rows block), so the sentence IS the wiring: a drifted character does not
-    throw, it drops the card back onto the loud ATTACK_EFFECT_SKIPPED path and
-    silently lets a 210 land that should have been cancelled — the most expensive
-    silent failure in the family so far.
-
-    Note the two printed traps: an ASCII U+0027 apostrophe in "didn't", and "from
-    the Bench" with NO possessive where D124's positive twin says "from your
-    Bench". */
 const JUSTICE_KICK =
   "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.";
 
-/** Lycanroc sv03-117 "Finishing Fang", verbatim — a HAPAX, the pool's only
-    printing of this clause under any consequent, and the row whose trailing
-    "before this attack does damage" is discharged by WHERE the gate runs. */
 const FINISHING_FANG =
   "If your opponent's Active Pokémon has no damage counters on it before this attack does damage, this attack does nothing.";
 
-/** D124's POSITIVE twin — Revavroom ex sv06.5-015 "Accelerator Flash", verbatim.
-    The same board fact as Justice Kick, under the OTHER consequent, and the
-    zero-new-vocabulary case reads both derivers against it. */
 const ACCELERATOR_FLASH =
   "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 120 more damage.";
 
-/** D115's POSITIVE twin — Meowscarada ex sv02-015 "Blossom Blade" (80+, +180),
-    verbatim. Its clause is the positive-sense reading of Finishing Fang's, and
-    both resolve to `opponentActiveDamaged`. The printed "already" is the timing
-    word Lycanroc's print spells out longhand as "before this attack does damage";
-    neither is modelled, because both are true by WHERE the reader is called. */
 const BLOSSOM_BLADE =
   "If your opponent's Active Pokémon already has any damage counters on it, this attack does 180 more damage.";
 
-/** Greedent sv01-152 "Enhanced Fang" (80+, +80), verbatim — a third REAL bonus
-    sentence on a member neither requirement row uses, so the null it gets from
-    `deriveAttackRequirement` is not an artefact of the shared-member pair above. */
 const ENHANCED_FANG =
   "If this Pokémon has a Pokémon Tool attached, this attack does 80 more damage.";
 
-/** UTF-8 byte length, counted off code points. Deliberately NOT
-    `new TextEncoder().encode(s).length`: the engine package compiles with
-    `lib: ["ES2022"]` and `types: []` (packages/engine/tsconfig.json), so no
-    platform global is in scope and `tsc -b` — which CI runs — would reject it.
-    Copied rather than shared with promotedClause.test.ts, where it is local for
-    the same reason: testFixtures.ts is a fixture module, not a string library. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
   for (const ch of text) {
@@ -152,14 +75,6 @@ const CLAW_INDEX = 1;
 const PROMOTED = { kind: "yourActivePromotedThisTurn" } as const;
 const DAMAGED = { kind: "opponentActiveDamaged" } as const;
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4).
-
-    Both Active spots are pinned to a neutral 200 HP fix-bigbody. BOTH attackers
-    here are Stage 1 and could never be the dealt starter anyway, so the pin is not
-    an optimisation: it is the only way a board starts in a known shape. Pinning
-    both sides also keeps every defender's Weakness out of cases that are not about
-    Weakness — fix-bigbody has none. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -169,30 +84,15 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** `board`, then two passes — P1's SECOND turn, which is turn 4.
-
-    Needed by the EVOLUTION case for a reason that has nothing to do with this
-    clause (§4/§10 ban evolving on your own first turn, and P1 went second here, so
-    turn 2 is P1's first) and by the REAL-damage case, which spends turn 2 putting
-    the damage there with Slashing Claw. */
 function laterBoard(seed: number): GameState {
   const afterP1 = mustApply(board(seed), { type: "endTurn", seat: "p1" }).state;
   return mustApply(afterP1, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** The 320 HP body in the seat's Active Spot — the only card in the pool that
-    survives Justice Kick's 210. fix-bigbody's 200 does not, and a KO would park
-    the turn on a PROMOTION, i.e. on the very move Palafin's clause reads. Its ×2
-    Lightning Weakness is inert against both attackers here (Water and Fighting).
-    The displaced fix-bigbody lands on the Bench, where two cases want it anyway. */
 function bigDefender(state: GameState, seat: Seat): GameState {
   return setActiveFromDeck(state, seat, "fix-lightning-weak-big");
 }
 
-/** Palafin in the seat's Active Spot with Justice Kick's {W}{W} paid. SURGERY,
-    and surgery that CANNOT arm the clause: `setActiveFromDeck` builds the Pokémon
-    with `makeInPlay`, which stamps `promotedTurn: null`. So this is the CANCELLED
-    board, and every armed board below goes through a real action instead. */
 function palafinActive(state: GameState, seat: Seat): GameState {
   return attachFromDeck(setActiveFromDeck(state, seat, "sv03-062"), seat, "fix-water-energy", 2);
 }
@@ -227,10 +127,6 @@ function lycanrocActive(state: GameState, seat: Seat): GameState {
   );
 }
 
-/** Arm the promotion the FIRST way it can be armed: a real §11 `retreat`. The
-    current Active pays with one plain {C} pulled from the deck (§11 takes any
-    Energy, which is why the Colorless line is load-bearing in a deck whose
-    attackers cost none), and `promoteBenchIndex` names who comes up. */
 function retreatInto(state: GameState, seat: Seat, benchIndex: number): GameState {
   const withEnergy = attachFromDeck(state, seat, "fix-energy", 1);
   const paying = withEnergy.players[seat].active?.energy.at(-1);
@@ -243,10 +139,6 @@ function retreatInto(state: GameState, seat: Seat, benchIndex: number): GameStat
   }).state;
 }
 
-/** Play an authored Trainer from the seat's hand by card id, pulling a copy out
-    of the deck first. Both Trainers this deck carries resolve WITHOUT parking
-    when the target Bench holds exactly one body, which is the shape every caller
-    here builds. */
 function playTrainer(state: GameState, seat: Seat, cardId: string): GameState {
   const withCard = handFromDeck(state, seat, cardId, 1);
   const played = mustApply(withCard, {
@@ -281,9 +173,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     const attack = FIXTURE_POOL["sv03-062"]?.attacks?.[KICK_INDEX];
     expect(attack?.effect).toBe(JUSTICE_KICK);
     expect(attack?.name).toBe("Justice Kick");
-    // A FLAT 210, not "210+" — this consequent adds nothing, so there is no
-    // printed modifier at all, and `modifierSimulated` is never in play. That is
-    // the structural difference from every predecessor slice in the family.
     expect(attack?.damage).toBe(210);
     expect(attack?.cost).toEqual(["Water", "Water"]);
     // TWO attacks, so KICK_INDEX cannot be right by accident — and index 0 is
@@ -306,9 +195,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(attack?.damage).toBe(90);
     expect(attack?.cost).toEqual(["Fighting"]);
     expect(FIXTURE_POOL["sv03-117"]?.attacks).toHaveLength(2);
-    // "Slashing Claw" has NO `effect` key at all on the D1 row — not an empty
-    // string — so the fixture omits the field. An `effect: ""` would be a
-    // different (and wrong) fact, and `toEqual` here is what pins the absence.
     expect(FIXTURE_POOL["sv03-117"]?.attacks?.[CLAW_INDEX]).toEqual({
       cost: ["Fighting", "Colorless", "Colorless"],
       name: "Slashing Claw",
@@ -339,11 +225,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(FIXTURE_POOL["sv03-117"]?.weaknesses).toEqual([{ type: "Grass", value: "×2" }]);
     expect(FIXTURE_POOL["sv03-117"]?.resistances).toBeNull();
 
-    // Asked by NAME, not by key: §10 matches `evolveFrom` against the card's NAME
-    // and FIXTURE_POOL is keyed by card ID, so a FIXTURE_POOL["Finizen"] lookup
-    // would be vacuously undefined and prove nothing. BOTH pre-evolutions are in
-    // the pool; only the Finizen line takes deck slots (Rockruff is pool-only, on
-    // D124's Wimpod precedent).
     const namesInPool = Object.values(FIXTURE_POOL).map((card) => card.name);
     expect(namesInPool).toContain("Finizen");
     expect(namesInPool).toContain("Rockruff");
@@ -376,9 +257,6 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
       expect(sentence.endsWith(", this attack does nothing.")).toBe(true);
     }
     expect(JUSTICE_KICK).toContain("didn't");
-    // TRAP 2: NO POSSESSIVE. Palafin says "the Bench"; D124's positive twin says
-    // "your Bench". Both spellings are real in the catalog, and a matcher that
-    // normalised them would let one table's key match the other's sentence.
     expect(JUSTICE_KICK).toContain("from the Bench");
     expect(JUSTICE_KICK).not.toContain("from your Bench");
     expect(ACCELERATOR_FLASH).toContain("from your Bench");
@@ -419,16 +297,6 @@ describe("deriveAttackRequirement — the clause resolves to a member that alrea
   });
 
   it("buys ZERO NEW VOCABULARY — both members are reachable from the BONUS table", () => {
-    // THE HEADLINE OF THE SLICE, and the only case that can state it mechanically.
-    //
-    // Two consequents, two tables, no shared lookup — and yet the SAME two
-    // `BoardCondition` values come out of both. D124's Revavroom ex sentence and
-    // D125's Palafin sentence are the positive and negative readings of one board
-    // fact, and they resolve to one member; D115's Meowscarada ex sentence and
-    // D125's Lycanroc sentence likewise.
-    //
-    // If this ever fails, the slice has quietly grown the union — which is the one
-    // cost it was designed not to pay.
     const flash = deriveAttackDamageBonus(ACCELERATOR_FLASH);
     if (flash?.count.kind !== "boardCondition") throw new Error("unreachable");
     expect(flash.count.cond).toEqual(deriveAttackRequirement(JUSTICE_KICK));
@@ -476,23 +344,12 @@ describe("deriver disjointness — two consequents, two vocabularies, no crossov
 
 describe("the rest of the 'does nothing' family stays LOUD", () => {
   it("refuses the COIN-FLIP printings — at the ANCHOR (12 prints in the pool)", () => {
-    // The pool's largest "does nothing" group by far: 12 printings, of which Zorua
-    // sv01-018's "Surprise Attack" is the canonical one. A different MECHANISM
-    // (§8's effect coin flip, which the engine already owns elsewhere), and the
-    // flip sentence in front denies the text `^If` — so it never reaches the
-    // table at all.
     const surpriseAttack = "Flip a coin. If tails, this attack does nothing.";
     expect(deriveAttackRequirement(surpriseAttack)).toBeNull();
     expect(surpriseAttack.startsWith("If ")).toBe(false);
   });
 
   it("refuses a BARE 'If tails' — at the TABLE, which is the OTHER guard", () => {
-    // CONSTRUCTED on purpose, and the reason is that the two guards must be pinned
-    // separately. Strip the flip sentence off and what is left IS the mapped shape:
-    // it clears the anchor, reaches the table, and misses there because "tails" is
-    // not a board fact anything in `BoardCondition` can answer. A regression that
-    // loosened the anchor would still be caught here; one that added a stray table
-    // row would still be caught above.
     const bareTails = "If tails, this attack does nothing.";
     expect(bareTails.startsWith("If ")).toBe(true);
     expect(bareTails.endsWith(", this attack does nothing.")).toBe(true);
@@ -500,10 +357,6 @@ describe("the rest of the 'does nothing' family stays LOUD", () => {
   });
 
   it("refuses the ANAPHORIC 'If you can't' printings — at the ANCHOR", () => {
-    // Three printings, all multi-sentence, and all refused twice over: the cost
-    // sentence in front denies them `^If`, and their "can't" points BACK at that
-    // sentence — a referent this reader, which sees one string and no board, could
-    // not resolve even if it matched.
     for (const text of [
       // Honchkrow sv02-132 "Dirty Throw" — an untyped hand discard.
       "Discard a card from your hand. If you can't, this attack does nothing.",
@@ -520,19 +373,6 @@ describe("the rest of the 'does nothing' family stays LOUD", () => {
   });
 
   it("refuses Malamar sv06.5-034's 'Colluding Tentacles' — at the ANCHOR, twice over", () => {
-    // The family's hardest near-miss: its LAST sentence is exactly the mapped
-    // shape, clause and all. It is refused because the anchor is WHOLE-STRING —
-    // two sentences precede it, so `^If` fails — and it would be refused again at
-    // the table, because "you didn't play Xerosic's Machinations from your hand
-    // during this turn" names a SPECIFIC CARD and no member tracks that.
-    // 🆕🆕🆕 D574 (D539): ~~"no member tracks that"~~ is WITHDRAWN, and was already false
-    // since D564 — `BoardCondition` (what `deriveAttackRequirement` returns) has
-    // `youPlayedSupporterNamedThisTurn { name }`, read off `TurnAllowances.supporterPlayedUid`.
-    // What STANDS is the table miss this rung asserts: the requirement TABLE has no row
-    // mapping this clause onto that member, so both guards still refuse. Malamar is BUILT at
-    // D574 as a REGISTRY row (`MALAMAR_COLLUDING_TENTACLES`, a `conditionGate` on that very
-    // member), around the derivers rather than through them — and its gate fails SILENTLY,
-    // with no ATTACK_FAILED "requirement" row (R-MA1 ⚠️ UNRULED), unlike a derived gate.
     const colludingTentacles =
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 120 damage to the new Active Pokémon. If you didn't play Xerosic's Machinations from your hand during this turn, this attack does nothing.";
     expect(colludingTentacles.startsWith("If ")).toBe(false);
@@ -556,27 +396,18 @@ describe("constructed near-misses stay LOUD", () => {
     // Each of these clears the outer anchor and dies at the table. One difference
     // apiece, named on the line.
     for (const clause of [
-      // THE POSSESSIVE ADDED: Palafin prints "the Bench", its D124 twin "your
-      // Bench" — the exact spelling that would let one table's key match the
-      // other's sentence.
       "this Pokémon didn't move from your Bench to the Active Spot this turn",
       // "did not" EXPANDED — the contraction is printed, and English offers a
       // second spelling of the same words that no card uses.
       "this Pokémon did not move from the Bench to the Active Spot this turn",
       // DE-ACCENTED "Pokemon" — the é is a real U+00E9 in the catalog.
       "this Pokemon didn't move from the Bench to the Active Spot this turn",
-      // The POSITIVE verb under this consequent: "moved" is D124's clause, and it
-      // must not resolve here, or a positive sentence would CANCEL an attack.
       "this Pokémon moved from the Bench to the Active Spot this turn",
       // Lycanroc's clause TRUNCATED before its trailing qualifier — the shape a
       // reader who thought "before this attack does damage" was decoration would
       // write. It is part of the key.
       "your opponent's Active Pokémon has no damage counters on it",
-      // POLARITY FLIPPED on Lycanroc's clause: "has any" is the D115 BONUS
-      // reading, and the two tables must not share it.
       "your opponent's Active Pokémon has any damage counters on it before this attack does damage",
-      // The SEAT swapped — if the pool ever prints it, it is a different member
-      // reading the attacker's own body, not this row.
       "your Active Pokémon has no damage counters on it before this attack does damage",
       // The pronoun already RESOLVED — `conditionNote`'s output shape fed back in.
       "your Active Pokémon didn't move from the Bench to the Active Spot this turn",
@@ -586,12 +417,6 @@ describe("constructed near-misses stay LOUD", () => {
   });
 
   it("keeps the OUTER ANCHOR guards on both sentences — the `^` half, and the punctuation", () => {
-    // 🆕🆕 D363 — ONE ROW LEFT THIS LIST AND IT IS THE ROW THIS SLICE BOUGHT.
-    // The list carried *"A real trailing clause pins `$`"* — Palafin plus "Then,
-    // discard an Energy from this Pokémon." — which was a guard keyed on a
-    // predecessor's REFUSAL, and paying the refusal inverts it. It moves to the
-    // case below rather than being deleted, because the guarantee it stood for is
-    // still owed: a trailing clause no reader resolves must still be REPORTED.
     for (const text of [
       // Lowercase leading "if" — the skeleton has no /i.
       "if this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
@@ -613,49 +438,13 @@ describe("constructed near-misses stay LOUD", () => {
     }
   });
 
-  it("🆕 D363 — a trailing clause no longer pins `$`, and what pins it INSTEAD is the SPLIT", () => {
-    // The guarantee the deleted row stood for, re-made where it now lives. The
-    // reader resolves the leading sentence…
+  it("D363 — a trailing clause no longer pins `$`, and what pins it INSTEAD is the SPLIT", () => {
     const compound = `${JUSTICE_KICK} Then, discard an Energy from this Pokémon.`;
     expect(deriveAttackRequirement(compound)).toEqual({ kind: "yourActivePromotedThisTurn" });
-    // …and the SPLIT hands the companion back rather than eating it, which is the
-    // only reason the widening is safe: the site rebinds every other reader onto
-    // that body, so an unread companion is still named on the loud path. Driven
-    // on a board in `sawkRequirementSplit.test.ts` §5.
     expect(splitAttackRequirementClause(compound)).toEqual({
       clause: JUSTICE_KICK,
       body: "Then, discard an Energy from this Pokémon.",
     });
-    // 🛑 AND THE SPLIT REFUSES A CLAUSE THE TABLE DOES NOT CARRY, which is what
-    // stops the widened anchor from stripping a requirement nothing answered.
-    //
-    // ⚠️ 🆕🆕 **D366 — THIS CONTROL WAS RE-POINTED, AND THE RE-POINTING IS THE
-    // WHOLE HAZARD OF WRITING A GUARD ON A REFUSAL.** It used to name Victini's
-    // *"If you have 4 or fewer Benched Pokémon…"*, which D366 BOUGHT — so the
-    // assertion INVERTED: the split started firing on it and the case went red
-    // naming a sentence the engine had just learned to read. The guard is correct
-    // and its SUBJECT rotted, exactly as `sawkRequirementSplit`'s Lycanroc id did.
-    // Re-aimed at Fan Rotom's clause, which is still unmapped at this head (and
-    // whose refusal `benchCountRequirement.test.ts` §1 prices at 2 printings). A
-    // guard keyed on something NOT being built has to be re-read every time
-    // something is.
-    // 🆕🆕 D378 — **AND IT ROTTED AGAIN, EXACTLY AS THE PARAGRAPH ABOVE PREDICTED
-    // IT WOULD.** D378 bought Fan Rotom's clause (`stadiumInPlay`), so the split
-    // started firing on it too. Re-aimed at the exact hand-size read, which is the
-    // LAST unmapped sentence behind this skeleton — so the NEXT slice to take it
-    // must replace this subject with a CONSTRUCTED near-miss and say so. **THREE
-    // SUBJECTS IN THREE SLICES IS NOT BAD LUCK; IT IS WHAT A GUARD KEYED ON A
-    // REFUSAL COSTS, AND THE COST IS NOW NAMED WITH ITS END DATE.**
-    // 🛑 🆕🆕 **D379 — THE END DATE ARRIVED, AND THIS IS THE FOURTH SUBJECT IN FOUR
-    // SLICES.** D379 bought the hand-size read (`yourHandExactly`), and with it the
-    // does-nothing skeleton SATURATED: there is no printed sentence left that this
-    // table refuses, so the subject cannot be a printed one any more. It is now
-    // CONSTRUCTED — the printed clause with its PARAMETER moved by one — and that is
-    // strictly sharper than what it replaced: the row is keyed on a LITERAL, so this
-    // string is exactly what a table "simplified" into a `\d+` pattern would wrongly
-    // claim. **THE GUARD IS UNCHANGED; ITS SUBJECT STOPPED BEING SOMETHING THE POOL
-    // COULD SUPPLY.** No further re-aiming is owed — a constructed near-miss has no
-    // expiry date, which is the one thing a printed refusal could never offer.
     expect(
       splitAttackRequirementClause(
         "If you don't have exactly 4 cards in your hand, this attack does nothing. Then, discard an Energy from this Pokémon.",
@@ -673,20 +462,7 @@ describe("constructed near-misses stay LOUD", () => {
     });
   });
 
-  it("🆕 D363 — the clause group is LAZY, so TWO does-nothing sentences spend the FIRST", () => {
-    // 🛑 THE ONLY CASE THAT TELLS `(.+?)` FROM `(.+)` APART, and it is a
-    // DIFFERENT loss from the `$` itself: with a trailing group behind it a
-    // GREEDY clause runs to the LAST `", this attack does nothing."` in the
-    // string, capturing "…this turn, this attack does nothing. If your
-    // opponent's Active Pokémon has no damage counters…" as one clause — which
-    // no table row carries, so BOTH readers go null and the printing falls back
-    // into the residue with its first requirement unspent.
-    //
-    // ⚠️ CONSTRUCTED, AND SAID SO. No catalog printing spells two does-nothing
-    // sentences (measured pool-wide: 2 rows carry a leading one with ANY trailing
-    // text and both are Sawk). That is exactly why the guard lives in the PATTERN
-    // and needs a constructed case to prove it — a survivor here would mean the
-    // laziness is untested, not that it is unneeded.
+  it("D363 — the clause group is LAZY, so TWO does-nothing sentences spend the FIRST", () => {
     const two = `${JUSTICE_KICK} ${FINISHING_FANG}`;
     expect(deriveAttackRequirement(two)).toEqual({ kind: "yourActivePromotedThisTurn" });
     expect(splitAttackRequirementClause(two)).toEqual({
@@ -702,10 +478,6 @@ describe("constructed near-misses stay LOUD", () => {
 
 describe("ZERO registry rows — the cards cancel straight off their printed text", () => {
   it("has no program of any kind for either card, the reprint, or the pre-evolutions", () => {
-    // sv03-200 is byte-identical to sv03-062 apart from `local_id`/rarity and is
-    // deliberately NOT a fixture, so this is the ONE place the reprint is named:
-    // it must be as unauthored as the print it copies, or the two would resolve
-    // differently. Three ways per id, on promotedClause.test.ts's pattern.
     for (const id of ["sv03-062", "sv03-200", "sv03-117"]) {
       expect(programFor(id)).toBeUndefined();
       expect(programFor(id)?.attack).toBeUndefined();
@@ -800,9 +572,6 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
   });
 
   it("is TURN-SCOPED — a retreat LAST turn cancels it this turn", () => {
-    // D124 proved the stamp goes stale by arithmetic from the BONUS side (the
-    // number drops back to the printed base). From the CANCEL side the same
-    // staleness is the difference between a 210 and no attack at all.
     const opened = bigDefender(board(11), "p2");
     const benched = palafinBenched(opened, "p1");
     const armed = retreatInto(benched.state, "p1", benched.index);
@@ -822,12 +591,6 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
   });
 
   it("§8.1 — a KO promotion carries the ATTACKER's turn, so your own Kick still fails", () => {
-    // THE MOST IMPORTANT BOARD CASE IN THE FILE, and D124's §8.1 argument re-proved
-    // from the cancel side. The replacement comes up during the OPPONENT's turn and
-    // is stamped with THEIR turn number; nothing clears it, and it simply cannot
-    // equal `state.turn` once the controller's own turn has begun. Without that
-    // falling out of the arithmetic, every Knock Out would hand the defender a free
-    // armed 210 on the turn that follows.
     let state = lycanrocActive(board(11), "p1"); // P1's KO tool: Slashing Claw, a flat 100
     const benched = palafinBenched(state, "p2"); // P2 bench[0] — the Pokémon that will come up
     state = benchFromDeck(benched.state, "p2", "fix-bigbody"); // bench[1] — so the promotion is a real CHOICE
@@ -870,13 +633,6 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
   });
 
   it("SURVIVES EVOLUTION — retreat a Finizen, evolve Palafin on top, 210 still lands", () => {
-    // §10 sheds Special Conditions, the retreat block and temporary markers. It
-    // does NOT shed the promotion stamp, because having moved is a fact about the
-    // TURN and not an effect sitting on the card — and mechanically because
-    // `placeEvolution` spreads `{ ...from }`.
-    //
-    // Turn 4 rather than turn 2: §4/§10 ban evolving on your own first turn, and P1
-    // went second here.
     let state = bigDefender(laterBoard(11), "p2");
     expect(state.turn).toBe(4);
     state = benchFromDeck(state, "p1", "sv03-061"); // Finizen, turnPlayed 0
@@ -908,14 +664,6 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
   });
 
   it("reads the ATTACKER's seat — an OPPONENT's promotion arms nothing, both ways", () => {
-    // SEAT ASYMMETRY, on the one board that can state it. Boss's Orders promotes a
-    // Pokémon on the OTHER side of the table DURING YOUR OWN TURN, so
-    // `yourActivePromotedThisTurn` is genuinely TRUE — for the seat that is not
-    // attacking. A gate that asked "did any Active move this turn" would score a
-    // 210 here; the printed clause is about the attacker's own body.
-    //
-    // Unreachable any other way: a KO promotion ends the turn in the same apply, [🆕🆕🆕 D570 (D539): except after a FIRST attack under Festival Lead with Festival Grounds in play, whose KO promotion hands turn:action back for the attack-again window — but only that same Festival Lead body may then attack, and none of the 7 is a Palafin, so for this board the claim stands]
-    // and a retreat only ever moves your own Pokémon.
     for (const attacker of ["p1", "p2"] as const) {
       const defender = other(attacker);
       // P1 acts on turn 2, P2 on turn 3 — one pass apart.
@@ -947,12 +695,6 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
 
 describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
   it("CANCELS into an UNDAMAGED Active — and does NOT bootstrap itself", () => {
-    // THE CASE THAT DISCHARGES THE PRINTED QUALIFIER. "…has no damage counters on
-    // it BEFORE THIS ATTACK DOES DAMAGE" is modelled by nothing at all: the gate
-    // sits in front of the §8.5 pipeline, so the only board it can read is the one
-    // where this attack has not landed. If the check ran anywhere later, Finishing
-    // Fang would satisfy its own requirement with its own hit and could never be
-    // cancelled at all.
     const opened = bigDefender(board(11), "p2");
     const state = lycanrocActive(opened, "p1");
     expect(activeDamage(state, "p2")).toBe(0);
@@ -972,10 +714,6 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
   });
 
   it("lands 90 into an Active a REAL Slashing Claw damaged two turns earlier", () => {
-    // The damage is put there by an ACTION, not by surgery — and by Lycanroc's OWN
-    // index 1, which is the only attack in this deck that can place it (Finishing
-    // Fang cannot, by the case above). Turn 2: 100. Turn 4: the clause is true, so
-    // 90 lands on top. 190 total, comfortably inside the 320 HP body.
     const opened = bigDefender(board(11), "p2");
     const armedBoard = lycanrocActive(opened, "p1");
     const { state: afterClaw, events: clawEvents } = mustApply(armedBoard, {
@@ -1001,14 +739,6 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
   });
 
   it("reads the OPPONENT's Active, not your own — the member's one cross-board arm", () => {
-    // Seat asymmetry for the second row. Damage on the ATTACKER's own body is the
-    // wrong board: `opponentActiveDamaged` is the only cross-board member in the
-    // vocabulary, and a gate that lost the seat would arm on any damage anywhere.
-    //
-    // SURGERY here, deliberately: the only real action that damages the attacker's
-    // OWN Active is an attack from the other seat, which would also advance the
-    // turn past the one the assertion is about. The previous case is the real-
-    // action witness for the arm that matters.
     const opened = bigDefender(board(11), "p2");
     const state = setDamage(lycanrocActive(opened, "p1"), "p1", 60);
     expect(activeDamage(state, "p1")).toBe(60);
@@ -1043,10 +773,6 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
   });
 
   it("resolves Slashing Claw as a plain 100 — the INDEX-KEYED negative", () => {
-    // The card's OTHER attack carries no `effect` key at all, so there is nothing
-    // for any deriver to read: no requirement, no bonus, no program, and no skipped
-    // row (a null effect is not an unsimulated one). This is what makes FANG_INDEX
-    // mean something — the requirement must not leak across the index seam.
     expect(
       deriveAttackRequirement(FIXTURE_POOL["sv03-117"]?.attacks?.[CLAW_INDEX]?.effect ?? ""),
     ).toBeNull();
@@ -1069,11 +795,6 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
 
 describe("effectSimulated — a requirement makes the sentence SIMULATED, either way", () => {
   it("emits NO ATTACK_EFFECT_SKIPPED on either card, in EITHER outcome", () => {
-    // FOUR boards, one claim: `requirement !== null` is a term in
-    // `effectSimulated`, so the printed sentence counts as handled whether the
-    // clause held or not. Before D125 all four of these produced a loud skipped
-    // row; a regression that dropped the term would bring it back on all four, and
-    // one that reported it only on the cancel would bring it back on two.
     const opened = bigDefender(board(11), "p2");
 
     // Palafin, CANCELLED (never moved).
@@ -1121,11 +842,6 @@ describe("effectSimulated — a requirement makes the sentence SIMULATED, either
 
 describe("ATTACK_FAILED — the two reasons stay distinguishable", () => {
   it("renders a DIFFERENT log row for 'requirement' than for 'confusion'", () => {
-    // The enum widening's user-visible half. "confusion" is followed by its own
-    // COUNTERS_PLACED row, so its line can afford to be terse; "requirement" is
-    // followed by NOTHING, so its line has to say on its own that the attack
-    // happened and did nothing — otherwise a cancelled attack reads as a silent
-    // no-op in the log.
     const state = palafinActive(bigDefender(board(11), "p2"), "p1");
     const uid = activeUid(state, "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_INDEX });
@@ -1150,10 +866,6 @@ describe("ATTACK_FAILED — the two reasons stay distinguishable", () => {
   });
 
   it("leaves the CONFUSION path alone — same event, other reason, other mechanism", () => {
-    // Deliberately light: checkup.test.ts already owns §12's tails path end to end
-    // (the flip, the 30 self-damage, the turn ending). All that is wanted here is
-    // that the two reasons are two, and that the requirement gate — which sits
-    // AFTER the confusion check in attack.ts — did not swallow the older one.
     const reasons: GameEvent[] = [
       { type: "ATTACK_FAILED", seat: "p1", uid: "u#1", reason: "confusion" },
       { type: "ATTACK_FAILED", seat: "p1", uid: "u#1", reason: "requirement" },
@@ -1168,8 +880,6 @@ describe("ATTACK_FAILED — the two reasons stay distinguishable", () => {
     const state = palafinActive(bigDefender(board(11), "p2"), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_INDEX });
     expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
-    // No confusion check ran at all — the attacker is not Confused, so §12's step
-    // never fires and the only failure on this board is D125's.
     expect(types(events)).not.toContain("CONFUSION_CHECK");
     expect(state.players.p1.active?.conditions.rotation).toBe("none");
   });

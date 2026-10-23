@@ -15,43 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.34.0 → 0.36.0 — count-scaled attack damage: two sibling families, told apart
-// by the word "more".
-//
-// ADDITIVE ("+", "… does N MORE damage for each …") folds N × count ONTO the
-// printed base. SIMULATED for two count sources: the attacker's OWN damage
-// counters (Paldean Tauros sv02-028 "Raging Horns", fix-attacker "Rage") and — the
-// opponent's taken Prizes (Charizard ex sv03-125 "Burning Darkness"). MULTIPLY
-// ("×", "… does N damage for each …", no "more") makes N × count the WHOLE damage,
-// the printed "N×" base dropped — SIMULATED (0.36.0) for the Prize twins Pecharunt
-// ex sv06.5-039 (60×) and Annihilape sv01-109 (70×). Both reuse ONE count evaluator
-// (opponentPrizesTaken); deriveAttackDamageBonus / deriveAttackDamageMultiplier read
-// the anchored sentence, and attack.ts folds N × count BEFORE the §8.5 W/R pipeline
-// — a DAMAGE_DEALT `scaled` field, at the same pre-W/R step as the continuous
-// Vitality Band bonus. The "+"/"×"/effect is no longer flagged loudly for these.
-//
-// ⚠️ 0.125.0 → 0.126.0 (D196) — THE ANCHOR-GUARD WITNESS MOVED. Entei sv03-030
-// "Blaze Ball" ("… for each {R} Energy attached to this Pokémon.") held that role
-// from 0.35.0: an additive "+" whose count source no reader simulated. D196 built
-// `energyOnSelf` (21 legal printings, the family's largest member), so Blaze Ball
-// is SIMULATED now and witnesses the opposite thing — it is the family's only
-// real-card positive case with a TYPE FILTER. The unsimulated-"+" witness was
-// Pachirisu sv01-068 "Everyone Discharge", unread for two independent reasons (a
-// two-sentence printing, and a TYPED body count no member answers) where Entei was
-// unread for one.
-// ⚠️ 🆕🆕 **D467 — AND THE SECOND OF PACHIRISU'S TWO REASONS HAS NOW EXPIRED TOO,
-// WHICH IS THE THIRD TIME THIS WITNESS HAS MOVED.** `yourBenchCount` took an
-// optional `filter` at D466 and the attacker's Bench took a CAPTURING anchor at
-// D467, so a TYPED body count on that Bench IS answered now. Pachirisu's PRINTING
-// is still unread — the two-sentence ground is untouched — but the COUNT-SOURCE
-// ground is gone, so the "count source with no reader at all" claim is re-homed a
-// third time, onto `censusAttackCorpus.ts` FILE LINE 534 (the constant now spelled
-// `UNREAD_COUNT_NOUN`, re-pointed twice more since and renamed at D519 because its
-// claim is no longer about a count SOURCE at all — see its block
-// below): one sentence, the additive fold, and the OPPONENT's whole board of damage
-// counters, which no `DamageCountSource` member answers. Wo-Chien ex (benched-target) and Chien-Pao ex (discarded-Energy
-// count) are the multiply deriver's.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -70,10 +33,6 @@ function p1Turn2(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-/** P1 fields `attacker` with `energy` Fire attached and `damage` HP already on it
-    (its damage counters are what the scaling reads), P2 fields `defender`. The two
-    scaling attackers are Basics and Charizard is a Stage 2, but setActiveFromDeck
-    force-places either — the surgery reads the stack top, not the stage. */
 function matchup(
   seed: number,
   opts: {
@@ -81,10 +40,6 @@ function matchup(
     defender: string;
     energy: number;
     damage?: number;
-    /** D196 — the Energy card to attach; defaults to fix-fire-energy, which pays
-        every {C}/{R}/{F} cost this suite fields. Pachirisu's "Everyone Discharge"
-        costs {L}{C} and Fire cannot pay the {L}, so the re-homed unsimulated-"+"
-        witness is the one case that names its own. */
     energyId?: string;
   },
 ): GameState {
@@ -95,65 +50,11 @@ function matchup(
   return setActiveFromDeck(state, "p2", opts.defender);
 }
 
-/** 🛑🆕🆕🆕 **D519 — THE WITNESS IS RE-POINTED A SIXTH TIME, AND ITS CLAIM HAS CHANGED
-    SHAPE — WHICH IS THE FINDING RATHER THAN A BOOKKEEPING NOTE.** For four homes running
-    (D196 → D467 → D469 → D518) this rung named *"a count source with no reader at all"*,
-    and every time the fix was a new `DamageCountSource` member. **After D519 there is no
-    such row left.** Re-measured over the whole legal column at this head: every residue
-    sentence still carrying a `for each` is blocked either by a COMPOUND (a second clause
-    no whole-sentence anchor can see) or by the printed noun's **VOCABULARY** — and none by
-    the count union, which now answers every count the column prints on a single-fold row.
-
-    So the sixth home is a different KIND of null, and it is labelled as one.
-    `censusAttackCorpus.ts` FILE LINE **565**, *"This attack does 30 damage for each of your
-    Ancient Pokémon in play."*, **1 sentence / 2 legal printings** — ⚠️ **a step UP in
-    printings (1 → 2), where D518's move was a step DOWN and said so.**
-
-    🛑 **WHY IT IS UNREAD, AND THE BLOCKER IS ONE LAYER LOWER THAN AT ANY PREVIOUS HOME**
-    (D473/D479's shape — name what is MISSING, not what is spelled). The ANCHOR matches:
-    `IN_PLAY_BODY_MULTIPLY` captures the noun `Ancient Pokémon` off this very string. The
-    COUNT is shipped: `DamageCountSource.pokemonInPlay { seat, filter }` has the right zone,
-    the right seat and the right fold. What fails is `inPlayBodyFilter`, because **no
-    `CardFilter` inhabitant can name an Ancient body and none can be written**: the
-    Ancient/Future banner is printed on the card FACE and appears in NO field of the
-    persisted catalog and none of tcgdex's own card model (`types.ts`:146-149, re-read word
-    for word at D440). **The fix is an INGEST change, not a type change** — which is why
-    this witness has come to rest one layer below every home it has had.
-
-    ⚠️ **AND IT CAN STILL FIRE**, which is what keeps it a falsifier rather than a monument:
-    the day the banner reaches a persisted column and `inPlayBodyFilter` answers it,
-    `deriveAttackDamageMultiplier` claims this string and the rung goes RED naming its own
-    replacement. §"REFUSES" drives exactly that.
-
-    🆕🆕🆕 **D569 (D539) — IT FIRED, AND "no `CardFilter` inhabitant can name an Ancient body and
-    none can be written" / "The fix is an INGEST change" ARE WITHDRAWN.** The fix was an ENGINE
-    TABLE keyed by printing id (`banners.ts`; the ingest still drops the banner — TRUE) and the
-    map's "Ancient Pokémon" key: Koraidon "Primordial Beatdown" ×2 is BUILT. The witness is
-    re-pointed one axis over, to the OTHER Paradox banner, which the map does not spell —
-    ⚠️ a CONSTRUCTED string now (the column prints no "for each of your Future Pokémon in
-    play"), so it pins the VOCABULARY and no longer a printed row. The printed row is pinned
-    as claimed in `bodiesInPlayScaling.test.ts` §2. */
 const UNREAD_COUNT_NOUN = "This attack does 30 damage for each of your Future Pokémon in play.";
 
-/** 🆕🆕🆕 D519 — the FIFTH home, kept as the LIVE counter-example so *"we re-homed it"* is a
-    measurement rather than a story. `censusAttackCorpus.ts` FILE LINE 596, **1 legal
-    printing**: the bodies-in-play tally NARROWED BY A BOARD FACT, now claimed by
-    `deriveAttackDamageMultiplier` through the `damagedOnly` rider on
-    `DamageCountSource.pokemonInPlay`.
-
-    ⚠️ **D518's VERDICT WAS RIGHT AND ITS STATED CAUSE WAS NOT** (D479's third mode). It said
-    this row *"needs a `CardFilter` inhabitant, not an anchor"*; it needed the opposite.
-    `matchesFilter` is handed a `Card` off `topCardOf` and a card carries no `damage` — the
-    number lives on the `InPlayPokemon` — so a damaged-body member of that union would have
-    been a question the matcher structurally cannot answer. The narrowing rides on the COUNT,
-    where the walk over bodies already is, and it is the FOURTH spelling of a rider name
-    `spreadDamage`, `counterEachAll` and `damageChosen` already carry. */
 const BUILT_FORMER_WITNESS =
   "This attack does 50 damage for each of your Pokémon that has any damage counters on it.";
 
-/** D518's home, kept a second slice as a live counter-example as well — two consecutive
-    re-pointings both asserted POSITIVE is what makes the sequence auditable rather than
-    anecdotal. `censusAttackCorpus.ts` FILE LINE 537, 2 legal printings. */
 const BUILT_D518_WITNESS =
   "This attack does 100 damage for each Special Condition affecting your opponent's Active Pokémon.";
 
@@ -178,8 +79,6 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
   });
 
   it("reads Charizard ex's Prize twin as opponentPrizesTaken (the second member)", () => {
-    // Same additive shape, a DIFFERENT count source (the opponent's taken Prizes),
-    // differing only in the tail — the second `count` member, landed in 0.35.0.
     expect(
       deriveAttackDamageBonus(
         "This attack does 30 more damage for each Prize card your opponent has taken.",
@@ -194,27 +93,11 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
   });
 
   it("REFUSES the '×'/multiply Prize family — 'more' is the additive tell", () => {
-    // Pecharunt ex / Annihilape print "This attack does N damage for each Prize card
-    // your opponent has taken." — NO "more". That MULTIPLIES (a printed "N×"), folding
-    // nothing into a base, so the additive reader must refuse it — the multiply reader
-    // (deriveAttackDamageMultiplier, tested below) owns that text.
     expect(
       deriveAttackDamageBonus(
         "This attack does 60 damage for each Prize card your opponent has taken.",
       ),
     ).toBeNull();
-    // And a count source with no reader at all — RE-HOMED TWICE. D196 moved the
-    // claim off Entei (whose scaler `energyOnSelf` then read) onto Pachirisu
-    // sv01-068 "Everyone Discharge", a TYPED count of BODIES on the attacker's own
-    // Bench.
-    //
-    // 🆕🆕 **D467 — AND THAT WITNESS HAS NOW GONE THE SAME WAY, SO THE TRANSITION IS
-    // RECORDED RATHER THAN THE RUNG QUIETLY SHRUNK (D444/D447).** D466 gave
-    // `yourBenchCount` an optional `filter` and D467 gave the attacker's Bench a
-    // capturing anchor, so the single-sentence count half is READ now — with the
-    // `{L}` resolved to Lightning, which is the half that says the noun is parsed
-    // and not merely matched. **The count source is no longer unread**, and pinning
-    // the OLD side would be pinning a falsehood.
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each of your Benched {L} Pokémon.",
@@ -226,51 +109,6 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
         filter: { kind: "typedPokemon", pokemonType: "Lightning" },
       },
     });
-    // 🛑🆕🆕 **D469 — AND THE D467 REPLACEMENT HAS NOW GONE THE SAME WAY, SO THE
-    // TRANSITION IS RECORDED RATHER THAN THE RUNG QUIETLY RE-POINTED (D444/D447).**
-    // D467 homed this witness on `censusAttackCorpus.ts` FILE LINE 534 — *"This attack
-    // does 10 more damage for each damage counter on all of your opponent's Pokémon."*,
-    // the OPPONENT's whole board on the additive fold — and D469 BUILT it: one anchor
-    // (`OPPONENT_BOARD_COUNTER_SCALE`), one nullary member
-    // (`damageCountersOnOpponentBoard`) and one evaluator arm delegating to
-    // `countDamageCountersInPlay`. **The count source is no longer unread**, and
-    // pinning the old side would be pinning a falsehood. It is asserted LIVE two lines
-    // down rather than merely dropped, which is what makes the move a measurement.
-    //
-    // 🛑🆕🆕🆕 **D518 — AND THE FOURTH HOME HAS NOW GONE THE SAME WAY, WHICH IS THE
-    // FOURTH TIME THIS WITNESS HAS MOVED AND THE THIRD TIME THE MOVE WAS RECORDED RATHER
-    // THAN THE RUNG QUIETLY RE-POINTED (D444/D447).** D469 homed it on `censusAttackCorpus.ts`
-    // FILE LINE 537 — *"This attack does 100 damage for each Special Condition affecting your
-    // opponent's Active Pokémon."* — and argued it was unread because *"no `DamageCountSource`
-    // member answers"* the tally and *"`boardCondition` (a 0-or-1 indicator) structurally
-    // cannot"*. **BOTH CLAUSES WERE EXACTLY RIGHT, 49 DECISIONS EARLY**, and D518 paid the
-    // first of them: ONE new member (`specialConditionsOnOpponentActive`) whose walk is
-    // `presentStatuses` — the very projection the indicator folds — leaving the second clause
-    // TRUE FOREVER, since an indicator's ceiling is `per` at any `per`.
-    //
-    // 🛑🆕🆕🆕 **D519 — AND THE FIFTH HOME HAS NOW GONE THE SAME WAY, WHICH IS THE FIFTH TIME
-    // THIS WITNESS HAS MOVED AND THE FOURTH TIME THE MOVE WAS RECORDED RATHER THAN THE RUNG
-    // QUIETLY RE-POINTED (D444/D447).** D518 homed it on `censusAttackCorpus.ts` FILE LINE
-    // 596 — *"This attack does 50 damage for each of your Pokémon that has any damage
-    // counters on it."* — and argued it was unread because *"this row needs a `CardFilter`
-    // inhabitant, not an anchor"*. ⚠️ **THE VERDICT WAS RIGHT AND THE STATED CAUSE WAS
-    // WRONG** (D479's third mode, and D503's warning that a successor reuses the PREMISE):
-    // `matchesFilter` is handed a `Card`, which has no `damage` field at all, so the member
-    // it named could not have been written. D519 paid the row the other way — a `damagedOnly`
-    // rider on `DamageCountSource.pokemonInPlay`, deciding through `hasAnyDamageCounters`,
-    // the same call behind the three SHIPPED op riders.
-    //
-    // 🛑 **AND THE CLAIM THIS RUNG CARRIES HAS CHANGED SHAPE, WHICH IS THE REAL FINDING.**
-    // Four homes running, the blocker was a missing `DamageCountSource` member; at this head
-    // there is no residue row left with that blocker. The sixth home is blocked one layer
-    // LOWER — at the printed noun's VOCABULARY, and permanently, because the Ancient banner
-    // is in no persisted column. See its block above.
-    // (🆕🆕🆕 D569 (D539): "permanently" is WITHDRAWN — `banners.ts` plus the map's "Ancient
-    // Pokémon" key built it; the witness is the constructed Future twin, per that block.)
-    //
-    // 🛑 **THE WITNESS IS RE-POINTED AND EVERY OLD SUBJECT IS ASSERTED LIVE BELOW**, because
-    // a lone `toBeNull` on a fresh string would pass even if every reader in this file were
-    // dead.
     expect(deriveAttackDamageBonus(UNREAD_COUNT_NOUN)).toBeNull();
     expect(deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN)).toBeNull();
     // …and the ANCHOR is not what refuses it: the same pattern claims the same shape at a
@@ -279,7 +117,6 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
       per: 30,
       count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "basicPokemon" } },
     });
-    // …and the row this witness REPLACES, asserted from the other side.
     expect(deriveAttackDamageMultiplier(BUILT_FORMER_WITNESS)).toEqual({
       per: 50,
       count: {
@@ -289,19 +126,12 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
         damagedOnly: true,
       },
     });
-    // ⚠️ **AND THE ADDITIVE READER STILL REFUSES IT**, which is what says the new rider is
-    // reachable from ONE reader rather than from the family: the column prints no
-    // *"more damage for each of your … that has any damage counters on it."*, so no additive
-    // anchor was written.
     expect(deriveAttackDamageBonus(BUILT_FORMER_WITNESS)).toBeNull();
-    // …and D518's own home, one slice on, still asserted positive.
     expect(deriveAttackDamageMultiplier(BUILT_D518_WITNESS)).toEqual({
       per: 100,
       count: { kind: "specialConditionsOnOpponentActive" },
     });
     expect(deriveAttackDamageBonus(BUILT_D518_WITNESS)).toBeNull();
-    // …and the row this witness REPLACES is asserted from the other side, so "we
-    // re-homed it" is a claim with a live counter-example instead of a story.
     expect(
       deriveAttackDamageBonus(
         "This attack does 10 more damage for each damage counter on all of your opponent's Pokémon.",
@@ -312,10 +142,6 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
         "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.",
       ),
     ).toBeNull();
-    // …and Entei's sentence really did change sides rather than merely stop being
-    // cited here: the same reader that returns null for both rows above now returns
-    // a count for it. A pair of nulls with no live neighbour would pass even if the
-    // reader were dead.
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each {R} Energy attached to this Pokémon.",
@@ -479,12 +305,6 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
   });
 
   it("multiplies by the CAPTURED per, and fires on the scaling clause alone (base 0)", () => {
-    // fix-attacker's "Fury" (index 4) is a base-0 scaler at per 20 — the probe that
-    // pins two branches nothing else reaches: the fold uses the CAPTURED `per` (not
-    // the literal 10 every real reader happens to print — a `* 10` regression would
-    // give 30 here, not 60), and attack.ts's widened `base + scaled > 0` guard fires
-    // the §8.5 pipeline off the scaling clause ALONE (a `base > 0` guard would emit
-    // no DAMAGE_DEALT at all). 3 counters (30 HP) × 20 = 60 on top of base 0.
     const state = matchup(7, {
       attacker: "fix-attacker",
       defender: "fix-wall",
@@ -529,11 +349,6 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
   });
 
   it("multiplies the Prize count by the CAPTURED per — a per-50 probe (not a literal 30)", () => {
-    // Charizard is the only real opponentPrizesTaken card and always prints per 30, so
-    // an apply probe at per ≠ 30 is the only thing that pins `* bonus.per` for THIS arm
-    // — a `* 30` literal (the value most likely to be hard-coded) would give 60 here.
-    // fix-attacker's "Bounty" (index 5, base 40, per 50): p2 has taken 2 Prizes →
-    // 50 × 2 = 100 onto base 40 → 140, which fix-bigbody (200 HP) survives.
     let state = matchup(11, { attacker: "fix-attacker", defender: "fix-bigbody", energy: 1 });
     state = setPrizes(state, "p2", 4); // 2 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 5 });
@@ -555,20 +370,6 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
 
 describe("the discrimination — an unsimulated '+' (Pachirisu) stays skipped", () => {
   it("flags 'Everyone Discharge' loudly and adds no `scaled` (a count source with no reader)", () => {
-    // ⚠️ THE RE-HOMED WITNESS (D196). This case used to drive Entei "Blaze Ball";
-    // `energyOnSelf` reads that sentence now, so the role moved to Pachirisu
-    // sv01-068 "Everyone Discharge" ({L}{C}, base 10) — a real printed "+" that
-    // stays unread for TWO independent reasons: it is a two-sentence printing and
-    // every reader here is whole-sentence anchored, AND its count ("for each of
-    // your Benched {L} Pokémon") is a TYPED count of BODIES that no
-    // `DamageCountSource` member answers. Either alone would do; both is what makes
-    // it survive the next slice, and is exactly what Entei lacked.
-    //
-    // The base 10 lands and the "+"/effect is flagged, exactly as Charizard's Prize
-    // "+" was before 0.35.0 and Entei's attached-Energy "+" was before 0.126.0.
-    // fix-bigbody (200 HP, no Weakness) survives the 10; the second printed sentence
-    // says the damage ignores Weakness and is UNSIMULATED, so a weak defender would
-    // make this case assert a rule the engine is not applying.
     const state = matchup(6, {
       attacker: "sv01-068",
       defender: "fix-bigbody",
@@ -586,11 +387,6 @@ describe("the discrimination — an unsimulated '+' (Pachirisu) stays skipped", 
   });
 
   it("hands the role over cleanly — Entei's SAME board now folds instead of skipping", () => {
-    // The other half of the re-homing, and the reason the case above is a move
-    // rather than a deletion: on the board that used to produce the skip, the
-    // engine now produces the fold. Three {R} on a base-60 "+" is 60 + 20×3 = 120,
-    // reported with `base: 60` and `scaled: 60` (the additive fold KEEPS the printed
-    // base, D167's rule), and NO ATTACK_EFFECT_SKIPPED at all.
     const state = matchup(6, { attacker: "sv03-030", defender: "fix-bigbody", energy: 3 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
@@ -599,10 +395,6 @@ describe("the discrimination — an unsimulated '+' (Pachirisu) stays skipped", 
 });
 
 describe("the '×'/multiply family — per × count as the whole damage (base dropped)", () => {
-  /** Setup, open P1's turn 2, and field `attacker` as P1's Active with `energy`
-      copies of `energyId` attached (its typed cost) against a fix-bigbody (200 HP)
-      that survives the scaled hit. The multiply twin of `matchup`: its own deck and
-      the Darkness/Fighting Energy the {D}{D} and {F} costs need (Fire cannot pay). */
   function multiplyMatchup(
     seed: number,
     opts: { attacker: string; energyId: string; energy: number },

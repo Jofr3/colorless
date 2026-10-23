@@ -23,64 +23,10 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.333.0 → 0.334.0 — 🆕🆕 D432: THE INSTALLED "NO WEAKNESS" BAR, and the THIRD
-// distinct way this engine can null §8.5's Weakness step.
-//
-//   "During your opponent's next turn, this Pokémon has no Weakness."
-//
-// **1 sentence / 3 legal printings** — `censusAttackCorpus.ts` row 192. ONE anchor
-// (`SELF_NO_WEAKNESS`), ONE arm in `deriveAttackEffect` (19d-bis), ONE field-free
-// `EffectOp` (`installNoWeakness`), ONE `stepOp` case, ONE interpreter installer,
-// ONE new `InPlayPokemon` field (`noWeaknessTurn`), ONE new reader
-// (`installedNoWeakness`), ONE new event (`WEAKNESS_REMOVED`) with ONE log row,
-// FOUR §10 clear literals and TWO read-site disjuncts.
-//
-// 🛑 **THE REQUIRED-VS-OPTIONAL DECISION IS THE SLICE, AND IT BUMPS
-// `MATCH_RECORD_VERSION` 26 → 27.** An optional `noWeaknessTurn?: number` is a
-// WIDENING and would have been free at the storage boundary. D421 takes that road
-// safely by *choosing the rest of the record so that LOSING the key is
-// detectable* — its `LockedAttack.turn` is stamped with the INSTALL turn so a
-// dropped rider produces a bar for a turn already spent, visible on the next
-// board. **That mitigation is unavailable here, because there IS no rest of the
-// record**: the printed sentence carries no amount, no attacker filter and no type
-// narrowing, so the record is one number and dropping it reproduces the pre-D432
-// engine exactly — Weakness doubles the hit and the board looks entirely normal.
-// That is D124's benign soft landing, refused for the sixth time at this address
-// (D124 `promotedTurn`, D142 `attackBlock`, D143 `attackLockedTurn`, D147
-// `damageReduction`, D412 `retreatLockedTurn`, now this). §8 drives BOTH
-// directions, including the soft landing itself.
-//
-// 🛑 **THE STORAGE IS A THIRD STORE, AND NEITHER EXISTING ONE COULD BE WIDENED.**
-// Both Weakness read sites already carried a null path before this slice:
-// `AttackDamageSuppression.weakness` (D192) is a PARSE of the attacker's declared
-// sentence, alive for one declaration and with no body to live on; and
-// `seatRemovesWeakness` (D161, Florges "Blooming Garden") is a seat-wide catalog
-// AURA that a §9 Ability-lock switches OFF — which an attack INSTALLATION must be
-// immune to, D147's own structural reason for keeping `installedReductionOf` out
-// of `passivesOf`. This one is per-body, installed and turn-scoped: none of the
-// three is a special case of another. §10 drives all three on one board.
-//
-// 🛑 **TWO READ SITES, AND A BUILD THAT WIDENS ONE IS INVISIBLE TO A SUITE THAT
-// SWINGS THE OTHER.** `attack.ts`'s main hit and `interpreter.ts`'s `snipeActive`
-// are separate expressions in separate files. §4 and §5 drive them on their own
-// boards, and the mutant `D432-snipe-bar-not-read` is exactly the one-sided build.
-
 const SENTENCE = "During your opponent's next turn, this Pokémon has no Weakness.";
 const VEIL = 0; // fix-nowk index 0 — the sentence
-const PLAIN = 1; // fix-nowk index 1 — the ONE-AXIS control: same cost, same damage, no effect
-// 🆕🆕🆕 D552 — index 2 was row 629 (the Weakness RETYPE), and row 629 is BUILT now, so the
-// loud-path witness was MOVED FIRST to a stable BLOCKED sentence (row 78, the copy-attack
-// family) and this constant renamed with it; see `fix-nowk`'s doc (testFixtures.ts).
-// 🆕🆕🆕 D573 — row 78 is BUILT now (the copy-attack substitution), so index 2 was MOVED FIRST
-// again, to row 434 (Haughty Order, 3 printings), the copy-family remainder that stays BLOCKED
-// (it reveals before the choice). "row 78" above is withdrawn as the CURRENT witness (D539).
-// 🆕🆕🆕 D574 — row 434 is BUILT now (the mid-attack copy), so ~~"stays BLOCKED"~~ is withdrawn (D539)
-// and index 2 was MOVED FIRST once more, to row 676 (Mr. Mime "Look-Alike Show", 1 printing — D445's
-// recorded refusal, outside every family the D574 pricing round ranks). "row 434" above is withdrawn
-// as the CURRENT witness.
-// 🆕🆕🆕 D580 (D539): D445's refusal is RETIRED — Mr. Mime `sv05-063` is BUILT as a REGISTRY row keyed by its
-// id; no reader claims the sentence, so `fix-nowk` index 2 still takes the loud path and the control stands.
-const LOUD = 2; // fix-nowk index 2 — a REAL BLOCKED corpus sentence, the loud-path control
+const PLAIN = 1;
+const LOUD = 2;
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -98,10 +44,6 @@ function must0(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
   return pokemon;
 }
 
-/** Both seats field `fix-nowk`; `first` has already ended their turn, so the OTHER
-    seat owns turn 2 and may attack (§4 forbids the going-first player's turn-1
-    attack). Seed-free by construction: nothing this suite declares flips a coin,
-    and every Active, benched body and attachment is placed by surgery. */
 function board(first: Seat = "p2", seed = 4): GameState {
   const state = driveSetup(
     seed,
@@ -111,11 +53,6 @@ function board(first: Seat = "p2", seed = 4): GameState {
   return mustApply(state, { type: "endTurn", seat: first }).state;
 }
 
-/** `installer` owns the turn with one {C} on its `fix-nowk`, and the OTHER seat's
-    Active has already been surgically set to `swinger` (`fix-bolt`, printed 50, or
-    Rotom `sv01-069`, the `opponentAny` snipe at 20) with one {C} of its own —
-    placed BEFORE the install so nothing about the swinger's arrival can be confused
-    with the bar. */
 function armed(installer: Seat, swinger: string): GameState {
   const victimSeat = otherSeat(installer);
   let state = board(victimSeat);
@@ -157,12 +94,7 @@ describe("§1 — one sentence, three printings, and the family read to its edge
     expect(rows[0]?.[0]).toBe(3);
   });
 
-  it("🛑 the LOOSEST plausible family grep returns 73 rows, and ONE of them removes a Weakness", () => {
-    // D424/D425's rule: grep the LOOSEST shape and read EVERY hit, then publish the
-    // pattern so the next reader can see its edges. `/Weakness/i` is as loose as this
-    // family gets — it matches the NOUN alone, so it cannot miss a possessive, a
-    // plural, a parenthetical, a different verb or a duration this slice did not
-    // imagine. All 73 were read; the partition is stated rather than sampled.
+  it("the LOOSEST plausible family grep returns 73 rows, and ONE of them removes a Weakness", () => {
     const hits = legalAttackCorpus().filter(([, text]) => /Weakness/i.test(text));
     expect(hits).toHaveLength(73);
     // The overwhelming majority is the BENCH CLARIFIER — "(Don't apply Weakness and
@@ -172,17 +104,10 @@ describe("§1 — one sentence, three printings, and the family read to its edge
       t.includes("Don't apply Weakness and Resistance for Benched Pokémon."),
     );
     expect(clarifier).toHaveLength(43);
-    // Then the two shipped families that really do reach the step: D192's
-    // attacker-side PARSE ("This attack's damage isn't affected by Weakness…") and
-    // the W/R PARENTHETICAL on the durated number families ("(before|after) applying
-    // Weakness and Resistance", D147/D149/D155).
     const suppression = hits.filter(([, t]) => t.includes("isn't affected by Weakness"));
     expect(suppression).toHaveLength(11);
     const parenthetical = hits.filter(([, t]) => /applying Weakness and Resistance\)/.test(t));
     expect(parenthetical).toHaveLength(17);
-    // …and the four classes PARTITION the 73 rather than merely covering them: no
-    // row is in two of them, which is what makes the two-row remainder below a
-    // remainder rather than a leftover of an arbitrary filter order.
     expect(clarifier.length + suppression.length + parenthetical.length).toBe(71);
     // …which leaves exactly TWO rows that speak about a body's Weakness itself.
     const rest = hits.filter(
@@ -193,26 +118,8 @@ describe("§1 — one sentence, three printings, and the family read to its edge
     );
     expect(rest.map(([, t]) => t).sort()).toEqual([
       SENTENCE,
-      // 🛑 THE ONE PRINTED NEAR-MISS IN THE WHOLE COLUMN, and it is a RETYPE rather
-      // than a removal — a different duration, a different body AND a different verb.
-      // It is what `fix-nowk` index 2 prints, so this suite's loud-path control is a
-      // real legal sentence rather than an invented one (🆕🆕🆕 D552: PRINTED — index 2
-      // now prints row 78, a BLOCKED copy-attack sentence, because this one is BUILT; 🆕🆕🆕 D573: row 434,
-      // Haughty Order, because row 78 is BUILT too; 🆕🆕🆕 D574: row 676, Mr. Mime's recorded refusal, [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader]
-      // because row 434 is BUILT too); and it is NOT the refusal
-      // rung's near-miss, because a three-axis miss tests nothing about any of them
-      // (D427). §2's near-misses vary one token each.
       "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)",
     ]);
-    // …and the retype stays REFUSED, which is what keeps `fix-nowk` index 2 a
-    // control rather than a second built sentence.
-    // 🆕🆕🆕 D552 — INVERTED (D516): the retype is BUILT now — by its OWN anchor and op
-    // (`DEFENDER_WEAKNESS_RETYPED` → `retypeDefenderWeakness`, `weaknessRetype.test.ts`),
-    // never by this suite's `SELF_NO_WEAKNESS` — so `fix-nowk` index 2 was re-pointed to a
-    // BLOCKED copy-attack sentence BEFORE this rung flipped (🆕🆕🆕 D573: row 78 is BUILT too, and
-    // index 2 now prints Haughty Order, row 434, the copy-family remainder; 🆕🆕🆕 D574: row 434 is BUILT
-    // too, and index 2 now prints row 676, Mr. Mime's recorded refusal) [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader]. The two-row remainder above is
-    // unchanged: it is a fact about the printed WORDS, not about what is built.
     expect(resolvedByAnyReader(rest.map(([, t]) => t).sort()[1] as string)).toBe(true);
     expect(deriveAttackEffect(rest.map(([, t]) => t).sort()[1] as string)).toEqual([
       { op: "retypeDefenderWeakness", type: "Colorless" },
@@ -220,8 +127,6 @@ describe("§1 — one sentence, three printings, and the family read to its edge
   });
 
   it("the apostrophe is U+0027 — MEASURED off the corpus row, not remembered", () => {
-    // D421's defect verbatim: that slice's brief asserted a U+2019 from memory and
-    // the byte was U+0027. The row is read here instead of transcribed.
     const row = legalAttackCorpus().find(([, text]) => /this Pokémon has no Weakness/.test(text));
     expect(row?.[1]).toBe(SENTENCE);
     expect(row?.[1]).toContain("'");
@@ -230,15 +135,7 @@ describe("§1 — one sentence, three printings, and the family read to its edge
     expect(row?.[1]).toContain("é");
   });
 
-  it("🛑 the three carrier ids are UNRESOLVED, and are stated so rather than invented", () => {
-    // This checkout has no D1 — no local sqlite, no remote credentials — and the
-    // corpus is grouped BY SENTENCE and records the COUNT, not the ids. So the three
-    // printings cannot be named here, and a plausible-looking invented id would be
-    // indistinguishable from a real one to every later reader (D425).
-    //
-    // The falsifier is executable rather than prose: the demonstrator is a `fix-*`
-    // key with no catalog row behind it, and the day the ids are resolvable this rung
-    // is what a successor edits.
+  it("the three carrier ids are UNRESOLVED, and are stated so rather than invented", () => {
     expect(FIXTURE_POOL["fix-nowk"]?.id).toBe("fix-nowk");
     expect(FIXTURE_POOL["fix-nowk"]?.attacks?.[VEIL]?.effect).toBe(SENTENCE);
     const printed = legalAttackCorpus().filter(([, text]) => text === SENTENCE);
@@ -260,12 +157,7 @@ describe("§2 — the anchor claims the sentence WHOLE, and each near-miss diffe
     expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(SENTENCE));
   });
 
-  it("🛑 four near-misses are REFUSED, each varying ONE token — and the anchor still ADMITS", () => {
-    // D424's rule: every "X is refused" rung owes a neighbouring "Y is admitted" on
-    // the same axis, or it passes trivially against a reader that refuses everything.
-    // D427's rule: a near-miss that differs on more than one axis tests nothing about
-    // either feature. So each string below is the RESOLVING one with a single token
-    // changed, and the admitted twin is asserted in this same `it`.
+  it("four near-misses are REFUSED, each varying ONE token — and the anchor still ADMITS", () => {
     const admitted = deriveAttackEffect(SENTENCE);
     expect(admitted).toEqual([{ op: "installNoWeakness" }]);
 
@@ -281,9 +173,6 @@ describe("§2 — the anchor claims the sentence WHOLE, and each near-miss diffe
         "During your opponent's next turn, the Defending Pokémon has no Weakness.",
       ),
     ).toBeNull();
-    // (c) the OBJECT — "Resistance" for "Weakness". Nothing in the pool prints it,
-    //     and `resistanceOf` has no defender-side null path at all (D192 says so at
-    //     the site).
     expect(
       deriveAttackEffect("During your opponent's next turn, this Pokémon has no Resistance."),
     ).toBeNull();
@@ -312,31 +201,22 @@ describe("§2 — the anchor claims the sentence WHOLE, and each near-miss diffe
   });
 
   it("the sentence is claimed by a READER and by neither splitter — the census attribution", () => {
-    // Which route claims it decides which census summand moves (D426's mechanism).
-    // It is a whole-sentence reader claim: `SPLIT_ATTACK_UNITS` and
-    // `COMPOUND_ATTACK_UNITS` stand still, and the reader SURFACE does too, because
-    // the arm is inside `deriveAttackEffect` rather than a fourteenth reader.
     expect(resolvedByAnyReader(SENTENCE)).toBe(true);
     expect(splitAttackGateClause(SENTENCE)).toBeNull();
     expect(splitAttackTrailingClause(SENTENCE)).toBeNull();
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §3 — the install: the stamp, the row, the loud path, and idempotence.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("§3 — what the install writes, and what it announces", () => {
   it("stamps the installer's OWN Active with `state.turn + 1`", () => {
     const state = armed("p1", "fix-bolt");
     expect(state.turn).toBe(2);
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: VEIL });
-    // Declaring ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the board is already on the window.
     expect(after.turn).toBe(3);
     expect(must0(after.players.p1.active).noWeaknessTurn).toBe(3);
     // …and nothing landed on the opponent's body: the op has no defender arm.
     expect(must0(after.players.p2.active).noWeaknessTurn).toBeNull();
-    // The row is ACTOR-voiced and names the installing body.
     expect(find(events, "WEAKNESS_REMOVED")).toEqual({
       type: "WEAKNESS_REMOVED",
       seat: "p1",
@@ -350,25 +230,12 @@ describe("§3 — what the install writes, and what it announces", () => {
     const rows = render(events, after);
     const row = rows.find((r) => r.text.includes("has no Weakness"));
     expect(row?.text).toBe("fix-nowk has no Weakness during your opponent's next turn");
-    // 🛑 THE ROW IS A CLAIM WITH THE SAME STANDING AS A PREDICATE (D421). "during
-    // your opponent's next turn" is TRUE here only because the row renders under the
-    // INSTALLER's name — `ATTACK_DEBUFF_APPLIED` had to reword its otherwise
-    // identical ending for exactly this reason. So the voice is asserted, not just
-    // the words: under the other player's name the same sentence names the one turn
-    // the bar is NOT live on.
     expect(row?.who).toBe("p1");
   });
 
-  it("🛑 NO `ATTACK_EFFECT_SKIPPED` for the built sentence — and the SAME BODY still emits one", () => {
-    // The half a one-sided assertion cannot make: index 2 prints a REAL legal
-    // sentence no reader claims, on the same card, at the same cost, for the same
-    // printed damage. If the loud path had gone quiet across the board, this rung
-    // reddens; if the new arm had not landed, the rung above does.
+  it("NO `ATTACK_EFFECT_SKIPPED` for the built sentence — and the SAME BODY still emits one", () => {
     const built = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL });
     expect(count(built.events, "ATTACK_EFFECT_SKIPPED")).toBe(0);
-    // 🆕🆕🆕 D552 — `LOUD` (row 78, BLOCKED copy-attack; 🆕🆕🆕 D573: row 434, Haughty Order, since row
-    // 78 is BUILT; 🆕🆕🆕 D574: row 676, Mr. Mime's recorded refusal, [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader] since row 434 is BUILT) where this read `RETYPE` (row 629,
-    // now BUILT); the rung's claim is unchanged.
     const loud = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: LOUD });
     expect(count(loud.events, "ATTACK_EFFECT_SKIPPED")).toBe(1);
     // …and the one-axis control emits neither, because it prints no sentence at all.
@@ -378,10 +245,6 @@ describe("§3 — what the install writes, and what it announces", () => {
   });
 
   it("idempotent BY THE STAMP — a second install in one turn writes nothing and says nothing", () => {
-    // Unreachable off any printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card prints two of
-    // these), so it is CONSTRUCTED and pinned. There is no amount for a `Math.max` to
-    // be about, which is what makes this `retreatLockedTurn`'s answer rather than
-    // `reduceDamage`'s.
     const state = armed("p1", "fix-bolt");
     const events: GameEvent[] = [];
     const once = runProgram(
@@ -416,10 +279,6 @@ describe("§4 — the main hit: 100 becomes 50, and the control differs on ONE a
       const row = find(swung.events, "DAMAGE_DEALT");
       expect(row?.base).toBe(50);
       expect(row?.dealt).toBe(50);
-      // 🛑 THE STEP IS GONE, NOT SHRUNK. `DAMAGE_DEALT.weakness` is the modifier
-      // itself, so a build that subtracted 50 somewhere else would still report the
-      // ×2 here. This is the field the log renders, and its absence IS the report
-      // (there is no `WEAKNESS_REMOVED` row on the biting turn, by design).
       expect(row?.weakness).toBeNull();
       expect(must0(swung.state.players[installer].active).damage).toBe(50);
     });
@@ -451,11 +310,6 @@ describe("§4 — the main hit: 100 becomes 50, and the control differs on ONE a
 // §5 — READ SITE TWO: `interpreter.ts`'s `snipeActive`. Driven on its OWN board.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§5 — the snipe path: 40 becomes 20, through a DIFFERENT expression in a DIFFERENT file", () => {
-  // 🛑 THIS SECTION IS THE DEFECT A SINGLE-PATH SUITE CANNOT SEE. `attack.ts:~2230`
-  // and `interpreter.ts:~7370` are two separate `||` chains; a build that widened
-  // one and not the other passes every board in §4. Rotom `sv01-069` "Linear Attack"
-  // is an `opponentAny` snipe with an EMPTY opposing Bench, so the pick is forced
-  // onto the Active and `snipeActive` is the arm that runs.
   it("the bar nulls the sniped Active's Weakness", () => {
     const { swung } = exchange("p1", "sv01-069", VEIL);
     const row = find(swung.events, "DAMAGE_DEALT");
@@ -502,10 +356,6 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
     // about the second install rather than about the clock).
     let later = mustApply(inWindow.state, { type: "endTurn", seat: "p1" }).state;
     expect(later.turn).toBe(5);
-    // 🛑 THE STAMP IS STILL THERE. Nothing cleared it — it simply stopped naming the
-    // turn being played, which is the whole of the read-through-a-stamp contract
-    // (D124). A build that had cleared it at the turn boundary would pass the damage
-    // assertion below and fail this line.
     expect(must0(later.players.p1.active).noWeaknessTurn).toBe(3);
     expect(installedNoWeakness(later, must0(later.players.p1.active))).toBe(false);
 
@@ -517,10 +367,6 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
   });
 
   it("the INSTALLER's own turn is not the window — the bar never protects on the turn it lands", () => {
-    // The stamp is `+ 1`, and the sentence says so. Asserted through the reader on
-    // the installing board itself, where `state.turn` is already the window's number
-    // because declaring ended the turn — so this is asserted on the PREVIOUS turn's
-    // board instead, which is the only place the distinction is visible.
     const before = armed("p1", "fix-bolt");
     expect(before.turn).toBe(2);
     const events: GameEvent[] = [];
@@ -539,18 +385,6 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
 // §7 — the CLEAR decision: by SITE as well as by stamp, on all three §10 routes.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§7 — leaving the Active Spot LIFTS it, and all three literals are driven", () => {
-  // 🛑 THE DECISION, PINNED RATHER THAN ASSUMED (D421's rule about a discrepancy
-  // that is not pinned being indistinguishable from an oversight): the bar expires
-  // BY STAMP and is ALSO cleared BY SITE at all four literals, which is
-  // `damageReduction`'s answer verbatim — same holder, same window, same
-  // reachability story. §10 sheds the effects of ATTACKS and this is one.
-  //
-  // ⚠️ AND IT IS THE ONE MEMBER OF THE DURATED FAMILY WHOSE CLEAR NO NUMBER CAN
-  // WITNESS. §8.5 applies Weakness only to the ACTIVE, so after any of these three
-  // routes the body is either benched or a different Pokémon and there is no
-  // Weakness step left for the bar to have removed. The field IS the witness, which
-  // is why this section reads it directly and why `attackLock.test.ts`'s three-route
-  // sweep carries `noWeaknessTurn` too.
   function barred(): GameState {
     const state = mustApply(armed("p1", "fix-bolt"), {
       type: "attack",
@@ -636,11 +470,6 @@ describe("§7 — leaving the Active Spot LIFTS it, and all three literals are d
 // §8 — THE PERSISTED QUESTION: `MATCH_RECORD_VERSION` 26 → 27, driven BOTH ways.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§8 — the bump, and the soft landing it refuses", () => {
-  // ⚠️ `MATCH_RECORD_VERSION` IS NOT EXPORTED FROM THIS PACKAGE (it lives in
-  // `apps/api/src/lobby/match.ts`, where the version gate and its argument sit, and
-  // where `match.test.ts` pins the literal 27 and drives ±1 to null). What is
-  // driven HERE is the ENGINE-side fact the constant is about: whether a record
-  // written by the previous deploy can be read benignly by this one.
   function inWindow(): GameState {
     const state = mustApply(armed("p1", "fix-bolt"), {
       type: "attack",
@@ -651,7 +480,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     return JSON.parse(JSON.stringify(state)) as GameState;
   }
 
-  it("🛑 DIRECTION 1 — a v27 record round-trips and the bar STILL bites", () => {
+  it("DIRECTION 1 — a v27 record round-trips and the bar STILL bites", () => {
     const saved = inWindow();
     expect(must0(saved.players.p1.active).noWeaknessTurn).toBe(3);
     const swung = mustApply(saved, { type: "attack", seat: "p2", index: 0 });
@@ -659,7 +488,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     expect(find(swung.events, "DAMAGE_DEALT")?.weakness).toBeNull();
   });
 
-  it("🛑 DIRECTION 2 — a v26-SHAPED body loses the bar SILENTLY, which is the retirement reason", () => {
+  it("DIRECTION 2 — a v26-SHAPED body loses the bar SILENTLY, which is the retirement reason", () => {
     // The v26 shape is BUILT rather than imagined: the key is genuinely DELETED from
     // a JSON round-tripped board, which is what a record written by the previous
     // deploy actually looks like.
@@ -669,30 +498,13 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     };
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
     delete body.noWeaknessTurn;
-    // ABSENT, not `undefined` — the distinction D124 refuses to blur and a `toEqual`
-    // would hide.
     expect("noWeaknessTurn" in body).toBe(false);
 
-    // 🛑 IT READS BACK BENIGNLY, AND THAT IS EXACTLY THE PROBLEM. `undefined ===
-    // state.turn` is FALSE, so the bar simply stops existing: the very next hit lands
-    // at 100 with a `×2` on the row, and NOTHING anywhere says a rule was lost. A
-    // player who spent a whole attack buying this protection is handed a doubled hit
-    // on the one turn it was for.
-    // 🛑 THE CAST IS THE FINDING, NOT A CONVENIENCE. `tsc` refuses to pass this body
-    // to `installedNoWeakness` — *"Type 'undefined' is not assignable to type
-    // 'number | null'"* — which is `MATCH_RECORD_VERSION`'s argument stated by the
-    // compiler: a v26 record's in-play Pokémon is not an inhabitant of this deploy's
-    // type. The cast reproduces what the STORAGE layer would do, which is hand the
-    // engine a value the type system would have refused.
     expect(installedNoWeakness(legacy, body as unknown as InPlayPokemon)).toBe(false);
     const swung = mustApply(legacy, { type: "attack", seat: "p2", index: 0 });
     expect(find(swung.events, "DAMAGE_DEALT")?.dealt).toBe(100);
     expect(find(swung.events, "DAMAGE_DEALT")?.weakness).toEqual({ op: "multiply", amount: 2 });
 
-    // …and the STRUCTURAL fact the version gate keys on: this body is not an
-    // inhabitant of the new type at all. Asserted as a key-set diff in both
-    // directions, because a diff between two boards from ONE build is blind to a key
-    // that grew on both (D279).
     const live = must0(inWindow().players.p1.active);
     expect(Object.keys(body).sort()).not.toEqual(Object.keys(live).sort());
     expect(
@@ -702,13 +514,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     ).toEqual(["noWeaknessTurn"]);
   });
 
-  it("🛑 THE OPTIONAL-KEY ROAD WAS DRIVEN TOO, and it is the reason the constant moved", () => {
-    // D425's rule: apply the test, do not copy the outcome. An OPTIONAL
-    // `noWeaknessTurn?: number` would have made the case above legal rather than
-    // retired — and the case above IS the pre-D432 engine. D421 can take that road
-    // because its record has a SECOND field to make the loss loud; this record is one
-    // number and has none, so there is nothing to choose. The two boards below are
-    // the whole argument, side by side.
+  it("THE OPTIONAL-KEY ROAD WAS DRIVEN TOO, and it is the reason the constant moved", () => {
     const withKey = inWindow();
     const withoutKey = inWindow();
     const stripped = must0(withoutKey.players.p1.active) as Omit<
@@ -719,8 +525,6 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     delete stripped.noWeaknessTurn;
     const a = mustApply(withKey, { type: "attack", seat: "p2", index: 0 });
     const b = mustApply(withoutKey, { type: "attack", seat: "p2", index: 0 });
-    // Same board, same action, same event TYPES — and a 50-point difference in what
-    // the defender takes. A log-shaped assertion could not have seen this (D430).
     expect(types(a.events)).toEqual(types(b.events));
     expect([find(a.events, "DAMAGE_DEALT")?.dealt, find(b.events, "DAMAGE_DEALT")?.dealt]).toEqual([
       50, 100,
@@ -750,10 +554,6 @@ describe("§9 — the install mutates nothing it was handed", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — the bar is neither the aura nor the parse, and all three null the same step", () => {
   it("the installed bar is live while the AURA is absent and the PARSE is empty", () => {
-    // The claim the storage argument rests on. If the bar had been folded into
-    // `seatRemovesWeakness` (the aura) this rung would read `true` on the seat, and
-    // if it had been folded into `AttackDamageSuppression.weakness` (the parse) it
-    // would be a property of the swinger's sentence rather than of the holder.
     const state = mustApply(armed("p1", "fix-bolt"), {
       type: "attack",
       seat: "p1",

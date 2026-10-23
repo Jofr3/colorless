@@ -14,84 +14,9 @@ import {
   handUid,
   setActiveFromDeck,
   setDamage,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// D320 — "LAVA ZONE": THE OPPONENT-ACTION FAMILY'S THIRD VERB, AND THE ONE
-// WHOSE MOMENT IS A BOARD MOVE RATHER THAN A HAND PLAY.
-//
-// THE SENTENCE, transcribed off the remote D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-10 rather than copied out
-// of a census bullet:
-//
-//   "Whenever your opponent's Active Pokémon moves to the Bench during their
-//    turn, their new Active Pokémon is now Burned."
-//        — Magcargo `sv05-029` "Lava Zone", 1 legal printing, Stage 1
-//          (evolves from Slugma), 120 HP, {R}, retreat 4.
-//
-// ── THE FAMILY BOUNDARY, RE-RUN AT SIX WIDTHS AND FROM BOTH SIDES ────────────
-//
-// The census, remote D1, all 3,786 rows, one row per column (D283's
-// compound-SELECT limit), legal count in parentheses:
-//
-//     predicate                                    attacks  abilities  effect
-//     instr(col, "moves to the Bench")                0        1 (1)      0
-//     instr(col, "during their turn")                 —        1 (1)      —
-//     instr(col, "new Active")                       46 (22)  25 (16)    6 (4)
-//     instr(col, "Whenever your opponent")            0        8 (8)      0
-//     instr(col, "is now Burned")                     —        3 (2)      —
-//     instr(col, "doesn't stack")                     —       10 (8)      —
-//
-// ⚠️ EVERY CELL ABOVE IS A `COUNT(*)`, AND THE FIRST DRAFT OF THIS TABLE WAS NOT.
-// The `'new Active'` row was originally typed as "44 legal / 32 / 10 / 2" from
-// the SHAPE of a result set rather than from a count, and re-running it returned
-// 42 distinct legal cards over the three columns. **A figure read off a screen is
-// not a measurement** (D310, D316) — and this one was twenty minutes old.
-//
-// 🛑 **THE ANTECEDENT LITERAL AND THE CONSEQUENT LITERAL BOTH RETURN EXACTLY
-// THIS ROW, AND THE WIDE ONE RETURNS FORTY-TWO DISTINCT LEGAL CARDS.** Every
-// other `'new Active'`
-// row is a switch-out attack's parenthetical *"(Your opponent chooses the new
-// Active Pokémon.)"* or an ACTIVATED Ability (Pecharunt ex's "Subjugating
-// Chains", Florges' "Captivating Invitation") — **not one of them prints
-// "Whenever"**, so no census on the consequent side alone could have priced this
-// row, and the antecedent side is what closes it. D319's rule from the other
-// direction: there the consequent was exact and the antecedent wide.
-//
-// **So the family is 1 of 1 legal sentence / 1 of 1 legal printing, and it
-// CLOSES here.** [🆕🆕🆕 D610 (D539): WITHDRAWN for the Standard pool — the `me` serie
-// prints the moment twice more (Mismagius ex "Swirling Prose", Team Rocket's Dugtrio
-// "Holes"), both built at D610; `onMoveHpMeD610.test.ts`.] `attacks_json` and `effect` return ZERO at every width, so no
-// text reader can see this sentence and `BUILT.attack` cannot move.
-//
-// ── THE FIVE WAYS A BUILD OF THIS PASSES A SUITE IT SHOULD FAIL ─────────────
-//
-// ⚠️ **A SCAN HUNG ON `switchInto` ALONE SHIPS THE SENTENCE'S COMMONEST
-// TRIGGER DEAD.** `retreat` (turn.ts) does NOT call that function — it pays the
-// retreat cost out of the retreating body's own attachments and emits
-// `RETREATED`, not `POKEMON_SWITCHED`. §2 retreats, and it is the case a
-// one-site build gets silently wrong. (This suite's author wrote that build
-// first; the doc comment on `switchInto` enumerates "three provenances" and
-// retreat is not one of them.)
-//
-// ⚠️ **A BUILD THAT DROPS *"DURING THEIR TURN"* BURNS ON A BOSS'S ORDERS.** A
-// gust is `switchInto` on the OTHER seat's board during the GUSTING player's
-// turn — the opponent's Active really does move to the Bench, and the clause is
-// the only thing that says no. §4 plays it and requires NO burn.
-//
-// ⚠️ **A DIRECTION-BLIND SCAN BURNS THE WATCHER'S OWN NEW ACTIVE.** Magcargo's
-// controller retreats too. §5 does exactly that and requires no burn on either
-// side.
-//
-// ⚠️ **A SCAN THAT FIRES ON THE §8.1 PROMOTION INVENTS A MOVE THE CARD DOES NOT
-// PRINT.** A Knocked Out Active goes to the DISCARD; nothing moved to the Bench.
-// §6 Knocks the actor's Active out on the watcher's turn and requires no burn —
-// and it is a control for the turn clause at the same time.
-//
-// ⚠️ **A `doesNotStack` READ AS A DEFAULT IS UNOBSERVABLE ON THE BOARD HERE.**
-// Burned is idempotent — two firings and one leave the same `conditions` — so
-// the only witness is the EVENT COUNT. §7 puts two Magcargo down and requires
-// TWO `ABILITY_TRIGGERED` rows, which is the flag read off the PRINT rather than
-// off the effect.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The printed strings, byte-exact off the D1 rows.
@@ -99,23 +24,11 @@ import {
 
 const LAVA_ZONE_TEXT =
   "Whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Burned.";
-/** Gnawing Curse, the family's ATTACH verb (D319) — pinned here so §9's claim
-    that the two rows differ ONLY in timing is checkable against the print. */
 const GNAWING_CURSE_TEXT =
   "Whenever your opponent attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon.";
 
 const MAGCARGO = "sv05-029";
-/** Dachsbun "Well-Baked Body" — *"This Pokémon can't be Burned."* plus a {R}
-    prevention. The §12 immunity control (§8), and a REAL printing rather than a
-    fixture, so the refusal is the catalog's and not this file's. */
 const DACHSBUN = "sv01-099";
-/** Ting-Lu ex "Cursed Land" — the §9 Ability-lock aura that can reach a Stage 1:
-    *"…your opponent's Pokémon in play that have any damage counters on them have
-    no Abilities, except for Pokémon ex."* Klefki's lock is Basic-only and
-    Magcargo is a Stage 1, so it could not have been the control.
-    (🆕🆕🆕 D559 CORRECTION (D539): "the … aura that can reach a Stage 1" is no longer
-    unique — an opposing Active Flutter Mane `sv05-078` reaches an Active Stage 1 too.
-    Ting-Lu stays this suite's control.) */
 const TING_LU = "sv02-127";
 const SWITCH = "sv01-194"; // Item — "Switch your Active Pokémon with 1 of your Benched Pokémon."
 const BOSS = "sv02-172"; // Supporter — the gust
@@ -126,9 +39,6 @@ const BASIC = "fix-basic-1";
 /** A body with NO Ability at all: every "the trigger fired" line below passes
     just as happily on a build that Burns on every bench move. */
 const PLAIN = "fix-lava-plain";
-/** 🆕 D559 landing — Flutter Mane "Midnight Fluttering", a Basic: *"As long as this
-    Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities,
-    except for Midnight Fluttering."* The §9 rung's PROMOTED lock source (§9 below). */
 const FLUTTER_MANE = "sv05-078";
 const FLUTTERING_TEXT =
   "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.";
@@ -165,7 +75,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** This suite's own seeded deck (D270's rule). */
 const LAVA_DECK = deckOf({
   [MAGCARGO]: 4,
   [PLAIN]: 4,
@@ -178,8 +87,6 @@ const LAVA_DECK = deckOf({
   "fix-fire-energy": 8,
 });
 
-/** 🆕 D559 landing — LAVA_DECK with four FREE swapped for four Flutter Mane, used by
-    §9's promoted-lock rung ONLY, so every other rung's shuffle is untouched. */
 const FLUTTER_DECK = deckOf({
   [MAGCARGO]: 4,
   [PLAIN]: 4,
@@ -193,22 +100,7 @@ const FLUTTER_DECK = deckOf({
   "fix-fire-energy": 8,
 });
 
-/** Three seeds, so nothing below rests on one shuffle (D270). */
 const SEEDS = [9041, 9043, 9049] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
 
 function localSetup(seed: number, first: Seat, deck: string[] = LAVA_DECK): GameState {
   const created = createGame({ seed, decks: { p1: deck, p2: deck }, cardPool: POOL });
@@ -235,13 +127,6 @@ function localSetup(seed: number, first: Seat, deck: string[] = LAVA_DECK): Game
   return state;
 }
 
-/** `watcher` holds `watcherIds` (Active first, then Bench); the ACTOR holds a
-    retreat-0 Active and EXACTLY ONE benched body.
-
-    ⚠️ THE ACTOR'S BENCH IS ONE BODY ON PURPOSE, TWICE OVER — §14.2 makes an
-    empty Bench a LOSS the moment an Active leaves, and a Switch/Boss's Orders
-    over a bench of two or more PARKS on a choice, which would make every
-    assertion below a claim about the park rather than about the trigger. */
 function board(
   seed: number,
   first: Seat,
@@ -334,10 +219,6 @@ function triggerEvents(result: ReturnType<typeof applyAction>): { seat: Seat; ab
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 0. The printed row, and the registry program that encodes it.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§0 — the printed sentence and its registry row", () => {
   it("the Ability text in this suite's pool is the D1 row, byte for byte", () => {
     expect(POOL[MAGCARGO]?.abilities).toEqual([
@@ -362,18 +243,12 @@ describe("§0 — the printed sentence and its registry row", () => {
     const row = programFor(MAGCARGO)?.triggered?.[0];
     expect(row?.doesNotStack).toBeUndefined();
     expect(LAVA_ZONE_TEXT).not.toContain("doesn't stack");
-    // Its sibling one verb over prints no clause either; Darkest Impulse does,
-    // and that row carries the flag. Two rows, one loop, told apart by the print.
     expect(GNAWING_CURSE_TEXT).not.toContain("doesn't stack");
     expect(programFor("sv05-104")?.triggered?.[0]?.doesNotStack).toBeUndefined();
     expect(programFor("sv10-074")?.triggered?.[0]?.doesNotStack).toBe(true);
   });
 
   it("the consequent is `defender` and NOT `damageSubject` — the two name different bodies", () => {
-    // The antecedent's subject is the body that LEFT the Active Spot; the
-    // consequent is about "their NEW Active Pokémon". D319's op resolves the
-    // former, so using it here would Burn the wrong Pokémon (and, being a
-    // damage op, could not Burn at all).
     const program = programFor(MAGCARGO)?.triggered?.[0]?.program ?? [];
     expect(program.some((op) => op.op === "damageSubject")).toBe(false);
     expect(program).toEqual([{ op: "applyStatus", target: "defender", status: "burned" }]);
@@ -427,18 +302,9 @@ describe("§1-3 — every Active→Bench route on the actor's own turn Burns the
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. "DURING THEIR TURN" — the gust, which is the same board move on the wrong
-//    clock.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§4 — a Boss's Orders is the same move on the WRONG turn, and Lava Zone stays silent", () => {
   for (const seed of SEEDS) {
     it(`the watcher gusts the actor's Active to the Bench and nothing Burns (seed ${seed})`, () => {
-      // p1 holds Magcargo AND plays the Boss's Orders, on p1's own turn. p2's
-      // Active really does move to the Bench — the board move is `switchInto`,
-      // byte for byte the one a Switch makes — and the printed clause is the
-      // ONLY thing that refuses it.
       const start = turnOf(board(seed, "p1", "p1", [MAGCARGO]), "p1");
       const result = playTrainer(start, "p1", BOSS);
       expect(result.ok).toBe(true);
@@ -481,10 +347,6 @@ describe("§5 — the scan direction: Magcargo does not Burn its own side", () =
 
 describe("§6 — a Knocked Out Active goes to the DISCARD, so nothing moved to the Bench", () => {
   it("the actor's Active is KO'd on the WATCHER's turn and the promoted body is not Burned", () => {
-    // p1 (the watcher, holding Magcargo on the Bench) attacks p2's Active to
-    // zero. p2 promotes. Two clauses refuse this at once — the move is not a
-    // bench move, and it is not p2's turn — which is exactly why it is here:
-    // a build that fired on the §8.1 promotion would need BOTH to be wrong.
     let state = turnOf(board(SEEDS[0], "p1", "p1", [PLAIN, MAGCARGO]), "p1");
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
     state = setDamage(state, "p2", 55); // fix-basic-0 has 60 HP; Plain Watcher hits for 30
@@ -499,11 +361,6 @@ describe("§6 — a Knocked Out Active goes to the DISCARD, so nothing moved to 
     expect(triggerEvents(result).filter((e) => e.ability === "Lava Zone")).toEqual([]);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. `doesNotStack` IS ABSENT, AND BURNED IS IDEMPOTENT — so the witness is the
-//    EVENT COUNT.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — two Magcargo are TWO firings, and only the log can see it", () => {
   it("two Magcargo emit two ABILITY_TRIGGERED rows on one retreat", () => {
@@ -547,67 +404,10 @@ describe("§8 — Dachsbun's “This Pokémon can't be Burned.” refuses the tr
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — THE ABILITY-LOCK CASE IS REFUSED, AND THE REFUSAL IS THE RESULT", () => {
-  // 🛑 NO §9 LOCK IN THIS CATALOG CAN BE LIVE AT THE MOMENT THIS TRIGGER FIRES,
-  // AND A FIXTURE THAT FAKED ONE WOULD BE THE NEXT VACUOUS GUARD (D203's
-  // refusal, conventions.md). The engine has THREE `disableAbilities` printings
-  // and each one is out for its own printed reason (🆕🆕🆕 D559: FIVE — the two new ones
-  // are the last two bullets, and each is out too, so the claim HOLDS, re-checked):
-  //
-  // ⛔ WITHDRAWN AT THE D559 LANDING (D539 — the original kept above, not deleted):
-  // the claim is FALSE, and so is D559's "re-checked, still true". The argument
-  // below only rules out the lock source being the body the antecedent moves to
-  // the Bench; it never considers the body the move PROMOTES. `retreat` /
-  // `switchInto` hand the POST-move board to `runActiveBenchedTriggers`, and
-  // `triggersOf` gates on `disabledAbilityUids` of that board — so a Flutter Mane
-  // `sv05-078` retreated or switched INTO the actor's Active Spot is live, as the
-  // opponent's Active, at the very moment Lava Zone would fire, and an Active
-  // Magcargo `sv05-029` (Standard-legal) is locked. Driven by the last rung of this
-  // block: promote `fix-basic-1` → Lava Zone fires and Burns; promote Flutter Mane →
-  // no trigger. The SAME hole is in the Ting-Lu bullet's "Ting-Lu's argument": a
-  // SECOND Ting-Lu ex promoted into the actor's Active re-lights "Cursed Land" on a
-  // damaged Magcargo. The bullets below stay as the record of the withdrawn reading.
-  //
-  //   • Klefki `sv01-096` "Mischievous Lock" — `stage: "Basic"`. Magcargo is a
-  //     STAGE 1, so the aura never names it.
-  //   • Spiritomb `sv02-089` "Fettered in Misfortune" — `stage: "Basic"` AND
-  //     `suffix: "V"`. Narrower still.
-  //   • Ting-Lu ex `sv02-127` "Cursed Land" — reaches a damaged Stage 1, but
-  //     carries `requiresActive`, and its target set is *"your OPPONENT's
-  //     Pokémon"*. So the lock source must be the ACTOR's Active — which is the
-  //     very body the trigger's antecedent moves to the Bench. By the time
-  //     `runActiveBenchedTriggers` runs, Ting-Lu is benched and the aura is
-  //     already off. **That is the engine being right, not a hole**: the printed
-  //     "as long as this Pokémon is in the Active Spot" really has stopped
-  //     holding.
-  //
-  //   • 🆕🆕🆕 D559 — Flutter Mane `sv05-078` "Midnight Fluttering" — `requiresActive`
-  //     and `targetZone "active"` on the OPPONENT's side: to reach Magcargo the
-  //     Flutter Mane must be the ACTOR's Active, which is the very body the trigger's
-  //     antecedent moves to the Bench — Ting-Lu's argument verbatim, and by the time
-  //     the trigger runs the lock is already off.
-  //     ⛔ WITHDRAWN (D559 landing): the Flutter Mane can be the NEW Active the move
-  //     promotes — the rung below drives it. Same hole in Ting-Lu's argument.
-  //   • 🆕🆕🆕 D559 — Gastrodon `sv08-107` "Sticky Bind" — `stage: "Stage2"`. Magcargo
-  //     is a STAGE 1, so the aura never names it.
-  //
-  // The gate itself is NOT untested — `triggersOf` is the single §9 choke for
-  // every timing and both scan directions, and D319's `opponentActionTrigger`
-  // suite drives it on the `"opponent"` direction this row also uses. Writing a
-  // second one here would need a board no deck can build.
-  // (⛔ WITHDRAWN at the D559 landing: a Standard deck builds it — Flutter Mane
-  // promoted into the actor's Active. The last rung of this block drives it.)
   it("the five lock printings are all narrower than this row, checked against the registry", () => {
     expect(programFor("sv01-096")?.passive?.disableAbilities?.stage).toBe("Basic");
     expect(programFor("sv02-089")?.passive?.disableAbilities?.stage).toBe("Basic");
     expect(programFor("sv02-127")?.passive?.disableAbilities?.requiresActive).toBe(true);
-    // 🆕🆕🆕 D559 — the two legal locks the registry builds [🆕🆕🆕 D571 (D539): THREE — Iron Thorns ex
-    // "Initialization" is built; it reaches only Rule Box bodies and is Active-sourced] [🆕🆕🆕 D632 (D539): and Damp
-    // (Psyduck / Golduck) is built; it reaches only a self-Knock-Out body, never Magcargo]: Flutter Mane is Active-sourced on the OPPONENT's
-    // Active (Ting-Lu's argument), Gastrodon names Stage 2 only.
-    // ⛔ WITHDRAWN (D559 landing): this `it`'s title and "(Ting-Lu's argument)" —
-    // Flutter Mane is NOT narrower than this row: promoted into the actor's Active
-    // it locks an Active Magcargo at the trigger moment (next rung). These pins
-    // stay as the registry facts they are; they no longer prove unreachability.
     expect(programFor("sv05-078")?.passive?.disableAbilities?.requiresActive).toBe(true);
     expect(programFor("sv05-078")?.passive?.disableAbilities?.side).toBe("opponent");
     expect(programFor("sv08-107")?.passive?.disableAbilities?.stage).toBe("Stage2");
@@ -615,7 +415,7 @@ describe("§9 — THE ABILITY-LOCK CASE IS REFUSED, AND THE REFUSAL IS THE RESUL
     expect(POOL[MAGCARGO]?.stage).toBe("Stage1");
   });
 
-  it("🆕 D559 landing — a Flutter Mane PROMOTED into the actor's Active locks an Active Magcargo, so Lava Zone does NOT fire", () => {
+  it("D559 landing — a Flutter Mane PROMOTED into the actor's Active locks an Active Magcargo, so Lava Zone does NOT fire", () => {
     for (const seed of SEEDS) {
       // The control, on the SAME deck and seed: the actor retreats into a plain
       // Basic and Lava Zone fires and Burns — so the refusal below is the lock.

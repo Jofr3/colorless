@@ -30,93 +30,15 @@ import type { CoinFace } from "./rng";
 import { FIXTURE_POOL, basicEnergy, battler, deckOf, itemTrainer } from "./testFixtures";
 import { makeInPlay } from "./types";
 
-// 0.371.0 → 0.372.0 — 🆕🆕 D474: THE BOARD-COUNTED COIN FLIP OVER **BODIES**.
-//
-// ── THE PRINTED SENTENCE ─────────────────────────────────────────────────────
-//   `censusAttackCorpus.ts` FILE LINE 233 — "Flip a coin for each {D} Pokémon you
-//     have in play. This attack does 60 damage for each heads."   **2 printings**
-//
-// — 1 sentence / 2 Standard-legal printings, ONE anchor, ONE new `AttackFlipCount`
-// member, ONE arm in `deriveAttackCoinFlip` and ONE arm in `attack.ts`'s `takeFlips`.
-//
-// 🛑 **THE SECOND BOARD FACT THE COIN FAMILY COUNTS BY.** D128 taught the family to
-// read its flip count off the board rather than off the text, and every printing it
-// could reach counts self-attached ENERGY. This one counts BODIES — Active + Bench,
-// stack tops only, own side — through `countPokemonInPlay`, the walk the three
-// `DamageCountSource.pokemonInPlay` anchors already fold over. Nothing about the
-// consequent moves: the fold, the loop, the event sequence and the dropped printed
-// base are all D127's.
-//
-// ── WHY IT IS A FOURTH MEMBER AND NOT A FIELD (D440, READ RATHER THAN COPIED) ──
-// *Nullary or asymmetric payload ⇒ two members; identical payload ⇒ one member with
-// the discriminator as a field.* `attachedEnergy` carries an ENERGY filter
-// (`BasicEnergyType | "special" | null`, read by PROVISION when typed and by CARD
-// when null) and this carries a `CardFilter` over BODIES — asymmetric, so two
-// members. §2 pins that both members are still reachable and that they answer
-// DIFFERENT numbers on one board.
-//
-// ── 🛑 THE `switch` IN `takeFlips`, AND THE MEASUREMENT THAT PAID FOR IT ───────
-// `takeFlips` read the union as an early return plus a TERNARY. The work order said a
-// member lacking `energy` would be a TYPE ERROR rather than a silent fall-through and
-// flagged that as verified on an ISOMORPHIC REPRODUCTION only. **Re-run on the real
-// file** — the fourth member added and nothing else changed — `bunx tsc -b` answers
-// TS2339 at `count.energy`, three times. So the ternary really was loud.
-//
-// **It was loud for a reason that does not generalise, which is why the `switch` is
-// owed anyway.** What refused was the FIELD ACCESS, not the discriminator: a member
-// carrying an `energy` field of a compatible type would satisfy `count.energy` and
-// fall SILENTLY into the self-attached reading. D222/D447: a total `switch` is the
-// only thing that sees a new union member.
-//
-// 🆕🆕🛑 **D475 CORRECTS THE PREDICTION THIS PARAGRAPH USED TO CARRY.** It named
-// corpus file line 231 — *"for each Energy attached to both Active Pokémon"* — as
-// *"exactly that"* member. D475 built it and the member is **NULLARY**
-// (`{ kind: "bothActivesEnergy" }`), because the printed sentence carries no type
-// filter, so the old ternary would have answered TS2339 for it as well. Measured on
-// the real file: with the ternary restored and `pokemonInPlay` peeled off the `:`
-// branch, `tsc` names `{ kind: "bothActivesEnergy"; }` in the TS2339 text. **The rule
-// stands, the forecast did not** — see `attack.ts`'s `takeFlips` block, corrected in
-// place at the same commit.
-//
-// ── WHY THE ANCHOR SPELLS BOTH ENDS OUT (D472, MEASURED OVER ALL 640 ROWS) ────
-// §1 runs FIVE widenings against the committed column rather than describing them,
-// and **every one claims the identical 1 sentence / 2 printings**. A wider anchor
-// that claims the same rows is pure risk. Because no widening admits a new ROW, none
-// admits a new OP either — so D473's describer question has an empty subject here,
-// which is stated rather than skipped.
-//
-// ── WHAT IS NOT NEW ──────────────────────────────────────────────────────────
-// ZERO new `EffectOp` members, op FIELDS, op VALUES, prompts, prompt fields, events,
-// error codes, `AttackCoinFlip`/`BoardCondition`/`CardFilter`/`DamageCountSource`
-// members, clause-table rows, registry rows, `packages/schema` bytes, `redact.ts`
-// bytes or `FIXTURE_POOL` ids. The reader surface stays 13. §6 is the
-// `MATCH_RECORD_VERSION` argument, and it is the FIRST of D473's three shapes.
-
-/** THE SENTENCE, byte for byte off `legalAttackCorpus()` — §1 asserts that. */
 const PRINTED =
   "Flip a coin for each {D} Pokémon you have in play. This attack does 60 damage for each heads.";
 
-/** The SHIPPED sibling this anchor must stay structurally disjoint from (D128, corpus
-    file line 232, 1 printing). Both patterns are `^…$` and share the trailing run
-    `. This attack does N damage for each heads.`; the mandatory bytes immediately
-    before it disagree, so no string reaches both. */
 const SIBLING_ENERGY =
   "Flip a coin for each Energy attached to this Pokémon. This attack does 80 damage for each heads.";
 
-/** The THIRD member of the printed `Flip a coin for each …` family (corpus file line
-    231, 1 printing) — and it is NOT this member's business. It counts ENERGY on two
-    bodies, which no widening of a BODY count can reach. 🆕🆕 **D475 BUILT IT, on its
-    OWN anchor and its OWN nullary `bothActivesEnergy` member — which is what this
-    file predicted and is the reason the rung below was RE-POINTED rather than
-    deleted (D418/D438): the claim that survives is *"`pokemonInPlay` did not widen to
-    take it"*, and that is strictly stronger than the `toBeNull` it replaces.** */
 const SIBLING_BOTH_ACTIVES =
   "Flip a coin for each Energy attached to both Active Pokémon. This attack does 60 damage for each heads.";
 
-/** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
-    "unread" is unread by the WHOLE engine and not by the one reader it is about.
-    ⚠️ SPLICED BEFORE THE LAST ENTRY RATHER THAN APPENDED where it ever grows, D419's
-    rule — mutant `find` strings quote an array's last entries plus its closing `];`. */
 const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -130,7 +52,6 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
@@ -139,33 +60,22 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 
 describe("D474 §1 — the sentence, measured live over the legal column", () => {
-  it("🛑 the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
-    // D417/D419's guard: a hand-kept copy of a module-derived surface cannot go red,
-    // it can only go quiet, so the DIFF and the COUNT are pinned separately.
+  it("the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("is really in the column, ONCE, at TWO printings", () => {
-    // The attribution control (D183/D456): without it every rung below could be green
-    // against a paraphrase no card prints. The PRINTING COUNT is asserted too,
-    // because it is what tells a file line from an array index in one look (D448).
     const rows = legalAttackCorpus().filter(([, s]) => s === PRINTED);
     expect([rows.length, units(rows)]).toEqual([1, 2]);
   });
 
-  it("🛑 the whole `Flip a coin for each` family is THREE rows, and D475 read the last", () => {
-    // D448's rule: write the "cannot see" sentence as a QUERY YOU RAN. The loosest
-    // shape that can hold this mechanism is the leading clause itself.
+  it("the whole `Flip a coin for each` family is THREE rows, and D475 read the last", () => {
     const family = legalAttackCorpus().filter(([, s]) => /Flip a coin for each/.test(s));
     expect(family.map(([, s]) => s).sort()).toEqual(
       [PRINTED, SIBLING_ENERGY, SIBLING_BOTH_ACTIVES].sort(),
     );
     expect([family.length, units(family)]).toEqual([3, 4]);
-    // 🆕🆕 D475 — all THREE now read, and each through a DIFFERENT `AttackFlipCount`
-    // member. Re-pointed onto the three derived VALUES rather than relaxed to three
-    // `not.toBeNull()`s, because "each row is claimed" is true under a build where one
-    // anchor swallowed its neighbour and the members collapsed (D438/D449).
     expect(deriveAttackCoinFlip(PRINTED)?.kind).toBe("perHeads");
     const members = [PRINTED, SIBLING_ENERGY, SIBLING_BOTH_ACTIVES].map((s) => {
       const read = deriveAttackCoinFlip(s);
@@ -174,32 +84,24 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     expect(members).toEqual(["pokemonInPlay", "attachedEnergy", "bothActivesEnergy"]);
   });
 
-  it("🛑 `deriveAttackCoinFlip` is its ONLY reader — the other TWELVE refuse it", () => {
+  it("`deriveAttackCoinFlip` is its ONLY reader — the other TWELVE refuse it", () => {
     expect(deriveAttackCoinFlip(PRINTED)).not.toBeNull();
     for (const read of READERS) {
       if (read === deriveAttackCoinFlip) continue;
       expect(read(PRINTED), read.name).toBeNull();
     }
-    // …and no splitter composes it either, so the whole-sentence anchor is the only
-    // route in and the RAW and RESIDUE summands move together (D444/D457).
     expect(splitAttackGateClause(PRINTED)).toBeNull();
     expect(splitAttackRequirementClause(PRINTED)).toBeNull();
     expect(splitAttackCancelClause(PRINTED)).toBeNull();
     expect(splitAttackTrailingClause(PRINTED)).toBeNull();
   });
 
-  it("🛑 D464's COMPOUND route contributes nothing — no row is this sentence plus a tail", () => {
-    // Building a sentence builds every `⟨it⟩. ⟨claimed tail⟩` compound with it, through
-    // a path that is neither the anchor nor the arm. Measured over the whole column
-    // rather than asserted: no row has this sentence as a prefix.
+  it("D464's COMPOUND route contributes nothing — no row is this sentence plus a tail", () => {
     const compounds = legalAttackCorpus().filter(([, s]) => s !== PRINTED && s.startsWith(PRINTED));
     expect(compounds).toEqual([]);
   });
 
-  it("🛑 EVERY widening claims the IDENTICAL 1 sentence / 2 printings — pure RISK", () => {
-    // D472's rule, at its third address, RUN rather than described. Five loosenings,
-    // one axis each; every one of them buys nothing and every one costs a wrong
-    // program or a wrong referent.
+  it("EVERY widening claims the IDENTICAL 1 sentence / 2 printings — pure RISK", () => {
     const widenings: Record<string, RegExp> = {
       // …drop `you have`: `{D} Pokémon you have` becomes the captured noun on any
       // "in play" spelling, including an opponent-side one the print never carries.
@@ -225,11 +127,7 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     }
   });
 
-  it("🛑 STRUCTURAL disjointness from `ATTACK_COIN_PER_ENERGY`, driven BOTH ways", () => {
-    // D468's second kind of `equivalent`: both patterns are `^…$` and disagree on a
-    // mandatory run of bytes at the same position, so no string can match both and NO
-    // GUARD EXISTS — correctly none, since one would be unkillable by construction
-    // (D467). Driven from each side rather than argued.
+  it("STRUCTURAL disjointness from `ATTACK_COIN_PER_ENERGY`, driven BOTH ways", () => {
     expect(deriveAttackCoinFlip(SIBLING_ENERGY)).toEqual({
       kind: "perHeads",
       flips: { kind: "attachedEnergy", energy: null },
@@ -240,8 +138,6 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
       flips: { kind: "pokemonInPlay", filter: { kind: "typedPokemon", pokemonType: "Darkness" } },
       per: 60,
     });
-    // The two derived programs are DIFFERENT (D449: an inequality of derived programs
-    // is strictly stronger than a `toBeNull`, and cannot go green by accident).
     expect(deriveAttackCoinFlip(PRINTED)).not.toEqual(deriveAttackCoinFlip(SIBLING_ENERGY));
     // …and the CROSSINGS — each sentence's head against the other's tail — reach
     // neither pattern, which is the byte-level claim spelled as a rung.
@@ -253,13 +149,7 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     }
   });
 
-  it("🛑 file line 231 is D475's row and NOT this member's — `pokemonInPlay` did not widen", () => {
-    // 🆕🆕 **RE-POINTED, NOT FLIPPED (D438/D418).** The old rung said
-    // `resolvedByAnyReader === false` — a thirteen-way refusal that D475 makes false.
-    // Relaxing it to `=== true` would discard all thirteen refusals at once, which is
-    // how D436 disarmed D368's tripwire and produced this run's only GAP. So the
-    // replacement NAMES THE OWNER by value and KEEPS the other twelve refusals and
-    // both splitters, which is strictly stronger than either boolean.
+  it("file line 231 is D475's row and NOT this member's — `pokemonInPlay` did not widen", () => {
     expect(resolvedByAnyReader(SIBLING_BOTH_ACTIVES)).toBe(true);
     expect(deriveAttackCoinFlip(SIBLING_BOTH_ACTIVES)).toEqual({
       kind: "perHeads",
@@ -272,13 +162,6 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     }
     expect(splitAttackTrailingClause(SIBLING_BOTH_ACTIVES)).toBeNull();
     expect(splitAttackGateClause(SIBLING_BOTH_ACTIVES)).toBeNull();
-    // 🛑 **THE DISCRIMINATION THE OLD CLAIM CARRIED, KEPT ON A NEW SUBJECT (D444).**
-    // What the `toBeNull` really pinned was *"no widening of a BODY count reaches an
-    // ENERGY count"*. That survives POSITIVELY and by VALUE: 231 derives through a
-    // member of its OWN, so a build in which `ATTACK_COIN_PER_BODY_IN_PLAY` had been
-    // loosened to swallow 231 reddens here — it would answer `pokemonInPlay` — where
-    // the old boolean could not have told that build from the real one. The two
-    // programs are UNEQUAL, which is D449's strictly-stronger form of a `toBeNull`.
     expect(deriveAttackCoinFlip(SIBLING_BOTH_ACTIVES)).not.toEqual(deriveAttackCoinFlip(PRINTED));
     expect(deriveAttackCoinFlip(SIBLING_BOTH_ACTIVES)).not.toEqual(
       deriveAttackCoinFlip(SIBLING_ENERGY),
@@ -288,9 +171,6 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
 
 describe("D474 §2 — the derived value, and every refusal pinned on ONE printed byte", () => {
   it("resolves `{D}` through the SHARED body vocabulary, not a local table", () => {
-    // `inPlayBodyFilter` is the one place this file resolves a printed body noun, so
-    // "which bodies does this noun name" keeps ONE answer across two unions (D159).
-    // Both notations, because that map carries both since D367.
     expect(deriveAttackCoinFlip(PRINTED)).toEqual({
       kind: "perHeads",
       flips: { kind: "pokemonInPlay", filter: { kind: "typedPokemon", pokemonType: "Darkness" } },
@@ -324,14 +204,7 @@ describe("D474 §2 — the derived value, and every refusal pinned on ONE printe
     });
   });
 
-  it("🛑 an UNRESOLVABLE noun stays LOUD — the map refuses, and the anchor does not", () => {
-    // D440's rule: a capture would claim "Ancient Pokémon", a banner NO `cardSchema`
-    // column classifies, and ship a filter that counts 0 on every board forever while
-    // `BUILT.attack` stepped for it. The closed map is what keeps that refusal honest.
-    // ⚠️ The ADMISSION is the line directly above, one axis away (D424).
-    // (🆕🆕🆕 D569 (D539): "Ancient" LEAVES this list — "Ancient Pokémon" is a map key now, over
-    // `banners.ts`' engine table; "no `cardSchema` column classifies it" stays TRUE. "Future" and
-    // "Tera" stay: the body map spells neither banner.)
+  it("an UNRESOLVABLE noun stays LOUD — the map refuses, and the anchor does not", () => {
     for (const noun of ["Future", "Tera", "Stage 9", "banana"]) {
       expect(
         deriveAttackCoinFlip(
@@ -360,9 +233,7 @@ describe("D474 §2 — the derived value, and every refusal pinned on ONE printe
     });
   });
 
-  it("🛑 each near-miss differs on ONE axis and each is refused for THAT axis", () => {
-    // D399/D427: a near-miss differing on more than one axis says nothing about
-    // either. THE POSITIVE CONTROL FIRST, so "refuses everything" is excluded.
+  it("each near-miss differs on ONE axis and each is refused for THAT axis", () => {
     expect(deriveAttackCoinFlip(PRINTED)).not.toBeNull();
     for (const text of [
       // …the SEAT alone: the printed subject is "you have".
@@ -384,8 +255,6 @@ describe("D474 §2 — the derived value, and every refusal pinned on ONE printe
   });
 
   it("the anchor is WHOLE-SENTENCE — leading text, trailing text, case and the period", () => {
-    // ⚠️ D452's rule: a "leading text pins `^`" probe must vary ONLY the anchor, so the
-    // prefix ENDS a sentence and the family's capital `F` is preserved.
     for (const text of [
       `This attack does 30 damage. ${PRINTED}`,
       `${PRINTED} Then, discard a card.`,
@@ -398,20 +267,6 @@ describe("D474 §2 — the derived value, and every refusal pinned on ONE printe
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. A file-local `cardPool` (D414/D452), so no `FIXTURE_POOL` id is added
-// and `opponentResistanceBonus.test.ts`'s eleven-deep id ladder takes a ZERO term.
-//
-// 🛑 THE SETUP HELPERS BELOW ARE DELIBERATELY NOT BYTE-COPIES of `handCostDraw.test.ts`'s
-// (D442/D446/D448: a new line that is a distant neighbour's twin breaks a mutant row
-// nobody touched). Where the shape is forced, the locals are named for THIS file's
-// subject.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** The attacker that prints the sentence, and it is {D} ITSELF — so its own body is
-    one of the things it counts, which is the whole difference between
-    `countPokemonInPlay` and the Bench-only walk sitting eight lines above it in
-    `attack.ts`. */
 const DARK_ATTACKER = "d474-dark-attacker";
 /** The SAME printed sentence on a body that is NOT {D}, so a board can hold zero
     matches at all. Without it the count can never be zero, because the attacker is
@@ -426,11 +281,6 @@ const DARK_WALL = "d474-dark-wall";
 const ENERGY_CARD = "d474-energy";
 const ITEM_CARD = "d474-item";
 
-/** The printed attack, spelled ONCE so the two attackers cannot drift apart: the
-    whole point of `PLAIN_ATTACKER` is that it differs from `DARK_ATTACKER` in its
-    `types` and in nothing else. `damage: "60×"` is the printed marker `perHeads`
-    consumes, so the dropped base is DECLARED rather than silently discarded
-    (`attack.ts`'s modifier-simulated check). */
 const ATTACK: NonNullable<Card["attacks"]>[number] = {
   cost: ["Colorless"],
   name: "Shadow Tally",
@@ -468,11 +318,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const CARD_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** SIXTY cards, and every count is a floor derived from the boards below rather
-    than a round number: setup removes 13 (seven dealt, six prized) before any
-    surgery runs, so each id must have enough copies left in the DECK on every swept
-    seed. The largest simultaneous demand is 7 Water (2 on P1's Bench + 5 on P2's)
-    and 7 Energy (the attacker's pile in §3). */
 const LOCAL_DECK = deckOf({
   [DARK_ATTACKER]: 5,
   [PLAIN_ATTACKER]: 5,
@@ -483,8 +328,6 @@ const LOCAL_DECK = deckOf({
   [ITEM_CARD]: 2,
 });
 
-/** The attack index the whole board half of this file drives, named so a fixture
-    gaining an attack moves ONE constant rather than every case (D442). */
 const TALLY_INDEX = 0;
 
 function ok(result: ReturnType<typeof applyAction>): GameState {
@@ -617,20 +460,6 @@ function attach(state: GameState, seat: Seat, count: number): GameState {
   };
 }
 
-/** THE DISCRIMINATING BOARD, and every number on it is chosen so that six plausible
-    readings answer six DIFFERENT values (§3 measures all six against the real
-    machinery rather than asserting them in this comment):
-
-      P1  Active  DARK_ATTACKER  ({D})        Bench  2 × {D} + 2 × {W}   Energy 7
-      P2  Active  DARK_WALL      ({D}, 900hp) Bench  5 × {W}
-
-    own in-play {D}  = 3   ← CORRECT
-    own in-play all  = 5   ← the filter dropped
-    own Bench   {D}  = 2   ← `benchBodies` instead of `countPokemonInPlay`
-    own Bench   all  = 4   ← both
-    foe in-play {D}  = 1   ← the seat crossed
-    foe in-play all  = 6   ← the seat crossed AND the filter dropped
-    Energy on Active = 7   ← the neighbouring `attachedEnergy` member emitted instead */
 function discriminating(seed: number): GameState {
   let state = opened(seed);
   state = clearBench(toActive(state, "p1", DARK_ATTACKER), "p1");
@@ -711,26 +540,10 @@ function benchOnly(state: GameState, seat: Seat, darkOnly: boolean): number {
   }).length;
 }
 
-/** How many seeds each sweep runs. MEASURED on THIS deck rather than inherited from
-    a sibling suite (D206: never inherit a suite figure from prose). Sweeping 0..23,
-    the FIRST seed reaching each outcome is:
-
-      THREE flips (§3's discriminating board): 1 head → seed 0, 2 → seed 1,
-        3 → seed 2, 0 → seed 10. The all-tails triple is a 1-in-8 draw, which is
-        what sets the number.
-      ONE flip (§4's one-match board): tails → seed 0, heads → seed 2.
-
-    ALL FOUR by seed 10, and 24 — D126's and D127's established bound for this
-    family — is comfortably past it. ⚠️ Every case that uses it ASSERTS it saw every
-    outcome rather than trusting the loop, so a deck edit that narrows the sweep
-    reddens here instead of quietly testing one face. */
 const SEEDS = 24;
 
 describe("D474 §3 — the board, where six plausible readings answer six DIFFERENT numbers", () => {
-  it("🛑 the six candidate readings are 3 / 5 / 2 / 4 / 1 / 6 and 7 — MEASURED, not asserted in a comment", () => {
-    // D439/D472: every wrong value must be measured by handing each real alternative
-    // to the real machinery over the real board. A signature whose values were written
-    // into a comment is arithmetic, not evidence.
+  it("the six candidate readings are 3 / 5 / 2 / 4 / 1 / 6 and 7 — MEASURED, not asserted in a comment", () => {
     const state = discriminating(0);
     const readings = [
       inPlayDarkness(state, "p1"), // CORRECT
@@ -742,13 +555,10 @@ describe("D474 §3 — the board, where six plausible readings answer six DIFFER
       state.players.p1.active?.energy.length ?? -1, // the neighbouring member emitted
     ];
     expect(readings).toEqual([3, 5, 2, 4, 1, 6, 7]);
-    // …and they are PAIRWISE DISTINCT, which is the property that makes the flip-row
-    // count a discriminator at all. Asserted as a set size so a future board edit that
-    // collides two of them reddens here rather than silently weakening every case below.
     expect(new Set(readings).size).toBe(readings.length);
   });
 
-  it("🛑 flips EXACTLY THREE times, on every swept seed, and never 5 / 2 / 4 / 1 / 6 / 7", () => {
+  it("flips EXACTLY THREE times, on every swept seed, and never 5 / 2 / 4 / 1 / 6 / 7", () => {
     const seenHeads = new Set<number>();
     for (let seed = 0; seed < SEEDS; seed += 1) {
       const state = discriminating(seed);
@@ -773,11 +583,6 @@ describe("D474 §3 — the board, where six plausible readings answer six DIFFER
   });
 
   it("the ACTIVE is counted — the same card, the same text, one Bench body fewer", () => {
-    // The one thing that separates `countPokemonInPlay` from the Bench-only walk eight
-    // lines above it in `attack.ts`. Removing a Bench {D} takes the count to 2; the
-    // Bench-only reading would have said 1, and the two boards would be the SAME
-    // number under it (2 → 1 and 1 → 1 is not a thing, so this is the honest form:
-    // the count moves by exactly one with the Bench and stays > 0 with an empty one).
     const full = discriminating(0);
     expect(rowsOf(step(full, swing).events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(3);
     const bare = oneMatch(0);
@@ -802,7 +607,7 @@ describe("D474 §3 — the board, where six plausible readings answer six DIFFER
 });
 
 describe("D474 §4 — ZERO FLIPS and ALL TAILS deal the same damage and are NOT the same fact", () => {
-  it("🛑 ZERO MATCHES takes NO flip, spends NO rng step, deals nothing, and is not LOUD", () => {
+  it("ZERO MATCHES takes NO flip, spends NO rng step, deals nothing, and is not LOUD", () => {
     for (let seed = 0; seed < SEEDS; seed += 1) {
       const state = zeroMatch(seed);
       // The board really is the one described — without this the case could pass on a
@@ -815,22 +620,14 @@ describe("D474 §4 — ZERO FLIPS and ALL TAILS deal the same damage and are NOT
       expect(rowsOf(events, "ATTACK_EFFECT_COIN_FLIP"), `seed ${seed}`).toHaveLength(0);
       expect(done.players.p2.active?.damage ?? 0, `seed ${seed}`).toBe(0);
       expect(rowsOf(events, "DAMAGE_DEALT"), `seed ${seed}`).toHaveLength(0);
-      // 🛑 THE CONTROL THAT SEPARATES THIS FROM SILENCE-FOR-ANOTHER-REASON. A zero
-      // count is a RESOLVED attack, not a refused one: no `ATTACK_EFFECT_SKIPPED`, no
-      // rejected action, and the turn really ended.
       expect(kinds(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       expect(kinds(events)).toContain("TURN_ENDED");
       expect(kinds(events)).toContain("ATTACK_DECLARED");
-      // …and the generator STOOD STILL, which is the byte no board assertion can see
-      // (D455: a resource that is consumed and written back is invisible to any
-      // assertion about ONE use).
       expect(done.rngState, `seed ${seed}`).toBe(before);
     }
   });
 
-  it("🛑 ALL TAILS deals the same ZERO and is a DIFFERENT fact — one flip row, one rng step", () => {
-    // The pair is the claim. Same damage, same absent `DAMAGE_DEALT` row, and two
-    // things that differ: the flip ROW COUNT and the rngState.
+  it("ALL TAILS deals the same ZERO and is a DIFFERENT fact — one flip row, one rng step", () => {
     const tailsSeeds: number[] = [];
     for (let seed = 0; seed < SEEDS; seed += 1) {
       const state = oneMatch(seed);
@@ -854,9 +651,6 @@ describe("D474 §4 — ZERO FLIPS and ALL TAILS deal the same damage and are NOT
 
 describe("D474 §5 — the rngState account: exactly `count` steps, no more and no fewer", () => {
   it("recomputes the whole flip sequence by hand, in order, on every swept seed", () => {
-    // D455's shape: dropping the write-back leaves the board identical and the
-    // generator frozen, so the next flip replays the same face. Only a comparison
-    // ACROSS the consumption can see it.
     for (let seed = 0; seed < SEEDS; seed += 1) {
       const state = discriminating(seed);
       const [faces, after] = foldByHand(state.rngState, 3);
@@ -885,18 +679,7 @@ describe("D474 §5 — the rngState account: exactly `count` steps, no more and 
 });
 
 describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST argument", () => {
-  it("🛑 `AttackFlipCount` has NO CARRIER AT ALL — it is never serialised anywhere", () => {
-    // ⚠️ D473's rule: a rule that turns on PERSISTENCE must be applied at an address
-    // that persists, and the three arguments this repo uses are different. This is the
-    // FIRST — *no carrier at all* — and NOT D473's own (*a byte string a v29 deploy
-    // already writes*), because there is no byte here in either direction.
-    //
-    // `deriveAttackCoinFlip`'s value is a LOCAL `const` inside `attack()`, consumed by
-    // `takeFlips` in the same tick and thrown away; it is not an `EffectOp`, so it
-    // never reaches `phase.cont.pendingOp` or its `rest`, and it is in no `GameState`
-    // field. Driven rather than argued: the whole serialized state after a swing that
-    // FIRED and after one that WHIFFED contains neither the union's name nor the new
-    // member's.
+  it("`AttackFlipCount` has NO CARRIER AT ALL — it is never serialised anywhere", () => {
     for (const build of [discriminating, zeroMatch]) {
       const { state: done } = step(build(0), swing);
       const wire = JSON.stringify(done);

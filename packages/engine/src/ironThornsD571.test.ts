@@ -20,24 +20,10 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: 6 PRINTINGS ─────────────────
-//
-//   Iron Thorns ex   sv06-077 / sv06-196 / sv08.5-032   Ability "Initialization"
-//   Iron Thorns      sv05-062 / svp-098                 attack index 0 "Destructo-Press"
-//   Ignition Energy  sv10.5w-086                        Special Energy (catalog `energyType "Normal"`)
-//
-// Initialization is Mischievous Lock's aura with two NEW catalog-only narrowings (`ruleBox`,
-// `exemptBanner "Future"`), and it is the first LEGAL lock whose source another legal lock
-// reaches — so continuous.ts `disabledAbilityUids` now settles the auras by the STRATIFIED pass
-// (R-LK2 ⚠️ UNRULED). Destructo-Press is the NEW non-parking `revealTopDiscardMatching` (R-DP1
-// ⚠️ UNRULED: the discard runs before the damage). Ignition is Reversal's "Evolution" provision
-// with three Colorless units plus the NEW `discardAtEndOfYourTurn`, paid by flow.ts's `endTurn`
-// stage (R-IG1 ⚠️ UNRULED: after Powerglass and Amarys). Driven on REAL ids in a LOCAL `cardPool`
-// (D275), card bodies transcribed from the tcgdex card JSON (the audit's, 2026-10-03). Rulings:
-// docs/decisions.md D571.
 
 const THORNS_EX = ["sv06-077", "sv06-196", "sv08.5-032"] as const;
 const THORNS = ["sv05-062", "svp-098"] as const;
@@ -178,7 +164,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [THORNS_EX[0]]: 3,
   [THORNS[0]]: 2,
@@ -200,18 +185,6 @@ const DECK = deckOf({
   [C]: 8,
   [FILLER]: 21,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** p2 went first and passed: p1's turn 2 — p1's FIRST turn. */
 function opened(seed: number): GameState {
@@ -446,7 +419,6 @@ describe("D571 §1 — the six registry rows on three objects", () => {
         ],
       });
     }
-    // The sentence is not read by the deriver — this is a REGISTRY attack (D569's route).
     expect(deriveAttackEffect(DESTRUCTO_TEXT)).toBeNull();
   });
 
@@ -483,7 +455,7 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
 
-  it("🛑 R-LK2 ONE-WAY: an Active Flutter Mane silences the opposing Active Iron Thorns ex, so Initialization is OFF", () => {
+  it("R-LK2 ONE-WAY: an Active Flutter Mane silences the opposing Active Iron Thorns ex, so Initialization is OFF", () => {
     const state = table({
       p1: THORNS_EX[0],
       p1Bench: [COPPERAJAH],
@@ -543,7 +515,7 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
     expect(locked.has(uidOf(state, "p2"))).toBe(true); // a {C} body: the Stadium's lock is live
   });
 
-  it("🛑 Initialization silences an Active Ting-Lu ex (a Rule Box, not Future), so Cursed Land is OFF", () => {
+  it("Initialization silences an Active Ting-Lu ex (a Rule Box, not Future), so Cursed Land is OFF", () => {
     let state = table({ p1: THORNS_EX[0], p1Bench: [FILLER], p2: TING_LU });
     state = withBody(state, "p1", 0, (p) => ({ ...p, damage: 30 })); // Cursed Land's target, if it were on
     const locked = disabledAbilityUids(state);
@@ -556,10 +528,6 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
   });
 
   it("Klefki silences a Spiritomb (a Basic), and Spiritomb never reaches Klefki — the target set is Klefki's alone", () => {
-    // 🆕 (the D571 review): what this rung pins is Spiritomb's OWN silencing and the target set.
-    // The OFF verdict on Fettered in Misfortune is NOT observable here or on any board: Klefki's
-    // Basic lock contains every Basic V Spiritomb could reach, so the Set is identical whether
-    // Spiritomb's aura is ON or OFF — that verdict is named in the docs, never claimed as pinned.
     const state = table({ p1: KLEFKI, p2: FILLER, p2Bench: [SPIRITOMB, "fix-pokemon-v"] });
     const locked = disabledAbilityUids(state);
     expect(locked.has(uidOf(state, "p2", 0))).toBe(true); // Spiritomb silenced
@@ -567,7 +535,7 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
     expect(locked.has(uidOf(state, "p2", 1))).toBe(true); // the V, by Klefki
   });
 
-  it("🛑 a MUTUAL pair (Klefki vs Flutter Mane, D559 §7) is a cycle: both stay ON", () => {
+  it("a MUTUAL pair (Klefki vs Flutter Mane, D559 §7) is a cycle: both stay ON", () => {
     const state = table({ p1: KLEFKI, p1Bench: [FILLER], p2: FLUTTER, p2Bench: [FILLER] });
     const locked = disabledAbilityUids(state);
     expect(locked.has(uidOf(state, "p1"))).toBe(true); // Flutter Mane's lock on Klefki
@@ -576,7 +544,7 @@ describe("D571 §2 — Initialization's aura, and R-LK2: the stratified lock pas
     expect(locked.has(uidOf(state, "p2", 0))).toBe(true);
   });
 
-  it("🛑 a lock DOWNSTREAM of a cycle is settled by it (the D571 review's board): Ting-Lu ex vs a damaged Flutter Mane is a source cycle — both ON — so Cursed Land switches a damaged benched Gastrodon OFF and Sticky Bind locks nothing", () => {
+  it("a lock DOWNSTREAM of a cycle is settled by it (the D571 review's board): Ting-Lu ex vs a damaged Flutter Mane is a source cycle — both ON — so Cursed Land switches a damaged benched Gastrodon OFF and Sticky Bind locks nothing", () => {
     // TEST SURGERY — the benched filler re-labelled `fix-stage2` (Sticky Bind's target; the
     // deck holds none, so the game's pool is given its card too — `topCardOf` reads the pool).
     const relabel = (s0: GameState): GameState => ({
@@ -660,7 +628,7 @@ describe("D571 §3 — Initialization through the §9 gates: a passive, an activ
 describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard them, shuffle the rest", () => {
   const armed = (s: GameState) => energize(s, "p1", "active", [L, C]);
 
-  it("🛑 three Future cards in the top 5 (two Pokémon and a TRAINER): 210, the three discarded, the deck shuffled", () => {
+  it("three Future cards in the top 5 (two Pokémon and a TRAINER): 210, the three discarded, the deck shuffled", () => {
     let state = armed(table({ p1: THORNS[0] }));
     // The 6th card is FUTURE too — the window is 5, so it is neither counted nor discarded.
     state = stackTop(state, "p1", [THORNS_EX[0], FILLER, POD, GUIDANCE, THORNS[0], THORNS_EX[0]]);
@@ -679,7 +647,6 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     );
     // the 6th card (a Future Iron Thorns ex) stayed in the deck
     expect(done.players.p1.deck).toContain(before[5]);
-    // R-DP1: the discard and the shuffle land BEFORE the damage
     const order = events
       .map((e) => e.type)
       .filter((t) => ["DECK_TOP_DISCARDED", "SHUFFLE", "DAMAGE_DEALT"].includes(t));
@@ -715,7 +682,7 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     expect(ids(done, done.players.p1.discard.slice(-2))).toEqual([POD, THORNS_EX[0]]);
   });
 
-  it("🛑 the op files `recordAs` ALWAYS — an EMPTY deck overwrites a stale slot with `[]` (the overwrite rule)", () => {
+  it("the op files `recordAs` ALWAYS — an EMPTY deck overwrites a stale slot with `[]` (the overwrite rule)", () => {
     const state = deckExactly(table({ p1: THORNS[0] }), "p1", []);
     const record: EffectRecord = { discarded: ["stale-a", "stale-b"] };
     const events: GameEvent[] = [];
@@ -763,12 +730,6 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
   });
 });
 
-// ────────────────────────────────────────────────────────────────────────────
-// 🆕 Card revision B55 — the printed *"Reveal the top 5 cards of your deck"* was never shown: the op
-// emitted only the DECK_TOP_DISCARDED row for the Future cards and the SHUFFLE, so the opponent never
-// saw the window that set the damage, and a whiff logged only "shuffled their deck". It now names the
-// whole window on one public DECK_TOP_REVEALED { dest: "deck", reveal: true } row (Bug Out's B45
-// row, top end) before anything moves — the empty deck too (D241).
 describe("D571 §4b — Destructo-Press names every revealed card to both players (card revision B55)", () => {
   const armed = (s: GameState) => energize(s, "p1", "active", [L, C]);
   const line = (events: GameEvent[], state: GameState): string[] => {
@@ -783,7 +744,7 @@ describe("D571 §4b — Destructo-Press names every revealed card to both player
   };
   const name = (id: string) => POOL[id]?.name as string;
 
-  it("🛑 the whole top-5 window is one public reveal row, in deck order, before the discard and the shuffle", () => {
+  it("the whole top-5 window is one public reveal row, in deck order, before the discard and the shuffle", () => {
     let state = armed(table({ p1: THORNS[0] }));
     state = stackTop(state, "p1", [THORNS_EX[0], FILLER, POD, GUIDANCE, THORNS[0], THORNS_EX[0]]);
     const top5 = state.players.p1.deck.slice(0, 5);
@@ -800,7 +761,7 @@ describe("D571 §4b — Destructo-Press names every revealed card to both player
     );
   });
 
-  it("🛑 a whiff (no Future card) still shows the window, then only the shuffle", () => {
+  it("a whiff (no Future card) still shows the window, then only the shuffle", () => {
     let state = armed(table({ p1: THORNS[0] }));
     state = stackTop(state, "p1", [FILLER, GUIDANCE, C, FILLER, L, THORNS_EX[0]]);
     const top5 = state.players.p1.deck.slice(0, 5);
@@ -862,7 +823,7 @@ describe("D571 §5 — Ignition Energy", () => {
     ]);
   });
 
-  it("🛑 is discarded at the end of its OWNER's turn — every body, Active then Bench — and nothing else moves", () => {
+  it("is discarded at the end of its OWNER's turn — every body, Active then Bench — and nothing else moves", () => {
     let state = table({ p1: FILLER, p1Bench: [FILLER] });
     state = energize(state, "p1", "active", [IGNITION, C]);
     state = energize(state, "p1", 0, [IGNITION]);
@@ -890,12 +851,11 @@ describe("D571 §5 — Ignition Energy", () => {
     expect(bodyAt(done, "p1").energy).toEqual([kept]);
     expect(bodyAt(done, "p1", 0).energy).toEqual([]);
     expect(done.players.p1.discard).toEqual(ign);
-    // R-IG1: paid inside the `endTurn` stage, before TURN_ENDED.
     const types = events.map((e) => e.type);
     expect(types.indexOf("ENERGY_DISCARDED")).toBeLessThan(types.indexOf("TURN_ENDED"));
   });
 
-  it("🛑 the OPPONENT's Ignition stays put when your turn ends — and goes when THEIR turn does", () => {
+  it("the OPPONENT's Ignition stays put when your turn ends — and goes when THEIR turn does", () => {
     let state = table({ p1: FILLER, p2: FILLER });
     state = energize(state, "p2", "active", [IGNITION]);
     const ign = bodyAt(state, "p2").energy[0] as string;

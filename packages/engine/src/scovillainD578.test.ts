@@ -4,23 +4,11 @@ import { matchesFilter, topCardOf } from "./cards";
 import { effectiveTypesOf, inPlayCardOf, preventsAttackerType } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds, runProgram } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf } from "./testFixtures";
+import { FIXTURE_POOL, battler, deckOf, must, mustApply as run } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D578 — SCOVILLAIN ex `sv08-037` / `sv08-216` "DOUBLE TYPE" ──
-//
-// *"As long as this Pokémon is in play, it is {G} and {R} type."* ONE passive key,
-// `PassiveEffects.typesInPlay` (`["Grass", "Fire"]`), read by ONE function, continuous.ts
-// `inPlayCardOf` — the in-play view of the TOP card every in-play type read now resolves
-// through. A §9 lock hands back the printed {R}; the hand, deck and discard stay printed.
-// The Watchtower's {C} read stays PRINTED (R-WT1, annotated), exact because no retype names {C}.
-//
-// The Scovillain ex here is a LOCAL face on the real id: its printed card (types, HP, Weakness,
-// "Spicy Rage") plus a test-only second attack "Test Strike" ({}, 50) so the §8.5 arithmetic is
-// readable. The defenders are local bodies with the Weakness / Resistance each rung needs.
 
 const SCOVILLAIN = "sv08-037";
 const SCOVILLAIN_ALT = "sv08-216";
@@ -122,18 +110,6 @@ const DECK = deckOf({
   [FILLER]: 28,
   "fix-energy": 20,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -411,9 +387,7 @@ describe("D578 Scovillain §6 — R-WT1: the Watchtower's {C} read stays PRINTED
   const HOLDER_PRINTED_TYPES: Record<string, readonly string[]> = {
     "sv08-037": ["Fire"],
     "sv08-216": ["Fire"],
-    // 🆕🆕🆕 D580 — Iron Treads "Dual Core" ({F}{M} while a Future Booster Energy Capsule is attached).
     "sv05-118": ["Metal"],
-    // 🆕🆕🆕 D586 — Carbink "Double Type" ({F}{P}), LOCAL D1 `types_json` ["Fighting"].
     "me02.5-117": ["Fighting"],
     "me02.5-242": ["Fighting"],
   };

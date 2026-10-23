@@ -26,28 +26,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.433.0 → 0.434.0 — D549 (A), THE COST TAX:
-//
-//   "During your opponent's next turn, attacks used by the Defending Pokémon cost {C}
-//    more, and its Retreat Cost is {C} more."
-//
-// `censusAttackCorpus.ts` FILE LINE 171 (leading count column 1): 1 sentence / 1 legal
-// printing — census class SUBST-19 at SUBMAX=12 before this slice. Claimed WHOLE by
-// `deriveAttackEffect` through ONE new anchor (`DEFENDER_COSTS_TAXED`, one `['’]` slot,
-// `{C}` escaped, no capture) and ONE new arm (26f) emitting ONE new nullary op,
-// `taxDefender`. The installer stamps `InPlayPokemon.costTaxTurn = T+1` on the
-// OPPONENT's Active; ONE reader, `installedCostTaxOf`, is folded at BOTH cost seams
-// (`effectiveAttackCost`'s `added`, `effectiveRetreatCost`'s sum).
-//
-// ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID PRINTS THE SENTENCE ON THIS CHECKOUT, AND THAT
-// WAS MEASURED (D425, `git grep`). Every board rides file-local DECLARED `d549-*`
-// demonstrators in their OWN 60-card deck (D270); the real card is UNMEASURED.
-//
-// Sections: §1 the derivation · §2 the install · §3 the window, on both costs · §4 the
-// free-retreat tier keeps precedence (R3) · §5 the retreat-COUNTING reads inherit it ·
-// §6 the §10 clears · §7 §11 · §8 idempotence · §9 the projections · §10 the log ·
-// §11 the v33 bytes and the v32 reject.
-
 const S171 =
   "During your opponent's next turn, attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.";
 const P171: readonly EffectOp[] = [{ op: "taxDefender" }];
@@ -114,7 +92,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "d549-taxer": 4,
   "d549-victim": 4,
@@ -262,7 +239,7 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       return (read?.(S171) ?? null) !== null;
     });
     expect(claimants).toEqual(["deriveAttackEffect"]);
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the ONE apostrophe slot is U+0027 in the corpus, and the U+2019 twin derives the same op", () => {
@@ -278,7 +255,6 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       S171.replace("Retreat Cost is {C} more", "Retreat Cost is {C} less"),
       S171.replace(", and its Retreat Cost is {C} more", ""),
       S171.replace("{C}", "C"),
-      // …and the anchor is `^…$`: a sentence in front of it or behind it is not this row.
       `Draw a card. ${S171}`,
       `${S171} Draw a card.`,
     ];
@@ -307,7 +283,6 @@ describe("§2 — the install stamps `T+1` on the DEFENDER", () => {
       seat: "p2",
       uid: activeUid(start, "p2"),
     });
-    // …and NOT an ATTACK_LOCKED row: the body is not locked (D421).
     expect(find(events, "ATTACK_LOCKED")).toBeUndefined();
   });
 
@@ -334,7 +309,7 @@ describe("§3 — dead before, live on T+1, dead after — on the attack cost AN
     expect(installedCostTaxOf(after, body(after.players.p2.active))).toBe(0);
   });
 
-  it("🛑 the attack cost: {C} becomes {C}{C}, so one Energy cannot pay Jab — and two can", () => {
+  it("the attack cost: {C} becomes {C}{C}, so one Energy cannot pay Jab — and two can", () => {
     const window = installed().state;
     const victim = body(window.players.p2.active);
     expect(effectiveAttackCost(window, victim, ["Colorless"])).toEqual(["Colorless", "Colorless"]);
@@ -344,7 +319,7 @@ describe("§3 — dead before, live on T+1, dead after — on the attack cost AN
     expect(refusal(paid, "p2", JAB)).toBeNull();
   });
 
-  it("🛑 the Retreat Cost: 1 becomes 2 — one Energy is a mismatch, two retreat", () => {
+  it("the Retreat Cost: 1 becomes 2 — one Energy is a mismatch, two retreat", () => {
     const window = installed().state;
     const victim = body(window.players.p2.active);
     expect(effectiveRetreatCost(window, victim)).toBe(2);
@@ -411,10 +386,6 @@ describe("§4 — R3: a free-retreat effect still zeroes the taxed Retreat Cost"
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — both retreat-counting reads see the TAXED Retreat Cost (constructed)", () => {
-  // CONSTRUCTED: the tax's window is the HOLDER's own turn, and these reads are made by
-  // the holder's OPPONENT when it attacks — so no played line puts the two together.
-  // The rung pins that the reads go through `effectiveRetreatCost` and therefore
-  // inherit the term with no byte of their own (R3).
   it("`attack.ts`'s per-{C} count and the interpreter's {C}{C}-or-more condition both move", () => {
     const start = ready();
     const taxed = withP2Active(start, { costTaxTurn: start.turn });
@@ -597,7 +568,7 @@ describe("§10 — the install row names both costs, in the victim's voice", () 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the version moved (D549)", () => {
-  it("🛑 v33: the stamp is in the serialized state, and a JSON round-trip still taxes", () => {
+  it("v33: the stamp is in the serialized state, and a JSON round-trip still taxes", () => {
     const window = installed().state;
     const bytes = JSON.stringify(window);
     expect(bytes.includes('"costTaxTurn":4')).toBe(true);
@@ -605,18 +576,16 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
     expect(refusal(revived, "p2", JAB)).toBe("ATTACK_COST_UNMET");
   });
 
-  it("⚠️ a v32-shaped BODY (the key genuinely ABSENT) reads the tax as 0 — the silent soft landing", () => {
+  it("a v32-shaped BODY (the key genuinely ABSENT) reads the tax as 0 — the silent soft landing", () => {
     const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
     delete target.costTaxTurn;
     expect("costTaxTurn" in target).toBe(false);
-    // `undefined === 4` is false: the printed surcharge silently never lands (D124's
-    // plausible wrong board) — one of the two reasons the version moved.
     expect(installedCostTaxOf(revived, body(revived.players.p2.active))).toBe(0);
   });
 
-  it("🛑 a v32-shaped STATE (no `sideAttackLock` on either side) THROWS on the declaration and the projection", () => {
+  it("a v32-shaped STATE (no `sideAttackLock` on either side) THROWS on the declaration and the projection", () => {
     const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;

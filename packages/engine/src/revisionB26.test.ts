@@ -21,30 +21,9 @@ import {
 } from "./testFixtures";
 import { koedDuringOpponentsLastTurn, koedMarksOnOpponentsLastTurn } from "./types";
 
-// ── CARD REVISION, BATCH B26 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B26"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.attacks_json` / `abilities_json` / `effect`, byte for byte below):
-//
-//   *"If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last
-//   turn, this attack does N more damage."* — Umbreon "Retaliate" `30th-091` (+100), Koraidon ex
-//   "Orichalcum Fang" `me02.5-121` (+120), Krookodile "Vengeful Fang" `me02-066` (+160), Iron Leaves
-//   "Avenging Edge" `sv06-019` (+60), Terrakion "Retaliate" `sv10.5w-054` / `-135` (+80), Tropius /
-//   Revavroom "Rally Back" `30th-005` / `sv06-125` (+90), Alolan Marowak "Retaliate" `sv09-057` (+90).
-//
-// THE BUG. `knockOut` (flow.ts) keeps ONE stamp per seat, and a Knock Out of the seat's OWN Pokémon on
-// its OWN turn (Dusclops `sv06.5-019` "Cursed Blast", the self-KO Dragapult decks run) overwrote the
-// opponent's-last-turn stamp and restarted the marks — so every revenge attack, and the bare gate
-// (Unfair Stamp `sv06-165`, Fezandipiti ex "Flip the Script" `sv06.5-038`), forgot the Knock Out the
-// opponent scored a turn earlier. The window the printed sentence asks about belongs to the opponent's
-// turn, so a Knock Out on the seat's own turn is not part of it and is no longer stamped.
-
 const REVENGE = (n: number) =>
   `If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does ${n} more damage.`;
 
-/** Every printing of the family, at its PRINTED attack index with its printed name, damage and
-    effect. Costs are a single {C} (the cost is not the claim, the bonus is). */
 const HOLDERS = [
   { id: "30th-091", name: "Umbreon", index: 0, attack: "Retaliate", base: 30, extra: 100 },
   {
@@ -242,8 +221,6 @@ describe("B26 — a self-Knock-Out on your own turn does not erase your opponent
       const board = revengeBoard(h.id);
       // The control: the opponent's attack Knock Out alone opens the window.
       expect(dealt(board, h.index)).toBe(h.base + h.extra);
-      // 🛑 The finding: P1's own Dusclops Knocked Out on P1's own turn first. The opponent's last turn
-      // is unchanged, so the printed condition still holds.
       const blasted = cursedBlast(board);
       expect(conditionHolds(blasted, "p1", BY_ATTACK)).toBe(true);
       expect(dealt(blasted, h.index)).toBe(h.base + h.extra);

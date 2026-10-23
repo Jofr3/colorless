@@ -37,62 +37,6 @@ import {
   types,
 } from "./testFixtures";
 
-// D199 — THE SECOND REGISTRY-ONLY SWEEP, and the first whose candidate list was
-// DERIVED rather than inherited.
-//
-// ⚠️ WHY THIS TIER MATTERS OUT OF ALL PROPORTION TO ITS SIZE.
-// `docs/reference/coverage-backlog-legal.md` (D187): of the **651 Standard-legal
-// Ability / Trainer / Special-Energy printings**, exactly **6 were built — 0.9 %**.
-// Attack text is 806-of-1,732 built because a deriver ARM is a text parser and its
-// sentences transfer across sets. Abilities and Trainers have **no deriver at
-// all** — each one is a hand-authored registry row, forever, keyed by card id —
-// and 172 of the registry's 178 pre-D190 ids are rotated out of Standard. D190
-// took that census's list of 7 candidates, built 3 and dropped 4, and exhausted
-// it.
-//
-// THIS SLICE RE-CENSUSED THE WHOLE 651 against the remote D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, of which 2,021
-// carry `legal_standard = 1`) on 2026-08-04: every distinct sentence in
-// `abilities_json` and in `effect`, grouped by text, ranked by legal printings,
-// and each asked ONE question — does it map onto ops that ALREADY EXIST, with no
-// new op, no new field, no new `CardFilter` kind, and no change to any engine
-// file but `registry.ts`?
-//
-// ⚠️⚠️ **THE ANSWER IS 28 PROGRAMS / 47 PRINTINGS — 7.2 % OF THE 651 — AND THE
-// OTHER ~604 ARE OP-BOUND RATHER THAN AUTHORING-BOUND.** That is the finding, and
-// `DROPPED` below is worth more than `LANDED`: it names the cheapest twenty of
-// them WITH THE EXACT MISSING PIECE, which is a ranked work order for the engine
-// changes that unlock the next tranche. Every `DROPPED` id is asserted to still
-// have NO program, so the list cannot rot into prose.
-//
-// 🛑 **D349 — THE "NO CHANGE TO ANY ENGINE FILE BUT `registry.ts`" CLAUSE ABOVE
-// STOPPED DESCRIBING `LANDED` AT D340, AND THIS IS THE FIRST TIME ANYONE HAS
-// WRITTEN THAT DOWN.** Measured, not argued: "Freezing Shroud" (D340) shipped with
-// the new `EffectOp` `counterEachAll`, and both "Cursed Blast" rows (D345) shipped
-// with `knockOutSelf` — all three are rows in the table below. The paragraph is a
-// faithful record of what the D199 SWEEP asked of its own seven candidates; it is
-// not, and has not been for nine slices, the membership rule of this table, which
-// is simply *the non-attack registry programs that landed*. **RECORDED AS SPENT
-// RATHER THAN REWRITTEN**: the sweep's question was real and its answer (28
-// programs / 47 printings, 7.2 %) is the finding this block exists for.
-//
-// ⚠️ THE DOCTRINE IS D190's, UNCHANGED: *EXACT MAP OR FLAG*. A registry row has
-// no deriver behind it to refuse a sentence it cannot parse — whatever is
-// authored IS what the card does, forever. An unauthored Ability at least
-// surfaces loudly; a wrong-but-plausible one does not.
-
-/** The programs that LANDED, with their MEASURED legal printing counts. Every id
-    was re-queried on 2026-08-04: each group returned `legal_standard = 1` on every
-    id, exactly ONE distinct printed sentence, and exactly ONE card name.
-
-    ⚠️ **THE LENGTH IS DELIBERATELY NOT WRITTEN IN THIS SENTENCE ANY MORE (D334).**
-    D269 corrected it from "35" to 38 and the count rotted again within eleven
-    slices — it read "41" against an array of 45 — because the ASSERTION below is
-    the thing that reddens and prose is not. **A COUNT IN A COMMENT IS A COUNT THAT
-    WILL BE WRONG**; the two `expect` calls at the foot of this file are the only
-    honest place for one, and they are re-added from the rows rather than
-    incremented. Each row's `ids` were re-queried against the remote D1 `colorless`
-    on the day the row landed, by the rule this block states. */
 const LANDED = [
   {
     program: "Inviting Wink (Lillie's Ribombee)",
@@ -453,13 +397,6 @@ const LANDED = [
   },
   {
     program: "Freezing Shroud (Froslass)",
-    // 🛑 NO SHARED-POOL DEMONSTRATOR, AND THAT IS A CENSUS DECISION RATHER THAN A
-    // TIDINESS ONE. `freezingShroud.test.ts` drives all three real ids on a LOCAL
-    // `cardPool` (D275's idiom, D338's and D339's practice), so nothing enters
-    // `FIXTURE_POOL`; neither `sv06` nor `svp` is among `catalogManifest`'s six
-    // sets, so a shared body would have owed a `fix-froslass` key AND reddened
-    // `revealClause`'s `swept.size` — exactly what D335's `fix-drakloak`, also a
-    // POKEMON and also `sv06`, had to pay. THE KEY IS THE SET, NOT THE SURFACE.
     fixture: null,
     ids: ["sv06-053", "sv06-174", "svp-117"],
     legal: 3,
@@ -467,11 +404,6 @@ const LANDED = [
   },
   {
     program: "Cursed Blast (Dusclops)",
-    // NO SHARED-POOL DEMONSTRATOR, for D340's reason at a NEW split:
-    // `cursedBlast.test.ts` drives all six real ids on a LOCAL `cardPool`, and
-    // `sv08.5` is not among `catalogManifest`'s six sets while `sv06.5` IS — so
-    // FOUR of these six could have gone in the shared pool and two could not.
-    // **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.**
     fixture: null,
     ids: ["sv06.5-019", "sv06.5-069", "sv08.5-036"],
     legal: 3,
@@ -486,11 +418,6 @@ const LANDED = [
   },
   {
     program: "Overvolt Discharge (Magneton)",
-    // NO SHARED-POOL DEMONSTRATOR, D275's idiom: `overvoltDischarge.test.ts` drives
-    // all three real ids on a LOCAL `cardPool` and ASSERTS, id by id, that nothing it
-    // defines reached `FIXTURE_POOL`. Neither `svp` nor `sv08` is among
-    // `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-*`
-    // key — this row is fully INadmissible where D345's was half-admissible.
     fixture: null,
     ids: ["svp-153", "svp-159", "sv08-059"],
     legal: 3,
@@ -498,11 +425,6 @@ const LANDED = [
   },
   {
     program: "Buzzing Boost (Yanmega ex)",
-    // NO SHARED-POOL DEMONSTRATOR, D275's idiom for the second slice running:
-    // `buzzingBoost.test.ts` drives all three real ids on a LOCAL `cardPool` and its
-    // §7 ASSERTS, id by id, that nothing it defines reached `FIXTURE_POOL`. `sv10` is
-    // not among `catalogManifest`'s six sets, so a shared-pool body would have owed a
-    // `fix-*` key.
     fixture: null,
     ids: ["sv10-003", "sv10-206", "sv10-228"],
     legal: 3,
@@ -510,11 +432,6 @@ const LANDED = [
   },
   {
     program: "Glittering Star Pattern (Ledian)",
-    // NO SHARED-POOL DEMONSTRATOR, D275's idiom for the third slice running:
-    // `remainingHpWindow.test.ts` drives all three real ids on a LOCAL `cardPool`
-    // and its §6 ASSERTS, id by id, that nothing it defines reached `FIXTURE_POOL`.
-    // Neither `svp` nor `sv07` is among `catalogManifest`'s six sets, so a
-    // shared-pool body would have owed a `fix-*` key AND joined two censuses.
     fixture: null,
     ids: ["svp-133", "sv07-003", "sv07-144"],
     legal: 3,
@@ -522,11 +439,6 @@ const LANDED = [
   },
   {
     program: "Bianca's Devotion",
-    // NO SHARED-POOL DEMONSTRATOR — and THIS is the row where that was a decision
-    // rather than a habit, because a SUPPORTER has to be played out of a hand and
-    // the reflex is to pool it. `deductionKit.test.ts` (D344) is the precedent: a
-    // LOCAL `cardPool` carrying the REAL id is strictly stronger, since there is no
-    // second body that could drift from the one the printings resolve to.
     fixture: null,
     ids: ["sv05-142", "sv05-197", "sv05-209"],
     legal: 3,
@@ -534,564 +446,7 @@ const LANDED = [
   },
 ] as const;
 
-// 🆕 **D340 — `fixture` IS NULLABLE AS OF THIS ROW, AND THE NULL IS THE POINT.**
-// Every row above names a `fix-*` body because its suite plays the card off the
-// SHARED `FIXTURE_POOL`. The three slices before this one (D338, D339, D340) drove
-// their real catalog ids on a LOCAL `cardPool` instead, which is what has kept
-// `raw.length`'s two lines 0 apart and `swept.size` at 27 for three sessions
-// running. 🛑 **D343: THE SECOND CONJUNCT IS RETIRED.** `revealClause`'s sweep
-// reads `registryCardIds()` ∪ the pool now and `swept.size` is **103**; the
-// LOCAL-pool idiom still keeps `raw.length`'s two lines 0 apart, and it no
-// longer keeps anything out of that sweep. Spelling that as `null` rather than inventing an unused `fix-*` string
-// keeps this column HONEST: it records what the suite actually seats, and a reader
-// can tell the two idioms apart without opening the suite.
-
-// ⚠️ **RIKA `sv04-172`/`-241`/`-258` IS BUILT AND IS DELIBERATELY NOT IN THE TABLE
-// ABOVE** (D335). It is `lookAtTopN{n 4, anyCard, max 2, exact,
-// restTo:"shuffledBottom"}`, the only printed consumer of the third leftovers
-// destination — and all three of its printings are `legal_standard = 0`, so it
-// cannot have a row here: every row asserts `ids.length === legal`, and this table
-// is the STANDARD-LEGAL registry map by construction. Hydreigon `sv02-140`
-// ("Tri Howl", `attachFromTop.restTo: "discard"` — 🆕 D352, was `discardRest`) has been
-// out of it since M5 for the same
-// reason. **A registry row and a LANDED row are not the same population**, which is
-// the D187 distinction one table down from where it is usually made.
-
-/** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
-    vocabulary CANNOT spell, each with the printings it would buy and THE EXACT
-    PIECE OF ENGINE IT NEEDS. Ranked by legal printings. Every `id` is asserted
-    below to still have NO program, so a later slice cannot silently half-build
-    one and leave this table lying. */
-const DROPPED: { sentence: string; ids: string[]; legal: number; needs: string }[] = [
-  // 🆕🆕🆕 **D570 — THE FESTIVAL LEAD ROW LEFT `DROPPED`: BUILT, AND THE LIST IS NOW EMPTY.**
-  // *"If Festival Grounds is in play, this Pokémon may use an attack it has twice…"* (Dipplin
-  // `sv06-018`/`-170`/`sv08.5-010`, Goldeen `sv06-044`/`sv08.5-020`, Swirlix `sv06-089`, Seaking
-  // `sv08.5-021` — 7 legal) is `FESTIVAL_LEAD`: `PassiveEffects.attackTwiceIf` on
-  // `stadiumInPlayNamed "Festival Grounds"`, the window `TurnAllowances.attackAgainUid`. Its
-  // `needs` string read: *"an ATTACK-AGAIN mechanism. §5.3 makes an attack end the turn
-  // unconditionally (turn.ts seeds the turn tail from attack.ts's epilogue); there is no state for
-  // 'this seat may declare a second attack', no `CardProgram` field to request one, and the
-  // printed gate is a named STADIUM in play, which no `BoardCondition` member expresses either.
-  // Two absences, and the bigger one is the turn machine."* (D539) Its STADIUM half was WITHDRAWN
-  // at D564 (`stadiumInPlayNamed`, effects.ts) and nobody re-priced the row; its turn-machine half
-  // was RIGHT and is what D570 built (flow.ts `finishAttack`'s window, turn.ts `turnGate`, the
-  // attack.ts re-read). "§5.3 makes an attack end the turn unconditionally" is WITHDRAWN: it does
-  // except under Festival Lead. The row is removed rather than kept, because this list asserts
-  // UNBUILT. `DROPPED` is now 0 (see the guard below, which now asserts the graduation).
-  // ✅ D208 BUILT THIS ROW — "If this Pokémon has full HP and would be Knocked Out
-  // by damage from an attack, it is not Knocked Out, and its remaining HP becomes
-  // 10." (Pikachu ex "Resolute Heart" sv08-057/-219/-238/-247, sv08.5-179; Crustle
-  // "Sturdy" sv10.5b-052/-130 — 7 printings, 7 Standard-legal, ONE sentence under
-  // TWO Ability names). The row is REMOVED rather than annotated in place, because
-  // the assertion below is what keeps this list honest and a built row would make
-  // it fail — D204's and D207's precedent. `DROPPED` is now 17.
-  //
-  // ⚠️ THE `needs` STRING WAS HALF RIGHT AND THE WRONG HALF WAS THE PLACEMENT, which
-  // is the part worth keeping. It correctly said no existing prevention fits: every
-  // one of them bites INSIDE the §8.5 pipeline, before the number lands, and this
-  // sentence lets the damage land. It then concluded the hook belonged on the KO
-  // SWEEP (flow.ts `collectKnockOuts`), and that is exactly where it cannot go. The
-  // antecedent is "has FULL HP" — a fact about the PRE-damage board — and
-  // `isLethallyDamaged`, the sweep's own and only lethality test, reads
-  // `pokemon.damage` AFTER the hit is already in it. By the time any sweep, any of
-  // the four KO/post-KO detection sites, or `onKoPrizeGuard` runs, the datum the
-  // sentence turns on has been destroyed. So it is neither a pipeline prevention nor
-  // a sweep hook: it is a CLAMP AT THE DAMAGE WRITE (continuous.ts
-  // `koSurvivalClamp`, called from the four sites that emit DAMAGE_DEALT), which is
-  // the one place the pre-hit value is still in scope. It cost ONE `PassiveEffects`
-  // flag, one shared helper and four call sites, and NO new detection site — D171
-  // bought the fourth at a high price and this slice deliberately bought none.
-  // 🆕🆕🆕 **D569 — THE IRON CROWN EX ROW LEFT `DROPPED`: BUILT.** Iron Crown ex
-  // `sv05-081`/`-191`/`-206`/`-216`, `sv08.5-158`, `svp-146` "Cobalt Command" (6 legal) is
-  // `COBALT_COMMAND` — `seatDamageBonusBeforeWR { 20, beneficiary: bannerPokemon Future,
-  // exceptName: "Iron Crown ex" }`. Its `needs` string (re-priced at D330) was RIGHT that the aura
-  // half was already built and that the blocker was the Future SUBGROUP; it was wrong that the fix
-  // had to be a catalog column: an ENGINE table keyed by printing id (`banners.ts`) supplied the
-  // banner (the ingest still drops it — TRUE), and the exclusion cost one optional key. The row is
-  // removed rather than kept, because this list asserts UNBUILT. `DROPPED` is now 1.
-  // 🛑🛑 **THE BLOOD MOON ROW LIVED HERE FROM D199 UNTIL D242, AND ITS DECLINE WAS
-  // WRONG ON THE FACTS.** It read: *"an ATTACK-NAME gate on
-  // `attackCostDiscountPerOpponentPrize`. … Authoring the ungated field would
-  // discount the card's OTHER ATTACK too — a silent behavioural bug on a common
-  // line."* The grammar half is right and is still recorded (registry.ts
-  // `SEASONED_SKILL`, as a flagged assumption). **The CARD half was never checked:
-  // Bloodmoon Ursaluna ex has exactly ONE attack, and it is named Blood Moon —
-  // on all six printings** (`json_array_length(attacks_json) = 1`, remote D1,
-  // 2026-08-06). There is no other attack for the ungated field to reach, so the
-  // bug it feared is UNREACHABLE on every printing in the legal pool.
-  // 🆕 **A DECLINE IS A CLAIM TOO, AND IT ROTS THE SAME WAY A COUNT DOES.** This
-  // table exists so a `needs` string cannot rot into prose — and this row proves
-  // the guard has to cover the REASON as well as the ids: it stayed correct-looking
-  // for 43 decisions while resting on a fact about a card nobody had queried.
-  // BUILT at D242; the flagged assumption and its alarm are in
-  // `abilityAttackGate.test.ts`.
-  // ✅ **D244 BUILT THIS ROW** — Iron Leaves ex "Rapid Vernier" (`svp-128`,
-  // `sv05-025`/`-186`/`-203`/`-213`, `sv08.5-176`; 6 legal printings on one
-  // sentence, backlog row 14-R). REMOVED rather than annotated in place, for the
-  // reason the assertion below exists and D204/D207/D208/D242 each paid: a built
-  // row would make this list fail.
-  //
-  // 🆕 **AND ITS `needs` STRING WAS RIGHT ON ALL THREE COUNTS — THE FIRST ROW IN
-  // THIS TABLE TO SURVIVE BEING BUILT WITHOUT A CORRECTION.** It asked for (1) a
-  // switch naming the body the trigger fired on, (2) `moveEnergy` off its
-  // single-source coupling, (3) a destination pinned to the source uid. What
-  // shipped is exactly that: `switchActive.fromSource`, `anySource` at its second
-  // route, and `moveEnergy.route: "othersToSelf"` resolving BOTH ends through
-  // `sourceRef`. The one thing it did not price is the fourth piece — "any
-  // amount" needed `max: number | "any"` — and a fourth piece it never claimed to
-  // enumerate is not the same defect as the three previous rows' wrong ones.
-  // ⚠️ **THE CONTRAST WORTH KEEPING IS WITH THE BLOOD MOON ROW ABOVE**: that one
-  // was wrong about a CARD, this one was right about the CODE, and both were
-  // written by the same pass. **A `needs` string is a claim about the engine and a
-  // decline is a claim about the card, and they rot independently.**
-  //
-  // ⚠️ **IT ALSO UNDER-COUNTED ITS OWN FAMILY, WHICH THIS TABLE CANNOT SEE.** The
-  // ids are the row's; the op field ships SEVEN legal printings because
-  // Meowscarada `sv09-018` prints the same pronoun clause as an ACTIVATED Ability.
-  // This table is keyed by SENTENCE, so a sibling sentence is invisible to it —
-  // `censusAtHead.test.ts`'s `BENCH_SWITCH_FAMILY` is where that is driven.
-  // ✅ D251 BUILT THIS ROW — Cornerstone Mask Ogerpon ex "Cornerstone Stance"
-  // (`sv06-112`/`-199`/`-215`, `sv08.5-058`/`-160`, 5 legal printings on ONE
-  // sentence). REMOVED rather than annotated in place, D204's precedent: the
-  // assertion below is what keeps this list honest and a built row would fail it.
-  //
-  // 🆕 **AND ITS `needs` STRING WAS RIGHT ON EVERY COUNT INCLUDING THE FIELD NAME
-  // — THE SECOND ROW IN THIS TABLE TO SURVIVE BEING BUILT WITHOUT A CORRECTION,
-  // AND THE FIRST TO BE RIGHT ABOUT A NUMBER THE SESSION HANDOFF GOT WRONG.** It
-  // asked for (1) a `preventDamageFromHasAbility` sibling of
-  // `preventDamageFromType` — shipped under that exact name, (2) "resolved at the
-  // FOUR read sites" — there are four (attack.ts's main hit, interpreter.ts's
-  // spread, `deals` and snipe arms) and the handoff that sent the slice here
-  // predicted ONE, (3) "the attacker's card has a non-empty `abilities`" — that is
-  // `cards.ts hasPrintedAbility` verbatim, and (4) Tier 2 for being a new field.
-  // ⚠️ **THE TRANSFERABLE PART IS THE PRECEDENCE ORDER.** A row's own prescribed
-  // REMEDY is written against the code by whoever last read the code; a handoff's
-  // price is written against a memory of it. When the two disagree, READ THE ROW.
-  // ✅ D204 BUILT THIS ROW — Iono's Bellibolt ex "Electric Streamer" (svp-194,
-  // sv09-053/-172/-183/-188, 5 legal printings), the item this list called **THE
-  // SINGLE HIGHEST-VALUE MISSING PIECE IN THE WHOLE CENSUS**. It needed TWO
-  // slices, not one, and the split is the interesting part: D200 landed the CARD
-  // predicate (`CardFilter.ownerPokemon`) and could not reach this sentence with
-  // it, because no op took a predicate for an IN-PLAY TARGET; D204 added the
-  // rider (`AttachTargetRiders.ownerPokemon`) that does. The row is REMOVED
-  // rather than left with a note, because the assertion below is what keeps this
-  // list honest and a built row would make it fail. `DROPPED` is now 19.
-  // ✅ **D327 BUILT THIS ROW** — "Food Prep": Crabominable `svp-134`/`sv07-042`/
-  // `-149` AND **Veluza `sv07-045`**, 4 legal printings on ONE byte-identical
-  // `abilities_json`. REMOVED rather than annotated in place, D204's precedent and
-  // the assertion below is what makes that the only honest option. `DROPPED` is now 4.
-  //
-  // 🛑 **ITS `needs` STRING WAS RIGHT ABOUT THE OBSTACLE, RIGHT ABOUT THE RULE IT
-  // CITED, AND DELIBERATELY UNDECIDED ABOUT THE ROAD — THE FIRST ROW IN THIS TABLE
-  // TO LEAVE A FORK OPEN AND HAVE BOTH PRONGS STILL BE LIVE WHEN IT WAS BUILT.**
-  // It priced the row at *"a second field or a parameterised one"* and named D162's
-  // rule for why. The slice took the FIRST prong —
-  // `attackCostDiscountPerNamedInDiscard: { name, amount }` — and the reason is one
-  // this row could not have known: `attackCostDiscountPerOpponentPrize` is read by
-  // THREE test files by name, and retyping it to `{ amount, scale }` would have
-  // bought this sentence nothing while making every existing reader carry a
-  // discriminant it never branches on (D135, from the other end). **A `needs`
-  // string that names a fork is worth more than one that names a road**, because
-  // the road is chosen against the code as it stands on the day, and this row's
-  // fork was still exactly the live choice 165 decisions later.
-  //
-  // ⚠️ **AND IT UNDER-COUNTED ITS OWN FAMILY IN A WAY THIS TABLE STRUCTURALLY
-  // CANNOT SEE — the same blindness the Rapid Vernier row above records, at the
-  // other end.** This table is keyed by SENTENCE. The ORTHOGONAL width (`%less for
-  // each%`, 12 legal, remote D1 `colorless` 2026-08-11) returns 6 built Bloodmoon
-  // Ursaluna ex + these 4 + **Incineroar ex `sv05-034`/`sv05-187` "Hustle Play"**,
-  // a sibling sentence on the SAME seam that was in no row of this table, no
-  // `needs` string and no session log — `git grep sv05-034 -- packages/` returned
-  // NOTHING AT ALL. It shipped in the same slice, and the whole `%less for each%`
-  // cost family is now 12 of 12 with an EMPTY residue.
-  // ✅ D249 BUILT THIS ROW — Hydrapple ex "Ripening Charge" (sv07-014/-156/-167,
-  // sv08.5-011, 4 legal printings). REMOVED rather than annotated in place: D204's
-  // precedent, and the assertion below is what makes that the only honest option.
-  //
-  // 🛑 AND ITS `needs` WAS RIGHT ABOUT THE OBSTACLE AND WRONG ABOUT THE ROAD —
-  // A FOURTH FAILURE MODE FOR A `needs` STRING, after the wrong CARD (Blood Moon),
-  // the ALREADY-BUILT piece (Lacey) and the piece built at a COARSER GRAIN
-  // (Metallic Signal). It priced the sentence at "`attachEnergyFrom.recordAs` AND
-  // a heal that reads the recorded TARGET", and the shipped program carries
-  // NEITHER: it is ONE op, `attachEnergyFrom { source:"hand", energyType:"Grass",
-  // healTarget: 30 }`, with no record and no gate. The observation the string was
-  // built on is exactly true — `EffectRecord` files card uids, not board refs, so
-  // a §9.2 gate genuinely cannot reach "that Pokémon" — but D236 had already drawn
-  // the opposite conclusion from the same fact and put the heal ON the op, as a
-  // rider applied to the `ref` the op already holds. 🆕 **AN OBSTACLE THAT IS
-  // REAL DOES NOT MAKE THE ROAD AROUND IT THE ONLY ONE, AND A `needs` STRING
-  // RECORDS THE ROAD.** `DROPPED` is now 13. See `ripeningCharge.test.ts`.
-  // ✅ D259 BUILT THIS ROW — Fraxure `sv06.5-045`/`-077` and Cetitan ex
-  // `sv10-065`/`-210` (4 legal printings), together with Rhyperior `sv07-076`
-  // "Wide Wall" (1 more, the Supporter-only seat spelling). REMOVED rather than
-  // annotated in place, D204's precedent, because the assertion below is what
-  // keeps this list honest and a built row would make it fail.
-  //
-  // ⚠️ AND THIS ROW'S `needs` WAS WRONG IN ITS LOAD-BEARING CLAUSE, WHICH IS THE
-  // PART WORTH KEEPING. It priced the sentence at "a read site PER TARGETING OP,
-  // which is why it is expensive and not a field" — and the shipped slice is ONE
-  // field, ONE scan and **TWO** read sites, because it did not add gates: it
-  // WIDENED the one funnel every effect op has consulted since D142
-  // (`attackEffectRefused`, renamed `effectRefused`). `applyStatus` was already on
-  // it and cost ZERO lines; only `gust` and `discardEnergy`'s candidate scan
-  // needed anything, and both took a filter rather than a guard.
-  //
-  // 🆕 **A `needs` STRING THAT SAYS "PER OP" IS A CLAIM ABOUT WHETHER A FUNNEL
-  // EXISTS, AND THAT IS A GREP AND NOT AN INTUITION.** The string was written
-  // before D142's funnel had eight callers; nobody re-read it afterwards. Two rows
-  // in a row have now been mispriced in the same direction (D258's `DROPPED` audit
-  // found the last), so: before trusting a `needs`, grep for the funnel it assumes
-  // is absent. `DROPPED` is now 10.
-  // ✅ D207 BUILT THIS ROW — Lacey (sv07-139/-166/-172, sv08.5-114/-175, 5 legal
-  // printings), together with Emcee's Hype (sv10-163/-220, 2 more). D204's
-  // precedent: REMOVED rather than annotated in place, because the assertion
-  // below is what keeps this list honest and a built row would make it fail.
-  //
-  // ⚠️ AND THIS ROW'S `needs` WAS WRONG WHEN IT WAS WRITTEN, WHICH IS THE
-  // INTERESTING PART. It priced the sentence at "ONE new union member" and named
-  // only `morePrizesThanOpponent` as the member that could not carry it. The
-  // member it was asking for — `BoardCondition.opponentPrizesRemaining
-  // { counts }` — was ALREADY IN THE UNION at D199's own commit (`git show
-  // 21623b5:packages/engine/src/effects.ts`) and already folded by
-  // `conditionHolds`, having landed with the M5 board-condition slice for
-  // Krokorok's and Houndstone's damage bonuses. The rest of the row was exact:
-  // the shape really is two `handRefresh` ops with exactly one running, which is
-  // Grusha's `otherwise` arm. So the cost was not one union member and two
-  // registry rows — it was two registry rows, and seven Standard-legal printings
-  // waited on a sentence in a `needs` string. `DROPPED` is now 18.
-  // ✅ D245 BUILT THIS ROW — Genesect ex "Metallic Signal" (sv10.5b-067/-161/-169,
-  // 3 legal printings). REMOVED rather than annotated in place (D204's precedent,
-  // and the assertion below is what makes that the only honest option).
-  //
-  // 🛑 AND ITS `needs` WAS RIGHT, SATISFIED SEVEN DECISIONS AGO, AND STILL DID NOT
-  // UNBLOCK THE CARD — WHICH IS A THIRD FAILURE MODE FOR A `needs` STRING. It
-  // asked for "a POKÉMON-TYPE refinement on the Pokémon `CardFilter` kinds". That
-  // is `typedPokemon`, and it landed at **D238**. What D238 shipped was the TYPE
-  // axis plus a `stage` rider whose ONLY value was `"basic"` — and this sentence
-  // needs `"evolution"`, so the row's named piece arrived, nothing went red, and
-  // three printings went on waiting. 🆕 **A `needs` STRING NAMES A PIECE AT SOME
-  // GRAIN, AND IT GOES STALE IN SILENCE WHEN THE PIECE IS BUILT AT A COARSER ONE.**
-  // Lacey (above) named a piece that already existed; this one named a piece that
-  // was then built and was still not enough. Both are invisible to this
-  // assertion, which only ever fires in the other direction. **The cheap check the
-  // list still does not have: when a slice lands a piece, grep `needs` for its
-  // NAME.** D238's own resume point would have found these three.
-  //
-  // ⚠️ ITS OTHER CLAUSE WAS FALSE TOO: "it also unlocks Hyper Aroma's stage
-  // refinement's neighbours" — Hyper Aroma is a Trainer whose filter is a plain
-  // `basicPokemon`, and no neighbour of it was ever waiting on a type. `DROPPED`
-  // is now 14.
-  // 🆕🆕🆕 D554 (2026-09-25) — ⚠️ WITHDRAWN (D539): "a plain `basicPokemon`" is FALSE.
-  // Hyper Aroma `sv06-152` prints *"Search your deck for up to 3 **Stage 1** Pokémon"*,
-  // and D554 built it on D466's `stagePokemon { stage: "Stage1" }` — a Basic is exactly
-  // what it refuses. The half that stands: no neighbour of it was waiting on a TYPE.
-  // ✅ D255 BUILT THIS ROW — "Prevent all damage done to this Pokémon by attacks
-  // from your opponent's Pokémon ex." (Sylveon sv08.5-040, Crustle sv10-012/-186,
-  // 3 legal printings). REMOVED rather than annotated in place, D245's precedent
-  // above and D204's before it. `DROPPED` is now 13.
-  //
-  // ✅ **AND THIS IS THE FIRST `needs` STRING ON THIS LIST THAT WAS RIGHT, STAYED
-  // RIGHT, AND WAS BUILT AS WRITTEN** — worth the lines precisely because the two
-  // rows above it are the catalogue of the opposite. It said: an ex-ONLY gate;
-  // `preventDamageFromExV` is `isExOrV` (ex OR V) and Mimikyu really does print
-  // both, so authoring the existing flag would prevent damage from a Pokémon V the
-  // card does not mention; the difference is unobservable in a legal game (no
-  // Pokémon V is Standard-legal) and observable in THIS engine, whose fixture pool
-  // has three; the fix is a `targetSuffix`-style parameter. D255 built exactly
-  // that — `cards.ts PreventedAttackerClass`, a record whose `suffix` is compared
-  // for EQUALITY against `pokemonSuffixOf` — and `preventedAttackerClass.test.ts`
-  // drives the Pokémon-V board the string predicted would be the only witness.
-  //
-  // 🆕 **A `needs` STRING SURVIVES WHEN IT NAMES THE PRINTED DIFFERENCE RATHER
-  // THAN THE PIECE THAT WOULD CLOSE IT.** Lacey's named a piece that already
-  // existed; Genesect's named one that was later built at the wrong grain; this
-  // one named the CLAUSE ("ex alone, not ex or V") and stayed true through four
-  // engine versions, because a printed clause cannot be built at a coarser grain.
-  //
-  // ⚠️ D255 ALSO BUILT THE ROW'S 2-PRINTING NEIGHBOUR — "…from your opponent's
-  // **Basic** Pokémon ex" (Farigiraf ex sv05-108/-194) — which was never on this
-  // list at all, only in `censusAtHead.test.ts`'s row-15 unbuilt set. It cost one
-  // registry object on top of this row, because the record has a `stage` key.
-  // ✅ D267 BUILT THE LATIAS ex ROW — "Your Basic Pokémon in play have no Retreat
-  //    Cost." (sv08-076/-220/-239, 3 legal). REMOVED rather than annotated in
-  //    place, D204's precedent: the assertion below is what keeps this list honest
-  //    and a built row would make it fail. `DROPPED` is now 6.
-  //
-  //    ⚠️ **ITS `needs` STRING WAS RIGHT ON EVERY COUNT — the second in a row, and
-  //    the second written by a slice that had MEASURED the row rather than
-  //    inherited the claim.** It read:
-  //
-  //      needs: "a STAGE refinement on `noRetreatCostAura`. The field carries
-  //        `requiresEnergyType` only; this printing gates on Basic-ness instead.
-  //        One optional field beside the existing one, and the read site
-  //        (`hasFreeRetreatAura`) already has the Pokémon."
-  //
-  //    Every clause held: one optional field (`stage?: "Basic"`), placed beside
-  //    `requiresEnergyType` rather than replacing it; `hasFreeRetreatAura` is the
-  //    SOLE read site and it did already take the `InPlayPokemon`. 🆕 **WHAT IT DID
-  //    NOT SAY IS WHICH END OF THE SCAN THE CONJUNCT BELONGS TO** — that loop holds
-  //    a HOLDER card (`top`) and a TARGET body (`pokemon`) at the same moment, and
-  //    the printed noun phrase is about the TARGET. A string can name the right
-  //    function and still leave the only decision in it open; the answer came from
-  //    READING the signature, which is what "already has the Pokémon" was pointing
-  //    at without saying.
-  // ✅ **D331 BUILT THIS ROW** — Lisia's Appeal `sv08-179`/`-234`/`-246`
-  // (Supporter, 3 Standard-legal printings and the WHOLE population of the
-  // sentence). REMOVED rather than annotated in place, D204's precedent and every
-  // precedent since: the assertion below is what keeps this list honest, and a
-  // built row would make it fail. `DROPPED` is now 3.
-  //
-  // 🛑 **AND ITS `needs` STRING NAMED THE RIGHT PIECE WHILE BEING WRONG ABOUT WHO
-  // ELSE READ IT — A ROT MODE THIS TABLE HAD NOT YET RECORDED.** The row, re-priced
-  // at D329 and re-confirmed at D330, ended: *"WHAT REMAINS IS ONE PIECE: a Basic
-  // rider on `gust`'s candidate scan (`oppBenchRefs`, **shared with that refusal, so
-  // the whiff arm follows for free**)"*. The piece is exactly right — `gust`'s scan
-  // genuinely carried no stage rider, and `recordAs` genuinely was not needed. **The
-  // SHARING was invented.** `programPlayable` refused a gust by reading
-  // `state.players[otherSeat(seat)].bench.length === 0` — a raw bench LENGTH that
-  // never touched `oppBenchRefs`, shares nothing with the scan, and cannot see a
-  // rider. Ridden scan alone, the card would have been PLAYABLE into a Bench of pure
-  // Evolutions: §7.2's one Supporter spent on a prompt with zero candidates.
-  //
-  // ⚠️ **SO THE ROW COST TWO PIECES AGAINST A PRICE OF ONE**: `gust.basicOnly` AND
-  // `gustTargets`, the sole funnel both readers now ask. That is D206's finding one
-  // op over, arriving eleven decisions late — D206 replaced this exact shape on
-  // `switchActive` and left the mirror op alone, because no printing had yet
-  // narrowed a gust. **A LENGTH TEST IS A CANDIDATE SCAN ONLY WHILE NOTHING NARROWS
-  // THE SET.**
-  //
-  // 🆕 **THE TRANSFERABLE LESSON, AND IT IS SHARPER THAN "THE PRICE WAS WRONG".**
-  // Every earlier rot mode here was about the PIECE — wrong card (Blood Moon), piece
-  // already shipped (the Future aura), wrong grain, wrong vocabulary. This one names
-  // the piece correctly and then asserts a SHARING that does not exist. D328's rule
-  // was *"when a slice makes a number movable, ask what else reads it"*; this is its
-  // exact instance, and the answer was TWO readers where the handoff assumed one.
-  // **GREP THE READERS OF THE THING YOU ARE ABOUT TO NARROW BEFORE BELIEVING
-  // ANYTHING DOWNSTREAM IS FREE** — a `needs` string can be right about the noun and
-  // wrong about the verb. See `lisiasAppeal.test.ts`.
-  // ✅ D266 BUILT CLEMONT'S QUICK WIT'S ROW — "Heal 60 damage from each of your
-  //    {L} Pokémon." (sv08-167 / sv08-229 / sv08-243, legal 3). Its `needs`
-  //    string is re-homed here rather than deleted, because grading it is the
-  //    result:
-  //
-  //      needs: "a TYPE gate on `healEach`. The op heals every one of the
-  //       controller's Pokémon unconditionally; this sentence heals a typed
-  //       subset. `Card.types` is the datum and the op already has the seat, so
-  //       it is one optional field — but it is a field, and Fennel (built above)
-  //       is the ungated printing that shows the op is otherwise right."
-  //
-  //    ⚠️ **IT WAS RIGHT IN FULL, AND IT IS THE SECOND CONSECUTIVE ONE** — the
-  //    field really was absent (re-read against `effects.ts` and `interpreter.ts`
-  //    before a line was written, which is D263's and D264's lesson each found
-  //    twice), `Card.types` really is the datum, Fennel really is the ungated
-  //    control, and the whole cost really was ONE optional field plus ONE
-  //    conjunct inside the existing loop. 🆕 **BUT THE STRING NAMED THE DATUM
-  //    WITHOUT NAMING THE ZONE.** "`Card.types` is the datum" is true of a CARD
-  //    read and of a BOARD read alike, and the two want different instruments:
-  //    `CardFilter.typedPokemon` already exists and is the WRONG one here,
-  //    because this gate walks IN-PLAY bodies and must read the TOP card of a
-  //    stack. A work order that names a FIELD still under-specifies the READ.
-  // ✅ **D332 BUILT THIS ROW** — Drayton `sv08-174`/`sv08-232`/`sv08-244`/
-  // `sv08.5-172` (Supporter, 4 Standard-legal printings and the WHOLE population
-  // of the sentence). REMOVED rather than annotated in place, D204's precedent and
-  // every precedent since: the assertion below is what keeps this list honest, and
-  // a built row would make it fail. `DROPPED` is now 2.
-  //
-  // 🛑 **AND ITS `needs` STRING NAMED THE RIGHT OP, THE RIGHT WINDOW AND THE WRONG
-  // HALF OF THE COST — A THIRD ROT MODE, AFTER D330's AND D331's.** The row read:
-  // *"TWO filters on one `lookAtTopN` window. The op takes one `filter` and one
-  // `max`; this sentence takes one of each of two kinds out of a SHARED window,
-  // which two sequential ops cannot express (the second would re-look at a window
-  // the first did not consume)."* — and the resume point that carried it added
-  // *"One op field or a second `max`."*
-  //
-  // ✅ **THE FIRST CLAUSE IS TRUE**, and reading the park makes it sharper than the
-  // row did: `top` is `deck.slice(0, op.n)` recomputed at every op, so a second
-  // `lookAtTopN` sees a card that slid INTO the window behind the first take. The
-  // obvious repair — a second op at `n - 1` — is right on the take-one path and
-  // WRONG on the DECLINE this printed *"you may"* permits, where index 6 goes
-  // unreachable.
-  //
-  // 🛑 **"ONE OP FIELD OR A SECOND `max`" IS THE FALSE HALF, AND IT IS FALSE IN
-  // EXACTLY THE CLAUSE THAT MADE THE ROW LOOK CHEAP.** `lookAtTopN.max` is
-  // forwarded straight into `prompt.max`, and `validateChoice` (cardplay.ts)
-  // enforces ONE FLAT TOTAL shared by all six `chooseCards` producers — so a second
-  // `max` on the OP is invisible to the only thing that checks a wire answer, and
-  // under a total of 2 a client takes TWO Pokémon. The cap had to reach the PROMPT,
-  // and the prompt has a wire tail (`redact.ts`, the zod schema, `projection.ts`,
-  // the dialog).
-  //
-  // 🛑 **AND THE PIECE THE ROW TREATED AS THE OBSTACLE WAS FREE ALL ALONG.**
-  // `{ kind: "anyOf" }` has been in `CardFilter` since D245 and produces exactly
-  // this candidate set. It is still not used, and why is the second finding:
-  // `retrieveNoun`'s `anyOf` arm is documented UNREACHABLE FROM ANY PROMPT and
-  // joins its members with **" or "** — deliberately — so Drayton would have given
-  // a green-and-dead member its first live caption saying the opposite of the card.
-  // **D330's shape, one arm over, and it would have arrived as a REGRESSION rather
-  // than as an absence.**
-  //
-  // 🆕 **THE TRANSFERABLE LESSON, AND IT COMPLETES A SET.** D330's row named a
-  // piece that had already SHIPPED. D331's named its piece correctly and invented
-  // a SHARING. This one names the piece correctly, names the obstacle, and gets
-  // WHICH END of the obstacle is hard exactly backwards. **A `needs` STRING CAN BE
-  // RIGHT ABOUT WHAT IS HARD AND WRONG ABOUT WHICH PART OF IT IS HARD** — and the
-  // way to tell, every time, is to read the thing that CHECKS the answer rather
-  // than the thing that OFFERS it. See `draytonWindow.test.ts`.
-  // ✅ D268 BUILT GOTHITELLE'S "DISTORTED FUTURE" ROW — "Once during your turn, if
-  //    this Pokémon is in the Active Spot, you may have your opponent shuffle
-  //    their hand into their deck and draw 3 cards." (`svp-211`/`sv10.5w-043`,
-  //    legal 2). REMOVED rather than annotated in place, because the assertion
-  //    below is what keeps this list honest and a built row would make it fail.
-  //    `DROPPED` is now 5. Its `needs` string is re-homed here rather than
-  //    deleted, because GRADING it is the result:
-  //
-  //      needs: "`handRefresh.who: 'opponent'`. The union is `'you' | 'both'` —
-  //       the OPPONENT-only arm is the one reading nothing prints in the sv01–03
-  //       pool and two cards print here. A one-member widening with a real read
-  //       site behind it already (Iono/Judge drive `both`)."
-  //
-  //    ✅ **THE MECHANICAL HALF WAS RIGHT IN FULL, AND IT IS THE THIRD
-  //    CONSECUTIVE `needs` STRING THAT WAS** — the union really was `'you' |
-  //    'both'` (re-read against `effects.ts` and `interpreter.ts` before a line
-  //    was written), the third member really was absent under any spelling, the
-  //    read site really is ONE expression (`interpreter.ts`'s `const seats:
-  //    Seat[] = …`), and the whole engine diff really was that one expression
-  //    plus the union member. `activeOnly` and `oncePerTurn` were already on the
-  //    Ability surface, exactly as the row's neighbours claimed.
-  //    🆕 **BUT ITS PARENTHETICAL NAMED A READ SITE THAT IS NOT STANDARD-LEGAL,
-  //    AND THE LEGALITY CLAIM IS NOT THE SAME CLAIM AS THE CODE CLAIM.** "Iono/
-  //    Judge drive `both`" is true of the REGISTRY and false of the FORMAT: every
-  //    Iono, Judge, Youngster and Brassius printing in the catalog is
-  //    `legal_standard = 0` (measured 2026-08-07), so the sentence that
-  //    exercises the `both` arm today is not a legal one at all. The arm is still
-  //    live and still driven — by `handRefresh.test.ts`, off registry ids — but a
-  //    work order that prices a widening by "there is already a read site" must
-  //    say WHICH POOL the read site lives in. **A REGISTRY PRECEDENT AND A LEGAL
-  //    PRECEDENT ARE DIFFERENT FACTS.**
-  //    🆕 **AND THE WIDER CENSUS FOUND THE VARIANT THIS ROW MUST NOT COVER, ON
-  //    THE SAME NOUN.** `%hand into%deck%` at `legal_standard = 1` over all three
-  //    text columns returns **16 printings on 8 sentences** (bare noun `%shuffle%`
-  //    = 281): this row (2); Lacey (5, `who: "you"`, BUILT); Drasna (2, `"you"` +
-  //    a coin-gated draw); Victini "Flippity Flap" (1, an ATTACK); Mr. Mime
-  //    "Mimic" (1, a draw counted off the OPPONENT's hand size); and then the
-  //    three that look like this op and are NOT it — Unfair Stamp (1), Team
-  //    Rocket's Archer (2) and Harlequin (2), all "Each player shuffles their
-  //    hand into their deck" with an ASYMMETRIC draw ("you draw 5 cards, and your
-  //    opponent draws 2/3"). `HandRefreshDraw` is ONE value for EVERY affected
-  //    seat, so those 5 printings need a PER-SEAT draw and no `who` member of any
-  //    spelling reaches them. **The residue on this noun is 5 legal printings on
-  //    3 sentences, and it is a different widening on a different field.**
-  //    🆕 **D270 BUILT THAT FIELD AND TOOK 2 OF THE 5** — `HandRefreshDraw.perSeat`,
-  //    Harlequin `sv10.5w-083`/`-163`, a LANDED row above. The `needs` string was
-  //    RIGHT about the field and RIGHT about the count it could reach: the other 3
-  //    (Unfair Stamp 1, Team Rocket's Archer 2) are held back by their PLAY GATE
-  //    and not by their draw — *"only if any of your Pokémon were Knocked Out
-  //    during your opponent's last turn"*, a datum `GameState` does not carry
-  //    (grepped at D270). **The residue on this noun is now 3 legal printings on 2
-  //    sentences, and what they wait on is a STATE field, not another draw kind.**
-  // 🛑 D263 RE-HOMED ONE ROW OUT OF THIS TABLE AND IT IS THE SLICE'S SHARPEST
-  //    FINDING, SO IT IS RECORDED HERE RATHER THAN DELETED WITH IT. The entry
-  //    read:
-  //
-  //      "Once during your turn, you may attach a Basic Energy card from your
-  //       discard pile to this Pokémon."  (sv10-020, sv10-187, legal 2)
-  //      needs: "`attachEnergyFrom`'s SELF target — D190's Teal Dance finding,
-  //       printed a second time on the DISCARD source. … the gap is exactly one
-  //       field wide."
-  //
-  //    ⚠️ **THE `needs` STRING WAS RIGHT, AND THE FIELD IT ASKED FOR LANDED AT
-  //    D221 — THIRTY-EIGHT DECISIONS BEFORE THIS ONE.** `attachEnergyFrom.toSelf`
-  //    was built for Teal Mask Ogerpon ex on the HAND source and reached this
-  //    zone for free, because `source` is a field on the op and not a fork in it.
-  //    Nothing re-read the work order, so the row sat here asserting UNBUILT
-  //    against a satisfied requirement for eleven slices. 🆕 **A `DROPPED` TABLE
-  //    ROTS IN BOTH DIRECTIONS: the loud one is a row that gets BUILT and is not
-  //    removed (which this suite catches, and did); the QUIET one is a row whose
-  //    PIECE gets built by a slice that never opened this file — and nothing
-  //    catches that at all.** The standing "re-check any arm believed dead" rule
-  //    now has a sibling: **re-check any WORK ORDER believed blocked**, and do it
-  //    against the code rather than against the string. It is now a LANDED row
-  //    ("Charging Up (Team Rocket's Spidops)") and is driven below.
-  // ✅ D265 BUILT ALOMOMOLA's ROW — "Once during your turn, if this Pokémon is in
-  //    the Active Spot, you may put a Basic Pokémon with 70 HP or less from your
-  //    discard pile onto your Bench." (sv10.5b-024/-108, 2 legal). REMOVED rather
-  //    than annotated in place, because the assertion below is what keeps this
-  //    list honest and a built row would make it fail. `DROPPED` is now 8.
-  //
-  //    ⚠️ **ITS `needs` STRING WAS RIGHT — THE FIRST ONE IN FOUR SLICES THAT WAS**,
-  //    and it was written by the slice that MEASURED the row (D264) rather than
-  //    inherited. What it named is exactly what shipped: ONE union rider
-  //    (`basicPokemon.maxHp`), ONE `matchesFilter` conjunct, ONE `retrieveNoun`
-  //    phrase, ZERO new ops, ZERO new op fields, ZERO anchors — and `activeOnly`
-  //    was already on the Ability surface, as it claimed. 🆕 **THE SHELF LIFE OF A
-  //    WORK ORDER IS THE TIME SINCE ITS LAST MEASUREMENT, NOT SINCE IT WAS
-  //    WRITTEN**: the three re-homed before it (D258's, D263's, D264's own) had
-  //    each been inherited across dozens of decisions, and all three had rotted.
-  //    Its full text, and D264's account of the two directions the PREVIOUS
-  //    version was wrong in, are kept below.
-  //
-  //    needs: "an HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`), and that
-  //      is now the WHOLE gap — `discardPileRetrieval.dest: 'bench'` was built at
-  //      D238 and this string outlived it. The printed noun is a CARD read of
-  //      printed HP (`Card.hp`), not the board read Bianca's Devotion prints; the
-  //      same rider lands Buddy-Buddy Poffin (3 legal) on `searchDeck`, so it is 5
-  //      printings on 2 sentences across 2 ops. The second clause here, 'if this
-  //      Pokémon is in the Active Spot', is the `activeOnly` flag the Ability
-  //      surface already carries (Attract Customers, driven above)."
-  //
-  //    🛑 D264 RE-HOMED THIS `needs` STRING RATHER THAN DELETING IT, AND IT WAS
-  //    WRONG IN BOTH DIRECTIONS AT ONCE — the loud one and the quiet one, in a
-  //    single sentence. It read:
-  //
-  //      "`discardPileRetrieval.dest: 'bench'` plus an HP-threshold filter. The
-  //       op's destinations are `hand` and `deck`; `searchDeck` has the bench
-  //       arm and the wrong source zone. The HP threshold (also Buddy-Buddy
-  //       Poffin, 3 legal, and Bianca's Devotion, 3 legal) has no `CardFilter`
-  //       expression at all."
-  //
-  //    ⚠️ **THE FIRST HALF EXPIRED AT D238**, twenty-six decisions before this
-  //    one: `dest: "bench"` is a member of this op's own union and has been
-  //    since the brace-code slice, so the string named a piece that was lying
-  //    right there — D263's finding, printed a second time on the SAME op.
-  //    ✅✅ **D349 BUILT BIANCA'S DEVOTION, AND THE CLASSIFICATION BELOW IS WHY IT
-  //    TOOK 168 DECISIONS.** The board read never did get a `CardFilter`
-  //    expression and never will: it is `healChosen.remainingHpAtMost`, a NUMBER on
-  //    the op, sharing `remainingHpWithin` with `gust.remainingHpAtMost` (Ledian ×3,
-  //    the same clause in the `abilities_json` column) and with D310's host gate.
-  //    **THE SENTENCE BELOW IS THEREFORE RECORDED AS SPENT AND NOT REWRITTEN** — its
-  //    diagnosis was exactly right, and what it could not say is that the answer
-  //    would arrive on a different axis from the one it was measuring.
-  //
-  //    ⚠️ **AND THE SECOND HALF NAMED A SIBLING THAT IS NOT ONE.** Bianca's
-  //    Devotion prints *"1 of your Pokémon that has 30 HP **or less
-  //    remaining**"* — a BOARD read, current HP against a body in play — where
-  //    this sentence and Buddy-Buddy Poffin's print *"a Basic Pokémon **with**
-  //    70 HP or less"*, a CARD read of the printed HP. A `CardFilter` cannot
-  //    express the first at any width, so counting it toward this row's price
-  //    overstated the yield by three printings. **Classify a predicate by KIND
-  //    before you count what it buys.** The re-derived yield of an HP-threshold
-  //    `CardFilter` rider is Buddy-Buddy Poffin (3, `searchDeck`) + this row (2)
-  //    = **5 legal printings on 2 sentences**; Fan Rotom (2) and Mandibuzz (2)
-  //    carry the same noun behind other machinery.
-] as const;
-
-// ── The demonstrator pool. One synthetic `fix-*` body per LANDED program, so
-//    each can be driven end to end.
-//
-//    ⚠️ THEY ARE DEFINED HERE, NOT IN `testFixtures.ts`, AND NOT AS REAL CARDS —
-//    D190's idiom and D190's reason. A fixture id naming a real printing must
-//    appear in `catalogManifest.ts` (catalogManifest.test.ts case (c)), and that
-//    manifest is GENERATED off the LOCAL sqlite: `bun run
-//    scripts/catalog-manifest.ts` dies SQLITE_CANTOPEN in this clone, and the
-//    manifest it holds measures a 978-row / 6-set catalog containing none of
-//    sv05 / sv07 / sv08 / sv08.5 / sv09 / sv10 / sv10.5b / sv10.5w / svp. So the
-//    47 printings cannot be fielded, and a real-card fixture would only make the
-//    manifest stale. `createGame` takes its `cardPool` as a PARAMETER, which is
-//    how a local pool stays local — `FIXTURE_POOL` is untouched, and the `fix-*`
-//    prefix is what the manifest's generator and checker both skip.
-//
-//    Every fixture carries its printed sentence VERBATIM off the remote D1, so a
-//    later census can SEE the text (D174's rule: a comment cannot go red). ──
+const DROPPED: { sentence: string; ids: string[]; legal: number; needs: string }[] = [] as const;
 
 function abilityBody(
   id: string,
@@ -1108,12 +463,6 @@ function abilityBody(
   });
 }
 
-/** A Stage 1 that evolves from `fix-basic-1` — the evolution-trigger carriers.
-    ⚠️ D263 WIDENED THE EXISTING HELPER RATHER THAN ADDING A PARALLEL ONE: Assemble
-    Alloy's carrier has to be a **{M}** body (its own `targetType` must admit it),
-    and `battler` defaults a `fix-*` id to Colorless. The overrides land AFTER the
-    stage/evolveFrom pair so a caller can still only add, never silently unmake an
-    evolution. */
 function evoBody(id: string, name: string, effect: string, overrides: Partial<Card> = {}): Card {
   return abilityBody(id, name, effect, {
     stage: "Stage1",
@@ -1169,8 +518,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Seething Spirit",
     "Once during your turn, you may attach a Basic Energy card from your discard pile to 1 of your Pokémon.",
   ),
-  // ── D263 — the ability half of backlog row 9. Each sentence VERBATIM off the
-  //    remote D1 `colorless` (2026-08-07), so a later census can see the text. ──
   "fix-chargingup": abilityBody(
     "fix-chargingup",
     "Charging Up",
@@ -1187,9 +534,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may attach up to 2 Basic {M} Energy cards from your discard pile to your {M} Pokémon in any way you like.",
     { types: ["Metal"] },
   ),
-  /** D263 — a plain {M} Basic with no Ability: the SECOND eligible body under
-      Assemble Alloy's `targetType`, and therefore the thing that makes "in any
-      way you like" two PARKS rather than two forced attaches. */
   "fix-metalbody": battler("fix-metalbody", { types: ["Metal"], hp: 140, retreat: 1 }),
   "fix-confectionarygift": abilityBody(
     "fix-confectionarygift",
@@ -1273,27 +617,11 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Stadium",
     "Once during each player's turn, that player may put up to 2 Basic {L} Energy cards from their discard pile into their hand.",
   ),
-  /** ⚠️ **D429 TRIED TO MOVE THIS CARD INTO THE SHARED `FIXTURE_POOL` AND PUT IT BACK,
-      AND THE REASON IS A FINDING ABOUT A GUARD ONE FILE OVER.** It wanted an
-      Energy-borne `damageAttacker` in the shared pool as a witness. Two walls, both
-      real: `catalogManifest.test.ts` will not accept the REAL id `sv09-159` in a
-      checkout with no D1 (the manifest is GENERATED and must classify every real id,
-      with `absent` asserted empty); and `counterattack.test.ts` discovers the §9 recoil
-      family by sweeping `FIXTURE_POOL` for the printed clause and then partitions it by
-      reading `programFor(id)?.passive`, which **cannot see `programFor(id)?.energy?.passive`**
-      — so this card in the shared pool makes that suite's *"text census = program
-      census"* claim FALSE, and its drive loop would try to `attachTool` an Energy.
-      That guard is correct today only because no Energy-borne recoil is in the shared
-      pool; it is D425's closed-world-assumption-true-by-accident, and repairing it means
-      widening `COUNTERATTACK_DECK`, which reshuffles every board seeded off it (D412).
-      D429 declined that and recorded it here rather than leaving the card where it would
-      have gone unnoticed. */
   "fix-spikyenergy": specialEnergy(
     "fix-spikyenergy",
     "fix-spikyenergy",
     "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), put 2 damage counters on the Attacking Pokémon.",
   ),
-  // ── D264 — backlog row 13's ABILITY and TRAINER halves. ──
   "fix-lanasaid": trainerCard(
     "fix-lanasaid",
     "Supporter",
@@ -1304,21 +632,10 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Greedy Order",
     "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may put up to 2 Arven's Sandwich cards from your discard pile into your hand.",
   ),
-  /** ⚠️ D264 — THE ONLY FIXTURE IN THIS POOL WHOSE `name` IS NOT ITS `id`, AND
-      IT HAS TO BE: `byName` matches `card.name` for EQUALITY, so a demonstrator
-      called "fix-arvenssandwich" would make Greedy Order's filter match nothing
-      and every assertion below vacuous. The name is the printed one, and the
-      catalog row it stands in for (`sv10-161`, a Standard-legal Item) was checked
-      to exist before the registry row was written. */
   "fix-arvenssandwich": {
     ...trainerCard("fix-arvenssandwich", "Item", "Heal 30 damage from 1 of your Pokémon."),
     name: "Arven's Sandwich",
   },
-  /** ⚠️ D264 — THE ONE CARD THAT SEPARATES `anyPokemon.noRuleBox` FROM
-      `basicPokemon.noRuleBox`, and without it Lana's Aid's whole row is green
-      under the wrong filter. An EVOLUTION Pokémon with no Rule Box: Artazon's
-      Basic-only noun refuses it, Lana's Aid's stage-free noun takes it. No
-      Ability, so it cannot be confused with the `evoBody` carriers above. */
   "fix-plainstage1": battler("fix-plainstage1", {
     name: "fix-plainstage1",
     stage: "Stage1",
@@ -1326,8 +643,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 150,
     retreat: 1,
   }),
-  // ── D265 — the HP-THRESHOLD rider (`basicPokemon.maxHp`), on TWO ops. Each
-  //    sentence VERBATIM off the remote D1 `colorless` (2026-08-07). ──
   "fix-buddybuddypoffin": trainerCard(
     "fix-buddybuddypoffin",
     "Item",
@@ -1338,15 +653,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Gentle Fin",
     "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
   ),
-  /** 🆕 D265 — THE CARD THAT SEPARATES THE **HP** CONJUNCT FROM THE **STAGE** ONE,
-      and without it every assertion about the threshold is confounded. A Stage 1
-      at 60 HP: it SATISFIES `maxHp: 70` and FAILS `isBasicPokemon`, so a build
-      that dropped the stage question would offer it and a build that dropped the
-      threshold would not be told apart from a correct one by this card alone.
-      The threshold's own negative is `fix-bigbody` (a Basic at **200** HP, read
-      out of `testFixtures.ts` rather than assumed) — the pair is what makes a
-      dropped `maxHp` conjunct observable. No Ability, so it cannot be confused
-      with the `evoBody` carriers above. */
   "fix-smallstage1": battler("fix-smallstage1", {
     name: "fix-smallstage1",
     stage: "Stage1",
@@ -1354,57 +660,24 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 60,
     retreat: 1,
   }),
-  // ── D266 — the TYPE GATE on `healEach` (`pokemonType`). Sentence VERBATIM off
-  //    the row this table dropped until now. ──
   "fix-clemontsquickwit": trainerCard(
     "fix-clemontsquickwit",
     "Supporter",
     "Heal 60 damage from each of your {L} Pokémon.",
   ),
-  /** 🆕 D266 — THE GATE'S POSITIVE. A {L} Basic at 200 HP, big enough to carry
-      100 damage without the KO sweep taking it off the board mid-assertion.
-      ⚠️ **THE POOL HAD NO {L} BODY AT ALL** — `fix-lightning-energy` is an
-      ENERGY, which `printedTypesOf` was read to confirm rather than assumed, and
-      every other Basic here is Colorless, Fire, Grass, Water, Psychic, Metal,
-      Darkness or Dragon. Without this card the type gate is green at ANY type,
-      because nothing on the board would ever satisfy it. */
   "fix-lightningbody": battler("fix-lightningbody", { types: ["Lightning"], hp: 200 }),
-  /** 🆕 D266 — THE GATE'S DUAL-TYPE WITNESS, and the one card that separates
-      `includes` from equality. `types` is a LIST: a body printed {L}{M} is a
-      "{L} Pokémon" and must heal. A build comparing `types[0]` or the whole
-      array would refuse it and pass every other assertion in this file. */
   "fix-dualtypebody": battler("fix-dualtypebody", { types: ["Metal", "Lightning"], hp: 200 }),
-  // ── D267 — the STAGE GATE on `noRetreatCostAura` (`stage: "Basic"`). Sentence
-  //    VERBATIM off the row this table dropped until now. ──
-  /** 🆕 D267 — THE AURA SOURCE. Latias ex's own printed shape, because the row's
-      SELF case depends on it: the source is itself a BASIC with a NON-ZERO
-      printed Retreat Cost (210 HP, retreat 2), so "self-inclusive" is an
-      assertion about a number that moves rather than a card that was already
-      free. Its Ability is a PASSIVE, not an activated one — it is never `useOn`'d,
-      it just has to be in play. */
   "fix-skyliner": abilityBody(
     "fix-skyliner",
     "Skyliner",
     "Your Basic Pokémon in play have no Retreat Cost.",
     { hp: 210, retreat: 2, types: ["Psychic"] },
   ),
-  // ── D268 — `handRefresh.who: "opponent"`, the union's third member. Sentence
-  //    VERBATIM off the row this table dropped until now. ──
-  /** 🆕 D268 — THE ACTIVATED ABILITY THAT REACHES ACROSS THE TABLE. No overrides:
-      nothing this row asserts is about HP, retreat or type — the whole content of
-      `who` is WHICH SEAT'S HAND MOVES, and that is a property of the two boards
-      either side of the op, not of the carrier. */
   "fix-distortedfuture": abilityBody(
     "fix-distortedfuture",
     "Distorted Future",
     "Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards.",
   ),
-  // ── D269 — `coinFlipGate.otherwise`. TWO Supporters, and the pair is the point:
-  //    one puts a bare `drawCards` in each arm (so the ONLY difference between
-  //    heads and tails is a count in one hand) and the other puts a whole
-  //    `handRefresh` in each (LACEY's shape, so the shuffle must happen on BOTH
-  //    faces). A build that spliced `otherwise` only when `then` was empty, or
-  //    that ran BOTH arms, would be green on one of these and red on the other. ──
   "fix-picnicker": trainerCard(
     "fix-picnicker",
     "Supporter",
@@ -1415,11 +688,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Supporter",
     "Shuffle your hand into your deck. Then, flip a coin. If heads, draw 8 cards. If tails, draw 3 cards.",
   ),
-  // ── D270 — `HandRefreshDraw.perSeat`. ONE Supporter, and it is Drasna's program
-  //    with two seats: the same two-armed gate, the same whole-`handRefresh`-in-
-  //    each-arm shape, `who: "both"` instead of `"you"`, and a printed PAIR where
-  //    the fixed count was. The pair is SWAPPED between the arms, so no board on
-  //    which only one hand is read can tell the four candidate mis-builds apart. ──
   "fix-harlequin": trainerCard(
     "fix-harlequin",
     "Supporter",
@@ -1454,20 +722,6 @@ const MON_DECK = deckOf({
   "fix-bigbody": 18,
 });
 
-/** The Trainer/Tool/Stadium/Energy deck. `fix-attacker-ex` is the Pokémon **ex**
-    Maximum Belt's suffix gate names; `fix-special` is an UNAUTHORED Special
-    Energy — Enhanced Hammer's victim, and the one whose presence beside a Basic
-    Energy makes the `specialEnergy` filter's narrowing observable. */
-/** ⚠️ D263 — THE DISCARD-ATTACH ABILITY ROWS GET THEIR **OWN** DECK RATHER THAN
-    SIX MORE LINES IN `MON_DECK`, and that is a seeded-suite decision rather than
-    tidiness: every board above is built from a numbered seed, so re-weighting the
-    shared deck moves what setup deals for **every other row in this file**. A
-    separate 60 leaves those untouched by construction.
-
-    `fix-metalbody` is the SECOND {M} body (what makes Assemble Alloy's "in any
-    way you like" two independent parks), `fix-bigbody` is the Colorless control
-    its `targetType` must refuse, and `fix-energy` is the Colorless Basic Energy
-    Dynamotor's `energyType` must refuse. */
 const ALLOY_DECK = deckOf({
   "fix-basic-1": 8, // the evolution base Assemble Alloy is played onto
   "fix-assemblealloy": 4,
@@ -1480,21 +734,6 @@ const ALLOY_DECK = deckOf({
   "fix-bigbody": 12, // dominant Basic filler, and the non-{M} target control
 });
 
-/** ⚠️ D264 — A THIRD 60, FOR D263's REASON RESTATED: `TRN_DECK` and `MON_DECK`
-    both feed seeded boards, so adding rows to either moves what setup deals for
-    every row already in this file. Both of this slice's programs read the DISCARD
-    PILE, so the deck's job is to hold one of each thing their two filters must
-    tell apart:
-      • `fix-plainstage1` — an EVOLUTION Pokémon with no Rule Box (the card that
-        separates `anyPokemon.noRuleBox` from `basicPokemon.noRuleBox`);
-      • `fix-attacker-ex` — "Fixmon ex", the Rule-Box control `noRuleBox` drops;
-      • `fix-bigbody` — a plain Basic, admitted by both readings;
-      • `fix-energy` — the Basic Energy the `anyOf`'s SECOND member admits, and
-        the card that makes `.some` observably not `.every`;
-      • `fix-special` — a Special Energy, which `basicEnergy` must refuse;
-      • `fix-arvenssandwich` — the NAMED card, ×4 so `max: 2` is a real clamp;
-      • `fix-item` — an Item that is NOT that name, so `byName` is observably
-        narrower than `item`. */
 const RECOVERY_DECK = deckOf({
   "fix-basic-1": 8, // the evolution base Greedy Order is played onto
   "fix-greedyorder": 4,
@@ -1508,29 +747,6 @@ const RECOVERY_DECK = deckOf({
   "fix-bigbody": 16,
 });
 
-/** ⚠️ D265 — A FOURTH 60, FOR D263's AND D264's REASON RESTATED A THIRD TIME:
-    every board in this file is dealt from a numbered seed, so re-weighting
-    `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` moves what setup deals
-    for every row already in them. A separate 60 leaves all four untouched by
-    construction.
-
-    Both of this slice's programs read the SAME filter — `basicPokemon` with
-    `maxHp: 70` — so the deck's job is to hold one of each thing that filter's
-    THREE conjuncts must tell apart, and to hold them where BOTH ops can see them
-    (Poffin searches the DECK, Gentle Fin the DISCARD PILE, and the pile is seeded
-    out of this deck):
-      • `fix-basic-1` — a Basic at **60** HP: the card both programs must take;
-      • `fix-bigbody` — a Basic at **200** HP: the THRESHOLD's negative, and the
-        one card that makes a dropped `maxHp` conjunct observable;
-      • `fix-smallstage1` — a Stage 1 at **60** HP: the STAGE conjunct's negative,
-        and the card that keeps the two conjuncts from being confounded;
-      • `fix-item` — a Trainer, whose `hp` is NULL: the data-gap negative. `null <=
-        70` is TRUE in JavaScript, so an unguarded comparison offers it;
-      • `fix-attacker` — a Basic at 120 HP, a second body above the line so the
-        threshold is not a claim about one card.
-    ⚠️ `fix-bigbody` is the dominant filler here as everywhere else in this file,
-    which means the deck is mostly INELIGIBLE — deliberate: a `max: 2` search that
-    accidentally ignored the filter would fill the Bench with 200 HP bodies. */
 const POFFIN_DECK = deckOf({
   "fix-basic-1": 8,
   "fix-smallstage1": 4,
@@ -1542,29 +758,6 @@ const POFFIN_DECK = deckOf({
   "fix-bigbody": 24,
 });
 
-/** ⚠️ D266 — A FIFTH 60, for the reason D263, D264 and D265 each wrote down:
-    every board in this file is dealt from a numbered seed, so re-weighting
-    `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK`
-    moves what setup deals for every row already in them. A separate 60 leaves
-    all five untouched by construction. It is four slices running now, and the
-    idiom is settled.
-
-    The gate is a BOARD read, so this deck's job is to supply BODIES rather than
-    search targets — one of each thing the `types` comparison must tell apart,
-    in enough copies that `benchFromDeck` can seat several at once:
-      • `fix-lightningbody` — a {L} Basic at **200** HP: the card that heals, and
-        the pool's FIRST {L} body of any kind;
-      • `fix-dualtypebody` — a {M}{L} Basic: `includes`, not equality;
-      • `fix-bigbody` — a **Colorless** Basic at 200 HP: the gate's negative, and
-        the one card that makes a dropped `pokemonType` conjunct observable;
-      • `fix-basic-1` / `fix-attacker` — a Colorless and a Fire Basic, so "not
-        {L}" is not a claim about one card;
-      • `fix-fennel` — the UNGATED sentence, on the SAME board, so "absent means
-        ungated" is asserted rather than assumed;
-      • `fix-energy` — filler that keeps the count at 60.
-    ⚠️ THE DECK IS MOSTLY OFF-TYPE ON PURPOSE: a heal that ignored the gate would
-    have to be told apart from one that honoured it, and a board where every body
-    is {L} cannot do that. */
 const QUICKWIT_DECK = deckOf({
   "fix-lightningbody": 12,
   "fix-dualtypebody": 4,
@@ -1576,32 +769,6 @@ const QUICKWIT_DECK = deckOf({
   "fix-bigbody": 18,
 });
 
-/** ⚠️ D267 — A SIXTH 60, for the reason the five before it were cut: adding rows
-    to `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK` /
-    `QUICKWIT_DECK` moves what setup deals for every row already in them. Five
-    slices running; the idiom is settled.
-
-    The gate is a BOARD read of a printed STAGE, so this deck's job is to supply
-    a STAGE pair that is also a RETREAT pair — a body with a printed Retreat Cost
-    on each side of the Basic/Evolution line, or the gate is green at any stage:
-      • `fix-skyliner` — the aura source: a BASIC with retreat 2, so the printed
-        sentence's SELF case (Latias ex frees itself) is a number that moves;
-      • `fix-retreat2` — a plain Basic, retreat 2: the FREED beneficiary and, with
-        no source in play, the aura-off control;
-      • `fix-stage1` — a Colorless Stage 1, retreat 2: the STAGE gate's NEGATIVE,
-        and the one body that makes a dropped `stage` conjunct observable;
-      • `fix-basic-1` — a second Basic (retreat 1), so "Basic" is not a claim
-        about one card, and the EVOLVE BASE for the live-read case
-        (`fix-stage1` evolves from it);
-      • `sv03-082` — Clefable ex "Lunar Zone", the UNGATED-on-stage sentence, on
-        the SAME board: it frees an EVOLUTION carrying {P}, so "absent means
-        ungated" is asserted rather than assumed;
-      • `fix-psychic-energy` — Basic {P}, which is what Lunar Zone's own clause
-        needs (Skyliner has no energy clause at all — the freed bodies here carry
-        NOTHING, which is the other half of "absent means ungated");
-      • `fix-bigbody` — 200 HP Colorless Basic: the DOMINANT mulligan-free starter
-        and the bench filler a retreat needs;
-      • `fix-energy` — filler that keeps the count at 60. */
 const SKYLINER_DECK = deckOf({
   "fix-skyliner": 4,
   "fix-retreat2": 8,
@@ -1613,28 +780,6 @@ const SKYLINER_DECK = deckOf({
   "fix-energy": 4,
 });
 
-/** ⚠️ D268 — A SEVENTH 60, for the reason the six before it were cut: adding rows
-    to `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK` /
-    `QUICKWIT_DECK` / `SKYLINER_DECK` moves what setup deals for every row already
-    in them. Six slices running; the idiom is settled.
-
-    🆕 AND THIS ONE IS DEALT TO **BOTH SEATS** AND ITS JOB IS THE DECK BEHIND THE
-    HAND, not the hand itself. `localSetup` gives `p1` and `p2` the same list, and
-    what this row asserts is that the OPPONENT's hand goes into the OPPONENT's deck
-    and three come back — so the deck must be deep enough that a 3-card draw off a
-    freshly reshuffled pile cannot deck out or run short at turn 3, and boring
-    enough that nothing on it has a trigger, an aura or a §12 clause that could
-    move a hand behind the op's back:
-      • `fix-distortedfuture` — the carrier, in enough copies that the ONCE-per-turn
-        assertion has a second body available if it ever wants one;
-      • `fix-bigbody` — the 200 HP Colorless Basic that is the dominant
-        mulligan-free starter everywhere else in this file;
-      • `fix-basic-1` / `fix-attacker` — plain Basics, so the opening hands on both
-        seats are non-trivial without being interesting;
-      • `fix-energy` — filler that keeps the count at 60 and gives the reshuffled
-        deck bulk to draw off.
-    ⚠️ NOTHING HERE CARRIES AN ABILITY EXCEPT THE CARRIER. A body with a trigger in
-    the opponent's hand or deck could move a count this suite is measuring. */
 const DISTORTED_DECK = deckOf({
   "fix-distortedfuture": 4,
   "fix-bigbody": 20,
@@ -1643,29 +788,6 @@ const DISTORTED_DECK = deckOf({
   "fix-energy": 24,
 });
 
-/** ⚠️ D269 — A SEVENTH 60, FOR THE REASON THE SIX BEFORE IT WERE BUILT: every
-    board in this file is dealt from a numbered seed, so adding rows to `MON_DECK`
-    / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK` / `QUICKWIT_DECK`
-    / `SKYLINER_DECK` / `DISTORTED_DECK` moves what setup deals for every row
-    already in them. Seven slices running; the idiom is settled.
-
-    🆕 AND THIS ONE IS SIZED FOR A **SWEPT** SUITE RATHER THAN A CHOSEN BOARD.
-    Both arms of both cards must be DRIVEN, and there is no way to force a coin —
-    `runProgram` takes it from `rngState` before anything else — so the assertions
-    below sweep a fixed seed list and read the face off the emitted
-    `ATTACK_EFFECT_COIN_FLIP` row, exactly as `multiCoinFlip.test.ts` does. That
-    puts two demands on the deck:
-      • **DEEP ENOUGH FOR THE BIGGEST DRAW ON EVERY SEED.** Drasna's heads arm
-        reshuffles the hand and draws 8 off the top; a deck that could short-draw
-        on some seed would make "8" a property of the seed rather than of the arm.
-        45 non-carrier cards behind a 7-card opening hand clears it with room.
-      • **BORING ENOUGH THAT NOTHING ELSE MOVES A HAND.** No body here carries an
-        Ability, a trigger or a §12 clause, so between the flip and the assertion
-        the only thing that touched either hand is the arm under test.
-    Both carriers ride the same 60 because they are the same field: sharing the
-    deck means a heads board for one is a heads board for the other on the same
-    seed, which is what lets the two rows be compared rather than merely both
-    passing. */
 const FLIP_DRAW_DECK = deckOf({
   "fix-picnicker": 4,
   "fix-drasna": 4,
@@ -1674,24 +796,6 @@ const FLIP_DRAW_DECK = deckOf({
   "fix-energy": 24,
 });
 
-/** ⚠️ D270 — AN EIGHTH 60, for the reason the seven before it were built: every
-    board in this file is dealt from a numbered seed, so adding rows to an existing
-    list moves what setup deals for every row already in it. `FLIP_DRAW_DECK` is
-    the nearest neighbour and is deliberately NOT re-weighted — eight slices
-    running.
-
-    🆕 AND THIS ONE IS SIZED FOR **BOTH SEATS**, which `FLIP_DRAW_DECK` never had
-    to be. `localSetup` deals the same list to `p1` and `p2`, so both seats hold a
-    real dealt hand and no surgery is needed — but this card refreshes BOTH of
-    them, so both decks must survive a 5-card draw off a freshly shuffled pile on
-    every swept seed, and neither hand may be empty before the play or "your hand
-    went back" is vacuously true. 47 non-carrier cards behind a 7-card opening hand
-    clears the first; the guard in each `it` measures the second rather than
-    assuming it.
-
-    ⚠️ BORING ON PURPOSE, exactly as `FLIP_DRAW_DECK` is: no body here carries an
-    Ability, a trigger or a §12 clause, so between the flip and the assertion the
-    only thing that touched either hand is the arm under test. */
 const HARLEQUIN_DECK = deckOf({
   "fix-harlequin": 4,
   "fix-bigbody": 20,
@@ -1741,8 +845,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** `driveSetup`, against the LOCAL pool — the one thing `testFixtures.ts` cannot
-    do for us, because it closes over `FIXTURE_POOL` (D190's helper verbatim). */
 function localSetup(seed: number, first: Seat, deck: string[]): GameState {
   const created = createGame({ seed, decks: { p1: deck, p2: deck }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -1755,9 +857,6 @@ function localSetup(seed: number, first: Seat, deck: string[]): GameState {
   return state;
 }
 
-/** P1 to move, on `turn`. The DEFAULT is 3, not 1: P1 goes first here, and §4
-    bars the going-first player from attacking, playing a Supporter or evolving on
-    turn 1 — three restrictions this slice's rows have nothing to do with. */
 function board(seed: number, deck: string[], turn = 3): GameState {
   let state = localSetup(seed, "p1", deck);
   while (state.turn < turn) {
@@ -1825,11 +924,6 @@ function cardsPrompt(state: GameState) {
   return state.phase.prompt;
 }
 
-/** 🆕 D343 — the `orderCards` park's twin of `cardsPrompt`. Kofu is the first
-    program in THIS file to park twice on two different prompt KINDS, so the
-    narrowing has to be per-kind rather than one shared accessor: a helper that
-    returned either would let a test assert an ordering window against a
-    `chooseCards` park and pass. */
 function orderPrompt(state: GameState) {
   if (state.phase.kind !== "effect:choose")
     throw new Error(`expected effect:choose, got ${state.phase.kind}`);
@@ -1849,11 +943,6 @@ function orderCards(state: GameState, uids: string[]): ReturnType<typeof mustApp
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  // 🆕 D335 — THE COUNT IS GONE FROM THIS TITLE RATHER THAN CORRECTED. It read
-  // "registers all 87 Standard-legal printings" over an assertion of 90 — one slice
-  // stale, and D334's own lesson come due on the very next slice: a count in a title
-  // is a count that will be wrong, and the two `expect` calls at the foot of this
-  // block are the only honest place for one. **Delete it or make it executable.**
   it("registers every Standard-legal printing in the table, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
@@ -1862,18 +951,6 @@ describe("D199 — the registry map", () => {
       const first = programFor(ids[0] as string);
       expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
-      // The demonstrator carries the SAME object, so what is driven below is
-      // literally what the printings resolve to — never a copy of it.
-      //
-      // 🆕 **D340 — A NULL `fixture` IS NOT AN EXEMPTION FROM THAT CLAIM, IT IS A
-      // STRICTLY STRONGER FORM OF IT.** The demonstrator exists so the body a suite
-      // DRIVES and the body the printings RESOLVE TO cannot drift apart. A suite
-      // that drives the REAL catalog ids on a local `cardPool` (D275's idiom) closes
-      // that gap by construction — there is no second body to disagree — so what is
-      // owed here is not a weaker check but a DIFFERENT one: prove the row really is
-      // real-id-driven. **This can go RED**: set `fixture: null` on a row whose ids
-      // are `fix-*` demonstrator keys and nothing would be driving a catalog
-      // printing at all, which is the defect the null would otherwise hide.
       if (fixture === null) {
         for (const id of ids) {
           expect(id.startsWith("fix-"), `${program}: ${id} is a demonstrator, not a printing`).toBe(
@@ -1888,29 +965,11 @@ describe("D199 — the registry map", () => {
         expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
       }
     }
-    // 🆕 D331: 41 -> 42 rows and 77 -> 80 legal printings, the +3 being Lisia's
-    // Appeal's whole population. RE-ADDED against the table rather than incremented
-    // from the old literal — D330 shipped a split summing to 21 against a total of
-    // 18 and a 9/4 that was a 9/5, and the `reduce` on the line below is the only
-    // reason a wrong number here cannot survive the run.
-    // 🆕 D332: 42 -> 43 rows and 80 -> 84 legal printings, the +4 being Drayton's
-    // whole population. RE-ADDED against the table by the `reduce` below rather
-    // than incremented from the old literal, which is the only reason a wrong
-    // number here cannot survive the run.
-    // 🆕 D333: 43 -> 45 rows and 84 -> 87 legal printings — Roto-Stick's 1 and Bug
-    // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
-    // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
-    // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(58); // 🆕🆕 D350 +1 (Inviting Wink), carrying +3 legal — ONE card with THREE printings, the D334/D337/D340/D346/D347 split rather than D349's pair. ⚠️ **THE UNIT, RE-READ BEFORE EDITING FOR THE FOURTH SLICE RUNNING: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, so "+1 here and +3 there" is one row and not a discrepancy. `fixture: null` for the EIGHTH row running — the suite drives the three REAL ids on a LOCAL `cardPool` and asserts the `FIXTURE_POOL` abstinence by id in §7. // 🆕🆕 D349 +2 (Glittering Star Pattern, Bianca's Devotion), carrying +6 legal — TWO cards with THREE printings each, D345's row-pair shape and the widest single-slice legal step this table has recorded since D345. 🛑 **AND THE PAIR IS NOT ONE ABILITY NAME ON TWO CARDS (D345) BUT ONE printed CLAUSE ON TWO OPS IN TWO COLUMNS** — a `triggered` Ability and a Supporter, which is a split this table has never carried before. ⚠️ **THE UNIT, RE-READ BEFORE EDITING FOR THE THIRD SLICE RUNNING: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, so "+2 here and +6 there" is two rows and not a discrepancy. `fixture: null` on both, for the sixth and seventh rows running. // 🆕 D347 +1 (Buzzing Boost), carrying +3 legal — ONE card with THREE printings, the same split D346/D340/D337/D334 took. ⚠️ **THE UNIT, RE-READ BEFORE EDITING FOR THE SECOND SLICE RUNNING: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, so "+1 here and +3 there" is one row and not a discrepancy. `fixture: null` for the fifth row running. // 🆕 D346 +1 (Overvolt Discharge), carrying +3 legal — ONE card with THREE printings, D334/D337/D340's split rather than D336's. ⚠️ **THE UNIT: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, which is D341's lesson and one of D345's own two non-count misses — a slice that predicts "+3" here has confused the two instruments. `fixture: null` for the fourth row running. // 🆕🆕 D345 +2 (Cursed Blast ×2), carrying +6 legal — TWO cards with THREE printings each, the first row-pair this table has taken from ONE Ability NAME on TWO cards, and the widest single-slice legal step it has recorded since D334. Both carry `fixture: null` (D340's idiom), and the SPLIT inside the pair is new: `sv06.5` IS among `catalogManifest`'s six sets and `sv08.5` is not, so four of the six ids were shared-pool-admissible and two were not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.** // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(122); // 🆕🆕 D350 +3 — 119 + 3 = 122, re-added from the rows rather than incremented. // 🆕🆕 D349 +6 — 113 + 3 + 3 = 119, re-added from the rows rather than incremented. // 🆕 D347 +3 — 110 + 3 = 113, re-added from the rows rather than incremented. // 🆕 D346 +3 — 107 + 3 = 110, and the sum is re-added from the rows rather than incremented. // 🆕🆕 D345 +6 — 101 + 3 + 3 = 107, and the sum is re-added from the rows rather than incremented. // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(58);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(122);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
-    // ⚠️ THE MISTAKE AN AUTHOR ACTUALLY MAKES HERE. Every row in this slice was
-    // written by reading a neighbouring program; the reprint idiom says
-    // byte-identical text SHARES the object, and NONE of these sentences is
-    // byte-identical to the one it was modelled on. Sharing would make a later
-    // edit to one card silently move another that never printed the same words.
     const pairs: [string, string][] = [
       ["sv10-122", "sv01-118"], // Biting Spree ← Hawlucha "Flying Entry"
       ["sv10-121", "sv10-122"], // Sneaky Bite ← Biting Spree (its own evolution!)
@@ -1937,9 +996,6 @@ describe("D199 — the registry map", () => {
     // …and the two that would be genuinely WRONG if shared, spelled out:
     expect(programFor("sv10.5b-082")?.trainer).toEqual([{ op: "healEach", amount: 40 }]);
     expect(programFor("sv01-184")?.trainer).toEqual([{ op: "healEachAll", amount: 30 }]);
-    // ⚠️ D266 — THE GATE IS ASSERTED PRESENT ON ONE ROW AND ABSENT ON THE OTHER,
-    // in the same `toEqual`, because "absent means ungated" is the fact the two
-    // sentences differ by. Fennel's object above carries NO `pokemonType` key.
     expect(programFor("sv08-167")?.trainer).toEqual([
       { op: "healEach", amount: 60, pokemonType: "Lightning" },
     ]);
@@ -1981,7 +1037,6 @@ describe("D199 — the registry map", () => {
         oncePerTurn: true,
         activeOnly: true,
         program: [
-          // D225's rider — "reveal a Supporter card you find there".
           { op: "lookAtTopN", n: 6, filter: { kind: "supporter" }, max: 1, reveal: true },
           { op: "shuffleDeck" },
         ],
@@ -2012,8 +1067,6 @@ describe("D199 — the registry map", () => {
     expect(programFor("sv09-024")?.abilities?.[0]?.program).toEqual([
       { op: "attachEnergyFrom", source: "discard" },
     ]);
-    // ── D263. The three rows are spelled EXACTLY, because each is the row above
-    //    plus riders and a missing rider is invisible in a `toMatchObject`. ──
     expect(programFor("sv10-020")?.abilities).toEqual([
       {
         name: "Charging Up",
@@ -2032,13 +1085,6 @@ describe("D199 — the registry map", () => {
         ],
       },
     ]);
-    // ⚠️ TWO ops, not `count: 2` — the printed "in any way you like" (D205), and
-    // the one claim about this program a reader is most likely to get wrong.
-    // 🆕 D358 — and each op carries `declinable: true`, the printed "up to 2".
-    // The two fields answer different questions and both are spelled here: `count`
-    // (absent) would pin the pair to ONE body, `declinable` lets the player stop
-    // after the first. `optional: true` above is a THIRD thing again — the
-    // trigger's own "you may", which buys only the empty answer (§9.1).
     expect(programFor("sv08-130")?.triggered).toEqual([
       {
         name: "Assemble Alloy",
@@ -2104,9 +1150,6 @@ describe("D199 — the registry map", () => {
       { op: "discardPileRetrieval", filter: { kind: "anyPokemon" }, dest: "deck", max: 5 },
       { op: "shuffleDeck" },
     ]);
-    // `reveal: true` on both — D225's printed-clause rider ("reveal it" /
-    // "reveal them"); the `discardPileRetrieval` rows above take none, because
-    // the discard pile is public and no §7.1 recovery Item prints the word.
     expect(programFor("sv05-153")?.trainer).toEqual([
       { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
       { op: "shuffleDeck" },
@@ -2119,11 +1162,6 @@ describe("D199 — the registry map", () => {
       { op: "applyStatus", target: "defender", status: "burned" },
       { op: "applyStatus", target: "defender", status: "confused" },
     ]);
-    // 🆕 D343 — the THIRD op is the printed "in any order", and it is inside the
-    // gate rather than beside the payment: `recordGateHolds` is "anything filed",
-    // so a run that paid nothing never opens an ordering window over two cards
-    // nobody put there. Order within the gate is printed too — the sentence
-    // finishes the putting before it starts the drawing.
     expect(programFor("sv07-138")?.trainer).toEqual([
       { op: "payFromHand", count: 2, to: "deckBottom", recordAs: "paid" },
       {
@@ -2161,11 +1199,7 @@ describe("D199 — the registry map", () => {
     });
   });
 
-  it("⚠️ the DROPPED sentences are still UNBUILT — the work order cannot rot (🆕🆕🆕 D570: the list is EMPTY, so the guard asserts the GRADUATION of its last row instead)", () => {
-    // 🆕🆕🆕 D570 — the per-id `toBeUndefined()` loop that stood here iterated `DROPPED`, which is
-    // now EMPTY, so it asserted nothing; a vacuous guard is not left behind (it is restored, in
-    // its shipped form at `5ae558f3`, the day a row is added back). What replaces it is not
-    // vacuous: the list IS empty, and every id its last row named now HAS a program.
+  it("the DROPPED sentences are still UNBUILT — the work order cannot rot ( D570: the list is EMPTY, so the guard asserts the GRADUATION of its last row instead)", () => {
     expect(DROPPED).toEqual([]);
     for (const id of [
       "sv06-018",
@@ -2184,76 +1218,6 @@ describe("D199 — the registry map", () => {
         name: "Festival Grounds",
       });
     }
-    // The list's own arithmetic: 13 sentences (20 at D199 — the Iono's attach was
-    // built by D204, Lacey's prize gate by D207, the §8.1 KO-survival clamp by
-    // D208, **Blood Moon's cost discount by D242, whose `needs` string turned
-    // out to be false about the card rather than expensive**, and **Iron Leaves
-    // ex's on-bench switch by D244, whose `needs` string was RIGHT on all three
-    // pieces — the first row here to be built without a correction**, and
-    // **Genesect ex's typed Evolution search by D245, whose `needs` string was
-    // right, was SATISFIED at D238, and still left the card unbuilt for seven
-    // decisions because it priced the axis and not the value**, and **Hydrapple
-    // ex's heal-on-attach Ability by D249, whose `needs` string was right about
-    // the OBSTACLE and wrong about the ROAD — it named a §9.2 record the shipped
-    // program does not carry**), and every one of them names its missing piece
-    // rather than shrugging.
-    // ⚠️ THE PROSE ABOVE SAID **15** AGAINST AN ASSERTION OF **14** AT D248's
-    // HEAD, and D249 found it while decrementing: a narrative count beside a
-    // machine-checked one drifts in the direction only the machine notices. The
-    // number below is the authority; the sentence now quotes it.
-    // ⚠️ D251 DECREMENTS IT AGAIN (13 → 12) — Cornerstone Mask Ogerpon ex's
-    // attacker-HAS-AN-ABILITY prevent, and the SECOND row here to be built with no
-    // correction to its `needs` string (D244's was the first). See
-    // `cornerstoneStance.test.ts`.
-    // ⚠️ D265 DECREMENTS IT AGAIN (9 → 8) — Alomomola's "Gentle Fin", and the
-    // FIRST row here whose `needs` string was right in full. See the annotation
-    // where the row stood.
-    // ⚠️ D266 DECREMENTS IT AGAIN (8 → 7) — Clemont's Quick Wit, the TYPE gate on
-    // `healEach`, and the SECOND consecutive row whose `needs` string was right.
-    // 🆕 It was right about the PIECE and silent about the ZONE, which is the
-    // refinement this slice adds to the rule: naming `Card.types` does not say
-    // whether the read is of a CARD or of a BOARD, and the two have different
-    // instruments (`CardFilter.typedPokemon` vs an op field beside `targetType`).
-    // ⚠️ D267 DECREMENTS IT AGAIN (7 → 6) — Latias ex's "Skyliner", the STAGE gate
-    // on `noRetreatCostAura`.
-    // ⚠️ D268 DECREMENTS IT AGAIN (6 → 5) — Gothitelle's "Distorted Future",
-    // `handRefresh.who: "opponent"`, and the FOURTH consecutive row whose `needs`
-    // string was right about the code. 🆕 Its refinement: the string priced the
-    // widening by "there is already a read site (Iono/Judge)" and every Iono and
-    // Judge printing is `legal_standard = 0`, so the precedent it cited is a
-    // REGISTRY fact and not a LEGAL one. Both are true; they are not the same
-    // claim, and only one of them belongs in a sentence about printings.
-    // 🆕 **D330 RE-PRICED ALL FOUR REMAINING ROWS AGAINST THE CODE AND TWO OF
-    // THEM WERE ROTTED IN THE SAME DIRECTION — THE *ALREADY-BUILT* MODE, WHICH IS
-    // NOW THE COMMONEST OF THE FOUR AND HAS CLAIMED FIVE ROWS.** The aura row asked
-    // for `seatDamageBonusBeforeWR` without naming it (D243) and named a "cheapest
-    // entry point" that was itself BUILT; the `lookAtTopN` row called
-    // `{ kind: "trainerCard" }` absent when it was a fully wired union member.
-    // 🛑 **AND THE SECOND ONE IS A NEW SHAPE: THE PIECE WAS NOT MERELY BUILT, IT
-    // WAS GREEN ON EVERY LINE AND DEAD TO EVERY PRINTED CARD.** `trainerCard` had
-    // `matchesFilter`, `retrieveNoun` and `HAND_SEARCH_NOUNS` rows and ZERO registry
-    // consumers, so every instrument this repo owns said it was fine and no printed
-    // sentence depended on it. **REACHING A LINE IS NOT A CARD DEPENDING ON IT**,
-    // and a `needs` string written by someone grepping for a CARD will call such a
-    // member missing every time. The cheap check: grep the UNION, not the registry.
-    // 🛑 **AND BOTH CORRECTIONS WERE INVISIBLE TO THE ASSERTION BELOW, BECAUSE
-    // THE CARDS THEY FREED ARE NAMED ONLY IN PROSE.** Florges `sv06-088` lives in a
-    // `needs` string and Team Rocket's Petrel `sv10-176`/`-226` in a PARENTHETICAL;
-    // neither is in any row's `ids`, so D330 built three legal printings out of this
-    // table while `DROPPED` stayed at 4 and nothing here moved. **THIS GUARD COVERS
-    // THE ids AND NOT THE REASONS**, which is the quiet rot direction the Charging Up
-    // note above names — and it is now on record twice.
-    // 🆕 **D331 IS THE FIRST SLICE IN THIS SERIES WHOSE BUILD ACTUALLY MOVES THIS
-    // NUMBER**, 4 -> 3, because unlike Florges and Team Rocket's Petrel the card it
-    // shipped is named in a row's own `ids` and not merely in a `needs` string. That
-    // is the contrast the note above was written for: the guard covers the ids, so it
-    // fires exactly when the ids are built and stays silent when the prose rots.
-    // 🆕🆕🆕 D569 — 2 -> **1**: the Iron Crown ex aura row is BUILT (`COBALT_COMMAND`), named in a
-    // row's own `ids`, so the guard fired exactly as D331's note says it should.
-    // 🆕🆕🆕 D570 — 1 -> **0**: the Festival Lead row is BUILT (`FESTIVAL_LEAD`), named in a row's
-    // own `ids`, so the guard fired exactly as D331's note says it should. The per-row shape loop
-    // that followed (a `needs` string over 80 characters, `ids` of length `legal`) iterated an
-    // empty list and is dropped for the vacuity reason above; the `DROPPED` type keeps the shape.
     expect(DROPPED).toHaveLength(0);
   });
 });
@@ -2288,9 +1252,6 @@ describe("Biting Spree / Sneaky Bite — driven through the real engine", () => 
     if (parked.phase.prompt.kind !== "choosePokemonMulti")
       throw new Error("expected choosePokemonMulti");
     const prompt = parked.phase.prompt;
-    // ⚠️ THE MUTANT THIS KILLS: `target: "opponentBench"` (Hawlucha's value, and
-    // the value a copy of Hawlucha's program would carry). The printed noun is
-    // "your opponent's Pokémon" with no zone word, so the Active is a candidate.
     expect(prompt.candidates.some((c) => c.spot.spot === "active" && c.seat === "p2")).toBe(true);
     expect(prompt.candidates).toHaveLength(3); // Active + 2 Benched
     // "choose 2" is exact — a floor as well as a ceiling — and "you may" makes
@@ -2317,10 +1278,7 @@ describe("Biting Spree / Sneaky Bite — driven through the real engine", () => 
     });
     const placed = findAll(events, "COUNTERS_PLACED");
     expect(placed).toHaveLength(2);
-    // ⚠️ THE MUTANT THIS KILLS: `amount: 10` (one counter — the number Hawlucha
-    // prints, and the units slip this family is one conversion away from).
     for (const e of placed) expect(e.amount).toBe(20);
-    // Counters, never attack damage: the row says "Ability" and no W/R applies.
     for (const e of placed) expect(e.source).toBe("ability");
     expect(done.players.p2.active?.damage).toBe(20);
     expect(done.players.p2.bench[0]?.damage).toBe(20);
@@ -2371,8 +1329,6 @@ describe("Sudden Shearing — driven through the real engine", () => {
       seat: "p1",
       ability: "Sudden Shearing",
     });
-    // ⚠️ THE MUTANT THIS KILLS: `whose: "self"`. Both halves are asserted, because
-    // one of them alone is satisfied by a program that mills nobody.
     expect(done.players.p2.discard).toContain(oppTop);
     expect(done.players.p2.deck[0]).not.toBe(oppTop);
     expect(done.players.p1.deck).toHaveLength(ownDeckBefore);
@@ -2395,8 +1351,6 @@ describe("Attract Customers — driven through the real engine", () => {
     deepFreeze(state);
     const { state: parked } = mustApply(state, useOn("Attract Customers"));
     const prompt = cardsPrompt(parked);
-    // ⚠️ THE MUTANTS THIS KILLS: `n: 7` (Pokégear's window — the deeper Supporter
-    // would appear) and `filter: anyPokemon` (the five fillers would appear).
     expect(prompt.candidates).toEqual([inWindow]);
     expect(prompt.candidates).not.toContain(belowWindow);
     expect(prompt.max).toBe(1);
@@ -2434,8 +1388,6 @@ describe("Scalding Steam / Calming Light / Dangerous Laser — the §12 writers"
     const { state: done, events } = mustApply(state, useOn("Scalding Steam"));
     expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
     expect(done.players.p2.active?.conditions.burned).toBe(true);
-    // ⚠️ TWO MUTANTS AT ONCE: `target: "self"` (the controller would burn) and
-    // `status: "asleep"` (the rotation slot would move instead of the flag).
     expect(done.players.p1.active?.conditions.burned).toBe(false);
     expect(done.players.p2.active?.conditions.rotation).toBe("none");
   });
@@ -2452,8 +1404,6 @@ describe("Scalding Steam / Calming Light / Dangerous Laser — the §12 writers"
     const state = deepFreeze(board(11, TRN_DECK));
     const { state: done, events } = playFromHand(state, "fix-dangerouslaser");
     const applied = findAll(events, "STATUS_APPLIED").map((e) => e.status);
-    // ⚠️ THE MUTANT THIS KILLS: dropping either op. Both are asserted, and they
-    // land in different fields, so one cannot be mistaken for the other.
     expect(applied).toEqual(["burned", "confused"]);
     expect(done.players.p2.active?.conditions.burned).toBe(true);
     expect(done.players.p2.active?.conditions.rotation).toBe("confused");
@@ -2494,8 +1444,6 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
     const first = mustApply(state, useOn("Inferno Fandango"));
     // One eligible target (the Active alone) and interchangeable Energy → forced.
     expect(first.state.players.p1.active?.energy).toHaveLength(1);
-    // ⚠️ THE MUTANT THIS KILLS: `oncePerTurn: true`. "As often as you like" is the
-    // printed clause, and Baxcalibur is the only other card in the file with it.
     const second = mustApply(first.state, useOn("Inferno Fandango"));
     expect(second.state.players.p1.active?.energy).toHaveLength(2);
     expect(findAll(second.events, "ENERGY_ATTACHED")).toHaveLength(1);
@@ -2532,75 +1480,11 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Seething Spirit"));
     expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
-    // ⚠️ THE MUTANT THIS KILLS: `source: "hand"` (Quaquaval's value). The pile
-    // shrank and the hand did not.
     expect(done.players.p1.discard).not.toContain(fromPile);
     expect(done.players.p1.hand).toHaveLength(handBefore);
     expect(done.players.p1.active?.energy).toContain(fromPile);
   });
 });
-
-// ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 ────────────────────────────────
-//
-// The `%attach%…%discard pile%` ladder run at D263 (all three text columns,
-// `json_each`, case-insensitive, `legal_standard = 1`, GROUPED BY SENTENCE,
-// remote D1 `colorless`, 2026-08-07) returns **38 printings on 24 sentences**:
-// ability 14/7, attack 17/12, effect 7/5. 🛑 **RUNG 1 — the resume point's own
-// `%from your discard pile%attach%` — RETURNS ZERO ROWS**, because this corpus
-// prints the verb FIRST every single time ("Attach … from your discard pile"),
-// never the reverse. The phrase order was a guess and the ladder falsified it on
-// the first rung, which is exactly what a ladder is for.
-//
-// Subtracting the ONE false positive (Huntail `sv10-055` "Diver's Catch", which
-// says "instead of the discard pile" and is a KO-trigger recovery, not an attach)
-// [🆕🆕🆕 D572 (D539): still a false positive for THIS ladder — it attaches nothing — but no
-// longer UNBUILT: Diver's Catch is BUILT as `passive.koBasicEnergyToHand` (flow.ts
-// `collectKnockOutPass` → `knockOut`'s hand split), so it leaves the residue either way]
-// leaves **ability 13 / 6 sentences** — D234's figure to the digit, re-derived
-// rather than inherited. One printing was authored (`sv09-024`); these three
-// sentences are 7 more, and the residue is **5 on 2 sentences, both seam-blocked**:
-//   • Magneton `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge" (3) — the
-//     attach is expressible (3 ops, `targetType: "Lightning"`), but the second
-//     printed clause is "If you use this Ability, this Pokémon is Knocked Out"
-//     and NO OP IN THE ENGINE KNOCKS OUT ITS OWN HOST. Grepped, not assumed.
-// ✅✅ **D346 TOOK IT, AND THIS BULLET WAS RIGHT ALL ALONG — WHICH IS THE FINDING.**
-//     `knockOutSelf` landed at D345 and spent the ONE blocker named here, so the card
-//     became a registry row and nothing else. But D345 did not read this bullet: it
-//     wrote a NEW residue note claiming the *"in any way you like"* DISTRIBUTION was a
-//     second blocker, and propagated it to NINE FILES. That was false when written —
-//     the phrase at a PRINTED COUNT is N `attachEnergyFrom` ops, which is D263's own
-//     `ASSEMBLE_ALLOY` two screens down and `attachEnergyFrom.count`'s doc since D205.
-// 🛑🛑 **THE TRANSFERABLE LESSON, AND IT IS THE EXPENSIVE HALF OF D341's.**
-//     D341/D344 found residue notes that rotted by STANDING STILL while the code moved;
-//     those re-derive, because note and code disagree and the code wins. **This one
-//     rotted by being REWRITTEN**, and a rewritten note disagrees with nothing: it
-//     carries a fresh decision's authority, names a real mechanism, and routes the next
-//     slice past a card that is already buildable. **WHEN A SLICE SPENDS A BLOCKER, THE
-//     NOTE THAT NAMED IT MUST BE DELETED — not re-pointed at the next mechanism that
-//     comes to mind without re-running the method's step (3) against the code.**
-//     The `DROPPED`-rots-in-both-directions rule D263 wrote is the same rule; this is
-//     its third direction, and the only one no assertion can see.
-//   • Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" (2) — "up to 2 **Spiky Energy**
-//     cards", a card named by NAME. `attachEnergyFrom` narrows by `energyType`
-//     and `anyEnergy` and has no name axis; `CardFilter.byName` exists one op
-//     over, and D246 refused to give this op a filter for a measured reason.
-//
-// ⚠️ WHAT THIS SUITE CAN AND CANNOT PUT RED, SAID UP FRONT (the guard rule):
-// * Dropping `toSelf` from Charging Up parks instead of forcing on the boards
-//   below — they hold TWO eligible own bodies — and the Energy may land on the
-//   Bench. BOTH halves are asserted, because either alone is satisfied by a
-//   program that attaches nothing.
-// * Dropping `benchOnly` from Dynamotor feeds the HOLDER, which is the Active on
-//   every board here. Asserted as "the Active ends with zero Energy".
-// * Changing Dynamotor's `energyType` is caught by the Colorless-pile case.
-// * Dropping ONE of Assemble Alloy's two ops, or welding them into `count: 2`,
-//   is caught by the two-park case: `count` pins the batch to one body, and the
-//   board below lands one Energy on EACH of two.
-// * Dropping `targetType` is caught by the candidate-set assertion (the Colorless
-//   `fix-bigbody` on the Bench must never be offered).
-// * Dropping `optional` changes no behaviour today (`TriggeredAbility.optional`
-//   AUTO-FIRES), so it is killed by the DECLARATION snapshot above and by nothing
-//   else — the same verdict `battleHardened.test.ts` records for its own.
 
 describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILITY rows", () => {
   /** The last uid pushed onto P1's discard pile. */
@@ -2615,8 +1499,6 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     const handBefore = state.players.p1.hand.length;
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Charging Up"));
-    // ⚠️ THE MUTANT THIS KILLS: dropping `toSelf` (Seething Spirit's shape). Two
-    // own bodies are eligible under the un-narrowed reading, so the op would PARK.
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
     expect(done.players.p1.active?.energy).toContain(fromPile);
@@ -2640,9 +1522,6 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     const { state: done, events } = mustApply(state, useOn("Dynamotor"));
     expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
     expect(done.players.p1.bench[0]?.energy).toContain(fromPile);
-    // ⚠️ THE MUTANT THIS KILLS: dropping `benchOnly`. The holder is the Active and
-    // is the FIRST ref `attachEnergyTargets` offers, so the defect is invisible on
-    // any board that only checks "did the Bench get one".
     expect(done.players.p1.active?.energy).toHaveLength(0);
   });
 
@@ -2718,9 +1597,6 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     const candidates = parked.phase.prompt.candidates;
-    // ⚠️ THE MUTANT THIS KILLS: dropping `targetType`. Three own bodies are in
-    // play and only TWO of them are {M} — the freshly evolved Active and
-    // `fix-metalbody`. `fix-bigbody` on bench index 1 is Colorless.
     expect(candidates).toHaveLength(2);
     expect(candidates.some((c) => c.spot.spot === "bench" && c.spot.index === 1)).toBe(false);
     expect(candidates.some((c) => c.spot.spot === "active")).toBe(true);
@@ -2734,8 +1610,6 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     expect(mid.phase.kind).toBe("effect:choose");
     const { state: done, events } = pickTarget(mid, "bench", 0);
     expect(done.phase.kind).not.toBe("effect:choose");
-    // ⚠️ THE MUTANT THIS KILLS: welding the two ops into one `count: 2`. A pinned
-    // batch puts BOTH Energy on the one chosen body; two ops put one on each.
     expect(done.players.p1.active?.energy).toHaveLength(1);
     expect(done.players.p1.bench[0]?.energy).toHaveLength(1);
     expect(done.players.p1.bench[1]?.energy).toHaveLength(0);
@@ -2781,8 +1655,6 @@ describe("Confectionary Gift — driven through the real engine", () => {
     state = setDamage(state, "p1", 100);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Confectionary Gift"));
-    // ⚠️ THE MUTANT THIS KILLS: `amount: "all"` (Arboliva's value — the same op,
-    // the neighbouring literal). 100 → 70, not 100 → 0.
     expect(find(events, "HEALED")?.amount).toBe(30);
     expect(done.players.p1.active?.damage).toBe(70);
   });
@@ -2794,7 +1666,6 @@ describe("Reconstitute / Up-Tempo — the hand-cost rows", () => {
     const handBefore = state.players.p1.hand.length;
     const { state: parked } = mustApply(state, useOn("Reconstitute"));
     const prompt = cardsPrompt(parked);
-    // ⚠️ THE MUTANT THIS KILLS: Trade's numbers (pay 1, draw 2).
     expect(prompt.min).toBe(2);
     expect(prompt.max).toBe(2);
     const picks = prompt.candidates.slice(0, 2) as string[];
@@ -2815,7 +1686,6 @@ describe("Reconstitute / Up-Tempo — the hand-cost rows", () => {
     const { state: parked } = mustApply(state, useOn("Up-Tempo"));
     const pick = cardsPrompt(parked).candidates[0] as string;
     const { state: done } = chooseCards(parked, [pick]);
-    // ⚠️ THE MUTANT THIS KILLS: `to: "discard"` (every other Ability in the file).
     expect(done.players.p1.discard).toHaveLength(discardBefore);
     expect(done.players.p1.deck[done.players.p1.deck.length - 1]).toBe(pick);
     // …and the draw measures the hand AFTER the payment (3 − 1 = 2, so 3 drawn),
@@ -2896,11 +1766,6 @@ describe("Enhanced Hammer — driven through the real engine", () => {
     const special = withBasic.players.p2.bench[0]?.energy[0] as string;
     const basic = withBasic.players.p2.active?.energy[0] as string;
     const { state: done, events } = playFromHand(withBasic, "fix-enhancedhammer");
-    // ⚠️ THE MUTANT THIS KILLS: `filter: anyEnergy` (fix-hammer's value). With the
-    // Basic on the Active in the offer there would be TWO candidates and the op
-    // would PARK; the narrowed filter leaves exactly one, so it is FORCED and the
-    // play settles straight back to the turn. The absence of the park is the
-    // assertion, and the surviving Basic is its second half.
     expect(done.phase.kind).toBe("turn:action");
     expect(types(events)).toContain("ENERGY_DISCARDED");
     expect(done.players.p2.discard).toContain(special);
@@ -2983,20 +1848,11 @@ describe("Fennel — driven through the real engine", () => {
     expect(done.players.p1.active?.damage).toBe(60);
     // Clamped per Pokémon: 30 damage heals 30, not 40.
     expect(done.players.p1.bench[0]?.damage).toBe(0);
-    // ⚠️ THE MUTANT THIS KILLS: `healEachAll` (Picnic Basket's op — the opponent
-    // would heal too). The printed sentence has no "(both yours and your
-    // opponent's)", and that absence is the whole difference between the ops.
     expect(done.players.p2.active?.damage).toBe(100);
   });
 });
 
 describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the real engine", () => {
-  /** P1 with a four-body board on `QUICKWIT_DECK`, every one of them damaged:
-      Active a {L} at 100, bench 0 a {L} at 30 (BELOW the heal amount, so the
-      clamp is observable), bench 1 a COLORLESS at 100 (the gate's negative) and
-      bench 2 a {M}{L} at 100 (the `includes` witness). P2's Active is a {L} at
-      100 too — the seat scope's negative, and the only thing that separates this
-      op from `healEachAll`. */
   function quickWitBoard(seed: number): GameState {
     let state = board(seed, QUICKWIT_DECK);
     state = setActiveFromDeck(state, "p1", "fix-lightningbody");
@@ -3029,15 +1885,8 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
     expect(done.players.p1.active?.damage).toBe(40);
     // Clamped per Pokémon, exactly as the ungated op already was: 30 heals 30.
     expect(done.players.p1.bench[0]?.damage).toBe(0);
-    // ⚠️ THE MUTANT THIS KILLS: a dropped `pokemonType` conjunct. Without the
-    // gate this body heals to 40 and the card becomes Fennel with a bigger
-    // number — the ONE assertion the whole slice exists for.
     expect(done.players.p1.bench[1]?.damage).toBe(100);
-    // ⚠️ AND THIS ONE: `types` compared for equality (or `types[0]`) instead of
-    // `includes`. A {M}{L} body IS a "{L} Pokémon" and must heal.
     expect(done.players.p1.bench[2]?.damage).toBe(40);
-    // ⚠️ AND `healEachAll`: the OPPONENT's {L} Active is not "your {L} Pokémon",
-    // and the gate does not make the seat scope any less load-bearing.
     expect(done.players.p2.active?.damage).toBe(100);
   });
 
@@ -3050,8 +1899,6 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
     const healed = findAll(events, "HEALED");
     expect(healed.every((e) => e.seat === "p1")).toBe(true);
     expect(healed.map((e) => e.amount)).toEqual([60, 30, 60]);
-    // The Colorless body's uid appears in NO HEALED row. Asserting the damage
-    // alone would stay green under a build that emitted a 0-amount row for it.
     expect(healed.some((e) => e.uid === skipped)).toBe(false);
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -3062,19 +1909,12 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
     state = clearBench(state, "p1");
     state = benchFromDeck(state, "p1", "fix-basic-1");
     state = setDamage(state, "p1", 100);
-    // Fennel has no playability gate and neither does this: the Supporter is
-    // spent, nothing heals, and no HEALED row is emitted. A whiff is SILENT —
-    // per Pokémon for the ungated op, and per Pokémon here too.
     const { state: done, events } = playFromHand(state, "fix-clemontsquickwit");
     expect(findAll(events, "HEALED")).toHaveLength(0);
     expect(done.players.p1.active?.damage).toBe(100);
   });
 
   it("leaves the UNGATED sentence ungated — Fennel still heals a {L} body", () => {
-    // ⚠️ THE ATTRIBUTION CONTROL. An absent `pokemonType` must NOT mean
-    // `Colorless`: Fennel's printed "each of your Pokémon" heals a {L} body, and
-    // a build that defaulted the field would pass every assertion above and
-    // break the two sentences apart in the wrong place.
     let state = board(71, QUICKWIT_DECK);
     state = setActiveFromDeck(state, "p1", "fix-lightningbody");
     state = clearBench(state, "p1");
@@ -3120,7 +1960,6 @@ describe("the discardPileRetrieval rows — Night Stretcher / Max Rod / Miracle 
     const { state: parked } = playFromHand(state, "fix-nightstretcher");
     const prompt = cardsPrompt(parked);
     expect([...prompt.candidates].sort()).toEqual([mon, energy].sort());
-    // ⚠️ THE MUTANT THIS KILLS: `max: 5` (Max Rod's value, the sibling row).
     expect(prompt.max).toBe(1);
     const { state: done } = chooseCards(parked, [mon]);
     expect(done.players.p1.hand).toContain(mon);
@@ -3148,8 +1987,6 @@ describe("the discardPileRetrieval rows — Night Stretcher / Max Rod / Miracle 
     expect(prompt.max).toBe(2);
     const { state: done, events } = chooseCards(parked, [supporter]);
     expect(done.players.p1.hand).toContain(supporter);
-    // ⚠️ THE MUTANT THIS KILLS: `dest: "deck"` (Pal Pad's value) — there would be
-    // a shuffle and the card would not be in hand.
     expect(types(events)).not.toContain("SHUFFLE");
   });
 
@@ -3168,7 +2005,6 @@ describe("the discardPileRetrieval rows — Night Stretcher / Max Rod / Miracle 
     expect(prompt.candidates).toEqual([energy]);
     expect(prompt.max).toBe(5);
     const { state: done, events } = chooseCards(parked, [energy]);
-    // ⚠️ THE MUTANT THIS KILLS: `dest: "hand"` (Energy Retrieval's value).
     expect(done.players.p1.deck).toContain(energy);
     expect(done.players.p1.hand).not.toContain(energy);
     expect(done.players.p1.deck).toHaveLength(deckBefore + 1);
@@ -3184,8 +2020,6 @@ describe("the discardPileRetrieval rows — Night Stretcher / Max Rod / Miracle 
     expect(prompt.candidates).toEqual([mon]);
     const { state: done, events } = chooseCards(parked, [mon]);
     expect(done.players.p1.deck).toContain(mon);
-    // ⚠️ THE MUTANT THIS KILLS: sharing Miriam's object (the first sentence is
-    // byte-identical). Miriam's second sentence would draw 3.
     expect(types(events)).not.toContain("CARDS_DRAWN");
     expect(done.players.p1.hand).toHaveLength(handBefore); // +1 drawn from deck, −1 played
   });
@@ -3195,7 +2029,6 @@ describe("the searchDeck rows — Master Ball / Treasure Tracker", () => {
   it("Master Ball searches the WHOLE deck for a Pokémon, with NO coin flip", () => {
     const state = board(29, TRN_DECK);
     const { state: parked, events } = playFromHand(state, "fix-masterball");
-    // ⚠️ THE MUTANT THIS KILLS: Poké Ball's `coinFlipGate` wrapper.
     expect(types(events)).not.toContain("EFFECT_COIN_FLIP");
     const prompt = cardsPrompt(parked);
     expect(prompt.max).toBe(1);
@@ -3237,42 +2070,15 @@ describe("Kofu — driven through the real engine", () => {
     const picks = prompt.candidates.slice(0, 2) as string[];
     const { state: paidState, events: payEvents } = chooseCards(parked, picks);
     expect(find(payEvents, "HAND_COST_PAID")?.uids).toEqual(picks);
-    // 🆕 D343 — THE PAYMENT NO LONGER FINISHES THE CARD. The printed "in any
-    // order" is a SECOND park, and it is here rather than riding the pick's array
-    // because `chooseCards`'s validator is free to treat that array as a set
-    // (D341) and because `payFromHand` skips the pick entirely when the offer is
-    // no bigger than the count. The draw has NOT happened yet.
     expect(find(payEvents, "CARDS_DRAWN")).toBeUndefined();
     const order = orderPrompt(paidState);
-    // ⚠️ THE WINDOW IS THE PAYMENT, BY CONSTRUCTION AND NOT BY A CHANNEL — D342's
-    // trick at the other end of the same deck. `payFromHand{to:"deckBottom"}`
-    // appends, so the two paid cards ARE the last two, and `reorderTop
-    // {from:"bottom"}` reads exactly them. Asserted as a SEQUENCE (deck order,
-    // index 0 nearer the top), which is the whole subject of the row.
     expect(order.candidates).toEqual(picks);
-    // ⚠️ THE MUTANT THIS KILLS: `to: "discard"`. The two cards are UNDER the deck.
     expect(paidState.players.p1.deck.slice(-2)).toEqual(picks);
     for (const uid of picks) expect(paidState.players.p1.discard).not.toContain(uid);
-    // Answer with the window REVERSED — the identity permutation would be green
-    // against an engine that ignored the answer entirely, which is exactly the
-    // mutant this row exists to catch.
     const reversed = [...picks].reverse();
     const { state: done, events } = orderCards(paidState, reversed);
-    // 🛑 THE BOARD, NOT THE FIELD (D342's shared shape). The bottom of the deck
-    // is the answer's own sequence, and everything above the window is untouched.
     expect(done.players.p1.deck.slice(-2)).toEqual(reversed);
-    // ⚠️ THE MIDDLE IS COMPARED PAST THE DRAW, and the `4` is why this assertion
-    // is worth writing rather than eyeballing: the gate's second op takes 4 cards
-    // off the TOP in the same reduction, so "everything above the window is
-    // untouched" is only checkable against the pre-draw deck with those 4 dropped.
-    // A reorder that spliced at the wrong end would show up here and nowhere else.
     expect(done.players.p1.deck.slice(0, -2)).toEqual(paidState.players.p1.deck.slice(4, -2));
-    // 🛑 THE ROW SAYS WHICH END, AND IT RIDES THE ACTION THAT *PARKED* — which
-    // is the PAYMENT's reduction, not this one. D341's rule inherited by the new
-    // fork without a line of its own: the event reports that the window was read,
-    // and that happened whether or not the ordering answer ever arrives. Asserted
-    // on `payEvents` for that reason, and re-asserted absent here so a future
-    // author cannot quietly start emitting it twice.
     expect(find(payEvents, "DECK_TOP_REORDERED")).toEqual({
       type: "DECK_TOP_REORDERED",
       seat: "p1",
@@ -3287,14 +2093,7 @@ describe("Kofu — driven through the real engine", () => {
     expect(done.players.p1.deck).toHaveLength(deckBefore - 1 + 2 - 4);
   });
 
-  it("🆕 D343 — asks for the ORDER even when the PAYMENT had no choice in it", () => {
-    // 🛑🛑 THE BOARD THAT JUSTIFIES THE WHOLE ROW, and the one the two-op program
-    // silently got wrong. `payFromHand` resolves INLINE when the offer is no
-    // bigger than the count ("the only decision is WHICH cards") — so on Kofu
-    // plus exactly two other cards there is no `chooseCards` park at all and the
-    // pair used to land in raw hand order. The printed "in any order" was not
-    // under-specified on this board; it was ABSENT. The ordering is a separate
-    // op precisely so that it does not inherit the payment's no-choice branch.
+  it("D343 — asks for the ORDER even when the PAYMENT had no choice in it", () => {
     let state = board(33, TRN_DECK);
     state = toHand(state, "fix-kofu");
     const kofu = handUid(state, "p1", "fix-kofu");
@@ -3324,9 +2123,6 @@ describe("Kofu — driven through the real engine", () => {
     // not have passed.
     const order = orderPrompt(played.state);
     expect(order.candidates).toEqual(spares);
-    // 🛑 THE CAPTION IS THE BOTTOM SENTENCE, NOT THE TOP ONE WITH A WORD SWAPPED.
-    // "back" would assert a return that never happened — these cards came out of
-    // the player's own hand, they were never on the deck to be put BACK.
     expect(order.note).toBe("Put these cards on the bottom of your deck in any order.");
     // The reversed answer reaches the board, and the draw is still owed.
     const flipped = [...spares].reverse();
@@ -3381,8 +2177,6 @@ describe("Maximum Belt — driven through the real engine", () => {
 
   it("adds 50 against a Pokémon ex and NOTHING against a body without the suffix", () => {
     const versusEx = mustApply(deepFreeze(belted(33, "fix-attacker-ex", "fix-maximumbelt")), bite);
-    // ⚠️ TWO MUTANTS AT ONCE: `amount: 30` (Choice Belt's number) and
-    // `targetSuffix: "V"` (Choice Belt's suffix — the second would deal a bare 30).
     expect(find(versusEx.events, "DAMAGE_DEALT")?.dealt).toBe(80);
     const versusPlain = mustApply(deepFreeze(belted(34, "fix-bigbody", "fix-maximumbelt")), bite);
     expect(find(versusPlain.events, "DAMAGE_DEALT")?.dealt).toBe(30);
@@ -3418,19 +2212,11 @@ describe("Binding Mochi — driven through the real engine", () => {
     expect(find(poisoned.events, "DAMAGE_DEALT")?.dealt).toBe(70);
     const clean = mustApply(deepFreeze(mochi(37, "none")), bite);
     expect(find(clean.events, "DAMAGE_DEALT")?.dealt).toBe(30);
-    // ⚠️ THE MUTANT THIS KILLS: `cond: { kind: "opponentActivePoisoned" }` — the
-    // sibling member one line away in the union, and the one a reader skimming
-    // "Poisoned Pokémon" would reach for. Poisoning the DEFENDER buys nothing.
     const wrongSide = mustApply(deepFreeze(mochi(38, "defender")), bite);
     expect(find(wrongSide.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
-  it("⚠️ a BENCHED holder contributes nothing — the fold reads the ATTACKER and no one else", () => {
-    // The printed subject is "the Pokémon this card is attached to"; the field
-    // reads "your Active". The two coincide because a body attacking IS the
-    // Active — which means a Tool on the Bench never reaches the fold at all,
-    // even on a board where the seat's Active is Poisoned. Asserted rather than
-    // argued, because it is the one place the two readings could have parted.
+  it("a BENCHED holder contributes nothing — the fold reads the ATTACKER and no one else", () => {
     let state = board(39, TRN_DECK);
     state = setActiveFromDeck(state, "p1", "fix-attacker");
     state = clearBench(state, "p1");
@@ -3471,8 +2257,6 @@ describe("Levincia — the first Stadium ability that is not a deck search", () 
     state = playFromHand(state, "fix-levincia").state;
     const { state: parked } = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
     const prompt = cardsPrompt(parked);
-    // ⚠️ THE MUTANT THIS KILLS: dropping `energyType` — the untyped Basic would be
-    // offered, which is Energy Retrieval's filter and not this card's.
     expect([...prompt.candidates].sort()).toEqual([...lightning].sort());
     expect(prompt.candidates).not.toContain(plain);
     expect(prompt.max).toBe(2);
@@ -3540,8 +2324,6 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
     };
     const { state: done, events } = mustApply(deepFreeze(withEnergy), bite);
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
-    // ⚠️ THE MUTANT THIS KILLS: `amount: 30` (Counterattack Quills' number — the
-    // program this row was read off, whose antecedent is byte-identical).
     expect(done.players.p1.active?.damage).toBe(20);
     // The non-vacuous control: the same board without the Energy attached.
     state = spiked(43);
@@ -3579,10 +2361,6 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// D264 — backlog row 13's ABILITY and TRAINER halves: the discard pile into the
-// HAND, on the two nouns the `CardFilter` vocabulary could not previously spell.
-
 describe("Lana's Aid — driven through the real engine", () => {
   /** P1's turn with a pile holding one of each of the five things Lana's Aid's
       two-member `anyOf` must tell apart. Every assertion below is a statement
@@ -3611,39 +2389,27 @@ describe("Lana's Aid — driven through the real engine", () => {
         pileUid(state, "fix-energy"),
       ].sort(),
     );
-    // ⚠️ THE MUTANT THIS KILLS: `anyOf` read as `.every` rather than `.some`. No
-    // card in the pile is BOTH a Rule-Box-less Pokémon and a Basic Energy, so an
-    // intersection reading offers an empty prompt — a Supporter that pays nobody.
     expect(prompt.candidates.length).toBeGreaterThan(0);
-    // ⚠️ AND: `max: 5` (Max Rod's value, the program this one was modelled on).
     expect(prompt.max).toBe(3);
   });
 
-  it("⚠️ takes an EVOLUTION Pokémon — the card that separates `anyPokemon` from `basicPokemon`", () => {
+  it("takes an EVOLUTION Pokémon — the card that separates `anyPokemon` from `basicPokemon`", () => {
     const state = lanaPile(71);
     const stage1 = pileUid(state, "fix-plainstage1");
     const { state: parked } = playFromHand(state, "fix-lanasaid");
-    // ⚠️ THE MUTANT THIS KILLS, AND THE REASON THIS ROW COST A UNION RIDER:
-    // `{ kind: "basicPokemon", noRuleBox: true }` (Artazon's filter) compiles,
-    // captions almost right, and silently drops every Stage 1 / Stage 2 in the
-    // pile. `fix-plainstage1` is the only card here that tells the two apart.
     expect(cardsPrompt(parked).candidates).toContain(stage1);
     const { state: done } = chooseCards(parked, [stage1]);
     expect(done.players.p1.hand).toContain(stage1);
     expect(done.players.p1.discard).not.toContain(stage1);
   });
 
-  it("⚠️ refuses the Pokémon ex — the `noRuleBox` rider, which is the whole clause", () => {
+  it("refuses the Pokémon ex — the `noRuleBox` rider, which is the whole clause", () => {
     const state = lanaPile(72);
     const { state: parked } = playFromHand(state, "fix-lanasaid");
-    // ⚠️ THE MUTANT THIS KILLS: dropping `noRuleBox`. "Fixmon ex" is a Pokémon
-    // sitting in the pile, so a bare `anyPokemon` offers it and the printed
-    // parenthetical ("Pokémon ex, Pokémon V, etc. have Rule Boxes.") becomes a
-    // sentence the engine does not read.
     expect(cardsPrompt(parked).candidates).not.toContain(pileUid(state, "fix-attacker-ex"));
   });
 
-  it("⚠️ refuses the SPECIAL Energy — `basicEnergy`, not `anyEnergy`", () => {
+  it("refuses the SPECIAL Energy — `basicEnergy`, not `anyEnergy`", () => {
     const state = lanaPile(73);
     const { state: parked } = playFromHand(state, "fix-lanasaid");
     expect(cardsPrompt(parked).candidates).not.toContain(pileUid(state, "fix-special"));
@@ -3652,10 +2418,6 @@ describe("Lana's Aid — driven through the real engine", () => {
   it("captions the prompt with the printed noun, joined — the `anyOf` arm's first witness", () => {
     const state = lanaPile(74);
     const { state: parked } = playFromHand(state, "fix-lanasaid");
-    // 🛑 `retrieveNoun`'s `anyOf` arm has been in the file since D245 and NOTHING
-    // could reach it: its only printing was a passive aura, which parks no prompt.
-    // This is the first board that renders it, and it renders BOTH new phrases —
-    // the joiner and the stage-free `noRuleBox` plural.
     expect(cardsPrompt(parked).note).toBe(
       "Put up to 3 Pokémon that don't have a Rule Box or Basic Energy cards from your discard pile into your hand.",
     );
@@ -3668,8 +2430,6 @@ describe("Lana's Aid — driven through the real engine", () => {
     expect(picks).toHaveLength(3);
     const { state: done, events } = chooseCards(parked, picks);
     for (const uid of picks) expect(done.players.p1.hand).toContain(uid);
-    // ⚠️ THE MUTANT THIS KILLS: `dest: "deck"` (Sacred Ash's value) — the cards
-    // would land in the deck and a SHUFFLE would fire.
     expect(types(events)).not.toContain("SHUFFLE");
   });
 });
@@ -3706,12 +2466,7 @@ describe("Greedy Order (Arven's Greedent) — driven through the real engine", (
     const { state: parked, events } = mustApply(state, evolveIntoGreedent(state));
     expect(types(events)).toContain("ABILITY_TRIGGERED");
     const prompt = cardsPrompt(parked);
-    // ⚠️ THE MUTANT THIS KILLS: `{ kind: "item" }` (or `trainerCard`) in place of
-    // `byName`. `fix-item` is an Item in the same pile and must NOT be offered;
-    // all three copies of the named card must be.
     expect([...prompt.candidates].sort()).toEqual([...sandwiches].sort());
-    // ⚠️ AND: `max: 3` (Lana's Aid's value, the sibling row) — three are eligible
-    // and the print takes two.
     expect(prompt.max).toBe(2);
   });
 
@@ -3724,18 +2479,12 @@ describe("Greedy Order (Arven's Greedent) — driven through the real engine", (
     expect(
       done.players.p1.discard.filter((u) => done.cardIdByUid[u] === "fix-arvenssandwich"),
     ).toHaveLength(1);
-    // ⚠️ THE MUTANT THIS KILLS: `dest: "deck"` — the cards would leave for the
-    // deck and a shuffle would fire.
     expect(types(events)).not.toContain("SHUFFLE");
   });
 
   it("captions the prompt with the printed 'cards' — the `cardNoun` rider", () => {
     const state = greedBoard(78, 3);
     const { state: parked } = mustApply(state, evolveIntoGreedent(state));
-    // ⚠️ THE MUTANT THIS KILLS: dropping `cardNoun`. `byName`'s bare arm exists
-    // for Flamigo, whose printed noun really is invariant ("up to 3 Flamigo"); a
-    // Trainer name prints the word after it, and without the rider the dialog
-    // reads "…up to 2 Arven's Sandwich from your discard pile…".
     expect(cardsPrompt(parked).note).toBe(
       "Put up to 2 Arven's Sandwich cards from your discard pile into your hand.",
     );
@@ -3756,19 +2505,6 @@ describe("Greedy Order (Arven's Greedent) — driven through the real engine", (
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// D265 — the HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`): ONE union
-// rider read by TWO ops, on the two sentences that print it.
-//
-// ⚠️ THE TWO SUITES BELOW ARE DELIBERATELY NOT MERGED, AND THE REASON IS THE
-// SLICE'S OWN THESIS. The filter is shared; the OPS are not. Buddy-Buddy Poffin
-// puts `searchDeck` over the DECK from a Trainer, Gentle Fin puts
-// `discardPileRetrieval` over the DISCARD PILE from an activated Ability, and a
-// rider that worked on one and not the other would be green on a merged suite
-// that only ever drove one of them. Each suite therefore asserts the SAME three
-// conjuncts through its own op — which is the evidence that the threshold belongs
-// on the FILTER rather than as a field on either op.
-
 describe("Buddy-Buddy Poffin — driven through the real engine", () => {
   /** P1's turn on the threshold deck. Nothing is seeded: `searchDeck` reads the
       deck, and the deck is what the fixture list above weights. */
@@ -3781,25 +2517,14 @@ describe("Buddy-Buddy Poffin — driven through the real engine", () => {
     const state = poffinBoard(80);
     const { state: parked } = playFromHand(state, "fix-buddybuddypoffin");
     const prompt = cardsPrompt(parked);
-    // ⚠️ THE THREE MUTANTS THIS KILLS, ONE PER EXCLUDED ID:
-    //   • `fix-bigbody` (a Basic at 200 HP) — dropping the `maxHp` conjunct;
-    //   • `fix-smallstage1` (a Stage 1 at 60 HP) — dropping `isBasicPokemon`,
-    //     which the HP card alone could not tell apart from a correct build;
-    //   • `fix-item` (a Trainer, `hp` null) — writing `hp! <= max` and letting
-    //     JavaScript's `null <= 70` decide, which admits every card with no HP.
     expect(idsOf(parked, prompt.candidates)).toEqual(["fix-basic-1"]);
     expect(prompt.candidates.length).toBeGreaterThan(0);
-    // ⚠️ AND: `max: 1` (Nest Ball's value, the program this one was modelled on).
     expect(prompt.max).toBe(2);
   });
 
   it("captions the prompt with the printed noun — the rider is a CAPTION rider too", () => {
     const state = poffinBoard(81);
     const { state: parked } = playFromHand(state, "fix-buddybuddypoffin");
-    // ⚠️ THE MUTANT THIS KILLS: a `maxHp` that filters correctly and captions as
-    // the bare "Basic Pokémon". The dialog would then name a wider set than the
-    // rows under it — the engine speaking a second vocabulary, which is the exact
-    // failure `searchNote`'s own doc block was written about.
     expect(cardsPrompt(parked).note).toBe(
       "Search your deck for up to 2 Basic Pokémon with 70 HP or less onto your Bench.",
     );
@@ -3814,17 +2539,10 @@ describe("Buddy-Buddy Poffin — driven through the real engine", () => {
     expect(done.players.p1.bench).toHaveLength(benchBefore + 2);
     const benched = done.players.p1.bench.map((b) => topUid(b));
     for (const uid of picks) expect(benched).toContain(uid);
-    // ⚠️ THE MUTANT THIS KILLS: dropping the trailing `shuffleDeck` op — the
-    // printed "Then, shuffle your deck." is its own sentence and its own op.
     expect(types(events)).toContain("SHUFFLE");
   });
 
-  it("⚠️ the threshold is INCLUSIVE — `<= 70`, not `< 70`", () => {
-    // The pool prints no Basic at exactly 70, so the boundary is asserted on the
-    // predicate itself rather than through a board: a `<` build refuses a body the
-    // printed "70 HP or less" takes, and no fixture in this file sits on the line.
-    // 🛑 A CONSTRUCTED CARD, LABELLED AS ONE (D146's rule) — it exists to drive
-    // the comparator and nothing else.
+  it("the threshold is INCLUSIVE — `<= 70`, not `< 70`", () => {
     const onTheLine = battler("fix-line-70", { hp: 70 });
     expect(matchesFilter(onTheLine, { kind: "basicPokemon", maxHp: 70 })).toBe(true);
     expect(
@@ -3832,12 +2550,7 @@ describe("Buddy-Buddy Poffin — driven through the real engine", () => {
     ).toBe(false);
   });
 
-  it("⚠️ a NULL printed hp is REFUSED rather than admitted — the data-gap arm", () => {
-    // `hpOf` reads null for a non-positive printed value as well as for a missing
-    // one, and `null <= 70` is TRUE in JavaScript. The `hp !== null` conjunct is
-    // what stands between this filter and every gap row in the catalog; the two
-    // cards below are the only way to see it, because a Trainer is already
-    // refused by `isBasicPokemon` one conjunct earlier.
+  it("a NULL printed hp is REFUSED rather than admitted — the data-gap arm", () => {
     expect(
       matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon", maxHp: 70 }),
     ).toBe(false);
@@ -3875,17 +2588,12 @@ describe("Gentle Fin (Alomomola) — driven through the real engine", () => {
     expect(prompt.candidates).not.toContain(pileUid(state, "fix-bigbody"));
     expect(prompt.candidates).not.toContain(pileUid(state, "fix-smallstage1"));
     expect(prompt.candidates).not.toContain(pileUid(state, "fix-item"));
-    // ⚠️ AND: `max: 3` (Lana's Aid's value, the sibling row on the same op) — the
-    // printed noun here is SINGULAR.
     expect(prompt.max).toBe(1);
   });
 
   it("captions the prompt with the printed sentence, verb and destination included", () => {
     const state = finBoard(84);
     const { state: parked } = mustApply(state, useOn("Gentle Fin"));
-    // ⚠️ THE MUTANTS THIS KILLS: `dest: "hand"` (the caption would read "into your
-    // hand", which is Lana's Aid's destination on the same op) and a dropped
-    // `maxHp` in `retrieveNoun` (the noun would read "a Basic Pokémon").
     expect(cardsPrompt(parked).note).toBe(
       "Put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
     );
@@ -3899,12 +2607,10 @@ describe("Gentle Fin (Alomomola) — driven through the real engine", () => {
     expect(done.players.p1.bench.map((b) => topUid(b))).toContain(pick);
     expect(done.players.p1.hand).not.toContain(pick);
     expect(done.players.p1.discard).not.toContain(pick);
-    // ⚠️ THE MUTANT THIS KILLS: a trailing `shuffleDeck` — a Trainer's habit
-    // landing on an Ability. Nothing here goes back to the deck.
     expect(types(events)).not.toContain("SHUFFLE");
   });
 
-  it("⚠️ is refused from the BENCH — the `activeOnly` flag, which is a printed clause", () => {
+  it("is refused from the BENCH — the `activeOnly` flag, which is a printed clause", () => {
     const state = finBoard(86);
     // Move the carrier off the Active Spot by promoting it to the Bench: the same
     // body, the same Ability, the wrong spot.
@@ -3923,19 +2629,13 @@ describe("Gentle Fin (Alomomola) — driven through the real engine", () => {
       target: { spot: "bench", index: benched.players.p1.bench.length - 1 },
       abilityName: "Gentle Fin",
     });
-    // ⚠️ THE MUTANT THIS KILLS: `activeOnly: false`. The printed "if this Pokémon
-    // is in the Active Spot" is a clause, not flavour, and the whole card is a
-    // Bench-filler that would otherwise work from the Bench it fills.
     expect(refused.ok).toBe(false);
   });
 
-  it("⚠️ is ONCE per turn — the second use is refused on the same board", () => {
+  it("is ONCE per turn — the second use is refused on the same board", () => {
     const state = finBoard(87);
     const { state: parked } = mustApply(state, useOn("Gentle Fin"));
     const { state: done } = chooseCards(parked, [pileUid(state, "fix-basic-1")]);
-    // ⚠️ THE MUTANT THIS KILLS: `oncePerTurn: false` (Inferno Fandango's value,
-    // the "as often as you like" printing) — the pile would empty into the Bench
-    // in one turn.
     expect(applyAction(done, useOn("Gentle Fin")).ok).toBe(false);
   });
 
@@ -3950,19 +2650,6 @@ describe("Gentle Fin (Alomomola) — driven through the real engine", () => {
     expect(done.players.p1.bench).toHaveLength(benchBefore);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// D267 — Skyliner (Latias ex sv08-076/-220/-239): "Your Basic Pokémon in play
-// have no Retreat Cost."
-//
-// The STAGE refinement on `noRetreatCostAura`, and the third row on that field.
-// Everything about the aura already existed — the own-board scan, the derived
-// seat, the §9 gate, the SET-TO-ZERO precedence over Beach Court's ± delta — so
-// what is driven here is exactly the new conjunct and the two ways it can be
-// wrong: read off the HOLDER instead of the TARGET, or applied when the field is
-// ABSENT. Both need a board with a stage pair on it, which is why the deck holds
-// one Basic and one Evolution that BOTH print a non-zero Retreat Cost.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("Skyliner (Latias ex) — driven through the real engine", () => {
   /** P1 with `bodyId` Active on `SKYLINER_DECK` and a clean Bench. */
@@ -3983,8 +2670,6 @@ describe("Skyliner (Latias ex) — driven through the real engine", () => {
   }
 
   it("authors the three printings as a STAGE-gated aura with NO energy clause", () => {
-    // ⚠️ `toEqual`, not `toMatchObject`: a `requiresEnergyType` that crept in
-    // would make this card free only bodies carrying an Energy it never names.
     expect(programFor("sv08-076")?.passive).toEqual({ noRetreatCostAura: { stage: "Basic" } });
     expect(programFor("sv08-220")).toBe(programFor("sv08-076"));
     expect(programFor("sv08-239")).toBe(programFor("sv08-076"));
@@ -4000,20 +2685,13 @@ describe("Skyliner (Latias ex) — driven through the real engine", () => {
   });
 
   it("a benched Latias ex frees a BASIC teammate carrying no Energy at all", () => {
-    // ⚠️ THE MUTANT THIS KILLS: a `requiresEnergyType` on this row. The printed
-    // sentence has NO energy clause, so the beneficiary here is deliberately
-    // bare — an aura that demanded a provision would leave it at 2.
     const state = benchFromDeck(skylinerBoard(91, "fix-retreat2"), "p1", "fix-skyliner");
     expect(activeBody(state).energy).toHaveLength(0);
     expect(hasFreeRetreatAura(state, activeBody(state))).toBe(true);
     expect(activeCost(state)).toBe(0);
   });
 
-  it("⚠️ an EVOLUTION on the same board is NOT freed — the gate is per TARGET", () => {
-    // 🛑 THE MUTANT THIS KILLS, AND THE ONE THE LOOP INVITES: reading the stage
-    // off `top` (the HOLDER's card) instead of the target's. Latias ex is itself
-    // a Basic, so a holder-side read is green on every assertion above and frees
-    // this Stage 1 too. Same seed family, same source, only the target differs.
+  it("an EVOLUTION on the same board is NOT freed — the gate is per TARGET", () => {
     const state = benchFromDeck(skylinerBoard(92, "fix-stage1"), "p1", "fix-skyliner");
     expect(hasFreeRetreatAura(state, activeBody(state))).toBe(false);
     expect(activeCost(state)).toBe(2);
@@ -4027,7 +2705,7 @@ describe("Skyliner (Latias ex) — driven through the real engine", () => {
     expect(activeCost(state)).toBe(0);
   });
 
-  it("🆕 the read is LIVE: evolving the freed Basic takes its freedom away", () => {
+  it("the read is LIVE: evolving the freed Basic takes its freedom away", () => {
     let state = benchFromDeck(skylinerBoard(94, "fix-basic-1"), "p1", "fix-skyliner");
     expect(activeCost(state)).toBe(0); // a Basic, retreat 1 → free
     state = toHand(state, "fix-stage1");
@@ -4037,18 +2715,10 @@ describe("Skyliner (Latias ex) — driven through the real engine", () => {
       uid: handUid(state, "p1", "fix-stage1"),
       target: { spot: "active" },
     });
-    // §1.2 — a Pokémon's identity is its TOP card, so the same body stops being
-    // Basic mid-turn and the aura stops reaching it in the same breath. Nothing
-    // is stamped at attach time; a build that cached the stage passes everything
-    // above and fails here.
     expect(activeCost(evolved)).toBe(2);
   });
 
-  it("🛑 ABSENT is not 'Basic': Lunar Zone still frees an EVOLUTION carrying {P}", () => {
-    // THE ATTRIBUTION CONTROL, on the same board and the same target as the
-    // negative two cases up. `stage` absent means UNGATED on that axis; a build
-    // that defaulted it to "Basic" passes every Skyliner assertion in this file
-    // and silently un-builds Clefable ex's printed "All of your Pokémon".
+  it("ABSENT is not 'Basic': Lunar Zone still frees an EVOLUTION carrying {P}", () => {
     let state = benchFromDeck(skylinerBoard(95, "fix-stage1"), "p1", "sv03-082");
     state = attachFromDeck(state, "p1", "fix-psychic-energy", 1);
     expect(hasFreeRetreatAura(state, activeBody(state))).toBe(true);
@@ -4064,38 +2734,11 @@ describe("Skyliner (Latias ex) — driven through the real engine", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// D268 — Distorted Future (Gothitelle svp-211/sv10.5w-043): "Once during your
-// turn, if this Pokémon is in the Active Spot, you may have your opponent
-// shuffle their hand into their deck and draw 3 cards."
-//
-// `handRefresh`'s THIRD `who` member, and the whole of its content is WHICH SEAT
-// the op's seat list holds. Everything else on this op has been driven since M5
-// (`handRefresh.test.ts`, off the Judge/Iono/Youngster registry ids) and none of
-// it is re-litigated here.
-//
-// 🛑 EVERY ASSERTION BELOW IS A TWO-SEAT ONE, AND IT HAS TO BE. The two ways a
-// one-member widening of a SEAT union goes wrong are `[ctx.seat]` (the `"you"`
-// arm, reached by a fallthrough) and `[ctx.seat, otherSeat(ctx.seat)]` (the
-// `"both"` arm, reached by a copy-paste). A board that only looks at the
-// opponent's hand is GREEN on the second; a board that only looks at the
-// controller's is GREEN on the first. Only asserting on BOTH hands in the same
-// breath tells the three arms apart — which is why the deck is dealt to both
-// seats and every `it` below reads both sides of the table.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("Distorted Future (Gothitelle) — driven through the real engine", () => {
-  /** P1 on turn 3 with `fix-distortedfuture` Active, on the two-seat deck. Both
-      seats hold a real dealt hand — no surgery, because the hands are exactly
-      what this row is about and trimming one would beg the question. */
   const distortedBoard = (seed: number) =>
     withActive(seed, "fix-distortedfuture", 3, DISTORTED_DECK);
 
   it("authors the two printings as an ACTIVE-ONLY once-per-turn opponent refresh", () => {
-    // ⚠️ `toEqual`, not `toMatchObject`: a `toBottom` or an `onlyIfAnyMoved` that
-    // crept in from Iono — the op's other two riders, neither of them printed
-    // here — would leave the opponent's deck order intact or skip the draw off an
-    // empty hand, and both are wrong-but-plausible cards.
     expect(programFor("svp-211")?.abilities).toEqual([
       {
         name: "Distorted Future",
@@ -4105,13 +2748,11 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
       },
     ]);
     expect(programFor("sv10.5w-043")).toBe(programFor("svp-211"));
-    // …and NOT the object any other `handRefresh` author carries. Judge is the
-    // `"both"` arm this row narrows and Skwovet is the other Ability on this op.
     expect(programFor("svp-211")).not.toBe(programFor("sv01-176")); // Judge
     expect(programFor("svp-211")).not.toBe(programFor("sv01-151")); // Skwovet
   });
 
-  it("🛑 moves the OPPONENT's hand and leaves the CONTROLLER's alone — `who`'s whole content", () => {
+  it("moves the OPPONENT's hand and leaves the CONTROLLER's alone — `who`'s whole content", () => {
     const state = distortedBoard(100);
     const mine = [...state.players.p1.hand];
     const theirs = [...state.players.p2.hand];
@@ -4122,13 +2763,8 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
 
     const { state: done } = mustApply(state, useOn("Distorted Future"));
 
-    // ⚠️ THE MUTANT THIS KILLS: `who: "both"` (Judge's value). P1's hand is
-    // IDENTICAL — the same uids in the same order, not merely the same size.
     expect(done.players.p1.hand).toEqual(mine);
     expect(done.players.p1.deck).toEqual(state.players.p1.deck);
-    // ⚠️ THE MUTANT THIS KILLS: `who: "you"` (Youngster's value, and the arm a
-    // fallthrough reaches). The opponent's hand is a NEW three cards, and none of
-    // what they were holding survived into it.
     expect(done.players.p2.hand).toHaveLength(3);
     for (const uid of theirs) expect(done.players.p2.hand).not.toContain(uid);
   });
@@ -4154,9 +2790,6 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
     const held = state.players.p2.hand.length;
     const { events } = mustApply(state, useOn("Distorted Future"));
     const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
-    // ⚠️ THE MUTANT THIS KILLS: `who: "both"` again, from the LOG's side — two
-    // events would be emitted and the first would name `p1`. And `toBottom` would
-    // emit HAND_TO_BOTTOM_OF_DECK instead, which is Iono's rider, not this card's.
     expect(shuffles).toHaveLength(1);
     expect(shuffles[0]?.seat).toBe("p2");
     expect(shuffles[0]?.count).toBe(held);
@@ -4169,9 +2802,6 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
   });
 
   it("draws the printed 3 even from an EMPTY opponent hand — no `onlyIfAnyMoved`", () => {
-    // ⚠️ THE MUTANT THIS KILLS: `onlyIfAnyMoved: true` (Iono's rider). This
-    // sentence has no "if they do", so an opponent with nothing in hand still
-    // reshuffles and still draws 3 — and the reshuffle is what makes it visible.
     const state = distortedBoard(103);
     const emptied: GameState = {
       ...state,
@@ -4191,7 +2821,7 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
     expect(done.players.p1.hand).toEqual(state.players.p1.hand);
   });
 
-  it("⚠️ is refused from the BENCH — the `activeOnly` flag, which is a printed clause", () => {
+  it("is refused from the BENCH — the `activeOnly` flag, which is a printed clause", () => {
     const state = distortedBoard(104);
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active");
@@ -4208,53 +2838,17 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
       target: { spot: "bench", index: benched.players.p1.bench.length - 1 },
       abilityName: "Distorted Future",
     });
-    // ⚠️ THE MUTANT THIS KILLS: `activeOnly: false` (Skwovet's value, the other
-    // Ability on this op — which really does work from the Bench). "If this
-    // Pokémon is in the Active Spot" is a clause, not flavour.
     expect(refused.ok).toBe(false);
   });
 
-  it("⚠️ is ONCE per turn — the second use is refused on the same board", () => {
+  it("is ONCE per turn — the second use is refused on the same board", () => {
     const state = distortedBoard(105);
     const { state: done } = mustApply(state, useOn("Distorted Future"));
-    // ⚠️ THE MUTANT THIS KILLS: `oncePerTurn: false` (Inferno Fandango's value) —
-    // the opponent's deck would be reshuffled to nothing in a single turn.
     expect(applyAction(done, useOn("Distorted Future")).ok).toBe(false);
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// D269 — `coinFlipGate.otherwise`: the printed "Flip a coin. If heads, X. **If
-// tails, Y.**" Picnicker svp-114 ("…draw 4 cards. If tails, draw 2 cards.") and
-// Drasna sv08-173/-231 ("Shuffle your hand into your deck. Then, flip a coin. If
-// heads, draw 8 cards. If tails, draw 3 cards.").
-//
-// ONE optional field on an existing op, spliced by the gate's EXISTING `unshift`.
-// The coin itself, the event it emits, the rng account and the parking behaviour
-// have all been driven since 0.x (`flipGatedOp.test.ts`, `multiCoinFlip.test.ts`,
-// `tailsGatedOp.test.ts`) and none of it is re-litigated here.
-//
-// 🛑 THE FIELD'S WHOLE CONTENT IS WHAT THE **LOSING** FACE DOES, WHICH IS WHY
-// EVERY ASSERTION BELOW IS SWEPT RATHER THAN SEEDED. There is no way to force a
-// coin — `runProgram` takes it from `rngState` before it consults a branch — so
-// the idiom is `multiCoinFlip.test.ts`'s: sweep a fixed seed list, read the face
-// off the emitted ATTACK_EFFECT_COIN_FLIP row, and assert the arm that face
-// selects. An `otherwise` that silently never ran would be GREEN on every heads
-// board, so a suite that did not reach tails would assert nothing at all — hence
-// the explicit both-faces-were-seen guard on every sweep.
-//
-// 🛑 AND THE THREE MUTANTS THIS SHAPE HAS TO TELL APART: splicing NOTHING on the
-// losing face (the pre-D269 meaning, and the one a forgotten `?? []` restores),
-// splicing `otherwise` on the WINNING face (the arms swapped), and splicing BOTH
-// arms (a second `unshift` instead of a ternary). Picnicker separates them by a
-// COUNT in one hand; Drasna separates them by whether the SHUFFLE happened, which
-// is a different observable on the same field.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the real engine", () => {
-  /** The swept seed list. Fixed and small, so the sweep is deterministic and no
-      single seed is load-bearing; 12 is comfortably enough for both faces on
-      this deck (measured below by the both-faces guard each `it` carries). */
   const SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
   /** P1 on turn 3 with the flip-draw 60, the named Supporter pulled into hand and
@@ -4280,11 +2874,6 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
   }
 
   it("authors both printings as ONE two-armed coin gate each", () => {
-    // ⚠️ `toEqual`, not `toMatchObject`: an `onTails: true` that crept in from the
-    // op's OTHER optional field would swap which arm each face runs — a
-    // wrong-but-plausible card that draws 2 on heads — and `toMatchObject` would
-    // not see the extra key. The two fields are different axes and this is where
-    // that is pinned.
     expect(programFor("svp-114")?.trainer).toEqual([
       {
         op: "coinFlipGate",
@@ -4309,7 +2898,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(programFor("svp-114")).not.toBe(programFor("sv08-173"));
   });
 
-  it("🛑 Picnicker draws 4 on heads and 2 on TAILS — the losing face is not nothing", () => {
+  it("Picnicker draws 4 on heads and 2 on TAILS — the losing face is not nothing", () => {
     const seen = new Set<string>();
     for (const seed of SEEDS) {
       const state = ready(seed, "fix-picnicker");
@@ -4318,12 +2907,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
       const face = faceOf(events);
       seen.add(face);
       const drawn = face === "heads" ? 4 : 2;
-      // ⚠️ THE MUTANT THIS KILLS on the tails rows: an absent/ignored `otherwise`
-      // (the pre-D269 splice), which draws NOTHING on the losing face. The played
-      // Supporter leaves the hand, so the hand moves by `drawn − 1`.
       expect(done.players.p1.hand).toHaveLength(held - 1 + drawn);
-      // ⚠️ THE MUTANT THIS KILLS: splicing BOTH arms — six cards, one deck, and a
-      // second CARDS_DRAWN row. Exactly ONE arm runs.
       const rows = findAll(events, "CARDS_DRAWN");
       expect(rows).toHaveLength(1);
       expect(rows[0]?.seat).toBe("p1");
@@ -4333,13 +2917,10 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
       expect(done.players.p2.hand).toEqual(state.players.p2.hand);
       expect(done.players.p2.deck).toEqual(state.players.p2.deck);
     }
-    // 🛑 WITHOUT THIS THE WHOLE SWEEP IS VACUOUS. An `otherwise` that never ran is
-    // green on every heads board, so a seed list that only reached heads would
-    // assert nothing about the field this slice built.
     expect(seen).toEqual(new Set(["heads", "tails"]));
   });
 
-  it("🛑 Drasna SHUFFLES ON BOTH FACES and draws 8 or 3 — LACEY's shape, coin-gated", () => {
+  it("Drasna SHUFFLES ON BOTH FACES and draws 8 or 3 — LACEY's shape, coin-gated", () => {
     const seen = new Set<string>();
     for (const seed of SEEDS) {
       const state = ready(seed, "fix-drasna");
@@ -4348,16 +2929,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
       const face = faceOf(events);
       seen.add(face);
       const drawn = face === "heads" ? 8 : 3;
-      // ⚠️ THE SHARPEST ASSERTION IN THIS FILE FOR THIS FIELD: the hand is an
-      // ABSOLUTE count, not a delta, because the whole of it went back first. An
-      // ignored `otherwise` leaves the tails hand at ZERO; a swapped pair leaves
-      // it at 8.
       expect(done.players.p1.hand).toHaveLength(drawn);
-      // ⚠️ AND THE SHUFFLE IS IN BOTH ARMS ON PURPOSE — the card shuffles either
-      // way and only the DRAW COUNT is what the second sentence replaces. A build
-      // that hoisted the refresh out of the arms, or that put it in `then` alone,
-      // is red here on the tails rows. `held − 1` because playTrainer takes the
-      // played Supporter out of the hand before the program runs.
       const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
       expect(shuffles).toHaveLength(1);
       expect(shuffles[0]?.seat).toBe("p1");
@@ -4379,12 +2951,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(seen).toEqual(new Set(["heads", "tails"]));
   });
 
-  it("⚠️ emits exactly ONE coin row on either face — the arm did not change the event", () => {
-    // 🛑 THE PREDICTION THIS SLICE WROTE DOWN, MEASURED RATHER THAN ARGUED. The
-    // flip is taken and announced BEFORE any branch is consulted, so a two-armed
-    // gate emits precisely the one row a one-armed gate does — and the losing face
-    // emits it too, which is what separates "the coin was taken and lost" from
-    // "no coin was taken".
+  it("emits exactly ONE coin row on either face — the arm did not change the event", () => {
     for (const cardId of ["fix-picnicker", "fix-drasna"]) {
       for (const seed of SEEDS) {
         const state = ready(seed, cardId);
@@ -4400,12 +2967,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     }
   });
 
-  it("⚠️ a two-armed gate is PLAYABLE while EITHER arm can act — cardplay's `or`", () => {
-    // The descent in `programPlayable` used to rest on "a coin gate has no
-    // `otherwise`, so `then` is the only thing the card can ever do". That is now
-    // false, and the rule it was replaced with is `or`, not `and`. No printed row
-    // can reach it — both arms of both cards are draws — so it is driven as a
-    // CONSTRUCTED program, which is the honest shape for a rule with no card.
+  it("a two-armed gate is PLAYABLE while EITHER arm can act — cardplay's `or`", () => {
     const state = board(0, FLIP_DRAW_DECK);
     const empty = {
       ...state,
@@ -4424,10 +2986,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
         ...(other === undefined ? {} : { otherwise: other }),
       },
     ];
-    // The ONE-ARMED refusal, unchanged by this slice: `then` is all the card does.
     expect(programPlayable(empty, gate(whiffOnly), "p1")).toBe(false);
-    // ⚠️ THE MUTANT THIS KILLS: refusing on `then` alone. The tails arm draws, so
-    // the card CAN do something and §7's "no valid target" refusal does not apply.
     expect(programPlayable(empty, gate(whiffOnly, canAct), "p1")).toBe(true);
     // …and symmetrically, so the rule is not accidentally reading only `otherwise`.
     expect(programPlayable(empty, gate(canAct, whiffOnly), "p1")).toBe(true);
@@ -4436,40 +2995,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// D270 — `HandRefreshDraw.perSeat`: the printed "…**you** draw 5 cards, and
-// **your opponent** draws 3 cards." Harlequin sv10.5w-083/-163, inside the coin
-// gate D269 gave a second arm — "Each player shuffles their hand into their deck.
-// Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards.
-// If tails, you draw 3 cards, and your opponent draws 5 cards."
-//
-// ONE union member on an EXISTING field, read by the op's EXISTING per-seat draw
-// loop. The seats are `who: "both"`'s, unchanged since Judge; the shuffle, the
-// count-only events and the hiding are all M5 behaviour and none of it is
-// re-litigated here. What is new is that the COUNT is a function of WHICH seat.
-//
-// 🛑 THE CONTRAST IS TWO-DIMENSIONAL — A FACE **AND** A SEAT — SO EVERY `it`
-// CARRIES BOTH GUARDS. A coin cannot be forced (`runProgram` takes it from
-// `rngState` before it consults a branch), so the face is swept and read off the
-// emitted ATTACK_EFFECT_COIN_FLIP row; and because the printed pair is SWAPPED
-// between the two arms, {5,3} is dealt to somebody on every board under every
-// wrong build. Only reading BOTH hands on BOTH faces separates them.
-//
-// 🛑 THE FOUR MIS-BUILDS THIS SHAPE HAS TO TELL APART:
-//   1. `you` for EVERY affected seat (the `seat === controller` test dropped) —
-//      green on the controller's hand on both faces, red on the opponent's;
-//   2. the PAIR read backwards (`opponent` to the controller) — green on the
-//      totals and on every count-conservation sum, red on WHICH hand got the 5;
-//   3. the ARMS swapped (5/3 on tails) — green on every single-face board;
-//   4. the member collapsing to one of the older kinds (`fixed` 5, say) — green
-//      on the controller and red on the opponent, and green on a `who: "you"`
-//      board, which is why this suite is the one that must hold two seats.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real engine", () => {
-  /** The swept seed list, `FLIP_DRAW_DECK`'s idiom on this slice's own 60. Fixed
-      and small, so no single seed is load-bearing; the both-faces guard on each
-      `it` measures that 12 is enough rather than asserting it in prose. */
   const SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
   /** P1 on turn 3 with the Harlequin 60 and one copy in hand, NOT yet played — so
@@ -4495,9 +3021,6 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
   }
 
   it("authors the printing as ONE two-armed gate over a per-seat pair", () => {
-    // ⚠️ `toEqual`, not `toMatchObject`: the whole content of this row is a pair of
-    // NUMBERS and which key each sits under, and `toMatchObject` would not see an
-    // `onTails: true` that swapped the arms or a stray fourth key on the draw.
     expect(programFor("sv10.5w-083")?.trainer).toEqual([
       {
         op: "coinFlipGate",
@@ -4516,40 +3039,26 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
     expect(programFor("sv10.5w-083")).not.toBe(programFor("sv07-139")); // Lacey
   });
 
-  it("🛑 deals 5 to the CONTROLLER and 3 to the OPPONENT on heads — and swaps on TAILS", () => {
+  it("deals 5 to the CONTROLLER and 3 to the OPPONENT on heads — and swaps on TAILS", () => {
     const seen = new Set<string>();
     for (const seed of SEEDS) {
       const state = ready(seed);
       const p1Held = state.players.p1.hand.length;
       const p2Held = state.players.p2.hand.length;
-      // 🛑 WITHOUT THIS THE SECOND HALF OF EVERY ASSERTION BELOW IS VACUOUS. "The
-      // opponent's whole hand went back" says nothing about a hand that was empty.
       expect(p1Held, `p1 pre-hand @${seed}`).toBeGreaterThan(1);
       expect(p2Held, `p2 pre-hand @${seed}`).toBeGreaterThan(0);
       const { state: done, events } = play(state);
       const face = faceOf(events);
       seen.add(face);
       const [mine, theirs] = face === "heads" ? [5, 3] : [3, 5];
-      // ⚠️ ABSOLUTE counts, not deltas: the whole of each hand went back first, so
-      // what is left IS what was drawn. `p1Held − 1` never appears here — the
-      // played Supporter left the hand before the refresh, and the refresh then
-      // took everything else.
-      // ⚠️ THE MUTANTS THIS KILLS, and it takes both seats in the same breath:
-      // `you` for every seat (p2 would hold `mine`), the pair read backwards (p1
-      // would hold `theirs`), and the member collapsing to `fixed` (p2 would hold
-      // p1's number). Each is green on exactly one of these two lines.
       expect(done.players.p1.hand, `p1 @${seed} ${face}`).toHaveLength(mine);
       expect(done.players.p2.hand, `p2 @${seed} ${face}`).toHaveLength(theirs);
-      // ⚠️ AND THE ARMS-SWAPPED MUTANT IS KILLED BY THE FACE, NOT BY THE COUNTS:
-      // 5 and 3 are both dealt on either face, so the only thing that separates
-      // `then` from `otherwise` is which seat holds which on which coin.
       expect(mine === 5).toBe(face === "heads");
     }
-    // 🛑 A per-seat pair that is never swapped is GREEN on a heads-only sweep.
     expect(seen).toEqual(new Set(["heads", "tails"]));
   });
 
-  it("⚠️ shuffles BOTH hands back first — `who: 'both'`, on either face", () => {
+  it("shuffles BOTH hands back first — `who: 'both'`, on either face", () => {
     const seen = new Set<string>();
     for (const seed of SEEDS) {
       const state = ready(seed);
@@ -4590,12 +3099,7 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
     expect(seen).toEqual(new Set(["heads", "tails"]));
   });
 
-  it("⚠️ the count is CONTROLLER-relative, not `p1`-relative — P2 plays the same object", () => {
-    // 🛑 THE MUTANT THIS KILLS AND NOTHING ELSE IN THIS FILE CAN: a `perSeat` arm
-    // that hard-codes `p1` (or reads the loop's seat against a literal) is green on
-    // every board above, because P1 is the controller in all of them. The op is
-    // controller-relative like every other field in this vocabulary, so the SAME
-    // program object played from the other seat must mirror the pair.
+  it("the count is CONTROLLER-relative, not `p1`-relative — P2 plays the same object", () => {
     const seen = new Set<string>();
     for (const seed of SEEDS) {
       // P1 opens and immediately passes, so it is P2's turn on the same 60.
@@ -4631,13 +3135,7 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
     expect(seen).toEqual(new Set(["heads", "tails"]));
   });
 
-  it("⚠️ the OTHER `draw` kinds are untouched — a widening, not a rewrite", () => {
-    // 🆕 D268's LESSON, APPLIED TO THIS UNION: a one-member widening must re-run
-    // the arms it did not change, because the sharpest mutant is the new member
-    // SWALLOWING an old one. `handRefresh.test.ts` drives `fixed`/`handPlus`/
-    // `prizeCount` off registry ids and is the killer for that class; this row is
-    // the cheap structural half — the three older kinds still author as they did,
-    // and none of them grew a seat key.
+  it("the OTHER `draw` kinds are untouched — a widening, not a rewrite", () => {
     expect(programFor("fix-drasna")?.trainer).toEqual([
       {
         op: "coinFlipGate",

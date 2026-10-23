@@ -12,95 +12,9 @@ import {
   clearBench,
   deckOf,
   handFromDeck,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ── D350 — *"…YOU PUT **ANY NUMBER OF** BASIC POKÉMON YOU FIND THERE ONTO THEIR
-//    BENCH"*: THE THIRD AND LAST PRINTED FORM OF ONE OP'S COUNT. ─────────────
-//
-// ── THE PRINTED SENTENCE ────────────────────────────────────────────────────
-//   Lillie's Ribombee `sv09-067` / `sv09-164` / `svp-183` — "Inviting Wink"
-//   (`abilities_json`): "When you play this Pokémon from your hand to evolve 1 of
-//   your Pokémon during your turn, you may have your opponent reveal their hand
-//   and you put any number of Basic Pokémon you find there onto their Bench."
-//   **3 legal printings on ONE byte-identical sentence** — the whole population,
-//   remote D1 `colorless` 2026-08-15, `json_each(abilities_json)` keyed on
-//   `$.effect` (NOT `$.text` — the false-zero key) and grouped so the unit is a
-//   SENTENCE.
-//
-// ── HOW THE ROW WAS FOUND, AND WHAT IT REFUSED ──────────────────────────────
-//   Largest live `ROWS` residue at this head is **row 9 (7 ids)**, re-derived by
-//   parsing the table rather than by reading D349's note. Its four blockers are
-//   D349's, re-checked: the by-NAME attach (Lycanroc ×2), the uncatalogued
-//   Ancient/Future/Tera banner (Reboot Pod ×1, Glass Trumpet ×2 — 🆕🆕🆕 D568 (D539):
-//   Glass Trumpet BUILT, the Tera banner supplied by `banners.ts`; Reboot Pod's FUTURE
-//   banner stays uncatalogued, TRUE — 🆕🆕🆕 D569 (D539): "uncatalogued" stays TRUE, but
-//   "refused" is WITHDRAWN for Reboot Pod too: BUILT on `banners.ts`' Future rows,
-//   `REBOOT_POD`, `paradoxBannerD569.test.ts` §7) and an
-//   end-of-turn Tool trigger point for 2 printings (Powerglass — 🆕🆕🆕 D566 (D539): BUILT,
-//   `koToolsD566.test.ts` §4). The Lycanroc
-//   clause rests on `onEvolve` — **58 printings / 29 legal / 13 legal sentences**,
-//   re-measured to the digit — and SEVEN of those thirteen are built, leaving six.
-//
-//   🛑 **D349 NAMED THE HEAL-THEN-DISCARD FAMILY AS THE LARGEST COHERENT BLOCK
-//   AND LEFT IT EXPLICITLY UNPRICED. THIS SLICE PRICED IT AND REFUSED IT.** The
-//   census is D349's exactly — Dachsbun ex ×3 + Whimsicott ×2 + Super Potion ×1 =
-//   6 legal printings / 3 sentences / 2 columns, and the whole-catalog
-//   `Heal…discard…Energy` query returns nothing else legal. What it costs, read
-//   off the source rather than off the prose:
-//     • `discardEnergy.from` has three own-board members — a SPOT (`yourActive`),
-//       a SIDE (`yours`, which parks over the whole board) and a BODY BY UID
-//       (`self` = `ctx.sourceUid`, the host). **None of them is "the body this
-//       program just healed."** `yours` would let the controller strip a DIFFERENT
-//       Pokémon, which is D236's own recorded argument one op over, verbatim.
-//     • `recordGate` IS the engine's spelling of the printed *"in this way"*, but
-//       `recordSlotOf`/`recordAs` has no heal producer, so `EffectRecord` has
-//       nothing to gate on — and no `discardEnergy.from` reads a record anyway.
-//     • The three sentences' heal HALVES are three separate unbought narrowings:
-//       `healChosen { amount: 60 }` exists verbatim (Potion), but *"your Active
-//       {G} Pokémon"* and *"each of your Evolution Pokémon"* do not.
-//   **≈6 new vocabulary items for 6 printings, or ≈3 for its cheapest single
-//   printing.** This row is 3 printings for ONE union member on ONE existing
-//   optional field, so the method sent the slice here and not there.
-//   (🆕🆕🆕 D560 CORRECTION (D539): the family's two ABILITY sentences are now BUILT,
-//   cheaper than priced here — Whimsicott ×2 needs no "body this program just
-//   healed" (its heal subject IS the Active, so `discardEnergy from "yourActive"`
-//   names it, behind `yourActiveHasType Grass` / `yourActiveDamaged` gates), and
-//   Dachsbun ex ×3 folds the per-healed-body discard into `healEach`
-//   (`discardEnergyFromHealed`, `evolutionOnly`, `amount "all"`). Super Potion
-//   stays unbuilt. index.ts's D350 note carries the same correction.)
-//   (🆕🆕🆕 D561 CORRECTION (D539): ~~"Super Potion stays unbuilt"~~ — BUILT,
-//   `SUPER_POTION`: `healChosen.discardEnergyFromHealed` schedules a body-addressed
-//   `discardEnergy { from: "self", bodyUid }`, the "body this program just healed" this
-//   note found missing. The whole family is built; index.ts's D350 note says so too.)
-//
-// ── THE MECHANISM CLOSES ────────────────────────────────────────────────────
-//   `reveal…hand` AND (`onto their Bench` OR `onto your opponent's Bench`), all
-//   three text columns, remote D1 2026-08-15: **4 sentences / 10 printings / 7
-//   legal.** This ×3 (MINE), Lickitung "Tongue Pull" ×2 (ATTACK, built D297),
-//   Mandibuzz "Look for Prey" ×2 (Ability, built D294), Erika's Invitation ×3
-//   (`effect`, **0 legal**). With this row the bench arm is **3 of 3 legal
-//   sentences / 7 of 7 legal printings**. D294's own block priced that population
-//   at "4, not 2"; it is 7, and the three it did not name are this card.
-//
-// ── THE ENGINE DIFF, AND WHY IT IS NOT ZERO ─────────────────────────────────
-//   `upTo?: number` → `upTo?: number | "any"`. **Behaviourally `upTo: BENCH_MAX`
-//   would have been sufficient** — the park already clamps to the live
-//   `benchSpace` and `BENCH_MAX` is 5, so a numeric cap of 5 can never bind [🆕🆕🆕 D577 (D539):
-//   WITHDRAWN at an Area Zero Underdepths 8-Bench, where it CAN bind — and the offer's cap is
-//   now `BENCH_CEILING`; driven in `areaZeroUnderdepthsD577.test.ts` §7]. It is
-//   refused on the CAPTION and on falsifiability: this op's note is grown one
-//   printed form per card and round-trips to the catalog text, so `upTo: 5` would
-//   caption the card with a number it does not print and would be
-//   indistinguishable from a future card that DOES print *"up to 5"*. §5 drives
-//   that difference as a STRING rather than arguing it.
-//   ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState`
-//   fields, `CardFilter` members, regexes, deriver arms, `programPlayable` arms,
-//   `EffectSlot` members and wire-schema bytes.
-//
-// ── THE POOL ────────────────────────────────────────────────────────────────
-//   All three real ids are driven on a LOCAL `cardPool` (D275's idiom). **A
-//   FIXTURE IS A CENSUS POPULATION** (D348), and neither `sv09` nor `svp` is among
-//   `catalogManifest`'s six sets anyway. §7 asserts the abstinence by id.
 
 const RIBOMBEE = "sv09-067";
 const RIBOMBEE_IDS = ["sv09-067", "sv09-164", "svp-183"] as const;
@@ -167,11 +81,6 @@ const DECK = deckOf({
   [ENERGY]: 10,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function apply(
   state: GameState,
   action: Parameters<typeof applyAction>[1],
@@ -181,17 +90,6 @@ function apply(
   return { state: result.state, events: result.events };
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
-/** Setup driven against a LOCAL `cardPool` (D275's idiom). Nothing is added to
-    `FIXTURE_POOL`; §7 asserts that by id rather than describing it. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -324,7 +222,6 @@ function benchIds(state: GameState, seat: Seat): string[] {
   return state.players[seat].bench.map((b) => state.cardIdByUid[b.stack.at(-1) ?? ""] ?? "");
 }
 
-/** The op the registry row carries, read LIVE rather than transcribed. */
 function winkOp(): Extract<EffectOp, { op: "bottomFromOpponentHand" }> {
   const program = programFor(RIBOMBEE);
   const op = program?.triggered?.[0]?.program?.[0];
@@ -338,17 +235,11 @@ describe("D350 §1 — the registry row, read off the LIVE registry", () => {
   it("the THREE printings resolve to ONE program object, by identity", () => {
     const first = programFor(RIBOMBEE);
     expect(first).toBeDefined();
-    // Identity and not deep equality: three separate-but-equal objects would pass
-    // a `toEqual` and would be THREE rows in `censusAtHead`'s object
-    // decomposition, which this slice asserts steps by exactly ONE.
     for (const id of RIBOMBEE_IDS) expect(programFor(id), id).toBe(first);
   });
 
   it("it is an `onEvolve` TRIGGER carrying ONE op, and NO attack/abilities key", () => {
     const program = programFor(RIBOMBEE);
-    // ⚠️ THE KEY SET, not a field-by-field read. `BUILT.attack` and the registry
-    // summand of it stand still on this row, and the only thing that can make that
-    // false is an `attack` key appearing here — which a `toMatchObject` cannot see.
     expect(Object.keys(program ?? {}).sort()).toEqual(["triggered"]);
     const triggered = program?.triggered?.[0];
     expect(triggered?.name).toBe("Inviting Wink");
@@ -364,9 +255,6 @@ describe("D350 §1 — the registry row, read off the LIVE registry", () => {
     expect(op.dest).toBe("bench");
     expect(op.upTo).toBe("any");
     expect(op.filter).toEqual({ kind: "basicPokemon" });
-    // D135 — an ABSENT field means what the sentence means. Mandibuzz's 70 is that
-    // card's word; this sentence does not carry it, and `not.toHaveProperty` is the
-    // only spelling that tells `maxHp: undefined` apart from no key at all.
     expect(op.filter).not.toHaveProperty("maxHp");
     expect(op).not.toHaveProperty("recordAs");
     expect(Object.keys(op).sort()).toEqual(["dest", "filter", "op", "upTo"]);
@@ -375,9 +263,6 @@ describe("D350 §1 — the registry row, read off the LIVE registry", () => {
 
 describe("D350 §2 — the trigger benches ANY NUMBER of the opponent's own Basics", () => {
   it("offers exactly the Basics, parks 0..3, and the CAPTION is the card's words", () => {
-    // The hand carries three Basics (two of one printing, one of another), a
-    // Stage 1 and an Energy: the filter has to drop the last two by STAGE and by
-    // CATEGORY, and the offer has to keep BOTH copies of the repeated printing.
     const start = board({
       oppHand: [
         [BASIC_A, 2],
@@ -391,9 +276,6 @@ describe("D350 §2 — the trigger benches ANY NUMBER of the opponent's own Basi
     expect(events.filter((e) => e.type === "HAND_REVEALED")).toHaveLength(1);
     const prompt = cardsPrompt(parked);
     expect(offeredIds(parked)).toEqual([BASIC_A, BASIC_A, BASIC_B]);
-    // 🛑 `min: 0` IS THE PRINTED "any number" — none is a legal answer — and `max`
-    // is the OFFER's own size, because a sentence with no number has no other
-    // ceiling. Under `upTo: 2` this board would read [0, 2].
     expect([prompt.min, prompt.max]).toEqual([0, 3]);
     expect(prompt.dest).toBe("bench");
     expect(prompt.note).toBe(WINK_NOTE);
@@ -431,9 +313,7 @@ describe("D350 §2 — the trigger benches ANY NUMBER of the opponent's own Basi
     expect(done.cardIdByUid[done.players.p1.active?.stack.at(-1) ?? ""]).toBe(RIBOMBEE);
   });
 
-  it('🛑 taking NONE is a legal answer, and it is what "any number" buys', () => {
-    // The decline is the half of this field a `max`-only spelling would lose, and
-    // it is the half a natural "the effect works" suite never writes (D279).
+  it('taking NONE is a legal answer, and it is what "any number" buys', () => {
     const start = board({ oppHand: [[BASIC_A, 2]] });
     const { state: parked } = evolveIntoRibombee(start);
     const before = [...parked.players.p2.hand];
@@ -449,10 +329,6 @@ describe("D350 §2 — the trigger benches ANY NUMBER of the opponent's own Basi
   });
 
   it("a LONE candidate is still ASKED — the auto-resolve stays off under a decline", () => {
-    // The M1 no-choice rule retires a prompt whose ANSWERS ARE THE SAME STATE;
-    // here they are "a body lands on their Bench" and "nothing moves". A build that
-    // took the shortcut would hand the opponent a Prize-worth body with nobody
-    // asked, which is the printed decline having no way to mean "none".
     const start = board({
       oppHand: [
         [BASIC_A, 1],
@@ -492,10 +368,6 @@ describe("D350 §3 — the whiffs: the trigger never strands the turn", () => {
   });
 
   it("a FULL opponent Bench offers nothing at all — the guard is the OFFER's", () => {
-    // `bottomFromOpponentHandOffer` returns EMPTY on a full opponent Bench, so
-    // there is no park and no question. `programPlayable` carries the same fact for
-    // the ACTIVATED surface — and costs this row ZERO, structurally, because a
-    // board trigger never passes through that gate at all.
     const start = board({
       oppHand: [[BASIC_A, 3]],
       oppBench: [BASIC_B, BASIC_B, BASIC_B, BASIC_B, BASIC_B],
@@ -526,11 +398,7 @@ describe("D350 §4 — the ceiling is the BOARD, not the card", () => {
     expect([prompt.min, prompt.max]).toEqual([0, BENCH_MAX - 3]);
   });
 
-  it("🛑 and `BENCH_MAX` is why `upTo: 5` would have been behaviourally equal (🆕🆕🆕 D577: on a board without Area Zero Underdepths)", () => {
-    // The refutation, DRIVEN: with the whole Bench free the ceiling is the offer,
-    // and the offer can never exceed what a hand of five Basics could land anyway.
-    // The member is bought for the CAPTION (§5), and this is the assertion that
-    // says so honestly rather than letting a reader assume it bought behaviour.
+  it("and `BENCH_MAX` is why `upTo: 5` would have been behaviourally equal ( D577: on a board without Area Zero Underdepths)", () => {
     const start = board({ oppHand: [[BASIC_A, 5]] });
     const prompt = cardsPrompt(evolveIntoRibombee(start).state);
     expect(prompt.max).toBe(BENCH_MAX);
@@ -540,10 +408,6 @@ describe("D350 §4 — the ceiling is the BOARD, not the card", () => {
 
 describe("D350 §5 — the offer keeps EVERY copy, and the note is the card's", () => {
   it("FIVE copies of ONE printed Basic are five candidates, not one", () => {
-    // `cardIdentity` keys a Pokémon on its catalog id, so identical copies COLLAPSE
-    // in the offer to `cap` representatives. Under the pre-D350 `cap = op.upTo ?? 1`
-    // an `"any"` op would have kept ONE, and four of the five copies could never
-    // reach the Bench — the printed "any number" silently meaning "one".
     const start = board({ oppHand: [[BASIC_A, 5]] });
     const { state: parked } = evolveIntoRibombee(start);
     expect(offeredIds(parked)).toEqual([BASIC_A, BASIC_A, BASIC_A, BASIC_A, BASIC_A]);
@@ -557,10 +421,6 @@ describe("D350 §5 — the offer keeps EVERY copy, and the note is the card's", 
   });
 
   it("the caption is a THIRD sentence, not a rewording of the other two", () => {
-    // 🛑 THE REFUTATION'S OTHER HALF. `upTo: BENCH_MAX` would caption this card
-    // "Put up to 5 Basic Pokémon …" — a number it does not print — and would be
-    // indistinguishable from a future card that DOES print "up to 5". The strings
-    // are compared here so the difference the member buys is a MEASUREMENT.
     const wouldHaveRead =
       "Your opponent reveals their hand. Put up to 5 Basic Pokémon you find there onto your opponent's Bench.";
     expect(WINK_NOTE).not.toBe(wouldHaveRead);
@@ -584,8 +444,6 @@ describe("D350 §6 — three printed forms of ONE field, and the other two are u
       throw new Error("Look for Prey is not one bottomFromOpponentHand");
     }
     expect(op).not.toHaveProperty("upTo");
-    // …and its filter DOES carry the rider this card's does not, which is what
-    // makes the pair a measurement of D135 rather than a restatement of it.
     expect(op.filter).toEqual({ kind: "basicPokemon", maxHp: 70 });
   });
 
@@ -596,42 +454,18 @@ describe("D350 §6 — three printed forms of ONE field, and the other two are u
   });
 
   it("the deriver does NOT reach this card's sentence — it is an ABILITY", () => {
-    // The row is hand-authored on purpose: `deriveAttackEffect` reads the attack
-    // column, this sentence is printed in `abilities_json`, and the three-column
-    // census returns ZERO for it on `attacks_json` and ZERO on `effect`.
     expect(deriveAttackEffect(RIBOMBEE_TEXT)).toBeNull();
   });
 });
 
 describe("D350 §7 — the pool and the registry, asserted by id", () => {
   it("NOTHING this slice defines reached `FIXTURE_POOL`", () => {
-    // ⚠️ **A FIXTURE IS A CENSUS POPULATION** (D348): a body here would move
-    // `catalogManifest`'s real-fixture population and `clauseApostrophe`'s
-    // derivable sweep, neither of which any grep of this slice's vocabulary
-    // reaches. The abstinence is asserted rather than described.
     for (const id of [...RIBOMBEE_IDS, CUTIEFLY, BASIC_A, BASIC_B, STAGE1]) {
       expect(Object.hasOwn(FIXTURE_POOL, id), `${id} leaked into FIXTURE_POOL`).toBe(false);
     }
   });
 
   it("the THREE ids are CONTIGUOUS and in order — a property of the ROW, permanent", () => {
-    // 🛑 `censusAtHead`'s `raw[raw.length - 1]` is keyed on INSERTION ORDER and has
-    // gone red on a constant nobody touched EIGHT consecutive times (D338, D340,
-    // D342, D345, D346, D347, D349 and this slice). No grep of any census FIGURE
-    // NAME reaches it. D349 carried this baton in `remainingHpWindow.test.ts` §6
-    // and it is picked up here, in the file that moved the constant.
-    // ⚠️ And this claim is SPENT the moment the next registry row lands — which is
-    // exactly what it is for. D347's version was written as a PERMANENT assertion
-    // and had to be re-pointed at contiguity; this one is written as what it is,
-    // and the next slice should re-point it the same way rather than delete it.
-    //
-    // 🛑 **D351 — SPENT, EXACTLY ON SCHEDULE, AND RE-POINTED RATHER THAN DELETED.**
-    // The expiring `raw.slice(-3)` claim now lives in `pyroDance.test.ts` §7, in
-    // the file that moved the constant — the fourth hand-off of this baton (D347 →
-    // D349 → D350 → D351). What is left here is the CONTIGUITY claim, which is a
-    // property of the ROW rather than of the tail and therefore permanent: three
-    // ids inserted together stay adjacent and in order however many rows land after
-    // them. The two are DIFFERENT assertions and neither substitutes for the other.
     const raw = registryCardIds();
     const at = raw.indexOf(RIBOMBEE_IDS[0] as string);
     expect(at).toBeGreaterThanOrEqual(0);
@@ -641,9 +475,6 @@ describe("D350 §7 — the pool and the registry, asserted by id", () => {
   it("all THREE real ids are registry keys, and none of the four demonstrators is", () => {
     const keys = new Set(registryCardIds());
     for (const id of RIBOMBEE_IDS) expect(keys.has(id), id).toBe(true);
-    // The synthetic bodies are scenery — a registry key for one would be a program
-    // no printing resolves to, and would inflate `raw.length` against
-    // `nonAttackRegistryIds()`, whose two lines this slice keeps 0 apart.
     for (const id of [CUTIEFLY, BASIC_A, BASIC_B, STAGE1]) expect(keys.has(id), id).toBe(false);
   });
 });

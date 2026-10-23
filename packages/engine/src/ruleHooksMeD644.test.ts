@@ -20,19 +20,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D644 — Y1e: RULE HOOKS, ONE PRINTING EACH ──
-//
-// 5 printed texts / 5 printings on five NEW registry objects: Cinderace `me01-028` "Explosiveness" (the NEW
-// `CardProgram.setupActiveFromHand`, setup.ts `setupPlaceActive`; R-EXP1, R-EXP2), Patrat `me04-070` "Watchful Eye"
-// (the NEW `PassiveEffects.countersCantMove`, continuous.ts `countersMoveLocked`; R-WEY1), Illumise `30th-004`
-// "Supereffective Pheromones" (the NEW `PassiveEffects.weaknessTimesWithNamedInPlay`, continuous.ts
-// `weaknessAmountOverride`; R-SPH1, R-SPH2), Ferrothorn `me04-063` "Startling Drop" (the NEW
-// `CardProgram.opponentMillWhenMilled`, interpreter.ts `startlingDropRetort`; R-STD1, R-STD2) and Transformation Tome
-// `me04-083` (shipped `payFromHand` + `switchWithDiscardNamed`; R-TFT1, R-TFT2). Dropped and named: Backtrack Badge
-// `me05-074` [🆕🆕🆕 D646 (D539): built at D646]. Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10,
-// `legal_standard = 1`. Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const EXPLOSIVENESS_TEXT =
   "If this Pokémon is in your hand when you are setting up to play, you may put it face down in the Active Spot.";
@@ -50,10 +39,10 @@ const PATRAT = "me04-070";
 const ILLUMISE = "30th-004";
 const FERROTHORN = "me04-063";
 const TOME = "me04-083";
-const BADGE = "me05-074"; // Backtrack Badge — dropped and named [🆕🆕🆕 D646 (D539): built at D646, `backtrackBadgeMeD646.test.ts`]
+const BADGE = "me05-074";
 const FLUTTER = "sv05-078"; // Flutter Mane "Midnight Fluttering": the opposing Active has no Abilities
-const MUNKIDORI = "sv06-095"; // "Adrena-Brain" (D572)
-const ORBEETLE = "sv10-089"; // Team Rocket's Orbeetle "Rocket Brain" (D565)
+const MUNKIDORI = "sv06-095";
+const ORBEETLE = "sv10-089";
 
 const MOVER = "d644-mover"; // {G}, 400 HP, the MOVES below
 const FILLER = "d644-filler"; // {C}, 400 HP
@@ -239,11 +228,6 @@ const DECK = deckOf({
   [SPARE]: 19,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 const isBasic = (state: GameState, uid: string) =>
   POOL[state.cardIdByUid[uid] ?? ""]?.stage === "Basic";
 
@@ -422,7 +406,7 @@ const topId = (state: GameState, seat: Seat) =>
   idOf(state, state.players[seat].active?.stack.at(-1));
 
 describe("D644 §1 — the prints and the registry rows", () => {
-  it("five keys on five NEW objects; ~~Backtrack Badge stays unkeyed (dropped and named)~~ (🆕🆕🆕 D646 (D539): keyed at D646)", () => {
+  it("five keys on five NEW objects; ~~Backtrack Badge stays unkeyed (dropped and named)~~ ( D646 (D539): keyed at D646)", () => {
     expect(programFor(CINDERACE)).toEqual({ setupActiveFromHand: "Explosiveness" });
     expect(programFor(PATRAT)).toEqual({ passive: { countersCantMove: true } });
     expect(programFor(ILLUMISE)).toEqual({
@@ -442,7 +426,7 @@ describe("D644 §1 — the prints and the registry rows", () => {
         { op: "switchWithDiscardNamed", filter: { kind: "basicPokemon" } },
       ],
     });
-    expect(Object.keys(programFor(BADGE) ?? {})).toEqual(["passive"]); // 🆕🆕🆕 D646 (D539): was `toBeUndefined()` — keyed at D646.
+    expect(Object.keys(programFor(BADGE) ?? {})).toEqual(["passive"]);
   });
 });
 

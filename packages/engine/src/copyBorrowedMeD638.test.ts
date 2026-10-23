@@ -10,32 +10,16 @@ import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  must,
+  mustApply as run,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D638 — X1: COPY / BORROWED EFFECTS, 3 TEXTS / 6 PRINTINGS ─────────────────────────────────────────
-//
-// The D625 re-rank's X1 group, every id and text off the LOCAL D1 (2026-10-10, `legal_standard = 1`):
-//
-//   Mew ex `30th-066` / `-152` / `-158` "Memory Helix" (Ability) — the NEW `PassiveEffects.memoryHelix`, a fourth
-//     `attackMenuOf` section (D578's borrowed-row seam): the printed attacks of each of your Benched Pokémon.
-//   Thievul `me05-054` / `-092` "Skill Thief" — `deriveAttackCopy`'s NEW `InPlayAttackCopy` (D573's declaration-time
-//     seam over the opponent's Active AND Bench, behind an empty hand), parked as the NEW `useInPlayAttackAs`.
-//   Ninetales `me01-020` "Supernatural Shapeshifter" — the NEW field-free `useMilledSupporterEffect` (D580's
-//     Look-Alike Show filter over the one card the attack discards).
-//
-// Rulings (decisions.md D638), each ⚠️ UNRULED:
-//   R-MH1 — a Memory Helix row is a Benched Pokémon's PRINTED attack (its top card's); its own Memory Dive / Tool
-//           rows are not offered. Reversal: read the benched body's whole `attackMenuOf`.
-//   R-MH2 — a copy-family attack (`COPY_FAMILY_MARKER`) is not a Memory Helix row, so every copy park keeps a
-//           PRINTED copier index (`resolveCopiedAttack` reads `attacksOf(copier)[index]`). Reversal: read the
-//           copier's attack through the menu at the three resume sites — and pay an MRV bump, because a 0.520
-//           rollback reads a parked menu index past the printed ones as PHASE_DESYNC.
-//   R-SKT1 — Skill Thief reads the hand at DECLARATION, before the choice and every coin (R-CP8's moment); any
-//           card in hand is the EMPTY override (declared, nothing resolves). R-CP1 … R-CP4 carry: the copier's
-//           cost only, the copier does the attack, no copy-family candidate, a copied gate binds the copier.
-//   R-NS1 — Supernatural Shapeshifter: the card is in the discard pile when its effect runs; a Supporter whose
-//           printed play condition fails for the attacker (R-LA2 / R-LA2a, carried) does nothing.
 
 const MEW = "30th-066";
 const MEW_ALT = "30th-152";
@@ -139,18 +123,6 @@ const LOCAL: Record<string, Card> = {
 };
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL };
 const DECK = deckOf({ [PLAIN]: 6, [FILLER]: 34, "fix-energy": 20 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** Setup, then P1's turn 2 (P2 went first and passed). */
 function opened(): GameState {
@@ -293,7 +265,6 @@ describe("D638 §1 — the texts and the keys", () => {
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
-    // The other attacks the six printings print: Teleportation Burst is reader-built, the rest are damage only.
     expect(resolvedByAnyReader(TELEPORTATION_BURST)).toBe(true);
   });
 

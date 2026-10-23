@@ -21,62 +21,13 @@ import {
   setDamage,
 } from "./testFixtures";
 
-// 0.111.0 → 0.112.0 — the MULTIPLY TWIN (P3-M5 long tail, D167): the THIRD and
-// LAST adjective on a count source the engine has read since M2.
-//
-//   "This attack does 30 damage for each damage counter on this Pokémon."
-//              (Drifloon sv01-089 "Balloon Blast", idx 1, "30×")
-//   "This attack does 50 damage for each damage counter on this Pokémon."
-//             (Onix swsh10.5-036 "Raging Swing", idx 1, "50×")
-//
-// ⚠️ THE FAMILY SPLITS BY FOLD, NOT BY COUNT SOURCE, AND THIS PRINTING IS THE
-// PROOF. `deriveAttackDamageBonus` (`more` → add to the printed base),
-// `deriveAttackDamageMultiplier` (no adjective → `per × count` IS the damage, the
-// printed "N×" base dropped) and `deriveAttackDamagePenalty` (`less` → keep the
-// base and subtract, D163) are three readers over ONE `{per, count}` interface and
-// ONE count evaluator. Until now each fold happened to own a different set of count
-// sources; `damageCountersOnSelf` is now read by ALL THREE, told apart by a single
-// word. That is what an interface shared by FOLD buys: the price of this slice was
-// one regex and one `if`, and `scaledAttackDamage`, `attack.ts`'s pipeline, the
-// base-drop rule, both simulated-flags, the event and the log crumb took ZERO diff.
-//
-// ⚠️ THE CENSUS IS A MEASUREMENT, AND IT IS EXACTLY TWO. The local D1 (2026-08-03,
-// 978 rows / 6 sets — sv01 258, sv02 279, sv03 230, sv06.5 99, sve 24, swsh10.5 88)
-// returns nineteen rows for `LIKE '%for each damage counter%'` across all three text
-// columns; subtract the `more` and `less` twins and TWO remain, both on
-// `attacks_json`, both `attacks_json` index 1: Drifloon and Onix. 2 printings, 2
-// distinct sentences, one `(\d+)` capture.
-//
-// ⚠️ AND `FIXTURE_POOL` HAD NOTHING TO REUSE, WHICH IS THE PART THE PLAN GOT WRONG.
-// Five bodies in the pool already print "for each damage counter on this Pokémon"
-// (sv02-028, sv03-161 and fix-attacker's Rage/Fury with `more`; sv01-060 and
-// sv02-037 with `less`) and NOT ONE of them prints the bare form — neither sv01-089
-// nor swsh10.5-036 was fielded anywhere in the package. Both fixtures are authored
-// FRESH, transcribed off the catalog rather than bent out of a neighbour, because a
-// bent string would make "one regex spans two REAL printed amounts" a claim about a
-// string this file wrote.
-//
-// ⚠️ TWO PRE-EXISTING BEHAVIOURS OF THE `×` FOLD THIS SUITE INHERITS RATHER THAN
-// INTRODUCES, both driven below so a later reader does not mistake them for bugs:
-// at ZERO counters `scaledBase` and `scaledTotal` are both 0, so attack.ts's
-// `if (scaledBase + scaledTotal > 0)` guard skips the whole damage pipeline and NO
-// `DAMAGE_DEALT` IS EMITTED AT ALL (rules-correct — the attack does 0 damage); and
-// the log crumb renders the entire damage as ` · scaled +N` off a `base 0`, which is
-// how every existing member of this fold already reads.
-
 /** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
     978 rows / 6 sets). */
 const BALLOON_BLAST = "This attack does 30 damage for each damage counter on this Pokémon.";
 const RAGING_SWING = "This attack does 50 damage for each damage counter on this Pokémon.";
-/** The two ADJECTIVED twins on the same count source — the sentences this slice's
-    regex must refuse and whose readers must refuse this slice's. Both are printed
-    on real catalog rows and both are read (M2 and D163). */
 const RAGING_HORNS = "This attack does 10 more damage for each damage counter on this Pokémon.";
 const SWEEPING_TACKLE = "This attack does 20 less damage for each damage counter on this Pokémon.";
 
-/** One seed for the whole suite: nothing in this family flips a coin and every
-    Active is placed by surgery, so a seed table would describe a shuffle rather
-    than a rule (D143's move, D147/D163's inheritance). */
 const SEED = 7;
 
 function find<T extends GameEvent["type"]>(
@@ -86,8 +37,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Every attacker this suite declares, with the printed INDEX and the energy its
-    cost needs — read off the local D1 per printing (D144's rule). */
 const ATTACKERS = {
   drifloon: { card: "sv01-089", index: 1, energy: [{ id: "fix-psychic-energy", count: 2 }] }, // "Balloon Blast" ({P}{P}, "30×")
   "drifloon-gust": { card: "sv01-089", index: 0, energy: [{ id: "fix-energy", count: 2 }] }, // "Gust" ({C}{C}, 10, NO effect key)
@@ -113,10 +62,6 @@ const ATTACKERS = {
 
 type Attacker = keyof typeof ATTACKERS;
 
-/** `by`'s opponent opens and passes, so the attacking seat carries no §4
-    first-turn restriction. Both bodies are placed by surgery and BOTH benches are
-    cleared: every number in this family is read off the CURRENT board at
-    declaration, and a stray displaced body is a silent extra Ability source. */
 function board(attacker: Attacker, defender: string, by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -171,9 +116,6 @@ describe("the printed data — re-queried, not recognised", () => {
       // against a defender that has none.
       resistances: [{ type: "Fighting", value: "-30" }],
     });
-    // The WHOLE list, so the fixture cannot be wrong by OMISSION (D156's failure
-    // mode) and so no later slice indexes into a short one. The printed damage
-    // marker is a trailing "×" — the sign this fold's base-drop rule reads.
     expect(FIXTURE_POOL["sv01-089"]?.attacks).toEqual([
       { cost: ["Colorless", "Colorless"], name: "Gust", damage: 10 },
       {
@@ -213,19 +155,7 @@ describe("the printed data — re-queried, not recognised", () => {
     ]);
   });
 
-  it("⚠️ NEITHER BODY EXISTED BEFORE THIS SLICE, and no neighbour could stand in", () => {
-    // The finding the plan got wrong, asserted rather than narrated. Every body in
-    // the pool printing this count source carries an ADJECTIVE, so there was no
-    // bare-form fixture to reuse and no `damage for each damage counter` sentence
-    // any reader could have read. The sweep is over the pool rather than a list,
-    // so a sixth adjectived printing added later joins the left-hand set on its own.
-    //
-    // ⚠️ AND ONE DID — `sv01-032[0]`, Arcanine ex's "Raging Claws", added by D173
-    // and NOT by a new card. The printing was in the pool the whole time; the
-    // FIXTURE dropped it, carrying only index-1 "Bright Flame", so this sweep read
-    // a body that prints this family's sentence and saw nothing. That is the exact
-    // failure mode a discovered-from-the-population census is built to avoid, and
-    // it survived one anyway: the sweep's inputs were short, not its predicate.
+  it("NEITHER BODY EXISTED BEFORE THIS SLICE, and no neighbour could stand in", () => {
     const bare: string[] = [];
     const adjectived: string[] = [];
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
@@ -242,7 +172,7 @@ describe("the printed data — re-queried, not recognised", () => {
       [
         "fix-attacker[3]",
         "fix-attacker[4]",
-        "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
+        "sv01-032[0]",
         "sv01-060[1]",
         "sv02-037[1]",
         "sv02-028[0]",
@@ -252,9 +182,6 @@ describe("the printed data — re-queried, not recognised", () => {
   });
 
   it("AUTHORS nothing — both printings are read off the TEXT", () => {
-    // The deriver is the whole mechanism: no registry row, no `attack` map entry,
-    // no passive. A registry-authored program would win over the reader (D8), so
-    // this is the claim that says the text path is the one being driven below.
     for (const id of ["sv01-089", "swsh10.5-036"] as const) {
       expect(programFor(id)).toBeUndefined();
     }
@@ -267,9 +194,6 @@ describe("the printed data — re-queried, not recognised", () => {
 
 describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count source", () => {
   it("reads BOTH printed sentences as `damageCountersOnSelf`", () => {
-    // per 30 ≠ 50 on one capture: a hardcoded per-unit satisfies one printing and
-    // fails the other, which is D121's second-printing warrant met by the pool.
-    // The `count` member is the EXISTING one — no new `DamageCountSource`.
     expect(deriveAttackDamageMultiplier(BALLOON_BLAST)).toEqual({
       per: 30,
       count: { kind: "damageCountersOnSelf" },
@@ -297,8 +221,6 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
   });
 
   it("is DISJOINT from its two adjectived siblings in BOTH directions", () => {
-    // The missing word is the whole discriminator, and each reader must refuse the
-    // others' sentences or two folds would fire on one printing.
     expect(deriveAttackDamageMultiplier(RAGING_HORNS)).toBeNull();
     expect(deriveAttackDamageMultiplier(SWEEPING_TACKLE)).toBeNull();
     expect(deriveAttackDamageBonus(BALLOON_BLAST)).toBeNull();
@@ -316,13 +238,7 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
     });
   });
 
-  it("⚠️ AT MOST ONE of the three readers answers ANY attack in the pool", () => {
-    // The sweep `selfScalingPenalty.test.ts` runs, re-run from the third fold's
-    // side and over a pool that now CONTAINS the bare sentence — which is the whole
-    // reason it is repeated here rather than trusted. attack.ts guards each reader
-    // on its predecessors having declined; that guard is free precisely because
-    // this holds, and D157's rule says an invisible guard is paid for with an
-    // assertion rather than a comment.
+  it("AT MOST ONE of the three readers answers ANY attack in the pool", () => {
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
       for (const attack of card.attacks ?? []) {
         const text = attack.effect ?? "";
@@ -337,8 +253,6 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
   });
 
   it("STAYS LOUD as an op — the sentence derives no post-damage program", () => {
-    // A pre-damage fold derived into a tail op would run AFTER the §8.5 pipeline
-    // and could not touch a number already computed (D125's classification rule).
     for (const text of [BALLOON_BLAST, RAGING_SWING]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -362,12 +276,6 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
       "Flip a coin. This attack does 30 damage for each damage counter on this Pokémon.",
       // trailing text
       "This attack does 30 damage for each damage counter on this Pokémon. Discard an Energy from this Pokémon.",
-      // the BENCH-wide count — ✅ READ SINCE D170 (Tyranitar swsh10.5-043 "Raging
-      // Crash"), but this string is NOT that sentence: the printing says "on ALL OF
-      // your Benched Pokémon" and `BENCH_COUNTER_MULTIPLY`'s literal tail requires
-      // the "all of". So the assertion is unchanged and now SHARPER — it is the
-      // near-miss of a sentence that exists rather than of one that does not, and
-      // it must stay null for BOTH readers rather than merely for this one.
       "This attack does 30 damage for each damage counter on your Benched Pokémon.",
       // a real Pokémon with a lookalike é would fall off the path silently
       "This attack does 30 damage for each damage counter on this Pokemon.",
@@ -376,21 +284,7 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
     }
   });
 
-  it("🛑 the DEFENDER-side twin is READ — and it must land on the OTHER count member", () => {
-    // 🆕 **D423 — RE-POINTED, BECAUSE THIS LINE'S SUBJECT MOVED SIDES.** This string
-    // sat in the near-miss list above under the caption *"a real unread neighbour"*,
-    // asserted null. It is read since D423 by `OPPONENT_COUNTER_MULTIPLY` (3
-    // Standard-legal printings — Glalie `sv06-052`, Flapple `sv08-139`/`sv08-210`),
-    // so a `toBeNull` there would now be false.
-    //
-    // ⚠️ **AND THE RE-POINTING KEEPS THE DISCRIMINATION THE OLD LINE CARRIED**, which
-    // is D418's second half rather than an afterthought. What that line ever proved is
-    // that `SELF_COUNTER_MULTIPLY` does not answer a sentence naming the OTHER body —
-    // and asserting `count.kind` rather than merely "not null" is what preserves it:
-    // a self-side tail widened off the literal `on this Pokémon.` would answer FIRST
-    // (it is arm one, this printing's arm is four) and hand `damageCountersOnSelf` to
-    // a printing whose counters are on the defender. Wrong body, right shape, no
-    // count moves — invisible to every census and wrong on every board.
+  it("the DEFENDER-side twin is READ — and it must land on the OTHER count member", () => {
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 30 damage for each damage counter on your opponent's Active Pokémon.",
@@ -405,21 +299,8 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The census, SWEPT out of the pool rather than listed.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("the census — discovered from the population, not enumerated", () => {
   it("is exactly TWO fixture attacks on this count source, and they are the two printings", () => {
-    // D145's move (D147/D159/D161/D163's inheritance): discover the producers by
-    // deriving every attack in the pool, so a third printing added without a case
-    // fails HERE.
-    //
-    // ⚠️ WHAT THIS SWEEP DOES NOT TRAVERSE, said rather than left: it enumerates
-    // `FIXTURE_POOL`, so a CATALOG row with no fixture is invisible to it (there is
-    // none for this family — the census is 2/2), and it reads ATTACK text only, so
-    // an Ability or Trainer printing of the same sentence would not appear. The
-    // catalog side is crossed only by `catalogManifest.test.ts`.
     const found: string[] = [];
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
       for (const [index, attack] of (card.attacks ?? []).entries()) {
@@ -433,10 +314,6 @@ describe("the census — discovered from the population, not enumerated", () => 
   });
 
   it("…and the OTHER TWO ADJECTIVES' producers are asserted beside them", () => {
-    // The claim this slice makes is about a count source read by THREE folds, so
-    // all three lists are swept together: a reader that started answering a
-    // neighbour's sentence would move a name between them, and no assertion on the
-    // two new printings alone can see that.
     const by = (read: (text: string) => { count: { kind: string } } | null): string[] => {
       const found: string[] = [];
       for (const [id, card] of Object.entries(FIXTURE_POOL)) {
@@ -451,7 +328,7 @@ describe("the census — discovered from the population, not enumerated", () => 
     expect(by(deriveAttackDamageBonus)).toEqual([
       "fix-attacker[3]",
       "fix-attacker[4]",
-      "sv01-032[0]", // Arcanine ex "Raging Claws" — carried since D173
+      "sv01-032[0]",
       "sv02-028[0]",
       "sv03-161[0]",
     ]);
@@ -477,9 +354,6 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
   });
 
   it("…and 50 PER COUNTER for Onix, off ONE regex", () => {
-    // TWO amounts on one capture: a hardcoded per-unit satisfies one printing and
-    // fails the other. 6 counters × 50 = 300, which fix-titan's 340 HP survives so
-    // the arithmetic stands alone with no KO in the way.
     let state = board("onix", "fix-titan");
     state = setDamage(state, "p1", 60); // 6 damage counters
     const { events } = swing(state, "onix");
@@ -501,19 +375,11 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     }
   });
 
-  it("⚠️ AT ZERO COUNTERS THERE IS NO `DAMAGE_DEALT` AT ALL — and that is CORRECT", () => {
-    // The base-drop tell, and the inherited second-order behaviour this suite is
-    // written knowing: `scaledBase` is 0 for a multiply and `scaledTotal` is 0 at
-    // count 0, so attack.ts's `scaledBase + scaledTotal > 0` guard skips the whole
-    // §8.5 pipeline. The attack really does 0 damage. Were the printed base kept it
-    // would deal 30, so the ABSENT row is what pins the drop — and the attack is
-    // still USED (the turn ends), which is the half an early return would break.
+  it("AT ZERO COUNTERS THERE IS NO `DAMAGE_DEALT` AT ALL — and that is CORRECT", () => {
     const { state: after, events } = swing(board("drifloon", "fix-titan"), "drifloon");
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(find(events, "KNOCKED_OUT")).toBeUndefined();
     expect(after.players.p2.active?.damage).toBe(0);
-    // …and the sentence is STILL not flagged: read text that resolves to nothing is
-    // simulated text (D140's rule — loudness is owed to UNREAD text).
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     // The attack was USED: the turn passed to the opponent.
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
@@ -553,10 +419,6 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
   });
 
   it("…and Onix's index 0 keeps its OWN, DIFFERENT mechanism intact", () => {
-    // The sharper form of the same negative: "Rock Tomb" is a live `preventRetreat`
-    // op (M3), so this board asserts that index 1's fold neither leaks INTO a
-    // simulated sibling nor displaces it. Base 50 lands whole and the block is
-    // installed on the defender.
     let state = board("onix-tomb", "fix-titan");
     state = setDamage(state, "p1", 60);
     const { state: after, events } = swing(state, "onix-tomb");
@@ -573,10 +435,6 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
 
 describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
   it("doubles the SCALED number, not a printed base that is not there", () => {
-    // Drifloon (PSYCHIC) into fix-psychic-weak (200 HP, ×2 Psychic) at 3 counters:
-    // (0 + 90) × 2 = 180, which 200 HP survives so no KO hides the arithmetic. A
-    // fold that kept the printed base would report 240; one that doubled before
-    // scaling has nothing to double.
     let state = board("drifloon", "fix-psychic-weak");
     state = setDamage(state, "p1", 30);
     const { state: after, events } = swing(state, "drifloon");
@@ -588,10 +446,6 @@ describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
   });
 
   it("…and the oracle is derived from the ROW's OWN fields", () => {
-    // D147's move (D149/D161/D163's inheritance): re-derive the number the engine
-    // reported from the fields that row carries, rather than from the constants the
-    // test was written with — so a fold that changed BOTH the number and the
-    // reported base would still be caught.
     let state = board("drifloon", "fix-psychic-weak");
     state = setDamage(state, "p1", 30);
     const row = find(swing(state, "drifloon").events, "DAMAGE_DEALT");
@@ -604,14 +458,7 @@ describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
     expect(row.base).toBe(0);
   });
 
-  it("⚠️ ALL THREE ADJECTIVES, ONE COUNT SOURCE, ONE COUNTER TOTAL, ONE BOARD", () => {
-    // The claim of the whole slice, driven rather than argued. Three bodies at
-    // THREE damage counters each, against the same clean 340 HP defender:
-    //   "more" (Rage, "10+")       →  10 + 30 = 40, reported through `scaled`
-    //   none   (Balloon Blast 30×) →       90,      reported through `scaled`, base 0
-    //   "less" (Sweeping Tackle)   → 200 − 60 = 140, reported through `debuff`
-    // One word apart in the print, three different rows out of the engine. If any
-    // reader started answering a neighbour's sentence, at least one of these moves.
+  it("ALL THREE ADJECTIVES, ONE COUNT SOURCE, ONE COUNTER TOTAL, ONE BOARD", () => {
     const at3 = (attacker: Attacker) => {
       let state = board(attacker, "fix-titan");
       state = setDamage(state, "p1", 30);
@@ -620,8 +467,6 @@ describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
     expect(at3("rage")).toMatchObject({ base: 10, scaled: 30, dealt: 40 });
     expect(at3("drifloon")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
     expect(at3("cetitan")).toMatchObject({ base: 200, debuff: 60, dealt: 140 });
-    // …and each row carries ONLY its own direction's field, which is what makes the
-    // three folds distinguishable to a reader of the RECORD and not just to this test.
     expect(at3("rage")?.debuff).toBeUndefined();
     expect(at3("drifloon")?.debuff).toBeUndefined();
     expect(at3("cetitan")?.scaled).toBeUndefined();
@@ -634,11 +479,6 @@ describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
 
 describe("VOICE — the crumb, rendered under BOTH seats and READ", () => {
   it("renders the WHOLE damage as ` · scaled +90` off a base of 0", () => {
-    // The inherited crumb, driven so it is not mistaken for a defect later: this
-    // fold has no base, so the number after "scaled +" IS the damage rather than an
-    // increment on something. Every existing `×` member already reads this way
-    // (Pecharunt ex, Annihilape, Stoutland), which is exactly why NO NEW ARM was
-    // added to log.ts.
     let state = board("drifloon", "fix-psychic-weak");
     state = setDamage(state, "p1", 30);
     const { state: after, events } = swing(state, "drifloon");
@@ -659,20 +499,12 @@ describe("VOICE — the crumb, rendered under BOTH seats and READ", () => {
   });
 
   it("says nothing at all at zero counters — there is no row to speak", () => {
-    // Loudness is owed to UNREAD text (D140). A clause that resolved to 0 must not
-    // print a damage line, and must not print a "not simulated" one either.
     const { state: after, events } = swing(board("drifloon", "fix-titan"), "drifloon");
     expect(rendered(after, events).some((r) => r.text.startsWith("dealt "))).toBe(false);
     expect(rendered(after, events).some((r) => r.text.includes("not simulated"))).toBe(false);
   });
 
-  it("⚠️ AND THE PRINTED TEXT STOPS BEING FLAGGED — both halves of it", () => {
-    // Before this slice both printings emitted ATTACK_EFFECT_SKIPPED carrying the
-    // whole sentence AND the "×" damage marker. `effectSimulated` and
-    // `modifierSimulated` are both written `scaling !== null || …` — where `scaling`
-    // is `damageBonus ?? damageMultiplier` — so both terms already subsumed this
-    // reader and NEITHER needed a diff. Asserted rather than assumed, on both
-    // printings and at a counter total where the fold does something.
+  it("AND THE PRINTED TEXT STOPS BEING FLAGGED — both halves of it", () => {
     for (const attacker of ["drifloon", "onix"] as const) {
       let state = board(attacker, "fix-titan");
       state = setDamage(state, "p1", 30);
@@ -687,78 +519,46 @@ describe("VOICE — the crumb, rendered under BOTH seats and READ", () => {
 
 describe("the structural answers", () => {
   it("PERSIST: NOTHING was written to `InPlayPokemon`, so MATCH_RECORD_VERSION stays 11", () => {
-    // Neither park nor persist. The clause is CATALOG text read at declaration by a
-    // pure function of the current state; no stamp, no op, no event type, no event
-    // field, no enum value, no union member — and, unlike D163, not even a new
-    // reader. Pinned as an ABSENCE (D161's move), which is the only way a no-bump
-    // claim is checkable. (`MATCH_RECORD_VERSION` itself lives in `apps/api/src/
-    // lobby/match.ts`; the engine cannot import it, so the assertion this side can
-    // make is the one that would FORCE the bump.)
-    //
-    // ⚠️ D412 — the literal ("is pinned at 11 by `match.test.ts`") is DELETED rather
-    // than stepped, for the reason spelled out in `selfScalingPenalty.test.ts`'s
-    // twin of this comment: a figure about another file, carried in prose, with
-    // nothing comparing them. This slice's own finding — that at D163 nothing was
-    // written to `InPlayPokemon` — is untouched and still asserted below.
     const active = board("drifloon", "fix-titan").players.p1.active;
     if (active === null) throw new Error("no Active");
     expect(Object.keys(active).sort()).toEqual(
       [
         "attackBlock",
         "attackDamageDebuff",
-        "attackDamageTaken", // 🆕🆕🆕 D630 (43 -> 44) — Juggernaut Horn's record; the pin is on the HEAD's key set
-        // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp and the NEXT-TURN VULNERABILITY
-        // record JOIN THE LIST (MATCH_RECORD_VERSION 30 -> 31). The pin is on the HEAD's
-        // key set, so it moves whenever anybody adds a key; what it asserts is that THIS
-        // suite's slice added none.
+        "attackDamageTaken",
         "attackFlipLockTurn",
         "attackLockedTurn",
-        "attackTwoFlipLockTurn", // 🆕🆕🆕 D636 (44 -> 45) — Jet of Ink's stamp; the pin is on the HEAD's key set
-        "benchedTurn", // 🆕🆕🆕 D636 (44 -> 45) — Fall Back to Reload's stamp
+        "attackTwoFlipLockTurn",
+        "benchedTurn",
         "boostedAttack",
         "conditions",
-        "costTaxTurn", // 🆕🆕🆕 D549 (32 -> 33) — the cost tax's stamp; the pin is on the HEAD's key set
+        "costTaxTurn",
         "damage",
         "damageReduction",
-        "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
+        "damageVulnerability",
         "energy",
-        // 🆕🆕 D386 — `healedTurn` JOINS THE LIST (a second per-turn stamp on this
-        // structure, and `MATCH_RECORD_VERSION` 22 → 23 with it). THIS slice still wrote
-        // nothing: the pin is on the HEAD's key set, so it moves whenever anybody adds a
-        // key, and what it asserts is that none of them was added HERE.
         "evolvedTurn",
-        "handAttachMark", // 🆕🆕🆕 D575 (37 -> 38) — the hand-attach mark (Glimmora / Hypno); the pin is on the HEAD's key set
+        "handAttachMark",
         "healedTurn",
         "installedRecoil",
-        "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
+        "koBounty",
         "lockedAttacks",
         "markers",
-        // 🆕🆕 D432 — the attack-installed §8.5 NO-WEAKNESS bar's stamp (MATCH_RECORD_VERSION 26 -> 27).
         "noWeaknessTurn",
         "promotedTurn",
         "retreatBlocked",
-        // 🆕🆕 D412 — the SELF-installed §11 retreat lock's stamp (MATCH_RECORD_VERSION 25 → 26).
         "retreatLockedTurn",
         "scheduledEffect",
         "stack",
         "tools",
         "turnPlayed",
-        // 🆕🆕 D394 — `usedAttack` JOINS THE LIST (a FOURTH per-turn stamp on this
-        // structure, and `MATCH_RECORD_VERSION` 24 → 25 with it). THIS slice still
-        // wrote nothing; the pin is on the HEAD's key set.
         "usedAttack",
-        "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
+        "weaknessRetype",
       ].sort(),
     );
   });
 
   it("GATES NO ACTION — the attack is still offered when it would deal 0", () => {
-    // Checked rather than assumed (D157's rule): the clause says nothing about
-    // legality or cost, so `redactedAttacksOf` must keep offering it on the board
-    // where it does literally nothing — refusing there would be the engine
-    // inventing a rule the card does not print. Both payability projections read
-    // the same `attacks` array, and `GameHud.tsx` takes no diff because no new
-    // field reaches it.
     const state = board("drifloon", "fix-titan"); // 0 counters → 0 damage
     const view = redactGame(state, "p1").phase;
     if (view.kind !== "turn:action") throw new Error(`expected turn:action, got ${view.kind}`);

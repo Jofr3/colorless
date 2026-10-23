@@ -16,17 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.59.0 → 0.60.0 — Calamitous Wasteland sv02-175 (P3-M5 long tail, D109): "The
-// Retreat Cost of each Basic non-{F} Pokémon in play (both yours and your
-// opponent's) is {C} more."
-//
-// Beach Court's negative twin on the D108 retreat-cost seam: the same global,
-// both-boards, Basic-only shape, but ADDING and carrying a type exemption. It is
-// a pure `StadiumEffects` row plus one clause in `effectiveRetreatCost`, so all
-// three readers of that one derivation point (turn.ts retreat, redact.ts, the
-// web HUD) pick it up untouched. Only one Stadium is ever in play (§7.3), so the
-// discount and the surcharge never stack — they REPLACE each other.
-
 /** Setup on P1's turn with the Stadium in `seat`'s hand and played into the
     shared zone. */
 function withStadium(state: GameState, cardId: string): GameState {

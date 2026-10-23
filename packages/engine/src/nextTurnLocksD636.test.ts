@@ -1,23 +1,3 @@
-// 🆕🆕🆕 D636 — L1 + Clawitzer of the Mega backlog: THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO RELOAD, 6 texts /
-// 7 printings, and `MATCH_RECORD_VERSION` 44 → 45 (apps/api match.ts "44 → 45 AT D636",
-// `lockKeysMigrationD636.test.ts`).
-//
-//   • Trevenant `me04-039` "Cursed Roots": the shipped `markHandAttach { barred }` (Glimmora's bar, no new key).
-//   • Pachirisu `me01-051` "Electrified Incisors": `markHandAttach` with the NEW `counters` — 8 counters per Energy
-//     card attached from the victim's hand to the marked body, on the action and an effect's hand attach (R-EIC1).
-//   • Octillery `me04-017` "Jet of Ink": `flipLockAttack` with the NEW `coins: 2` on the NEW
-//     `InPlayPokemon.attackTwoFlipLockTurn`; every coin is flipped, any tails stops the attack (R-JOI1).
-//   • Seismitoad `30th-084` "Quaking Fist": the NEW `flipLockTrainerPlay` on the NEW `PlayerSide.trainerFlipLockTurn`;
-//     cardplay.ts `trainerFlipFails` at every Trainer play from hand (R-QF1).
-//   • Chi-Yu `me01-031` "Scorching Earth": a `conditionGate` on the NEW `opponentStadiumInPlay` over `discardStadium`
-//     and `preventHandPlay` at the NEW stamped class `"Stadium"` (R-SCE1).
-//   • Clawitzer `me01-038` / `-141` "Fall Back to Reload": `FALL_BACK_TO_RELOAD` on the NEW per-body gate
-//     `benchedThisTurn` over the NEW `InPlayPokemon.benchedTurn` (R-FBR1).
-//
-// Texts byte for byte off the LOCAL D1 (2026-10-10, `legal_standard = 1`); driven on the real ids in a LOCAL `cardPool`
-// (D275) in the suite's OWN 60-card deck (D270). Attack COSTS and Retreat Costs are dropped to `[]` / 0 on the local
-// faces; names, stages, HP, types, Weakness and Resistance are printed. Coins are chosen by seeding `rngState`.
-
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
@@ -36,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
 import { type PokemonTarget, makeInPlay } from "./types";
 
@@ -219,7 +200,7 @@ const FILLER = "d636-filler";
 const SPROUT = "d636-sprout"; // Rare Candy's Basic …
 const SHOOT = "d636-shoot"; // … its Stage 1 (the bridge, never played) …
 const TREE = "d636-tree"; // … and the Stage 2 Rare Candy puts on it
-const CLAUNCHER = "d636-clauncher"; // the suite's own Clauncher, for R-FBR1's evolution reading
+const CLAUNCHER = "d636-clauncher";
 const JAB = 60;
 
 const mon = (id: string, name: string, extra: Partial<Card> = {}): Card =>
@@ -267,18 +248,12 @@ const DECK = deckOf({
   [CLAUNCHER]: 1,
   [FILLER]: 15,
   [WATER]: 12,
-  "fix-energy": 6, // the prize row
+  "fix-energy": 6,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 function refusal(result: ReturnType<typeof applyAction>): string {
   return result.ok ? "OK" : result.error.code;
 }
 
-/** Hands and prize rows reset: every hand back into the deck, the six `fix-energy` the prize row. */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {
@@ -485,7 +460,6 @@ describe("D636 §1 — the readers and the registry row", () => {
         },
       ],
     });
-    // Every L1 attack id is a reader row: no key.
     for (const id of [TREVENANT, PACHIRISU, OCTILLERY, SEISMITOAD, CHIYU])
       expect(programFor(id), id).toBeUndefined();
   });

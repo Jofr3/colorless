@@ -31,49 +31,8 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.376.0 → 0.377.0 — 🆕🆕 D479: THE ATTACK-SIDE HAND REFRESH.
-//
-// *"Shuffle your hand into your deck. Then, draw 6 cards."* — `censusAttackCorpus.ts`
-// **FILE LINE 486**, **1 sentence / 1 legal printing**, claimed WHOLE by
-// `deriveAttackEffect` arm 44b through ONE new anchor (`SHUFFLE_HAND_DRAW`) and ONE new
-// arm returning `[{ op: "handRefresh", who: "you", draw: { kind: "fixed", count } }]`.
-//
-// 🛑 **THE REPO ALREADY KNEW THE ANSWER AND HAD WRITTEN IT DOWN.** D404 built the
-// sentence one verb over (*"Discard your hand and draw 6 cards."*, 7 printings) and its
-// own doc block names THIS row as its near-miss with the correct diagnosis: *"the same
-// zone emptied by a DIFFERENT verb into a DIFFERENT pile, **which is `handRefresh` and
-// not `discardHand`**"*. `discardHandDraw.test.ts` then fielded it as a `toBeNull`
-// witness for 75 decisions with the comment *"it is a whole slice of its own
-// (`handRefresh` with `toBottom` absent)"*. That price was right and this slice is it
-// being paid — both of those rungs are RE-POINTED here rather than deleted (D444/D447).
-//
-// ⚠️ **ZERO NEW MECHANISM, MEASURED IN §7 RATHER THAN ASSERTED.** No new `EffectOp`
-// member, op FIELD, op VALUE, reader (surface still 13), prompt, choice, event, error
-// code, registry row, `FIXTURE_POOL` id, `interpreter.ts` byte, `redact.ts` byte or
-// `packages/schema` byte. `handRefresh { who: "you", draw: { kind: "fixed", count } }`
-// is Youngster `sv01-198`'s hand-authored trainer program at a second address, and §2
-// reads this arm AGAINST that row rather than against a re-typed expectation.
-//
-// 🛑 **WHAT THIS FILE IS ACTUALLY ABOUT IS *WHICH PILE*, AND A COUNT CANNOT SEE IT.**
-// Arm 44's program and this one both leave a six-card hand and both fire `CARDS_DRAWN`
-// with six uids. They differ in where the OLD hand went — the discard there, the DECK
-// here — and in whether the deck was reshuffled. §4 reads UIDS across all four zones,
-// which is the only instrument that can tell them apart; §3's `not.toEqual` says the
-// same thing at the reader.
-//
-// ⚠️ **THE DEMONSTRATOR IS NOT A NEW FIXTURE (D414/D425).** `fix-handdraw` is D404's
-// body and already prints the SIBLING sentence as its whole attack; the boards below
-// re-text attack 0 on a per-board `cardPool` CLONE, so `FIXTURE_POOL` is byte-unchanged
-// and every `ids.length` ladder takes a ZERO term. The STRING is the corpus row byte
-// for byte (§1); nothing else about the body is transcription.
-
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 
-/** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
-    "unread" is unread by the WHOLE engine and not merely by the one reader it is about
-    (D382). Kept in `discardHandDraw.test.ts`'s order and guarded against the MODULE in
-    §7, D419's rule — a hand-kept copy that nothing compares to the module can sit short
-    of it indefinitely. */
 const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -87,42 +46,17 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
-/** THE SENTENCE THIS SLICE BUYS, byte for byte from `legalAttackCorpus()`. */
 const PRINTED = "Shuffle your hand into your deck. Then, draw 6 cards.";
 
-/** 🛑 **THE REAL NEAR-MISS, AND IT IS THE VERY NEXT CORPUS LINE** (487, 1 printing) —
-    the identical head, a DERIVED count. `HandRefreshDraw` has four members and NOT ONE
-    of them counts the OPPONENT's hand: `fixed` is a constant, `handPlus` reads the
-    drawing seat's own pre-move hand, `prizeCount` its own Prizes, `perSeat` picks one
-    of a printed PAIR by seat. So this row needs a FIFTH member and stays LOUD, and that
-    refusal is this anchor's own falsifier rather than a constructed one (D399).
-
-    🆕 **D516 BUILT IT, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ITS RECEIPT
-    DATED HERE** (D178/D438). Every clause was true when written: the fifth member is
-    exactly what the row needed, and it is now `HandRefreshDraw.opponentHandSize`, claimed
-    by `SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND` — a SECOND anchor, so `SHUFFLE_HAND_DRAW`'s
-    own `(\d+)` still refuses this string and every rung below that says so is re-pointed
-    ONTO THE SHAPE rather than deleted. ⚠️ **THREE RUNGS IN THIS FILE HAD THIS
-    SENTENCE'S UNBUILTNESS AS THEIR PREMISE** — §1's reader pair, §3's COUNT
-    falsifier and §6's ZERO-MATCH board — and a re-point that only chased the one
-    that reddened would have left the other two green and wrong (D444). */
 const DERIVED_COUNT =
   "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.";
 
-/** D404's sentence — the SIBLING, and the reason §3's sharpest rung is a `not.toEqual`
-    rather than a `toBeNull`: both anchors are `^…$` and a string cannot begin two ways,
-    so the disjointness is STRUCTURAL (D467's first preference) and carries no guard. */
 const SIBLING = "Discard your hand and draw 6 cards.";
 
-/** 🆕 D516 — THE CONSTRUCTED NEAR-MISS §6's zero-match board runs on, now that the
-    printed one it used (`DERIVED_COUNT`, corpus line 487) is BUILT. It varies the count's
-    SOURCE ZONE and nothing else, which is the axis `opponentHandSize` names; no anchor in
-    `effects.ts` claims it and §3 drives that in the same pass. */
 const UNREAD_COUNT_SOURCE =
   "Shuffle your hand into your deck. Then, draw a card for each card in your hand.";
 
@@ -146,31 +80,19 @@ function find<T extends GameEvent["type"]>(
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D479 §1 — the printed data, measured live over the legal column", () => {
-  it("🛑 the sentence is the CORPUS's bytes at ONE printing, and so is its near-miss", () => {
-    // D183's rule: author and assert against the printed bytes, never a paraphrase.
-    // D456's: derive the specimen from `legalAttackCorpus()` where you can.
+  it("the sentence is the CORPUS's bytes at ONE printing, and so is its near-miss", () => {
     const rows = new Map(legalAttackCorpus().map(([n, text]) => [text, n]));
     expect(rows.get(PRINTED)).toBe(1);
     expect(rows.get(DERIVED_COUNT)).toBe(1);
     expect(rows.get(SIBLING)).toBe(7);
-    // ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1**, which D478's did
-    // NOT (1 vs 2) — so every census term this slice writes is the same number, and a
-    // pass that carried D478's habit of reading the two apart would still be right here
-    // for the wrong reason. Stated so the next slice does not inherit the coincidence
-    // (D451/D461/D464).
     expect([1, units(legalAttackCorpus().filter(([, s]) => s === PRINTED))]).toEqual([1, 1]);
-    // The é is U+00E9-free here and the apostrophe in the near-miss is ASCII U+0027,
-    // measured with `codePointAt` rather than by eye (D421/D440).
     expect(PRINTED.includes("é")).toBe(false);
     expect(DERIVED_COUNT.includes("opponent's")).toBe(true);
     expect(DERIVED_COUNT.includes("opponent’s")).toBe(false);
     expect(DERIVED_COUNT.codePointAt(DERIVED_COUNT.indexOf("'"))).toBe(0x0027);
   });
 
-  it("🛑 the column prints ONE count for this skeleton, and it is 6", () => {
-    // The measurement behind the CAPTURE, stated as a number rather than left implied
-    // (D400). A literal `6` in the anchor could never go red off THIS column — which is
-    // exactly why the argument for capturing comes from the OTHER column (§2).
+  it("the column prints ONE count for this skeleton, and it is 6", () => {
     const family = legalAttackCorpus().filter(([, s]) =>
       /^Shuffle your hand into your deck\. Then, draw /.test(s),
     );
@@ -178,21 +100,13 @@ describe("D479 §1 — the printed data, measured live over the legal column", (
     expect(units(family)).toBe(2);
   });
 
-  it("🆕🆕 D479 — the sentence is now RESOLVED, and by exactly one reader", () => {
-    // The transition this slice is, asserted off the MODULE surface rather than off the
-    // hand-kept list above (D419) — so no edit to `READERS` can move it.
+  it("D479 — the sentence is now RESOLVED, and by exactly one reader", () => {
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
     expect(deriveAttackEffect(PRINTED)).toEqual(program(6));
     for (const read of READERS) {
       if (read === deriveAttackEffect) continue;
       expect(read(PRINTED), read.name).toBeNull();
     }
-    // 🆕 D516 RE-POINTED THIS PAIR RATHER THAN DELETING IT (D444). It used to read
-    // *"one sentence in and one out, differing on the count alone"*; both are in now, so
-    // the pair is re-pointed onto what it was always for — that each is claimed by
-    // EXACTLY ONE reader, and that the two differ in their PROGRAMS on the draw member
-    // alone. That is a strictly sharper claim about the anchors than a `toBeNull` was:
-    // a widening of either anchor across the other's string reddens it.
     expect(resolvedByAnyReader(DERIVED_COUNT)).toBe(true);
     expect(deriveAttackEffect(DERIVED_COUNT)).toEqual([
       { op: "handRefresh", who: "you", draw: { kind: "opponentHandSize" } },
@@ -216,13 +130,7 @@ describe("D479 §1 — the printed data, measured live over the legal column", (
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D479 §2 — the program, read against the TRAINER column's hand-authored rows", () => {
-  it("🛑 the count is a printed PARAMETER, and `registry.ts` is the evidence", () => {
-    // D404's argument at a second address. The attack column prints 6 alone (§1), so the
-    // corpus cannot justify a capture on its own; the trainer column can. Youngster
-    // `sv01-198` carries 5 and Katy `sv01-177` carries 8, both hand-authored years
-    // before this arm existed — so the arm is read AGAINST those rows rather than against
-    // a re-typed expectation. One sentence, two producers, and they must agree byte for
-    // byte or one of them is wrong.
+  it("the count is a printed PARAMETER, and `registry.ts` is the evidence", () => {
     expect(deriveAttackEffect("Shuffle your hand into your deck. Then, draw 5 cards.")).toEqual(
       programFor("sv01-198")?.trainer,
     );
@@ -232,18 +140,11 @@ describe("D479 §2 — the program, read against the TRAINER column's hand-autho
     // …and the two really are DIFFERENT programs, so the pair above is not one assertion
     // written twice.
     expect(programFor("sv01-198")?.trainer).not.toEqual(programFor("sv01-177")?.trainer);
-    // 🛑 KATY'S ROW ALSO CARRIES `trainerEndsTurn: true`, and the printed reason is a
-    // THIRD sentence this arm never sees ("Your turn ends."). The equality above is on
-    // the `trainer` PROGRAM alone, which is the half this arm derives; asserting the
-    // whole `CardProgram` would have failed for a reason that is not about this slice.
     expect(programFor("sv01-177")?.trainerEndsTurn).toBe(true);
     expect(programFor("sv01-198")?.trainerEndsTurn).toBeUndefined();
   });
 
   it("a printed 0 stays LOUD, and 1 does not", () => {
-    // The `>= 1` guard every counted arm in `effects.ts` carries. A "draw 0 cards." is a
-    // deck reshuffle wearing a draw's sentence, and belongs on the ATTACK_EFFECT_SKIPPED
-    // path where a census can see it.
     expect(deriveAttackEffect("Shuffle your hand into your deck. Then, draw 0 cards.")).toBeNull();
     expect(deriveAttackEffect("Shuffle your hand into your deck. Then, draw 1 cards.")).toEqual(
       program(1),
@@ -256,43 +157,22 @@ describe("D479 §2 — the program, read against the TRAINER column's hand-autho
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D479 §3 — the refusals, each pinned on ONE printed byte", () => {
-  it("🛑 the VERB refuses BOTH WAYS, and that is the disjointness stated as behaviour", () => {
-    // D399's rule: the POSITIVE control first, or a near-miss the anchor refuses for
-    // some OTHER reason proves nothing about the byte you meant to test.
+  it("the VERB refuses BOTH WAYS, and that is the disjointness stated as behaviour", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(program(6));
-    // 🛑 THE SHARPEST RUNG IN THE FILE, AND IT IS NOT A `toBeNull`. Both sentences now
-    // BUILD, so "the other anchor refuses mine" can only be said as "it derives to
-    // something else". A widened `DISCARD_HAND_DRAW` that floated on "draw 6 cards"
-    // would claim this string and this pair is what reddens.
     expect(deriveAttackEffect(SIBLING)).not.toEqual(program(6));
     expect(deriveAttackEffect(SIBLING)).toEqual([
       { op: "discardHand" },
       { op: "drawCards", count: 6 },
     ]);
-    // …and neither anchor can reach the other's string at all, because a string cannot
-    // begin two ways and both are `^…$`. STRUCTURAL disjointness (D467's first
-    // preference): no guard, nothing to rot, and the ORDER of the two arms is therefore
-    // legibility rather than behaviour — pinned from the other side by an
-    // ORDER-PERMUTATION mutant declared `equivalent` (D439's shape).
     expect(PRINTED.startsWith("Shuffle ")).toBe(true);
     expect(SIBLING.startsWith("Discard ")).toBe(true);
   });
 
-  it("🛑 the COUNT, the SEAT, the DESTINATION and the JOIN refuse INDEPENDENTLY", () => {
-    // …the COUNT alone. 🆕 D516 RE-POINTED THIS RUNG ONTO THE SHAPE (D444/D438): the
-    // real printing at corpus line 487 is BUILT now, by a SECOND anchor, so the claim
-    // this rung has always made — *"this anchor's `(\d+)` refuses a derived count"* — is
-    // asserted as *"the derived string does not produce THIS arm's program"* rather than
-    // as a `toBeNull` that has stopped being true. A widening of `SHUFFLE_HAND_DRAW`
-    // onto the derived string reddens it, which is exactly what the `toBeNull` bought.
+  it("the COUNT, the SEAT, the DESTINATION and the JOIN refuse INDEPENDENTLY", () => {
     expect(deriveAttackEffect(DERIVED_COUNT)).not.toEqual(program(6));
     expect(deriveAttackEffect(DERIVED_COUNT)?.[0]).toMatchObject({
       draw: { kind: "opponentHandSize" },
     });
-    // …and the COUNT axis still has a LOUD side, on a string this column does not print
-    // and no anchor claims. It is CONSTRUCTED and says so (D452: a byte pin on an
-    // invented string is green by construction, so it is a control and never evidence
-    // about the column) — the real near-miss was spent when D516 built it.
     expect(
       deriveAttackEffect(
         "Shuffle your hand into your deck. Then, draw a card for each card in your hand.",
@@ -307,11 +187,6 @@ describe("D479 §3 — the refusals, each pinned on ONE printed byte", () => {
     expect(
       deriveAttackEffect("Each player shuffles their hand into their deck. Then, draw 6 cards."),
     ).toBeNull();
-    // 🛑 …AND THE POSSESSIVE ITSELF, BOTH OF THEM, because a widened `(?:your|their)`
-    // would leave the ARM emitting `who: "you"` on a sentence naming the other seat —
-    // a read that is wrong about WHOSE ZONE IT NAMES and that no positive board can
-    // reveal, since on the printed string the two spellings are the same seat
-    // (`RETURN_BENCHED`/`DAMAGE_SUPPRESSION`'s seat-widening shape, D467).
     expect(
       deriveAttackEffect("Shuffle their hand into their deck. Then, draw 6 cards."),
     ).toBeNull();
@@ -324,8 +199,6 @@ describe("D479 §3 — the refusals, each pinned on ONE printed byte", () => {
         "Shuffle your hand and put it on the bottom of your deck. Then, draw 6 cards.",
       ),
     ).toBeNull();
-    // …the JOIN alone: the printed two-sentence form with ". Then, " is what this anchor
-    // reads. The one-sentence "and" spelling is nobody's printing here.
     expect(deriveAttackEffect("Shuffle your hand into your deck and draw 6 cards.")).toBeNull();
   });
 
@@ -346,15 +219,6 @@ describe("D479 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. One fixture, re-texted on a per-board `cardPool` clone (D414).
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Re-text `fix-handdraw`'s ONE printed attack on a board's OWN `cardPool` copy.
-    ⚠️ **NOT A FIXTURE EDIT** — `FIXTURE_POOL` is shared by every suite in this package
-    and D412 reddened three of D409's boards by widening a shared one. This mutates a
-    per-board clone, so nothing outside the calling `it` can see it, and the slice adds
-    **no `FIXTURE_POOL` id**. */
 function withEffect(state: GameState, effect: string): GameState {
   const card = state.cardPool["fix-handdraw"];
   if (card === undefined) throw new Error("no fix-handdraw in pool");
@@ -370,10 +234,6 @@ function withEffect(state: GameState, effect: string): GameState {
   };
 }
 
-/** Setup, then open P1's turn 2 (P2 went first and passed) — P1 goes second, so their
-    first turn carries no §4 attack restriction. P1 fields `fix-handdraw` holding one
-    `fix-energy` (the printed {C} cost); P2's Active is a 200 HP body the flat 30 never
-    Knocks Out, so no §8.1 KO tail can land between the shuffle and the draw. */
 function fielded(seed: number, effect: string = PRINTED): GameState {
   const opened = mustApply(
     driveSetup(seed, { p1: HAND_DRAW_DECK, p2: HAND_DRAW_DECK }, { first: "p2" }),
@@ -400,11 +260,7 @@ function emptyHand(state: GameState): GameState {
 const sorted = (uids: readonly string[]) => [...uids].sort();
 
 describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it", () => {
-  it("🛑 the old hand ends in the DECK and NOT in the discard — the whole difference from arm 44", () => {
-    // THE RUNG THIS WHOLE SLICE EXISTS FOR. Under `discardHand` + `drawCards` every op
-    // still runs, the hand still ends at six and `CARDS_DRAWN` still carries six uids —
-    // so every count-based assertion is green under the wrong program. What separates
-    // them is WHERE THE OLD HAND WENT, and these two sets are disjoint by construction.
+  it("the old hand ends in the DECK and NOT in the discard — the whole difference from arm 44", () => {
     const state = fielded(1);
     const before = state.players.p1;
     const oldHand = [...before.hand];
@@ -415,8 +271,6 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
 
     const { state: done, events } = mustApply(state, attack);
 
-    // 🛑 THE DISCARD PILE IS BYTE-UNCHANGED. Under arm 44's program every card of
-    // `oldHand` would be sitting in it, and `HAND_DISCARDED` would name them.
     expect(types(events)).not.toContain("HAND_DISCARDED");
     expect(done.players.p1.discard).toEqual(oldDiscard);
     for (const uid of oldHand) expect(done.players.p1.discard).not.toContain(uid);
@@ -426,8 +280,6 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
     for (const uid of oldHand) {
       expect([...done.players.p1.deck, ...done.players.p1.hand]).toContain(uid);
     }
-    // 🛑 CONSERVATION: hand ∪ deck is the same multiset before and after. Nothing was
-    // created, nothing leaked to a third zone.
     expect(sorted([...done.players.p1.hand, ...done.players.p1.deck])).toEqual(
       sorted([...oldHand, ...oldDeck]),
     );
@@ -435,11 +287,7 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
     expect(done.players.p1.deck).toHaveLength(oldHand.length + oldDeck.length - 6);
   });
 
-  it("🛑 the EVENT is the shuffle's and not the discard's, and it is COUNT-ONLY", () => {
-    // `handRefresh` emits HAND_SHUFFLED_INTO_DECK (a count, because a hand's cards are
-    // hidden) and never HAND_DISCARDED. Arm 44's program emits the opposite pair, so
-    // this is the same claim as §4.1 read off the wire instead of off the board — the
-    // half a client and a replay actually see.
+  it("the EVENT is the shuffle's and not the discard's, and it is COUNT-ONLY", () => {
     const state = fielded(2);
     const handCount = state.players.p1.hand.length;
     const { events } = mustApply(state, attack);
@@ -451,11 +299,6 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
   });
 
   it("the op runs at the attack's TAIL, after the damage, and the printed BASE is KEPT", () => {
-    // An `EffectOp` runs after §8.5 and before `finishAttack`'s Knock Out sweep, so the
-    // printed 30 lands FIRST and the program follows it. `programDamage` is
-    // `program?.some(step => step.op === "damageDefender")`, FALSE here, so the printed
-    // number survives the whole pipeline — a reading that ever claimed the base would
-    // silently delete a 30-damage attack.
     const state = fielded(3);
     const { state: done, events } = mustApply(state, attack);
     expect(types(events)).toEqual([
@@ -471,12 +314,7 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
     expect(done.players.p2.active?.damage).toBe(30);
   });
 
-  it("🛑 neither half of `ATTACK_EFFECT_SKIPPED` fires, and nothing parks", () => {
-    // `effectSimulated`'s FIRST disjunct is `program !== null`, so a new
-    // `deriveAttackEffect` arm answers the effect half by construction and this slice
-    // adds NO term to any of `attack.ts`'s three disjunction chains. `handRefresh` never
-    // parks (interpreter.ts: "Fully automatic — no decision"), so there is one action and
-    // one event list — stated rather than relied on (D403).
+  it("neither half of `ATTACK_EFFECT_SKIPPED` fires, and nothing parks", () => {
     const state = fielded(4);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, attack);
@@ -487,12 +325,7 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
 });
 
 describe('D479 §5 — the SEAT: `who: "you"` is the printed subject, not a default', () => {
-  it("🛑 the OPPONENT's hand, deck and discard are BYTE-UNCHANGED", () => {
-    // The rung that kills `who: "both"` and `who: "opponent"`, the two nearest wrong
-    // VALUES of the one field this arm writes. Both are shipped and authored
-    // (Judge/Iono, Gothitelle), so neither is a construction — and on a ONE-SEAT board
-    // all three read identically, which is why this is asserted on the seat that is NOT
-    // attacking (D463's pair rule).
+  it("the OPPONENT's hand, deck and discard are BYTE-UNCHANGED", () => {
     const state = fielded(5);
     const before = state.players.p2;
     const oldHand = [...before.hand];
@@ -500,22 +333,12 @@ describe('D479 §5 — the SEAT: `who: "you"` is the printed subject, not a defa
     const oldDiscard = [...before.discard];
     expect(oldHand.length).toBeGreaterThan(0);
     const { state: done, events } = mustApply(state, attack);
-    // 🛑 ASSERTED AS *STILL IN HAND*, NOT AS AN EQUALITY, AND THE REASON IS A REAL EVENT
-    // RATHER THAN A TOLERANCE. The attack ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so P2's turn STARTS inside this
-    // same event list and P2 draws one card for it — an equality here would go red for
-    // §5.3's draw and not for anything this slice does. Under `who: "both"` or
-    // `who: "opponent"` every uid below would be in P2's DECK instead, which no
-    // start-of-turn draw can imitate.
     for (const uid of oldHand) expect(done.players.p2.hand).toContain(uid);
     expect(done.players.p2.hand).toHaveLength(oldHand.length + 1);
     // …and P2's deck lost exactly that ONE card off its TOP and was never reshuffled:
     // the tail is byte-identical, which a shuffle could not leave.
     expect(done.players.p2.deck).toEqual(oldDeck.slice(1));
     expect(done.players.p2.discard).toEqual(oldDiscard);
-    // …and no event names the other seat, which is the wire's half of the same claim.
-    // (The trailing TURN_STARTED draw is P2's start-of-turn draw and is not this op's —
-    // it is filtered by `reason`, so the assertion cannot be satisfied by absence of
-    // events in general.)
     expect(
       events.filter((e) => e.type === "HAND_SHUFFLED_INTO_DECK" && e.seat === "p2"),
     ).toHaveLength(0);
@@ -527,10 +350,6 @@ describe('D479 §5 — the SEAT: `who: "you"` is the printed subject, not a defa
 
 describe("D479 §6 — the falsifiers, driven rather than argued", () => {
   it("FALSIFIER 1 — an EMPTY hand still reshuffles and still draws SIX", () => {
-    // `onlyIfAnyMoved` is ABSENT on this program (it is Iono's rider), so the draw is
-    // unconditional. The deck is reordered even from an empty hand — interpreter.ts says
-    // so in as many words — which is why "nothing happened" is the wrong reading of an
-    // empty hand here and a `toHaveLength(0)` on the drawn list would be wrong.
     const state = emptyHand(fielded(6));
     expect(state.players.p1.hand).toEqual([]);
     const oldDeck = [...state.players.p1.deck];
@@ -541,13 +360,6 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
   });
 
   it("FALSIFIER 2 — a SHORT pile draws what is there and costs no rule", () => {
-    // `drawToHand` SLICES, so a six-card draw off a four-card pile files FOUR and stops.
-    // Running the deck dry does NOT end the game here: §14.3's deck-out is checked at
-    // the DRAW in `flow.ts startTurn`, so the loss stays owed to P1's next turn. That is
-    // `ATTACK_DRAW`'s stated reading of its own short draw, inherited rather than
-    // re-decided.
-    // ⚠️ THE ORDER OF THE TWO SURGERIES IS LOAD-BEARING: `emptyHand` puts the hand UNDER
-    // the deck, so trimming FIRST would leave a pile of 4 + hand. Empty, then trim.
     const state = trimDeckTo(emptyHand(fielded(7)), "p1", 4);
     expect(state.players.p1.hand).toEqual([]);
     const pile = [...state.players.p1.deck];
@@ -560,16 +372,7 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
     expect(done.phase.kind).not.toBe("gameOver");
   });
 
-  it("🛑 ZERO-MATCH BOARD — the near-miss on the SAME body is SILENT, and loudly so", () => {
-    // THE CONTROL THAT SEPARATES THIS ARM FROM SILENCE-FOR-ANOTHER-REASON. The board,
-    // the fixture, the cost, the seat and the damage are identical to §4's; only the
-    // printed STRING differs, and it differs on the count alone. So a green §4 plus a
-    // green rung here cannot both be explained by the board.
-    // 🆕 D516 RE-POINTED THE STRING, NOT THE RUNG (D444). It was corpus line 487, which
-    // this repo BUILT one slice later; the control still has to exist, so it now runs on
-    // a CONSTRUCTED sibling that varies the same axis (the count's SOURCE zone) and that
-    // no anchor claims. ⚠️ A constructed specimen is a control and never evidence about
-    // the printed column (D452) — the column claim §1 makes is measured there.
+  it("ZERO-MATCH BOARD — the near-miss on the SAME body is SILENT, and loudly so", () => {
     const state = fielded(8, UNREAD_COUNT_SOURCE);
     const before = state.players.p1;
     const oldHand = [...before.hand];
@@ -589,19 +392,11 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
 
 describe("D479 §7 — what this slice did NOT buy, measured", () => {
   it("the hand-kept READERS list IS the module's reader surface, still THIRTEEN", () => {
-    // D419's guard: a hand-kept copy that nothing compares to the module can sit short
-    // of it indefinitely. The COUNT is pinned separately from the diff, because a diff
-    // alone stays green when a slice deletes a reader from the module and from this list
-    // in the same commit.
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("`FIXTURE_POOL` is BYTE-UNCHANGED — the demonstrator is a per-board clone", () => {
-    // D414/D452: the slice adds ZERO fixture ids, so every `ids.length` ladder takes a
-    // ZERO term. `fix-handdraw` still prints D404's sentence in the SHARED pool, and the
-    // whole attack list is asserted rather than index 0 alone (D437: truncating an
-    // enumeration by WIDTH is truncating).
     expect(FIXTURE_POOL["fix-handdraw"]?.attacks).toEqual([
       { cost: ["Colorless"], name: "Hand Refresh", damage: "30", effect: SIBLING },
     ]);

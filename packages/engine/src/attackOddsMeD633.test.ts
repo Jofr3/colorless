@@ -18,24 +18,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D633 — O1: ATTACK ODDS AND ENDS ───────────────────────────────────────────────────────────
-//
-// The D625 re-rank's O1 group, 6 texts / 8 printings. 5 texts / 7 printings are built here; every id and
-// text off the LOCAL D1, 2026-10-10, `legal_standard = 1`:
-//
-//   All-You-Can-Yeet (Slowpoke `me05-029`)      — D617's uncapped declinable `payFromHand`, attack side.
-//   Rocket Feathers (TR's Honchkrow `me02.5-127`) — the same payment on `supporterNameContaining`, × 60.
-//   Weaponized Swords (Doublade ×3)             — the NEW `revealFromHand` (nothing moves) × 60.
-//   Voltaic Fist (Pawmot `me02-034`)             — one `optional` over the self-damage and the Paralysis.
-//   Elemental Blast (Lugia `30th-121`)           — three typed discards, matched by `discardEnergy.reserve`.
-//
-// Dropped and named: Pikachu `30th-040` "Overwriting Bolt" — *"(Apply Weakness as ×2.)"* GIVES a
-// Weakness to a Pokémon that prints none (101 legal Dragon-type printings print none, LOCAL D1), which
-// D552's amount-keeping retype cannot carry; the persisted `weaknessRetype` record needs a new field, so it
-// rides an MRV bump (L1's). [🆕🆕🆕 D637 (D539): it rode neither L1's bump (D636) nor the fossils' (D637); owes 46 → 47.]
-// [🆕🆕🆕 D640 (D539): BUILT at D640 — `retypeDefenderWeakness { asTimesTwo }` on 46 → 47; the pin below is inverted.]
 
 const YEET = "You may discard any number of cards from your hand.";
 const ROCKET_FEATHERS =
@@ -48,7 +32,6 @@ const ELEMENTAL_BLAST = "Discard a {R} Energy, a {W} Energy, and a {L} Energy fr
 const OVERWRITING_BOLT =
   "The Defending Pokémon's Weakness is now {L} until the end of your next turn. (Apply Weakness as ×2.)";
 
-/** [attack text, the printings that print it] — the five built sentences. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [YEET, ["me05-029"]],
   [ROCKET_FEATHERS, ["me02.5-127"]],
@@ -70,10 +53,10 @@ describe("D633 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("Overwriting Bolt stays unbuilt, named: no reader, no key (🆕🆕🆕 D640 (D539): read since D640, still no key)", () => {
+  it("Overwriting Bolt stays unbuilt, named: no reader, no key ( D640 (D539): read since D640, still no key)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get(OVERWRITING_BOLT)).toBe(1);
-    expect(resolvedByAnyReader(OVERWRITING_BOLT)).toBe(true); // 🆕🆕🆕 D640 — inverted: built
+    expect(resolvedByAnyReader(OVERWRITING_BOLT)).toBe(true);
     expect(programFor("30th-040")).toBeUndefined();
   });
 
@@ -284,11 +267,6 @@ const BOARD_IDS = new Set(
     .filter((id) => id !== FILLER)
     .concat([LEGACY]),
 );
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

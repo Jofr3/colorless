@@ -20,15 +20,6 @@ import {
   types,
 } from "./testFixtures";
 
-// Rare Candy (§7.1, M4 slice 7) — the Basic→Stage 2 evolve-skip Item. It is NOT
-// an interpreter program (it evolves, and flow.ts owns every Knock Out): the
-// `rareCandy` action carries the target Basic + the Stage 2 and reuses the
-// shared placement (turn.ts placeEvolution) — so the SKIP, the on-evolve
-// trigger and the evolve-below-HP mid-turn KO all ride the exact machinery
-// `evolve` does. The fixture line is fix-basic-1 → fix-stage1 → fix-stage2; Rare
-// Candy skips the middle (fix-stage1 is in the pool as the BRIDGE the chain
-// check reads, but is never needed in hand — the whole point).
-
 // Seed by scan: p1 opens RARE_CANDY_DECK with enough fix-basic-1 to place an
 // Active plus a benched copy (the mid-turn-KO board's promote target).
 const SEED = 4;
@@ -210,10 +201,6 @@ describe("Rare Candy: the evolve-below-HP mid-turn KO (§8.1)", () => {
   });
 
   it("Knocks Out a charmed BENCHED Basic that drops below the Stage 2's HP", () => {
-    // The bench path: a benched charmed fix-basic-1 damaged to 100 survives, but
-    // Rare Candy to the frail Stage 2 (80 HP) Knocks it Out — a benched KO owes
-    // only the opponent's prize (no promotion; the bench compacts), then the
-    // actor's Active-intact turn resumes.
     let state = rareCandyBoard(SEED, { benchP1: 1 });
     state = handFromDeck(state, "p1", "sv02-173", 1); // Bravery Charm
     const charmUid = handUid(state, "p1", "sv02-173");

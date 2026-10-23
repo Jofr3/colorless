@@ -19,24 +19,10 @@ import {
   setActiveFromDeck,
   setPrizes,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D575 — THE MRV-38 ATTACK SLICE: SIX PRINTINGS, SIX TEXTS, `MATCH_RECORD_VERSION` 37 → 38 ──
-//
-//   Iron Moth              sv06.5-009  "Anachronism Repulsor" (1) — prevent damage from Ancient Pokémon (R-IM1)
-//   Miraidon               sv08-069    "C.O.D.E.: Protect"    (0) — every Future Pokémon, from Pokémon ex,
-//                                                                    ends when it leaves the Active (R-MI1/2)
-//   Glimmora               sv08-115    "Corrosive Shards"     (0) — Poisoned, and no hand attach to it (R-GL1)
-//   Hypno                  sv06.5-017  "Daydream"             (0) — a hand attach to it ENDS the turn (R-HY1/2)
-//   Team Rocket's Blipbug  sv10-015    "Searching Eyes"       (0) — look at 1 face-down Prize (R-BL1/2)
-//   N's Sigilyph           sv09-064    "Victory Symbol"       (1) — at exactly 1 Prize, you win (R-VS1)
-//
-// Every card is driven on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Texts,
-// stats and legality off tcgdex (the audit's card JSON), 2026-10-04. The banners are `banners.ts`'s, by
-// printing id: Sandy Shocks `sv05-098` is Ancient, Iron Treads `sv05-118` is Future, Iron Moth and Miraidon
-// are Future. Readings R-IM1, R-MI1, R-MI2, R-GL1, R-HY1, R-HY2, R-BL1, R-BL2, R-VS1 (all ⚠️ UNRULED):
-// docs/decisions.md D575.
 
 const IRON_MOTH = "sv06.5-009";
 const MIRAIDON = "sv08-069";
@@ -50,8 +36,6 @@ const QUAQUAVAL = "sv01-054";
 const OGERPON = "sv06-025";
 const DROWZEE = "sv06.5-016";
 const V_HITTER = "d575t-vhitter";
-/** Gengar ex "Gnawing Curse" — the attach-WATCHED trigger (registry, by printing id) that sends Hypno's turn
-    end down the mid-turn Knock Out sweep's tail (R-HY2's "behind any parked prize pick"). */
 const GENGAR = "sv05-104";
 const BOSS = "sv02-172";
 const SWITCH = "sv01-194";
@@ -290,7 +274,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [IRON_MOTH]: 1,
   [MIRAIDON]: 1,
@@ -320,18 +303,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -366,8 +337,6 @@ function opened(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-/** TEST SURGERY — every uid of `seat`'s hand back into the deck, the hand then EXACTLY `ids` (from the deck,
-    or swapped out of the Prizes — D572's helper). */
 function setHand(state: GameState, seat: Seat, ids: readonly string[]): GameState {
   const side = state.players[seat];
   let deck = [...side.deck, ...side.hand];
@@ -500,19 +469,16 @@ const handUidOf = (state: GameState, seat: Seat, id: string): string => {
   return uid;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — the six sentences: corpus bytes, one printing each, each claimed WHOLE.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §1 — the six printed sentences, measured", () => {
   const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
-  it("🛑 every sentence is a corpus row of ONE legal printing, and the only one of its text", () => {
+  it("every sentence is a corpus row of ONE legal printing, and the only one of its text", () => {
     for (const text of [REPULSOR, PROTECT, SHARDS, DAYDREAM, SEARCHING_EYES, VICTORY_SYMBOL]) {
       expect(rows.get(text), text).toBe(1);
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
   });
 
-  it("🛑 each derives to its program, claimed WHOLE by `deriveAttackEffect`", () => {
+  it("each derives to its program, claimed WHOLE by `deriveAttackEffect`", () => {
     expect(deriveAttackEffect(REPULSOR)).toEqual([
       { op: "preventDamage", fromClass: { stage: "ancient" } },
     ]);
@@ -546,9 +512,6 @@ describe("D575 §1 — the six printed sentences, measured", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — Iron Moth "Anachronism Repulsor": the `"ancient"` attacker class (R-IM1).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §2 — Iron Moth: prevent all damage from ANCIENT Pokémon, next turn", () => {
   /** p1's Iron Moth uses Anachronism Repulsor on a 900-HP Filler; on p2's turn `attacker` (benched until
       then) is swapped into the Active Spot by surgery and energised. */
@@ -574,7 +537,7 @@ describe("D575 §2 — Iron Moth: prevent all damage from ANCIENT Pokémon, next
     return attach(swapped, "p2", "active", ...energy);
   }
 
-  it("🛑 an ANCIENT attacker (Sandy Shocks, by printing id) does NOTHING to Iron Moth on the opponent's next turn", () => {
+  it("an ANCIENT attacker (Sandy Shocks, by printing id) does NOTHING to Iron Moth on the opponent's next turn", () => {
     const state = repulsed(SANDY_SHOCKS, FIGHTING, COLORLESS);
     const block = bodyAt(state, "p1", "active").attackBlock;
     expect(block).toEqual({
@@ -587,7 +550,7 @@ describe("D575 §2 — Iron Moth: prevent all damage from ANCIENT Pokémon, next
     expect(bodyAt(hit, "p1", "active").damage).toBe(0);
   });
 
-  it("🛑 a NON-Ancient attacker hits at full damage — the class NARROWS the block", () => {
+  it("a NON-Ancient attacker hits at full damage — the class NARROWS the block", () => {
     const { state: hit } = run(repulsed(HITTER), attack("p2", 0));
     expect(bodyAt(hit, "p1", "active").damage).toBe(60);
   });
@@ -607,9 +570,6 @@ describe("D575 §2 — Iron Moth: prevent all damage from ANCIENT Pokémon, next
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §3 — Miraidon "C.O.D.E.: Protect": the side-wide block (R-MI1 / R-MI2).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while Miraidon stays Active", () => {
   /** p1's Miraidon (Future) Active with Iron Treads (Future) and a non-Future Filler benched; p2 `attacker`. */
   function protectedSide(attacker: string = EX_SPREADER): GameState {
@@ -625,7 +585,7 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
     return after;
   }
 
-  it("🛑 a Pokémon ex's spread does NOTHING to either Future body and full damage to the other", () => {
+  it("a Pokémon ex's spread does NOTHING to either Future body and full damage to the other", () => {
     const state = protectedSide();
     expect(state.players.p1.sideAttackBlock).toEqual({
       turn: state.turn,
@@ -639,14 +599,14 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
     expect(bodyAt(hit, "p1", 1).damage).toBe(30); // the Filler — no banner
   });
 
-  it("🛑 a NON-ex attacker's spread hits every body — the class narrows the block", () => {
+  it("a NON-ex attacker's spread hits every body — the class narrows the block", () => {
     const { state: hit } = run(protectedSide(SPREADER), attack("p2", 0));
     expect(bodyAt(hit, "p1", "active").damage).toBe(30);
     expect(bodyAt(hit, "p1", 0).damage).toBe(30);
     expect(bodyAt(hit, "p1", 1).damage).toBe(30);
   });
 
-  it("🛑 R-MI2 — the Future set is read LIVE: a Future body benched AFTER the install is covered", () => {
+  it("R-MI2 — the Future set is read LIVE: a Future body benched AFTER the install is covered", () => {
     let state = protectedSide();
     // Surgery on p2's turn: a second Iron Treads joins p1's Bench after the install.
     state = benchFromDeck(ensureInDeck(state, "p1", IRON_TREADS), "p1", IRON_TREADS);
@@ -677,13 +637,12 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
     return { state: picked.state, events };
   }
 
-  it("🛑 R-MI1 — a GUST ends it: Boss's Orders drags Miraidon to the Bench, the record is CLEARED, the row says so", () => {
+  it("R-MI1 — a GUST ends it: Boss's Orders drags Miraidon to the Bench, the record is CLEARED, the row says so", () => {
     const before = protectedSide();
     const miraidonUid = top(bodyAt(before, "p1", "active"));
     const { state, events } = gusted(before);
     expect(state.cardIdByUid[top(bodyAt(state, "p1", "active"))]).toBe(FILLER);
     expect(state.players.p1.sideAttackBlock).toBeNull();
-    // The END is an event and a row, named off the record's SOURCE (switchInto's `SIDE_ATTACK_BLOCK_ENDED`).
     expect(all(events, "SIDE_ATTACK_BLOCK_ENDED")).toEqual([
       { type: "SIDE_ATTACK_BLOCK_ENDED", seat: "p1", uid: miraidonUid },
     ]);
@@ -696,7 +655,7 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
       expect(body?.damage).toBe(30);
   });
 
-  it("🛑 R-MI1 — and it STAYS ended when Miraidon is re-promoted (a read-time check alone would revive it)", () => {
+  it("R-MI1 — and it STAYS ended when Miraidon is re-promoted (a read-time check alone would revive it)", () => {
     let state = gusted(protectedSide()).state;
     // TEST SURGERY — Miraidon back into the Active Spot (the record was cleared, so nothing to revive).
     const benchIndex = state.players.p1.bench.findIndex(
@@ -719,7 +678,7 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
     expect(bodyAt(run(state, attack("p2", 0)).state, "p1", "active").damage).toBe(30);
   });
 
-  it('🛑 "Pokémon ex" is EXACTLY the printed class — a Pokémon V\'s spread is NOT refused (never `isExOrV`, never `hasRuleBox`)', () => {
+  it('"Pokémon ex" is EXACTLY the printed class — a Pokémon V\'s spread is NOT refused (never `isExOrV`, never `hasRuleBox`)', () => {
     const { state: hit } = run(protectedSide(V_HITTER), attack("p2", 0));
     expect(bodyAt(hit, "p1", "active").damage).toBe(30);
     expect(bodyAt(hit, "p1", 0).damage).toBe(30);
@@ -753,7 +712,6 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
     expect(render(events, after)).toContain(
       "p1: Future Pokémon are protected from damage from Pokémon ex's attacks during the opponent's next turn, while Miraidon stays in the Active Spot",
     );
-    // …and the END row, from the gust that walks the source out of the Active Spot.
     const ended = gusted(after);
     expect(render(ended.events, ended.state)).toContain(
       "p1: Miraidon left the Active Spot — its protection ended",
@@ -778,9 +736,6 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — Glimmora "Corrosive Shards": Poisoned, and the hand-attach BAR (R-GL1).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn", () => {
   function shattered(oppBench: readonly string[] = [FILLER]): GameState {
     const state = attach(table(GLIMMORA, [], FILLER, oppBench), "p1", "active", COLORLESS);
@@ -789,7 +744,7 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
     return after;
   }
 
-  it("🛑 the Defending Pokémon is Poisoned AND marked for the victim's own turn", () => {
+  it("the Defending Pokémon is Poisoned AND marked for the victim's own turn", () => {
     const state = shattered();
     const victim = bodyAt(state, "p2", "active");
     expect(victim.conditions.poisonDamage).toBeGreaterThan(0);
@@ -799,11 +754,11 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
       endsTurn: false,
       tripped: false,
       counters: 0,
-    }); // 🆕🆕🆕 D636 — `counters`
+    });
     expect(liveHandAttachMark(state, victim)).not.toBeNull();
   });
 
-  it("🛑 the ATTACH ACTION to it is refused with its own code, and the §6.2 allowance is NOT spent", () => {
+  it("the ATTACH ACTION to it is refused with its own code, and the §6.2 allowance is NOT spent", () => {
     const state = p2Hand(shattered(), [COLORLESS, COLORLESS]);
     const energy = handUidOf(state, "p2", COLORLESS);
     const no = refused(state, {
@@ -824,7 +779,7 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
     expect(bodyAt(ok, "p2", 0).energy).toContain(energy);
   });
 
-  it('🛑 R-GL1 — an EFFECT\'s hand attach skips the barred body (Quaquaval "Energy Carnival")', () => {
+  it('R-GL1 — an EFFECT\'s hand attach skips the barred body (Quaquaval "Energy Carnival")', () => {
     let state = p2Hand(shattered([QUAQUAVAL]), [COLORLESS]);
     const energy = handUidOf(state, "p2", COLORLESS);
     state = run(state, {
@@ -838,7 +793,7 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
     expect(bodyAt(state, "p2", 0).energy).toContain(energy);
   });
 
-  it('🛑 R-GL1 — and a `toSelf` hand attach onto the barred body itself attaches NOTHING (Teal Mask Ogerpon ex "Teal Dance")', () => {
+  it('R-GL1 — and a `toSelf` hand attach onto the barred body itself attaches NOTHING (Teal Mask Ogerpon ex "Teal Dance")', () => {
     let state = attach(table(GLIMMORA, [], OGERPON, [FILLER]), "p1", "active", COLORLESS);
     state = p2Hand(run(state, attack("p1", 0)).state, [GRASS]);
     const energy = handUidOf(state, "p2", GRASS);
@@ -905,9 +860,6 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §5 — Hypno "Daydream": a hand attach to the Defending Pokémon ENDS the turn (R-HY1 / R-HY2).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends the turn", () => {
   function dreamt(oppBench: readonly string[] = [FILLER]): GameState {
     const state = attach(table(HYPNO, [], FILLER, oppBench), "p1", "active", PSYCHIC, COLORLESS);
@@ -916,7 +868,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
     return after;
   }
 
-  it("🛑 the attach LANDS, then the turn ENDS — after the attach, through the staged tail (R-HY2)", () => {
+  it("the attach LANDS, then the turn ENDS — after the attach, through the staged tail (R-HY2)", () => {
     const state = p2Hand(dreamt(), [COLORLESS]);
     const energy = handUidOf(state, "p2", COLORLESS);
     const { state: after, events } = run(state, {
@@ -933,7 +885,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
   });
 
-  it("🛑 an attach to ANOTHER body does not end the turn — the mark is on the Defending Pokémon", () => {
+  it("an attach to ANOTHER body does not end the turn — the mark is on the Defending Pokémon", () => {
     const state = p2Hand(dreamt(), [COLORLESS]);
     const energy = handUidOf(state, "p2", COLORLESS);
     const { state: after, events } = run(state, {
@@ -946,7 +898,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 R-HY1 — an EFFECT's hand attach onto it ends the turn too, when the program settles", () => {
+  it("R-HY1 — an EFFECT's hand attach onto it ends the turn too, when the program settles", () => {
     let state = p2Hand(dreamt([QUAQUAVAL]), [COLORLESS]);
     const energy = handUidOf(state, "p2", COLORLESS);
     state = run(state, {
@@ -968,7 +920,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
   });
 
-  it("🛑 R-HY1 — a `toSelf` hand attach onto the Defending Pokémon (Teal Dance) ends the turn AFTER its draw", () => {
+  it("R-HY1 — a `toSelf` hand attach onto the Defending Pokémon (Teal Dance) ends the turn AFTER its draw", () => {
     let state = attach(table(HYPNO, [], OGERPON, [FILLER]), "p1", "active", PSYCHIC, COLORLESS);
     state = p2Hand(run(state, attack("p1", 0)).state, [GRASS]);
     const energy = handUidOf(state, "p2", GRASS);
@@ -984,7 +936,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
   });
 
-  it('🛑 R-HY2 — a WATCHED trigger fires on the attach (Gengar ex "Gnawing Curse"): the counters land, THEN the turn ends', () => {
+  it('R-HY2 — a WATCHED trigger fires on the attach (Gengar ex "Gnawing Curse"): the counters land, THEN the turn ends', () => {
     // The opponent-direction watched sweep sends the attach down `resolveMidTurnKnockOuts` — its
     // tail is Hypno's turn end in place of `resumeTurn`, even when nothing is Knocked Out.
     let state = attach(
@@ -1013,7 +965,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p1" });
   });
 
-  it("🛑 R-HY2 — and when the counters Knock it Out, the turn ends BEHIND the parked prize pick and the promotion", () => {
+  it("R-HY2 — and when the counters Knock it Out, the turn ends BEHIND the parked prize pick and the promotion", () => {
     let state = attach(
       table(HYPNO, [GENGAR], FILLER, [FILLER, FILLER]),
       "p1",
@@ -1068,14 +1020,11 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — Team Rocket's Blipbug "Searching Eyes": the BLIND pick and the PRIVATE look (R-BL1 / R-BL2).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize cards", () => {
   const eyes = (prizes = 6): GameState =>
     setPrizes(attach(table(BLIPBUG, [], FILLER), "p1", "active", COLORLESS), "p2", prizes);
 
-  it("🛑 two or more face-down: the attacker picks a SLOT, blind, on the shipped `choosePrize` park", () => {
+  it("two or more face-down: the attacker picks a SLOT, blind, on the shipped `choosePrize` park", () => {
     const { state } = run(eyes(), attack("p1", 0));
     expect(prompt(state)).toEqual({
       kind: "choosePrize",
@@ -1087,7 +1036,7 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
     expect("prompt" in theirs ? theirs.prompt : null).toBeNull();
   });
 
-  it("🛑 the slot buys the LOOK: a one-card `orderCards` park the redactor resolves for the ATTACKER alone", () => {
+  it("the slot buys the LOOK: a one-card `orderCards` park the redactor resolves for the ATTACKER alone", () => {
     let state = run(eyes(), attack("p1", 0)).state;
     const prizeUid = state.players.p2.prizes[2] as string;
     const answered = run(state, {
@@ -1107,7 +1056,6 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
     expect(JSON.stringify(mine.prompt)).toContain(state.cardIdByUid[prizeUid] as string);
     const theirs = redactGame(state, "p2").phase;
     expect("prompt" in theirs ? theirs.prompt : null).toBeNull();
-    // The public row names the SLOT, never the card (R-BL2).
     expect(all(answered.events, "PRIZE_LOOKED_AT")).toEqual([
       { type: "PRIZE_LOOKED_AT", seat: "p2", actor: "p1", index: 2 },
     ]);
@@ -1117,7 +1065,7 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
     expect(rows.some((r) => r.includes(name) && r.includes("Prize"))).toBe(false);
   });
 
-  it("🛑 putting it back changes nothing, and the turn passes", () => {
+  it("putting it back changes nothing, and the turn passes", () => {
     let state = run(eyes(), attack("p1", 0)).state;
     const before = [...state.players.p2.prizes];
     state = run(state, {
@@ -1146,9 +1094,6 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — N's Sigilyph "Victory Symbol": the printed win (R-VS1).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §7 — N's Sigilyph: at exactly 1 Prize card remaining, you win", () => {
   const symbol = (prizes: number): GameState =>
     setPrizes(
@@ -1157,7 +1102,7 @@ describe("D575 §7 — N's Sigilyph: at exactly 1 Prize card remaining, you win"
       prizes,
     );
 
-  it("🛑 at 1 Prize: the game ENDS on the attack, through `finishGame`, by the NEW reason `cardEffect`", () => {
+  it("at 1 Prize: the game ENDS on the attack, through `finishGame`, by the NEW reason `cardEffect`", () => {
     const { state, events } = run(symbol(1), attack("p1", 1));
     expect(state.phase).toEqual({
       kind: "gameOver",
@@ -1188,7 +1133,7 @@ describe("D575 §7 — N's Sigilyph: at exactly 1 Prize card remaining, you win"
     expect(redactedGameOverReasonSchema.parse("cardEffect")).toBe("cardEffect");
   });
 
-  it("🛑 at 2 Prizes (and at 6): nothing — the attack does no damage and the turn passes", () => {
+  it("at 2 Prizes (and at 6): nothing — the attack does no damage and the turn passes", () => {
     for (const prizes of [2, 6]) {
       const { state, events } = run(symbol(prizes), attack("p1", 1));
       expect(all(events, "GAME_OVER")).toEqual([]);
@@ -1201,7 +1146,7 @@ describe("D575 §7 — N's Sigilyph: at exactly 1 Prize card remaining, you win"
 // §8 — THE ELEVENTH POSITION (`MATCH_RECORD_VERSION` 37 → 38), driven.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optional test, run on each", () => {
-  it("🛑 the side key and the body mark round-trip through JSON and still bite", () => {
+  it("the side key and the body mark round-trip through JSON and still bite", () => {
     const protectedState = (() => {
       const s = attach(
         table(MIRAIDON, [IRON_TREADS], EX_SPREADER),
@@ -1217,7 +1162,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(bodyAt(run(revived, attack("p2", 0)).state, "p1", 0).damage).toBe(0);
   });
 
-  it("🛑 (i) `PlayerSide.sideAttackBlock` OPTIONAL — a 0.458 rollback ignores it and DROPS a live protection (NOT inert)", () => {
+  it("(i) `PlayerSide.sideAttackBlock` OPTIONAL — a 0.458 rollback ignores it and DROPS a live protection (NOT inert)", () => {
     const s = attach(
       table(MIRAIDON, [IRON_TREADS], EX_SPREADER),
       "p1",
@@ -1235,7 +1180,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(bodyAt(run(rolled, attack("p2", 0)).state, "p1", 0).damage).toBe(30);
   });
 
-  it("🛑 (ii) `InPlayPokemon.handAttachMark` OPTIONAL — a 0.458 rollback ignores it and GRANTS a barred attach (NOT inert)", () => {
+  it("(ii) `InPlayPokemon.handAttachMark` OPTIONAL — a 0.458 rollback ignores it and GRANTS a barred attach (NOT inert)", () => {
     const s = attach(table(GLIMMORA, [], FILLER, [FILLER]), "p1", "active", COLORLESS);
     const live = p2Hand(run(s, attack("p1", 0)).state, [COLORLESS]);
     const rolled = withBody(live, "p2", "active", (p) => ({ ...p, handAttachMark: null }));
@@ -1250,7 +1195,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(bodyAt(run(rolled, act).state, "p2", "active").energy).toContain(energy);
   });
 
-  it("🛑 (ii-b) the SAME mark's Daydream half — a 0.458 rollback ignores it and KEEPS a turn the print ends (NOT inert)", () => {
+  it("(ii-b) the SAME mark's Daydream half — a 0.458 rollback ignores it and KEEPS a turn the print ends (NOT inert)", () => {
     const s = attach(table(HYPNO, [], FILLER, [FILLER]), "p1", "active", PSYCHIC, COLORLESS);
     const live = p2Hand(run(s, attack("p1", 0)).state, [COLORLESS]);
     const rolled = withBody(live, "p2", "active", (p) => ({ ...p, handAttachMark: null }));
@@ -1267,15 +1212,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(kept.state.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 (iii) `AttackerClass.stage` WIDENED — a member the stage switch has no arm for FALLS OUT and reads as NO block", () => {
-    // 0.458's `attackerMatchesStage` is THIS switch minus the two D575 arms: `switch (stage) { case
-    // "basic": … }`, no default. A v38 `"ancient"` record under it falls out, answers `undefined`
-    // (falsy), and the block refuses nothing — D569 (e)'s finding, and why the member could only land
-    // behind a bump. What is DRIVEN here is that fall-out, through THIS build's real `attackBlockOf`
-    // (the switch's shape is the part 0.458 shares): a stage word this build has no arm for — the
-    // position a v38 member occupies in 0.458 — reads as NO block, while the same record with the
-    // member this build DOES read refuses the Ancient attacker. A `default: return true` (the silent
-    // widening) or a defensive "unknown stage protects" arm turns the first assertion red.
+  it("(iii) `AttackerClass.stage` WIDENED — a member the stage switch has no arm for FALLS OUT and reads as NO block", () => {
     const live = (() => {
       const s0 = attach(
         table(IRON_MOTH, [], FILLER, [SANDY_SHOCKS]),
@@ -1301,7 +1238,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(attackBlockOf(live, { ...moth, attackBlock: unread }, shocks, 60)).toBeNull();
   });
 
-  it("🛑 (iv) the `GameOverReason` widening rides the bump, and an OLD client's enum REJECTS it — client first", () => {
+  it("(iv) the `GameOverReason` widening rides the bump, and an OLD client's enum REJECTS it — client first", () => {
     // The 0.458 client's enum is this one minus the new member (zod's `exclude`, so no list is retyped).
     const old = redactedGameOverReasonSchema.exclude(["cardEffect"]);
     expect([...old.options].sort()).toEqual(["conceded", "deckOut", "noPokemon", "prizesTaken"]);

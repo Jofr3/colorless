@@ -19,27 +19,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// ── CARD REVISION, BATCH B35 (Attacks) ──
-//
-// The verified findings from the per-unit audit (docs/reference/card-revision.md "B35"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.attacks_json`, byte for byte below):
-//
-//   Ceruledge `sv08-035` / `sv08-197` "Cursed Edge" {C}: *"Discard all Special Energy from all of
-//   your opponent's Pokémon."*
-//   Mega Dragalge ex `me04-065` / `me04-104` / `me04-118` "Corrosive Liquid" {C}{C}: *"Discard all
-//   Pokémon Tools and Special Energy from all of your opponent's Pokémon."*
-//
-// THE BUG. Both derive `discardEnergy { from: "opponentEach", filter: specialEnergy, count: "all" }`.
-// The op's ATTACK-channel guard (interpreter.ts `case "discardEnergy"`) asked `effectRefused` with its
-// default target — the victim's ACTIVE — and refused the op WHOLE when that one body was shielded. So
-// Mist Energy on the opponent's Active protected every Benched Pokémon's Special Energy too, although
-// Mist prevents attack effects "done to the Pokémon this card is attached to" and to no other. The
-// per-body filter one block down (`unshieldedRefs`) already answered the sweep correctly; the whole-op
-// guard now runs only for the single-body arm (`opponentActive`), and a multi-body arm is left to the
-// filter. Corrosive Liquid's Tool half (`discardTools all`) always filtered per body, so before the fix
-// the two halves of ONE sentence treated the same board differently.
-
 const CURSED_EDGE = "Discard all Special Energy from all of your opponent's Pokémon.";
 const BLACK_BLAZE_SLASH = "During your next turn, this Pokémon can't attack.";
 const CORROSIVE_LIQUID =
@@ -191,7 +170,6 @@ describe("B35 — Cursed Edge: Mist Energy on the Active shields only the Active
       // "from ALL of your opponent's Pokémon" — the unshielded Bench loses every Special Energy.
       expect(energyIds(done, 0)).toEqual([WATER]);
       expect(energyIds(done, 1)).toEqual([]);
-      // One refusal row, naming the shielded body and no other.
       expect(prevented(events).map((e) => e.uid)).toEqual([activeUid(state)]);
       const discarded = events.filter((e) => e.type === "ENERGY_DISCARDED");
       expect(discarded).toHaveLength(2);

@@ -1,28 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { GameAction, GameEvent, GameState } from "./index";
+import type { GameEvent, GameState } from "./index";
 import { applyAction, createGame } from "./index";
-import { battler, completeSetup, deckOf, typedEnergy } from "./testFixtures";
+import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B51 (Attacks) ──
-//
-// The audit finding (docs/reference/card-revision.md "B51"), driven on a real board through
-// `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`, byte for byte
-// below). NOTHING WAS CHANGED IN THE ENGINE: the finding was DEFERRED, and this suite pins the current
-// reading on every printing.
-//   §1 *"You may draw cards until you have 6 cards in your hand."* (Thievul "Greedy Hunt", Mismagius ex
-//      "Hexa-Magic", Cynthia's Garchomp ex "Corkscrew Dive", Blissey ex / Lumineon / Audino "Return"),
-//      *"… until you have 5 cards …"* (Deoxys "Psyspeed") and *"You may draw 5 cards."* (Cyclizar ex
-//      "Zircon Road"). The derived `optional` parks its Yes / No on EVERY board, including the two on
-//      which "yes" draws nothing: a hand already holding the printed size (`drawUntilHandSize` never
-//      trims), and an empty deck. That is the recorded D186 / D202 design ("the engine may not decide a
-//      printed 'may' on the player's behalf by peeking at their hand"), pinned by
-//      `optionalConfirm.test.ts` "ALWAYS parks …" and `optionalDraw.test.ts` "draws only up to the
-//      printed size …". So the prompt stays, and §1 pins it: the question is asked, and both answers
-//      reach the same board, so nothing about the game depends on it. Reversal recipe in the doc.
-//   §2 the controls: with a draw available the confirm parks with the printed sentence as its note,
-//      "yes" draws to the printed size (or the printed 5), and "no" draws nothing.
 
 const UNTIL_6 = "You may draw cards until you have 6 cards in your hand.";
 const UNTIL_5 = "You may draw cards until you have 5 cards in your hand.";
@@ -193,9 +174,6 @@ function base(): GameState {
   return state;
 }
 
-/** TEST SURGERY — P1's Active is the printing carrying Energy that pays its printed cost, with
-    `hand` Fillers in hand and `deck` Fillers in deck; P2's Active is a 400-HP Filler (no Bench, a
-    10-card deck). Fresh uids for every card placed. */
 function table(p: Printing, hand: number, deck: number): GameState {
   const state: GameState = JSON.parse(JSON.stringify(base()));
   let n = 0;
@@ -232,13 +210,6 @@ function table(p: Printing, hand: number, deck: number): GameState {
     deck: fillers(10),
   };
   return state;
-}
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
 }
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);

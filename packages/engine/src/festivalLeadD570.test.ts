@@ -19,28 +19,11 @@ import {
   setActiveFromDeck,
   setConditions,
   trainerCard,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 import { freshAllowances } from "./types";
-
-// ── 🆕🆕🆕 D570 — FESTIVAL LEAD, THE ATTACK-AGAIN TURN MACHINE (7 printings) ──
-//
-//   Dipplin  sv06-018 / sv06-170 / sv08.5-010  "Do the Wave"
-//   Goldeen  sv06-044 / sv08.5-020             "Whirlpool"
-//   Swirlix  sv06-089                          "Sneaky Placement"
-//   Seaking  sv08.5-021                        "Rapid Draw"
-//
-//   "If Festival Grounds is in play, this Pokémon may use an attack it has twice. If the
-//    first attack Knocks Out your opponent's Active Pokémon, you may attack again after
-//    your opponent chooses a new Active Pokémon."
-//
-// `PassiveEffects.attackTwiceIf` (registry.ts) on D564's `stadiumInPlayNamed`, collected RAW
-// by `passivesOf`, evaluated by `attackAgainLicensed`; the window is the REQUIRED
-// `TurnAllowances.attackAgainUid` (types.ts), opened by flow.ts `finishAttack`, narrowed by
-// turn.ts `turnGate` (R-FL1), re-read at the second declaration by `attackAgainBarred`
-// (R-FL2, attack.ts / redact.ts / GameHud [🆕 D570 landing (D539): and flow.ts `resumeTurn`'s
-// offer row, the fourth caller]). R-FL1..R-FL4 are UNRULED: docs/decisions.md D570.
-// Driven on the REAL ids, on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const FESTIVAL_IDS = [
   "sv06-018",
@@ -53,7 +36,7 @@ const FESTIVAL_IDS = [
 ] as const;
 const SEAKING = "sv08.5-021";
 const GOLDEEN = "sv06-044";
-const SWIRLIX = "sv06-089"; // ⚠️ TEST SURGERY: the printed id, a DEMONSTRATOR attack (below)
+const SWIRLIX = "sv06-089";
 const TR_ENERGY = "fix-tr-energy";
 const DISCARD_DEFENDER_TEXT =
   "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.";
@@ -107,10 +90,6 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  // ⚠️ TEST SURGERY: Swirlix's REAL id (so the registry's `FESTIVAL_LEAD` row reaches it) with a
-  // demonstrator attack in place of "Sneaky Placement" — the derived `discardDefender` (D536),
-  // the one shipped op that empties the OPPONENT's Active Spot with no Knock Out, so the window's
-  // own orphaned-promotion splice is driven.
   [SWIRLIX]: battler(SWIRLIX, {
     name: "Swirlix",
     hp: 50,
@@ -155,7 +134,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [FESTIVAL[0]]: 1,
   [FESTIVAL[1]]: 1,
@@ -171,11 +149,6 @@ const DECK = deckOf({
   "fix-energy": 27,
 });
 
-/** 🆕 D570 review — §7's MAIN-PHASE deck (D270: its own 60, so the boards every other rung
-    stands on keep their draws). It carries what the window must WITHHOLD and the first deck
-    could not offer at all: an activated Ability (`fix-drakloak` "Recon Directive", usable from
-    the Bench), a Rare Candy pairing (`sv01-191` + `fix-basic-1` → `fix-stage2`, `fix-stage1` the bridge), and a Stadium
-    with an activated ability (Town Store `sv03-196`, and a `fix-tool` for it to find). */
 const RARE_CANDY = "sv01-191";
 const TOWN_STORE = "sv03-196";
 const DRAKLOAK = "fix-drakloak";
@@ -193,17 +166,6 @@ const MAIN_PHASE_DECK = deckOf({
   [WALL]: 15,
   "fix-energy": 33,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -317,10 +279,6 @@ function toHand(state: GameState, seat: Seat, id: string): GameState {
   };
 }
 
-/** 🆕 D570 review — p1's TURN 4 (driven: p1 and p2 each pass once from `table`, so Rare Candy
-    is past §4's first-turn ban), Seaking Active under Festival Grounds, a benched
-    `fix-basic-1` (in play since before this turn) and a benched Drakloak, and Rare Candy +
-    `fix-stage2` in hand. Every main-phase affordance but the Stadium's is LIVE here. */
 function mainPhaseBoard(): GameState {
   let state = table({ deck: MAIN_PHASE_DECK, bench: ["fix-basic-1", DRAKLOAK], seed: 5711 });
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
@@ -479,13 +437,13 @@ describe("D570 §3 — no window without the licence", () => {
     expect(result.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
-  it("🛑 a LOCKED Ability: an opposing Active Flutter Mane (Midnight Fluttering) — no window", () => {
+  it("a LOCKED Ability: an opposing Active Flutter Mane (Midnight Fluttering) — no window", () => {
     const result = swing(table({ oppActive: FLUTTER }));
     expect(all(result.events, "TURN_ENDED")).toHaveLength(1);
     expect(all(result.events, "ATTACK_AGAIN_OFFERED")).toEqual([]);
   });
 
-  it("🛑 a LOCKED Ability: Klefki (Basic Pokémon have no Abilities) against a Basic Goldeen — no window; the same Goldeen opens one against a wall", () => {
+  it("a LOCKED Ability: Klefki (Basic Pokémon have no Abilities) against a Basic Goldeen — no window; the same Goldeen opens one against a wall", () => {
     const locked = swing(table({ active: GOLDEEN, oppActive: KLEFKI }));
     expect(all(locked.events, "TURN_ENDED")).toHaveLength(1);
     expect(all(locked.events, "ATTACK_AGAIN_OFFERED")).toEqual([]);
@@ -527,7 +485,7 @@ describe("D570 §4 — R-FL4: the window survives a Knock Out's prize and promot
     expect(wall.damage).toBe(60);
   });
 
-  it("🛑 no Checkup runs between the attacks: a Poisoned Defender takes no Poison until the turn really ends", () => {
+  it("no Checkup runs between the attacks: a Poisoned Defender takes no Poison until the turn really ends", () => {
     const state = setConditions(table(), "p2", { poisonDamage: 10 });
     const first = swing(state);
     expect(active(first.state, "p2").damage).toBe(60);
@@ -539,7 +497,7 @@ describe("D570 §4 — R-FL4: the window survives a Knock Out's prize and promot
     expect(ended.state.allowances.attackAgainUid).toBeNull();
   });
 
-  it("🛑 the window keeps the ORPHANED promotion in front of it: an attack that discards the Defender (no Knock Out) — p2 promotes BEFORE turn:action comes back", () => {
+  it("the window keeps the ORPHANED promotion in front of it: an attack that discards the Defender (no Knock Out) — p2 promotes BEFORE turn:action comes back", () => {
     let state = table({ active: SWIRLIX, energy: 0, oppBench: [WALL] });
     state = attachFromDeck(attachFromDeck(state, "p1", TR_ENERGY, 1), "p1", "fix-energy", 1);
     const uid = topOf(state, "p1");
@@ -638,15 +596,12 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
     expect(refused(gone, { type: "attack", seat: "p1", index: 0 }).code).toBe("ATTACK_PREVENTED");
   });
 
-  it("the licence was LOST: p2 PROMOTES a Flutter Mane after the KO — the window is open but the locked Seaking may not use it [🆕 D570 third review: and NO `ATTACK_AGAIN_OFFERED` row claims it may]", () => {
+  it("the licence was LOST: p2 PROMOTES a Flutter Mane after the KO — the window is open but the locked Seaking may not use it [ D570 third review: and NO `ATTACK_AGAIN_OFFERED` row claims it may]", () => {
     const first = swing(table({ oppActive: SOFT, oppBench: [FLUTTER] }));
     const prized = run(first.state, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
     // A Bench of one auto-promotes (the M1 no-choice doctrine).
     expect(prized.state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(prized.state.allowances.attackAgainUid).toBe(topOf(prized.state, "p1"));
-    // 🆕 D570 THIRD REVIEW — the offer row is filed only when the second declaration is NOT
-    // barred: turn:action came back on a board where the declaration is refused, so no log
-    // row may say "Seaking may attack again".
     expect(all(prized.events, "ATTACK_AGAIN_OFFERED")).toEqual([]);
     expect(refused(prized.state, { type: "attack", seat: "p1", index: 0 }).code).toBe(
       "ATTACK_PREVENTED",
@@ -656,13 +611,7 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
     ).toHaveLength(1);
   });
 
-  it("the second declaration is a FULL one: an Asleep attacker (surgery — UNREACHABLE in play [🆕 D570 review], pinned anyway) is refused by §12, not waved through by the window", () => {
-    // 🆕 D570 REVIEW — ⚠️ THIS BOARD CANNOT OCCUR, AND THE TITLE NOW SAYS SO. The licence needs
-    // Festival Grounds in play (built at D562), which keeps every Pokémon with Energy attached
-    // free of Special Conditions — and every Festival Lead attack costs Energy, so a body that
-    // can declare in the window is a body no Special Condition can stay on. The rung is kept as
-    // a CONSTRUCTED pin (D144/D146's precedent) of the code fact it measures: the window adds a
-    // re-read to the declaration and removes none of §12's gates.
+  it("the second declaration is a FULL one: an Asleep attacker (surgery — UNREACHABLE in play [ D570 review], pinned anyway) is refused by §12, not waved through by the window", () => {
     const first = swing(table()).state;
     const asleep = setConditions(first, "p1", { rotation: "asleep" });
     expect(refused(asleep, { type: "attack", seat: "p1", index: 0 }).code).toBe(
@@ -672,7 +621,7 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
 });
 
 describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in GameHud)", () => {
-  it("in the window the actor's turn:action carries the attack and NOTHING else: null retreat, empty lists, null Stadium ability [🆕 D570 review: on `table()`'s board, where only retreat and the Trainer row are live — the two rungs below drive the other three]", () => {
+  it("in the window the actor's turn:action carries the attack and NOTHING else: null retreat, empty lists, null Stadium ability [ D570 review: on `table()`'s board, where only retreat and the Trainer row are live — the two rungs below drive the other three]", () => {
     const first = swing(withHandTrainer(table({ bench: [WALL] }))).state;
     expect(first.players.p1.hand.some((u) => first.cardIdByUid[u] === FESTIVAL[1])).toBe(true);
     const view = redactGame(first, "p1");
@@ -692,17 +641,7 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
     expect(view.phase.trainers.length).toBeGreaterThan(0);
   });
 
-  // 🆕 D570 REVIEW — THE TWO RUNGS ABOVE PASSED ON THE BOARD'S DEFAULTS FOR THREE OF THE FIVE
-  // PROJECTIONS. `table()` has no activated Ability, no Rare Candy and a Stadium with no
-  // ability, so `abilities` [], `rareCandy` [] and `stadiumAbility` null held whether or not the
-  // window was honoured — MEASURED: redact.ts reading `actor` for those three stayed green. The
-  // two rungs below put each affordance on the board LIVE and read the SAME state twice, the
-  // window open and closed, so the only difference between the two projections is the window.
-  // 🆕🆕🆕 D576 — "every main-phase affordance" GREW A SIXTH, `turn:action.discardable` (an
-  // Antique Fossil's discard-from-play offer). This board has no fossil, so that affordance's
-  // window rung lives in `antiqueFossilsD576.test.ts` §3 (the same state, window shut and
-  // open, read on the wire) — the title below names the ones this board carries.
-  it("🛑 every main-phase affordance on this board LIVE with the window closed — an activated Ability, a Rare Candy pairing, the Trainer row, Retreat (the fossil discard offer: D576 §3) — and each one WITHHELD inside it", () => {
+  it("every main-phase affordance on this board LIVE with the window closed — an activated Ability, a Rare Candy pairing, the Trainer row, Retreat (the fossil discard offer: D576 §3) — and each one WITHHELD inside it", () => {
     const win = swing(mainPhaseBoard()).state;
     expect(win.allowances.attackAgainUid).toBe(topOf(win, "p1"));
     const shut = redactGame(closed(win), "p1").phase;
@@ -730,11 +669,7 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
     expect(open.attacks.map((a) => a.playable)).toEqual([true]);
   });
 
-  it("🛑 …and the Stadium row — CONSTRUCTED (Town Store swapped in mid-window by surgery): live with the window closed, null inside it", () => {
-    // ⚠️ UNREACHABLE IN PLAY, PINNED ANYWAY (D144/D146's precedent): only Festival Grounds opens
-    // a window, it has no activated ability, and R-FL1 refuses the Stadium play that could
-    // replace it — so a live Stadium row inside a window needs surgery. `redactPhase` withholds
-    // it through the same `mainPhase` guard, and this is the only board that can tell.
+  it("…and the Stadium row — CONSTRUCTED (Town Store swapped in mid-window by surgery): live with the window closed, null inside it", () => {
     const win = swapStadium(
       ensureInDeck(swing(mainPhaseBoard()).state, "p1", "fix-tool"),
       TOWN_STORE,
@@ -761,7 +696,7 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
 });
 
 describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 → 37)", () => {
-  it("🛑 the window round-trips through JSON and still narrows the turn", () => {
+  it("the window round-trips through JSON and still narrows the turn", () => {
     const first = swing(table()).state;
     const revived = JSON.parse(JSON.stringify(first)) as GameState;
     expect(revived.allowances.attackAgainUid).toBe(first.allowances.attackAgainUid);
@@ -772,7 +707,7 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     expect(all(swing(revived).events, "TURN_ENDED")).toHaveLength(1);
   });
 
-  it("🛑 (i) a 0.453 ROLLBACK resuming a v37 record MID-WINDOW ignores the key and GRANTS main-phase plays between the attacks — NOT inert", () => {
+  it("(i) a 0.453 ROLLBACK resuming a v37 record MID-WINDOW ignores the key and GRANTS main-phase plays between the attacks — NOT inert", () => {
     // A 0.453 engine never reads the key, which is this engine with the key at its fresh
     // value: an Energy attachment (and every other main-phase play) is accepted between
     // the two attacks, which the printed card never allows.
@@ -798,10 +733,7 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     expect(active(granted.state, "p1").energy).toContain(energy);
   });
 
-  it("🛑 (ii) a v36-SHAPED bag (the key ABSENT) is NOT read benignly — MEASURED: every action but `endTurn` is refused", () => {
-    // `undefined !== null`: `turnGate` reads an open window and `attackAgainBarred` a uid
-    // no body holds. A v36 record resumed by this deploy would strand the turn owner with
-    // one legal action — retired by `readMatchRecord`'s version gate (D124), not by the reader.
+  it("(ii) a v36-SHAPED bag (the key ABSENT) is NOT read benignly — MEASURED: every action but `endTurn` is refused", () => {
     const state = table();
     const { attackAgainUid: _window, ...v36Allowances } = state.allowances;
     const v36 = { ...state, allowances: v36Allowances } as unknown as GameState;

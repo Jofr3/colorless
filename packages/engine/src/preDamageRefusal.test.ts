@@ -12,105 +12,7 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-/** 🆕🆕 **D491 — THE LOUD CONTROL'S SENTENCE, and its blocker is DATA.**
-    `censusAttackCorpus.ts` FILE LINE 272, 1 legal printing. Refused by all 13
-    `deriveAttack*` readers, by all four splitters and by the registry — and it can
-    never stop being refused, because the `Ancient` banner is a per-PRINTING fact that
-    `cardSchema` carries no column for. Asserted against the corpus below rather than
-    merely byte-pinned.
-    🆕🆕🆕 D569 (D539): ~~refused … by the registry — and it can never stop being refused~~
-    WITHDRAWN. The `Ancient` banner is supplied by `banners.ts`' engine table, keyed by
-    printing id (no `cardSchema` column was added — that half stays TRUE), and the one
-    legal printing, Scream Tail `sv05-077`, now has a registry program ("Supportive
-    Singing", `SUPPORTIVE_SINGING`, index-keyed — `paradoxBannerD569.test.ts`). The
-    control below still holds for a narrower reason: the sentence stays unread by every
-    DERIVE reader and splitter, and the fixture body that carries it is not `sv05-077`,
-    so its attack still reports the sentence skipped. */
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
-
-// 0.331.0 → 0.332.0 — 🆕🆕 D430: ROUTING THE PRE-DAMAGE SEAM THROUGH THE §11 GATE.
-//
-// 🛑 **THIS IS A CORRECTNESS SLICE AND IT BUYS ZERO NEW PRINTINGS.** Not one sentence
-// is claimed, not one reader is added, and every census figure of the built corpus
-// stands still. It exists because D429 found a live rules gap, wrote it down in prose,
-// and DELIBERATELY DID NOT PIN THE BROKEN BEHAVIOUR — a guard that reddens when
-// somebody fixes a defect actively defends the defect (D418). So the fix meets no
-// resistance from the suite, and this file is where the corrected rule lands.
-//
-// ─────────────────────────────────────────────────────────────────────────────
-// 🛑 ① **THE DEFECT, EXACTLY.**
-//
-// `attack.ts`'s `stripPreDamage` — the act all four members of the pre-damage family
-// perform — consulted §11's refusal gate NOWHERE. Grepping the whole applier for
-// `effectRefused|refused|prevent` at D429's head returned ZERO hits. Meanwhile row
-// 74's *"…your opponent's Active Pokémon is now Paralyzed."* goes through the
-// interpreter's own `applyStatus`, which HAS asked §11 since D142.
-//
-// So ONE printed sentence had two effects, one gated and one not — and the board is
-// reachable off two real cards today: Klefki `sv01-096` "Joust" (*"Before doing
-// damage, discard all Pokémon Tools from your opponent's Active Pokémon."*) into a
-// body wearing Mist Energy `sv05-161` (*"Prevent all effects of attacks used by your
-// opponent's Pokémon done to the Pokémon this card is attached to. (Existing effects
-// are not removed. Damage is not an effect.)"*). The Tool came off anyway.
-//
-// A discard is an EFFECT of an attack done to a Pokémon. That is the whole argument,
-// and the printed parenthetical settles the only plausible objection: damage is not an
-// effect, so the shield lets the 10 through and stops the strip.
-//
-// 🛑 ② **THE PER-ROW SEMANTICS DIFFER, AND ROW 72 IS THE CRUX.**
-//
-//   · rows 71 / 73 / 74 aim at *"your opponent's Active Pokémon"* — a shield on THAT
-//     body refuses them, and §2 drives all three;
-//   · **row 72 aims at *"this Pokémon"* — the ATTACKER's own body — and is refusable
-//     by NOTHING.** Every §11 printing in the pool names the attack's SOURCE, and
-//     every one of them names the holder's OPPONENT (§1 measures this on the
-//     population rather than on a specimen). An opponent's Mist Energy is not even on
-//     the target; the attacker's OWN Mist Energy is on the target and still does not
-//     apply, because the attack is used by its own Pokémon and not by the opponent's.
-//     §3 drives both placements.
-//
-// The rule therefore lives in `effectRefusedOn` as `seat === ctx.seat ⇒ false` on the
-// attack channel — the exact guard the TRAINER channel has spelled since D259 — and
-// NOT as an `if (seat !== actor)` at the pre-damage call site. A caller re-deciding
-// what the funnel owns is D222's second reader, quiet the day a fifth member prints a
-// different victim.
-//
-// 🛑 ③ **AND IF A SELF-STRIP WERE EVER REFUSED, ROW 72's CANCEL WOULD FIRE.** The
-// printed *"If you can't discard any, this attack does nothing."* is conditioned on
-// the ACT's result, and a refused act discarded none. That falls out of the existing
-// `nothing` return and costs no code; it is UNREACHABLE today for the printed reason
-// above, so it is stated at the site and NOT tested around — an unreachable branch
-// with a guard written for it is the next vacuous test (D205/D206/D208).
-//
-// 🛑 ④ **NOTHING DOUBLES, AND THE EVENT COUNT IS WHY THE DEFECT HID.** On a shielded
-// board row 74 now refuses the STRIP, so `stripPreDamage` reports `tools: 0` and the
-// pre-existing `if (stripped.tools === 0) return stripped;` never reaches
-// `applyStatus`. Exactly ONE `ATTACK_EFFECT_PREVENTED` is filed — and exactly one was
-// filed BEFORE this slice too, for the opposite and wrong reason (the Tool came off
-// unrefused, and only the Paralysis was blocked). **The log is identical either way.**
-// That is precisely why nothing went red, and why the rung that catches the defect has
-// to read the BOARD — the Tool is still attached — rather than the event stream. §4
-// asserts both halves.
-//
-// ⚠️ **THE SIBLING DEFECTS THE FUNNEL LINE FIXED, NAMED SO THEY ARE NOT MISTAKEN FOR
-// SCOPE CREEP.** `applyStatus`'s `target: "self"` arm and `preventRetreat` /
-// `preventAttack`'s `"self"` arms all ask the gate on their OWN seat. Their doc blocks
-// said the self arm "can never be refused in practice", reasoning from the INSTALLED
-// block's clock — the only channel that existed at D142. D260 added the AURA channels,
-// which carry no clock, so a self-inflicted Special Condition on an attacker wearing
-// Mist Energy was being cancelled by the attacker's own card. Both blocks are
-// corrected in place and DATED (D423): rotted, not wrong-when-written.
-//
-// ⚠️ **THE IDS THAT COULD NOT BE RESOLVED ARE NOT INVENTED** (D425). This checkout has
-// no D1, so the three cards printing corpus rows 71/72/74 stay unnamed, exactly as
-// `preDamageFamily.test.ts` leaves them. `sv05-161` and `sv01-096` ARE named, because
-// both are resolvable: Klefki is a real-id fixture (`FIXTURE_POOL["sv01-096"]`, whose
-// "Joust" prints row 73 verbatim) and Mist Energy's program is a registry row keyed on
-// `sv05-161` that `fix-mist-energy` shares. ⚠️ **THE BRIEF'S CLAIM THAT BOTH IDS ARE
-// IN THE FIXTURE POOL IS HALF TRUE**: `sv01-096` is a pool key; `sv05-161` is NOT and
-// cannot be, because `catalogManifest.ts` holds no `sv05` row and its generator cannot
-// be run here. The demonstrator is `fix-mist-energy`, carrying the printed sentence
-// verbatim and mapped to the SAME `MIST_ENERGY` program the real id is.
 
 /** One seed for the whole suite, `preDamageFamily.test.ts`'s reason verbatim: nothing
     here flips a coin and every Active, Tool and Energy is placed by surgery. */
@@ -138,9 +40,6 @@ function board(seat: Seat = "p1"): GameState {
   return mustApply(state, { type: "endTurn", seat: other(seat) }).state;
 }
 
-/** 🛑 **THE ONE-AXIS PAIR THIS WHOLE SUITE TURNS ON (D427).** The defender wears a
-    Rock Chestplate either way; `shielded` adds a Mist Energy and changes NOTHING else.
-    Same seed, same bodies, same Tool, same attack — one attached card apart. */
 function tooled(seat: Seat = "p1"): GameState {
   return attachToolFromDeck(board(seat), other(seat), "active", CHESTPLATE);
 }
@@ -172,24 +71,7 @@ function dealt(events: GameEvent[]): number | undefined {
   return find(events, "DAMAGE_DEALT")?.dealt;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — 🛑 THE POPULATION: what "refused" can mean, measured rather than asserted.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — every §11 printing names the OPPONENT as the attack's source", () => {
-  /** Every distinct printed sentence in `FIXTURE_POOL` that talks about preventing the
-      EFFECTS of attacks — swept across all three text carriers a fixture can hold
-      (`effect` for Energy and Trainer cards, `abilities[].effect`, `attacks[].effect`),
-      because a census is as narrow as the columns its query names (D310) and this one
-      is the warrant for a rule in `interpreter.ts`.
-
-      ⚠️ **THE PATTERN IS PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425).** It is
-      `/effects of attacks/` — the loosest shape the family is spelled in, deliberately
-      shorter than "Prevent all effects of attacks" so that the two printed word orders
-      (*"prevent all effects of attacks"* and *"prevent all damage from and effects of
-      attacks"*) and any future *"…the effects of attacks…"* all land in it. What it
-      CANNOT see: a printing that says "effect of an attack" in the singular, or that
-      spells the rule without the word "attacks" at all. */
   const SHIELD = /effects of attacks/;
   const shieldSentences: { id: string; where: string; text: string }[] = [];
   for (const [id, card] of Object.entries(FIXTURE_POOL)) {
@@ -209,25 +91,10 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
     }
   }
 
-  /** The two ways a printing can restrict itself to the opponent, spelled as the
-      corpus spells them. ⚠️ **THE SOURCE CLASS IS `(?:used by|from|by) your opponent's
-      Pokémon` AND NOT A BARE `opponent`, WHICH IS THE WHOLE POINT OF THIS RUNG.** A
-      bare `/opponent/` passes on `sv03-004` — *"…during your **opponent's** next turn,
-      prevent all damage from and effects of attacks done to this Pokémon."* — which
-      carries NO source clause at all and would have made a true assertion stand in for
-      a false claim (D423's exact shape, caught here by reading all eight hits rather
-      than by trusting the first green). */
   const SOURCE = /(?:used by|from|by) your opponent's Pokémon/;
   const CLOCK = /your opponent's next turn/;
 
-  it("🛑 the sweep is NON-EMPTY and both disjuncts have witnesses", () => {
-    // D200→D214's rule: an "every X has property P" assertion over an EMPTY set is
-    // green forever, and so is one where every member takes the same easy arm. Floors
-    // rather than frozen counts, so a slice adding a §11 fixture need not touch this
-    // file. Measured at this head: EIGHT sentences — six carrying a SOURCE clause
-    // (`fix-mist-energy`, `fix-mightyshell`, `fix-teaparty`, `fix-spherical`,
-    // `fix-unaware`, `fix-repellingveil`), two in the ATTACK column carrying the CLOCK
-    // (`sv03-004`, `sv03-145`), and `sv03-145` carrying both.
+  it("the sweep is NON-EMPTY and both disjuncts have witnesses", () => {
     expect(shieldSentences.length).toBeGreaterThanOrEqual(8);
     expect(shieldSentences.filter(({ text }) => SOURCE.test(text)).length).toBeGreaterThanOrEqual(
       6,
@@ -238,42 +105,21 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
     ).toBeGreaterThanOrEqual(1);
   });
 
-  it("🛑 EVERY ONE of them is confined to the opponent — the FALSIFIER for the rule", () => {
-    // 🛑 **THIS IS THE EXECUTABLE FALSIFIER FOR `effectRefusedOn`'s OWN-SIDE RULE
-    // (D428).** That line answers `false` whenever the effect's target is the
-    // attacker's own side, and its entire warrant is that no §11 printing in the pool
-    // can be true of an attack used by the holder's OWN Pokémon — either because it
-    // names the opponent as the SOURCE, or because it is only live during the
-    // opponent's turn. Pinned on the POPULATION and not on a specimen (D423): the day
-    // a §11 sentence lands with neither restriction, this goes RED and the funnel's
-    // rule has to be re-derived before that fixture can be committed.
+  it("EVERY ONE of them is confined to the opponent — the FALSIFIER for the rule", () => {
     for (const { id, where, text } of shieldSentences) {
       expect(SOURCE.test(text) || CLOCK.test(text), `${id} ${where}`).toBe(true);
     }
   });
 
-  it("⚠️ the CLOCK-only printings are exactly the INSTALLED ones, in the ATTACK column", () => {
-    // The two disjuncts are not interchangeable and this rung says which is which. An
-    // AURA (`passivesOf`) has no duration, so it MUST carry a source clause or it
-    // would be true of its holder's own attacks; an INSTALLED block (`attackBlockOf`)
-    // is stamped `turn: state.turn + 1` on its installer's own turn and read under
-    // `block.turn !== state.turn`, so it is live on exactly the opponent's next turn
-    // and structurally cannot be live on its holder's own — which is why `sv03-004`
-    // may print no source clause and still be confined.
+  it("the CLOCK-only printings are exactly the INSTALLED ones, in the ATTACK column", () => {
     for (const { id, where, text } of shieldSentences) {
       if (where.startsWith("attacks")) expect(CLOCK.test(text), `${id} ${where}`).toBe(true);
       else expect(SOURCE.test(text), `${id} ${where}`).toBe(true);
     }
   });
 
-  it("🛑 ZERO NEW PRINTINGS — the reader surface and all four family sentences stand still", () => {
-    // 🛑 **THE SLICE'S CENTRAL CLAIM, ASSERTED RATHER THAN ASSUMED.** A correctness
-    // slice that accidentally moved a census figure would be a slice that changed what
-    // the engine CLAIMS to understand, and the whole point here is that it changed only
-    // what the engine DOES. The reader surface is 13 (unchanged since D428), and all
-    // four members of the pre-damage family were already claimed at D429 — the refusal
-    // is a rule applied to a sentence, never a sentence.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+  it("ZERO NEW PRINTINGS — the reader surface and all four family sentences stand still", () => {
+    expect(attackReaderSurface()).toHaveLength(14);
     for (const sentence of [
       "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
       "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.",
@@ -285,8 +131,6 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
   });
 
   it("the demonstrator carries Mist Energy's printed bytes, source clause included", () => {
-    // The sentence the whole slice is decided by, read off the fixture rather than
-    // transcribed here (D415: a claim copied is a claim that rots in N places).
     expect(FIXTURE_POOL[MIST]?.effect).toContain(
       "Prevent all effects of attacks used by your opponent's Pokémon done to the Pokémon this card is attached to.",
     );
@@ -294,31 +138,21 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — 🛑 THE OPPONENT-SIDE STRIP IS REFUSED, with the one-axis control beside it.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§2 — the shielded body keeps its Tool, and the identical board loses it", () => {
-  it("🛑🛑 ROW 73 — THE DEFECT. The Tool STAYS, and the unshielded twin loses it", () => {
-    // 🛑 **THE PAIR IS THE RUNG.** Two boards, one attached card apart (D427): both
-    // wear a Rock Chestplate, one also wears a Mist Energy. Before D430 the Tool came
-    // off BOTH, and every event assertion in this file passed on that build — which is
-    // why the claim is made on the BOARD.
+  it("ROW 73 — THE DEFECT. The Tool STAYS, and the unshielded twin loses it", () => {
     const refused = swing(shielded(), IDX.pry);
     expect(refused.state.players.p2.active?.tools).toHaveLength(1);
     expect(refused.state.players.p2.discard).toEqual([]);
     expect(find(refused.events, "TOOLS_DISCARDED")).toBeUndefined();
     expect(find(refused.events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
 
-    // ⚠️ **THE ADMISSION THAT MAKES THE REFUSAL MEAN SOMETHING (D424).** Without it the
-    // rung above passes on a build that refuses every strip on every board.
     const admitted = swing(tooled(), IDX.pry);
     expect(admitted.state.players.p2.active?.tools).toEqual([]);
     expect(find(admitted.events, "TOOLS_DISCARDED")?.uids).toHaveLength(1);
     expect(find(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
   });
 
-  it("🛑 THE NUMBER MOVES WITH IT: 70 refused, 100 admitted, on the same pair", () => {
+  it("THE NUMBER MOVES WITH IT: 70 refused, 100 admitted, on the same pair", () => {
     // The Chestplate's −30 is what makes the refusal observable as arithmetic and not
     // only as a card in a zone — a refusal that left the board right and the damage
     // wrong would pass every assertion above. 100 − 30 = 70 when the Tool survives.
@@ -326,7 +160,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     expect(dealt(swing(tooled(), IDX.pry).events)).toBe(100);
   });
 
-  it("🛑 *(Damage is not an effect.)* — the printed parenthetical, on this seam", () => {
+  it("*(Damage is not an effect.)* — the printed parenthetical, on this seam", () => {
     // The shield refuses the STRIP and lets the hit through in full. A build that
     // routed the refusal into §8.5 instead would hand the holder total immunity, which
     // is the one mis-read the printed reminder exists to stop.
@@ -337,10 +171,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     expect(find(refused.events, "ATTACK_FAILED")).toBeUndefined();
   });
 
-  it("🛑 ROW 71 — BOTH ZONES are refused together, including the shield's own card", () => {
-    // Row 71 takes Tools AND Special Energy, so on a shielded body the Mist Energy is
-    // itself in the strip's sights. The gate is asked BEFORE either zone is read, so
-    // the shield saves itself and the Tool and the Basic in one refusal.
+  it("ROW 71 — BOTH ZONES are refused together, including the shield's own card", () => {
     let state = shielded();
     state = attachFromDeck(state, "p2", BASIC, 1);
     const refused = swing(state, IDX.purge);
@@ -350,8 +181,6 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     expect(find(refused.events, "ENERGY_DISCARDED")).toBeUndefined();
     expect(count(refused.events, "ATTACK_EFFECT_PREVENTED")).toBe(1);
 
-    // ⚠️ THE ADMISSION, one axis apart: the same board WITHOUT the Mist Energy loses
-    // its Tool and keeps its Basic (row 71's card-class control still holds).
     let unshielded = tooled();
     unshielded = attachFromDeck(unshielded, "p2", THERAPEUTIC, 1);
     unshielded = attachFromDeck(unshielded, "p2", BASIC, 1);
@@ -360,11 +189,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     expect(admitted.state.players.p2.active?.energy).toHaveLength(1); // the Basic survived
   });
 
-  it("🛑 a REFUSED strip files no row claiming a discard, and is not silent either", () => {
-    // Both halves of "what is emitted on refusal", asserted together because either one
-    // alone admits a wrong build: a silent refusal is a Tool that stays with nothing
-    // saying why, and a `TOOLS_DISCARDED` with an empty `uids` is a row that has to be
-    // read to learn nothing (`HEALED`'s never-0 rule).
+  it("a REFUSED strip files no row claiming a discard, and is not silent either", () => {
     const { events } = swing(shielded(), IDX.pry);
     const prevented = find(events, "ATTACK_EFFECT_PREVENTED");
     expect(prevented).toBeDefined();
@@ -375,7 +200,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     expect(events.map((e) => e.type)).toContain("ATTACK_EFFECT_PREVENTED");
   });
 
-  it("🛑 the refusal is about the BODY, not the seat: a shielded ATTACKER is no shield", () => {
+  it("the refusal is about the BODY, not the seat: a shielded ATTACKER is no shield", () => {
     // A build that read the wrong side's passives would refuse here. The Mist Energy
     // goes on the ATTACKER while the DEFENDER wears the Tool; the strip must land.
     let state = attachFromDeck(tooled(), "p1", MIST, 1);
@@ -388,25 +213,12 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §3 — 🛑 ROW 72's SELF-TARGET: refusable by NOTHING, decided from the printed text.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () => {
-  /** The attacker wears a Vitality Band — row 72's own +10, so the strip is observable
-      as a NUMBER as well as a zone (`attackerPreWRBonus` folds it pre-W/R). */
   function banded(seat: Seat = "p1"): GameState {
     return attachToolFromDeck(board(seat), seat, "active", BAND);
   }
 
-  it("🛑🛑 THE ATTACKER'S OWN MIST ENERGY DOES NOT SAVE THE ATTACKER'S OWN TOOL", () => {
-    // 🛑 **THE DECISION THIS SLICE HAD TO MAKE, DRIVEN.** The shield is ON the target
-    // body and the target body is the attacker's own. It still does not apply: Mist
-    // Energy prevents effects of attacks *"used by your opponent's Pokémon"*, and this
-    // attack is used by the holder's own Pokémon. A build that routed row 72 through
-    // the gate WITHOUT `effectRefusedOn`'s own-side rule keeps the Band here and
-    // reddens this line — which is what makes the decision executable rather than
-    // argued (D428).
+  it("THE ATTACKER'S OWN MIST ENERGY DOES NOT SAVE THE ATTACKER'S OWN TOOL", () => {
     const state = attachFromDeck(banded(), "p1", MIST, 1);
     const { state: after, events } = swing(state, IDX.shed);
     expect(after.players.p1.active?.tools).toEqual([]);
@@ -418,10 +230,7 @@ describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () =
     expect(dealt(swing(banded(), IDX.plain).events)).toBe(110);
   });
 
-  it("🛑 …and the OPPONENT's Mist Energy does not either — it is not on the target", () => {
-    // The near-miss, one axis from the rung above: same board, the shield moved to the
-    // other side of the table. Row 72 never looks at that body at all, so this is the
-    // control that stops "no refusal" being read as "the gate is off for row 72".
+  it("…and the OPPONENT's Mist Energy does not either — it is not on the target", () => {
     const state = attachFromDeck(banded(), "p2", MIST, 1);
     const { state: after, events } = swing(state, IDX.shed);
     expect(after.players.p1.active?.tools).toEqual([]);
@@ -429,22 +238,14 @@ describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () =
     expect(dealt(events)).toBe(100);
   });
 
-  it("🛑 …while the SAME shield on the SAME body refuses an opponent-side sentence", () => {
-    // 🛑 **THE ATTRIBUTION CONTROL (D214).** Without it, both rungs above are equally
-    // satisfied by a build where Mist Energy does nothing at all. One board, two
-    // indices: index 2 (row 72, self) is admitted and index 1 (row 73, opponent) is
-    // refused, and the ONLY difference is which body the printed sentence names.
+  it("…while the SAME shield on the SAME body refuses an opponent-side sentence", () => {
     let state = attachToolFromDeck(banded(), "p2", "active", CHESTPLATE);
     state = attachFromDeck(state, "p2", MIST, 1);
     expect(swing(state, IDX.shed).state.players.p1.active?.tools).toEqual([]);
     expect(swing(state, IDX.pry).state.players.p2.active?.tools).toHaveLength(1);
   });
 
-  it("🛑 the printed CANCEL still fires on a bare own body, shield or no shield", () => {
-    // The cancel is conditioned on the ACT's result. Its antecedent is "no Tool on this
-    // Pokémon", which a shield cannot create and cannot remove — so the branch answers
-    // identically with the Mist Energy attached, which is the observable half of
-    // "a self-strip is never refused".
+  it("the printed CANCEL still fires on a bare own body, shield or no shield", () => {
     for (const [label, state] of [
       ["bare", board()],
       ["bare + shield", attachFromDeck(board(), "p1", MIST, 1)],
@@ -457,17 +258,8 @@ describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () =
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — 🛑 ROW 74: one refusal for two effects, and NO doubled prevention row.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§4 — row 74's strip and status are refused by ONE gate, announced ONCE", () => {
-  it("🛑🛑 the Tool STAYS, nothing is Paralyzed, and there is EXACTLY ONE row", () => {
-    // 🛑 **THE EVENT COUNT IS 1 BEFORE AND 1 AFTER THIS SLICE, WHICH IS WHY THE DEFECT
-    // HID.** The old build discarded the Tool (unrefused) and then had `applyStatus`
-    // refuse the Paralysis — one `ATTACK_EFFECT_PREVENTED`. The new build refuses the
-    // STRIP, reports `tools: 0`, and returns before `applyStatus` is ever called — one
-    // `ATTACK_EFFECT_PREVENTED`. Only the BOARD tells them apart.
+  it("the Tool STAYS, nothing is Paralyzed, and there is EXACTLY ONE row", () => {
     const { state, events } = swing(shielded(), IDX.lock);
     expect(state.players.p2.active?.tools).toHaveLength(1);
     expect(state.players.p2.active?.conditions.rotation).toBe("none");
@@ -479,7 +271,7 @@ describe("§4 — row 74's strip and status are refused by ONE gate, announced O
     expect(dealt(events)).toBe(70);
   });
 
-  it("⚠️ the ADMISSION: the same board without the shield discards AND Paralyzes", () => {
+  it("the ADMISSION: the same board without the shield discards AND Paralyzes", () => {
     const { state, events } = swing(tooled(), IDX.lock);
     expect(state.players.p2.active?.tools).toEqual([]);
     expect(state.players.p2.active?.conditions.rotation).toBe("paralyzed");
@@ -488,12 +280,7 @@ describe("§4 — row 74's strip and status are refused by ONE gate, announced O
     expect(dealt(events)).toBe(100);
   });
 
-  it("🛑 §12's immunity is a DIFFERENT refusal and still behaves as it did", () => {
-    // Therapeutic Energy `sv02-193` prints a §12 immunity, not a §11 shield: the Tool
-    // IS discarded and only the Paralysis is refused, with `STATUS_PREVENTED` rather
-    // than `ATTACK_EFFECT_PREVENTED`. This rung is the one-axis neighbour of the first
-    // one in this section — same body, same Tool, a different Special Energy — and it
-    // is what proves the new gate did not swallow the old distinction.
+  it("§12's immunity is a DIFFERENT refusal and still behaves as it did", () => {
     const state = attachFromDeck(tooled(), "p2", THERAPEUTIC, 1);
     const { state: after, events } = swing(state, IDX.lock);
     expect(after.players.p2.active?.tools).toEqual([]);
@@ -503,11 +290,7 @@ describe("§4 — row 74's strip and status are refused by ONE gate, announced O
     expect(after.players.p2.active?.conditions.rotation).toBe("none");
   });
 
-  it("🛑 BOTH Energies at once: §11 wins, because it refuses the act that gates §12", () => {
-    // The composition, driven rather than reasoned about. §11 refuses the strip, so
-    // `tools === 0` and `applyStatus` — which owns §12 — is never reached: ONE
-    // `ATTACK_EFFECT_PREVENTED` and NO `STATUS_PREVENTED`. A build that asked §12 first
-    // would file the wrong row, and a build that asked §11 twice would file two.
+  it("BOTH Energies at once: §11 wins, because it refuses the act that gates §12", () => {
     let state = attachFromDeck(shielded(), "p2", THERAPEUTIC, 1);
     state = attachFromDeck(state, "p2", BASIC, 1);
     const { state: after, events } = swing(state, IDX.lock);
@@ -523,8 +306,7 @@ describe("§4 — row 74's strip and status are refused by ONE gate, announced O
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — both seats, and nothing is reported as skipped", () => {
-  it("🛑 p2 attacking: the shield on p1's Active refuses p2's strip", () => {
-    // D361's rule. A build that hard-coded the shielded seat passes every p1 rung above.
+  it("p2 attacking: the shield on p1's Active refuses p2's strip", () => {
     const refused = swing(shielded("p2"), IDX.pry, "p2");
     expect(refused.state.players.p1.active?.tools).toHaveLength(1);
     expect(find(refused.events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p1");
@@ -536,7 +318,7 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
     expect(dealt(admitted.events)).toBe(100);
   });
 
-  it("🛑 p2 attacking: row 72 still strips p2's OWN Tool through its OWN shield", () => {
+  it("p2 attacking: row 72 still strips p2's OWN Tool through its OWN shield", () => {
     let state = attachToolFromDeck(board("p2"), "p2", "active", BAND);
     state = attachFromDeck(state, "p2", MIST, 1);
     const { state: after, events } = swing(state, IDX.shed, "p2");
@@ -545,9 +327,6 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
   });
 
   it("a REFUSED sentence is still SIMULATED — no ATTACK_EFFECT_SKIPPED, either way", () => {
-    // D130's rule: the report is about whether a READER claimed the sentence, never
-    // about whether the act moved anything. A refusal must not be laundered into "the
-    // engine does not understand this card".
     for (const index of [IDX.purge, IDX.pry, IDX.shed, IDX.lock]) {
       expect(
         find(swing(shielded(), index).events, "ATTACK_EFFECT_SKIPPED"),
@@ -560,25 +339,10 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
     }
   });
 
-  it("🛑 THE ATTRIBUTION CONTROL — index 5's unread sentence IS still reported", () => {
-    // Without it the rung above passes on a build where the report is broken outright,
-    // which is the vacuous-guard shape this repo keeps finding (D200→D214).
+  it("THE ATTRIBUTION CONTROL — index 5's unread sentence IS still reported", () => {
     const skipped = find(swing(shielded(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
-    // 🆕🆕 D491 RE-POINTED THIS CONTROL. It used to name *"Each player draws 3
-    // cards."*; D491 BUILT that sentence, which would have left this rung GREEN while
-    // it stopped testing anything (D462 predicted exactly this slot). The replacement's
-    // blocker is the `Ancient` BANNER, which no ingested column classifies, so it is
-    // DATA-blocked rather than merely unbuilt (D461's rule 2) and cannot be built by
-    // any reader at any width.
-    // 🆕🆕🆕 D569 (D539): ~~DATA-blocked … cannot be built … at any width~~ WITHDRAWN — it
-    // was BUILT for its one printing (`sv05-077`, a registry row over `banners.ts`). The
-    // control stands because no DERIVE reader reads the sentence and this fixture is not
-    // that printing — an UNREAD sentence, not a data-blocked one.
     expect(skipped?.effect).toBe(LOUD_SENTENCE);
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
-    // ⚠️ D452/D490 — assert the specimen IS a row of the committed corpus and read its
-    // printing count OFF the corpus. A byte pin measures an invention as faithfully as
-    // it measures the truth, so pinning the string alone would be green on a phantom.
     expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
       [1, LOUD_SENTENCE],
     ]);
@@ -590,18 +354,7 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — persistence, purity, and the property the export did not cost", () => {
-  it("🛑 `MATCH_RECORD_VERSION` STAYS 26 — a boolean gate adds no persisted shape", () => {
-    // ⚠️ THE CONSTANT LIVES IN `apps/api/src/lobby/match.ts` and is not exported from
-    // this package, so this rung drives the SHAPES it governs, `preDamageFamily.test.ts`
-    // §9's move. Four ways this slice could have owed a bump, and none of them fires:
-    //   ① a new `GameState` / `InPlayPokemon` FIELD — none; the refusal WRITES NOTHING,
-    //      it returns the input board `===` unchanged;
-    //   ② a new `EffectOp` inhabitant reaching `phase.cont` — none;
-    //   ③ a new key on the effect CONTINUATION — none: this seam still never parks, and
-    //      `effectRefused` returns a `boolean`, which carries neither a prompt nor a
-    //      continuation for a resolver to drain (D429's property, at the type);
-    //   ④ a new EVENT type — none: the refusal files `ATTACK_EFFECT_PREVENTED`, which
-    //      `applyStatus` has filed since D142.
+  it("`MATCH_RECORD_VERSION` STAYS 26 — a boolean gate adds no persisted shape", () => {
     const refused = swing(shielded(), IDX.pry);
     expect(refused.state.phase.kind).toBe("turn:action");
     expect(refused.state.pending).toEqual([]);
@@ -611,30 +364,25 @@ describe("§6 — persistence, purity, and the property the export did not cost"
     expect(Object.keys(refused.state.players.p2.active ?? {}).sort()).toEqual([
       "attackBlock",
       "attackDamageDebuff",
-      "attackDamageTaken", // 🆕🆕🆕 D630 (43 -> 44) — Juggernaut Horn's record; the pin is on the HEAD's key set
-      // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp and the NEXT-TURN VULNERABILITY
-      // record JOIN THE LIST (MATCH_RECORD_VERSION 30 -> 31). The pin is on the HEAD's
-      // key set, so it moves whenever anybody adds a key; what it asserts is that THIS
-      // suite's slice added none.
+      "attackDamageTaken",
       "attackFlipLockTurn",
       "attackLockedTurn",
-      "attackTwoFlipLockTurn", // 🆕🆕🆕 D636 (44 -> 45) — Jet of Ink's stamp; the pin is on the HEAD's key set
-      "benchedTurn", // 🆕🆕🆕 D636 (44 -> 45) — Fall Back to Reload's stamp
+      "attackTwoFlipLockTurn",
+      "benchedTurn",
       "boostedAttack",
       "conditions",
-      "costTaxTurn", // 🆕🆕🆕 D549 (32 -> 33) — the cost tax's stamp; the pin is on the HEAD's key set
+      "costTaxTurn",
       "damage",
       "damageReduction",
-      "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
+      "damageVulnerability",
       "energy",
       "evolvedTurn",
-      "handAttachMark", // 🆕🆕🆕 D575 (37 -> 38) — the hand-attach mark (Glimmora / Hypno); the pin is on the HEAD's key set
+      "handAttachMark",
       "healedTurn",
       "installedRecoil",
-      "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
+      "koBounty",
       "lockedAttacks",
       "markers",
-      // 🆕🆕 D432 — the attack-installed §8.5 NO-WEAKNESS bar's stamp (MATCH_RECORD_VERSION 26 -> 27).
       "noWeaknessTurn",
       "promotedTurn",
       "retreatBlocked",
@@ -644,14 +392,14 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       "tools",
       "turnPlayed",
       "usedAttack",
-      "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
+      "weaknessRetype",
     ]);
     // …and the refusal event's own key set, for the same reason.
     const prevented = find(refused.events, "ATTACK_EFFECT_PREVENTED");
     expect(Object.keys(prevented ?? {}).sort()).toEqual(["seat", "type", "uid"]);
   });
 
-  it("🛑 a v26 record round-trips BOTH DIRECTIONS through every refused sentence", () => {
+  it("a v26 record round-trips BOTH DIRECTIONS through every refused sentence", () => {
     for (const [label, start, index] of [
       ["row71-refused", attachFromDeck(shielded(), "p2", BASIC, 1), IDX.purge],
       ["row73-refused", shielded(), IDX.pry],
@@ -662,31 +410,21 @@ describe("§6 — persistence, purity, and the property the export did not cost"
         IDX.shed,
       ],
     ] as [string, GameState, number][]) {
-      // BACKWARD: a record written by an older deploy — the board serialized BEFORE
-      // this slice's code could have touched it — rehydrates and answers identically.
       const rehydrated = JSON.parse(JSON.stringify(start)) as GameState;
       const live = swing(start, index);
       const replayed = swing(rehydrated, index);
       expect(JSON.stringify(replayed.events), label).toBe(JSON.stringify(live.events));
       expect(JSON.stringify(replayed.state), label).toBe(JSON.stringify(live.state));
-      // FORWARD: the board this slice produces survives the same trip unchanged.
       const after = JSON.parse(JSON.stringify(live.state)) as GameState;
       expect(JSON.stringify(after), label).toBe(JSON.stringify(live.state));
     }
   });
 
-  it("🛑 the swing mutates NOTHING it was given — deep-frozen boards resolve", () => {
-    // Strict mode makes any write to a frozen object throw, so this is the whole
-    // no-mutation claim rather than a sample of it. THE PAIR is the point: the REFUSED
-    // path is the one this slice added and it must not write, and the ADMITTED path on
-    // the identical board must still write — a frozen board that refuses everything
-    // would pass the first half alone.
+  it("the swing mutates NOTHING it was given — deep-frozen boards resolve", () => {
     const frozenRefused = deepFreeze(shielded());
     const refused = swing(frozenRefused, IDX.pry);
     expect(frozenRefused.players.p2.active?.tools).toHaveLength(1);
     expect(refused.state.players.p2.active?.tools).toHaveLength(1);
-    // 🛑 THE BOARD IS RETURNED IDENTICAL, not rebuilt — the strip's silent-no-op
-    // contract, which the refusal reuses rather than re-spelling.
     expect(refused.state.players.p2.active?.tools).toBe(frozenRefused.players.p2.active?.tools);
 
     const frozenAdmitted = deepFreeze(tooled());

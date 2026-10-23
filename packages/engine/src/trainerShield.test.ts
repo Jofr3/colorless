@@ -17,128 +17,11 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.174.0 → 0.175.0 — the TRAINER-BORNE EFFECT SHIELD (P3-M5 long tail, D259),
-// backlog row 15-D and the LARGEST row left in the `%prevent%` ability seam:
-//
-//   "Whenever your opponent plays an Item or Supporter card from their hand,
-//    prevent all effects of that card done to this Pokémon."
-//     — Fraxure sv06.5-045/sv06.5-077 "Unnerve";
-//       Cetitan ex sv10-065/sv10-210 "Snow Camouflage".            4 printings
-//
-//   "As long as this Pokémon is in the Active Spot, whenever your opponent plays
-//    a Supporter card from their hand, prevent all effects of that card done to
-//    all of your Pokémon."
-//     — Rhyperior sv07-076 "Wide Wall".                            1 printing
-//
-// ✅ RE-DERIVED AT THIS COMMIT, NOT TRANSCRIBED. Remote D1 `colorless`
-// (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-07, over ALL THREE text columns
-// via `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE:
-//
-//   WITH u AS (
-//     SELECT 'attack' col, c.id id, json_extract(j.value,'$.effect') t
-//       FROM cards c, json_each(c.attacks_json) j
-//       WHERE c.legal_standard=1 AND json_extract(j.value,'$.effect') NOT IN ('')
-//     UNION ALL SELECT 'ability', c.id, json_extract(j.value,'$.effect')
-//       FROM cards c, json_each(c.abilities_json) j
-//       WHERE c.legal_standard=1 AND json_extract(j.value,'$.effect') NOT IN ('')
-//     UNION ALL SELECT 'effect', id, effect FROM cards
-//       WHERE legal_standard=1 AND effect NOT IN ('')
-//   )
-//   SELECT col, t s, COUNT(*) n, group_concat(id) ids FROM u
-//    WHERE lower(t) LIKE '%plays an item%' OR lower(t) LIKE '%plays a supporter%'
-//       OR lower(t) LIKE '%effects of that card%'
-//    GROUP BY col, s ORDER BY col, n DESC;
-//
-// → ability 4 + 1, attack 0, effect 0. **ZERO false positives at all three rungs**
-// — the widest rung (`%effects of that card%`) returns the same two rows as the
-// two narrow ones, which is what makes "the whole result set is this row" a
-// measurement rather than a hope. `BUILT.attack` is UNCHANGED for the fourteenth
-// consecutive slice and the query is why, not an inherited streak.
-//
-// 🛑 REACHABILITY WAS CHECKED BEFORE THE ROW WAS PROMISED, WHICH THE HANDOFF ASKED
-// FOR EXPLICITLY (D207's hazard: a predicate over something nothing CLASSIFIES has
-// a permanently empty candidate set). The risk here was sharper — a shield against
-// Trainer effects is worth nothing if no authored Item or Supporter aims at an
-// opposing Pokémon. **It is REACHABLE, abundantly**, and the grep is:
-//   • `discardEnergy from:"opponentActive" | "opponentChosen" | "opponentEach"` —
-//     Crushing Hammer, Giacomo, and the `fix-hammer` fixture this suite plays;
-//   • `gust` — Boss's Orders sv02-172 (Supporter) and Pokémon Catcher (Item);
-//   • `applyStatus` — Dangerous Laser sv06.5-058 ("Your opponent's Active Pokémon
-//     is now Burned").
-// Three ops, both trainer types, on real printings. No refusal was needed.
-//
-// 🛑 THE SHAPE, WRITTEN DOWN BEFORE THE FIRST EDIT AND GRADED AFTER: **ONE
-// `passivesOf` FIELD *AND* ONE SCAN**, which is the first slice in this run to pay
-// both. The split is decided by reading `passivesOf`'s own signature and not by
-// analogy:
-//
-//     export function passivesOf(state: GameState, pokemon: InPlayPokemon)
-//
-// It takes a BODY and no SEAT. Fraxure/Cetitan protect *"this Pokémon"* — the body
-// the fold is already about — so they fold. Rhyperior protects *"all of your
-// Pokémon"* — a set the fold has no name for — so it scans, and the scan takes a
-// SEAT rather than a Pokémon because the printed target clause names the SIDE and
-// no zone at all (`seatShieldedFromSupporterEffects`).
-//
-// 🛑 AND THE FUNNEL WAS WIDENED RATHER THAN PARALLELED, WHICH IS D258's LESSON
-// PAYING FOR THE SECOND TIME. The question the handoff posed — *"which single
-// function does every effect of a played Item/Supporter pass through"* — had an
-// answer already in the tree: `EffectContext.invokedBy` and D142's
-// `attackEffectRefused`, which eight effect ops have consulted since. So the slice
-// is a WIDENING and not a new gate:
-//   • `invokedBy` "attack" → "attack" | "item" | "supporter", set at cardplay.ts's
-//     ONE trainer `runProgram` call;
-//   • `attackEffectRefused` → `effectRefused`, with the TRAINER channel added and
-//     an OPTIONAL `target` defaulting to what the function used to compute itself.
-// **All eight pre-existing call sites are byte-unchanged.**
-//
-// 🛑 THE TARGET CLAUSE WAS THE HARD HALF, EXACTLY AS PREDICTED, AND THE
-// SIGNATURE CHANGE IS WHERE IT LANDED. The old funnel resolved
-// `state.players[seat].active` internally — correct while EVERY caller was
-// attack-borne (§8 aims at an Active), and wrong the instant a Crushing Hammer
-// names a benched body. Hence the `target` parameter, and hence:
-//
-// 🆕 **THIS SLICE MAKES TWO PREVIOUSLY-DEAD ARMS LIVE, AND THAT IS A CORRECTNESS
-// RESULT RATHER THAN A SIDE EFFECT.** D253's `preventDamageAndEffectsWhileBenched`
-// and D254's `benchShieldedFromEffects` were both recorded at their own commits as
-// structurally unreachable *because every op consulting this funnel aimed at an
-// Active*. That sentence stopped being true here: `gust` names a benched body, so
-// an ATTACK that gusts is now refused by a benched Curious Tea Party holder
-// through the very disjunct written for totality two slices ago. Their doc blocks
-// are corrected in place — a comment that claims a deadness which has ended is a
-// stale count in prose (D258's rule about `coverage-backlog.md`, applied to code).
-//
-// ⚠️ READ SITES: **TWO NEW, NOT THREE.** The prediction named three (`applyStatus`,
-// `discardEnergy`, `gust`) and `applyStatus` cost ZERO LINES because it was already
-// on the funnel and its target really is the Active. The two that cost anything
-// took a FILTER rather than a guard, and the reason is printed: those ops CHOOSE a
-// target from a set, so refusing them whole would let one shielded Fraxure protect
-// a five-body Bench — a rule no card states.
-//
-// ⚠️ AND THE WHIFF GATE IS DELIBERATELY *NOT* WIDENED, ON A RULING ALREADY IN THIS
-// TREE. cardplay.ts's `programPlayable` cites Compendium ruling/284: "playing a
-// card for no effect happens when THE GAME STATE ITSELF prevents any effect from
-// taking place", with the Unown-E precedent as the other branch — a card blocked
-// by AN EFFECT IN PLAY stays playable. A Fraxure Ability is an effect in play. So
-// a Boss's Orders into a fully-shielded Bench is legal, is played, and does
-// nothing, and that is asserted below rather than left to the reader.
-//
-// ⚠️ `MATCH_RECORD_VERSION` STAYS **13**, DRIVEN AS A REPLAY AND NOT ASSERTED
-// (D258's rule). Widening a string-literal union is backward-compatible for an old
-// parked continuation: a record written before this slice carries
-// `invokedBy: "attack"` or nothing, and both still parse and still mean what they
-// meant. The new `TRAINER_EFFECT_PREVENTED` row is text in NEW records only —
-// D141's already-settled case, the same one `ATTACK_BOOSTED` was.
-
 const UNNERVE_TEXT =
   "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon.";
 const WIDE_WALL_TEXT =
   "As long as this Pokémon is in the Active Spot, whenever your opponent plays a Supporter card from their hand, prevent all effects of that card done to all of your Pokémon.";
 
-/** P2 holds the board being shielded; P1 is on turn and plays the Trainers.
-    `holderId` goes to P2's ACTIVE, `benchIds` to their Bench, and every one of
-    those bodies gets one Colorless Energy so Crushing Hammer has something to
-    aim at everywhere. P1's Active is a plain body — nothing here attacks. */
 function board(holderId: string, benchIds: readonly string[]): GameState {
   let state = driveSetup(1, { p1: TRAINER_SHIELD_DECK, p2: TRAINER_SHIELD_DECK }, { first: "p2" });
   state = setActiveFromDeck(state, "p2", holderId);
@@ -168,10 +51,6 @@ function prevented(events: readonly GameEvent[]): GameEvent[] {
   return events.filter((e) => e.type === "TRAINER_EFFECT_PREVENTED");
 }
 
-/** The candidate refs a parked prompt is offering, as "active" / "bench:N".
-    ⚠️ A ONE-CANDIDATE SET AUTO-RESOLVES (`parkOrForce`), so an empty answer here
-    means EITHER "nothing survived the filter" OR "exactly one did" — every case
-    below that reads this either has two survivors or checks the board instead. */
 function offered(state: GameState): string[] {
   if (state.phase.kind !== "effect:choose") return [];
   const prompt = state.phase.prompt;
@@ -207,17 +86,11 @@ describe("the registry data rows — 4 + 1 on two sentences", () => {
     });
   });
 
-  // 🛑 THE MERGE THIS ROW REFUSES, ASSERTED IN BOTH DIRECTIONS. The two sentences
-  // disagree on the TRIGGER (Item|Supporter vs Supporter) and on the TARGET (the
-  // holder vs the seat). Either merge is observable on a board this deck builds.
   it("keeps the two fields disjoint — neither sentence sets the other's flag", () => {
     expect(programFor("sv06.5-045")?.passive?.preventSupporterEffectsWhileActive).toBeUndefined();
     expect(programFor("sv07-076")?.passive?.preventTrainerEffects).toBeUndefined();
   });
 
-  // ⚠️ NO ATTACK PROGRAM ON ANY OF THE FIVE, which is the claim behind
-  // "`BUILT.attack` UNCHANGED at 1115 for the fourteenth slice" — authoring one
-  // would take a sentence away from the text derivers and move that column.
   it("authors NO attack program on any of the five printings", () => {
     for (const id of ["sv06.5-045", "sv06.5-077", "sv10-065", "sv10-210", "sv07-076"]) {
       expect(programFor(id)?.attack, id).toBeUndefined();
@@ -231,8 +104,6 @@ describe("the registry data rows — 4 + 1 on two sentences", () => {
     }
   });
 
-  // D145's move: discover the demonstrators from the registry rather than naming
-  // them, so a third fixture added without a case fails HERE.
   it("has exactly ONE fixture demonstrator per sentence", () => {
     const holders = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.passive?.preventTrainerEffects === true,
@@ -246,8 +117,6 @@ describe("the registry data rows — 4 + 1 on two sentences", () => {
     expect(programFor("fix-widewall")).toBe(programFor("sv07-076"));
   });
 
-  // The fixtures carry the PRINTED bytes, so an arm authored from a paraphrase
-  // (D183) fails here rather than passing against its own paraphrase.
   it("the fixture bodies print the real sentences", () => {
     expect(FIXTURE_POOL["fix-unnerve"]?.abilities?.[0]?.effect).toBe(UNNERVE_TEXT);
     expect(FIXTURE_POOL["fix-widewall"]?.abilities?.[0]?.effect).toBe(WIDE_WALL_TEXT);
@@ -261,8 +130,6 @@ describe("the fold and the scan — the two predicates", () => {
     if (activeBody === null) throw new Error("board");
     expect(passivesOf(active, activeBody).preventTrainerEffects).toBe(true);
 
-    // 🛑 NO ZONE CLAUSE IS PRINTED, so a BENCHED holder answers identically. This
-    // is the direct contrast with D253's field, whose whole content is a zone.
     const benched = board("fix-titan", ["fix-unnerve"]);
     const benchedBody = benched.players.p2.bench[0];
     if (benchedBody === undefined) throw new Error("board");
@@ -277,10 +144,6 @@ describe("the fold and the scan — the two predicates", () => {
     expect(passivesOf(state, teammate).preventTrainerEffects).toBe(false);
   });
 
-  // 🛑 THE SCAN'S SOURCE CLAUSE, IN BOTH DIRECTIONS. "As long as this Pokémon is
-  // in the Active Spot" is the entire difference between these two boards, and a
-  // build that folded the sentence instead of scanning it would answer the same
-  // on both.
   it("the seat scan is TRUE from the Active Spot and FALSE from the Bench", () => {
     expect(seatShieldedFromSupporterEffects(board("fix-widewall", ["fix-titan"]), "p2")).toBe(true);
     expect(seatShieldedFromSupporterEffects(board("fix-titan", ["fix-widewall"]), "p2")).toBe(
@@ -304,9 +167,6 @@ describe("the fold and the scan — the two predicates", () => {
 });
 
 describe("the ITEM half — Crushing Hammer's opponentChosen discard", () => {
-  // 🛑 THE FILTER SHAPE, AND THE SHARPEST CLAIM THE SLICE MAKES ABOUT PLACEMENT.
-  // One shielded body on a two-body board must remove ITSELF from the prompt and
-  // leave the other pickable. A guard would have refused the whole op.
   it("drops ONLY the shielded body from the candidate set", () => {
     const start = board("fix-titan", ["fix-unnerve", "fix-titan"]);
     const { state, events } = play(start, "fix-hammer");
@@ -315,9 +175,6 @@ describe("the ITEM half — Crushing Hammer's opponentChosen discard", () => {
     expect(prevented(events)[0]).toMatchObject({ seat: "p2", trainerType: "item" });
   });
 
-  // 🛑 THE FIRST LIVE BENCH ARM THIS FUNNEL HAS EVER HAD. Every prior effects-half
-  // holder sat behind a resolver that read the Active; here the shielded body is
-  // on the Bench and the refusal is about IT.
   it("shields a BENCHED holder, which no attack-borne board could reach", () => {
     const start = board("fix-titan", ["fix-unnerve", "fix-titan"]);
     const { state } = play(start, "fix-hammer");
@@ -334,9 +191,6 @@ describe("the ITEM half — Crushing Hammer's opponentChosen discard", () => {
     expect(energyCount(state, "p2", 0)).toBe(0);
   });
 
-  // 🛑 THE ROW'S SHARPEST OBSERVABLE CLAIM: Wide Wall prints "a Supporter card"
-  // and an Item goes straight through it. A merge of the two fields turns this
-  // green when it must be red.
   it("Wide Wall does NOT stop an Item — the trigger narrowing is real", () => {
     const { state, events } = play(board("fix-widewall", ["fix-titan"]), "fix-hammer");
     expect(prevented(events)).toEqual([]);
@@ -355,8 +209,6 @@ describe("the ITEM half — Crushing Hammer's opponentChosen discard", () => {
     expect(energyCount(state, "p2", "active") + energyCount(state, "p2", 0)).toBe(before);
   });
 
-  // ⚠️ ONE ROW PER SHIELDED BODY AND NOT PER CANDIDATE ENERGY — the distinct-body
-  // pass in the read site is what this asserts, and dropping it prints three.
   it("announces ONE row for a body carrying three Energy", () => {
     let start = board("fix-unnerve", ["fix-titan"]);
     start = attachFromDeck(start, "p2", "fix-energy", 2);
@@ -375,8 +227,6 @@ describe("the SUPPORTER half — Boss's Orders' gust", () => {
     expect(prevented(events)[0]).toMatchObject({ seat: "p2", trainerType: "supporter" });
   });
 
-  // 🛑 THE SEAT RULE DOING WHAT THE HOLDER RULE CANNOT: a Wide Wall in the Active
-  // Spot shields bodies it is not, so an entire Bench comes off the table.
   it("Wide Wall shields the WHOLE Bench from a Supporter", () => {
     const start = board("fix-widewall", ["fix-titan", "fix-titan"]);
     const { state, events, phase } = play(start, "sv02-172");
@@ -403,9 +253,6 @@ describe("the SUPPORTER half — Boss's Orders' gust", () => {
 });
 
 describe("the boundaries — what the channel must NOT refuse", () => {
-  // 🛑 THE PRINTED WORD IS "YOUR OPPONENT". A Supporter you play on your own board
-  // is not refused by your own wall, and this is the one direction a build that
-  // forgot the seat test would get wrong on every board.
   it("your own Trainer is not refused by your own shield", () => {
     let state = driveSetup(
       1,
@@ -429,11 +276,7 @@ describe("the boundaries — what the channel must NOT refuse", () => {
     expect(prevented(events)).toEqual([]);
   });
 
-  // ⚠️ AN ABILITY IS NOT AN ITEM OR A SUPPORTER, and `invokedBy` being ABSENT for
-  // one is what says so. Asserted through the context rather than a board because
-  // that is where the distinction lives.
-  // 🆕🆕🆕 D614 (D539): ~~ABSENT~~ — an Ability's program carries `"ability"` (never a Trainer type).
-  it("labels a played Item, and never an Ability's program, as a Trainer (🆕🆕🆕 D614 (D539): ~~leaves invokedBy absent for an Ability's program~~ — it is \"ability\")", () => {
+  it("labels a played Item, and never an Ability's program, as a Trainer ( D614 (D539): ~~leaves invokedBy absent for an Ability's program~~ — it is \"ability\")", () => {
     const state = board("fix-unnerve", ["fix-titan"]);
     // Nothing in this deck has a parking Ability; the claim is about the setter,
     // and cardplay.ts labels ONLY the trainer call. A grep-shaped assertion would
@@ -450,9 +293,6 @@ describe("the boundaries — what the channel must NOT refuse", () => {
     expect(state.players.p2.active).not.toBeNull();
   });
 
-  // §9 — all five printings ARE Abilities, so a lock takes the shield down. This
-  // is the whole reason both reads go through the catalog fold/scan rather than
-  // off `programFor(top.id)` at the read site.
   it("Klefki's Ability lock switches BOTH shields off", () => {
     let state = board("fix-unnerve", ["fix-titan"]);
     state = setActiveFromDeck(state, "p1", "sv01-096");
@@ -469,10 +309,6 @@ describe("the boundaries — what the channel must NOT refuse", () => {
 });
 
 describe("the record and the wire", () => {
-  // D258's rule: drive the no-bump as a REPLAY. A park written by this slice is
-  // resolved from a state that was DEEP-FROZEN before the play, so the whole
-  // park-and-resolve round trip runs against a record whose `ctx` now carries the
-  // widened union. A version gate that needed to move would break here.
   it("a park carrying the widened invokedBy still resolves from a frozen state", () => {
     const start = deepFreeze(board("fix-titan", ["fix-unnerve", "fix-titan"]));
     const { state: parked } = play(start, "fix-hammer");
@@ -491,8 +327,6 @@ describe("the record and the wire", () => {
     expect(energyCount(done, "p2", 0)).toBe(1);
   });
 
-  // The refusal must be LOUD (D142's rule), and a row a renderer cannot draw is
-  // not loud. Driven through the real renderer rather than asserted on the event.
   it("renders a readable row naming the card TYPE", async () => {
     const { logFromEvents } = await import("./log");
     const render = (result: { state: GameState; events: GameEvent[] }) =>
@@ -512,9 +346,6 @@ describe("the record and the wire", () => {
     );
   });
 
-  // NO RNG: neither read site flips anything, and `fix-hammer` is the ungated
-  // fixture on purpose. A shield that consumed a coin would desynchronise every
-  // replay after it (D258's finding), so this is the control for that.
   it("consumes no rng — the whole suite is seed-free", () => {
     const start = board("fix-titan", ["fix-unnerve", "fix-titan"]);
     const { state } = play(start, "sv02-172");

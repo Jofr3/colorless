@@ -14,101 +14,10 @@ import {
   setDamage,
   trainerCard,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
 
-// ── D312 — "YOU MAY SHUFFLE THIS POKÉMON AND ALL ATTACHED CARDS INTO YOUR
-//    DECK." — THE SELF-REMOVAL FAMILY'S **ATTACK** HALF, AND THE §8.1 PROMOTION
-//    SEAM AT ITS **SECOND SITE**. ────────────────────────────────────────────
-//
-// THE POPULATION, queried against remote Cloudflare D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, WHOLE
-// COLUMN read (D306's rule — every arm, `damage` and `cost` included):
-//
-//   SELECT id, name, category, stage, evolve_from, legal_standard,
-//          types_json, abilities_json, attacks_json, effect
-//     FROM cards
-//    WHERE legal_standard = 1
-//      AND instr(coalesce(attacks_json,''),
-//                'You may shuffle this Pokémon and all attached cards') > 0;
-//
-// **ONE legal row** — Gholdengo `sv08-131`, `Stage1` off `Gimmighoul`, 130 HP,
-// `types_json = ["Metal"]`, TWO attacks:
-//
-//   idx 0  "Strike It Rich"  cost [Metal]                      damage "30+"
-//          "If this Pokémon evolved from Gimmighoul during this turn, this
-//           attack does 90 more damage."
-//   idx 1  "Surf Back"       cost [Colorless × 3]              damage 100
-//          "You may shuffle this Pokémon and all attached cards into your deck."
-//
-// ⚠️ **INDEX 1 ONLY.** Index 0 MUST NOT inherit this program — the
-// index-precision rule `CardProgram.attack` states and D187's inflated
-// intermediate result paid for. §1 drives both halves of that.
-//
-// 🆕🆕 **D393 — THE REASON CHANGED AND THE RULE DID NOT.** This block used to read
-// *"index 0's evolved-this-turn conditional is unread by this engine and must stay
-// unsimulated"*, and D393 BUILT that sentence: *"If this Pokémon evolved from
-// Gimmighoul during this turn…"* now resolves through `CONDITIONAL_DAMAGE_CLAUSES`
-// to `yourActiveEvolvedFromThisTurn`. **THE PREMISE DIED WITHOUT A CHARACTER OF THE
-// MUTANT'S `find` MOVING** — D384's class — so it is re-transcribed here rather than
-// left to read as a fact. Gholdengo is now the engine's FIRST card with a REGISTRY
-// attack at one index and a DERIVED one at another, and §1's `toBeUndefined()` is
-// what keeps them apart: `programFor(id)` wins over `deriveAttackEffect`, so
-// authoring index 0 here would MASK the printed +90 as well as unsimulating
-// "Surf Back".
-//
-// ── 🛑 THE SEAM: MEASURED AT THE SECOND SITE, NOT ASSUMED FROM THE FIRST ────
-//
-// D311 proved the §8.1 promotion is a QUEUEING SEAM and not a stage, and put one
-// in `resolveMidTurnKnockOuts` — which serves `settleProgram`, i.e. Trainers,
-// Abilities and board triggers. **`finishAttack` is a different site.** It calls
-// `collectKnockOuts` DIRECTLY and never passes through `resolveMidTurnKnockOuts`,
-// so until D312 an attack that removed its own actor handed the turn over with an
-// empty Active Spot and nothing owed.
-//
-// **THE SECOND SITE IS NOT MORE EXPENSIVE, AND THAT IS A MEASUREMENT.** The
-// filter, the `.map` and the stage kind are byte-for-byte D311's;
-// `PendingStage {kind:"promote"}` gained nothing. The ONE thing that differs is
-// the TAIL the stages splice in front of, and the difference is what makes each
-// site correct:
-//
-//   resolveMidTurnKnockOuts   [...batch.stages, ...orphaned, resumeTurn]
-//   finishAttack              [...batch.stages, ...orphaned, ...turnTail]
-//
-// An Ability does not end a turn (§9), so the actor RESUMES; an attack does
-// (§5.3), so the turn ENDS [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] — and §8.1 owes the promotion BEFORE it does, because
-// a player does not hand over a board with an empty Active Spot. §3 drives that
-// ORDER, which is the only thing about this site that could have been got wrong.
-//
-// ── 🛑 AND A DOC CLAIM THIS FAMILY FALSIFIES, CORRECTED RATHER THAN LEFT ────
-//
-// `finishAttack`'s block justified its `addDamageByUid`-returns-`null` branch
-// with a claim about the POOL, quoted here verbatim from HEAD before this slice:
-//
-//     "`null` (not in play at all) is a no-op: nothing in this pool can discard
-//      its own actor mid-attack, and `koRecoilOf`'s 'the lethal set is the
-//      sweep's own' rule says a body that is about to be Knocked Out is still
-//      HERE."
-//
-// **"Surf Back" discards its own actor mid-attack.** The second half of that
-// sentence still holds; the first does not. ⚠️ **THE CODE WAS ALREADY RIGHT AND
-// ONLY THE REASON WAS WRONG** — `addDamageByUid` is total over uids and returns
-// `null` on one it cannot find — so what changed is that the branch went from
-// UNREACHABLE-BY-ARGUMENT to **REACHED**, and §4 below drives it on a real board
-// rather than leaving it to a comment. 🛑 **A `null` GUARD DEFENDED BY A CENSUS
-// OF THE POOL EXPIRES THE DAY THE POOL GROWS.**
-//
-// ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
-//
-// ONE registry ATTACK row over ONE id and ONE index, plus a SIX-LINE queueing
-// seam. **NO new `EffectOp`, op field, `PendingStage` kind, prompt kind, choice
-// kind, event, error code, `GameState` field or deriver arm**; `packages/schema`
-// takes ZERO and `MATCH_RECORD_VERSION` stays at 18 (nothing new is authorable
-// or persisted — the seam changes WHEN an existing stage is queued, not what it
-// looks like). It moves `BUILT.attack`'s **REGISTRY** summand (4 → 5) and leaves
-// the READER-keyed raw summand (1,146 over 303 sentences) untouched.
-
-/** The printed sentence, transcribed off the D1 row rather than assembled
-    (D306: transcribe, never interpolate). */
 const PRINTED = "You may shuffle this Pokémon and all attached cards into your deck.";
 
 /** Index 0's, kept as the control for the index-precision claim. */
@@ -125,8 +34,6 @@ const TOOL = "fix-d312sb-tool";
     programmed, so §4's board is built out of shipped pieces. */
 const VENGEFUL_PUNCH = "sv03-197";
 
-/** The LOCAL pool (D275's idiom) — the real `sv08-131` lives HERE and not in
-    `FIXTURE_POOL`, so no `fix-*` demonstrator and no manifest row is owed. */
 const LOCAL_CARDS: Record<string, Card> = {
   [GHOLDENGO]: battler(GHOLDENGO, {
     name: "Gholdengo",
@@ -175,27 +82,12 @@ const DECK = deckOf({
   [ENERGY]: 36,
 });
 
-/** Two seeds — nothing below rests on one shuffle (D270). */
 const SEEDS = [3129, 3137] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function apply(state: GameState, action: Parameters<typeof applyAction>[1]) {
   const result = applyAction(state, action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -288,15 +180,10 @@ describe("D312 §1 — the print, the index-precision, and the `optional` that I
     expect(POOL[GHOLDENGO]?.attacks?.[0]?.effect).toBe(IDX0_PRINTED);
   });
 
-  it("🛑 the registry authors index 1 and index 0 STAYS UNSIMULATED", () => {
+  it("the registry authors index 1 and index 0 STAYS UNSIMULATED", () => {
     const program = programFor(GHOLDENGO);
     expect(program?.attack?.[1]).toBeDefined();
-    // The index-precision rule. Index 0 is D393's DERIVED evolved-this-turn bonus
-    // and must NOT inherit "Surf Back"'s program — the registry beats the deriver,
-    // so an index slip here would silently swallow the printed +90 as well as
-    // leaving "Surf Back" unsimulated. Two failures, one assertion (D393).
     expect(program?.attack?.[0]).toBeUndefined();
-    // …and the row is attack-ONLY: no Ability, no passive, no trigger.
     expect(Object.keys(program ?? {})).toEqual(["attack"]);
   });
 
@@ -311,19 +198,13 @@ describe("D312 §1 — the print, the index-precision, and the `optional` that I
     ]);
   });
 
-  it("🛑 the prompt note IS the printed sentence, byte for byte", () => {
-    // The `payFromHandNote` rule: the op is the whole clause, so the note is the
-    // whole clause — never a paraphrase and never an interpolation (D306).
+  it("the prompt note IS the printed sentence, byte for byte", () => {
     const program = programFor(GHOLDENGO)?.attack?.[1] ?? [];
     const head = program[0];
     expect(head?.op === "optional" && head.note).toBe(PRINTED);
   });
 
-  it("⚠️ the ABILITY printing of the same mechanism takes NO wrapper — the pair is the argument", () => {
-    // §9 makes declining an Ability free, so Abra's row is a bare `returnSelf`. An
-    // ATTACK has already been declared — the Energy is committed and the turn is
-    // ending — so its printed "you may" names a decision that exists nowhere else.
-    // The two rows differ on this field for a reason about §8 vs §9.
+  it("the ABILITY printing of the same mechanism takes NO wrapper — the pair is the argument", () => {
     expect(programFor("sv06-080")?.abilities?.[0]?.program).toEqual([
       { op: "returnSelf", dest: "deck" },
     ]);
@@ -339,9 +220,6 @@ describe("D312 §2 — the decision: the attack lands FIRST, then the printed 'y
       const before = board({ bench: 2, seed, defender: FILLER });
       const { state: parked, events } = apply(before, SURF_BACK);
 
-      // §8.5 put the 100 down before step 4 ran the program — the order is §8's
-      // and not this row's choice, and it is why a Gholdengo that shuffles itself
-      // away has already Knocked its target out on the board §3 builds.
       expect(parked.players.p2.active?.damage).toBe(100);
       expect(parked.phase.kind).toBe("effect:choose");
       expect(find(events, "EFFECT_PENDING")).toMatchObject({ seat: "p1", note: PRINTED });
@@ -388,20 +266,14 @@ describe("D312 §2 — the decision: the attack lands FIRST, then the printed 'y
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D312 §3 — 🛑 THE SEAM AT ITS SECOND SITE, and the ORDER that makes it §8.1", () => {
+describe("D312 §3 — THE SEAM AT ITS SECOND SITE, and the ORDER that makes it §8.1", () => {
   it("the attacker's empty spot is promoted BEFORE the turn ends — the whole point", () => {
-    // ⚠️ THE ONE THING ABOUT THIS SITE THAT COULD HAVE BEEN GOT WRONG. D311's
-    // stages splice in front of `resumeTurn`; these splice in front of `turnTail`.
-    // Put them BEHIND the tail instead and this board hands p2 a turn against an
-    // empty Active Spot, which is precisely what §8.1 forbids.
     const { state: done, events } = apply(
       must(applyAction(board({ bench: 2, defender: FILLER }), SURF_BACK)),
       YES,
     );
     expect(done.phase).toEqual({ kind: "ko:promote", seat: "p1" });
     expect(find(events, "PROMOTION_REQUIRED")).toMatchObject({ seat: "p1" });
-    // ⚠️ AND THE TURN HAS NOT ENDED YET. The tail is still queued behind the
-    // promotion, so TURN_ENDED must not have fired.
     expect(events.map((e) => e.type)).not.toContain("TURN_ENDED");
     expect(done.pending.some((s) => s.kind === "endTurn")).toBe(true);
 
@@ -424,7 +296,7 @@ describe("D312 §3 — 🛑 THE SEAM AT ITS SECOND SITE, and the ORDER that make
     expect(done.phase).toMatchObject({ seat: "p2" });
   });
 
-  it("🛑 a Bench of NONE is the §14.2 loss — the attacker attacks itself out of the game", () => {
+  it("a Bench of NONE is the §14.2 loss — the attacker attacks itself out of the game", () => {
     const { state: done, events } = apply(
       must(applyAction(board({ bench: 0, defender: FILLER }), SURF_BACK)),
       YES,
@@ -433,11 +305,7 @@ describe("D312 §3 — 🛑 THE SEAM AT ITS SECOND SITE, and the ORDER that make
     expect(find(events, "GAME_OVER")?.outcome).toMatchObject({ result: "win", winner: "p2" });
   });
 
-  it("🛑 THE BOTH-SEATS BOARD: the defender is KO'd and the attacker removes ITSELF", () => {
-    // ⚠️ THE BOARD THE SKIP-TERM EXISTS FOR, and the one D311's site cannot reach:
-    // an attack can empty BOTH Active Spots in one resolution — one by Knock Out
-    // (which queues its own promotion) and one by `returnSelf` (which does not).
-    // A naive predicate gives the KO'd seat TWO promotions and the attacker NONE.
+  it("THE BOTH-SEATS BOARD: the defender is KO'd and the attacker removes ITSELF", () => {
     const { state: done, events } = apply(
       must(applyAction(board({ bench: 2, defender: WALL, p2Bench: 2 }), SURF_BACK)),
       YES,
@@ -468,9 +336,6 @@ describe("D312 §3 — 🛑 THE SEAM AT ITS SECOND SITE, and the ORDER that make
   });
 
   it("an ORDINARY attack is untouched — the superset costs nothing", () => {
-    // ⚠️ THE CONTROL. The seam scans BOTH seats on every attack; on the vast
-    // majority neither spot is empty and nothing is queued. Without this, a seam
-    // that queued a promotion unconditionally would still pass every case above.
     const { state: done, events } = apply(board({ bench: 2, defender: FILLER }), {
       type: "attack",
       seat: "p1",
@@ -483,11 +348,8 @@ describe("D312 §3 — 🛑 THE SEAM AT ITS SECOND SITE, and the ORDER that make
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D312 §4 — 🛑 THE FALSIFIED DOC CLAIM, DRIVEN", () => {
+describe("D312 §4 — THE FALSIFIED DOC CLAIM, DRIVEN", () => {
   it("an attack CAN now discard its own actor mid-attack — the claim's premise is RETIRED", () => {
-    // ⚠️ THIS IS THE SENTENCE `finishAttack` USED TO CARRY, and it is false as of
-    // this slice: "nothing in this pool can discard its own actor mid-attack".
-    // Driven as a fact about the board rather than as a fact about the comment.
     const parked = must(applyAction(board({ bench: 2, defender: FILLER }), SURF_BACK));
     const attacker = parked.players.p1.active?.stack.at(-1) ?? "";
     expect(attacker).not.toBe("");
@@ -498,15 +360,7 @@ describe("D312 §4 — 🛑 THE FALSIFIED DOC CLAIM, DRIVEN", () => {
     expect(done.players.p1.bench.some((b) => b.stack.includes(attacker))).toBe(false);
   });
 
-  it("🛑 THE DEFECT BOARD: a Vengeful Punch is owed 4 counters and the attacker is GONE", () => {
-    // ⚠️ THE BRANCH THAT WENT FROM UNREACHABLE-BY-ARGUMENT TO REACHED. p2's Wall
-    // holds Vengeful Punch (`sv03-197`, shipped since D158): "If the Pokémon this
-    // card is attached to is Knocked Out by damage from an attack from your
-    // opponent's Pokémon, put 4 damage counters on the Attacking Pokémon."
-    // Gholdengo Knocks it Out with the same attack that shuffles Gholdengo away,
-    // so the counters are owed to a body sitting in its controller's deck.
-    // `addDamageByUid` returns `null`, `recoiled` stays `null`, and NOTHING is
-    // placed — the code was always right and only its stated reason was wrong.
+  it("THE DEFECT BOARD: a Vengeful Punch is owed 4 counters and the attacker is GONE", () => {
     const state = board({ bench: 2, defender: WALL, defenderTool: VENGEFUL_PUNCH, p2Bench: 2 });
     const parked = must(applyAction(state, SURF_BACK));
     const attacker = parked.players.p1.active?.stack.at(-1) ?? "";
@@ -514,8 +368,6 @@ describe("D312 §4 — 🛑 THE FALSIFIED DOC CLAIM, DRIVEN", () => {
 
     // The antecedent HELD — the holder really was Knocked Out by this attack.
     expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
-    // …and no counterattack row was written, because there was nobody to write it
-    // on. NOT "no row because the Tool did not fire" — §5 below is the control.
     const recoils = events.filter(
       (e) => e.type === "COUNTERS_PLACED" && e.source === "counterattack",
     );
@@ -525,10 +377,6 @@ describe("D312 §4 — 🛑 THE FALSIFIED DOC CLAIM, DRIVEN", () => {
   });
 
   it("…and the CONTROL: DECLINE the removal and the SAME 4 counters LAND", () => {
-    // 🛑 THE INTERSECTION PROOF (D310's lesson: prove the branch discriminates, or
-    // the case above is green and dead). The identical board, the identical Tool,
-    // the identical Knock Out — and answering NO instead of YES leaves the
-    // attacker standing, so the recoil it is owed is placed on it.
     const state = board({ bench: 2, defender: WALL, defenderTool: VENGEFUL_PUNCH, p2Bench: 2 });
     const parked = must(applyAction(state, SURF_BACK));
     const { state: done, events } = apply(parked, NO);

@@ -16,24 +16,10 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D566 — THE TRAINER BUNDLE, HALF ONE: BROCK'S SCOUTING, OGRE'S MASK AND THE
-//    WATCHTOWER RIDER ──
-//
-//   Brock's Scouting   sv09-146 / sv09-179  Supporter  "Search your deck for up to 2 Basic Pokémon or
-//                                                      1 Evolution Pokémon, reveal them, and put them into
-//                                                      your hand. Then, shuffle your deck."
-//   Ogre's Mask        sv06-159 / sv08.5-118 Item      "Choose a Pokémon ex in your discard pile that has
-//                                                      "Ogerpon" in its name, and switch it with 1 of your
-//                                                      Pokémon ex in play that has "Ogerpon" in its name. …"
-//   Team Rocket's      sv10-180              Stadium   "{C} Pokémon in play (both yours and your opponent's)
-//   Watchtower                                         have no Abilities."
-//
-// Driven on the REAL ids on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Texts off tcgdex
-// (the audit's card JSON), 2026-09-28. Readings: docs/decisions.md D566 (R-OM, R-WT1, R-LK1 restated).
-// The KO-moment Tools and Powerglass are `koToolsD566.test.ts`.
 
 const BROCK = ["sv09-146", "sv09-179"] as const;
 const OGRE = ["sv06-159", "sv08.5-118"] as const;
@@ -134,7 +120,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [BROCK[0]]: 1,
   [BROCK[1]]: 1,
@@ -154,18 +139,6 @@ const DECK = deckOf({
   [TOOL]: 2,
   [FILLER]: 24,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -451,7 +424,7 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
     return { ...parked, basics, evos };
   }
 
-  it("🛑 the park: the UNION of both alternatives, max 2 (the LARGER, never the sum 3), min 0, `capsAnyOf` and no `caps`", () => {
+  it("the park: the UNION of both alternatives, max 2 (the LARGER, never the sum 3), min 0, `capsAnyOf` and no `caps`", () => {
     const { state, basics, evos } = scouting();
     const prompt = chooseCardsPrompt(state);
     expect(new Set(prompt.candidates)).toEqual(new Set([...basics, ...evos]));
@@ -468,7 +441,7 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
     );
   });
 
-  it("🛑 KEY RUNG: 1 Basic + 1 Evolution is REFUSED — the conjunctive caps [{Basic,2},{Evo,1}] under max 2 would pass it", () => {
+  it("KEY RUNG: 1 Basic + 1 Evolution is REFUSED — the conjunctive caps [{Basic,2},{Evo,1}] under max 2 would pass it", () => {
     const { state, basics, evos } = scouting();
     const mixed = [basics[0] as string, evos[0] as string];
     // The conjunctive reading, computed off the same prompt: both per-kind caps hold and
@@ -526,7 +499,7 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
     expect(view.phase.prompt.capsAnyOf?.[0]?.uids).not.toBe(engine?.[0]?.uids);
   });
 
-  it("🛑 the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and the refusal survives it", () => {
+  it("the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and the refusal survives it", () => {
     const { state, basics, evos } = scouting();
     const revived = JSON.parse(JSON.stringify(state)) as GameState;
     expect(rejected(revived, cards([basics[0] as string, evos[0] as string]))).toBe(
@@ -565,7 +538,7 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     return state;
   }
 
-  it('🛑 two bodies qualify and two DIFFERENT ex in the pile: TWO parks — the body, then the card (`dest "swap"`, mandatory)', () => {
+  it('two bodies qualify and two DIFFERENT ex in the pile: TWO parks — the body, then the card (`dest "swap"`, mandatory)', () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
     const first = play(state, OGRE[0]).state;
     if (first.phase.kind !== "effect:choose" || first.phase.prompt.kind !== "choosePokemon") {
@@ -589,7 +562,7 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     expect(rejected(second, cards([]))).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 the swap: the TOP card is replaced IN PLACE — damage, conditions, Energy, Tool and turns in play stay; the old top goes to the DISCARD; no shuffle", () => {
+  it("the swap: the TOP card is replaced IN PLACE — damage, conditions, Energy, Tool and turns in play stay; the old top goes to the DISCARD; no shuffle", () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
     const before = bodyAt(state, "p1", "active");
     const oldTop = topOf(before);
@@ -649,13 +622,13 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     expect(topOf(bodyAt(after, "p1", "active"))).toBe(topOf(bodyAt(state, "p1", "active")));
   });
 
-  it("🛑 a NON-ex Ogerpon is refused on the BODY side: the only Ogerpon in play is plain → the Item is unplayable", () => {
+  it("a NON-ex Ogerpon is refused on the BODY side: the only Ogerpon in play is plain → the Item is unplayable", () => {
     let state = table(TEAL_PLAIN, [], 5665);
     state = toDiscard(state, "p1", HEARTH_EX);
     expect(playRejected(state, OGRE[0])).toBe("NO_LEGAL_TARGET");
   });
 
-  it("🛑 a NON-ex Ogerpon is refused on the DISCARD side: the only Ogerpon in the pile is plain → unplayable", () => {
+  it("a NON-ex Ogerpon is refused on the DISCARD side: the only Ogerpon in the pile is plain → unplayable", () => {
     let state = table(TEAL_EX, [], 5666);
     state = toDiscard(state, "p1", TEAL_PLAIN);
     expect(playRejected(state, OGRE[0])).toBe("NO_LEGAL_TARGET");
@@ -687,7 +660,7 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     );
   });
 
-  it("🛑 MID-TURN KO: the new top's HP (100) is at or below the carried damage (100) → swept at once, and the Prize is the OPPONENT's", () => {
+  it("MID-TURN KO: the new top's HP (100) is at or below the carried damage (100) → swept at once, and the Prize is the OPPONENT's", () => {
     let state = table(FILLER, [TEAL_EX], 5670);
     state = withBody(state, "p1", 0, (p) => ({ ...p, damage: 100 }));
     state = toDiscard(state, "p1", TINY_EX);
@@ -713,7 +686,7 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
     expect(idOf(after, topOf(bodyAt(after, "p1", 0)))).toBe(TINY_EX);
   });
 
-  it("🛑 R-OM (UNRULED): Teal Dance used by the old top is FRESH on the new one — the lock keys on the top uid", () => {
+  it("R-OM (UNRULED): Teal Dance used by the old top is FRESH on the new one — the lock keys on the top uid", () => {
     let state = table(TEAL_EX, [], 5672);
     state = toDiscard(state, "p1", TEAL_EX);
     state = setHand(state, "p1", [GRASS, GRASS]);
@@ -765,7 +738,7 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
   const topUidAt = (state: GameState, seat: Seat, spot: Spot) =>
     topOf(bodyAt(state, seat, spot)) as string;
 
-  it("🛑 BOTH seats, Active AND Bench: every {C} body is locked and the {G} body is not", () => {
+  it("BOTH seats, Active AND Bench: every {C} body is locked and the {G} body is not", () => {
     const state = towered(true);
     expect(state.stadium).not.toBeNull();
     const locked = disabledAbilityUids(state);
@@ -780,7 +753,7 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
     expect(disabledAbilityUids(towered(false)).size).toBe(0);
   });
 
-  it("🛑 a {C} ACTIVATED Ability is refused under it (`ABILITY_DISABLED`) and used without it", () => {
+  it("a {C} ACTIVATED Ability is refused under it (`ABILITY_DISABLED`) and used without it", () => {
     const action: GameAction = {
       type: "useAbility",
       seat: "p1",
@@ -791,7 +764,7 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
     expect(all(run(towered(false), action).events, "CARDS_DRAWN")).toHaveLength(1);
   });
 
-  it("🛑 a {C} ON-PLAY TRIGGER does not fire under it (Farfetch'd parks no search); the {G} control's trigger does", () => {
+  it("a {C} ON-PLAY TRIGGER does not fire under it (Farfetch'd parks no search); the {G} control's trigger does", () => {
     const base = setHand(
       ensureInDeck(ensureInDeck(towered(true), "p1", FARFETCHD), "p1", DURANT_EX),
       "p1",
@@ -847,12 +820,7 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
     }
   });
 
-  it("🛑 R-WT1 TRIPWIRE (🆕🆕🆕 D578: INVERTED): ONE registered passive rewrites a Pokémon's TYPE, `typesInPlay` — the Watchtower still reads PRINTED types, exact because no retype names {C}", () => {
-    // ~~The parked Scovillain ex "Double Type" … is UNBUILT, and the day it lands this rung must
-    // move the Watchtower's read to an effective-types reader.~~ 🆕🆕🆕 D578 (D539): BUILT
-    // (`DOUBLE_TYPE`, `typesInPlay: ["Grass", "Fire"]`), and the Watchtower read STAYS PRINTED
-    // (the effective reader would recurse through `disabledAbilityUids`); its exactness is now
-    // the no-{C} registry walk in `scovillainD578.test.ts`.
+  it("R-WT1 TRIPWIRE ( D578: INVERTED): ONE registered passive rewrites a Pokémon's TYPE, `typesInPlay` — the Watchtower still reads PRINTED types, exact because no retype names {C}", () => {
     expect(programFor("sv08-037")?.passive?.typesInPlay).toEqual(["Grass", "Fire"]);
     expect(programFor("sv08-216")).toBe(programFor("sv08-037"));
     const passiveKeys = new Set<string>();
@@ -860,25 +828,16 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
       for (const key of Object.keys(programFor(id)?.passive ?? {})) passiveKeys.add(key);
     }
     const typeKeys = [...passiveKeys].filter((key) => /type/i.test(key)).sort();
-    // Every type-NAMING passive key, each one a filter, a reduction or a weakness rewrite —
-    // ~~none rewrites the holder's own `types`~~ 🆕🆕🆕 D578 (D539): ONE does, `typesInPlay`. A
-    // new key here must be read before it is added.
     expect(typeKeys).toEqual([
       "damageReductionAfterWRFromTypeThenDiscard",
       "damageReductionAfterWRIfType",
       "preventDamageFromType",
-      "typesInPlay", // 🆕🆕🆕 D578 — the ONE key that rewrites the holder's own types
-      // 🆕🆕🆕 D580 — NOT a second rewriter: Iron Treads "Dual Core"'s CONDITION on `typesInPlay` (the
-      // retype holds only while a Tool of this NAME is attached). It names no type, so the Watchtower's
-      // printed read stays exact — `typesInPlay` is still the ONE key that rewrites a holder's types.
+      "typesInPlay",
       "typesInPlayWhileToolNamed",
     ]);
   });
 
-  it("🛑 R-LK1 RESTATED WITH THE WATCHTOWER BUILT: neither legal Pokémon lock source is {C}, so it switches no lock off", () => {
-    // Flutter Mane `sv05-078` is {P} and Gastrodon `sv08-107` is {F} (tcgdex, 2026-09-28).
-    // 🆕🆕🆕 D571 — and Iron Thorns ex `sv06-077` "Initialization" (built at D571, the THIRD legal
-    // Pokémon lock) is {L} (tcgdex, 2026-10-03), so the Watchtower still switches no lock off.
+  it("R-LK1 RESTATED WITH THE WATCHTOWER BUILT: neither legal Pokémon lock source is {C}, so it switches no lock off", () => {
     expect(programFor("sv05-078")?.passive?.disableAbilities).toBeDefined();
     expect(programFor("sv08-107")?.passive?.disableAbilities).toBeDefined();
     expect(programFor("sv06-077")?.passive?.disableAbilities).toBeDefined();

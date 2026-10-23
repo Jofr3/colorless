@@ -30,48 +30,12 @@ import type { CoinFace } from "./rng";
 import { FIXTURE_POOL, basicEnergy, battler, deckOf } from "./testFixtures";
 import { makeInPlay } from "./types";
 
-// 0.434.0 → 0.435.0 — 🆕🆕🆕 D550: THE OPPONENT-FLIPPED PER-TAILS SNIPE ON THE OPPONENT'S
-// BENCH COUNT, WITH WEAKNESS AND RESISTANCE SUPPRESSED.
-//
-// ── THE PRINTED SENTENCE ─────────────────────────────────────────────────────
-//   `censusAttackCorpus.ts` FILE LINE 669 — "Your opponent flips a coin for each of their
-//     Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each
-//     tails. This attack's damage isn't affected by Weakness or Resistance."   **1 printing**
-//
-// ONE whole-sentence anchor (`ATTACK_OPPONENT_BENCH_TAILS`) read by TWO readers off the SAME
-// `effect` string — the FOURTH use of D493's one-anchor-two-readers route (D493, D494,
-// D539, D550), and the column's FIFTH dual-claimed sentence (`opponentHandScaling.test.ts`
-// §2 pins all five by name):
-//   · `deriveAttackCoinFlip` → `{ kind: "opponentPerTails", flips: { kind: "opponentBench" },
-//     per: 80 }` — a NINTH `AttackCoinFlip` member over a SIXTH, NULLARY `AttackFlipCount`
-//     member;
-//   · `deriveAttackDamageSuppression` → `{ weakness: true, resistance: true }`, GATED on the
-//     coin reader (D445).
-//
-// ── THE RULINGS (docs/decisions.md D550, each with its reversal condition) ────
-//   R1 — the coin rows are filed under the FLIPPER, the OPPONENT (D547's precedent:
-//        `ATTACK_FLIP_LOCK_CHECK` files "your opponent flips" under the seat that flips).
-//   R2 — the count is the opponent's Benched bodies AT THE FLIP SITE, after the §8
-//        flip-lock/Confusion checks; it cannot differ from a declaration-time count.
-//   R3 — the printed marker is read as "80×": the printed base is DROPPED.
-//   R4 — ONLY W/R is suppressed: the defender's own effects (D547's vulnerability) apply.
-//   R5 — 0 benched = 0 flips, no rng step, no coin rows, no DAMAGE_DEALT; all heads = no
-//        DAMAGE_DEALT. Neither files a 0-damage row.
-//
-// ⚠️ **THE REAL CARD IS UNMEASURED.** No id on this checkout resolves to the sentence
-// (`registry.ts`, `catalogManifest.ts`, `testFixtures.ts` — measured by `git grep`), so the
-// board half rides a FILE-LOCAL DECLARED `d550-*` demonstrator (D425) in its own 60-card deck
-// (D270), with `damage: "80×"` — the R3 reading, declared rather than assumed.
-
-/** THE SENTENCE, byte for byte off `legalAttackCorpus()` — §1 asserts that. */
 const PRINTED =
   "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.";
 
 /** The derived coin member, spelled once. */
 const MEMBER = { kind: "opponentPerTails", flips: { kind: "opponentBench" }, per: 80 } as const;
 
-/** Every reader `censusAtHead.test.ts` sweeps with. ⚠️ Spliced before the last entry if it
-    ever grows (D419). */
 const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -85,7 +49,6 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
@@ -98,9 +61,9 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D550 §1 — the sentence, measured live over the legal column", () => {
-  it("🛑 the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
+  it("the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("is really in the column, ONCE, at ONE printing — and it is the only per-tails fold", () => {
@@ -114,7 +77,7 @@ describe("D550 §1 — the sentence, measured live over the legal column", () =>
     expect(flippedByTheOpponent.map(([, s]) => s)).toEqual([PRINTED]);
   });
 
-  it("🛑 TWO readers own it, by VALUE — the coin reader and the suppression reader — and the other ELEVEN refuse", () => {
+  it("TWO readers own it, by VALUE — the coin reader and the suppression reader — and the other ELEVEN refuse", () => {
     expect(deriveAttackCoinFlip(PRINTED)).toEqual(MEMBER);
     expect(deriveAttackDamageSuppression(PRINTED)).toEqual({ weakness: true, resistance: true });
     for (const read of READERS) {
@@ -135,10 +98,7 @@ describe("D550 §1 — the sentence, measured live over the legal column", () =>
     expect(deriveAttackDamageSuppression(thirty)).toEqual({ weakness: true, resistance: true });
   });
 
-  it("🛑 a printed 0 stays LOUD in BOTH readers, and 1 does not — the `per >= 1` guard, and the gate that carries it", () => {
-    // The coin arm's guard refuses the 0; the suppression arm is GATED on the coin reader
-    // (D445), so a bare `.test()` there would claim the 0-damage sentence whole — this is
-    // the rung that goes red on that.
+  it("a printed 0 stays LOUD in BOTH readers, and 1 does not — the `per >= 1` guard, and the gate that carries it", () => {
     const zero = PRINTED.replace("does 80 damage", "does 0 damage");
     expect(deriveAttackCoinFlip(zero)).toBeNull();
     expect(deriveAttackDamageSuppression(zero)).toBeNull();
@@ -149,7 +109,6 @@ describe("D550 §1 — the sentence, measured live over the legal column", () =>
   });
 
   it("the anchor is WHOLE-SENTENCE — leading text, trailing text, case and the period", () => {
-    // D452's rule: the prefix ENDS a sentence, so only the anchor is varied.
     for (const text of [
       `This attack does 30 damage. ${PRINTED}`,
       `${PRINTED} Then, discard a card.`,
@@ -194,11 +153,6 @@ describe("D550 §1 — the sentence, measured live over the legal column", () =>
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. A file-local `cardPool` (D414/D452), so no `FIXTURE_POOL` id is added.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** The declared demonstrator (D425): a {R} body printing the sentence, "80×". */
 const SNIPER = "d550-sniper";
 /** 900 HP and NO Weakness/Resistance: the plain target. */
 const WALL = "d550-wall";
@@ -235,7 +189,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const CARD_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** SIXTY cards (D270). The largest demand is 5 bodies on one Bench plus setup's draw. */
 const LOCAL_DECK = deckOf({
   [SNIPER]: 6,
   [WALL]: 6,
@@ -356,10 +309,6 @@ function fuel(state: GameState, seat: Seat): GameState {
   };
 }
 
-/** THE BOARD: P1's sniper with `ownBench` bodies behind it, P2's `target` with `foeBench`.
-    The two Bench sizes are chosen per case so that the CORRECT count (P2's Bench) differs
-    from every wrong one: P1's Bench (the seat crossed), P2's Bench + Active (the
-    `pokemonInPlay` reading), and a constant. */
 function board(seed: number, ownBench: number, foeBench: number, target: string = WALL): GameState {
   let state = table(seed);
   state = fuel(benchUp(fieldAlone(state, "p1", SNIPER), "p1", ownBench), "p1");
@@ -412,7 +361,7 @@ const SEEDS = 24;
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D550 §2 — the opponent flips once per BENCHED body, and the damage is tails × 80", () => {
-  it("🛑 flips EXACTLY as many times as the OPPONENT has Benched — never the attacker's Bench, never Active + Bench", () => {
+  it("flips EXACTLY as many times as the OPPONENT has Benched — never the attacker's Bench, never Active + Bench", () => {
     // Asymmetric benches, both ways round: 1 own / 3 foe and 4 own / 2 foe. The seat
     // crossed would answer 1 and 4; `pokemonInPlay` on the foe would answer 4 and 3; a
     // constant cannot answer both 3 and 2.
@@ -430,7 +379,7 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
     }
   });
 
-  it("🛑 R1 — every coin row is filed under the OPPONENT, the seat that flips", () => {
+  it("R1 — every coin row is filed under the OPPONENT, the seat that flips", () => {
     for (let seed = 0; seed < 6; seed += 1) {
       const { events } = act(board(seed, 1, 3), toll);
       const flips = rowsOf(events, "ATTACK_EFFECT_COIN_FLIP");
@@ -441,7 +390,7 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
     }
   });
 
-  it("🛑 the damage is TAILS × 80 — not heads × 80, not every flip × 80, and never the printed base on top", () => {
+  it("the damage is TAILS × 80 — not heads × 80, not every flip × 80, and never the printed base on top", () => {
     const seenTails = new Set<number>();
     for (let seed = 0; seed < SEEDS; seed += 1) {
       const { state: done, events } = act(board(seed, 1, 3), toll);
@@ -465,7 +414,7 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
     expect([...seenTails].sort()).toEqual([0, 1, 2, 3]);
   });
 
-  it("🛑 R5 — ALL HEADS files NO DAMAGE_DEALT (never a 0-damage row), and the flips were still taken", () => {
+  it("R5 — ALL HEADS files NO DAMAGE_DEALT (never a 0-damage row), and the flips were still taken", () => {
     const allHeads: number[] = [];
     for (let seed = 0; seed < SEEDS; seed += 1) {
       const state = board(seed, 1, 3);
@@ -480,7 +429,7 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
     expect(allHeads.length).toBeGreaterThan(0);
   });
 
-  it("🛑 R5 — ZERO Benched takes NO flip, spends NO rng step, files NO DAMAGE_DEALT, and is not LOUD", () => {
+  it("R5 — ZERO Benched takes NO flip, spends NO rng step, files NO DAMAGE_DEALT, and is not LOUD", () => {
     for (let seed = 0; seed < 6; seed += 1) {
       // The ATTACKER's Bench is full so a crossed seat would flip five times here.
       const state = board(seed, 5, 0);
@@ -511,7 +460,7 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
     }
   });
 
-  it("🛑 R1 — the log RENDERS the coin rows under P2 (read, not reasoned about — D456)", () => {
+  it("R1 — the log RENDERS the coin rows under P2 (read, not reasoned about — D456)", () => {
     let seenTails = false;
     for (let seed = 0; seed < 6; seed += 1) {
       const { state, events } = act(board(seed, 1, 3), toll);
@@ -539,7 +488,7 @@ describe("D550 §2 — the opponent flips once per BENCHED body, and the damage 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else is", () => {
-  it("🛑 a defender BOTH ×2 Weak and −30 Resistant to {R} takes EXACTLY tails × 80", () => {
+  it("a defender BOTH ×2 Weak and −30 Resistant to {R} takes EXACTLY tails × 80", () => {
     // Unsuppressed this board would read (80t × 2) − 30; Weakness alone suppressed would
     // read 80t − 30; Resistance alone, 160t. Each differs from 80t for every t ≥ 1.
     let seen = 0;
@@ -549,7 +498,6 @@ describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else 
       expect(done.players.p2.active?.damage ?? 0, `seed ${seed}`).toBe(80 * tails);
       if (tails === 0) continue;
       seen += 1;
-      // …and the ROW says why: neither modifier was applied.
       const dealt = rowsOf(events, "DAMAGE_DEALT");
       expect(
         dealt.map((e) => [e.weakness, e.resistance]),
@@ -573,7 +521,7 @@ describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else 
     expect(done.players.p2.active?.damage ?? 0).toBe(70);
   });
 
-  it("🛑 R4 — a D547 vulnerability on the defender STILL adds its +50 after the (suppressed) W/R step", () => {
+  it("R4 — a D547 vulnerability on the defender STILL adds its +50 after the (suppressed) W/R step", () => {
     let seen = 0;
     for (let seed = 0; seed < SEEDS; seed += 1) {
       let state = board(seed, 1, 3);
@@ -602,7 +550,7 @@ describe("D550 §3 — Weakness AND Resistance are suppressed, and nothing else 
 });
 
 describe("D550 §4 — nothing new is persisted, so the record version holds", () => {
-  it("🛑 the demonstrator is FILE-LOCAL and DECLARED — zero `FIXTURE_POOL` ids, a 60-card deck, the printed '80×'", () => {
+  it("the demonstrator is FILE-LOCAL and DECLARED — zero `FIXTURE_POOL` ids, a 60-card deck, the printed '80×'", () => {
     expect(Object.keys(LOCAL_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
     expect(LOCAL_DECK).toHaveLength(60);
     expect(LOCAL_CARDS[SNIPER]?.attacks?.[TOLL_INDEX]).toMatchObject({

@@ -22,18 +22,8 @@ import {
   setConditions,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D642 — Z1 + K2: THE `me` STADIUM REST AND THE WATCHED-ACTIVE DAMAGE TRIGGERS ──
-//
-// 5 printed texts / 6 printings on five NEW registry objects: Spiritomb `me01-087` / `-148` "Spiteful Swirl" and
-// Wishiwashi `30th-022` "Counterattack Grouping" (the NEW `PassiveEffects.damageAttackerWatched`, read by
-// continuous.ts `watchedRecoilOf` at the two recoil sites; R-SSW1, R-CAG1), Risky Ruins `me01-127` (the NEW
-// `StadiumEffects.benchArrivalCounters`, interpreter.ts `benchArrivalCounters`; R-RR1, R-RR2), Dizzying Valley
-// `me02-088` (the NEW `StadiumEffects.confusionSurvivesStageChange`, continuous.ts `stageChangeConditions`; R-DV1)
-// and Ange Floette `me04-075` (the NEW `StadiumEffects.playOnlyOverStadium` and `hpDelta.name`; R-ANF1, R-ANF2).
-// Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`.
-// Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const SWIRL_TEXT =
   "If your Active {D} Pokémon is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place 1 damage counter on the Attacking Pokémon.";
@@ -56,7 +46,7 @@ const VALLEY = "me02-088";
 const ANGE = "me04-075";
 const TOWER = "me04-080";
 const MEGA_FLOETTE = "me04-035";
-const CLEFABLE = "me03-031"; // Mega Clefable ex "Luminous Wing" (D614)
+const CLEFABLE = "me03-031";
 const FLUTTER = "sv05-078"; // Flutter Mane "Midnight Fluttering": the opposing Active has no Abilities
 const NEST_BALL = "sv01-181";
 const ALOMOMOLA = "sv10.5b-024"; // "Gentle Fin": a Basic with 70 HP or less from the discard onto the Bench
@@ -293,11 +283,6 @@ const DECK = deckOf({
 const BOARD_IDS = Object.keys(LOCAL)
   .filter((id) => id !== SPARE)
   .concat([E, NEST_BALL]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own SECOND turn (P2 went first; every turn passed); both hands back into the decks. */
 function p1Turn(): GameState {
@@ -806,7 +791,7 @@ describe("D642 §6 — Ange Floette: only over a Prism Tower, the same turn too;
     expect(wire(theirs)).toBe(true);
   });
 
-  it("🛑 the stated limitation, pinned: the actor's OWN earlier Prism Tower plus a spent play is let through", () => {
+  it("the stated limitation, pinned: the actor's OWN earlier Prism Tower plus a spent play is let through", () => {
     const base = stadium(table(FILLER, FILLER), TOWER, "p1");
     const spent = withAnge({ ...base, allowances: { ...base.allowances, stadiumPlayed: true } });
     expect(wire(spent)).toBe(false);

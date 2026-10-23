@@ -15,14 +15,6 @@ import {
   setBenchDamage,
 } from "./testFixtures";
 
-// M5 op-slice — the attachEnergyFrom RIDERS, authoring the marquee Gardevoir ex
-// "Psychic Embrace": "As often as you like during your turn, you may attach a
-// Basic {P} Energy card from your discard pile to 1 of your {P} Pokémon. If you
-// attached Energy in this way, put 2 damage counters on that Pokémon. You can't
-// use this Ability on a Pokémon that would be Knocked Out." → the three riders on
-// the base attach op: targetType (only {P} Pokémon), bonusCounters (20 = 2), and
-// notIfKO (exclude any target the counters would Knock Out); repeatable.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,

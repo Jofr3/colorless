@@ -1,8 +1,3 @@
-// POST /lobby + GET /lobby/:code/ws against a scripted DO namespace (no
-// workers runtime under vitest): code minting with collision retry, strict
-// code validation, upgrade-header gating, and that the socket route forwards
-// the original upgrade request to the right instance's internal /ws path.
-
 import { isValidLobbyCode } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { Env } from "../env";

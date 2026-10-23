@@ -25,27 +25,10 @@ import {
   setPrizes,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D569 — THE PARADOX BANNER UNLOCK, SLICE 2 PART a: 20 PRINTINGS ──────────────────────
-//
-//   The datum      banners.ts `Banner = "Tera" | "Ancient" | "Future"`, +86 ids (Ancient 44, Future 42)
-//   Vocabulary     cards.ts `bannerCard` (ANY category); `BoardCondition` `opponentBannerPokemonInPlay`
-//                  and `yourPlayedBannerSupporterThisTurn`; `healChosen.filter`,
-//                  `moveCountersToDefender.filter`, `drawCards.per` → `pokemonInPlay`,
-//                  `attachFromDiscard.targetBanner` / `.each`, `seatDamageBonusBeforeWR.exceptName`
-//   Attacks (+12)  Miraidon sv05-121/svp-092 "Peak Acceleration", Great Tusk sv05-097/sv08.5-055 "Land
-//                  Collapse", Scream Tail sv05-077 "Supportive Singing", Flutter Mane sv08-096
-//                  "Perplexing Transfer" (registry rows); Koraidon sv05-119/svp-091 "Primordial
-//                  Beatdown", Roaring Moon sv05-109/sv08.5-065 "Vengeance Fletching", Iron Valiant
-//                  sv05-080 "Majestic Sword", Slither Wing sv06.5-026 "Iron Smasher" (deriver rows)
-//   Abilities (+6) Iron Crown ex "Cobalt Command" sv05-081/-191/-206/-216, sv08.5-158, svp-146
-//   Trainers (+2)  Awakening Drum sv05-141, Reboot Pod sv05-158
-//
-// Driven on REAL ids in a LOCAL `cardPool` (D275) — the table knows no `fix-*` id — with the card
-// bodies transcribed from the tcgdex card JSON (the audit's, 2026-10-02). Rulings R-PX1 … R-PX5 are
-// ⚠️ UNRULED: docs/decisions.md D569.
 
 const KORAIDON = "sv05-119"; // Ancient — Primordial Beatdown 30× per own Ancient in play
 const ROARING_MOON = "sv05-109"; // Ancient — Vengeance Fletching 70+, +10 per Ancient CARD in discard
@@ -56,7 +39,7 @@ const GREAT_TUSK = "sv05-097"; // Ancient — Land Collapse, mill 1 (+3 after an
 const SCREAM_TAIL = "sv05-077"; // Ancient — Supportive Singing, heal 100 from a Benched Ancient
 const FLUTTER_MANE = "sv08-096"; // Ancient — Perplexing Transfer, move a Benched Ancient's counters
 const IRON_CROWN = "sv05-081"; // Future ex — Cobalt Command
-const IRON_THORNS_EX = "sv06-077"; // Future ex — Initialization (UNBUILT at D569; 🆕🆕🆕 D571 (D539): BUILT, `INITIALIZATION`)
+const IRON_THORNS_EX = "sv06-077";
 const DRUM = "sv05-141"; // Ancient Item
 const POD = "sv05-158"; // Future Item
 const GUIDANCE = "sv05-147"; // Ancient Supporter — Explorer's Guidance
@@ -359,7 +342,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [KORAIDON]: 2,
   [ROARING_MOON]: 1,
@@ -388,18 +370,6 @@ const DECK = deckOf({
   [D]: 3,
   [FILLER]: 16,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function rejected(state: GameState, action: GameAction): string {
   const result = applyAction(state, action);
@@ -646,12 +616,12 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     expect([count("Future", "Pokemon"), count("Future", "Trainer")]).toEqual([38, 4]);
   });
 
-  it("🛑 every Paradox id is a legal printing in one of the two local pools (ex rows in `LEGAL_EX_POOL`)", () => {
+  it("every Paradox id is a legal printing in one of the two local pools (ex rows in `LEGAL_EX_POOL`)", () => {
     for (const id of paradox) expect(exPool.has(id) || pool.has(id), id).toBe(true);
     expect(PARADOX_POOL).toHaveLength(47);
   });
 
-  it("🛑 the eight Trainers are the four printed names, and the Ancient/Future split is by name", () => {
+  it("the eight Trainers are the four printed names, and the Ancient/Future split is by name", () => {
     const trainers = paradox.filter((id) => pool.get(id)?.[2] === "Trainer");
     expect(trainers.map((id) => [id, pool.get(id)?.[1], BANNER_BY_ID[id]]).sort()).toEqual(
       [
@@ -667,7 +637,7 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     );
   });
 
-  it("🛑 REPRINT CONSISTENCY: same name, HP, attacks and abilities agree on the banner — over BOTH pools", () => {
+  it("REPRINT CONSISTENCY: same name, HP, attacks and abilities agree on the banner — over BOTH pools", () => {
     const groups = new Map<string, string[]>();
     const add = (id: string, key: unknown) => {
       const k = JSON.stringify(key);
@@ -681,7 +651,6 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
       (members) => new Set(members.map((id) => BANNER_BY_ID[id])).size > 1,
     );
     expect(split).toEqual([]);
-    // ⚠️ NOT VACUOUS: Iron Crown ex is SIX printings of one text, all Future.
     const crown = [...groups.values()].find((members) => members.includes(IRON_CROWN));
     expect(crown?.sort()).toEqual([
       "sv05-081",
@@ -694,21 +663,18 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     for (const id of crown ?? []) expect(BANNER_BY_ID[id], id).toBe("Future");
   });
 
-  it("🛑 THE NAME IS NOT THE BANNER — three same-species legal printings carry NO banner (the tcgdex image)", () => {
+  it("THE NAME IS NOT THE BANNER — three same-species legal printings carry NO banner (the tcgdex image)", () => {
     expect(pool.get("sv07-090")?.slice(0, 2)).toEqual(["sv07-090", "Koraidon"]);
     expect(pool.get("svp-148")?.slice(0, 2)).toEqual(["svp-148", "Miraidon"]);
     expect(exPool.get("svp-197")?.slice(0, 2)).toEqual(["svp-197", "Koraidon ex"]);
     for (const id of ["sv07-090", "svp-148", "svp-197"])
       expect(BANNER_BY_ID[id], id).toBeUndefined();
-    // …while their banner siblings ARE keyed — the table is by ID (D135).
     expect(BANNER_BY_ID[KORAIDON]).toBe("Ancient");
     expect(BANNER_BY_ID["sv05-120"]).toBe("Ancient"); // Koraidon ex
     expect(BANNER_BY_ID[MIRAIDON]).toBe("Future");
   });
 
-  it("the ~~Tera~~ `sv` Tera rows are untouched: 98, and no id carries two banners (a Record cannot) (🆕🆕🆕 D582 (D539): *the Tera rows are 98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
-    // 🆕🆕🆕 D582 — the `sv` Tera rows are still 98; the table gained FIVE `me` Tera reprints
-    // (`me02.5-*`, `reprintAliasMeD582.test.ts`), so 103 Tera / 189 in all.
+  it("the ~~Tera~~ `sv` Tera rows are untouched: 98, and no id carries two banners (a Record cannot) ( D582 (D539): *the Tera rows are 98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
     const tera = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
     expect(tera.filter((id) => !id.startsWith("me"))).toHaveLength(98);
     expect(tera).toHaveLength(103);
@@ -718,7 +684,7 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§2 — `bannerCard` (any category) against `bannerPokemon` (Pokémon only)", () => {
-  it("🛑 an Ancient TRAINER is an Ancient card and NOT an Ancient Pokémon — the undercount `bannerPokemon` would ship", () => {
+  it("an Ancient TRAINER is an Ancient card and NOT an Ancient Pokémon — the undercount `bannerPokemon` would ship", () => {
     const ancientCard = { kind: "bannerCard", banner: "Ancient" } as const;
     const ancientPokemon = { kind: "bannerPokemon", banner: "Ancient" } as const;
     expect(matchesFilter(card(GUIDANCE), ancientCard)).toBe(true);
@@ -741,14 +707,14 @@ describe("§2 — `bannerCard` (any category) against `bannerPokemon` (Pokémon 
     });
   });
 
-  it("🛑 the Tera rule stays TERA: no Ancient or Future Pokémon is `isTeraPokemon`", () => {
+  it("the Tera rule stays TERA: no Ancient or Future Pokémon is `isTeraPokemon`", () => {
     for (const id of [KORAIDON, IRON_CROWN, MIRAIDON, IRON_THORNS_EX])
       expect(isTeraPokemon(card(id)), id).toBe(false);
     expect(isTeraPokemon(card(TERAPAGOS_EX))).toBe(true);
     expect(bannerOf(card(IRON_CROWN))).toBe("Future");
   });
 
-  it("🛑 the Tera Bench shield does NOT extend to Ancient/Future: a benched Koraidon and Iron Crown ex take the spread", () => {
+  it("the Tera Bench shield does NOT extend to Ancient/Future: a benched Koraidon and Iron Crown ex take the spread", () => {
     let state = table({ p1: STRIKER, p2Bench: [KORAIDON, IRON_CROWN, TERAPAGOS_EX] });
     expect(benchShieldedFromDamage(state, bodyAt(state, "p2", 0), "all")).toBe(false);
     expect(benchShieldedFromDamage(state, bodyAt(state, "p2", 2), "all")).toBe(true);
@@ -761,7 +727,7 @@ describe("§2 — `bannerCard` (any category) against `bannerPokemon` (Pokémon 
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§3 — the two NEW board conditions, read on real boards", () => {
-  it("🛑 `opponentBannerPokemonInPlay`: the OTHER seat's Active AND Bench, never your own", () => {
+  it("`opponentBannerPokemonInPlay`: the OTHER seat's Active AND Bench, never your own", () => {
     const cond = { kind: "opponentBannerPokemonInPlay", banner: "Future" } as const;
     expect(conditionHolds(table({ p2Bench: [IRON_VALIANT] }), "p1", cond)).toBe(true);
     expect(conditionHolds(table({ p2: MIRAIDON }), "p1", cond)).toBe(true);
@@ -771,7 +737,7 @@ describe("§3 — the two NEW board conditions, read on real boards", () => {
     expect(conditionNote(cond)).toBe("your opponent has any Future Pokémon in play");
   });
 
-  it("🛑 `yourPlayedBannerSupporterThisTurn`: the PLAYED Supporter's printing, its banner, the turn owner only", () => {
+  it("`yourPlayedBannerSupporterThisTurn`: the PLAYED Supporter's printing, its banner, the turn owner only", () => {
     const ancient = { kind: "yourPlayedBannerSupporterThisTurn", banner: "Ancient" } as const;
     const future = { kind: "yourPlayedBannerSupporterThisTurn", banner: "Future" } as const;
     const base = table();
@@ -792,7 +758,7 @@ describe("§3 — the two NEW board conditions, read on real boards", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletching, Majestic Sword, Iron Smasher", () => {
-  it("🛑 the four sentences derive to the banner readers, and nothing else does the reading", () => {
+  it("the four sentences derive to the banner readers, and nothing else does the reading", () => {
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 30 damage for each of your Ancient Pokémon in play.",
@@ -833,7 +799,6 @@ describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletchin
       kind: "boardCondition",
       cond: { kind: "opponentBannerPokemonInPlay", banner: "Future" },
     });
-    // No registry row: these six printings simulate off their printed text.
     for (const id of [
       KORAIDON,
       "svp-091",
@@ -846,7 +811,7 @@ describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletchin
     }
   });
 
-  it("🛑 Koraidon: 30 × YOUR Ancient Pokémon in play — itself included, the opponent's and a Future body not", () => {
+  it("Koraidon: 30 × YOUR Ancient Pokémon in play — itself included, the opponent's and a Future body not", () => {
     const beat = (bench: readonly string[], p2Bench: readonly string[] = []) => {
       let state = table({ p1: KORAIDON, p1Bench: bench, p2Bench });
       state = energize(state, "p1", "active", F, 2);
@@ -857,7 +822,7 @@ describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletchin
     expect(beat([GREAT_TUSK, IRON_VALIANT], [KORAIDON, FLUTTER_MANE])).toBe(60);
   });
 
-  it("🛑 Roaring Moon: +10 per Ancient CARD in YOUR discard — the Trainer counts, a Future card does not", () => {
+  it("Roaring Moon: +10 per Ancient CARD in YOUR discard — the Trainer counts, a Future card does not", () => {
     const fletch = (pile: readonly string[]) => {
       let state = table({ p1: ROARING_MOON });
       state = energize(state, "p1", "active", D, 2);
@@ -870,7 +835,7 @@ describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletchin
     expect(fletch([GUIDANCE, DRUM, KORAIDON, POD, IRON_VALIANT, FILLER])).toBe(100);
   });
 
-  it("🛑 Iron Valiant: +100 ONLY after a FUTURE Supporter — none, Ancient and Tera Supporters do not pay", () => {
+  it("Iron Valiant: +100 ONLY after a FUTURE Supporter — none, Ancient and Tera Supporters do not pay", () => {
     const sword = (prep: (s: GameState) => GameState) => {
       let state = table({ p1: IRON_VALIANT });
       state = energize(state, "p1", "active", P, 3);
@@ -882,7 +847,7 @@ describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletchin
     expect(sword((s) => playedSupporter(s, "p1", CIPHER))).toBe(200);
   });
 
-  it("🛑 Slither Wing: +120 against ANY opposing Future body (Active or Bench) — your own Future bodies are not read", () => {
+  it("Slither Wing: +120 against ANY opposing Future body (Active or Bench) — your own Future bodies are not read", () => {
     const smash = (opts: { p1Bench?: string[]; p2?: string; p2Bench?: string[] }) => {
       let state = table({ p1: SLITHER_WING, ...opts });
       state = energize(state, "p1", "active", F, 2);
@@ -896,7 +861,7 @@ describe("§4 — the four deriver arms: Primordial Beatdown, Vengeance Fletchin
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§5 — the four registry attacks", () => {
-  it("🛑 Peak Acceleration: up to 2 Basic Energy onto FUTURE bodies only, 40 damage, the deck shuffled", () => {
+  it("Peak Acceleration: up to 2 Basic Energy onto FUTURE bodies only, 40 damage, the deck shuffled", () => {
     let state = table({ p1: MIRAIDON, p1Bench: [KORAIDON, IRON_VALIANT, FILLER] });
     state = energize(state, "p1", "active", W);
     const first = run(state, { type: "attack", seat: "p1", index: 0 });
@@ -931,18 +896,15 @@ describe("§5 — the four registry attacks", () => {
     expect(bodyAt(done.state, "p1", 1).energy).toEqual([a, b]);
     expect(all([...first.events, ...done.events], "SHUFFLE").length).toBeGreaterThan(0);
     expect(dealt([...first.events, ...done.events])).toBe(40);
-    // 🛑 THE PARKED OP SURVIVES A JSON ROUND TRIP (the match record's bytes) and resolves identically.
     const replayed = run(roundTrip(first.state), answer);
     expect(bodyAt(replayed.state, "p1", 1).energy).toEqual([a, b]);
   });
 
-  it("🛑 Land Collapse: mill 1; +3 ONLY after an ANCIENT Supporter (a real Explorer's Guidance) — none, a Tera Briar, a Future Supporter do not", () => {
+  it("Land Collapse: mill 1; +3 ONLY after an ANCIENT Supporter (a real Explorer's Guidance) — none, a Tera Briar, a Future Supporter do not", () => {
     const collapse = (prep: (s: GameState) => GameState) => {
       let state = table({ p1: GREAT_TUSK });
       state = energize(state, "p1", "active", F, 2);
       state = prep(state);
-      // Read off the opponent's DISCARD PILE: the attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and p2 draws, so the
-      // deck count would carry a draw the mill never made.
       const before = state.players.p2.discard.length;
       const after = run(state, { type: "attack", seat: "p1", index: 0 }).state;
       return after.players.p2.discard.length - before;
@@ -967,7 +929,7 @@ describe("§5 — the four registry attacks", () => {
     ).toBe(4);
   });
 
-  it("🛑 Supportive Singing: 100 off ONE BENCHED ANCIENT — the Active and a Future body are not candidates", () => {
+  it("Supportive Singing: 100 off ONE BENCHED ANCIENT — the Active and a Future body are not candidates", () => {
     let state = table({ p1: SCREAM_TAIL, p1Bench: [IRON_VALIANT, KORAIDON] });
     state = energize(state, "p1", "active", P);
     for (const spot of [0, 1] as const)
@@ -1003,7 +965,7 @@ describe("§5 — the four registry attacks", () => {
     ).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 R-PX4 — Supportive Singing and Perplexing Transfer WHIFF with no Benched Ancient: no park, no heal, no counters", () => {
+  it("R-PX4 — Supportive Singing and Perplexing Transfer WHIFF with no Benched Ancient: no park, no heal, no counters", () => {
     let sing = table({ p1: SCREAM_TAIL, p1Bench: [IRON_VALIANT] });
     sing = withBody(energize(sing, "p1", "active", P), "p1", 0, (p) => ({ ...p, damage: 60 }));
     const sung = run(sing, { type: "attack", seat: "p1", index: 0 });
@@ -1018,7 +980,7 @@ describe("§5 — the four registry attacks", () => {
     expect(bodyAt(moved.state, "p2", "active").damage).toBe(0);
   });
 
-  it("🛑 Perplexing Transfer: ALL counters off ONE Benched Ancient onto the opponent's Active", () => {
+  it("Perplexing Transfer: ALL counters off ONE Benched Ancient onto the opponent's Active", () => {
     let state = table({ p1: FLUTTER_MANE, p1Bench: [IRON_VALIANT, KORAIDON, GREAT_TUSK] });
     state = energize(state, "p1", "active", P, 2);
     state = withBody(state, "p1", 0, (p) => ({ ...p, damage: 90 }));
@@ -1061,10 +1023,10 @@ describe('§6 — Iron Crown ex "Cobalt Command": +20 to your FUTURE Pokémon\'s
     });
   });
 
-  it("🛑 the beneficiary: a Future attacker +20, an Ancient or bannerless attacker 0, and ANY Iron Crown ex 0", () => {
+  it("the beneficiary: a Future attacker +20, an Ancient or bannerless attacker 0, and ANY Iron Crown ex 0", () => {
     const state = table({ p1Bench: [IRON_CROWN] });
     expect(seatPreWRDamageBonus(state, "p1", card(MIRAIDON))).toBe(20);
-    expect(seatPreWRDamageBonus(state, "p1", card(IRON_THORNS_EX))).toBe(20); // R-PX5 — a Future ex
+    expect(seatPreWRDamageBonus(state, "p1", card(IRON_THORNS_EX))).toBe(20);
     expect(seatPreWRDamageBonus(state, "p1", card(KORAIDON))).toBe(0);
     expect(seatPreWRDamageBonus(state, "p1", card(FILLER))).toBe(0);
     expect(seatPreWRDamageBonus(state, "p1", card(IRON_CROWN))).toBe(0); // the exclusion, by NAME
@@ -1073,7 +1035,7 @@ describe('§6 — Iron Crown ex "Cobalt Command": +20 to your FUTURE Pokémon\'s
     expect(seatPreWRDamageBonus(state, "p2", card(MIRAIDON))).toBe(0);
   });
 
-  it("🛑 R-PX2 — it STACKS across copies (no `noStack` is printed): Peak Acceleration 40 → 60 → 80", () => {
+  it("R-PX2 — it STACKS across copies (no `noStack` is printed): Peak Acceleration 40 → 60 → 80", () => {
     const peak = (bench: readonly string[], p2?: string) => {
       let state = table({ p1: MIRAIDON, p1Bench: bench, ...(p2 === undefined ? {} : { p2 }) });
       state = energize(state, "p1", "active", W);
@@ -1083,11 +1045,10 @@ describe('§6 — Iron Crown ex "Cobalt Command": +20 to your FUTURE Pokémon\'s
     expect(peak([])).toBe(40);
     expect(peak([IRON_CROWN])).toBe(60);
     expect(peak([IRON_CROWN, IRON_CROWN])).toBe(80);
-    // 🛑 §9: an Active Klefki ("Mischievous Lock") silences every Basic in play — Iron Crown ex is one.
     expect(peak([IRON_CROWN], KLEFKI)).toBe(40);
   });
 
-  it("🛑 Iron Crown ex's own attack is NOT boosted (its Twin Shotels is a two-target snipe besides)", () => {
+  it("Iron Crown ex's own attack is NOT boosted (its Twin Shotels is a two-target snipe besides)", () => {
     const state = table({ p1: IRON_CROWN, p1Bench: [IRON_CROWN] });
     expect(seatPreWRDamageBonus(state, "p1", card(IRON_CROWN))).toBe(0);
     expect(disabledAbilityUids(state).size).toBe(0);
@@ -1096,7 +1057,7 @@ describe('§6 — Iron Crown ex "Cobalt Command": +20 to your FUTURE Pokémon\'s
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§7 — Awakening Drum and Reboot Pod", () => {
-  it("🛑 Awakening Drum draws one card per YOUR Ancient Pokémon in play (Active + Bench); none draws 0 and is still played (R-PX6 ⚠️ UNRULED)", () => {
+  it("Awakening Drum draws one card per YOUR Ancient Pokémon in play (Active + Bench); none draws 0 and is still played (R-PX6 UNRULED)", () => {
     const drum = (opts: { p1?: string; p1Bench?: string[]; p2Bench?: string[] }) => {
       const { events } = play(table(opts), DRUM);
       return all(events, "CARDS_DRAWN").reduce((n, e) => n + e.uids.length, 0);
@@ -1116,7 +1077,7 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     ]);
   });
 
-  it("🛑 Reboot Pod: ONE park over every Future body, one card each; a short answer is TOPPED UP (R-PX1)", () => {
+  it("Reboot Pod: ONE park over every Future body, one card each; a short answer is TOPPED UP (R-PX1)", () => {
     let state = table({ p1: MIRAIDON, p1Bench: [IRON_VALIANT, KORAIDON, IRON_CROWN] });
     // A NON-Energy card first in the pile, then 1 Lightning and 3 Psychic: four Energy for three
     // Future bodies, so ONE Psychic is left over — the top-up must stop at the offered bodies.
@@ -1164,7 +1125,7 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     expect(all(declined.events, "ENERGY_ATTACHED")).toHaveLength(3);
   });
 
-  it("🛑 Reboot Pod with FEWER Energy than Future bodies PARKS: WHICH Future Pokémon get the cards is the player's (R-PX1)", () => {
+  it("Reboot Pod with FEWER Energy than Future bodies PARKS: WHICH Future Pokémon get the cards is the player's (R-PX1)", () => {
     // ONE identity in the pile but a SHORT one (1 Psychic, 3 Future bodies): the identity
     // collapse leaves no choice of CARD, but the printed sentence still leaves the choice of
     // BODY, so the inline path is refused and the same `attachCards` prompt parks.
@@ -1204,8 +1165,6 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     if (twoPrompt.kind !== "attachCards")
       throw new Error(`expected attachCards, got ${twoPrompt.kind}`);
     expect(twoPrompt.max).toBe(2);
-    // An EMPTY answer on a short pile is still not a decline (R-PX1): the player forfeits the
-    // choice of body, and the top-up gives the one card in target order (the Active).
     const forfeited = run(parked, {
       type: "resolveEffect",
       seat: "p1",
@@ -1215,7 +1174,7 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     expect(bodyAt(forfeited.state, "p1", "active").energy).toEqual([psychic]);
   });
 
-  it("🛑 Reboot Pod over a single-identity pile that COVERS every Future body attaches INLINE (no decision left)", () => {
+  it("Reboot Pod over a single-identity pile that COVERS every Future body attaches INLINE (no decision left)", () => {
     // Exactly as many Psychic as Future bodies — the boundary of the guard — and one more.
     for (const count of [3, 4]) {
       let state = table({ p1: MIRAIDON, p1Bench: [IRON_VALIANT, KORAIDON, IRON_CROWN] });
@@ -1233,25 +1192,20 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
     }
   });
 
-  it("🛑 Reboot Pod is REFUSED with no Future Pokémon in play, or no Basic Energy in the discard (Glass Trumpet's precedent)", () => {
+  it("Reboot Pod is REFUSED with no Future Pokémon in play, or no Basic Energy in the discard (Glass Trumpet's precedent)", () => {
     expect(playRejected(discard(table({ p1: KORAIDON }), "p1", P), POD)).toBe("NO_LEGAL_TARGET");
     expect(playRejected(table({ p1: MIRAIDON }), POD)).toBe("NO_LEGAL_TARGET");
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initialization stays unbuilt (🆕🆕🆕 D571: BUILT — `ironThornsD571.test.ts`)", () => {
-  it("🛑 it receives Cobalt Command and Peak Acceleration as a Future body; it has no program (🆕🆕🆕 D571: it HAS one — Initialization)", () => {
-    // 🆕🆕🆕 D571 (D539) — INVERTED: `programFor(IRON_THORNS_EX)` was asserted UNDEFINED (R-PX5's
-    // "Initialization stays UNBUILT"). D571 built it, so the program is now DEFINED and carries
-    // the lock. The `size === 0` line below STILL holds, now for a different reason: both bodies
-    // on this board are FUTURE, which Initialization exempts (and Iron Crown ex is the only
-    // Rule Box body besides the source).
+describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initialization stays unbuilt ( D571: BUILT — `ironThornsD571.test.ts`)", () => {
+  it("it receives Cobalt Command and Peak Acceleration as a Future body; it has no program ( D571: it HAS one — Initialization)", () => {
     expect(programFor(IRON_THORNS_EX)?.passive?.disableAbilities?.exemptBanner).toBe("Future");
     expect(bannerOf(card(IRON_THORNS_EX))).toBe("Future");
     const state = table({ p1: IRON_THORNS_EX, p1Bench: [IRON_CROWN] });
     expect(seatPreWRDamageBonus(state, "p1", card(IRON_THORNS_EX))).toBe(20);
-    expect(disabledAbilityUids(state).size).toBe(0); // no lock is built for it (🆕🆕🆕 D571: it is — and both bodies are Future, so it silences neither)
+    expect(disabledAbilityUids(state).size).toBe(0);
   });
 
   it("the four registry sentences stay UNREAD by the deriver (index-keyed rows play them)", () => {

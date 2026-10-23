@@ -20,16 +20,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D643 — Y1a: MULTI ADAPTER ──
-//
-// Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter" on the NEW `PassiveEffects.toolCapForName` (continuous.ts
-// `toolCapOf`, read at both `attachTool` arms), and its second sentence as a STATE CHECK: continuous.ts
-// `toolTrimStages` queues the NEW persisted `PendingStage` `toolTrim` at flow.ts `advance`'s entry and in index.ts
-// `applyAction` on a board back at `turn:action`; flow.ts `runToolTrim` runs the NEW `trimTools` op, which parks the
-// shipped `discardTools` prompt at an exact `total` for the OWNER (R-MAD1 … R-MAD4). Text off the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. Driven on a LOCAL `cardPool` (D275).
 
 const MULTI_ADAPTER_TEXT =
   'Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each.';
@@ -136,11 +128,6 @@ const DECK = deckOf({
 const BOARD_IDS = Object.keys(LOCAL)
   .filter((id) => id !== SPARE)
   .concat([E]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own SECOND turn (P2 went first; every turn passed); both hands back into the decks. */
 function p1Turn(): GameState {

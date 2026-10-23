@@ -18,29 +18,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: `bottomFromOpponentHand` + `opponentMayDraw` — the reveal-and-
-// bottom family, and the engine's first decision ANSWERED BY THE NON-CONTROLLER.
-//
-//   • ORTEGA (sv03-190/-219, Supporter) — "Your opponent reveals their hand, and
-//     you choose a card you find there and put it on the bottom of their deck.
-//     If you put a card on the bottom of your opponent's deck in this way, your
-//     opponent may draw a card." The Miriam shape (a recording op + a plain
-//     recordGate) with both halves on the OTHER side of the table: the pick
-//     reads a zone the controller does not own, and the gated draw belongs to
-//     the seat that did not make the play (phase.answerer).
-//   • GREAVARD (sv01-105) "Underworld Stroll" — the DERIVED attack twin:
-//     "Your opponent reveals their hand. Choose a Supporter card you find there
-//     and put it on the bottom of their deck." Same op, Supporter filter, no
-//     gate — and its plain second attack (Sharp Fang) is why the card-level
-//     registry `attack` field could not have carried the program.
-//
-// What the suite pins beyond the happy paths: the reveal is TOTAL and emitted
-// exactly once (at the park, never re-told by the resolve); the offer collapses
-// per interchangeable class ACROSS catalog ids; a collapsed-out sibling uid is
-// not answerable; the mayDraw park's answerer is enforced BOTH directions; a
-// decline moves nothing, says nothing, and still spent the Supporter; and both
-// parks survive a JSON round-trip (D14).
-
 const SEED = 20260722;
 
 const ORTEGA = "sv03-190";
@@ -62,9 +39,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** Every uid the seat holds anywhere, sorted — the card-conservation census.
-    This op moves a card between two zones of the seat that did NOT act, so the
-    census that matters most here is the opponent's. */
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
   const inPlay = [side.active, ...side.bench].flatMap((p) =>
@@ -154,24 +128,9 @@ describe("the registry rows and the derived twin", () => {
         "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck. If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
       ),
     ).toBeNull();
-    // ⚠️ D232 — THIS LINE USED TO ASSERT `null` AND IT WAS A "THIS IS UNBUILT"
-    // CONTROL WITH AN EXPIRY DATE NOBODY WROTE DOWN (D231's finding, one slice
-    // later and one file over). The truncation it was guarding against is real —
-    // a body that drifted to accept the first clause alone would widen Greavard's
-    // filter to nothing — but "derives to null" stopped being the way to say so
-    // the moment the bare sentence became a card this engine reads (7 legal
-    // printings, `opponentHandFamily.test.ts`). Re-homed rather than deleted:
-    // what the assertion is FOR is that the truncation does not reach THIS op,
-    // and that is now said by naming the program it does reach.
     expect(deriveAttackEffect("Your opponent reveals their hand.")).toEqual([
       { op: "revealOpponentHand" },
     ]);
-    // THE ANCHORS, pinned directly — attackDiscards.test.ts's rule, and the
-    // whole safety argument for a whole-sentence deriver. Both strings CONTAIN
-    // the printed sentence verbatim and add text on one side, so it is `^` and
-    // `$` and nothing else that refuses them: drop either and the engine
-    // silently implements half of a card it has never seen, which is exactly
-    // what "anchored end to end" is supposed to make impossible.
     expect(
       deriveAttackEffect(
         "This attack does 30 damage. Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.",
@@ -203,8 +162,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     expect(revealed?.uids).toEqual(oppHand);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected an effect:choose park");
     expect(parked.phase.seat).toBe("p1");
-    // The CONTROLLER answers the pick — no answerer is filed (the absent-when-
-    // controller rule that keeps every pre-D52 park byte-identical).
     expect(parked.phase.answerer).toBeUndefined();
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error("expected a chooseCards prompt");
@@ -345,10 +302,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("over an empty deck, the may offers back the VERY card just bottomed — and yes takes it", () => {
-    // Ortega can never reach opponentMayDraw's empty-deck skip: the gate only
-    // holds when a card WAS bottomed, and that card IS the opponent's deck
-    // now. So the printed corner case is the fun one — bottom their last
-    // playable card and they may draw it straight back.
     let state = ortegaBoard(["fix-item", GREAVARD]);
     state = withDeckSize(state, "p2", 0);
     const { state: parked } = mustApply(state, {
@@ -378,10 +331,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("carries the printed COUNT through the prompt, the note and the draw", () => {
-    // Ortega prints 1, so nothing in the live vocabulary exercises the number
-    // at all — the prompt's `count`, mayDrawNote's plural arm and the draw
-    // itself could each be hard-wired to 1 and no test would notice. Driven at
-    // the op level, which is where the field's contract lives.
     const state = ortegaBoard(["fix-item"]);
     const events: GameEvent[] = [];
     const result = runProgram(state, [{ op: "opponentMayDraw", count: 3 }], { seat: "p1" }, events);
@@ -398,10 +347,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("reads the op's OWN slot — a record filed under `paid` is not read as `moved`", () => {
-    // `recordSlotOf` feeds the §9.2 describer; hard-wiring this op's slot would
-    // attach the wrong consequence clause (or none) to a card authored on the
-    // other slot. Ortega uses "moved", so only a differently-slotted program
-    // can tell the two apart.
     const state = ortegaBoard(["fix-item", GREAVARD]);
     const events: GameEvent[] = [];
     const result = runProgram(
@@ -426,10 +371,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("checks the SEAT before the choice — a wrong seat learns nothing about the prompt", () => {
-    // Precedence, not merely rejection: both wrong-seat tests above send a
-    // VALID choice, so swapping the two checks would still reject them. A
-    // garbage choice from the wrong seat must come back WRONG_SEAT, or the
-    // error message becomes an oracle the other player can query.
     const state = ortegaBoard(["fix-item", GREAVARD]);
     const { state: parked } = mustApply(state, {
       type: "playTrainer",
@@ -464,10 +405,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       uid: handUid(state, "p1", ORTEGA),
     });
-    // The REVEAL STILL COMES FIRST on this path too. The park test pins the
-    // order for the parking path; without this the auto-resolve path could
-    // bottom a card before announcing the hand it came from, and the op's
-    // "the reveal is its first act" claim would hold on one branch only.
     expect(types(events)).toEqual([
       "TRAINER_PLAYED",
       "HAND_REVEALED",
@@ -517,10 +454,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("PLAYS into a hand of exactly ONE — the gate's other boundary", () => {
-    // The gate is `length === 0`, and a suite that only ever plays into 0, 2 or
-    // more pins half of it: `<= 1` would refuse the commonest late-game board
-    // there is (an opponent holding one card), and refuse it as NO_LEGAL_TARGET
-    // when the card resolves perfectly well.
     const state = ortegaBoard(["fix-item"]);
     const { state: done, events } = mustApply(state, {
       type: "playTrainer",
@@ -533,11 +466,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("the play gate reads the hand's LENGTH, never the op's FILTER", () => {
-    // The ruling/284 line, and the promise `programPlayable`'s export rests on:
-    // whether a non-empty HIDDEN hand holds a match is exactly what the game
-    // state does not establish, so a filtered op into a matchless hand stays
-    // playable and reveals. A gate that peeked would also leak — it would tell
-    // the controller "no Supporter in there" before they played the card.
     const state = ortegaBoard(["fix-item", "fix-grass-energy"]);
     expect(
       programPlayable(
@@ -558,12 +486,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("moves nothing for a uid that is no longer in the hand — no card is duplicated", () => {
-    // The apply's wire-safety guard, and the one failure it prevents is the
-    // worst kind: a crafted snapshot (a P4 client replaying an action against a
-    // state whose hand has moved on) would otherwise APPEND to the deck a card
-    // that is still sitting somewhere else — a duplicate that hides for the
-    // rest of the game. Reachable exactly as resolveEffect's own PHASE_DESYNC
-    // guard is.
     const state = ortegaBoard(["fix-item", GREAVARD]);
     const { state: parked } = mustApply(state, {
       type: "playTrainer",
@@ -590,7 +512,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [picked] },
     });
-    // Nothing moved, nothing was announced, and the census is intact.
     expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
     expect(after.players.p2.deck).toEqual(crafted.players.p2.deck);
     expect(after.players.p2.discard).toContain(picked);
@@ -600,11 +521,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("files what MOVED, not what was picked — the gate cannot be fooled by a dropped uid", () => {
-    // The sharp end of the test above, stated as the record contract: if the
-    // apply filed `choice.uids` instead of the moved uids, the crafted snapshot
-    // would bottom nothing yet still park the opponent's may — a decision
-    // offered for an event that did not happen. Driven through the op directly
-    // so the record itself is observable, not just its consequence.
     const state = ortegaBoard(["fix-item", GREAVARD]);
     const ghost = "p2#ghost";
     const events: GameEvent[] = [];
@@ -629,11 +545,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   });
 
   it("files an EMPTY record on a whiff — an honest no, not a missing key", () => {
-    // `recordGateHolds` reads `record[slot] ?? []`, so the filing and the
-    // absence agree on the gate's answer — which is why deleting the whiff's
-    // `recordMoved([])` changes no behaviour today. What it DOES change is the
-    // parked continuation's bytes, and that is the thing D14 replays, so the
-    // record is asserted where it actually lives.
     const state = ortegaBoard(["fix-item", "fix-grass-energy"]);
     const events: GameEvent[] = [];
     const result = runProgram(
@@ -773,7 +684,6 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(find(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected an effect:choose park");
-    // Mid-TAIL: the attackEpilogue waits behind the pick (D42).
     expect(parked.phase.resumeTail).toBe(true);
     expect(parked.phase.answerer).toBeUndefined();
     const prompt = parked.phase.prompt;
@@ -805,8 +715,6 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     expect(find(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
     expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
     expect(find(events, "TURN_ENDED")).toBeDefined();
-    // The revealed hand is intact — the extra card is P2's own turn-start
-    // draw, which rides the same reduction once the attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds].
     expect(done.players.p2.hand.slice(0, oppHand.length)).toEqual(oppHand);
     expect(done.players.p2.hand).toHaveLength(oppHand.length + 1);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });

@@ -38,64 +38,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.341.0 → 0.342.0 — 🆕🆕 D440: DAMAGE SCALED BY A COUNT OF FILTERED CARDS IN A
-// DISCARD PILE, ON EITHER SEAT.
-//
-//   "This attack does 20 more damage for each Energy card in your discard pile."             2
-//   "This attack does 60 more damage for each Ethan's Adventure card in your discard pile."   2
-//   "This attack does 30 damage for each Basic Energy card in your opponent's discard pile."  2
-//   "This attack does 30 damage for each Item card in your opponent's discard pile."          2
-//                                          — 4 sentences / 8 LEGAL printings
-//
-// THE SIXTEENTH `DamageCountSource`, the first that reads a zone neither player has
-// on the board, and the first that carries a SEAT AS A FIELD rather than in its
-// member name. `CardFilter` members used: `anyEnergy`, `basicEnergy`, `item`,
-// `byName` — **ZERO new ones**, which is what keeps this slice out of
-// `retrieveNoun`'s exhaustive switch and out of `BENCHABLE_RETRIEVAL_KINDS`.
-//
-// ── 🛑 WHAT THIS SUITE EXISTS TO PIN, AND WHY EACH RUNG CAN GO RED ───────────
-//
-//   ⑴ THE SEAT. Two of the four sentences read YOUR pile and two read your
-//      OPPONENT's, and the two piles below are shaped so that **all four numbers
-//      move under a seat inversion** — 80/120/90/60 becomes 100/60/60/30.
-//   ⑵ THE SEAT/FOLD CONFOUND. ⚠️ **MEASURED: in the buildable core the two are
-//      PERFECTLY confounded** — every claimed "more" sentence is YOUR pile and
-//      every claimed bare one is your OPPONENT's — so a build that derived either
-//      axis from the other reads all four printed sentences and all eight printings
-//      correctly. §2 breaks it on CONSTRUCTED text, labelled as constructed, which
-//      is the only rung that can: a reader is a function of TEXT, and the column
-//      prints no sentence that separates them.
-//   ⑶ THE ZONE. The pile, not the board. A build that delegated an Energy noun to
-//      `countEnergyInPlay` (the sibling members' walk, and the §6.5 hazard D376's
-//      block names outright) reads the ONE `fix-energy` attached to the attacker
-//      and deals 40 where the print says 80.
-//   ⑷ THE FILTER. Four nouns, four `CardFilter` members, and the two piles answer
-//      **different numbers on every neighbouring member**: any/basic/item/byName
-//      are 3/2/1/1 on the attacker's pile and 4/3/2/0 on the defender's, with
-//      `supporter` 2/1 and `trainerCard` 3/3 and the pile LENGTHS 7/8.
-//   ⑸ THE FOLD. Two sentences carry "more" and KEEP the printed base; two carry
-//      `30×` and DROP it. §4 drives an EMPTY pile and asserts no `DAMAGE_DEALT` at
-//      all on the `×` fold and the bare printed base on the `+` one.
-//   ⑹ THE VOCABULARY. Three corpus sentences reach an anchor or the family and are
-//      DELIBERATELY LEFT LOUD, for three different reasons — see §2 and §6.
-//
-// ⚠️ **THE WALK IS D376's, GENERALISED IN PLACE.** `yourBasicEnergyInDiscardAtLeast`
-// already scanned this zone with this predicate for a `BoardCondition` THRESHOLD; a
-// second walk would have made a pile scan a question with two implementations, and —
-// because `D376-discard-threshold-counts-the-whole-pile` quotes one of those lines
-// verbatim — a byte-identical copy would also have broken a shipped mutation row into
-// a `2×` ERROR without anybody touching it (D416/D437). §3 drives BOTH names on ONE
-// board so they cannot disagree.
-
-// ─────────────────────────────────────────────────────────────────────────────
-// The printed bytes, off `legalAttackCorpus()` — the committed `legal_standard = 1`
-// attack column. ⚠️ THE APOSTROPHES ARE **U+0027**, MEASURED WITH `codePointAt` OVER
-// THE CORPUS ROWS AND NOT REMEMBERED (D421's byte): `opponent's` at index 70 and 62
-// of the two `×` rows and `Ethan's` at index 46 of the additive one, three slots in
-// all. The anchors spell the class `['’]` anyway, per D137, and §2 drives the U+2019
-// rewrite through the vocabulary — which is where it would break, because
-// `DISCARD_PILE_NOUNS` has an apostrophe in a KEY.
-// ─────────────────────────────────────────────────────────────────────────────
 const ENERGY_PILE = "This attack does 20 more damage for each Energy card in your discard pile.";
 const ETHAN_PILE =
   "This attack does 60 more damage for each Ethan's Adventure card in your discard pile.";
@@ -107,68 +49,23 @@ const FOE_ITEM_PILE =
 /** The four, in fixture-attack order. */
 const CLAIMED = [ENERGY_PILE, ETHAN_PILE, FOE_BASIC_PILE, FOE_ITEM_PILE] as const;
 
-/** 🛑 THE SENTENCE THE ANCHOR REACHES AND THE VOCABULARY REFUSES — **DATA-BLOCKED**,
-    permanently, and not unbuilt. The Ancient/Future banner is printed on the card FACE
-    and is in no column of the persisted catalog and no field of tcgdex's card model
-    (`types.ts`:146-149, re-read at D440). The fix is an INGEST change. */
 const ANCIENT_PILE = "This attack does 10 more damage for each Ancient card in your discard pile.";
-/** 🆕🆕🆕 D569 — THE REFUSAL'S NEW WITNESS. `ANCIENT_PILE` is CLAIMED now (`bannerCard` over
-    `banners.ts`), so the closed map's refusal of an UNMAPPED "X card" noun needs a string that
-    reaches the anchor and misses the map: the other Paradox banner. ⚠️ CONSTRUCTED — the column
-    prints no "for each Future card in your discard pile" — one axis (the banner word) from the
-    printed row. It is what kills `D440-vocabulary-defaults-instead-of-staying-loud` (an unmapped
-    noun defaulting to `anyCard`) and `D440-vocabulary-claims-any-card-noun` (an open `^(.+) card$`
-    → `byName` fall-through), both of which the Ancient row used to kill. */
 const FUTURE_PILE = "This attack does 10 more damage for each Future card in your discard pile.";
 
-/** ✅ **BUILT AT D510**, and it used to be this file's second refusal. The block read:
-    *"THE SENTENCE THE ANCHOR REACHES AND THE VOCABULARY REFUSES FOR A COMPLETELY
-    DIFFERENT REASON — UNBUILT, with an executable falsifier in §6. `byName` is exact
-    equality (`cards.ts`:518) and no `CardFilter` member matches a name SUBSTRING at any
-    width."* **The first clause was right and the last one was wrong when it was
-    written** — `ownerPokemon` has matched a proper PREFIX of `Card.name` since D200 —
-    and the falsifier FIRED exactly as designed: §2 and §6 both went RED against D510's
-    build and were re-pointed rather than narrowed. `supporterNameContaining` is the
-    member; `pileByNameFragment.test.ts` owns the row now. Kept here as a named constant
-    because it is still a member of THIS anchor's family and §1's eight-row survey
-    counts it (D428: never truncate an enumeration). */
 const TR_NAME_PILE =
   'This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile.';
 
-/** 🛑 THE FAMILY MEMBER THAT REACHES NEITHER ANCHOR, and it is a STRUCTURAL refusal
-    rather than a vocabulary one: the noun is split AROUND the zone phrase, so the
-    sentence does not end at "discard pile." and an `^…$` anchor cannot see it. */
 const UNITED_WINGS_PILE =
   "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack.";
 
-/** 🛑 THE ONE THE LOOSE SURVEY FOUND THAT IS NOT THIS FAMILY AT ALL — a counter
-    PLACEMENT whose count scales an op's amount, not the attack's damage. Kept as a
-    named constant because a survey that silently drops a hit is the defect this repo
-    keeps paying for (D424/D428). */
 const COUNTER_PLACEMENT_PILE =
   "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
 
-/** 🛑 THE TWO EMPTY CELLS OF THE 2×2, **CONSTRUCTED AND LABELLED SO**, which is
-    `bodiesInPlayScaling.test.ts` §2's own posture (three non-corpus sentences driven
-    to positive values there, with the same note). A reader is a function of TEXT, so
-    these are claims about the READER and not about the pool — and they are the only
-    rungs in this file that can separate the seat axis from the fold axis, because no
-    printed sentence does.
-
-    ⚠️ **THE TWO CELLS ARE NOT EQUALLY HYPOTHETICAL, AND THAT IS WORTH STATING.**
-    `CONSTRUCTED_MULTIPLY_YOURS` fills a cell the column DOES print — `TR_NAME_PILE`
-    is `×` over YOUR pile, refused for its FILTER and not for its seat — so a
-    fold-derived seat is a live defect waiting on one vocabulary row.
-    `CONSTRUCTED_SCALE_FOES` fills the diagonal the column prints nowhere at all. */
 const CONSTRUCTED_SCALE_FOES =
   "This attack does 40 more damage for each Item card in your opponent's discard pile.";
 const CONSTRUCTED_MULTIPLY_YOURS =
   "This attack does 40 damage for each Energy card in your discard pile.";
 
-/** The twelve readers this file's four sentences must NOT reach, so that §2 can assert
-    a NAMED owner plus eleven kept refusals rather than a bare `resolvedByAnyReader`
-    (D438: a negative over a disjunction is a claim about every disjunct, and its
-    positive replacement is a claim about none of them). */
 const OTHERS = [
   deriveAttackEffect,
   deriveAttackDamagePenalty,
@@ -214,14 +111,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** `by`'s opponent opens and passes, so the attacking seat carries no §4 first-turn
-    restriction. Both Actives are placed by surgery and BOTH Benches are cleared: every
-    number this suite reads is a POPULATION, and a body the setup shuffle happened to
-    place would move nothing here but a Bench that grew would still be noise. One {C}
-    is attached to pay the printed cost of all four attacks — and that attachment is
-    itself load-bearing, because it is what makes the ⑶ zone mistake (`countEnergyInPlay`
-    over the board) answer a NON-ZERO wrong number rather than an obviously empty one.
-    **BOTH DISCARD PILES ARE EMPTY HERE**, which is the `bare` board §4 drives. */
 function bare(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -241,26 +130,6 @@ function bare(by: Seat = "p1"): GameState {
   return clearBench(state, foe);
 }
 
-/** 🛑 **THE CANONICAL BOARD: TWO PILES, AND EVERY NEIGHBOURING FILTER ANSWERS A
-    DIFFERENT NUMBER ON EACH.**
-
-      attacker's pile (7 cards)          defender's pile (8 cards)
-        fix-energy       ×2                fix-fire-energy    ×2
-        fix-special      ×1                fix-energy         ×1
-        fix-ethansadv    ×1                fix-special        ×1
-        fix-ethansadventure ×1             fix-item           ×2
-        fix-item         ×1                fix-ethansadventure ×1
-        fix-titan        ×1                fix-titan          ×1
-
-    In NOUN order — anyEnergy, basicEnergy, item, byName "Ethan's Adventure":
-
-      attacker   3 / 2 / 1 / 1        supporter 2   trainerCard 3   LENGTH 7
-      defender   4 / 3 / 2 / 0        supporter 1   trainerCard 3   LENGTH 8
-
-    Every wrong answer is a different number from the right one on every attack: a
-    seat inversion reads **4 / 0 / 2 / 1** where the print reads **3 / 1 / 3 / 2**;
-    `anyEnergy` for `basicEnergy` reads 4 for 3; `supporter` for `byName` reads 2 for
-    1; `trainerCard` for `item` reads 3 for 2; and the pile LENGTH reads 7 or 8. */
 function canonical(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = bare(by);
@@ -298,17 +167,7 @@ describe("§1 — the four printed sentences, their population, and the fixture"
     expect(rows.flat().reduce((sum, [n]) => sum + n, 0)).toBe(8);
   });
 
-  it("🛑 the WHOLE 'for each … discard pile' family, printed whole and classified", () => {
-    // ⚠️ **THE ENUMERATION IS THE UNRELIABLE PART** (D424/D428), so this rung takes the
-    // LOOSEST plausible shape — every corpus row containing BOTH "for each" and
-    // "discard pile", which is deliberately looser than either anchor — and asserts the
-    // WHOLE list rather than a count. It cannot be truncated on either axis, because a
-    // missing row is a `toEqual` failure naming the row.
-    //
-    // ⚠️ AND IT IS THE RUNG THAT FOUND THE TWO ROWS A NARROWER PATTERN MISSES: the
-    // United Wings row (its noun is split around the zone phrase) and the counter
-    // PLACEMENT compound (not a damage fold at all). A survey shaped like the anchor
-    // would have reported a six-row family and been wrong by two.
+  it("the WHOLE 'for each … discard pile' family, printed whole and classified", () => {
     const family = legalAttackCorpus()
       .filter(([, s]) => s.includes("for each") && s.includes("discard pile"))
       .map(([, s]) => s)
@@ -329,19 +188,12 @@ describe("§1 — the four printed sentences, their population, and the fixture"
   });
 
   it("carries fix-discardpile's four printed attacks, `×` and `+` markers included", () => {
-    // The whole list, so the fixture cannot be wrong by OMISSION (D156's failure mode).
-    // ⚠️ THE TRAILING MARKERS ARE LOAD-BEARING: `×` tells attack.ts to DROP the printed
-    // base and `+` tells it to keep it, and the two folds sit on the two SEATS here.
     expect(FIXTURE_POOL["fix-discardpile"]?.attacks?.map((a) => [a.damage, a.effect])).toEqual([
       ["20+", ENERGY_PILE],
       ["60+", ETHAN_PILE],
       ["30×", FOE_BASIC_PILE],
       ["30×", FOE_ITEM_PILE],
     ]);
-    // 🛑 THE NAMED SUPPORTER IS THE `byName` DATUM AND ITS NEIGHBOUR IS THE CONTROL.
-    // `trainerCard` names every Trainer in this pool by its ID, so D337's fixture is
-    // called "fix-ethansadventure" and cannot satisfy the printed noun; the D440
-    // fixture overrides `name` and does. Both sit in the attacker's pile.
     expect(FIXTURE_POOL["fix-ethansadv"]?.name).toBe("Ethan's Adventure");
     expect(FIXTURE_POOL["fix-ethansadventure"]?.name).toBe("fix-ethansadventure");
     expect(FIXTURE_POOL["fix-ethansadv"]?.trainerType).toBe("Supporter");
@@ -379,10 +231,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     });
   });
 
-  it("🛑 `basicEnergy` is UNTYPED here, which the printed noun decides", () => {
-    // D376's sibling prints "Basic {R} Energy card" and its filter carries an
-    // `energyType`; this one prints "Basic Energy card" and must not. A build that
-    // copied the sibling's shape would count Fire-only and miss every other Basic.
+  it("`basicEnergy` is UNTYPED here, which the printed noun decides", () => {
     const bonus = deriveAttackDamageMultiplier(FOE_BASIC_PILE);
     expect(bonus?.count).toEqual({
       kind: "cardsInDiscardPile",
@@ -392,12 +241,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     expect((bonus?.count as { filter: { energyType?: string } }).filter.energyType).toBeUndefined();
   });
 
-  it("🛑 THE SEAT/FOLD CONFOUND, MEASURED — and then broken on CONSTRUCTED text", () => {
-    // ⚠️ **THE CONFOUND IS REAL AND THIS RUNG STATES IT AS A FACT ABOUT THE POOL**
-    // rather than describing it in a comment: over the whole corpus, every sentence
-    // this slice CLAIMS with a "more" reads YOUR pile and every one it claims without
-    // reads your OPPONENT's. So no printed row can tell a seat-from-fold build from
-    // the real one, and a suite built only on printed text would pass on both.
+  it("THE SEAT/FOLD CONFOUND, MEASURED — and then broken on CONSTRUCTED text", () => {
     const claimed = legalAttackCorpus().filter(([, s]) =>
       (CLAIMED as readonly string[]).includes(s),
     );
@@ -411,10 +255,6 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       expect(bonus === null ? "opponent" : "you", `${s} breaks the confound`).toBe(seat);
     }
 
-    // …and HERE is the break. Both sentences below are CONSTRUCTED — neither is in
-    // `legalAttackCorpus()` — and each fills one empty cell of the 2×2. A build that
-    // hard-coded `seat: "you"` in the additive arm and `seat: "opponent"` in the
-    // multiply arm passes every rung above and fails both of these.
     expect(legalAttackCorpus().some(([, s]) => s === CONSTRUCTED_SCALE_FOES)).toBe(false);
     expect(legalAttackCorpus().some(([, s]) => s === CONSTRUCTED_MULTIPLY_YOURS)).toBe(false);
     expect(deriveAttackDamageBonus(CONSTRUCTED_SCALE_FOES)).toEqual({
@@ -427,23 +267,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     });
   });
 
-  it("🛑 the ONE vocabulary refusal that is left, and the one that stopped being one", () => {
-    // 🆕🆕🆕 **D510 HALVED THIS RUNG, AND IT WENT RED HERE FIRST.** It used to loop over
-    // `[ANCIENT_PILE, TR_NAME_PILE]` under the title *"the two vocabulary refusals are
-    // refused, and for two DIFFERENT reasons"*. Both reached an anchor — the regex
-    // matched, the `per` was fine — and both left the vocabulary as null. **The reasons
-    // really were different, and that is why only one of them survived**: `Ancient` is
-    // DATA-BLOCKED (no catalog column classifies the banner, so no `CardFilter` at any
-    // width can express it and the fix is an INGEST change), where the Team Rocket row
-    // was merely UNBUILT and D510 built it.
-    // 🆕🆕🆕 D569 (D539) — "`Ancient` is DATA-BLOCKED … no `CardFilter` at any width can express it and the
-    // fix is an INGEST change" is WITHDRAWN: the fix was an ENGINE table keyed by printing id
-    // (`banners.ts`; no catalog column classifies the banner — still TRUE) and the NEW
-    // `CardFilter` `bannerCard` (any category: "Ancient CARD" counts Trainers). Roaring Moon
-    // "Vengeance Fletching" ×2 is BUILT, so this family's vocabulary has NO refusal left; the rung
-    // pins the DIRECTION of the change at the value, like the Team Rocket row below.
-    // 🆕🆕🆕 D569 — the vocabulary refusal, on the noun the map still does not spell: the anchor
-    // reaches it (the `per` is fine) and the CLOSED map answers null on both folds.
+  it("the ONE vocabulary refusal that is left, and the one that stopped being one", () => {
     expect(deriveAttackDamageBonus(FUTURE_PILE)).toBeNull();
     expect(deriveAttackDamageMultiplier(FUTURE_PILE.replace("more damage", "damage"))).toBeNull();
     expect(resolvedByAnyReader(FUTURE_PILE)).toBe(false);
@@ -466,9 +290,6 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
         filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
       },
     });
-    // …and the ADMITTED twin on the same axis, so the refusals are not passing because
-    // the reader refuses everything (D424: every "X is refused" owes a "Y is admitted").
-    // One character apart from `ANCIENT_PILE` in the fold, one noun apart in the map.
     expect(
       deriveAttackDamageBonus(
         "This attack does 10 more damage for each Item card in your discard pile.",
@@ -479,22 +300,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     });
   });
 
-  it("🛑 the United Wings row is claimed by a THIRD anchor, and NOT by either of ours", () => {
-    // 🆕🆕🆕 **D508 RE-POINTED THIS RUNG, AND THE OLD CLAIM IS WHY IT COULD BE** (D418:
-    // ask what the old claim caught before replacing it). It used to read *"reaches
-    // NEITHER anchor, which is a STRUCTURAL refusal"* — the sentence does not END at
-    // `discard pile.` because its noun is split around the zone phrase — and it WENT RED
-    // against D508's build, which is exactly the service a refusal rung is for. D446 had
-    // already corrected the other half of the same refusal in place (*"it also needs a
-    // `CardFilter` member reading `attacksOf`"* stopped being true when
-    // `attackNamePokemon` shipped), leaving this row blocked ONCE.
-    //
-    // 🛑 **WHAT IT CATCHES NOW IS STRICTLY MORE THAN WHAT IT CAUGHT BEFORE.** The
-    // structural fact is UNCHANGED and still asserted — the sentence does not end at
-    // `discard pile.`, so neither of THIS FILE'S two anchors can see it however wide
-    // `DISCARD_PILE_NOUNS` grows — and the claim on top of it is that the third anchor
-    // resolves it through a filter this file's vocabulary does not contain. A build that
-    // relaxed either `\.$` here would be a DIFFERENT derived value, not a null.
+  it("the United Wings row is claimed by a THIRD anchor, and NOT by either of ours", () => {
     expect(UNITED_WINGS_PILE.endsWith("discard pile.")).toBe(false);
     // The MULTIPLY fold, and the filter is `attackNamePokemon` — NOT one of this file's
     // four nouns, which is what says the new arm and not a widened map claimed it.
@@ -512,10 +318,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     const filter = count !== undefined && "filter" in count ? count.filter : null;
     expect(filter).not.toBeNull();
     for (const noun of NOUNS) expect(filter).not.toEqual(noun);
-    // …and the ADDITIVE reader still refuses it, because the column prints no "more"
-    // spelling of this noun at all — the empty cell of D508's own 2×2, measured there.
     expect(deriveAttackDamageBonus(UNITED_WINGS_PILE)).toBeNull();
-    // The new anchor claims exactly ONE corpus row, so nothing this file owns moved.
     expect(
       legalAttackCorpus().filter(([, text]) => {
         const value = deriveAttackDamageMultiplier(text);
@@ -529,8 +332,6 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
   });
 
   it("the whole-sentence anchor holds at both ends, on the capital, and on the zero", () => {
-    // The family's standing near-miss set, one axis at a time (D427: a near-miss that
-    // differs on more than one axis tests nothing about either).
     const NEAR = [
       // a lowercased "this"
       "this attack does 20 more damage for each Energy card in your discard pile.",
@@ -545,10 +346,6 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       "This attack does 20 more damage for each Energy card in your deck.",
       // a THIRD seat phrasing the anchor does not spell
       "This attack does 20 more damage for each Energy card in each discard pile.",
-      // 🛑 A TRAILING CLAUSE — the compound the `$` refuses, and the ONLY near-miss
-      // that can see the terminator. A `\.` without `$` would claim the PREFIX of
-      // each of these and simulate a sentence whose printed tail it never read, which
-      // is the defect D207 paid for three times.
       "This attack does 20 more damage for each Energy card in your discard pile. Then, shuffle your deck.",
       "This attack does 30 damage for each Item card in your opponent's discard pile. Discard the top card of your deck.",
     ];
@@ -558,12 +355,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     }
   });
 
-  it("🛑 the U+2019 spelling resolves IDENTICALLY, and the KEY is why that is a rung", () => {
-    // ⚠️ `DISCARD_PILE_NOUNS` has an apostrophe in a KEY ("Ethan's Adventure card"), so
-    // a bare `Map.get` would return undefined under a punctuation-normalising re-ingest
-    // and the sentence would fall silently off the built set. The lookup goes through
-    // `literalClauseRow` (D137) for exactly that reason. The anchors' `['’]` class
-    // covers the SEAT token; the noun capture is a character class and covers itself.
+  it("the U+2019 spelling resolves IDENTICALLY, and the KEY is why that is a rung", () => {
     const curly = (s: string) => s.replaceAll("'", "’");
     for (const text of CLAIMED) {
       expect(deriveAttackDamageBonus(curly(text))).toEqual(deriveAttackDamageBonus(text));
@@ -579,11 +371,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     expect(deriveAttackDamageMultiplier(curly(FOE_ITEM_PILE))?.per).toBe(30);
   });
 
-  it("🛑 the sentences are claimed by EXACTLY the two readers named, and refused by the rest", () => {
-    // ⚠️ **A NAMED CLAIM PLUS ELEVEN KEPT REFUSALS, AND NOT `resolvedByAnyReader === true`**
-    // (D438, and the shape that produced D436's GAP): a bare `=== true` is a claim about
-    // NO reader and stays green under any mistaken widening. This asserts WHICH reader
-    // owns each sentence AND that every other reader still says no.
+  it("the sentences are claimed by EXACTLY the two readers named, and refused by the rest", () => {
     for (const text of [ENERGY_PILE, ETHAN_PILE]) {
       expect(deriveAttackDamageBonus(text)).not.toBeNull();
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
@@ -596,47 +384,18 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(true);
     }
-    // 🆕🆕🆕 **D510 CLAIMS `TR_NAME_PILE`, so it moves UP into a named-owner loop of its
-    // own** — the whole point of keeping it as a constant. It is asserted through the
-    // SAME thirteen-way shape as its four siblings, so the new member is pinned by
-    // WHICH reader owns it rather than by a bare `=== true`.
     for (const text of [TR_NAME_PILE]) {
       expect(deriveAttackDamageMultiplier(text)).not.toBeNull();
       expect(deriveAttackDamageBonus(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(true);
     }
-    // …and the TWO the family still leaves behind are refused by EVERY reader, which
-    // is the thirteen-way negative KEPT rather than replaced.
-    // 🆕🆕🆕 **D508 TOOK `UNITED_WINGS_PILE` OUT OF THIS LIST AND D510 TOOK
-    // `TR_NAME_PILE`**, and both went RED here rather than being noticed: the list is a
-    // `for` over named constants, so a row that becomes buildable fails by NAME instead
-    // of by count. **The one genuine refusal left is `ANCIENT_PILE`** — DATA-BLOCKED
-    // permanently, because no catalog column classifies the banner — plus the
-    // counter-placement compound, which is not this family at all.
-    // 🆕🆕🆕 **D538 TOOK `COUNTER_PLACEMENT_PILE` OUT OF THIS LIST TOO, AND IT WENT RED
-    // HERE BY NAME** — the third row in three slices to leave a `for` over named
-    // constants rather than a count (D508, D510, now D538). **The one genuine refusal
-    // left in this family is `ANCIENT_PILE`**, data-blocked permanently because no
-    // catalog column classifies the banner.
-    // 🆕🆕🆕 D569 (D539) — `ANCIENT_PILE` LEAVES too, the FOURTH row in four slices to leave this `for`
-    // by NAME: "data-blocked permanently" is WITHDRAWN (an engine table, `banners.ts`, plus the
-    // NEW `bannerCard` filter). The list is EMPTY, and the claim is pinned on the other side:
-    // claimed by EXACTLY the additive reader.
     for (const text of [ANCIENT_PILE]) {
       expect(deriveAttackDamageBonus(text)).not.toBeNull();
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(true);
     }
-    // 🛑 **AND THE COUNTER-PLACEMENT COMPOUND IS STILL NOT A DAMAGE FOLD, WHICH IS THE
-    // HALF OF THE OLD CLAIM THAT SURVIVES AND IS NOW THE LOAD-BEARING ONE.** D538 claims
-    // it through `deriveAttackEffect` (arm 23b-bis, a three-op program whose amount rider
-    // is `damageChosen.perDiscardPileCard`), NOT through either of this file's two
-    // damage readers and not through any of the eleven OTHERS. So the nullities are
-    // KEPT verbatim (D418: re-point, never delete) and only `resolvedByAnyReader`
-    // inverts — which is exactly the discrimination this rung exists for: a reader in
-    // THIS family widened to swallow the placement compound still reddens here.
     expect(deriveAttackDamageBonus(COUNTER_PLACEMENT_PILE)).toBeNull();
     expect(deriveAttackDamageMultiplier(COUNTER_PLACEMENT_PILE)).toBeNull();
     // The owner is NAMED and the other ten are still refused one by one — the same
@@ -654,13 +413,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     ]);
   });
 
-  it("🛑 no splitter composes on any of the eight, before OR after this slice", () => {
-    // D426's mechanism, driven rather than asserted: none of these sentences carries a
-    // `. ` joiner an anchor could hide behind, so no composition path can claim a head
-    // this slice made readable — and the counter-placement compound, which DOES carry
-    // one, is refused by every splitter too. Measured on all four splitters (D425: the
-    // requirement and cancel splitters serve zero additional sentences, so the honest
-    // subtraction is gate + trailing, and this rung checks all four anyway).
+  it("no splitter composes on any of the eight, before OR after this slice", () => {
     for (const text of [
       ENERGY_PILE,
       ETHAN_PILE,
@@ -684,13 +437,13 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — `countCardsInDiscardPile`: the pile, seat-relative, filtered", () => {
-  it("🛑 the canonical piles answer 3 / 2 / 1 / 1 and 4 / 3 / 2 / 0", () => {
+  it("the canonical piles answer 3 / 2 / 1 / 1 and 4 / 3 / 2 / 0", () => {
     const state = canonical();
     expect(NOUNS.map((f) => countCardsInDiscardPile(state, "p1", f))).toEqual([3, 2, 1, 1]);
     expect(NOUNS.map((f) => countCardsInDiscardPile(state, "p2", f))).toEqual([4, 3, 2, 0]);
   });
 
-  it("🛑 every NEIGHBOURING filter answers a different number on the same piles", () => {
+  it("every NEIGHBOURING filter answers a different number on the same piles", () => {
     // ⑷ driven rather than argued: the four printed members against the three nearest
     // members nobody printed here, plus the pile LENGTH, which is what a build that
     // skipped the noun phrase entirely would read.
@@ -702,24 +455,12 @@ describe("§3 — `countCardsInDiscardPile`: the pile, seat-relative, filtered",
     expect(countCardsInDiscardPile(state, "p1", { kind: "specialEnergy" })).toBe(1);
     expect(state.players.p1.discard).toHaveLength(7);
     expect(state.players.p2.discard).toHaveLength(8);
-    // …so `byName` and `supporter` differ on the attacker's pile, `item` and
-    // `trainerCard` differ on the defender's, and `anyEnergy` and `basicEnergy` differ
-    // on BOTH. No two of the four printed nouns share a value on the same pile except
-    // `item` and `byName` on the attacker's, which the OTHER pile separates at 2 and 0.
   });
 
-  it("🛑 THE PRINT, NEVER THE PROVISION — §6.5 on the one card that shows it", () => {
-    // `fix-special` is an Energy CARD (`anyEnergy` admits it) that is not a Basic one
-    // (`basicEnergy` refuses it), which is the printed word "Basic" made observable on
-    // a single pile. And `providesEnergy` — the filter a provision reading would
-    // reach for — is FALSE for every card in a pile by `matchesFilter`'s own arm, with
-    // the pile argument written into that arm.
+  it("THE PRINT, NEVER THE PROVISION — §6.5 on the one card that shows it", () => {
     const state = canonical();
     expect(countCardsInDiscardPile(state, "p1", ANY_ENERGY)).toBe(3);
     expect(countCardsInDiscardPile(state, "p1", BASIC_ENERGY)).toBe(2);
-    // ⚠️ TWO TYPES, and the second is the sharp one: the defender's pile holds TWO
-    // Basic {R} Energy, which a provision reading over an ATTACHED card would count
-    // as Fire — here it is 0, because a card in a pile provides nothing at all.
     expect(
       countCardsInDiscardPile(state, "p1", { kind: "providesEnergy", energyType: "Water" }),
     ).toBe(0);
@@ -728,7 +469,7 @@ describe("§3 — `countCardsInDiscardPile`: the pile, seat-relative, filtered",
     ).toBe(0);
   });
 
-  it("🛑 an EMPTY pile is 0 and an UNRESOLVABLE uid contributes 0, on every filter", () => {
+  it("an EMPTY pile is 0 and an UNRESOLVABLE uid contributes 0, on every filter", () => {
     // Both are properties of the walk rather than of any board a game can reach, so
     // they are driven on the function. `cardOfUid` returns undefined for a uid the
     // catalog cannot resolve and `matchesFilter`'s first line answers false for it.
@@ -746,10 +487,7 @@ describe("§3 — `countCardsInDiscardPile`: the pile, seat-relative, filtered",
     expect(NOUNS.map((f) => countCardsInDiscardPile(haunted, "p1", f))).toEqual([3, 2, 1, 1]);
   });
 
-  it("🛑 the GENERALISED walk and D376's threshold cannot disagree", () => {
-    // The two vocabularies, one walk. This is what a second copy of the loop would have
-    // broken, and it goes red the day somebody re-inlines one of them. D376's arm asks a
-    // THRESHOLD over `{ kind: "basicEnergy", energyType }`; the walk answers the COUNT.
+  it("the GENERALISED walk and D376's threshold cannot disagree", () => {
     const state = canonical();
     // The defender's pile holds two Basic {R} and one Basic {C}, so the typed reading is
     // 2 and the untyped one is 3 — which is also the `energyType` rung ⑷ in miniature.
@@ -774,26 +512,19 @@ describe("§3 — `countCardsInDiscardPile`: the pile, seat-relative, filtered",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — the fold: four attacks, four numbers, one board", () => {
-  it("🛑 the canonical board deals 80 / 120 / 90 / 60", () => {
+  it("the canonical board deals 80 / 120 / 90 / 60", () => {
     const state = canonical();
     expect([0, 1, 2, 3].map((i) => dealt(state, i))).toEqual([80, 120, 90, 60]);
   });
 
-  it("🛑 the MULTIPLY fold DROPS the printed base and the ADDITIVE one KEEPS it", () => {
-    // The two `+` sentences carry their printed 20 and 60; the two `×` ones have
-    // `base: 0` even though the card prints `30×`. A build that got the fold wrong
-    // would be off by the base on every board above — but only this rung says WHICH
-    // half of the number is which.
+  it("the MULTIPLY fold DROPS the printed base and the ADDITIVE one KEEPS it", () => {
     const state = canonical();
     const rows = [0, 1, 2, 3].map((i) => find(swing(state, i).events, "DAMAGE_DEALT"));
     expect(rows.map((r) => r?.base)).toEqual([20, 60, 0, 0]);
     expect(rows.map((r) => r?.scaled)).toEqual([60, 60, 90, 60]);
   });
 
-  it("🛑 the EMPTY-pile board: the `+` fold pays its base, the `×` fold deals nothing", () => {
-    // Both piles empty. On the additive fold a 0 count leaves the printed base — the
-    // card still hits for 20 and 60 — and on the multiply fold a 0 count means no
-    // `DAMAGE_DEALT` row at all, which is rules-correct and is the printed floor.
+  it("the EMPTY-pile board: the `+` fold pays its base, the `×` fold deals nothing", () => {
     const state = bare();
     expect(state.players.p1.discard).toHaveLength(0);
     expect(state.players.p2.discard).toHaveLength(0);
@@ -802,19 +533,14 @@ describe("§4 — the fold: four attacks, four numbers, one board", () => {
     expect(find(swing(state, 3).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
-  it("🛑 THE ZONE: the attached Energy is NOT the pile, and the wrong walk is non-zero", () => {
-    // ⑶ made observable. The attacker has exactly ONE Energy attached (the printed cost)
-    // and THREE Energy cards in its pile, so a build that delegated the "Energy card"
-    // noun to `countEnergyInPlay` — the walk every OTHER Energy-counting member of this
-    // union uses — deals 40 where the print says 80. A board with an empty attachment
-    // would have made that mistake look like a zero and hidden it.
+  it("THE ZONE: the attached Energy is NOT the pile, and the wrong walk is non-zero", () => {
     const state = canonical();
     expect(activeOf(state, "p1").energy).toHaveLength(1);
     expect(countCardsInDiscardPile(state, "p1", ANY_ENERGY)).toBe(3);
     expect(dealt(state, 0)).toBe(80);
   });
 
-  it("🛑 THE SEAT, driven through `attack()`: all four numbers move under an inversion", () => {
+  it("THE SEAT, driven through `attack()`: all four numbers move under an inversion", () => {
     // ⑴ as arithmetic rather than as an argument. The inverted reading of each attack is
     // computed from the OTHER pile with the SAME filter, and no attack lands on its own
     // number: 80→100, 120→60, 90→60, 60→30.
@@ -838,7 +564,7 @@ describe("§4 — the fold: four attacks, four numbers, one board", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — the same four numbers from the other chair", () => {
-  it("🛑 p2 attacking reads p2's pile for 'your' and p1's for 'your opponent's'", () => {
+  it("p2 attacking reads p2's pile for 'your' and p1's for 'your opponent's'", () => {
     // The seat rung driven through `attack()` from the other end: the piles are built
     // the same way around the attacker, so the four numbers are identical while the
     // physical seats are swapped — which is what "controller-relative" means.
@@ -854,23 +580,12 @@ describe("§5 — the same four numbers from the other chair", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", () => {
-  // ⚠️ THE CONSTANT LIVES IN `apps/api/src/lobby/match.ts` and is not exported from this
-  // package; what is driven HERE is the engine-side fact it is about — whether anything
-  // this slice produces reaches a persisted board. The rule at that constant is *does
-  // the old byte string still mean what it meant*: a WIDENING is free, a RENAME or a new
-  // REQUIRED key on a persisted structure is not. This slice adds a `DamageCountSource`
-  // member and renames nothing.
-
-  it("🛑 DIRECTION 1 — a v29 record round-trips and STILL scores all four counts", () => {
+  it("DIRECTION 1 — a v29 record round-trips and STILL scores all four counts", () => {
     const record = JSON.parse(JSON.stringify(canonical())) as GameState;
     expect([0, 1, 2, 3].map((i) => dealt(record, i))).toEqual([80, 120, 90, 60]);
   });
 
-  it("🛑 DIRECTION 2 — nothing this slice produces is on the board at all", () => {
-    // `DamageCountSource` is a PARSE-TIME type: derived from card text and consumed in
-    // the same tick by `scaledAttackDamage`. No op carries one, no field stores one, no
-    // event names one. Driven as a property of the SERIALIZED bytes rather than reasoned
-    // from the type's name (D427: choosing a carrier does not duck persistence).
+  it("DIRECTION 2 — nothing this slice produces is on the board at all", () => {
     const before = canonical();
     const after = swing(before, 0).state;
     const wire = JSON.stringify(after);
@@ -888,14 +603,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     );
   });
 
-  it("🛑 the OPPONENT-side read is ONLINE-EVALUABLE — the pile ships face up to BOTH seats", () => {
-    // ⚠️ **D376's MEMBER ONLY EVER COUNTED THE ACTOR'S OWN PILE, so this is checked here
-    // rather than inherited from it.** §2 makes a discard pile ordered and PUBLIC, and
-    // `redact.ts` agrees at the code rather than in prose: `redactedSideOf` maps
-    // `side.discard` through `redactedCardOf` unconditionally, with no `SideVisibility`
-    // gate, for the viewer's side AND the opponent's. So an attacker counting the
-    // defender's pile is reading something the client already renders, and this union's
-    // public-state invariant holds on both values of `seat`.
+  it("the OPPONENT-side read is ONLINE-EVALUABLE — the pile ships face up to BOTH seats", () => {
     const state = canonical();
     const view = redactGame(state, "p1").board;
     expect(view.opponent.discard).toHaveLength(8);
@@ -913,50 +621,22 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(view.opponent.hand.length).toBeGreaterThan(0);
   });
 
-  it("🛑 the TWO REFUSALS ARE PINNED ON THE POPULATION, and they are TWO claims", () => {
-    // D423: pin an absence on the population, never on a specimen. Each row is located
-    // in the corpus by its own predicate and asserted unresolved — so the rung reddens
-    // the day either becomes buildable, and it names WHICH one.
-    //
-    // ⑴ **Ancient — DATA-BLOCKED, PERMANENTLY.** The banner is in no catalog column and
-    //    no tcgdex field, so no `CardFilter` at any width can express it and the fix is
-    //    an INGEST change. This rung is NOT a falsifier: it is a standing statement that
-    //    the row is still printed and still unclaimed.
+  it("the TWO REFUSALS ARE PINNED ON THE POPULATION, and they are TWO claims", () => {
     const ancient = legalAttackCorpus().filter(
       ([, s]) => s.includes("Ancient card") && s.includes("discard pile"),
     );
     expect(ancient.map(([, s]) => s)).toEqual([ANCIENT_PILE]);
     expect(ancient.reduce((sum, [n]) => sum + n, 0)).toBe(2);
-    // 🆕🆕🆕 D569 (D539) — ⑴'s "DATA-BLOCKED, PERMANENTLY … the fix is an INGEST change" is WITHDRAWN: the
-    // row is still printed and is now CLAIMED (`bannerCard` over `banners.ts`).
     expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(true);
 
-    // ⑵ ✅ **THE NAME SUBSTRING — THE FALSIFIER FIRED, AND THIS IS WHAT IT LOOKS LIKE
-    //    AFTERWARDS.** The rung used to read *"UNBUILT, WITH AN EXECUTABLE FALSIFIER
-    //    (D428/D422). `byName` is exact equality and no `CardFilter` member matches a
-    //    substring; the day one does and `DISCARD_PILE_NOUNS` gains the row, THIS RUNG
-    //    GOES RED and the refusal stops being true loudly."* **D510 is that day** — and
-    //    the mechanism was very slightly different from the one predicted: the noun is
-    //    PARAMETERISED, so `DISCARD_PILE_NOUNS` gained no row at all and
-    //    `discardPileFilter` gained a second branch. The population half is KEPT
-    //    VERBATIM and only the verdict is turned over, which is what stops a re-point
-    //    from quietly deleting the evidence (D508).
     const substring = legalAttackCorpus().filter(
       ([, s]) => s.includes('has "Team Rocket" in its name') && s.includes("discard pile"),
     );
     expect(substring.map(([, s]) => s)).toEqual([TR_NAME_PILE]);
     expect(substring.reduce((sum, [n]) => sum + n, 0)).toBe(2);
     expect(resolvedByAnyReader(TR_NAME_PILE)).toBe(true);
-    // The predicate that DID change, asserted at the value rather than in a comment: an
-    // exact-equality filter still says NO to a name that merely CONTAINS the fragment —
-    // `byName` was not widened, a member was ADDED beside it — and the two readings are
-    // driven against each other on ONE pile in the same run.
     expect(countCardsInDiscardPile(canonical(), "p1", { kind: "byName", name: "Ethan's" })).toBe(0);
     expect(countCardsInDiscardPile(canonical(), "p1", ETHAN_BY_NAME)).toBe(1);
-    // …and the ONE refusal this file has left, so ⑴ and ⑵ no longer read as one claim:
-    // the Ancient banner is still printed, still unclaimed, and still an INGEST problem.
-    // (🆕🆕🆕 D569 (D539): WITHDRAWN — "still unclaimed … still an INGEST problem" is false at
-    // this head: ⑴ is claimed through `banners.ts`' engine table. This file has NO refusal left.)
     expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(true);
   });
 

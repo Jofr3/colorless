@@ -17,22 +17,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// ── CARD REVISION, BATCH B33 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B33"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1
-// `cards.attacks_json`, byte for byte below):
-//
-//   Mudsdale `sv05-092` / `sv05-175` "Mud Stock" {F}: *"Attach a Basic {F} Energy card from your
-//   discard pile to each of your Benched Pokémon."*
-//
-// THE BUG. The `toEach` fold (interpreter.ts `attachEnergyFrom`) walked `attachEnergyTargets` in Bench
-// order and attached until the pile ran dry, so with fewer Basic {F} Energy in the discard pile than
-// Benched Pokémon the FIRST Benched bodies were always fed and the player was never asked. "Each of"
-// with a short pile is "do as much as you can", and WHICH Benched Pokémon get the cards is the
-// player's decision: the op now parks a `choosePokemonMulti` with `min === max ===` the pile size
-// over the Benched targets. A pile that covers every body still asks nothing.
-
 const MUD_STOCK =
   "Attach a Basic {F} Energy card from your discard pile to each of your Benched Pokémon.";
 const HIGH_HORSEPOWER = "This Pokémon also does 40 damage to itself.";

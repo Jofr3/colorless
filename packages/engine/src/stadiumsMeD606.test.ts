@@ -19,19 +19,8 @@ import {
   setBenchDamage,
   setDamage,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D606 — WP25a: THE FIRST HALF OF THE `me` STADIUMS ──
-//
-// 5 printed texts / 9 `me` printings on five new registry objects: Prism Tower ×2, Surfing Beach ×2,
-// Nighttime Mine, Lumiose City ×2 and Celebratory Fanfare ×2. ONE new piece, the turn-ending Stadium
-// use (`StadiumAbility.endsTurn`: `"always"` R-LC1, `"ifHealed"` R-CF1), and League HQ's filtered
-// twin (`StadiumEffects.attackCostSurcharge`). Every id and text measured on the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was referenced
-// in the tree before this slice. Dropped and named: Battle Cage ×2, Mystery Garden ×3, Forest of
-// Vitality ×3, Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins, Ange Floette BUILT at D642 (Z1).], Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins. Excluded by the brief: Ange Floette. [🆕🆕🆕 D618 (D539): Battle Cage,
-// Mystery Garden and Forest of Vitality are built at D618, `stadiumsMeD618.test.ts`.]
-// Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const PRISM_TEXT =
   "Once during each player's turn, that player may discard 2 cards from their hand in order to draw a card.";
@@ -50,7 +39,6 @@ const MINE = "me02.5-197";
 const LUMIOSE = ["me03-077", "me03-111"] as const;
 const FANFARE = ["mep-028", "mep-120"] as const;
 
-/** [name, the keyed printings, the printed text]. */
 const TEXTS: readonly (readonly [string, readonly string[], string])[] = [
   ["Prism Tower", PRISM, PRISM_TEXT],
   ["Surfing Beach", SURF, SURF_TEXT],
@@ -62,7 +50,7 @@ const TEXTS: readonly (readonly [string, readonly string[], string])[] = [
 const FILLER = "d606-filler";
 const WATER = "d606-water";
 const WATER_B = "d606-water-b";
-const TERA = "sv08-057"; // Pikachu ex — Tera by printing id (banners.ts)
+const TERA = "sv08-057";
 const ITEM_A = "d606-item-a";
 const ITEM_B = "d606-item-b";
 const ZAP = { name: "Zap", cost: ["Colorless", "Colorless"], damage: "30", effect: "" };
@@ -92,7 +80,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [PRISM[0]]: 2,
   [SURF[0]]: 2,
@@ -107,11 +94,6 @@ const DECK = deckOf({
   [ITEM_B]: 6,
   "fix-energy": 9,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -296,10 +278,7 @@ describe("D606 §1 — the programs: five objects over 9 printings", () => {
     ]);
   });
 
-  it("dropped and excluded Stadiums stay unkeyed (🆕🆕🆕 D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are keyed since D618; 🆕🆕🆕 D635 (D539): Fossil Quarry since D635; 🆕🆕🆕 D642 (D539): WITHDRAWN for the last three — keyed since D642, the rung is inverted)", () => {
-    // 🆕🆕🆕 D618 (D539) — Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3 left this list
-    // (`stadiumsMeD618.test.ts`). 🆕🆕🆕 D635 (D539) — Fossil Quarry `me05-076` left it too
-    // (`fossilQuarryD635.test.ts`). 🆕🆕🆕 D642 (D539) — and the three below, Z1 (`stadiumWatchedMeD642.test.ts`).
+  it("dropped and excluded Stadiums stay unkeyed ( D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are keyed since D618; D635 (D539): Fossil Quarry since D635; D642 (D539): WITHDRAWN for the last three — keyed since D642, the rung is inverted)", () => {
     for (const id of [
       "me02-088", // Dizzying Valley
       "me01-127", // Risky Ruins
@@ -382,7 +361,7 @@ describe("D606 §3 — Surfing Beach: the Active {W} switches with a Benched {W}
     });
   });
 
-  it("🛑 a {W} Active with no Benched {W}: NO_LEGAL_TARGET — the FIRST printed Stadium program `programPlayable` refuses, and the wire greys it", () => {
+  it("a {W} Active with no Benched {W}: NO_LEGAL_TARGET — the FIRST printed Stadium program `programPlayable` refuses, and the wire greys it", () => {
     const board = stadium(table(WATER, [FILLER]), SURF[0]);
     expect(refusal(board).code).toBe("NO_LEGAL_TARGET");
     expect(offer(board)).toEqual({

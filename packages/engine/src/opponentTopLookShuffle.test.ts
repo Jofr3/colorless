@@ -17,31 +17,9 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 🆕🆕🆕 D534 — THE ONE-CARD LOOK AT THE OPPONENT's DECK WITH A PRINTED SHUFFLE.
-//
-// `censusAttackCorpus.ts` **FILE LINE 401** — *"Look at the top card of your
-// opponent's deck. You may have your opponent shuffle their deck."* — **1 sentence
-// / 1 legal printing** (Inkay `sv06.5-033`, residue class SUBST-16 at SUBMAX=12 BEFORE
-// D534 built it — 🆕🆕🆕 D547: a stale label now, not a live class membership; SUBST-16
-// holds `:149` and `:169` after D547 built `:150` — 🆕🆕🆕 D549: STALE in turn, and WITHDRAWN as a
-// present-tense claim; D549 built `:149` and `:169` (with `:170` and `:171`), and SUBST-16 is
-// 0/0 at SUBMAX=12, measured).
-// No catalog id on this checkout, so the demonstrator is FILE-LOCAL and DECLARED
-// (D425): `d534-inkay` below carries the printed bytes and nothing else of the card.
-//
-// engine 0.418.0 → 0.419.0 — `shuffleDeck` gains the optional key
-// `whose?: "opponent"` (D131/D532's spelling), `reorderTop`'s guard parks a ONE-card
-// window when its two arms differ, `reorderNote` and the `DECK_TOP_REORDERED` log arm
-// gain a one-card branch. `MATCH_RECORD_VERSION` HELD at 30 (an optional widening).
-//
-// THE PROGRAM: `reorderTop{ n: 1, side: "opponent", otherwise: [shuffleDeck{ whose:
-// "opponent" }], otherwiseNote }` — D341's op with D344's second arm, one card wide.
-// The looker is the only seat that decides; "have your opponent shuffle" names who
-// handles the deck. The refusal on record ("two-seat CONSENT") priced the wrong thing.
-// ─────────────────────────────────────────────────────────────────────────────
 
 const PRINTED =
   "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck.";
@@ -111,20 +89,6 @@ const DECK = deckOf({
 });
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
 
 function localSetup(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -245,7 +209,7 @@ const sorted = (uids: readonly string[]): string[] => [...uids].sort();
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §1 — the reading: file line 401 derives to ONE reorderTop with a shuffle arm", () => {
-  it("🛑 the printed sentence derives to EXACTLY the program (`D534-arm-drops-whose` / `-arm-drops-the-note`)", () => {
+  it("the printed sentence derives to EXACTLY the program (`D534-arm-drops-whose` / `-arm-drops-the-note`)", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
     const [op] = deriveAttackEffect(PRINTED) ?? [];
     expect(Object.keys(op ?? {}).sort()).toEqual(["n", "op", "otherwise", "otherwiseNote", "side"]);
@@ -257,11 +221,11 @@ describe("D534 §1 — the reading: file line 401 derives to ONE reorderTop with
     expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(PRINTED));
   });
 
-  it("🛑 a TRAILING clause is refused — the `$` is load-bearing (`D534-anchor-loses-the-tail`)", () => {
+  it("a TRAILING clause is refused — the `$` is load-bearing (`D534-anchor-loses-the-tail`)", () => {
     expect(deriveAttackEffect(`${PRINTED} Draw a card.`)).toBeNull();
   });
 
-  it("🛑 a PREFIXED print is refused — the `^`", () => {
+  it("a PREFIXED print is refused — the `^`", () => {
     expect(deriveAttackEffect(`Draw a card. ${PRINTED}`)).toBeNull();
   });
 
@@ -280,7 +244,7 @@ describe("D534 §1 — the reading: file line 401 derives to ONE reorderTop with
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §2 — the board: the look parks, and the answer is put-back or shuffle", () => {
-  it("🛑 the attack PARKS on `orderCards` over p2's TOP card, with the alternative and the one-card caption (`D534-guard-drops-the-new-disjunct` / `-note-drops-the-one-card-branch`)", () => {
+  it("the attack PARKS on `orderCards` over p2's TOP card, with the alternative and the one-card caption (`D534-guard-drops-the-new-disjunct` / `-note-drops-the-one-card-branch`)", () => {
     const state = board(11);
     const { state: parked, events } = attack(state);
     const prompt = parkedPrompt(parked);
@@ -297,7 +261,7 @@ describe("D534 §2 — the board: the look parks, and the answer is put-back or 
     expect(continuation(parked).pendingOp).toEqual(PROGRAM[0]);
   });
 
-  it("🛑 the redacted prompt shows the card to the ANSWERER (p1) and NOTHING to the deck's owner (p2)", () => {
+  it("the redacted prompt shows the card to the ANSWERER (p1) and NOTHING to the deck's owner (p2)", () => {
     const { state: parked } = attack(board(13));
     const [uid] = parkedPrompt(parked).candidates;
     if (uid === undefined) throw new Error("no candidate");
@@ -310,13 +274,12 @@ describe("D534 §2 — the board: the look parks, and the answer is put-back or 
     expect(JSON.stringify(redactGame(parked, "p2"))).not.toContain(uid);
   });
 
-  it("🛑 answering [uid] PUTS IT BACK: p2's deck is untouched (the card is what p2 draws next), no SHUFFLE, rng unspent", () => {
+  it("answering [uid] PUTS IT BACK: p2's deck is untouched (the card is what p2 draws next), no SHUFFLE, rng unspent", () => {
     const state = board(17);
     const { state: parked } = attack(state);
     const [uid] = parkedPrompt(parked).candidates;
     if (uid === undefined) throw new Error("no candidate");
     const run = answer(parked, [uid]);
-    // An attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]: p2's turn begins and p2 DRAWS the card that was put back.
     expect(run.state.players.p2.hand).toContain(uid);
     expect(run.state.players.p2.deck).toEqual(state.players.p2.deck.slice(1));
     expect(run.state.players.p1.deck).toEqual(state.players.p1.deck);
@@ -324,7 +287,7 @@ describe("D534 §2 — the board: the look parks, and the answer is put-back or 
     expect(run.state.rngState).toEqual(parked.rngState);
   });
 
-  it("🛑 answering [] runs the printed arm: SHUFFLE{p2}, rng advanced, p2's deck a real permutation, p1's deck byte-identical (`D534-shuffle-reads-the-actor`)", () => {
+  it("answering [] runs the printed arm: SHUFFLE{p2}, rng advanced, p2's deck a real permutation, p1's deck byte-identical (`D534-shuffle-reads-the-actor`)", () => {
     const state = board(19);
     const before = [...state.players.p2.deck];
     const { state: parked } = attack(state);
@@ -370,7 +333,7 @@ describe("D534 §2 — the board: the look parks, and the answer is put-back or 
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §3 — the degenerate boards and the constructed ops", () => {
-  it("🛑 a 1-card p2 deck does NOT park (a shuffle of one card is the state it was) and still announces a look of 1 (`D534-guard-drops-the-deck-conjunct`)", () => {
+  it("a 1-card p2 deck does NOT park (a shuffle of one card is the state it was) and still announces a look of 1 (`D534-guard-drops-the-deck-conjunct`)", () => {
     const { state: done, events } = attack(board(31, 1));
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(reorderRows(events)).toEqual([
@@ -387,7 +350,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
     ]);
   });
 
-  it("🛑 a constructed `reorderTop{n:1, side:opponent}` with NO `otherwise` does not park over a long deck — one ordering is not a decision (`D534-guard-drops-the-otherwise-conjunct`)", () => {
+  it("a constructed `reorderTop{n:1, side:opponent}` with NO `otherwise` does not park over a long deck — one ordering is not a decision (`D534-guard-drops-the-otherwise-conjunct`)", () => {
     const state = board(41);
     expect(state.players.p2.deck.length).toBeGreaterThan(10);
     const events: GameEvent[] = [];
@@ -401,7 +364,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
     expect(reorderRows(events)).toHaveLength(1);
   });
 
-  it("🛑 a constructed OWN-side `reorderTop{n:1}` WITH `otherwise` PARKS over a long own deck — decided: the guard asks whether the arms differ, not whose deck it is — under the own one-card caption", () => {
+  it("a constructed OWN-side `reorderTop{n:1}` WITH `otherwise` PARKS over a long own deck — decided: the guard asks whether the arms differ, not whose deck it is — under the own one-card caption", () => {
     const state = board(43);
     const events: GameEvent[] = [];
     const result = runProgram(
@@ -453,8 +416,8 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646)", () => {
-  it("🛑 the parked state round-trips through JSON BYTE-EQUAL, keeps `whose` in `cont.pendingOp.otherwise`, and resumes from its bytes to the same result", () => {
+describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 ( held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646)", () => {
+  it("the parked state round-trips through JSON BYTE-EQUAL, keeps `whose` in `cont.pendingOp.otherwise`, and resumes from its bytes to the same result", () => {
     const { state: parked } = attack(board(59));
     const bytes = JSON.stringify(parked);
     const revived = JSON.parse(bytes) as GameState;
@@ -469,7 +432,7 @@ describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` 
     expect(shuffleSeats(fromBytes.events)).toEqual(["p2"]);
   });
 
-  it("🛑 THE LOSS DIRECTION (D421/D435): the key DELETED from the parked arm resumes as a shuffle of the ATTACKER's deck — p1 shuffles, p2's deck keeps its order", () => {
+  it("THE LOSS DIRECTION (D421/D435): the key DELETED from the parked arm resumes as a shuffle of the ATTACKER's deck — p1 shuffles, p2's deck keeps its order", () => {
     const state = board(61);
     const { state: parked } = attack(state);
     const revived = JSON.parse(

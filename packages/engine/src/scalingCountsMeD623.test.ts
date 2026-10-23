@@ -24,18 +24,8 @@ import {
   setBenchDamage,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D623 — WP28b: THE REST OF THE SCALING COUNT SOURCES ─────────────────────────────────────
-//
-// 5 printed attack texts / 7 `me` printings, all attacks, no registry key. Three NEW `DamageCountSource`
-// members — `damagedBenchedPokemon` (Gourgeist ex ×2), `benchedPokemonWithEnergy` (Armarouge ×2) and
-// `benchedPokemonWithMaxHp` (Igglybuff, R-BOC1) — the body-map key "Pikachu and Pikachu ex" (Pikachu
-// `30th-034`) and Kyogre "Riptide", one anchor read by the multiplier (the count) and by
-// `deriveAttackEffect` (the shipped retrieval + shuffle tail). Every id and text off the LOCAL D1,
-// 2026-10-09, `legal_standard = 1`; no id was referenced in the tree outside docs before this slice.
-// Dropped and named: Doublade ×3 and Okidogi (§1) [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630 (M1)] [🆕🆕🆕 D633 (D539):
-// Doublade ×3 BUILT at D633 (O1)].
 
 const RONDO =
   "This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.";
@@ -47,7 +37,6 @@ const PIKA_CHAIN = "This attack does 40 damage for each of your Pikachu and Pika
 const RIPTIDE =
   "This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [RONDO, ["me04-041", "me04-102"]],
   [FLAME_LEGION, ["me05-012", "me05-086"]],
@@ -58,14 +47,10 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
 
 /** Dropped from WP28b and named: each needs vocabulary beyond a count source. */
 const DROPPED: readonly (readonly [string, number])[] = [
-  // An own-hand pick that moves nothing plus a partial public reveal (a new op and event). [🆕🆕🆕 D633 (D539):
-  // WITHDRAWN — built at D633 on that new op and event (`revealFromHand`, `HAND_CARDS_REVEALED`).]
   [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
     3,
   ],
-  // The Prizes taken during the opponent's last turn: no state records them (an MRV bump). [🆕🆕🆕 D630 (D539):
-  // WITHDRAWN — `PlayerSide.prizesTakenOnTurn` records them since D630 (MRV 43 → 44).]
   [
     "This attack does 60 more damage for each Prize card your opponent took during their last turn.",
     1,
@@ -84,12 +69,10 @@ describe("D623 §1 — the texts: 5 attack sentences / 7 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named (🆕🆕🆕 D630 (D539): WITHDRAWN for Okidogi — built at D630, `persistedRecordsMeD630.test.ts`) (🆕🆕🆕 D633 (D539): WITHDRAWN for Doublade — built at D633, `attackOddsMeD633.test.ts`)", () => {
+  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named ( D630 (D539): WITHDRAWN for Okidogi — built at D630, `persistedRecordsMeD630.test.ts`) ( D633 (D539): WITHDRAWN for Doublade — built at D633, `attackOddsMeD633.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);
-      // 🆕🆕🆕 D630 — Settle the Score reads now (the persisted `PlayerSide.prizesTakenOnTurn`, MRV 43 → 44).
-      // 🆕🆕🆕 D633 — and Weaponized Swords reads (the new `revealFromHand`): both are built.
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
     expect(DROPPED.reduce((sum, [, n]) => sum + n, 0)).toBe(4);
@@ -285,11 +268,6 @@ const BOARD_IDS = new Set([
   BRAVERY_CHARM,
   "fix-blend",
 ]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

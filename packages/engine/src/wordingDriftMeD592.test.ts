@@ -23,19 +23,9 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
 
-// ── 🆕🆕🆕 D592 — WP02: THE `me` READER WORDING DRIFT AND CORROSIVE LIQUID ──
-//
-// 11 printed attack texts / 18 `me` printings, all read by `deriveAttackEffect`. Ten are `me`
-// phrasings of sentences the readers already build in their `sv` wording; `normaliseMeWording`
-// (effects.ts) rewrites each to that wording before the anchors run. The eleventh is Corrosive
-// Liquid (Mega Dragalge ex ×3), Megaton Blower's two sweeps on an attack. Every id and text measured
-// on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no
-// id was referenced anywhere in the tree before this slice. No `me` row is a fixture, so the printed
-// faces used on a board are carried HERE.
-
-/** [the `me` sentence, its legal `me` printings, the `sv` wording it is read as]. */
 const DRIFT: readonly (readonly [string, number, string])[] = [
   [
     // Mega Absol ex `me01-086` / `-161` / `-180` "Claw of Darkness"
@@ -182,20 +172,11 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     const drift = new Set(DRIFT.map(([text]) => text));
     const unbuilt = changed.filter((text) => !drift.has(text));
     expect(changed.filter((text) => drift.has(text))).toHaveLength(10);
-    // Each still needs vocabulary beyond a synonym (a hand-count source, a gate, a trigger, …).
-    // 🆕🆕🆕 D609 (D539): ~~5~~ 7 — WP36 widened the lookahead to the singular "damage counter on", so the
-    // table also rewrites Sneaky Placement (built, `COUNTER_PUT_ON_OPPONENT_ANY`) and the Active singular
-    // (still unbuilt, the §3 control). 🆕🆕🆕 D627 (D539): WITHDRAWN, kept as written — the Active singular is
-    // Furtive Drop `me05-005`, BUILT at D627 (H1); the §3 control is re-pointed to "Place 2 damage counter…".
     expect(unbuilt).toHaveLength(7);
-    // 🆕🆕🆕 D600 (D539): "five that stay unbuilt" is WITHDRAWN, kept as written — four: Powerful Hand
-    // ×3 is built by WP14's hand-count source (`damageActive.per`), the vocabulary named above.
     const powerfulHand =
       "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
     expect(unbuilt).toContain(powerfulHand);
     expect(deriveAttackEffect(powerfulHand)).not.toBeNull();
-    // 🆕🆕🆕 D608 (D539): and three — Phantasmal Barrage is built by WP30's literal compound
-    // (`SELF_DISCARD_ALL_THEN_COUNTERS`, read after this table rewrote its "place").
     const barrage =
       "Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.";
     expect(unbuilt).toContain(barrage);
@@ -203,8 +184,6 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     const sneaky = "Place 1 damage counter on 1 of your opponent's Pokémon.";
     expect(unbuilt).toContain(sneaky);
     expect(deriveAttackEffect(sneaky)).not.toBeNull();
-    // 🆕🆕🆕 D627 (D539): and two more — Furtive Drop (the Active singular, `COUNTER_PUT_ON_DEFENDER` at 1) and
-    // Matcha Spin (arm 6e-septies, read after this table rewrote its lower-case "place") are built by H1.
     const furtive = "Place 1 damage counter on your opponent's Active Pokémon.";
     const matcha =
       "If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.";
@@ -212,14 +191,10 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
       expect(unbuilt).toContain(text);
       expect(deriveAttackEffect(text), text).not.toBeNull();
     }
-    // 🆕🆕🆕 D629 (D539): and one more — Mismagius "Assassin's Magic" (`CLAUSE_GATED_BENCH_COUNTERS`, read
-    // after this table rewrote its lower-case "place") is built by S1.
     const assassin =
       "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
     expect(unbuilt).toContain(assassin);
     expect(deriveAttackEffect(assassin)).not.toBeNull();
-    // 🆕🆕🆕 D636 (D539): and one more — Pachirisu "Electrified Incisors" (`HAND_ATTACH_COUNTERS`, read after this
-    // table rewrote its lower-case "place") is built by L1. The rewritten sentences that stay unbuilt: none.
     const incisors =
       "During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.";
     expect(unbuilt).toContain(incisors);
@@ -235,13 +210,8 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
 describe("D592 §3 — near misses stay null, one token apart each", () => {
   it("every control is unbuilt", () => {
     const controls: Record<string, string> = {
-      // 🆕🆕🆕 D609 (D539): the table now rewrites this singular "place" too (WP36); it stays null because no
-      // anchor reads a 1-counter put on the Active.
-      // 🆕🆕🆕 D627 (D539): WITHDRAWN, kept as written — the printed singular is BUILT (Poltchageist "Furtive
-      // Drop", H1). The control is re-pointed onto its number-agreement near miss, which stays null.
       "a singular counter (no 'counters')":
         "Place 2 damage counter on your opponent's Active Pokémon.",
-      // 🆕🆕🆕 D600 (D539): the printed Powerful Hand is BUILT (WP14) — this control is its seat near miss.
       "Powerful Hand over THEIR hand (the printed row is built, WP14)":
         "Place 2 damage counters on your opponent's Active Pokémon for each card in their hand.",
       "the comma-join on another head":
@@ -299,7 +269,7 @@ describe("D592 §4 — Corrosive Liquid: Megaton Blower's two sweeps on an attac
     expect(deriveAttackEffect(CORROSIVE_LIQUID.replace("'", "’"))).toEqual(program);
   });
 
-  it('no printing of this slice is registry-keyed (🆕🆕🆕 D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability "Durable Body"; its attack is still the reader\'s; 🆕🆕🆕 D626 (D539): and for Miraidon `mep-082` and Gengar ex `30th-090` / `-154` — keyed for their Abilities "Photon Cord" / "Fainting Spell"; their attacks are still the reader\'s)', () => {
+  it('no printing of this slice is registry-keyed ( D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability "Durable Body"; its attack is still the reader\'s; D626 (D539): and for Miraidon `mep-082` and Gengar ex `30th-090` / `-154` — keyed for their Abilities "Photon Cord" / "Fainting Spell"; their attacks are still the reader\'s)', () => {
     for (const id of [
       "me04-065",
       "me04-104",
@@ -314,7 +284,6 @@ describe("D592 §4 — Corrosive Liquid: Megaton Blower's two sweeps on an attac
       expect(programFor(id), id).toBeUndefined();
     }
     expect(Object.keys(programFor("me05-041") ?? {})).toEqual(["passive"]);
-    // 🆕🆕🆕 D626 — an Ability key only: no `attack` key, so "Thunder" / "Chaotic Pain" still derive.
     expect(Object.keys(programFor("mep-082") ?? {})).toEqual(["triggered"]);
     for (const id of ["30th-090", "30th-154"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
@@ -395,11 +364,6 @@ const DECK = deckOf({
   [SPECIAL]: 6,
   "fix-energy": 17,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup (P2 first), then P1's turn 4 with both hands back in the decks. */
 function p1Turn(): GameState {

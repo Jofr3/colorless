@@ -1,8 +1,3 @@
-// 🆕🆕🆕 D646 — MATCH_RECORD_VERSION 48 → 49, THE EIGHTH MIGRATION (match.ts "48 → 49 AT D646"): Backtrack Badge's
-// parked `EffectOp`s `reflipAttackCoins` / `reflipCoins` and the engine-written `faces` / `hitRefs` keys are persisted
-// shapes a 0.528 rollback misreads. No v48 writer could write any of them, so a v48 record is migrated by a re-stamp
-// alone (no D1 read), as a v45, v46 or v47 one is; a v44 record takes D636's step, a v43 two, a v42 three, a v41 all four.
-
 import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@colorless/engine";
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
@@ -27,7 +22,7 @@ import {
 
 const BODY = "d646-body";
 const FLIPPER = "d646-flipper"; // {C}: "Flip a coin. If tails, this attack does nothing."
-const BADGE = "me05-074"; // Backtrack Badge — read since D646
+const BADGE = "me05-074";
 const JAW = "me03-068"; // Antique Jaw Fossil — kept so the earlier steps run over the same pool
 const BODY_CARD: Card = {
   id: BODY,
@@ -71,7 +66,6 @@ const FLIPPER_CARD: Card = {
     },
   ],
 } as unknown as Card;
-/** The catalog row a v48 pool holds — the printed face; only this build reads it. */
 const BADGE_CARD: Card = {
   ...BODY_CARD,
   id: BADGE,
@@ -87,7 +81,6 @@ const BADGE_CARD: Card = {
   effect:
     "Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again.",
 } as unknown as Card;
-/** The catalog row as a pool holds it (D581's ingest keeps the printed face). */
 const JAW_CARD: Card = {
   ...BODY_CARD,
   id: JAW,
@@ -166,8 +159,6 @@ function fresh(seed = 6460): GameState {
   return created.state;
 }
 
-/** A record as an older deploy wrote it. v48, v47, v46 and v45 are this build's bytes (no key was added at any); v44
-    also lacks D636's keys; v43 D630's too; v42 D621's too; v41 is the D583-refreshed shape below that. */
 function oldRecord(version: 41 | 42 | 43 | 44 | 45 | 46 | 47 | 48, state?: GameState): MatchRecord {
   let old = state ?? fresh();
   if (version <= 44) {

@@ -20,13 +20,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 3 — the persistent-zone Trainers: the shared Stadium zone (§7.3)
-// with its replace/same-name/one-per-turn rules, Pokémon Tool attachment
-// (§7.4), and the CONTINUOUS effects both feed into the pipeline
-// (continuous.ts): Beach Court's retreat discount, League HQ's attack-cost
-// surcharge, Vitality Band's pre-W/R damage bonus, Bravery Charm's Basic HP
-// bonus — plus the KO/evolution interactions of a card that stays in play.
-
 /** Setup then open P1's turn 2 (P2 went first, passed) — no §4 restrictions
     apply to P1's play. */
 function p1Turn2(seed: number): GameState {
@@ -369,7 +362,7 @@ describe("Defiance Band — a CONDITIONAL +30 before W/R (D40's third consumer)"
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const dealt = find(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
-    expect(dealt?.bonus).toBeUndefined(); // no bonus row emitted
+    expect(dealt?.bonus).toBeUndefined();
     expect(dealt?.dealt).toBe(30);
   });
 
@@ -425,7 +418,7 @@ describe("Choice Belt — a TARGET-gated +30 before W/R (the DEFENDER's suffix)"
     const { events } = mustApply(armed("fix-wall"), { type: "attack", seat: "p1", index: 0 });
     const dealt = find(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
-    expect(dealt?.bonus).toBeUndefined(); // no bonus row emitted
+    expect(dealt?.bonus).toBeUndefined();
     expect(dealt?.dealt).toBe(30);
   });
 
@@ -512,12 +505,6 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
   });
 
   it("evolving a charmed Basic below the new stage's HP Knocks it Out mid-turn (§8.1)", () => {
-    // A Bravery Charm's +50 is Basic-only, so evolving drops it — the one way
-    // evolution can LOWER effective max HP. A charmed Basic damaged into the
-    // window (survivable at +50, lethal at the printed stage HP) is Knocked Out
-    // the instant it evolves (§8.1) — a MID-TURN KO that resumes the actor's
-    // turn (M4 slice 4 closed the former Active-only/turn-ending gap). Uses the
-    // BENCH, which the Checkup would never have cleaned up.
     let state = p1Turn2(7);
     state = setActiveFromDeck(state, "p1", "fix-basic-1"); // 60 HP Basic
     state = handFromDeck(state, "p1", "sv02-173", 1);

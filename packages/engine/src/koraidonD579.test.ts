@@ -2,24 +2,11 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackDamageBonus } from "./effects";
-import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
-import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
+import { FIXTURE_POOL, battler, deckOf, typedEnergy, must, mustApply as run } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D579 — KORAIDON `sv08-116` "UNRELENTING ONSLAUGHT" (attack index 0, 1 legal printing) ──
-//
-// {C}{C}, `30+`: *"If 1 of your other Ancient Pokémon used an attack during your last turn, this
-// attack does 150 more damage."* A READER row: one `CONDITIONAL_DAMAGE_CLAUSES` literal, mapped to
-// the NEW `BoardCondition` `yourOtherBannerPokemonAttackedLastTurn { banner: "Ancient" }`, read off
-// the NEW REQUIRED `GameState.recentAttackers` — a SEAT-level record of which bodies attacked on
-// this turn and on the seat's previous one, written beside `stampAttackUse` (flow.ts
-// `stampSeatAttacker`). 🛑 R-1, RULED BY THE USER 2026-10-05: READING B — the record OUTLIVES the
-// body, so an Ancient Pokémon that attacked last turn and then left play STILL counts.
-// `MATCH_RECORD_VERSION` 40 → 41 (apps/api match.ts "D579"). R-1b (Angelite still reads the
-// per-body stamp) is ⚠️ UNRULED and pinned as a divergence in §6.
 
 const KORAIDON = "sv08-116";
 const WAKE = "sv06-063"; // Walking Wake — Ancient (banners.ts)
@@ -103,18 +90,6 @@ const DECK = deckOf({
   [WATER]: 6,
   "fix-energy": 16,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -248,7 +223,7 @@ const benchTop = (state: GameState, i: number): string =>
 const dealt = (board: GameState): number => active(run(board, onslaught).state, "p2").damage;
 
 describe("D579 Koraidon §1 — the clause is a LITERAL row; the note round-trips", () => {
-  it("🛑 the printed sentence derives to +150 behind the new member", () => {
+  it("the printed sentence derives to +150 behind the new member", () => {
     expect(deriveAttackDamageBonus(ONSLAUGHT)).toEqual({
       per: 150,
       count: { kind: "boardCondition", cond: COND },
@@ -266,13 +241,13 @@ describe("D579 Koraidon §1 — the clause is a LITERAL row; the note round-trip
 });
 
 describe("D579 Koraidon §2 — the record: written at the attack's end, idempotent, bounded", () => {
-  it("🛑 a fresh board's record is empty on both seats (REQUIRED key, setup.ts)", () => {
+  it("a fresh board's record is empty on both seats (REQUIRED key, setup.ts)", () => {
     const created = createGame({ seed: 1, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
     if (!created.ok) throw new Error("createGame failed");
     expect(created.state.recentAttackers).toEqual({ p1: [], p2: [] });
   });
 
-  it("🛑 an attack stamps `{ turn, uid }` for the ATTACKING body on the attacking seat — the turn it attacked on", () => {
+  it("an attack stamps `{ turn, uid }` for the ATTACKING body on the attacking seat — the turn it attacked on", () => {
     const board = koraidonBoard();
     const after = run(board, onslaught).state;
     expect(after.recentAttackers.p1).toEqual([{ turn: board.turn, uid: top(active(board, "p1")) }]);
@@ -302,31 +277,31 @@ describe("D579 Koraidon §2 — the record: written at the attack's end, idempot
 });
 
 describe("D579 Koraidon §3 — the discriminating rungs", () => {
-  it("🛑 another Ancient Pokémon attacked LAST turn: 30 + 150 = 180", () => {
+  it("another Ancient Pokémon attacked LAST turn: 30 + 150 = 180", () => {
     const board = koraidonBoard();
     expect(dealt(recorded(board, [{ uid: benchTop(board, 0), ago: 2 }]))).toBe(180);
   });
 
-  it("🛑 nobody attacked: the printed 30 alone", () => {
+  it("nobody attacked: the printed 30 alone", () => {
     expect(dealt(koraidonBoard())).toBe(30);
   });
 
-  it("🛑 OTHER: Koraidon's OWN attack last turn does not count", () => {
+  it("OTHER: Koraidon's OWN attack last turn does not count", () => {
     const board = koraidonBoard();
     expect(dealt(recorded(board, [{ uid: top(active(board, "p1")), ago: 2 }]))).toBe(30);
   });
 
-  it("🛑 the BANNER: a non-Ancient attacker last turn does not count", () => {
+  it("the BANNER: a non-Ancient attacker last turn does not count", () => {
     const board = koraidonBoard();
     expect(dealt(recorded(board, [{ uid: benchTop(board, 1), ago: 2 }]))).toBe(30);
   });
 
-  it('🛑 the WINDOW: an Ancient attack TWO of your turns ago is not "your last turn"', () => {
+  it('the WINDOW: an Ancient attack TWO of your turns ago is not "your last turn"', () => {
     const board = koraidonBoard();
     expect(dealt(recorded(board, [{ uid: benchTop(board, 0), ago: 4 }]))).toBe(30);
   });
 
-  it("🛑 R-1 READING B — the DEPARTED body: an Ancient attacker that has LEFT PLAY still counts", () => {
+  it("R-1 READING B — the DEPARTED body: an Ancient attacker that has LEFT PLAY still counts", () => {
     const board = koraidonBoard();
     const departed = benchTop(board, 0);
     const gone = withSide(board, "p1", {
@@ -346,7 +321,7 @@ describe("D579 Koraidon §3 — the discriminating rungs", () => {
 });
 
 describe("D579 Koraidon §4 — BOTH CARDS, end to end: Walking Wake Knocks ITSELF Out, Koraidon pays +150", () => {
-  it("🛑 turn T: Undulating Slice puts 9 on a damaged Walking Wake (self-KO); turn T+2: the promoted Koraidon deals 180", () => {
+  it("turn T: Undulating Slice puts 9 on a damaged Walking Wake (self-KO); turn T+2: the promoted Koraidon deals 180", () => {
     let state = table({
       p1: { id: WAKE, energy: [WATER, WATER, WATER], damage: 60 },
       p1Bench: [{ id: KORAIDON, energy: [C, C] }],
@@ -386,19 +361,15 @@ describe("D579 Koraidon §4 — BOTH CARDS, end to end: Walking Wake Knocks ITSE
 });
 
 describe("D579 Koraidon §5 — `MATCH_RECORD_VERSION` 40 → 41: a v40 record THROWS on this deploy (D326)", () => {
-  it("🛑 a v40-shaped state (no `recentAttackers`) throws at the first attack's end — retired, never read", () => {
+  it("a v40-shaped state (no `recentAttackers`) throws at the first attack's end — retired, never read", () => {
     const board = koraidonBoard();
     const { recentAttackers: _dropped, ...v40 } = board;
     expect(() => applyAction(v40 as GameState, onslaught)).toThrow();
   });
 });
 
-describe("D579 Koraidon §6 — R-1b (⚠️ UNRULED): Angelite is NOT re-pointed, and the divergence is pinned", () => {
+describe("D579 Koraidon §6 — R-1b ( UNRULED): Angelite is NOT re-pointed, and the divergence is pinned", () => {
   it("the seat record keeps a departed attacker; the per-body stamp Angelite reads does not", () => {
-    // 🆕🆕🆕 D579 REVIEW FIX — DISCRIMINATING: the same Walking Wake carries BOTH records (the
-    // per-body `usedAttack` stamp D394 writes and the seat entry D579 writes), so the CONTROL
-    // reads both members TRUE while the body stands; only its departure parts them. Without the
-    // control the per-body `false` below would hold whether or not the body had left.
     const board = koraidonBoard();
     const wake = benchTop(board, 0);
     const lastTurn = board.turn - 2;
@@ -422,7 +393,6 @@ describe("D579 Koraidon §6 — R-1b (⚠️ UNRULED): Angelite is NOT re-pointe
     expect(gone.recentAttackers.p1).toEqual([{ turn: lastTurn, uid: wake }]);
     // Koraidon's member (reading B) still sees it…
     expect(conditionHolds(gone, "p1", COND)).toBe(true);
-    // …while Angelite's member (D396, the per-body `usedAttack`) lost it with the body.
     expect(conditionHolds(gone, "p1", angelite)).toBe(false);
   });
 });

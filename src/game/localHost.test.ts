@@ -1,7 +1,3 @@
-// Pure-logic suite (node env): the hot-seat viewer selector and the host
-// reducer — the parts of the local host that must be exactly right for the
-// game not to soft-lock (D17: gate on who must ACT, never on turn owner).
-
 import { describe, expect, it } from "vitest";
 import type { GameState, Phase, Seat } from "@colorless/engine";
 import {

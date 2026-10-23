@@ -15,22 +15,8 @@ import {
   setActiveFromDeck,
   setConditions,
   setDamage,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D560 — THE ABILITY BUNDLE, PART 1: THE ELEVEN REGISTRY ROWS AND THE FIVE
-//    TRIGGERED ABILITIES ──
-//
-//   Drilbur               sv05-085                 "Dig Dig Dig"         onPlayToBench → search {F} → discard
-//   Team Rocket's Koffing sv10-125                 "Smog Signals"        onDamagedByAttack → 2 "Koffing" → Bench
-//   Whimsicott            sv05-015 / sv08.5-008    "Wafting Heal"        onEvolve → gates → confirm → heal "all" + discard
-//   Dachsbun ex           sv07-067 / -160 / -169   "Time to Chow Down"   onEvolve → confirm → healEach "all" Evolution
-//   Indeedee              sv08-093 / svp-154       "Obliging Heal"       onPlayToBench → heal 30 → recoverOneStatus
-//
-// Part 2 (the three passives, Magmortar, Thwackey and Cradily) is
-// `abilityPassivesD560.test.ts`. Every board rides a LOCAL `cardPool` (D275) in the suite's
-// OWN 60-card deck (D270): the printed cards transcribed from the tcgdex JSON (2026-09-26)
-// plus `d560-*` demonstrators. Readings R-KF, R-DB and the `MATCH_RECORD_VERSION` hold:
-// docs/decisions.md D560.
 
 const DRILBUR = "sv05-085";
 const KOFFING_TR = "sv10-125";
@@ -180,7 +166,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [DRILBUR]: 1,
   [KOFFING_TR]: 2,
@@ -202,11 +187,6 @@ const DECK = deckOf({
   "fix-fighting-energy": 4,
   "fix-energy": 26,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; p1's turn 2 after p2 passed — or, with `evolve`, p1's turn
     4 (§4: nobody evolves on their first turn). */
@@ -532,7 +512,7 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
     expect(done.events.some((e) => e.type === "SHUFFLE" && e.seat === "p2")).toBe(true);
   });
 
-  it("🛑 Knocked Out by the hit: the search still runs FIRST, then the KO, then p2 PROMOTES a new Koffing", () => {
+  it("Knocked Out by the hit: the search still runs FIRST, then the KO, then p2 PROMOTES a new Koffing", () => {
     let { state } = mustApply(koffingBoard(), { type: "attack", seat: "p1", index: 1 });
     expect(state.phase.kind).toBe("effect:choose");
     const pick = (prompt(state).candidates as string[])[0] as string;
@@ -567,10 +547,6 @@ describe("D560 §3 — Team Rocket's Koffing \"Smog Signals\": the bench search 
     expect(state.players.p2.bench).toHaveLength(5);
   });
 
-  // NOT a guard on `activeOnly` (which §1's shape pin holds): an `onDamagedByAttack` trigger
-  // is only ever SEEDED for the damaged Active (R-KF), and Poke never damages a Bench body, so
-  // this rung stays green with `activeOnly` removed — `activeOnly` is structurally redundant
-  // on today's seed sites. It pins the seeding, not the clause.
   it("a BENCHED Team Rocket's Koffing does not fire (no damaged-trigger is seeded for an undamaged Bench body)", () => {
     let state = table({ active: HITTER, oppActive: WALL, oppBench: [KOFFING_TR] });
     state = attachFromDeck(ensureInDeck(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
@@ -687,13 +663,12 @@ describe('D560 §5 — Dachsbun ex "Time to Chow Down": every Evolution Pokémon
     // The Basic is NOT an Evolution Pokémon: still damaged, Energy kept.
     expect(body(state, "p1", 2).damage).toBe(50);
     expect(body(state, "p1", 2).energy).toHaveLength(1);
-    // The undamaged Active healed nothing, so it is not one of "those Pokémon" (R-DB).
     expect(body(state, "p1").energy).toHaveLength(1);
     expect(events.filter((e) => e.type === "HEALED")).toHaveLength(1);
     expect(events.filter((e) => e.type === "ENERGY_DISCARDED")).toHaveLength(1);
   });
 
-  it("🛑 R-DB: accepting on a board where NO Evolution Pokémon is damaged heals and discards NOTHING", () => {
+  it("R-DB: accepting on a board where NO Evolution Pokémon is damaged heals and discards NOTHING", () => {
     const { state, events } = confirm(evolve({ benchDamage: 0 }).state, true);
     expect(events.some((e) => e.type === "HEALED" || e.type === "ENERGY_DISCARDED")).toBe(false);
     expect(body(state, "p1", 0).energy).toHaveLength(1); // Dachsbun ex (Fidough's Energy)
@@ -721,7 +696,7 @@ describe('D560 §5 — Dachsbun ex "Time to Chow Down": every Evolution Pokémon
     });
   });
 
-  it("🛑 Dachsbun ex ITSELF is an Evolution Pokémon and keeps Fidough's damage: it heals and discards too", () => {
+  it("Dachsbun ex ITSELF is an Evolution Pokémon and keeps Fidough's damage: it heals and discards too", () => {
     const { state } = confirm(evolve({ fidoughDamage: 30, benchDamage: 0 }).state, true);
     expect(idOf(state, body(state, "p1", 0))).toBe(DACHSBUN[0]);
     expect(body(state, "p1", 0).damage).toBe(0);
@@ -785,7 +760,7 @@ describe('D560 §6 — Indeedee "Obliging Heal": heal 30, then recover from ONE 
     expect([burned.rotation, burned.poisonDamage, burned.burned]).toEqual(["asleep", 10, false]);
   });
 
-  it("🛑 a revived link with its labels STRIPPED still resolves yes = the first, no = the rest", () => {
+  it("a revived link with its labels STRIPPED still resolves yes = the first, no = the rest", () => {
     const parked = play({ rotation: "confused", poisonDamage: 10, burned: true }).state;
     const bare = revived(parked, true);
     expect(JSON.stringify(bare.phase)).not.toContain('"labels"');

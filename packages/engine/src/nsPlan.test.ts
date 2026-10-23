@@ -15,50 +15,8 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// D226 — N's PLAN, and the SINGLE-SOURCE COUPLING it lifts.
-//
-// "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon."
-//
-// ⚠️ **THE LAST OF D190's FOUR `DROPPED` WORK ORDERS** (D221 Teal Dance, D222
-// Flashing Draw, D223 Carmine, and this). **3 Standard-legal printings** —
-// `sv10.5b-083`, `sv10.5b-163`, `sv10.5b-170`, all regulation mark **I**, all
-// `legal_standard = 1`, one distinct `effect` string across the three (remote D1
-// `colorless`, `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-05).
-//
-// ⚠️ **THE WORD THAT COSTS IS "Pokémon", AND IT IS PLURAL.** Every other printed
-// member of this family says "from **1 of** your Pokémon" (Energy Switch, Poppy,
-// Armarouge's "Fire Off", Exp. Share), and `cardplay.ts`'s wire validator enforced
-// it verbatim — *"every Energy must come from the same Pokémon"*. So the ordinary
-// use of this card, one Energy off each of two benched bodies, was a legal paper
-// play and a REJECTED WIRE MESSAGE. Authoring the route without the rider would
-// have shipped a card that is legal to play and impossible to answer: the *EXACT
-// MAP OR FLAG* doctrine's own case, and the reason D190 dropped the row.
-//
-// ⚠️ **AND THE COUPLING HAD NEVER BEEN OBSERVABLE ON A PRINTED CARD BEFORE.**
-// Armarouge is the only other `benchToActive` printing and it is `max: 1` — one
-// pick has one source however the rule reads. Poppy is `max: 2` and free-route, so
-// it is the one card that CAN express a two-source answer, which is exactly why it
-// is the control on every board below rather than Energy Switch (`max: 1`, where a
-// two-source answer is refused first, by the count rule, for a different reason).
-//
-// ⚠️ WHAT THIS SUITE CAN PUT RED, SAID UP FRONT (the guard rule, conventions.md):
-// * Dropping `anySource` from the op, the prompt, the wire schema, `redact.ts` or
-//   `projection.ts` fails the two-source play, the wire pin or the round-trip pin.
-// * DELETING the coupling in `cardplay.ts` instead of making it conditional fails
-//   the POPPY control, which is driven on the same board through the same op.
-// * Keeping the coupling fails the two-source play outright.
-// * Emitting ONE `ENERGY_MOVED` for a two-source move fails the events pin — and
-//   that row would be a lie, since the event's doc promises all its uids share
-//   `from` and the log renders it literally.
-// * Hard-coding "1 of" back into `moveNote` fails the printed-bytes pin.
-// * Authoring the rider WITHOUT `route: "benchToActive"` fails the movable-set pin
-//   (the Active's Energy would be offered, which the print does not allow).
-
-/** The three Standard-legal printings, measured 2026-08-05. */
 const NS_PLAN_IDS = ["sv10.5b-083", "sv10.5b-163", "sv10.5b-170"] as const;
 
-/** The printed effect, byte for byte (D183 — author against the print, never a
-    paraphrase). `moveNote` reproduces it exactly, which is the pin below. */
 const NS_PLAN_TEXT = "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.";
 
 const decks = { p1: NS_PLAN_DECK, p2: NS_PLAN_DECK };
@@ -89,10 +47,6 @@ function p1Turn(seed: number): GameState {
   }).state;
 }
 
-/** The board this card is printed for: a bare Active (`fix-basic-1`) and TWO
-    benched bodies (`fix-basic-2`) each carrying one Basic Energy of its own type,
-    so a two-source answer is expressible and each moved uid is traceable to the
-    body it came off. */
 function twoSourceBoard(seed: number): GameState {
   let state = p1Turn(seed);
   state = setActiveFromDeck(state, "p1", "fix-basic-1");
@@ -148,10 +102,6 @@ describe("D226 — N's Plan: the registry rows and the printed prompt", () => {
   it("the prompt note is the PRINTED BYTES — the plural is what `anySource` spells", () => {
     const parked = park(twoSourceBoard(1), "fix-nsplan");
     expect(movePrompt(parked).note).toBe(NS_PLAN_TEXT);
-    // …and the coupled sibling on the SAME route keeps its article, so the note is
-    // reading the rider rather than the route. (Armarouge, `benchToActive`,
-    // max 1 — "Move a Fire Energy from 1 of your Benched Pokémon to your Active
-    // Pokémon."; the only printed difference is "1 of".)
     expect(NS_PLAN_TEXT.includes("from your Benched Pokémon")).toBe(true);
     expect(NS_PLAN_TEXT.includes("1 of")).toBe(false);
   });
@@ -193,11 +143,6 @@ describe("D226 — the two-source answer the coupling used to refuse", () => {
     expect(benchEnergy(done, "p1", 1)).toEqual([]);
     expect(done.phase.kind).toBe("turn:action");
 
-    // ⚠️ ONE `ENERGY_MOVED` PER SOURCE, not one widened row. The event's own doc
-    // promises every `uids` entry came off the one `from`, and `log.ts` renders
-    // that literally ("moved N energy from X to Y") — so a single row naming one
-    // bench body for both cards would be a false sentence in the game log. Two
-    // honest rows cost no event-shape change and no `MATCH_RECORD_VERSION` move.
     const moved = find(events, "ENERGY_MOVED");
     expect(moved).toHaveLength(2);
     expect(moved.map((e) => e.uids)).toEqual([[fire], [water]]);
@@ -273,12 +218,6 @@ describe("D226 — the two-source answer the coupling used to refuse", () => {
 
 describe("D226 — THE CONTROL: the coupling still holds where it is PRINTED", () => {
   it("POPPY refuses the very answer N's Plan accepts, on the same board", () => {
-    // 🛑 THE ASSERTION THIS WHOLE SLICE TURNS ON. A suite that only proves the
-    // plural case works cannot distinguish "the rider was added" from "the
-    // coupling was deleted" — and deleting it is the cheaper, likelier mistake,
-    // since the rule lived in four lines of `validateChoice`. Poppy prints "from
-    // 1 of your Pokémon" and carries no rider, so the identical two-source answer
-    // must still be refused, with the identical message.
     const board = twoSourceBoard(7);
     const parked = park(board, "sv03-193"); // Poppy — max 2, free route, NO rider
     const prompt = movePrompt(parked);
@@ -315,11 +254,6 @@ describe("D226 — THE CONTROL: the coupling still holds where it is PRINTED", (
   });
 
   it("the SELF-MOVE rule survives the rewrite — it is now per pick, same message", () => {
-    // The rule used to ride on the single `source` the coupling produced, so
-    // relaxing the coupling could have taken it out with it. Driven through Poppy,
-    // which is the only printing whose destinations include a source (N's Plan's
-    // route makes source and destination disjoint by construction, so the case is
-    // unreachable there — stated rather than tested around).
     const parked = park(twoSourceBoard(8), "sv03-193");
     const fire = benchEnergy(parked, "p1", 0)[0] as string;
     const refused = applyAction(parked, {
@@ -359,13 +293,6 @@ describe("D226 — the wire, and the park that predates the rider", () => {
   });
 
   it("A PARK WITHOUT THE KEY IS BYTE-IDENTICAL — so MATCH_RECORD_VERSION stays 12", () => {
-    // 🛑 DRIVEN, NOT ARGUED. `moveEnergy` PARKS, so its prompt is embedded in the
-    // persisted `GameState.phase` — the position D140's 2 → 3 bump was about. The
-    // question the version doc asks is "could the PREVIOUS deploy's record be
-    // misread by THIS one", so the test is whether an op that sets no rider still
-    // produces the object it always did: absent, not `undefined`, in the park AND
-    // on the wire. Absent reads back as the coupling, which is what a pre-D226
-    // record meant. A WIDENING, not a missing required field.
     const parked = park(twoSourceBoard(10), "sv03-193"); // Poppy sets no rider
     const prompt = movePrompt(parked);
     expect(Object.keys(prompt).sort()).toEqual(["destinations", "kind", "max", "movable", "note"]);

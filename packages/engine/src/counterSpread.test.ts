@@ -16,41 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.253.0 → 0.254.0 — THE COUNTER **SPREAD** (D348, arm 23a). "Put {N} damage
-// counters on your opponent's [Benched] Pokémon in any way you like." — **8 legal
-// printings on 3 sentences**, the largest count this family has mapped in one arm
-// since D143's twenty, and a reader that buys NOTHING ELSE.
-//
-// 🛑 THE FINDING, AND IT IS A PRICE REFUTED RATHER THAN PAID. The handoff priced
-// this family as a NEW PROMPT KIND — a counter distribution park, on the argument
-// that "`damageChosen` places on ONE body and `moveCountersChosen` moves between
-// two; neither can express a many-to-many DISTRIBUTION". It is not one.
-// **"In any way you like" at a PRINTED COUNT is N independent ops** (D346, and
-// `attachEnergyFrom`'s own doc block since D205); the compound MAP exists for
-// *"any NUMBER"*, which has no N to unroll. 6, 2 and 4 are printed counts, so the
-// op SEQUENCE is the sentence: N repeated `damageChosen { count: 1, amount: 10 }`,
-// an op that has existed since M4 slice 8. **ZERO new ops, ZERO new op fields,
-// ZERO new prompt kinds, no `MATCH_RECORD_VERSION` move.**
-//
-// ⚠️ AND THE UNROLL IS **EXACT** RATHER THAN CLOSE. The printed placement is
-// simultaneous; N sequential picks are the same board only if the candidate set
-// cannot change between them. Two facts make it identical, and this file DRIVES
-// both rather than reasoning about them:
-//   1. `snipeTargets` applies **no HP filter** — a body already at lethal is still
-//      a candidate.
-//   2. A program op **never sweeps Knock Outs**; the sweep is the attack epilogue.
-// So stacking all N on one body is legal, spreading them is legal, and the board
-// after N picks is the board the card prints. `fix-victim` (30 HP) is in the deck
-// precisely to make that a measurement: three of Hex Hurl's counters kill it, and
-// a mid-sequence sweep would drop it out of the park between picks.
-//
-// ⚠️ WHAT THIS FILE PINS THAT PROSE CANNOT. The census below is not a recorded
-// number — it LOOPS `legalAttackCorpus()` and pins the arm's population by
-// SENTENCE. D347's finding: a population pinned against a live instrument is a
-// prose figure that cannot rot silently. The doc block on
-// `COUNTER_SPREAD_ON_OPPONENT` in `effects.ts` quotes 8/3, and this is what makes
-// that quote answerable to something.
-
 /** The three Standard-legal sentences, verbatim off remote D1 `colorless`
     (`735f0fb5-…`, 2026-08-15) through `json_each(attacks_json)`. */
 const HEX_HURL = "Put 2 damage counters on your opponent's Benched Pokémon in any way you like.";
@@ -58,20 +23,12 @@ const PHANTOM_DIVE =
   "Put 6 damage counters on your opponent's Benched Pokémon in any way you like.";
 const CURSED_DROP = "Put 4 damage counters on your opponent's Pokémon in any way you like.";
 
-/** The three legal sentences with their LEGAL PRINTING counts — the unit that
-    matters, and the one D347 caught a slice getting wrong. 4 + 3 + 1 = **8**. */
 const LEGAL_SPREAD: readonly (readonly [string, number])[] = [
   [PHANTOM_DIVE, 4], // Dragapult ex sv06-130 / sv06-200 / sv08.5-073 / sv08.5-165
   [HEX_HURL, 3], // Flutter Mane svp-097 / sv05-078 / sv08.5-043
   [CURSED_DROP, 1], // Sinistcha sv06-022 — and the ONLY producer of the `opponentAny` branch
 ] as const;
 
-/** ⚠️ THE ROTATED-OUT HALF, and it is here because the anchor reads it too — a
-    bare `(\d+)` has no CLOSED vocabulary to reject against (D139), so legality is
-    not a property the regex can see. **SEVEN printings on FOUR sentences**, at
-    three distinct counts. Re-derived on remote D1 2026-08-15, NOT inherited: the
-    landed doc block said "five rotated-out printings", which is the SENTENCE list
-    `8/5/3/3` wearing a printing count's name. */
 const ROTATED_SPREAD: readonly (readonly [string, number])[] = [
   ["Put 8 damage counters on your opponent's Pokémon in any way you like.", 2], // sv01-090 / sv04.5-156
   ["Put 5 damage counters on your opponent's Benched Pokémon in any way you like.", 2], // sv04-076 / sv04-224
@@ -79,9 +36,6 @@ const ROTATED_SPREAD: readonly (readonly [string, number])[] = [
   ["Put 3 damage counters on your opponent's Benched Pokémon in any way you like.", 1], // sv03.5-094
 ] as const;
 
-/** 🆕🆕🆕 D538 — corpus FILE LINE 412, **3 legal printings**. It sat at INDEX 2 of
-    `NEAR_MISSES` from D450 to D537; D538 MAPPED it as arm 23b-bis, so the claim about it
-    is an INEQUALITY of derived programs plus the positive rather than a nullity. */
 const SCALED_PILE_TWIN =
   "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
 
@@ -92,38 +46,8 @@ const NEAR_MISSES = [
   // taking N counters where this anchor makes N counters each name their own.
   "Put 2 damage counters on 1 of your opponent's Benched Pokémon.",
   "Put 6 damage counters on 1 of your opponent's Benched Pokémon.",
-  // A per-target FILTER and a fold — no pick anywhere in it.
-  // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
-  // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
-  // note above). The replacement is the SCALED TWIN, **3 legal printings** and still unread: it shares this anchor's whole opening noun phrase and is refused on its count payload and its tail. The sentence it replaced is not gone from this
-  // file: the claim about it is now an INEQUALITY of derived programs below the loop,
-  // which is D418's second half and strictly stronger than the `toBeNull` it had.
-  // 🆕🆕🆕 **D538 — AND THE SCALED TWIN HAS NOW LEFT THIS SLOT TOO, witness MOVED
-  // rather than deleted (the standing note above).** Corpus line 412 is claimed WHOLE by
-  // arm 23b-bis as a THREE-op program, so the `toBeNull` rung below would go RED on it;
-  // the claim is re-pointed below the loop as an INEQUALITY plus the positive (D465/D488
-  // — name the OP, never merely decrement). ⚠️ **THE REMOVAL SHIFTS EVERY INDEX AFTER IT
-  // AND THIS ARRAY IS READ BY INDEX** (D501's silent-index-shift class), so the
-  // `toBeNull` rung below is re-pointed onto an OPEN-ENDED `.slice(2)` with its length
-  // asserted, and the two rungs that name index 0 are unaffected because the row that
-  // left sits after them.
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
-  // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on your opponent's
-  // Active Pokémon until its remaining HP is 10."* — "the amount read off the TARGET
-  // rather than printed" — which D451 MAPPED (arm 23g over the new op
-  // `counterUntilRemainingHp`), so the witness MOVED rather than being deleted and the
-  // claim about it is an INEQUALITY of derived programs below the loop. The replacement
-  // is the SCALED FOLD: *"Put 1 damage counter on each of your opponent's Pokémon for
-  // each of your Maushold in play."* — a real catalog row with **0 Standard-legal
-  // printings**, refused on the SINGULAR noun and on a `pokemonInPlay` scale, and the
-  // nearest thing this family has to a fold with no pick in it. 🛑 It is named here as
-  // a CATALOG row and never through `legalAttackCorpus()`, which would be a claim about
-  // the wrong population (D413/D449).
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
-  // The distribution tail on a MOVE rather than a PUT, and behind a status clause —
-  // the one row in the catalog that carries this file's phrase and is NOT its arm.
-  // (🆕🆕🆕 D574: its TAIL is built now, on `moveCountersOpponentAnyWay`, and the compound composes;
-  // the WHOLE string still derives null here and is still not this arm — the rung below holds.)
   "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
   // "any number" rather than a printed count: the compound MAP's shape, which has
   // no N to unroll and is the reading this arm's finding refuses.
@@ -165,11 +89,6 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** ONE BOARD, NO SWEEP. Nothing here takes a coin, so there is no seed to vary.
-    Both Actives are pinned to `fix-titan` (340 HP, no Weakness, no Resistance, NO
-    attacks) and BOTH BENCHES ARE EMPTIED — D133's trap: `setActiveFromDeck`
-    DISPLACES the Active it replaces onto the Bench, and here the opponent's Bench
-    IS the candidate list, so a stray body silently changes what the prompt offers. */
 function board(): GameState {
   let state = driveSetup(11, { p1: COUNTER_SPREAD_DECK, p2: COUNTER_SPREAD_DECK }, { first: "p2" });
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
@@ -239,11 +158,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     expect(deriveAttackEffect(HEX_HURL)).toEqual(spread(2, "opponentBench"));
     expect(deriveAttackEffect(PHANTOM_DIVE)).toEqual(spread(6, "opponentBench"));
     expect(deriveAttackEffect(CURSED_DROP)).toEqual(spread(4, "opponentAny"));
-    // 🛑 THE COUNT IS THE **LENGTH**, NOT A FIELD. This is the one direction the
-    // build could have gone wrong that still "looks right": one op carrying
-    // `count: 6` or `amount: 60` is a different placement entirely — one body
-    // taking the lot — and it is exactly what arm 23's sentence means. Both are
-    // refused explicitly rather than left to `toEqual` on the right answer.
     expect(deriveAttackEffect(PHANTOM_DIVE)).toHaveLength(6);
     expect(deriveAttackEffect(PHANTOM_DIVE)).not.toEqual([
       { op: "damageChosen", target: "opponentBench", amount: 10, count: 6, source: "attack" },
@@ -264,21 +178,15 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
         "source",
         "target",
       ]);
-      // ⚠️ The absence is the whole routing decision, for arm 23's reason verbatim:
-      // `deals: true` would emit DAMAGE_DEALT, re-admit the benched reduction
-      // passive and the ex/V prevention, and never reach the counter path. A placed
-      // counter is not attack damage even when an attack printed it.
       expect(op).not.toHaveProperty("deals");
       expect(op).not.toHaveProperty("ignoreWR");
       expect(op).not.toHaveProperty("optional");
       expect(op).not.toHaveProperty("perTakenPrize");
     }
-    // ⚠️ AND EVERY OP IS THE SAME op — a build that unrolled with a decreasing
-    // amount, or that marked the last one, would pass every assertion above.
     expect(new Set(ops.map((op) => JSON.stringify(op))).size).toBe(1);
   });
 
-  it("⚠️ converts counters → HP PER OP, and fails at a factor of ten either way", () => {
+  it("converts counters → HP PER OP, and fails at a factor of ten either way", () => {
     // The printed number is COUNTERS, `damageChosen.amount` is HP, §12 fixes one
     // counter at 10. A build that forgot the ×10 places 1 per op; one that applied
     // it to the total places 20 on two ops. Both refused explicitly.
@@ -311,9 +219,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     expect(new Set(anyZone.map((op) => (op as { target: string }).target))).toEqual(
       new Set(["opponentAny"]),
     );
-    // ⚠️ AND THE BRANCH IS EARNED (D104's minimal-shape rule): the `opponentAny`
-    // side is not a reading nothing prints — Sinistcha `sv06-022` is a real,
-    // Standard-legal printing that omits the word, and it is the ONLY one.
     const anyZoneLegal = LEGAL_SPREAD.filter(([s]) => !s.includes("Benched"));
     expect(anyZoneLegal.map(([, n]) => n)).toEqual([1]);
     // …and the two differ in the TARGET and in nothing else, written as a rebuild
@@ -330,17 +235,11 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     expect(deriveAttackEffect(clause(1))).toHaveLength(1);
     expect(deriveAttackEffect(clause(13))).toHaveLength(13);
     expect(deriveAttackEffect(clause(1))).not.toEqual(deriveAttackEffect(clause(13)));
-    // ⚠️ `counters >= 1` IS THE GUARD, and it returns NULL rather than an empty
-    // program: an attack that silently reported an effect moving nothing is worse
-    // than one that reports no effect at all. Leave it loud.
     expect(deriveAttackEffect(clause(0))).toBeNull();
     expect(deriveAttackEffect(clause(0))).not.toEqual([]);
   });
 
   it("is the SAME op arm 23 emits — D132's inventory rule, at the eighth instance", () => {
-    // The op existed before this reader did. Meowscarada ex `sv02-015`'s "Bouquet
-    // Magic" has produced `damageChosen { target: "opponentBench", count: 1 }`
-    // since M4 slice 8, at amount 30 and through the REGISTRY.
     const authored = programFor("sv02-015")?.abilities?.[0]?.program?.[1] as Record<
       string,
       unknown
@@ -371,12 +270,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     ]);
     expect(deriveAttackEffect(NEAR_MISSES[0])).toHaveLength(1);
     expect(deriveAttackEffect(HEX_HURL)).toHaveLength(2);
-    // ⚠️ **RE-POINTED BY VALUE WITH BOTH ENDS AND THE LENGTH ASSERTED (D538).** This
-    // was `.slice(2, 6)` over a SEVEN-row array; corpus line 412 left at INDEX 2, which
-    // SHIFTED every index after it (D501's silent-index-shift class, already paid once
-    // in this family). The window is re-derived from the two rows it must EXCLUDE — the
-    // two `1 of` rows at the front, which arm 23 claims, and the attach row at the back,
-    // which its own arm claims — rather than from a literal that a departure re-aims.
     const UNREAD = NEAR_MISSES.slice(2, NEAR_MISSES.length - 1);
     expect(NEAR_MISSES).toHaveLength(6);
     expect(UNREAD).toHaveLength(3);
@@ -384,11 +277,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     for (const text of UNREAD) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
-    // 🆕🆕🆕 **D538 — THE ROW THAT LEFT THIS LIST, AS AN INEQUALITY PLUS THE POSITIVE.**
-    // It shares this anchor's whole opening noun phrase and differs on the DETERMINER
-    // (*"1 of"* against *"each of"*) and on the count source. Arm 23b-bis derives THREE
-    // ops where this anchor unrolls to N placements, so a reader that dropped the
-    // determiner would redden here.
     expect(deriveAttackEffect(SCALED_PILE_TWIN), SCALED_PILE_TWIN).not.toEqual(
       spread(2, "opponentBench"),
     );
@@ -397,11 +285,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
       "discardPileRetrieval",
       "shuffleDeck",
     ]);
-    // 🆕🆕🆕 **D451 — THE ROW THAT LEFT THIS LIST, AS AN INEQUALITY.** It shares this
-    // anchor's verb and its opponent-side possessive and differs on the TAIL: *"in any
-    // way you like"* opens a distribution where *"until its remaining HP is N"* closes
-    // an arithmetic. An anchor that dropped its tail would claim both, so the claim is
-    // made in the form that still goes red on that defect.
     const HP_TARGET =
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
     expect(deriveAttackEffect(HP_TARGET)?.[0]?.op).toBe("counterUntilRemainingHp");
@@ -415,8 +298,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     for (const text of [
       // NO TRAILING PERIOD — the `$` sits after it.
       "Put 2 damage counters on your opponent's Benched Pokémon in any way you like",
-      // A LOWERCASE first word: what keeps every mid-sentence ABILITY printing of
-      // this same action off this path, and the reason there is no /i flag.
       "put 2 damage counters on your opponent's Benched Pokémon in any way you like.",
       // THE SINGULAR NOUN — deliberately not a branch; the pool prints only plural.
       "Put 2 damage counter on your opponent's Benched Pokémon in any way you like.",
@@ -431,9 +312,6 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
-    // ⚠️ THE POSSESSIVE CARRIES BOTH APOSTROPHES (D136/D137) in its ONE marked slot,
-    // and U+2019 is spelled as an ESCAPE rather than typed — a typed one degrades to
-    // ASCII in an editor and the case then asserts nothing.
     expect(
       deriveAttackEffect(
         "Put 2 damage counters on your opponent’s Benched Pokémon in any way you like.",
@@ -443,21 +321,7 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
 });
 
 describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live corpus", () => {
-  it("🛑 resolves EXACTLY the three legal sentences in the committed corpus", () => {
-    // ⚠️ THIS IS THE RUNG THAT MAKES THE PROSE ANSWERABLE. `effects.ts`'s doc block
-    // quotes "8 legal printings on 3 sentences"; a recorded constant would agree
-    // with itself forever. This LOOPS the corpus — the same instrument
-    // `censusAtHead` derives `BUILT.attack` from — so widening the anchor by one
-    // sentence reddens this file by name.
-    // 🆕🛑 **D535 — THE LOOSE SHAPE GAINED A SECOND PRODUCER, AND THE PREDICATE IS
-    // RE-POINTED ONTO THE FAMILY RATHER THAN DECREMENTED (D418/D438).** "A multi-op
-    // program of nothing but `damageChosen`" was a unique description of this anchor's
-    // unroll until D535's pick-with-replacement snipe derived SIX such ops (corpus FILE
-    // LINE 81, 2 printings). The two families are told apart by the ONE field that says
-    // what a hit IS: this one PLACES COUNTERS (`deals` absent, `COUNTERS_PLACED`), D535's
-    // DEALS DAMAGE (`deals: true`, `DAMAGE_DEALT`) — `effects.ts:5438`'s own split. The
-    // conjunct below is therefore a statement about the mechanism and not a fence around
-    // a count, and the rung underneath names the intruder so the step is attributable.
+  it("resolves EXACTLY the three legal sentences in the committed corpus", () => {
     const hits = legalAttackCorpus().filter(([, sentence]) => {
       const ops = deriveAttackEffect(sentence);
       return (
@@ -468,20 +332,11 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
       );
     });
     expect(hits.map(([, s]) => s).sort()).toEqual(LEGAL_SPREAD.map(([s]) => s).sort());
-    // THE SENTENCE COUNT and THE PRINTING COUNT are DIFFERENT UNITS and both are
-    // pinned — D347's lesson, which caught a printing count wearing a sentence
-    // count's name in this very family.
     expect(hits).toHaveLength(3);
     expect(hits.reduce((sum, [units]) => sum + units, 0)).toBe(8);
-    // …and the corpus's own per-sentence counts are the ones recorded above, so the
-    // 4 / 3 / 1 split cannot drift either.
     expect(
       hits.map(([units, s]) => [s, units] as const).sort((a, b) => a[0].localeCompare(b[0])),
     ).toEqual([...LEGAL_SPREAD].sort((a, b) => a[0].localeCompare(b[0])));
-    // 🆕🛑 **AND THE INTRUDER IS NAMED, SO THE NARROWING ABOVE IS ATTRIBUTABLE.** D535's
-    // row satisfies every conjunct the predicate carried before this slice — a program of
-    // more than one op, every one a `damageChosen` — and is excluded by exactly one field.
-    // Without this pair the `deals` conjunct would read as a fence nobody can date.
     const PICK_WITH_REPLACEMENT =
       "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance.";
     const intruder = deriveAttackEffect(PICK_WITH_REPLACEMENT);
@@ -489,8 +344,6 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
     expect((intruder ?? []).every((op) => (op as { op: string }).op === "damageChosen")).toBe(true);
     expect((intruder ?? []).every((op) => (op as { deals?: true }).deals === true)).toBe(true);
     expect(hits.map(([, s]) => s)).not.toContain(PICK_WITH_REPLACEMENT);
-    // …and THIS family's own rows carry no `deals`, which is the other half of the split
-    // and the control that keeps the conjunct a statement about the mechanism (D424).
     for (const [sentence] of LEGAL_SPREAD) {
       const ops = deriveAttackEffect(sentence) ?? [];
       expect(ops.length, sentence).toBeGreaterThan(1);
@@ -502,26 +355,16 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
   });
 
   it("reads the SEVEN rotated-out printings too — legality is not a regex property", () => {
-    // ⚠️ A bare `(\d+)` has no CLOSED vocabulary to reject against (D139), so the
-    // anchor reads every count the family was ever printed at. That is intended,
-    // and it is why the corpus rung above is scoped to `legal_standard = 1` while
-    // this one is not.
     for (const [sentence, printings] of ROTATED_SPREAD) {
       expect(deriveAttackEffect(sentence), sentence).not.toBeNull();
       expect(printings).toBeGreaterThan(0);
     }
     expect(ROTATED_SPREAD).toHaveLength(4);
     expect(ROTATED_SPREAD.reduce((sum, [, n]) => sum + n, 0)).toBe(7);
-    // 🛑 AND NONE OF THE SEVEN IS IN THE LEGAL CORPUS — which is what makes them
-    // rotated rather than merely unlisted, and is the half a hand-kept table gets
-    // wrong. The landed doc block said "five rotated-out printings"; `8/5/3/3` is
-    // the four SENTENCES, and this is the unit that disagrees with it.
     const corpus = new Set(legalAttackCorpus().map(([, s]) => s));
     for (const [sentence] of ROTATED_SPREAD) {
       expect(corpus.has(sentence), sentence).toBe(false);
     }
-    // The whole anchor-shaped population, both halves: 8 + 7 = 15 printings on 7
-    // sentences, which is the figure the re-derivation corrected.
     expect(LEGAL_SPREAD.length + ROTATED_SPREAD.length).toBe(7);
     expect(
       LEGAL_SPREAD.reduce((s, [, n]) => s + n, 0) + ROTATED_SPREAD.reduce((s, [, n]) => s + n, 0),
@@ -529,8 +372,6 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
   });
 
   it("buys no registry row — the eight printings are reader-keyed, all of them", () => {
-    // 🛑 The arm's whole claim is that it authors a READER. If any of the eight ids
-    // carried a registry `attack` program, the census would be double-counting it.
     for (const id of [
       "sv06-130",
       "sv06-200",
@@ -569,27 +410,17 @@ describe("DRIVEN — the unroll is the printed placement, not an approximation o
     expect(after2.state.players.p2.bench[1]?.damage).toBe(10);
   });
 
-  it("🛑 lets ALL N stack on ONE body — 'in any way you like' includes 'all here'", () => {
+  it("lets ALL N stack on ONE body — 'in any way you like' includes 'all here'", () => {
     let state = flutterMane(board());
     state = bench(state, "p2", ["fix-titan", "fix-titan"]);
     const first = declare(state);
     const a = mustApply(first.state, pick(P2_BENCH_0));
-    // ⚠️ THE SAME BODY AGAIN. If the interpreter narrowed the candidate set after a
-    // pick — treating the sequence as a "distribute across distinct bodies" prompt —
-    // this would be rejected, and the reading would be wrong in the direction the
-    // handoff's price assumed.
     const b = mustApply(a.state, pick(P2_BENCH_0));
     expect(b.state.players.p2.bench[0]?.damage).toBe(20);
     expect(b.state.players.p2.bench[1]?.damage).toBe(0);
   });
 
-  it("🛑 keeps a LETHAL body in the candidate set across every pick", () => {
-    // ⚠️ THIS IS THE RUNG THE WHOLE "EXACT, not close" CLAIM RESTS ON, and it is
-    // driven rather than argued. `fix-victim` is 30 HP: three of Hex Hurl's counters
-    // would kill it — but Hex Hurl only has two, so the sharper case is Cursed Drop's
-    // FOUR. Either way the claim is the same: a body at or past lethal is STILL a
-    // candidate on the next pick, because `snipeTargets` applies no HP filter and a
-    // program op never sweeps Knock Outs (the sweep is the attack epilogue).
+  it("keeps a LETHAL body in the candidate set across every pick", () => {
     let state = sinistcha(board());
     state = bench(state, "p2", ["fix-victim", "fix-titan"]);
     const doomed = benchTopUid(state, "p2", 0);
@@ -601,10 +432,6 @@ describe("DRIVEN — the unroll is the printed placement, not an approximation o
     const batches: GameEvent[][] = [];
     for (let i = 0; i < 4; i += 1) {
       const prompt = multiPrompt(cur.state);
-      // ⚠️ THE CLAIM: the victim is offered EVERY time, including on pick 4 when it
-      // is already 10 HP past lethal. `snipeTargets` applies no HP filter, so the
-      // candidate set is IDENTICAL at every pick — which is exactly what makes N
-      // sequential picks the simultaneous placement the card prints.
       expect(
         prompt.candidates.some(
           (c) => c.spot.spot === "bench" && (c.spot as { index: number }).index === 0,
@@ -617,11 +444,6 @@ describe("DRIVEN — the unroll is the printed placement, not an approximation o
     }
     expect(cur.state.phase.kind).not.toBe("effect:choose");
 
-    // 🛑 AND THE KNOCK OUT LANDS EXACTLY ONCE, IN THE **LAST** BATCH. The first
-    // three picks — including the third, which puts the body AT lethal — sweep
-    // nothing at all: a program op never sweeps Knock Outs. A build that swept
-    // mid-sequence would KO on pick 3 and then have only two candidates left on
-    // pick 4, which is the failure this whole rung exists to refuse.
     expect(types(batches[0] ?? [])).not.toContain("KNOCKED_OUT");
     expect(types(batches[1] ?? [])).not.toContain("KNOCKED_OUT");
     expect(types(batches[2] ?? [])).not.toContain("KNOCKED_OUT");
@@ -633,10 +455,6 @@ describe("DRIVEN — the unroll is the printed placement, not an approximation o
   });
 
   it("offers the ACTIVE only on the `opponentAny` branch — the zone, driven", () => {
-    // Cursed Drop omits "Benched", so the opponent's ACTIVE is a candidate.
-    // ⚠️ TWO bench bodies on both boards, deliberately: at ONE candidate the park
-    // is auto-resolved and there is no prompt to read the zone off. The zone claim
-    // needs a REAL choice to be a claim about.
     let anyState = sinistcha(board());
     anyState = bench(anyState, "p2", ["fix-titan", "fix-titan"]);
     const anyPrompt = multiPrompt(declare(anyState).state);
@@ -663,8 +481,6 @@ describe("DRIVEN — the unroll is the printed placement, not an approximation o
     const b = mustApply(a.state, pick(P2_BENCH_1));
     // …and the Defender is untouched by the two counters, which went to the Bench.
     expect(b.state.players.p2.active?.damage).toBe(90);
-    // 🛑 AND CURSED DROP IS THE OTHER END OF THE SPLIT: no printed damage at all,
-    // so the family has a driven producer on both sides.
     let noDamage = sinistcha(board());
     noDamage = bench(noDamage, "p2", ["fix-titan"]);
     const drop = declare(noDamage);

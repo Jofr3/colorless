@@ -2,8 +2,6 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackGateOf, attackTimingBlocked, firstTurnAttackBanned } from "./index";
 import { applyAction, createGame, programFor, redactGame } from "./index";
-// ⚠️ NOT RE-EXPORTED FROM THE PACKAGE INDEX (D272, deliberately) — the whole-pool
-// sweep in §6 is the only kind of caller it has.
 import { registryCardIds } from "./registry";
 import type { BoardCondition, GameState, InPlayPokemon, Seat } from "./index";
 import {
@@ -17,118 +15,9 @@ import {
   setActiveFromDeck,
   typedEnergy,
   walkProgram,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// 0.194.0 → 0.195.0 — D281: THE PER-ATTACK-INDEX TIMING GATE.
-//
-// ONE new `CardProgram` field (`attackGate`), keyed by the SAME attack index the
-// `attack` map is keyed by, carrying THREE arms over TWO polarities of one printed
-// clause family — and **ZERO new `BoardCondition` members**, because D280 built
-// the condition that 10 of the 13 printings need and this slice authors it
-// unchanged at both signs.
-// 🆕🆕🆕 (D545 — DATED HISTORY: *"THREE arms"* was true at D281's head. The union
-// carries FIVE members since D545, which added two COST clauses — `alternateCostIf`
-// and `costWaivedIf` — that never block and are read by `attackCostAt` (attack.ts),
-// not by any gate below. Neither carries an op, so the reachability sweep further down
-// is unmoved. Annotated, not overwritten.)
-//
-// ── THE CENSUS, RE-DERIVED RATHER THAN CARRIED ───────────────────────────────
-//
-// D280 measured 13 and left the number to be re-derived. It reproduces EXACTLY,
-// with the 7/3/3 split intact (remote D1 `colorless`, 2026-08-08, `json_each` over
-// `attacks_json` so the printed INDEX comes back with the text):
-//
-//   n  shape    ids                                        printed clause
-//   7  BAN      Terapagos ex sv07-128/-170/-173/            "If you go second, you
-//               sv08.5-092/-169/-180/svp-165 idx 0          can't use this attack
-//                                                           during your first turn."
-//   3  GATE     Illumise sv06-010 idx 0;                    "You can use this attack
-//               Scream Tail ex sv06-094/-197 idx 0          only if you go second,
-//                                                           and only during your
-//                                                           first turn."
-//   3  LICENCE  Volbeat sv06-009 idx 0;                     "If you go first, you can
-//               Exeggcute sv08-001/-192 idx 0               use this attack during
-//                                                           your first turn."
-//   ──
-//  13  and the pool-wide query returns 15 — the other 2 are Bombirdier ex
-//      `sv04-156`/`-234`, both `legal_standard = 0`. The phrase family is
-//      EXHAUSTED in Standard: there is no fourth shape OF THIS PHRASE FAMILY.
-//      🆕🆕 **D395 — AND "THIS PHRASE FAMILY" IS THE LOAD-BEARING QUALIFIER**, which
-//      the sentence used to leave implicit. `CardProgram.attackGate` now carries a
-//      FOURTEENTH printing from a DIFFERENT family (Miltank `sv08.5-081`, whose
-//      condition is a per-body used-attack window and not a §4 turn-order fact).
-//      The 13 / 7+3+3 above is unmoved and correct; what was never true is that the
-//      FIELD's population and this FAMILY's population are the same number.
-//
-// ⚠️ **EVERY ONE OF THE 13 IS AT INDEX 0**, and that is asserted from the fixture
-// bytes below rather than believed.
-// 🆕🆕 **D395 — AND THAT IS NOW A CLAIM ABOUT THIS FAMILY AND NOT ABOUT THE FIELD.**
-// `CardProgram.attackGate` carries a FOURTEENTH printing, Miltank `sv08.5-081` idx
-// **1** — a second clause family (`onlyIf` over D394's per-body used-attack window)
-// whose gate is at a NON-ZERO index and whose own idx 0 is the attack the clause
-// names. It is driven in `rolloutGate.test.ts`, which is where the per-INDEX key
-// finally gets a board that can falsify it: every assertion in THIS file is written
-// about index 0, so an index-blind read is green on all of them.
-// The original wording, kept — four of the five bodies carry a SECOND attack
-// that must not inherit the clause, and a per-INDEX field authored off an assumed
-// reprint layout is the one way this shape fails silently.
-//
-// ── 🛑 TWO NUMBERS, NOT ONE: 13 GATES BUILT, 0 BODIES ────────────────────────
-//
-// Every one of the five printed bodies is refused on a mechanism that does not
-// exist, NAMED here and in registry.ts by id:
-//
-//   • Terapagos "Unified Beatdown" — wants `DamageCountSource.yourBenchCount`.
-//     The multiply fold has EIGHT count sources including `opponentBenchCount` and
-//     `bothSidesBenchCount`, and none counts YOUR OWN Bench as bodies;
-//     `damageCountersOnYourBench` is the near miss and tallies COUNTERS. A second
-//     blocker rides with it: the fold's anchors are whole-sentence and the gate
-//     clause precedes the damage sentence.
-//   • Illumise "Slowing Perfume" — wants a CROSS-SEAT put-into-deck. No `EffectOp`
-//     moves an opponent's benched Pokémon and its attached cards into the
-//     OPPONENT'S deck; `searchMove`/`retrieveMove` hard-code `ctx.seat`'s zones.
-//     Mandibuzz `sv10.5w-064`/`-145`'s schema-boundary refusal, verbatim.
-//   • Scream Tail ex "Scream" — wants a TURN-SCOPED IMPOSED SUPPORTER LOCK.
-//     `preventSupporterEffectsWhileActive` is a continuous passive whose object is
-//     a Supporter's EFFECT, not its PLAY; this sentence stamps the OPPONENT'S seat
-//     for their next turn and `TurnAllowances` carries no such field.
-//   • Volbeat "Quick Sign" — wants a SPLIT ANCHOR. effects.ts's bench-search
-//     reader already names this id as one of four legal deferrals for exactly this
-//     reason: its anchor is whole-sentence and the licence clause sits in front.
-//   • Exeggcute "Precocious Evolution" — wants a `searchDeck` `dest` THAT EVOLVES,
-//     onto a body that is the searcher itself.
-//
-// So the gate is honoured at the §8 declaration seam and the effect stays on the
-// loud ATTACK_EFFECT_SKIPPED path — the coverage strategy this repo has used since
-// M4. `BUILT.attack` does NOT move (half a printed sentence resolving is not a
-// built attack unit); `BUILT.ability` moves by 13 because the census's pool
-// predicate is the NEGATIVE one, and `attackGate` is the EIGHTH non-attack surface
-// and the FIRST that is not an Ability. See `censusAtHead.test.ts`.
-//
-// ── WHAT THIS SUITE EXISTS TO PIN ────────────────────────────────────────────
-//
-// 1. 🛑 **THE BOARD WHERE THE LICENCE IS DENIED, FIRST.** D278 and D279 both shipped
-//    a permission that failed by being TOO STRICT, and the standing lesson is that
-//    every natural "the permission works" assertion is written on the board the
-//    permission is most obviously about. So §2 asserts Volbeat's idx 1
-//    "Coordinated Strike" is STILL §4-banned on the same turn its idx 0 is
-//    licensed, before it asserts the licence works at all. A per-BODY flag is green
-//    on every other assertion in this file.
-// 2. 🛑 **THE TWO POLARITIES ARE ONE CONDITION**, and §3 asserts it by IDENTITY:
-//    Terapagos's `barredIf` and Illumise's `onlyIf` are `toEqual` on their
-//    conditions and answer OPPOSITELY on the same board. A build with two parallel
-//    index maps would be green on every other line here.
-// 3. 🛑 **§9 DOES NOT REACH THIS FIELD**, and that is the inverse of the rule
-//    `attackFirstTurnExempt` follows. §4 drives a Klefki `sv01-096` Ability-lock
-//    live and asserts the gate answers IDENTICALLY under it, on both polarities —
-//    the one place a build that reused `passivesOf` out of habit shows.
-// 4. **ALL THREE PAYABILITY PROJECTIONS AGREE, PER INDEX.** §5 drives the engine's
-//    §8 gate and the wire projection against each other per seed, per seat and per
-//    ROW. D223's `needs` string named a field and not its two mirrors, and the
-//    failure direction is the quiet one.
-// 5. **`MATCH_RECORD_VERSION` STAYS 14, DRIVEN.** §6.
-
-// ── the local pool (FIXTURE_POOL is left untouched — D190's idiom) ───────────
 
 const BAN_TEXT =
   "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.";
@@ -154,11 +43,6 @@ const GATE_IDS = ["sv06-010", "sv06-094", "sv06-197"] as const;
 const LICENCE_IDS = ["sv06-009", "sv08-001", "sv08-192"] as const;
 const ALL_IDS = [...BAN_IDS, ...GATE_IDS, ...LICENCE_IDS];
 
-/** Terapagos ex, carrying the catalog's own hp (230), type ({C}), retreat (2)
-    and BOTH attack costs — read off the D1 row rather than invented (D146's rule:
-    a fixture that claims to BE the printing gets every scalar re-read, not only
-    the ones the assertions touch). ⚠️ THE SECOND ATTACK IS LOAD-BEARING: "Crown
-    Opal" is what proves the bar is per-INDEX rather than per-body. */
 function terapagos(id: string): Card {
   return battler(id, {
     name: "Terapagos ex",
@@ -172,11 +56,6 @@ function terapagos(id: string): Card {
   });
 }
 
-/** Scream Tail ex. ⚠️ **ITS SECOND ATTACK'S PRINTED COST IS {P}{C}{C} AND IS
-    DELIBERATELY RE-COSTED TO {C}{C} HERE**, declared rather than silent: this
-    suite attaches two {C}-payable Energy so that a refusal at either row can only
-    ever be a GATE and never an unpaid cost. The gate is what is under test; the
-    cost seam has its own suites. */
 function screamTail(id: string): Card {
   return battler(id, {
     name: "Scream Tail ex",
@@ -202,10 +81,6 @@ function exeggcute(id: string): Card {
   });
 }
 
-/** The CONTROL body: two attacks, same costs as Terapagos, NO `attackGate`.
-    🛑 **THE SUITE IS VACUOUS WITHOUT IT** — every "the gate bites" assertion below
-    passes just as happily on a build that refused ALL attacks, and this body is
-    the only thing that can tell the two apart. */
 const UNGATED = "fix-ungated";
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -249,11 +124,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The THIRTEENTH seeded deck (D270's rule: a seeded suite gets its own deck). */
-// ⚠️ **ALL THIRTEEN REAL IDS ARE IN IT**, not just the three the assertions drive
-// most often: `setActiveFromDeck` pulls from the deck, so a reprint that is only
-// ever named in §1's catalog check would be untestable on a board. The reprints
-// carry 1 copy each and the three principals 4, which is what keeps the 60 honest.
 const GATE_DECK = deckOf({
   "sv07-128": 4,
   "sv07-170": 1,
@@ -275,27 +145,8 @@ const GATE_DECK = deckOf({
   "fix-energy": 6,
 });
 
-/** Four seeds, so nothing below rests on one shuffle (D270). */
 const SEEDS = [4111, 4127, 4133, 4159] as const;
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
-/** D275's `localSetup`, D277's shape: the FIRST PLAYER is a PARAMETER, so every
-    assertion below can be made from BOTH seats under BOTH assignments. ⚠️ A
-    ONE-SEAT BOARD IS VACUOUS ON A PER-SEAT FACT, and both `youGoSecond` and
-    `yourFirstTurn` are exactly such facts. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: GATE_DECK, p2: GATE_DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -321,11 +172,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** A board with `seat`'s Active set to `activeId`, TWO {C} attached (so every
-    printed cost in this pool is payable and a refusal can only ever be a gate)
-    and a benched body behind it.
-    ⚠️ THE BENCH BODY IS LOAD-BEARING — §14.2 makes an empty Bench a LOSS the
-    moment the Active leaves, and a `gameOver` board proves nothing about a gate. */
 function board(seed: number, first: Seat, seat: Seat, activeId: string): GameState {
   let state = localSetup(seed, first);
   state = setActiveFromDeck(state, seat, activeId);
@@ -357,7 +203,6 @@ function declare(state: GameState, seat: Seat, index: number): string {
   return result.ok ? "OK" : result.error.code;
 }
 
-/** The wire projection's own answer for the same row — the payability mirror. */
 function wirePlayable(state: GameState, seat: Seat, index: number): boolean | undefined {
   const phase = redactGame(state, seat).phase;
   if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
@@ -378,12 +223,7 @@ describe("D281 — the census, and the per-INDEX claim checked against the print
     expect(ALL_IDS.length).toBe(13);
   });
 
-  it("🛑 the gated attack really IS index 0 on every fixture, and idx 1 exists on four of five", () => {
-    // 🛑 THE ASSERTION A PER-INDEX FIELD CANNOT DO WITHOUT. The registry authors
-    // `{ 0: … }` by hand for each id; if any printing ordered its attacks
-    // differently the clause would land on the wrong row and NOTHING else in this
-    // file would notice — every other assertion is written about index 0 too.
-    // Driven off the printed EFFECT text, which is the thing the clause is in.
+  it("the gated attack really IS index 0 on every fixture, and idx 1 exists on four of five", () => {
     const gatedText: Record<string, string> = {
       "sv07-128": BAN_TEXT,
       "sv06-010": GATE_TEXT_ILLUMISE,
@@ -394,8 +234,6 @@ describe("D281 — the census, and the per-INDEX claim checked against the print
     for (const [id, text] of Object.entries(gatedText)) {
       const attacks = POOL[id]?.attacks ?? [];
       expect(attacks[0]?.effect, id).toBe(text);
-      // …and no OTHER row on the card prints the clause, which is the half that
-      // catches "the fixture happens to start with it".
       expect(
         attacks.slice(1).filter((a) => (a.effect ?? "").includes("first turn")),
         id,
@@ -423,18 +261,8 @@ describe("D281 — the census, and the per-INDEX claim checked against the print
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. 🛑 THE LICENCE, AND THE BOARD WHERE IT IS DENIED — ASSERTED FIRST.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D281 — the per-INDEX LICENCE (Volbeat, Exeggcute)", () => {
-  it("🛑 licenses idx 0 on turn 1 and leaves idx 1 BANNED — the board a per-BODY flag gets wrong", () => {
-    // 🛑 THE FIRST ASSERTION IN THE FILE ABOUT THE LICENCE IS THE ONE WHERE IT
-    // MUST NOT REACH, because the standing lesson is that a permission that is
-    // too WIDE is green on every "it works" line anyone naturally writes. A
-    // `PassiveEffects.attackFirstTurnExempt` on Volbeat — the shape D277 built and
-    // this slice deliberately did not reuse — passes every other assertion in this
-    // file and fails exactly here.
+  it("licenses idx 0 on turn 1 and leaves idx 1 BANNED — the board a per-BODY flag gets wrong", () => {
     for (const first of ["p1", "p2"] as const) {
       const state = board(SEEDS[0], first, first, "sv06-009");
       expect(state.turn, `${first}`).toBe(1);
@@ -488,15 +316,8 @@ describe("D281 — the per-INDEX LICENCE (Volbeat, Exeggcute)", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. 🛑 THE TWO POLARITIES — ONE CONDITION, OPPOSITE SIGNS.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () => {
-  it("🛑 Terapagos's `barredIf` and Illumise's `onlyIf` carry the IDENTICAL condition", () => {
-    // 🛑 THE ASSERTION THAT MAKES "ONE FIELD, TWO POLARITIES" A MEASUREMENT RATHER
-    // THAN A DESIGN NOTE. If these two conditions ever diverge, the argument for a
-    // polarity TOKEN (rather than two parallel index maps) has gone with them.
+  it("Terapagos's `barredIf` and Illumise's `onlyIf` carry the IDENTICAL condition", () => {
     const ban = programFor("sv07-128")?.attackGate?.[0];
     const gate = programFor("sv06-010")?.attackGate?.[0];
     expect(ban?.kind).toBe("barredIf");
@@ -507,16 +328,12 @@ describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () =
     };
     expect(ban?.kind === "barredIf" ? ban.condition : undefined).toEqual(expected);
     expect(gate?.kind === "onlyIf" ? gate.condition : undefined).toEqual(expected);
-    // ZERO new `BoardCondition` members: every leaf here shipped at D275/D280.
     expect(
       new Set(expected.kind === "allOf" ? expected.conditions.map((c) => c.kind) : []),
     ).toEqual(new Set(["youGoSecond", "yourFirstTurn"]));
   });
 
-  it("🛑 on the ONE board the condition holds, they answer OPPOSITELY", () => {
-    // The going-second seat's first turn is TURN 2 — the only moment in any game
-    // where `allOf([youGoSecond, yourFirstTurn])` is true. §4 does not ban turn 2,
-    // so the printed clause is the only thing deciding either row.
+  it("on the ONE board the condition holds, they answer OPPOSITELY", () => {
     for (const first of ["p1", "p2"] as const) {
       const second = first === "p1" ? "p2" : "p1";
       let state = passTurns(localSetup(SEEDS[0], first), 1);
@@ -540,7 +357,7 @@ describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () =
     }
   });
 
-  it("🛑 and on EVERY OTHER turn they swap — the gate closes and the ban lifts", () => {
+  it("and on EVERY OTHER turn they swap — the gate closes and the ban lifts", () => {
     for (const first of ["p1", "p2"] as const) {
       const second = first === "p1" ? "p2" : "p1";
       // Turn 4: the going-second seat's SECOND turn. `yourFirstTurn` is false, so
@@ -562,9 +379,6 @@ describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () =
   });
 
   it("the GATE is closed for the going-FIRST seat at every moment — `youGoSecond` is a seat fact", () => {
-    // ⚠️ TURN 3 IS THE GOING-FIRST SEAT'S SECOND TURN, and `yourFirstTurn` is
-    // false there too — so this case is about `youGoSecond` specifically. Turn 1
-    // is asserted separately below, where §4's own ban would mask it.
     for (const first of ["p1", "p2"] as const) {
       let state = passTurns(localSetup(SEEDS[2], first), 2);
       expect(state.turn, `${first}`).toBe(3);
@@ -579,12 +393,7 @@ describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () =
     }
   });
 
-  it("🛑 on TURN 1 the going-first seat's gated attack is refused by §4 FIRST, and that ordering is deliberate", () => {
-    // Both rules refuse; the message a player gets names the one nearest the top
-    // of the rulebook, which is what keeps the §4 gate above the index check in
-    // `attack`. The alternative (moving §4 below `BAD_ATTACK_INDEX` so it could
-    // read a validated index) would have re-ordered §12's status gate and §11's
-    // lock as a side effect — three rejections changed to serve one slice.
+  it("on TURN 1 the going-first seat's gated attack is refused by §4 FIRST, and that ordering is deliberate", () => {
     for (const first of ["p1", "p2"] as const) {
       const state = board(SEEDS[3], first, first, "sv06-010");
       expect(state.turn, `${first}`).toBe(1);
@@ -624,18 +433,8 @@ describe("D281 — `onlyIf` and `barredIf` are ONE condition at two signs", () =
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. 🛑 §9 DOES NOT REACH THIS FIELD — the inverse of `attackFirstTurnExempt`.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D281 — a §9 Ability-lock does NOT touch a printed attack clause", () => {
-  it("🛑 Klefki `sv01-096` leaves BOTH polarities and the licence answering identically", () => {
-    // 🛑 THE ONE PLACE A BUILD THAT REUSED `passivesOf` OUT OF HABIT SHOWS. D277's
-    // licence is printed as an ABILITY and a §9 lock must silence it and hand the
-    // §4 ban back; every clause in THIS field is printed as ATTACK TEXT and §9
-    // locks Abilities only. So the correct answer here is "no change", and a
-    // wrong build gets a Terapagos that may suddenly attack and a Volbeat that
-    // suddenly may not — in the same call.
+  it("Klefki `sv01-096` leaves BOTH polarities and the licence answering identically", () => {
     for (const first of ["p1", "p2"] as const) {
       const second = first === "p1" ? "p2" : "p1";
       const base = passTurns(localSetup(SEEDS[0], first), 1);
@@ -671,26 +470,14 @@ describe("D281 — a §9 Ability-lock does NOT touch a printed attack clause", (
   });
 
   it("the ATTRIBUTION CONTROL — the lock really is live in this pool", () => {
-    // Without this, the case above passes just as happily on a Klefki that never
-    // reached the board: "no change under a lock" and "no lock" are the same
-    // observation. Meloetta ex is not in this deck, so the control is the lock's
-    // OWN reader rather than a second licence.
     const state = board(SEEDS[0], "p1", "p2", "sv01-096");
     expect(POOL["sv01-096"]?.abilities?.[0]?.name).toBe("Mischievous Lock");
     expect(activeOf(state, "p2").stack.length).toBeGreaterThan(0);
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. THE THREE PAYABILITY PROJECTIONS — driven against each other, PER ROW.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D281 — the engine gate and the wire projection agree row by row", () => {
   it("every (seed × assignment × body × row) pair agrees — the sweep D223's `needs` string missed", () => {
-    // ⚠️ THE FAILURE DIRECTION IS THE QUIET ONE: an engine-legal attack whose row
-    // is greyed is never clicked, so no player ever reports it. The sweep asserts
-    // AGREEMENT rather than either side's value, which is the only shape that
-    // catches a projection that forgot the field entirely.
     let compared = 0;
     let disagreements = 0;
     let legalRows = 0;
@@ -719,10 +506,6 @@ describe("D281 — the engine gate and the wire projection agree row by row", ()
         }
       }
     }
-    // THE ATTRIBUTION CONTROLS, both directions: the sweep really ran, and it
-    // really found live rows as well as refused ones. Without the second one this
-    // whole `it` passes on a build that refuses every attack in the game.
-    // 4 seeds × 2 assignments × 4 turn offsets × 8 rows (2 per body, 4 bodies).
     expect(compared).toBe(256);
     expect(legalRows).toBeGreaterThan(0);
     expect(legalRows).toBeLessThan(compared);
@@ -757,14 +540,6 @@ describe("D281 — the engine gate and the wire projection agree row by row", ()
 
 describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is MEASURED", () => {
   it("NO registry program's `attackGate` carries an op — the persisted-op reachability sweep", () => {
-    // 🛑 THE HALF THAT ACTUALLY DECIDES THE CONSTANT. `pendingOp` is a PERSISTED
-    // structure riding `GameState.phase.cont` into the match record, so the
-    // question is not "does a gated attack park" — it is **"can an `attackGate`
-    // value reach a stored continuation from anywhere"**. It cannot, structurally:
-    // the field's values are conditions and a bare tag, and NOTHING in the union
-    // is an `EffectOp`. Measured with the same NEGATIVE predicate `walkProgram`
-    // uses (an op is any object with a string `op`), so a fourth arm of
-    // `AttackTimingGate` that smuggled ops in would redden this line.
     let gatesFound = 0;
     let opsInGates = 0;
     let programsWalked = 0;
@@ -784,27 +559,11 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     // THE ATTRIBUTION CONTROLS: the sweep really walked programs and really found
     // gates, so "no ops" is an answer rather than an empty population.
     expect(programsWalked).toBeGreaterThan(300);
-    // 🆕🆕 D396 — 14 -> **17**: Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`'s
-    // `barredIf` over D396's in-play window, on THREE keys sharing ONE program
-    // object — so this counter steps by 3 where the object count steps by 1, which
-    // is the reprint idiom being counted from the id side. The reachability claim is
-    // UNCHANGED and re-measured rather than assumed: that condition is the same
-    // two-field record with no `then` and no op anywhere inside it.
-    // 🆕🆕 D395 — 13 -> **14**: Miltank `sv08.5-081`'s `onlyIf` over D394's
-    // per-body window. The reachability claim is UNCHANGED and re-measured rather
-    // than assumed — that condition is a two-field record with no `then` and no op
-    // anywhere inside it, so this sweep still answers 0.
-    // 🆕🆕🆕 D582 — 17 -> **18**: Terapagos ex `me02.5-179`, a reprint-alias key on `sv07-128`'s
-    // object (Unified Beatdown's ban), so the counter steps by 1 and the object count not at all.
     expect(gatesFound).toBe(18);
     expect(opsInGates).toBe(0);
   });
 
   it("a gated REFUSAL and a licensed ACCEPTANCE both leave the persisted shape untouched", () => {
-    // ⚠️ **A DIFF BETWEEN TWO BOARDS FROM ONE BUILD IS A HALF-GUARD** (D279): it
-    // catches "the new path writes something extra" and is blind to "every body
-    // grew a key", because the key would be on both sides. So the diff is PAIRED
-    // WITH A LITERAL KEY-LIST ANCHOR.
     const first = "p1" as const;
     const licensedBoard = board(SEEDS[0], first, first, "sv06-009");
     const plainBoard = board(SEEDS[0], first, first, UNGATED);
@@ -824,12 +583,11 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
         "lastKoMarks",
         "lastKoTurn",
         "oncePerGameSpent",
-        // 🆕 D283 — `handPlayLockedTurn`, the turn-scoped imposed hand-play bar.
         "handPlayLockedTurn",
         "pending",
         "phase",
         "players",
-        "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
+        "recentAttackers",
         "rngState",
         "stadium",
         "turn",

@@ -21,20 +21,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D619 — WP12 (THE PASSIVE HALF) + WP15 ──
-//
-// 7 printed texts / 10 `me` printings. WP12: the attacker-gated post-W/R reduction, the NEW
-// `PassiveEffects.damageReductionAfterWRFromAttacker` — Sacred Charm ×2 (a Tool, "Pokémon that have an
-// Ability"), Thick Scale (a Tool on a {N} holder, {G}/{R}/{W}/{L} attackers) and Dewgong ×2 "Thick Fat"
-// (an Ability, {R}/{W} attackers) — summed at the four §8.5 sites by `attackerGatedReductionOf`. WP15:
-// D564's `youPlayedSupporterNamedThisTurn` behind three attack texts (Team Rocket's Kangaskhan ex
-// "Wicked Impact", Espurr "Buddy Attack", Hippowdon "Twister Spewing") and Heliolisk ×2 "Frilled
-// Generator". Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-09,
-// `legal_standard = 1`; none was referenced in the tree before this slice except Heliolisk's D611 pin.
-// WP12's four ATTACK texts are dropped and named (a persisted attacker class — apps/api match.ts "STAYS
-// 42 AT D619") [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44); §1's rung reads them now]. Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const SACRED_TEXT =
   "The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance).";
@@ -51,7 +39,6 @@ const BUDDY =
 const TWISTER =
   "If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck.";
 
-/** WP12's four dropped ATTACK texts (a persisted attacker class), with their printing counts. [🆕🆕🆕 D630 (D539): BUILT at D630.] */
 const DROPPED: readonly (readonly [string, number])[] = [
   [
     "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.",
@@ -96,7 +83,6 @@ const L = "d619-lightning";
 const F = "d619-fighting";
 const P = "d619-psychic";
 
-// The attacker's attacks, one per §8.5 site (D562's set): every cost is ONE {C}.
 const BLAST = 0; // main hit, 120
 const SHOCKWAVE = 1; // spreadDamage into the opponent's Bench, 120 each
 const PINPOINT = 2; // placeSnipe `deals` arm, 120 to one chosen benched
@@ -313,7 +299,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [SACRED[0]]: 2,
   [THICK_SCALE]: 1,
@@ -344,11 +329,6 @@ const DECK = deckOf({
   [P]: 2,
   "fix-energy": 12,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's turn 2 after p2 passed, both hands back into the decks. */
 function opened(): GameState {
@@ -471,9 +451,6 @@ function play(state: GameState, id: string): GameState {
   return mustApply(held, { type: "playTrainer", seat: "p1", uid }).state;
 }
 
-/** TEST SURGERY — `id` was played from p1's hand this turn: the card into p1's discard and the
-    allowance bag stamped exactly as `playTrainer` stamps it (D564's `supporterPlayedUid`). For the two
-    Supporters whose own programs park (Tarragon's pick, Canari's hand cost). */
 function played(state: GameState, id: string): GameState {
   const ensured = ensureInDeck(state, "p1", id);
   const side = ensured.players.p1;
@@ -617,11 +594,11 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
     }
   });
 
-  it("WP12's four ATTACK texts are dropped: corpus rows, still unread (🆕🆕🆕 D630 (D539): WITHDRAWN — all four read at D630, MRV 43 → 44, `persistedRecordsMeD630.test.ts`)", () => {
+  it("WP12's four ATTACK texts are dropped: corpus rows, still unread ( D630 (D539): WITHDRAWN — all four read at D630, MRV 43 → 44, `persistedRecordsMeD630.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);
-      expect(resolvedByAnyReader(text), text).toBe(true); // 🆕🆕🆕 D630 — reader-built
+      expect(resolvedByAnyReader(text), text).toBe(true);
     }
     for (const id of ["me05-007", "me05-024", "me05-089", "me04-033", "me05-064"])
       expect(programFor(id), id).toBeUndefined();
@@ -630,7 +607,7 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D619 §2 — Sacred Charm at the MAIN HIT: 30 less from an opposing Pokémon that has an Ability", () => {
-  it("🛑 an attacker with an Ability: 120 → 90; one without: 120", () => {
+  it("an attacker with an Ability: 120 → 90; one without: 120", () => {
     expect(
       activeDamage(swing(table({ defender: { id: WALL, tool: SACRED[0] } }), BLAST).state),
     ).toBe(90);
@@ -641,18 +618,18 @@ describe("D619 §2 — Sacred Charm at the MAIN HIT: 30 less from an opposing Po
     ).toBe(120);
   });
 
-  it("🛑 AFTER Weakness: a ×2 holder takes 60 × 2 − 30 = 90 (before it would be 60)", () => {
+  it("AFTER Weakness: a ×2 holder takes 60 × 2 − 30 = 90 (before it would be 60)", () => {
     expect(activeDamage(swing(table({ defender: { id: WEAK, tool: SACRED[0] } }), JAB).state)).toBe(
       90,
     );
   });
 
-  it("🛑 Jamming Tower: the Tool has no effect — 120 lands", () => {
+  it("Jamming Tower: the Tool has no effect — 120 lands", () => {
     const state = stadium(table({ defender: { id: WALL, tool: SACRED[0] } }), JAMMING);
     expect(activeDamage(swing(state, BLAST).state)).toBe(120);
   });
 
-  it("🛑 Feint (`suppressTargetEffects`) drops it with the catalog half", () => {
+  it("Feint (`suppressTargetEffects`) drops it with the catalog half", () => {
     expect(
       activeDamage(swing(table({ defender: { id: WALL, tool: SACRED[0] } }), FEINT).state),
     ).toBe(120);
@@ -671,7 +648,7 @@ describe("D619 §2 — Sacred Charm at the MAIN HIT: 30 less from an opposing Po
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D619 §3 — Thick Scale: a {N} holder takes 50 less from opposing {G} / {R} / {W} / {L}", () => {
-  it("🛑 each printed type pays 50; {P} pays nothing", () => {
+  it("each printed type pays 50; {P} pays nothing", () => {
     for (const type of ["Grass", "Fire", "Water", "Lightning"]) {
       const state = table({ attacker: TYPED(type), defender: { id: DRAGON, tool: THICK_SCALE } });
       expect([type, activeDamage(swing(state, BLAST).state)]).toEqual([type, 70]);
@@ -683,7 +660,7 @@ describe("D619 §3 — Thick Scale: a {N} holder takes 50 less from opposing {G}
     expect(activeDamage(swing(psychic, BLAST).state)).toBe(120);
   });
 
-  it("🛑 THE HOLDER GATE — on a non-{N} holder it does nothing (and the fold carries nothing)", () => {
+  it("THE HOLDER GATE — on a non-{N} holder it does nothing (and the fold carries nothing)", () => {
     const state = table({ attacker: TYPED("Fire"), defender: { id: WALL, tool: THICK_SCALE } });
     expect(
       passivesOf(
@@ -697,7 +674,7 @@ describe("D619 §3 — Thick Scale: a {N} holder takes 50 less from opposing {G}
 
 // ────────────────────────────────────────────────────────────────────────────
 describe('D619 §4 — Dewgong "Thick Fat": 30 less from opposing {R} or {W}', () => {
-  it("🛑 {R} and {W} pay 30; {G} pays nothing", () => {
+  it("{R} and {W} pay 30; {G} pays nothing", () => {
     expect(
       activeDamage(
         swing(table({ attacker: TYPED("Fire"), defender: { id: DEWGONG[0] } }), BLAST).state,
@@ -715,7 +692,7 @@ describe('D619 §4 — Dewgong "Thick Fat": 30 less from opposing {R} or {W}', (
     ).toBe(120);
   });
 
-  it("🛑 an Ability: Flutter Mane's lock on the opposing Active silences it", () => {
+  it("an Ability: Flutter Mane's lock on the opposing Active silences it", () => {
     const control = table({ attacker: TYPED("Fire"), defender: { id: DEWGONG[0] } });
     const locked = table({ attacker: FLUTTER, defender: { id: DEWGONG[0] } });
     const fold = (state: GameState) =>
@@ -727,7 +704,7 @@ describe('D619 §4 — Dewgong "Thick Fat": 30 less from opposing {R} or {W}', (
     expect(fold(locked)).toEqual([]);
   });
 
-  it("🛑 two sources SUM: Thick Fat + Sacred Charm against a {R} attacker that has an Ability: 120 − 60", () => {
+  it("two sources SUM: Thick Fat + Sacred Charm against a {R} attacker that has an Ability: 120 − 60", () => {
     const state = table({ attacker: FIRE_ABLE, defender: { id: DEWGONG[0], tool: SACRED[0] } });
     expect(activeDamage(swing(state, BLAST).state)).toBe(60);
   });
@@ -735,24 +712,24 @@ describe('D619 §4 — Dewgong "Thick Fat": 30 less from opposing {R} or {W}', (
 
 // ────────────────────────────────────────────────────────────────────────────
 describe('D619 §5 — the three interpreter sites, and "your opponent\'s"', () => {
-  it("🛑 spreadDamage: the Charm holder takes 90, its neighbour 120", () => {
+  it("spreadDamage: the Charm holder takes 90, its neighbour 120", () => {
     const state = table({ bench: [{ id: WALL, tool: SACRED[0] }, { id: WALL }] });
     const done = swing(state, SHOCKWAVE).state;
     expect([benchDamage(done, "p2", 0), benchDamage(done, "p2", 1)]).toEqual([90, 120]);
   });
 
-  it("🛑 placeSnipe `deals`: the picked Charm holder takes 90", () => {
+  it("placeSnipe `deals`: the picked Charm holder takes 90", () => {
     const state = table({ bench: [{ id: WALL, tool: SACRED[0] }, { id: WALL }] });
     expect(benchDamage(snipe(state, PINPOINT, BENCH0).state, "p2", 0)).toBe(90);
   });
 
-  it("🛑 snipeActive: the picked Active Charm holder takes 90; under `ignoreWR` (Feint Snipe) 120", () => {
+  it("snipeActive: the picked Active Charm holder takes 90; under `ignoreWR` (Feint Snipe) 120", () => {
     const state = table({ defender: { id: WALL, tool: SACRED[0] }, bench: [{ id: WALL }] });
     expect(activeDamage(snipe(state, ARROW, ACTIVE).state)).toBe(90);
     expect(activeDamage(snipe(state, FEINT_SNIPE, ACTIVE).state)).toBe(120);
   });
 
-  it("🛑 an OWN-SIDE splash: \"your opponent's\" — the attacker's own Charm holder takes the full 120", () => {
+  it("an OWN-SIDE splash: \"your opponent's\" — the attacker's own Charm holder takes the full 120", () => {
     const state = table({ ownBench: [{ id: WALL, tool: SACRED[0] }] });
     expect(benchDamage(swing(state, SELFSPLASH).state, "p1", 0)).toBe(120);
   });
@@ -771,21 +748,21 @@ describe('D619 §5 — the three interpreter sites, and "your opponent\'s"', () 
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D619 §6 — WP15's attack texts on D564's named-Supporter member", () => {
-  it("🛑 Wicked Impact: +100 after a Team Rocket's Supporter (Ariana, played); 120 after Emma or nothing", () => {
+  it("Wicked Impact: +100 after a Team Rocket's Supporter (Ariana, played); 120 after Emma or nothing", () => {
     const board = () => table({ attacker: KANGASKHAN, energy: [["fix-energy", 3]] });
     expect(activeDamage(swing(play(board(), ARIANA), 1).state)).toBe(220);
     expect(activeDamage(swing(play(board(), EMMA), 1).state)).toBe(120);
     expect(activeDamage(swing(board(), 1).state)).toBe(120);
   });
 
-  it("🛑 Buddy Attack: +60 after Emma (played); 10 after Ariana or nothing", () => {
+  it("Buddy Attack: +60 after Emma (played); 10 after Ariana or nothing", () => {
     const board = () => table({ attacker: ESPURR, energy: [[P, 1]] });
     expect(activeDamage(swing(play(board(), EMMA), 0).state)).toBe(70);
     expect(activeDamage(swing(play(board(), ARIANA), 0).state)).toBe(10);
     expect(activeDamage(swing(board(), 0).state)).toBe(10);
   });
 
-  it("🛑 Twister Spewing: after Tarragon the opponent's top 3 go to their discard; otherwise only the 80", () => {
+  it("Twister Spewing: after Tarragon the opponent's top 3 go to their discard; otherwise only the 80", () => {
     const board = () =>
       table({
         attacker: HIPPOWDON,
@@ -833,7 +810,7 @@ describe('D619 §7 — Heliolisk "Frilled Generator": after Canari, up to 2 Basi
     result.ok ? "applied" : result.error.code;
   const board = () => table({ attacker: WALL, ownBench: [{ id: HELIOLISK[0] }] });
 
-  it("🛑 after Canari: offers only Basic {L} Energy, two land on Heliolisk, the deck is shuffled; once per turn", () => {
+  it("after Canari: offers only Basic {L} Energy, two land on Heliolisk, the deck is shuffled; once per turn", () => {
     const parked = must(use(played(board(), CANARI)));
     if (parked.phase.kind !== "effect:choose")
       throw new Error(`expected a park, got ${parked.phase.kind}`);
@@ -862,7 +839,7 @@ describe('D619 §7 — Heliolisk "Frilled Generator": after Canari, up to 2 Basi
     expect(code(use(done.state))).toBe("ABILITY_ALREADY_USED");
   });
 
-  it("🛑 refused with no Supporter, and after another Supporter (Emma, played)", () => {
+  it("refused with no Supporter, and after another Supporter (Emma, played)", () => {
     expect(code(use(board()))).toBe("ABILITY_CONDITION_NOT_MET");
     expect(code(use(play(board(), EMMA)))).toBe("ABILITY_CONDITION_NOT_MET");
   });

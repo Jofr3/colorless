@@ -26,70 +26,10 @@ import {
   setDamage,
 } from "./testFixtures";
 
-// D298 — LEGACY ENERGY `sv06-167`, AND THE REFUSAL WHOSE CONCLUSION HELD WHILE
-// HALF ITS REASON WAS FIVE SLICES STALE.
-//
-// ── THE PRINTED TEXT, RE-QUERIED IN FULL ────────────────────────────────────
-// Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-09, ONE
-// flat `WHERE id = 'sv06-167'` over every column — the whole row, not the first
-// 90 characters D292 read:
-//
-//   "As long as this card is attached to a Pokémon, it provides every type of
-//    Energy but provides only 1 Energy at a time.
-//
-//    If the Pokémon this card is attached to is Knocked Out by damage from an
-//    attack from your opponent's Pokémon, that player takes 1 fewer Prize card.
-//    This effect of your Legacy Energy can't be applied more than once per game."
-//
-// `category = 'Energy'`, `energy_type = 'Special'`, `rarity = 'ACE SPEC Rare'`,
-// `regulation_mark = 'H'`, `legal_standard = 1`, `legal_expanded = 1`, and
-// `attacks_json` / `abilities_json` / `types_json` / `trainer_type` all NULL.
-//
-// ── THE INHERITED REFUSAL, RE-TYPED RATHER THAN REPEATED ────────────────────
-// `mistEnergy.test.ts` has recorded this row for five slices as
-//
-//     "a PRIZE-COUNT modifier on the holder's KO, once per game.
-//      Needs a prize hook AND a per-game latch; §14 has neither."
-//
-// 🛑 **THE CONCLUSION HELD AND HALF THE REASON WAS STALE.** The prize hook is
-// §8.1's, not §14's, and it has existed since **D164**: `koPrizeReduction` /
-// `planPrizes` (flow.ts) already read the BYTE-SIMILAR Munkidori ex antecedent —
-// *"is Knocked Out by damage from an attack from your opponent's Pokémon"* — and
-// already decrement a planned Prize. The ATTACHED-CARD scan has existed since
-// **D174** (`passivesOf`'s third source class) and its §8.1 KO-time twin since
-// **D141** (`koRecoilOf`, Vengeful Punch `sv03-197`, the identical antecedent
-// borne by a TOOL). What was actually missing was ONE thing: the latch.
-//
-// ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
-// ONE extracted type (`KoPrizeReduction`, with `requiresInPlay` widened to
-// optional), ONE new `PassiveEffects` field, ONE collector in `passivesOf`, ONE
-// helper plus ONE closure in `planPrizes`, ONE `GameState` field and its setup
-// line. **NO new op, prompt kind, choice kind, event TYPE, error code, deriver
-// arm or regex**; `packages/schema`, `redact.ts` and `src/` take a ZERO diff for
-// the FIFTH slice running.
-//
-// ── AND THE FAMILY CLOSES AT 2 OF 2, WHICH IS WHY BOTH ARE BUILT ────────────
-// `legal_standard = 1 AND instr(effect,'fewer Prize') > 0` returns **9** rows.
-// Seven are Lacey `sv07-139`/`-166`/`-172`/`sv08.5-114`/`-175` and Emcee's Hype
-// `sv10-163`/`-220`, every one printing *"If your opponent has 3 or fewer Prize
-// cards **remaining**"* — a board condition on a Supporter, a different sentence
-// on a different surface. The other two are this Energy and **Lillie's Pearl
-// `sv09-151`**, a Pokémon TOOL printing the same consequent with an OWNER gate
-// and no cap. Building only the Energy would have justified an `EnergyProgram`
-// field that the Tool could never reach; building both put the field on
-// `PassiveEffects`, where ONE fold already walks both slots.
-//
-// 🛑 AND THE TWO PRINTINGS DISAGREE ON EVERY RIDER, WHICH IS THE GUARD D279 ASKED
-// FOR: the Pearl refuses an unprefixed holder and may fire every turn; the Energy
-// admits any holder and fires once per game. Reusing a mechanism copies the
-// sentence it was written for, so both sentences are driven.
-
 const LEGACY_PRINTED =
   "As long as this card is attached to a Pokémon, it provides every type of Energy but provides only 1 Energy at a time.\n\nIf the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card. This effect of your Legacy Energy can't be applied more than once per game.";
 const PEARL_PRINTED =
   "If the Lillie's Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card.";
-/** Munkidori ex's, carried verbatim because the whole claim is that this row
-    RE-USES its antecedent rather than authoring a second reading of it. */
 const OH_NO_YOU_DONT =
   "If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card.";
 
@@ -110,10 +50,6 @@ interface Board {
   bench?: string[];
 }
 
-/** P2 (going first) fields the holder with its attachments, then the turn passes
-    to P1, who fields `fix-attacker` with one {C}. `ohNoYouDont.test.ts`'s `field`
-    with this row's cast — deliberately the same shape, because the two suites read
-    the same printed antecedent at the same site. */
 function field(seed: number, opts: Board = {}): GameState {
   let state = driveSetup(seed, { p1: LEGACY_PRIZE_DECK, p2: LEGACY_PRIZE_DECK }, { first: "p2" });
   state = setActiveFromDeck(state, "p2", opts.holder ?? "fix-legacy-ex");
@@ -164,34 +100,23 @@ function activeOf(state: GameState, seat: Seat): InPlayPokemon {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the two registry rows, and the half of Legacy Energy that costs nothing", () => {
-  it("🛑 the PROVISION is Luminous Energy's line VERBATIM — one wildcard unit", () => {
-    // "provides every type of Energy but provides only 1 Energy at a time" IS
-    // `[ANY_ENERGY]`, and `costMet` has consumed it since M4 slice 5. Asserted
-    // against the OTHER printing of the same string rather than against a
-    // literal, so the claim is "identical to a shipped row" and not "looks right".
+  it("the PROVISION is Luminous Energy's line VERBATIM — one wildcard unit", () => {
     expect(programFor("sv06-167")?.energy?.provides).toEqual([ANY_ENERGY]);
     expect(programFor("sv06-167")?.energy?.provides).toEqual(
       programFor("sv02-191")?.energy?.provides,
     );
-    // 🛑 ONE unit, not two: the count is printed and `costMet` consumes a FLAT
-    // LIST, so a row with a second entry would pay a two-symbol cost this card
-    // refuses. D262's multiset trap, one printing over.
     expect(programFor("sv06-167")?.energy?.provides).toHaveLength(1);
     expect(costMet(["Psychic"], [ANY_ENERGY])).toBe(true);
     expect(costMet(["Psychic", "Water"], [ANY_ENERGY])).toBe(false);
   });
 
   it("carries NO conditional provision and NO on-attach arm — both are ABSENT from the print", () => {
-    // The sentence prints its wildcard UNCONDITIONALLY, which is what separates
-    // it from Neo Upper `sv05-162` and Prism `sv10.5b-086` (both gate the same
-    // clause on the holder's stage) and from Reversal `sv04-266` (a Prize
-    // comparison). A row that grew a gate would be authoring text this card lacks.
     expect(programFor("sv06-167")?.energy?.promoteOnHolderStage).toBeUndefined();
     expect(programFor("sv06-167")?.energy?.demoteWithOtherSpecial).toBeUndefined();
     expect(programFor("sv06-167")?.energy?.onAttach).toBeUndefined();
   });
 
-  it("🛑 the PRIZE half sits on `energy.passive`, which is D174's third source class", () => {
+  it("the PRIZE half sits on `energy.passive`, which is D174's third source class", () => {
     expect(programFor("sv06-167")?.energy?.passive?.onKoPrizeReduction).toEqual({
       by: 1,
       oncePerGame: "Legacy Energy",
@@ -211,9 +136,6 @@ describe("the two registry rows, and the half of Legacy Energy that costs nothin
       by: 1,
       requiresHolderOwner: "Lillie",
     });
-    // 🛑 The Tool authors NO `energy` entry and the Energy NO top-level `passive`:
-    // the two slots are what `passivesOf` folds, and a row in the wrong one would
-    // be silently unread.
     expect(programFor("sv09-151")?.energy).toBeUndefined();
     expect(programFor("sv06-167")?.passive).toBeUndefined();
   });
@@ -228,15 +150,11 @@ describe("the two registry rows, and the half of Legacy Energy that costs nothin
   });
 
   it("neither sentence is an ATTACK's, so no deriver may claim either", () => {
-    // Both live on the bare `effect` column — the column censuses in this repo
-    // have repeatedly been blind to (D164's finding, still worth a line).
     expect(deriveAttackEffect(LEGACY_PRINTED)).toBeNull();
     expect(deriveAttackEffect(PEARL_PRINTED)).toBeNull();
   });
 
-  it("⚠️ D164's ABILITY row is UNTOUCHED by the type extraction", () => {
-    // `requiresInPlay` went from REQUIRED to optional. Munkidori ex still carries
-    // it, and its absence must not have become the row's new default anywhere.
+  it("D164's ABILITY row is UNTOUCHED by the type extraction", () => {
     expect(programFor("sv06.5-037")?.triggered?.[0]?.onKoPrizeReduction).toEqual({
       by: 1,
       requiresInPlay: "Pecharunt ex",
@@ -250,7 +168,7 @@ describe("the two registry rows, and the half of Legacy Energy that costs nothin
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("passivesOf collects the reduction off an attached card, on either slot", () => {
-  it("🛑 an ENERGY and a TOOL both reach `koPrizeReductions` — one fold, two slots", () => {
+  it("an ENERGY and a TOOL both reach `koPrizeReductions` — one fold, two slots", () => {
     const energyOnly = field(3, { legacy: 1 });
     const toolOnly = field(3, { pearl: true });
     expect(passivesOf(energyOnly, activeOf(energyOnly, "p2")).koPrizeReductions).toEqual([
@@ -261,11 +179,7 @@ describe("passivesOf collects the reduction off an attached card, on either slot
     ]);
   });
 
-  it("🛑 a body wearing BOTH offers TWO entries — the list is not a scalar", () => {
-    // The interface field's own claim: two attached sources on one body carry
-    // DIFFERENT riders, so a summed `by` would spend the Energy's cap on a Prize
-    // the Tool reduced. TOOLS come before ENERGY in `sources`, and the ORDER is
-    // asserted because the two entries are not interchangeable.
+  it("a body wearing BOTH offers TWO entries — the list is not a scalar", () => {
     const both = field(3, { legacy: 1, pearl: true });
     expect(passivesOf(both, activeOf(both, "p2")).koPrizeReductions).toEqual([
       { by: 1, requiresHolderOwner: "Lillie" },
@@ -274,10 +188,6 @@ describe("passivesOf collects the reduction off an attached card, on either slot
   });
 
   it("a bare body collects NOTHING, and neither does the ABILITY carrier", () => {
-    // The attribution control. Without it every assertion above would pass on a
-    // fold that pushed unconditionally. And Munkidori ex's reduction is a
-    // TRIGGERED ability, so it must NOT appear in this list — the two carriers
-    // are read at two different places in `planPrizes`.
     const bare = field(3);
     expect(passivesOf(bare, activeOf(bare, "p2")).koPrizeReductions).toEqual([]);
     const munkidori = field(3, { holder: "sv06.5-037", damage: 0 });
@@ -295,7 +205,7 @@ describe("passivesOf collects the reduction off an attached card, on either slot
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the Prize reduction — driven through a real attack Knock Out", () => {
-  it("🛑 2 → 1 off the ENERGY, and it is a DECREMENT rather than a zeroing", () => {
+  it("2 → 1 off the ENERGY, and it is a DECREMENT rather than a zeroing", () => {
     const done = mustApply(field(1, { legacy: 1 }), bite);
     expect(parkedPrizes(done.state)).toBe(EX_PRIZES - 1);
     expect(reductions(done.events)).toEqual([
@@ -305,13 +215,13 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     expect(parkedPrizes(mustApply(field(1), bite).state)).toBe(EX_PRIZES);
   });
 
-  it("🛑 2 → 1 off the TOOL, on a holder its owner gate ADMITS", () => {
+  it("2 → 1 off the TOOL, on a holder its owner gate ADMITS", () => {
     const done = mustApply(field(1, { pearl: true }), bite);
     expect(parkedPrizes(done.state)).toBe(EX_PRIZES - 1);
     expect(reductions(done.events)).toHaveLength(1);
   });
 
-  it("🛑 THE OWNER GATE REFUSES AN UNPREFIXED HOLDER — the board D279 asks for", () => {
+  it("THE OWNER GATE REFUSES AN UNPREFIXED HOLDER — the board D279 asks for", () => {
     // `fix-pearl-nobody` is "Clefairy" to `fix-lillie-body`'s "Lillie's Clefairy":
     // same HP, same attack, same Prize value, and ONLY the name differs. A build
     // that reused Legacy Energy's ungated read would reduce here.
@@ -328,7 +238,6 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     );
     expect(parkedPrizes(admitted.state)).toBe(0);
     expect(reductions(admitted.events)).toHaveLength(1);
-    // 🛑 The ENERGY has no such gate, so the very same unprefixed body IS reduced.
     const ungated = mustApply(
       field(1, { holder: "fix-pearl-nobody", damage: 50, legacy: 1 }),
       bite,
@@ -337,7 +246,7 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     expect(reductions(ungated.events)).toHaveLength(1);
   });
 
-  it("🛑 the two COMPOUND on one body: 2 → 1 → 0, and the clamp is over the RUNNING total", () => {
+  it("the two COMPOUND on one body: 2 → 1 → 0, and the clamp is over the RUNNING total", () => {
     const done = mustApply(field(1, { legacy: 1, pearl: true }), bite);
     expect(parkedPrizes(done.state)).toBe(0);
     expect(reductions(done.events).map((e) => e.count)).toEqual([1, 0]);
@@ -346,14 +255,7 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     expect(done.state.phase.kind).not.toBe("ko:takePrizes");
   });
 
-  it("🛑 THE POSSESSIVE REFUSES A KO ON THE ATTACKER'S OWN BOARD — a Rocky Helmet board", () => {
-    // *"from your OPPONENT'S Pokémon"*. `attackerSeat === ref.seat` is the holder
-    // dying on the ATTACKER's own side, which `finishAttack` sweeps too because it
-    // passes BOTH seats — so the possessive is load-bearing rather than decorative
-    // (D164's clause, re-used rather than re-derived). The only way to reach that
-    // board is a retaliation: P2's Active wears a Rocky Helmet, so Bite puts 20 HP
-    // back on P1's own attacker, which is already one hit from death and dies in
-    // the SAME sweep with a Legacy Energy attached.
+  it("THE POSSESSIVE REFUSES A KO ON THE ATTACKER'S OWN BOARD — a Rocky Helmet board", () => {
     let state = field(1, { holder: "fix-lillie-body", damage: 50 });
     state = attachToolFromDeck(state, "p2", "active", "sv01-193"); // Rocky Helmet
     state = attachFromDeck(state, "p1", "fix-legacy-energy", 1);
@@ -363,24 +265,15 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     const done = mustApply(state, bite);
     // BOTH bodies died on one sweep, and only P2's carried a live clause.
     expect(done.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
-    // 🛑 P1's Legacy Energy did NOT fire: no reduction names p1, and the cap it
-    // would have spent is untouched. A build that dropped the possessive would
-    // reduce here and be green on every other board in this file.
     expect(reductions(done.events).map((e) => e.seat)).toEqual([]);
     expect(done.state.oncePerGameSpent.p1).toEqual([]);
   });
 
-  it("🛑 a CHECKUP Knock Out is refused — `attackerSeat` is undefined there", () => {
-    // The clause is "by damage from an attack". A poisoned holder finished at the
-    // Checkup dies for real and its Prize is NOT reduced. This is the refusal that
-    // makes the reduction a CAUSE-conditioned one rather than an on-KO one, and it
-    // is the same board D164 drives one carrier over.
+  it("a CHECKUP Knock Out is refused — `attackerSeat` is undefined there", () => {
     let state = field(2, { legacy: 1, damage: 250 });
     state = setConditions(state, "p2", { poisonDamage: 10 });
     // P1 ends its turn; the Checkup poisons P2's Active for its last 10 HP.
     const done = mustApply(state, { type: "endTurn", seat: "p1" });
-    // 🛑 THE KO REALLY HAPPENED — without this the assertion below is vacuous and
-    // would pass just as happily on a body that survived the Checkup.
     expect(done.events.some((e) => e.type === "KNOCKED_OUT")).toBe(true);
     expect(reductions(done.events)).toEqual([]);
     expect(parkedPrizes(done.state)).toBe(EX_PRIZES);
@@ -398,7 +291,7 @@ describe("`oncePerGameSpent` — the per-game latch, and the only new GameState 
     expect(game.oncePerGameSpent).toEqual({ p1: [], p2: [] });
   });
 
-  it("🛑 is stamped with the printed EFFECT's name — not a card id and not a uid", () => {
+  it("is stamped with the printed EFFECT's name — not a card id and not a uid", () => {
     const done = mustApply(field(1, { legacy: 1 }), bite);
     expect(done.state.oncePerGameSpent).toEqual({ p1: [], p2: ["Legacy Energy"] });
     // The key is what makes `sv06-167` and `fix-legacy-energy` ONE cap. Read off
@@ -408,11 +301,7 @@ describe("`oncePerGameSpent` — the per-game latch, and the only new GameState 
     ]);
   });
 
-  it("🛑 A SECOND Knock Out with a SECOND copy attached is NOT reduced", () => {
-    // The whole sentence. Two Legacy Energy on one board is not a legal DECK (one
-    // ACE SPEC), but it is an expressible BOARD — and it is also what a recovered
-    // and re-attached copy looks like, which is how the cap is actually reached in
-    // play. Both bodies are `ex`, so both would be 2 → 1 without the latch.
+  it("A SECOND Knock Out with a SECOND copy attached is NOT reduced", () => {
     let state = field(1, { legacy: 1, bench: ["fix-legacy-ex", "fix-bigbody"] });
     const first = mustApply(state, bite);
     expect(parkedPrizes(first.state)).toBe(1);
@@ -433,11 +322,7 @@ describe("`oncePerGameSpent` — the per-game latch, and the only new GameState 
     expect(second.state.oncePerGameSpent.p2).toEqual(["Legacy Energy"]);
   });
 
-  it("🛑 IS NOT SPENT WHEN THERE IS NOTHING LEFT TO REDUCE — the `count === 0` break", () => {
-    // A 1-Prize `Lillie's ` holder wearing BOTH: the Pearl takes 1 → 0 first, and
-    // "that player takes 1 fewer Prize card" than none is not an application of
-    // the effect. A build that ran the arithmetic anyway would burn the cap on a
-    // Knock Out that reduced nothing — green on every board above, wrong here.
+  it("IS NOT SPENT WHEN THERE IS NOTHING LEFT TO REDUCE — the `count === 0` break", () => {
     const done = mustApply(
       field(1, { holder: "fix-lillie-body", damage: 50, legacy: 1, pearl: true }),
       bite,
@@ -464,12 +349,7 @@ describe("`oncePerGameSpent` — the per-game latch, and the only new GameState 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the attached reduction composes with D164's ABILITY and D155's GUARD", () => {
-  it("🛑 Munkidori ex wearing a Legacy Energy pays BOTH — 2 → 1 → 0", () => {
-    // The ability arm `continue`d before this slice, so an attached source on an
-    // on-KO-Ability body would have been silently skipped. Every push in
-    // `planPrizes` now goes through one closure, and this is the board that says so.
-    // Munkidori ex is 210 HP and worth 2 Prizes; Pecharunt ex on its Bench is the
-    // printed board clause, matched by NAME.
+  it("Munkidori ex wearing a Legacy Energy pays BOTH — 2 → 1 → 0", () => {
     const state = field(4, {
       holder: "sv06.5-037",
       damage: 190,
@@ -491,15 +371,8 @@ describe("the attached reduction composes with D164's ABILITY and D155's GUARD",
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 6. THE POPULATION — measured, and it CLOSES.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("the population of the printed sentence — 2 of 2, and the residue moves", () => {
-  it("⚠️ ENUMERATES every card in the pool carrying the reduction — a sweep, not a list", () => {
-    // A POPULATION claim belongs to a POOL SWEEP rather than to any one board
-    // (D261's headline loss). It goes RED on a new FIXTURE as much as on new code,
-    // which is the point: a third carrier arriving in silence is what this catches.
+  it("ENUMERATES every card in the pool carrying the reduction — a sweep, not a list", () => {
     const carriers = Object.keys(FIXTURE_POOL)
       .filter((id) => {
         const program = programFor(id);
@@ -509,22 +382,10 @@ describe("the population of the printed sentence — 2 of 2, and the residue mov
         );
       })
       .sort();
-    // ⚠️ THE VIEW IS `FIXTURE_POOL` AND NOT THE REGISTRY MAP, which is not
-    // exported — `neoUpperEnergy.test.ts`'s sweep verbatim, and the reason the
-    // REAL ids are absent here: the committed manifest holds no `sv06` and no
-    // `sv09` row, so neither may be added as a real-id fixture. Both real ids are
-    // pinned by §1's assertions and asserted to share their fixture's program.
     expect(carriers).toEqual(["fix-legacy-energy", "fix-lillies-pearl"]);
   });
 
-  it("🛑 the Special Energy residue is now TWO, and this file owns the correction (🆕🆕🆕 D577: ONE — Boomerang Energy BUILT; 🆕🆕🆕 D578: NONE — Team Rocket's Energy BUILT)", () => {
-    // `mistEnergy.test.ts` has carried the residue since D261 and D262 re-homed it
-    // once already. `sv06-167` leaves it BUILT; `sv06-166` and `sv10-182` remain,
-    // each with a blocker that is still real.
-    // 🆕🆕🆕 D577 (D539): *"`sv06-166` and `sv10-182` remain"* is WITHDRAWN — `sv06-166` is BUILT
-    // (`BOOMERANG_ENERGY`, `boomerangEnergyD577.test.ts`); ~~`sv10-182` alone remains.~~
-    // 🆕🆕🆕 D578 (D539): `sv10-182` is BUILT too (`TEAM_ROCKETS_ENERGY`,
-    // `teamRocketsEnergyD578.test.ts`) — the residue is EMPTY.
+  it("the Special Energy residue is now TWO, and this file owns the correction ( D577: ONE — Boomerang Energy BUILT; D578: NONE — Team Rocket's Energy BUILT)", () => {
     expect(programFor("sv06-167"), "sv06-167 is BUILT at D298").toBeDefined();
     expect(programFor("sv06-166"), "sv06-166 is BUILT at D577").toBeDefined();
     expect(programFor("sv10-182"), "sv10-182 is BUILT at D578").toBeDefined();
@@ -539,10 +400,7 @@ describe("the population of the printed sentence — 2 of 2, and the residue mov
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () => {
-  it("🛑 the persisted `GameState` carries EXACTLY these keys", () => {
-    // THE LITERAL KEY ANCHOR (D279's pairing rule): a diff between two boards from
-    // ONE build is blind to "every state grew a key", because the key sits on both
-    // sides. This names them, and the list has grown by exactly ONE.
+  it("the persisted `GameState` carries EXACTLY these keys", () => {
     const game = freshGame();
     const revived = JSON.parse(JSON.stringify(game)) as GameState;
     expect(Object.keys(revived).sort()).toEqual([
@@ -557,21 +415,14 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
       "pending",
       "phase",
       "players",
-      "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
+      "recentAttackers",
       "rngState",
       "stadium",
       "turn",
     ]);
   });
 
-  it("🛑 FORWARD: a version-16 record WITHOUT the key THROWS on the first reduction", () => {
-    // The direction the repo's rule tests — "can the PREVIOUS deploy's RECORD hold
-    // the new TYPE". It cannot: the field is INDEXED before it is compared
-    // (`next.oncePerGameSpent[ref.seat]`), so an old record resumed under this
-    // deploy dies the moment a Legacy Energy holder is Knocked Out. `lastKoTurn`'s
-    // shape at D271 — the fourth such field and the second that does not read back
-    // benignly. Rebuilt by DELETING the key off a real board, not by hand-rolling
-    // a state.
+  it("FORWARD: a version-16 record WITHOUT the key THROWS on the first reduction", () => {
     const live = field(1, { legacy: 1 });
     const { oncePerGameSpent: _dropped, ...old } = live;
     const stale = old as unknown as GameState;
@@ -579,7 +430,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
     expect(() => applyAction(stale, bite)).toThrow();
   });
 
-  it("🛑 BACKWARD: a version-17 board round-trips through JSON with the latch intact", () => {
+  it("BACKWARD: a version-17 board round-trips through JSON with the latch intact", () => {
     const spent = mustApply(field(1, { legacy: 1 }), bite).state;
     const revived = JSON.parse(JSON.stringify(spent)) as GameState;
     expect(revived.oncePerGameSpent).toEqual(spent.oncePerGameSpent);
@@ -590,8 +441,6 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
   });
 
   it("no new `GameEvent` TYPE, no new prompt kind, no new error code", () => {
-    // What moved: ONE `GameState` field and ONE `PassiveEffects` field. The
-    // reduction reports through `PRIZE_REDUCED`, which D164 authored.
     const done = mustApply(field(1, { legacy: 1 }), bite);
     expect(reductions(done.events)).toHaveLength(1);
     expect(new Set(done.events.map((e) => e.type)).has("PRIZE_REDUCED")).toBe(true);

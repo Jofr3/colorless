@@ -15,103 +15,8 @@ import {
   discardFromDeck,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── D359 — `attachEnergyFrom`'s QUANTITY AXIS: THE PRINTED "up to N" TO ONE ───
-// ── NAMED BODY, AND A POPULATION THE REGISTRY COULD NOT SEE ──────────────────
-//
-// ── THE DEFECT ──────────────────────────────────────────────────────────────
-// `attachEnergyFrom.count` has meant "up to N onto the ONE body the print names"
-// since D205 — its own doc says so: *"`min(count, available)` is what actually
-// lands: a hand holding one {R} attaches one, silently, because the print says UP
-// TO."* **The engine was spending the printed "up to" against AVAILABILITY and
-// never against the player's WILL.** A controller with two {F} in the pile who
-// wanted ONE got two, and on the four `toSelf` sentences was never asked at all —
-// `parkOrForce` forces a lone candidate, and "this Pokémon" is one candidate by
-// construction.
-//
-// ── 🛑🛑 THE POPULATION, RE-DERIVED OVER **BOTH** PRODUCERS ─────────────────
-// D358 measured this residue as *"8 legal printings / 3 sentences / 3 objects"*
-// by walking the REGISTRY. **THE REGISTRY IS NOT THE BUILD.** `deriveAttackEffect`
-// is this op's second producer and it emits `count: 2` for three more
-// Standard-legal sentences no registry walk can reach. Re-derived here off the
-// registry AND the deriver, joined to remote D1 `colorless` on `$.effect` (never
-// `$.text`, which returns a false zero — the extractor was verified against the
-// eight known-present rows before any zero in it was believed), 2026-08-18:
-//
-//   Ethan's Ho-Oh ex ×4   sv10-039/-209/-230/-239   ability  count 2 + owner/bench
-//   Bloodmoon Ursaluna ×2 sv06.5-025, sv08.5-054    ability  count 2 + toSelf
-//   Lycanroc ×2           sv09-085/-166             ability  count 2 + toSelf
-//   🆕 Oricorio ×2        sv08-026, sv08-089        ATTACK   count 2 + benchOnly
-//   🆕 Regirock ex ×2     sv10-101, sv10-214        ATTACK   count 2 + toSelf
-//   🆕 Kilowattrel ex ×1  sv08-068                  ATTACK   count 2 + toSelf, gated
-//
-// **6 sentences / 13 Standard-legal printings, printed {0, 1, 2} on all 13.**
-// ⚠️ **AND THE TWO HALVES WERE BROKEN DIFFERENTLY, WHICH IS WHY A DECLINE AXIS
-// COULD NEVER HAVE REPAIRED EITHER.** The 8 ABILITY printings reached {0, 2}: an
-// activated or triggered *"you may"* buys the empty answer and the ceiling was
-// resolved exactly. The 5 ATTACK printings reached **{2} ALONE** — an attack is
-// declared and resolves, there is no `optional` anywhere in the program, and even
-// the zero was unreachable.
-// ⚠️ Koraidon "Dino Cry" is **6** printings (svp-029, sv01-125/-231/-247/-254,
-// sv04.5-245), not the 4 the handoff carried, and all six are
-// `legal_standard = 0` — excluded because it was MEASURED. It is an *"in any way
-// you like"* spread anyway, which is the `anyWay` axis and not this one.
-//
-// ── 🛑 THE FIRST QUESTION WAS **WHICH PROMPT**, AND IT WAS SETTLED FROM THE
-//    CATALOG ────────────────────────────────────────────────────────────────
-//   (1) **`ptcg-rules.md` §9.1, verbatim:** *"'Search your deck for **up to 2**
-//       Basic Energy cards' (Earthen Vessel) — **one, two, or none, all legal**."*
-//       Every k in 0..N is a printed answer, and nothing about that is
-//       card-specific.
-//   (2) **`count`'s OWN DOC SAYS THE BATCH IS ONE DECISION** — it exists to pin
-//       the batch to the ONE body a print NAMES. So the print asks ONE compound
-//       question (how many, and onto which body), and the answer rides ONE prompt.
-//       A second prompt would contradict a documented reading.
-//   (3) **THE SIBLING OP ALREADY RULED ON THE IDENTICAL QUANTIFIER.**
-//       `attachFromDeck` reads *"Search your deck for **up to 2** Basic Energy
-//       cards and attach them…"* as `max: N` over a park with a floor of ZERO.
-//       `attachEnergyFrom` is the one attach route where the printed ceiling
-//       collapsed into an exact count.
-//   (4) **THE CATALOG CONTRASTS THE QUANTIFIER AGAINST ITS OWN ABSENCE, ON THE
-//       SAME OP, THE SAME ZONE AND THE SAME DESTINATION CLAUSE.** Furfrou
-//       `sv06.5-051` prints *"Attach **a** Basic Energy card from your discard
-//       pile to 1 of your Benched Pokémon"*; Oricorio `sv08-026` prints *"Attach
-//       **up to 2** Basic Energy cards from your discard pile to 1 of your Benched
-//       Pokémon"*. One op, one zone, one destination, two words apart.
-//
-// ── THE NO-NEW-VOCABULARY REFUTATIONS, RUN FROM SOURCE (§5) ─────────────────
-//   (a) a new OP field (`upTo` beside `count`) — **refused, and the refusal is
-//       measured rather than argued**: `count` IS the ceiling. `effects.ts`'s
-//       `attachFromZoneClause` admits a count above 1 through its literal
-//       `up to (\d+)` alternative ALONE, so no sentence in the catalog can produce
-//       `count > 1` without printing the word. §5 drives that from the deriver.
-//   (b) a second key on the PROMPT (`upTo` beside D358's `declinable`) — refused
-//       by widening instead: at this prompt `declinable` IS `upTo: 1`, and
-//       `interpreter.ts` had already written the rule down one member below
-//       (*"A prompt with `min: 0` is declinable by construction and does not set
-//       it"*). **The OP-level fields are untouched and still never co-occur**,
-//       which `attachDecline.test.ts` §1 asserts unedited.
-//   (c) route it to the `attachCards` MAP prompt — refused twice over: that
-//       prompt asks *which card goes where*, re-opening the distribution `count`
-//       exists to close, and its three producers are deck-top / deck-search /
-//       hand. **No op in this engine reads the DISCARD PILE into a map prompt**,
-//       and three of these six sentences are `source: "discard"`. §5 pins it.
-//   (d) two ops instead of one — refused on D205's ground: `count` pins the batch
-//       to one body, so two ops would legalise splitting Ethan's Ho-Oh's two
-//       Energy across two benched bodies against *"to **1 of** your Benched
-//       Ethan's Pokémon"*.
-//
-// ── 🛑 THE CEILING IS THE PRINTED NUMBER AND IS NEVER CLAMPED TO THE ZONE ────
-// `min(count, available)` stays a fact about the APPLY, exactly as it has been
-// since D205. ⚠️ **THE FIRST ARGUMENT FOR THAT WAS MEASURED FALSE AND IS RECORDED
-// AS SUCH IN §4**: a clamp would NOT leak the hand, because `redactPhase` sends an
-// `effect:choose` prompt only to the seat that must answer it. The real argument
-// is internal consistency — the park's `note` quotes the PRINTED count verbatim
-// (D205), so a clamped ceiling would offer one button under a caption promising
-// two, which is one prompt contradicting itself. `chooseCards` reached the same
-// conclusion from the other side: *"`max` never needed this — a ceiling above the
-// candidate count simply never binds"*.
 
 const ORICORIO = "sv08-026";
 const ORICORIO_B = "sv08-089";
@@ -119,9 +24,6 @@ const BENCH_BODY = "fix-d359-bench";
 const FIRE = "fix-d359-fire";
 const WATER = "fix-d359-water";
 
-/** The printed sentence, character-for-character off the remote D1 row for
-    `sv08-026`/`sv08-089` (2026-08-18). Both printings carry it byte-identically,
-    which is what makes them ONE row of this slice's population. */
 const ENERGY_ASSIST =
   "Attach up to 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon.";
 
@@ -136,12 +38,6 @@ const QUANTITY_IDS = {
   returnCharge: ["sv08-068"],
 } as const;
 
-/** The real printing, off the remote D1 row (2026-08-18): Oricorio HP 90 Basic
-    {R} / retreat 1 / weak {W} ×2, "Energy Assist" {R} (index 0) and "Fireworks"
-    {R} 30 (index 1). Held in a LOCAL pool and never in `FIXTURE_POOL` (D275's
-    idiom): `catalogManifest.ts` is generated off a six-set catalog that does not
-    hold `sv08`, so a shared-pool body would owe a `fix-*` key on `censusAtHead`'s
-    `raw.length` line — **and this slice moves NO census figure.** */
 const POOL: Record<string, Card> = {
   [ORICORIO]: battler(ORICORIO, {
     name: "Oricorio",
@@ -175,11 +71,6 @@ const DECK = deckOf({ [ORICORIO]: 4, [BENCH_BODY]: 16, [FIRE]: 20, [WATER]: 20 }
 const ENERGY_ASSIST_IDX = 0;
 const ACTIVE: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function step(state: GameState, action: Parameters<typeof applyAction>[1]) {
   const result = applyAction(state, action);
@@ -242,11 +133,6 @@ function passTo(state: GameState, turn: number): GameState {
   return next;
 }
 
-/** Oricorio Active with its {R} cost attached, `bench` benched bodies, and a
-    discard pile holding `pile` Basic Energy. Built by the shared TEST SURGERY
-    helpers rather than by hand: an `InPlayPokemon` assembled inline drops `tools`
-    and every passive reader that walks it throws — a board a fixture builds is
-    legal-shaped by construction and one a test literal builds is not. */
 function ready(
   seed: number,
   { bench = 2, pile = 2 }: { bench?: number; pile?: number } = {},
@@ -311,7 +197,7 @@ function registryAttachOps(): Map<string, Extract<EffectOp, { op: "attachEnergyF
 // ── 1. THE POPULATION, WALKED OFF **BOTH** PRODUCERS ─────────────────────────
 
 describe("D359 §1 — the quantity population, over the registry AND the deriver", () => {
-  it("🛑 the REGISTRY half is exactly ~~8~~ printings on 3 sentences, by id (🆕🆕🆕 D582 (D539): *8* WITHDRAWN — 9 since the `me` alias Ethan's Ho-Oh ex `me02.5-026`; 🆕🆕🆕 D587: 11 printings on 4 sentences since Philippe ×2; 🆕🆕🆕 D588: 14 on 5 since Rosa's Encouragement ×3)", () => {
+  it("the REGISTRY half is exactly ~~8~~ printings on 3 sentences, by id ( D582 (D539): *8* WITHDRAWN — 9 since the `me` alias Ethan's Ho-Oh ex `me02.5-026`; D587: 11 printings on 4 sentences since Philippe ×2; D588: 14 on 5 since Rosa's Encouragement ×3)", () => {
     const withCount = [...registryAttachOps()]
       .filter(([, ops]) => ops.some((op) => op.count !== undefined))
       .map(([id]) => id)
@@ -321,19 +207,9 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
         ...QUANTITY_IDS.goldenFlame,
         ...QUANTITY_IDS.battleHardened,
         ...QUANTITY_IDS.spikeClad,
-        // 🆕🆕🆕 D582 — Ethan's Ho-Oh ex `me02.5-026`, a reprint-alias of `sv10-039` (the SAME
-        // `ETHANS_HO_OH_EX` object): the 8 are now 9 printings, still 3 sentences.
         "me02.5-026",
-        // 🆕🆕🆕 D587 — Philippe `me04-079` / `-110` (`PHILIPPE`): *"Attach up to 2 Basic {M} Energy
-        // cards from your discard pile to 1 of your {M} Pokémon."* — the same `count: 2` reading
-        // (the batch pinned to the one named body, the printed {0, 1, 2} on this axis), a fourth
-        // sentence. `trainerParamsMeD587.test.ts` §4 drives its park.
         "me04-079",
         "me04-110",
-        // 🆕🆕🆕 D588 — Rosa's Encouragement `me03-084` / `-114` / `-123` (`ROSAS_ENCOURAGEMENT`):
-        // *"Attach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Pokémon."* —
-        // the same `count: 2` reading on the new `stage2Only` rider, a fifth sentence.
-        // `trainerParamsMeD588.test.ts` §6 drives its park.
         "me03-084",
         "me03-114",
         "me03-123",
@@ -342,11 +218,7 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
     expect(withCount).toHaveLength(14);
   });
 
-  it("🛑🛑 the DERIVER half is 5 more printings the registry cannot see", () => {
-    // **THIS IS THE WHOLE OF D358's CENSUS MISS, MADE INTO AN ASSERTION.** That
-    // slice walked the registry and reported the residue as 8 printings; these
-    // three sentences build through `deriveAttackEffect` and carry no registry row
-    // at all, so no registry walk however careful could have found them.
+  it("the DERIVER half is 5 more printings the registry cannot see", () => {
     for (const id of [
       ...QUANTITY_IDS.energyAssist,
       ...QUANTITY_IDS.regiCharge,
@@ -415,7 +287,7 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
 // ── 2. THE PRINTED {0, 1, 2}, DRIVEN END TO END ──────────────────────────────
 
 describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () => {
-  it("🛑 the park carries the printed CEILING and every Benched body", () => {
+  it("the park carries the printed CEILING and every Benched body", () => {
     const parked = attackWith(ready(11));
     const prompt = parkOf(parked.state);
     expect(prompt.upTo).toBe(2);
@@ -440,7 +312,7 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
     );
   });
 
-  it("🛑 ONE — the printed MIDDLE answer, UNREACHABLE before this slice", () => {
+  it("ONE — the printed MIDDLE answer, UNREACHABLE before this slice", () => {
     const parked = attackWith(ready(11));
     const done = step(parked.state, {
       type: "resolveEffect",
@@ -457,12 +329,7 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
     );
   });
 
-  it("🛑🛑 ZERO — and on an ATTACK this answer had NO other route to it", () => {
-    // The ability half of this population reaches 0 through an activated or
-    // triggered *"you may"*. **An attack is declared and resolves**: Oricorio's
-    // program holds no `optional`, so before D359 its printed answer set was {2}
-    // alone — a strictly worse defect than the abilities', and one no decline flag
-    // on the OP could have reached either, since there is nothing to decline.
+  it("ZERO — and on an ATTACK this answer had NO other route to it", () => {
     const parked = attackWith(ready(11));
     const done = step(parked.state, {
       type: "resolveEffect",
@@ -478,11 +345,7 @@ describe("D359 §2 — Oricorio's printed {0, 1, 2}, all three reachable", () =>
     expect(done.state.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 the batch still lands on ONE body — the quantity did not buy a SPLIT", () => {
-    // D205's rule, re-asserted where it is now most at risk: `count` pins the
-    // batch to the one body the print names, and the answer names ONE ref. A
-    // design that had answered the quantity with a MAP would let these two Energy
-    // land on two Pokémon off a sentence that prints "to **1 of** your Benched".
+  it("the batch still lands on ONE body — the quantity did not buy a SPLIT", () => {
     const parked = attackWith(ready(11));
     const done = step(parked.state, {
       type: "resolveEffect",
@@ -516,7 +379,7 @@ describe("D359 §3 — the validator is the only place the printed ceiling is en
     return result.error;
   };
 
-  it("🛑 a take ABOVE the printed ceiling is refused — the one a crafted frame wants", () => {
+  it("a take ABOVE the printed ceiling is refused — the one a crafted frame wants", () => {
     const parked = attackWith(ready(11)).state;
     const error = reject(parked, { kind: "pokemon", ref: benchRef(0), take: 3 });
     expect(error.code).toBe("BAD_EFFECT_CHOICE");
@@ -547,12 +410,7 @@ describe("D359 §3 — the validator is the only place the printed ceiling is en
     );
   });
 
-  it("🛑 a MANDATORY prompt refuses BOTH the decline and the quantity, separately", () => {
-    // The eight mandatory parks (switchActive, gust, healChosen's single arm, the
-    // counter moves, both evolve-body continuations) have no referent for "how
-    // many", and Boss's Orders prints no *"up to"* to decline. Two rejections with
-    // two sentences, because a reader looking at a Pokémon should not be told
-    // their message was malformed when it was their card that said no.
+  it("a MANDATORY prompt refuses BOTH the decline and the quantity, separately", () => {
     const parked = attackWith(ready(11)).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     const phase = parked.phase;
@@ -573,11 +431,7 @@ describe("D359 §3 — the validator is the only place the printed ceiling is en
     ).toBe(true);
   });
 
-  it("🛑 the APPLY clamps to the printed count too — the belt behind the validator", () => {
-    // `applyChoice` is reachable with a wire-supplied number, and the validator is
-    // what refuses an over-take. This drives the BELT directly, because a guard
-    // only the validator can reach is a guard nothing tests: the clamp is what
-    // keeps a frame that somehow got past the barrier from emptying the pile.
+  it("the APPLY clamps to the printed count too — the belt behind the validator", () => {
     const parked = attackWith(ready(11, { pile: 4 })).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     const events: GameEvent[] = [];
@@ -635,21 +489,7 @@ describe("D359 §4 — the redacted prompt, and the leak a clamp would have been
     expect(Object.keys(plain).sort()).toEqual(["candidates", "kind", "note"]);
   });
 
-  it("🛑 THE CEILING IS THE PRINTED NUMBER, AND `note` IS WHAT PROVES IT MUST BE", () => {
-    // ⚠️ **A CLAIM THIS SLICE MADE AND THEN MEASURED FALSE, CORRECTED HERE RATHER
-    // THAN QUIETLY DROPPED.** The first argument for leaving the ceiling unclamped
-    // was that clamping it to the matching Energy available would LEAK the
-    // controller's hand to the opponent. It would not: `redactPhase` sends an
-    // `effect:choose` prompt ONLY to the seat that must answer it and `null` to
-    // every other viewer, so no field on this prompt can leak to anyone.
-    //
-    // **THE REAL ARGUMENT IS INTERNAL CONSISTENCY, AND IT IS SHARPER.** The park's
-    // `note` quotes the PRINTED count verbatim ("up to 2 Energy") — it has since
-    // D205, deliberately, because the count is the one thing about this park a
-    // player cannot read off the offered rows. A `upTo` clamped to the zone would
-    // say 1 under a caption saying 2: **one prompt contradicting itself**, with the
-    // dialog offering one button and the sentence above it promising two. Driven
-    // over three pile sizes, both halves asserted together.
+  it("THE CEILING IS THE PRINTED NUMBER, AND `note` IS WHAT PROVES IT MUST BE", () => {
     for (const pile of [1, 2, 4]) {
       const parked = attackWith(ready(11, { pile })).state;
       const prompt = parkOf(parked);
@@ -659,8 +499,6 @@ describe("D359 §4 — the redacted prompt, and the leak a clamp would have been
   });
 
   it("the prompt reaches ONLY the answerer, which is why no field on it can leak", () => {
-    // The measurement behind the correction above, kept as an assertion so a later
-    // slice that widens the gate has to come here first.
     const parked = attackWith(ready(11)).state;
     const opponent = redactGame(parked, "p2");
     if (opponent.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -671,13 +509,7 @@ describe("D359 §4 — the redacted prompt, and the leak a clamp would have been
 // ── 5. THE REFUTATIONS, RUN FROM SOURCE ON A BOARD ───────────────────────────
 
 describe("D359 §5 — what this slice refused, driven rather than asserted", () => {
-  it("🛑 refutation (a): `count > 1` COMES ONLY FROM A PRINTED 'up to N'", () => {
-    // **THE MEASURED GROUND FOR AUTHORING NO NEW OP FIELD.** `attachFromZoneClause`
-    // offers three alternatives — "an Energy card", "a Basic {X} Energy card", and
-    // "up to N Basic {X} Energy cards" — and only the third carries a number. So a
-    // sentence that names a quantity WITHOUT the printed hedge is not read at all,
-    // which is what makes `count` unambiguously a ceiling and `upTo` beside it a
-    // second key on one axis.
+  it("refutation (a): `count > 1` COMES ONLY FROM A PRINTED 'up to N'", () => {
     expect(
       deriveAttackEffect(
         "Attach 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon.",
@@ -697,18 +529,12 @@ describe("D359 §5 — what this slice refused, driven rather than asserted", ()
     expect(singular?.[0]).not.toHaveProperty("count");
   });
 
-  it("🛑 refutation (b): NO OP FIELD MOVED — `declinable` and `count` still never co-occur", () => {
-    // The prompt gained the ceiling; the OP did not. `attachDecline.test.ts` §1
-    // asserts this same partition and is UNEDITED by this slice, which is the
-    // strongest form the claim can take: a slice that pairs them still has to come
-    // there and say why, and this one did not have to.
+  it("refutation (b): NO OP FIELD MOVED — `declinable` and `count` still never co-occur", () => {
     for (const [id, ops] of registryAttachOps()) {
       for (const op of ops) {
         expect(op.declinable === true && op.count !== undefined, id).toBe(false);
       }
     }
-    // …and every one of the eight registry printings still carries `count` and NOT
-    // `declinable`, by id and in both directions.
     for (const id of [
       ...QUANTITY_IDS.goldenFlame,
       ...QUANTITY_IDS.battleHardened,
@@ -721,17 +547,7 @@ describe("D359 §5 — what this slice refused, driven rather than asserted", ()
     }
   });
 
-  it("🛑 refutation (c): the DISCARD-sourced batch parks a REF, never a MAP", () => {
-    // The `attachCards` map prompt was the obvious home for "how many, and where",
-    // and it is refused twice over. **The zone**: its three producers read the deck
-    // TOP, a deck SEARCH and the HAND, and no op in this engine reads the DISCARD
-    // PILE into a map prompt (`attachDecline.test.ts` §4 pins that partition off
-    // the registry) — while three of this slice's six sentences are
-    // `source: "discard"`. **And the shape**: a map answers *which card goes
-    // where*, re-opening the distribution `count` exists to close. Driven here on
-    // the discard-sourced board: the park is a `choosePokemon`, and the ANSWER
-    // carries exactly one ref, so the two Energy cannot be split whatever the
-    // client sends.
+  it("refutation (c): the DISCARD-sourced batch parks a REF, never a MAP", () => {
     const parked = attackWith(ready(11)).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(parked.phase.prompt.kind).toBe("choosePokemon");
@@ -753,7 +569,7 @@ describe("D359 §5 — what this slice refused, driven rather than asserted", ()
     ).toBe(false);
   });
 
-  it("🛑 refutation (d): the answer set is EXACTLY 0..N — nothing unprinted is legal", () => {
+  it("refutation (d): the answer set is EXACTLY 0..N — nothing unprinted is legal", () => {
     // The one thing a widened prompt member must never do. Every k in 0..2 lands a
     // board, and every k outside it is refused — so the capability bought is
     // precisely §9.1's *"one, two, or none, all legal"* and not a byte more.
@@ -789,158 +605,14 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
   it("the local pool carries the printing under test, and none of it reaches FIXTURE_POOL", () => {
     expect(POOL[ORICORIO]?.attacks?.[ENERGY_ASSIST_IDX]?.effect).toBe(ENERGY_ASSIST);
     expect(POOL[ORICORIO]?.attacks?.[ENERGY_ASSIST_IDX]?.name).toBe("Energy Assist");
-    // ⚠️ THE SECOND PRINTING IS NOT SEATED AND THAT IS DELIBERATE: it carries the
-    // byte-identical sentence, so a second body would test the deriver twice and
-    // the board zero extra times. Its presence in the population is asserted from
-    // D1 in §1, where the claim actually lives.
     expect(QUANTITY_IDS.energyAssist).toEqual([ORICORIO, ORICORIO_B]);
     expect(Object.keys(POOL).sort()).toEqual([BENCH_BODY, FIRE, ORICORIO, WATER].sort());
   });
 
-  it("🛑 ZERO registry keys were added — this slice moves no census figure", () => {
-    // 🆕🆕🆕 D553 — 713 -> **725**: TWELVE registry keys on SEVEN program objects —
-    // the simple once-per-turn Abilities (Rapidash, Chandelure, Blissey ex, Swadloon,
-    // Mamoswine ex, Sawsbuck, Ethan's Quilava). Real catalog ids and NOT `fix-*` keys
-    // (both suites drive a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no
-    // row authors an `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
-    // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
-    // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
-    // and the first on which the gate NAMES its own attack. Real catalog ids and NOT
-    // `fix-*` keys (the suite drives a LOCAL `cardPool`, D275's idiom), and the row
-    // authors no `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
-    // — a bare `attackGate` at index **1**, the first gate in that field at a
-    // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
-    // LOCAL `cardPool`, D275's idiom), and it authors no `attack` program, so the
-    // ATTACK summand cannot move with it.
-    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
-    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
-    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
-    // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    // 🆕🆕🆕 D554 — 725 -> **740**: FIFTEEN registry keys on NINE program objects —
-    // the deck-search Trainers (Hilda, Colress's Tenacity, Cyrano, Hyper Aroma, Team
-    // Rocket's Transceiver, Energy Search Pro, Precious Trolley, Boxed Order,
-    // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
-    // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
-    // an `attack` program, so the ATTACK summand cannot move with them.
-    // 🆕🆕🆕 D555 — 740 -> **760**: TWENTY registry keys on TWELVE program objects —
-    // the zero-vocabulary Trainers (Cook, Poké Vital A, Iris's Fighting Spirit, Eri,
-    // Meddling Memo) and Abilities (Torrid Scales, Ancient Wing, Beckoning Tail,
-    // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
-    // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
-    // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
-    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
-    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
-    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
-    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    // 🆕🆕🆕 D557 — 779 -> **798**: NINETEEN registry keys on ELEVEN program objects —
-    // Kieran, Team Rocket's Venture Bomb, Morty's Conviction, Xerosic's Machinations,
-    // Lucian, Arven's Sandwich, Megaton Blower, Brilliant Blender, TM Machine, Dusk Ball
-    // and Tool Scrapper. Real catalog ids, no `fix-*` key (`chooseOneTrainersD557.test.ts`
-    // / `riderTrainersD557.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
-    // `svp-149`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D558 — 798 -> **816**: EIGHTEEN registry keys on TWELVE program objects —
-    // Counter Gain, Hop's Choice Band, Brave Bangle, Air Balloon, Rescue Board, Gravity
-    // Gemstone (Tools), Full Metal Lab, Granite Cave, Postwick, N's Castle, Paradise Resort
-    // (Stadiums) and Salvatore. Real catalog ids, no `fix-*` key
-    // (`continuousToolsStadiumsD558.test.ts` / `salvatoreD558.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv10.5w-085`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D559 — 816 -> **831**: FIFTEEN registry keys on SEVEN program objects — the
-    // ability bundle (Lillie's Clefairy ex ×4, Flutter Mane ×3, Gastrodon, Orthworm ex ×2,
-    // Maractus ×2, Klinklang ×2, Regirock). Real catalog ids, no `fix-*` key
-    // (`abilityBundleD559.test.ts` / `abilityRecoilArmorD559.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv05-212`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D560 — 831 -> **848**: SEVENTEEN registry keys on ELEVEN program objects — the
-    // second ability bundle (Drilbur, Team Rocket's Koffing, Thwackey ×2, Slaking ex ×2,
-    // Annihilape, Galvantula, Magmortar, Whimsicott ×2, Dachsbun ex ×3, Indeedee ×2,
-    // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
-    // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
-    // `sv09-082`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D561 — 848 -> **863**: FIFTEEN registry keys on NINE program objects — the
-    // trainer bundle (Perrin ×3, Crispin ×4, Super Potion, Love Ball, Hand Trimmer, Scoop Up
-    // Cyclone ×2, Scramble Switch, Academy at Night, Perilous Jungle). Real catalog ids, no
-    // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
-    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
-    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
-    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D563 — 877 -> **888**: ELEVEN registry keys on FIVE program objects — Eevee ex
-    // ×3 "Rainbow DNA", Noivern "Tuning Echo", Kyurem "Plasma Bane", Feraligatr ×2
-    // "Torrential Heart", Palafin ex ×4 "Hero's Spirit". Real catalog ids, no `fix-*` key
-    // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
-    // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D564 — 888 -> **897**: NINE registry keys on FIVE program objects — Jasmine's
-    // Gaze ×3, Amarys ×3, Team Rocket's Factory, Community Center, Crobat "Shadowy Envoy"
-    // (Caretaker's rider re-authors an EXISTING object on its two existing keys). Real catalog
-    // ids, no `fix-*` key (`trainerBundleD564.test.ts` / `sideDamageNextTurnD564.test.ts` drive
-    // a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151`, and no row authors an `attack`
-    // program.
-    // 🆕🆕🆕 D565 — 897 -> **905**: EIGHT registry keys on FIVE program objects — Misty's
-    // Psyduck ×2 "Flustered Leap", Team Rocket's Orbeetle ×2 "Rocket Brain", Farfetch'd
-    // "Impromptu Carrier", Palafin "Zero to Hero", Ruffian ×2. Real catalog ids, no `fix-*` key
-    // (`abilityBundleD565.test.ts` / `ruffianD565.test.ts` drive a LOCAL `cardPool`), inserted
-    // MID-MAP after `sv06.5-029`, and no row authors an `attack` program.
-    // 🆕🆕🆕 D566 — 905 -> **914**: NINE registry keys on SIX program objects — Brock's Scouting
-    // ×2, Ogre's Mask ×2, Heavy Baton, Amulet of Hope, Powerglass ×2, Team Rocket's Watchtower.
-    // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
-    // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
-    // `attack` program.
-    // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
-    // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
-    // 🆕🆕🆕 D568 — 918 -> **935**: SEVENTEEN registry keys on EIGHT program objects — the Tera
-    // banner unlock, Slice 1: Sparkling Crystal ×2, Tera Orb, Glass Trumpet ×2, Briar ×4, Milotic ex
-    // ×3 "Sparkling Scales", Noctowl ×3 "Jewel Seeker", Azumarill "Glistening Bubbles", and
-    // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
-    // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
-    // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
-    // 🆕🆕🆕 D569 — 935 -> **949**: FOURTEEN registry keys on SEVEN program objects — the Paradox
-    // banner unlock, Slice 2 part a: Iron Crown ex ×6 "Cobalt Command", Awakening Drum, Reboot Pod
-    // (non-attack), and SIX `attack`-keyed rows — Miraidon ×2 "Peak Acceleration", Great Tusk ×2
-    // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
-    // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
-    // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
-    // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
-    // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
-    // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
-    // 🆕🆕🆕 D571 — 956 -> **962**: SIX registry keys on THREE program objects — Iron Thorns ex
-    // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
-    // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
-    // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
-    // 🆕🆕🆕 D572 — 962 -> **968**: SIX registry keys on FOUR program objects — Munkidori ×3
-    // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
-    // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
-    // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
-    // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
-    // (`MALAMAR_COLLUDING_TENTACLES`, an ATTACK row on existing ops), keyed beside Xerosic's Machinations.
-    // 🆕🆕🆕 D576 — 969 -> **973**: FOUR registry keys on THREE program objects — the Antique Fossils
-    // `sv07-129` / `sv10.5b-080` (`PROTECTIVE_COVER`), `sv07-130` (`PRIMAL_ROOT`), `sv10.5w-079`
-    // (`PLUME_PROTECTION`): `playAsPokemon` + `passive`, ALL non-attack. Real catalog ids, no `fix-*`
-    // key, inserted MID-MAP after D572's rows (Area Zero Underdepths ×3 is PARKED, D577).
-    // 🆕🆕🆕 D577 — 973 -> **979**: SIX registry keys on THREE program objects — Area Zero Underdepths
-    // `sv07-131` / `sv07-174` / `sv08.5-094` (`AREA_ZERO_UNDERDEPTHS`, a `stadium`), Boomerang Energy
-    // `sv06-166` (`BOOMERANG_ENERGY`, an `energy`) and Tyme `sv08-190` / `sv08.5-143` (`TYME`, a
-    // `trainer`): ALL non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D576's rows.
-    // (🆕🆕🆕 D577 (D539): *"Area Zero Underdepths ×3 is PARKED, D577"* above is WITHDRAWN — BUILT here.)
-    // 🆕🆕🆕 D578 — 979 -> **985**: SIX registry keys on FOUR program objects — Scovillain ex
-    // `sv08-037` / `sv08-216` (`DOUBLE_TYPE`, a `passive`), Technical Machine: Fluorite `sv08-188`
-    // (`TM_FLUORITE`, `toolAttacks` + `toolDiscardAtEndOfYourTurn` + an `attack` key for its GRANTED
-    // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
-    // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
-    // MID-MAP after D577's rows; no `attackGate`.
-    expect(registryCardIds()).toHaveLength(1451); // (🆕 **card revision B09 +1** — Paradise Resort `svp-045` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `PARADISE_RESORT` object; no `attackGate`.) (🆕 **card revision B08 +1** — Reversal Energy `sv02-192` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `REVERSAL_ENERGY` object; no `attackGate`.) (🆕 **card revision B05 +1** — Potion `mfb-33` (`legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `POTION` object; no `attackGate`.) (🆕 **card revision B04 +7** — Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091` (`legal_standard = 0`, `legal_standard_effective = 1`) and the text-less `30th` Items Poké Pad `30th-126`, Switch `30th-127`, Ultra Ball `30th-128` (`legal_standard = 1`), MID-MAP, on the shipped `RARE_CANDY` / `SWITCH` / `ULTRA_BALL` / `POKE_PAD` objects; no `attackGate`.) (🆕 **card revision B01 +3** — Judge `sv04.5-228` / `sv10-167` / `sv10-222` (mark G, `legal_standard = 0`, `legal_standard_effective = 1`), MID-MAP, on the shipped `JUDGE` object; no `attackGate`.) (🆕🆕🆕 **D647 +13** — the merge of `main`: Arven ×5 and Miraidon ex "Tandem Unit" ×6 (rotated, user-requested; `CENSUS_NOT_LEGAL`) and Counter Catcher `sv04-160` / `sv04-264` (rotated), MID-MAP, on three NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D646 +1** — Backtrack Badge `me05-074`, MID-MAP, on one NEW `passive` Tool object; no `attackGate`.) (🆕🆕🆕 **D645 +4** — the last one-offs, Meganium `me01-010` / `mep-001` and Goodra `me04-068` / `mep-077`, MID-MAP, on two NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D644 +5** — Y1e, Cinderace `me01-028`, Patrat `me04-070`, Illumise `30th-004`, Ferrothorn `me04-063` and Transformation Tome `me04-083`, MID-MAP, on five NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D643 +3** — Y1a, Rotom ex `me02-029` / `-111` / `-126`, MID-MAP, on one NEW `passive` object (`toolCapForName`); no `attackGate`.) (🆕🆕🆕 **D642 +6** — Z1 + K2, Spiritomb `me01-087` / `-148`, Wishiwashi `30th-022`, Risky Ruins `me01-127`, Dizzying Valley `me02-088` and Ange Floette `me04-075`, MID-MAP, on five NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D641 +3** — Y1b, Lt. Surge's Bargain `me01-120` / `-170` / `-185`, MID-MAP, on one NEW Trainer object; no `attackGate`.) (🆕🆕🆕 **D638 +3** — X1, Mew ex `30th-066` / `-152` / `-158`, MID-MAP, on one NEW `passive` object (`memoryHelix`); no `attackGate`.) (🆕🆕🆕 **D637 +4** — the four `me` Antique Fossils `me03-068` / `-069`, `me05-072` / `-073`, MID-MAP, on four NEW fossil objects; no `attackGate`.) (🆕🆕🆕 **D636 +2** — Clawitzer `me01-038` / `-141`, MID-MAP, on one NEW `abilities` object; no `attackGate`.) (🆕🆕🆕 **D635 +1** — F1, Fossil Quarry `me05-076`, MID-MAP, on one NEW `stadium` object; no `attackGate`.) (🆕🆕🆕 **D632 +5** — D1, Damp: Psyduck ×3 and Golduck ×2, MID-MAP, on two NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D631 +9** — P1, the rest of the passive modifiers: Bastiodon ×3, Decidueye ex ×2, Kingambit, Garbodor, Yveltal and Snorlax, MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D630 +2** — M1, the persisted-record bundle: Iron Defender ×2, MID-MAP, on one NEW Trainer object; no `attackGate`.) (🆕🆕🆕 **D628 +2** — A1, the rest of the on-bench / on-move Abilities: Latios "Lustrous Assist" and Larry's Komala "Lethargic Charge", MID-MAP, on two NEW non-attack objects (Meowth ex ×3 "Last-Ditch Catch" rides D593's existing keys); no `attackGate`.) (🆕🆕🆕 **D627 +4** — H1, the Hide 'n' Sneak archetype: Poltchageist, Sinistcha, Shuppet and Banette "Hide 'n' Sneak", MID-MAP, on one NEW non-attack object; no `attackGate`.) (🆕🆕🆕 **D626 +8** — K1, the rest of the KO / damaged triggers: Flygon ×3 "Sandy Flapping", Miraidon ×2 "Photon Cord", Gengar ex ×2 "Fainting Spell" and Adversity Policy, MID-MAP, on four NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D625 +13** — T1, the rest of the `me` Trainers: Special Red Card ×2, Jumbo Ice Cream ×2, Dark Bell ×2, Wally's Compassion ×3, Blowtorch ×2, Great Haul Net and Strange Timepiece, MID-MAP, on seven NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D621 +16** — WP24c + WP23: Gladion's Final Battle ×3, Premium Power Pro ×3, Acerola's Mischief ×4, Roxie's Performance ×3 and Dawn ×3, MID-MAP, on five NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D620 +7** — WP26: Light Ball, Punk Helmet ×2, Team Rocket's Hypnotizer, Core Memory and Tremendous Bomb ×2, MID-MAP, on five NEW Tool objects; no `attackGate`.) (🆕🆕🆕 **D619 +7** — WP12 / WP15: Sacred Charm ×2, Thick Scale, Dewgong ×2 "Thick Fat" and Heliolisk ×2 "Frilled Generator", MID-MAP, on four NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D618 +8** — WP25b: Battle Cage ×2, Mystery Garden ×3 and Forest of Vitality ×3, MID-MAP, on three NEW `stadium` objects; no `attackGate`.) (🆕🆕🆕 **D617 +11** — WP24b: Pokémon Center Lady, AZ's Tranquility ×3, Grimsley's Move ×2, Gwynn ×3 and Naveen ×2, MID-MAP, on five NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D614 +4** — WP37b: Mega Clefable ex ×4 "Luminous Wing" (`mep-072`, `me03-031` / `-103` / `-119`), MID-MAP, on one NEW passive object; no `attackGate`.) (🆕🆕🆕 **D612 −4** — WP06: the attack-only keys `INFERNO_X` (`mep-023` / `-029`) and `STEALTHY_SLASH` (`30th-021` / `-148`) RETIRED, their normalised text now reader-built.) (🆕🆕🆕 **D611 +17** — WP21 + Dragonair: 17 `me` ids (Nighttime Maneuvers ×3, Sinister Surge ×3, Boisterous Wind ×2, Destructive Headbutting ×2, Evidence Gathering ×2, Sky Hunt ×2, Grand Wing, Spiteful Evolution, Evolutionary Guidance), MID-MAP, on nine NEW activated Ability objects; no `attackGate`.) (🆕🆕🆕 **D610 +16** — WP37a: 16 `me` ids (Solar Transfer ×4, Bubble Gathering, Metal Road ×2, Swirling Prose ×2, Holes ×2, Scale Up ×3, Tyrannically Gutsy ×2), MID-MAP, on seven NEW Ability / trigger / passive objects; no `attackGate`.) (🆕🆕🆕 **D608 +5** — WP30: 5 `30th` ids (Mewtwo ex ×3 "Photon Bullets", Greninja ex ×2 "Stealthy Slash"), MID-MAP, on two NEW attack-only objects (`PHOTON_BULLETS`, `STEALTHY_SLASH`; tcgdex's `<em>` markup); no `attackGate`.) (🆕🆕🆕 **D606 +9** — WP25a: 9 `me` Stadium ids (Prism Tower ×2, Surfing Beach ×2, Nighttime Mine, Lumiose City ×2, Celebratory Fanfare ×2), MID-MAP, on five NEW `stadium` objects; no `attackGate`.) (🆕🆕🆕 **D604 +8** — WP18: the 8 typed `me` Special Energies (Growing Grass, Rocky Fighting, Telepathic Psychic, Bubbly Water, Magnetic Metal, Nitro Fire, Shadowy Darkness, Voltaic Lightning), MID-MAP, on eight NEW `energy` objects; no `attackGate`.) (🆕🆕🆕 **D603 +11** — WP11: 11 Mega-gated `me` ids (Oricorio ex ×3, Ludicolo ×2, Linoone, Seviper, Mega Signal ×3, Jett), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D602 +9** — WP20b: 9 `me` Ability ids (Silvally ×2, Erika's Tangela ×2, Vivillon `30th-008`, Shuckle ×2, Erika's Vileplume ex, Solgaleo `30th-105`), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D599 +4** — WP24a: Anthea & Concordia `me02.5-182` / `-254` and Emma `me04-077` / `-107`, MID-MAP, on two NEW Trainer objects; no `attackGate`.) (🆕🆕🆕 **D598 +13** — WP32: 13 `me` Ability ids (Mega Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape, Shedinja ×2, Gengar, Pecharunt), MID-MAP, on six NEW non-attack objects; no `attackGate`.) (🆕🆕🆕 **D597 +2** — WP29: Mega Charizard X ex `mep-023` / `mep-029`, MID-MAP, on the NEW attack-only `INFERNO_X` (the `me02` "Inferno X" program; tcgdex prints "[R]"); no `attackGate`.) (🆕🆕🆕 **D594 +2** — WP33a: Luxio `me03-027` "Fighting Roar" and Chesnaught `me04-007` "Needly Armor", MID-MAP, on two NEW passive objects (`FIGHTING_ROAR`, `NEEDLY_ARMOR`), both non-attack; no `attackGate`.) (🆕🆕🆕 **D593 +5** — WP07: Drifblim `mep-006`, Meowth ex `me03-062` / `-107` / `-121` and Emolga `me04-030`, MID-MAP, on three NEW attack-only objects (Balloon Return, Tuck Tail ×3, Sky Return — Lillie's Comfey's "Fade Out" op at each printed index); no `attackGate`.) (🆕🆕🆕 **D591 +19** — WP20a: 19 `me` Pokémon ids, MID-MAP, on seven NEW `abilities` objects (Run Errand ×4, Alluring Wings, Fiery / Flash-Pop / Frosty Flapping ×3 each, Lunar Cycle ×3, Flaring Magic ×2), all non-attack; no `attackGate`.) (🆕🆕🆕 **D590 +13** — WP05: 13 `me` Pokémon ids, MID-MAP, on nine NEW `onEvolve` objects (Psychic Draw ×4 on two, Prison Panic, Energized Steps, Heave-Ho Catcher, Cast-Off Shell ×2, Enriching Melody ×2, Multiplying Cocoon, Haphazard Hammer), all non-attack; no `attackGate`.) (🆕🆕🆕 **D589 +5** — WP08: Mega Greninja ex ×5 (`mep-081`, `me04-022` / `-100` / `-116` / `-122`), MID-MAP, on the NEW `MORTAL_SHURIKEN`, all non-attack; no `attackGate`.) (🆕🆕🆕 **D588 +17** — WP22: 17 `me` Trainer ids, MID-MAP, on eight NEW objects (Canari ×3, Lillie's Determination ×4, Misty's Vitality ×2, Rosa's Encouragement ×3, Rust Syndicate Grunt ×2, Waitress, Hole-Digging Shovel, Lumiose Galette), all non-attack; no `attackGate`.) (🆕🆕🆕 **D587 +19** — WP04: 19 `me` Trainer ids, MID-MAP, on nine NEW objects (Wondrous Patch ×2, Philippe ×2, Jacinthe ×3, Firebreather ×2, Fighting Gong ×3, Tarragon ×2, Poké Pad ×3, Energy Swatter, Repel), all non-attack; no `attackGate`.) (🆕🆕🆕 **D586 +2** — WP03: Carbink `me02.5-117` / `-242` on the new `DOUBLE_TYPE_FP` ({F}{P} copy of Scovillain's `typesInPlay`), MID-MAP, non-attack; no `attackGate`.) (🆕🆕🆕 **D585 +19** — WP19's parameter copies: 19 `me` ids, MID-MAP, on eight NEW objects (Tundra Wall ×2, Wash Out, Powerful a-Salt ×2, Counterattacking Crest ×3, Stone Arms ×2, Scent Collection, Sky Transport ×5, Synchro Pulse ×3), all non-attack; no `attackGate`.) (🆕🆕🆕 **D584 +18** — the `me` alias tier 2: 18 `me` ids, MID-MAP — Ultra Ball ×2, Zoroark `30th-096` and Hop's Pincurchin ex `me02.5-068` on EXISTING objects, fourteen on the eight NEW D584 objects (Smooth Coat ×3, Shell Spikes, Incandescent Body ×2, Aerial Draw ×2, Share Happiness ×2, Intimidating Fang, Dopey Face, Float Up ×2 — the last two attack-only); no `attackGate`.) (🆕🆕🆕 **D583 +1** — Team Rocket's Energy `me02.5-217`, a reprint-alias key on `sv10-182`'s object, inserted MID-MAP; no `attackGate`.) (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP; Terapagos ex `me02.5-179` shares `sv07-128`'s `attackGate`.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+  it("ZERO registry keys were added — this slice moves no census figure", () => {
+    expect(registryCardIds()).toHaveLength(1451);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
-      // Every id that DOES have a program had one before this slice: the eight
-      // registry printings, unchanged byte for byte.
       expect([
         ...QUANTITY_IDS.goldenFlame,
         ...QUANTITY_IDS.battleHardened,

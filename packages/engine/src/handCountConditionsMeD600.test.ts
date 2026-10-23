@@ -24,17 +24,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D600 — WP14 + WP33b: THE HAND COUNT AND FIVE BONUS CONDITIONS ─────────────────────────
-//
-// 7 printed attack texts / 12 `me` printings. WP14: `DamageCountSource.cardsInYourHand` — Galarian
-// Meowth "Treasure Rush" ×2 on the `×` fold, Alakazam "Powerful Hand" ×3 as `damageActive.per`.
-// WP33b: five `CONDITIONAL_DAMAGE_CLAUSES` literal rows on five new `BoardCondition` members — Weavile
-// (remaining HP), Carnivine (no Retreat Cost), Serperior ×2 (Rosa's Encouragement in your discard),
-// Sableye (Stage 2 {D} on your Bench), Zarude ×2 (Shadowy {D} Energy on your Bench). Every id and
-// text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`;
-// no id was referenced in the tree before this slice. Gholdengo "Celebration" ×2 stays dropped. [🆕🆕🆕 D640 (D539): BUILT at D640.]
 
 const POWERFUL_HAND =
   "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
@@ -52,7 +43,6 @@ const SHADOWY_WHIP =
 const CELEBRATION =
   "If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [POWERFUL_HAND, ["me01-056", "mep-003", "mep-009"]],
   [TREASURE_RUSH, ["30th-101", "30th-141"]],
@@ -75,7 +65,7 @@ describe("D600 §1 — the texts: 7 attack sentences / 12 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(12);
   });
 
-  it("the near misses stay unbuilt: every row is a literal, and Celebration stays dropped (🆕🆕🆕 D640 (D539): Celebration is built since D640)", () => {
+  it("the near misses stay unbuilt: every row is a literal, and Celebration stays dropped ( D640 (D539): Celebration is built since D640)", () => {
     for (const near of [
       "This attack does 10 more damage for each card in your hand.",
       "Place 2 damage counters on 1 of your opponent's Pokémon for each card in your hand.",
@@ -87,7 +77,7 @@ describe("D600 §1 — the texts: 7 attack sentences / 12 printings", () => {
     ]) {
       expect(resolvedByAnyReader(near), near).toBe(false);
     }
-    expect(resolvedByAnyReader(CELEBRATION)).toBe(true); // 🆕🆕🆕 D640 — inverted: built
+    expect(resolvedByAnyReader(CELEBRATION)).toBe(true);
     expect(meAttackCorpus().find(([, text]) => text === CELEBRATION)?.[0]).toBe(2);
   });
 });
@@ -165,7 +155,6 @@ describe("D600 §2 — the readings", () => {
 // ── ON A BOARD ──
 
 const FILLER = "d600-filler";
-/** A constructed attacker printing the BARE put (arm 22), for §3's no-`per` board. */
 const PUTTER = "d600-putter";
 const FREE = "d600-free-retreat";
 const WEAK_P = "d600-weak-psychic";
@@ -325,11 +314,6 @@ const DECK = deckOf({
   "fix-energy": 3,
 });
 const BOARD_IDS = Object.keys(LOCAL).filter((id) => id !== FILLER);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

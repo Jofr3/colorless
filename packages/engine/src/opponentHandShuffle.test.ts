@@ -24,77 +24,9 @@ import {
   types,
 } from "./testFixtures";
 
-// 🆕🆕🆕 D542 — THE OPPONENT-CHOSEN HAND SHUFFLE, AND IT IS A COMPOSITION OF TWO
-// SHIPPED OPS PLUS ONE OPTIONAL FIELD.
-//
-//   "Your opponent chooses 3 cards from their hand and shuffles those cards into
-//    their deck."
-//
-// **1 sentence / 1 legal printing** — `censusAttackCorpus.ts` **file line 665**,
-// `legalAttackCorpus()` index **612**, leading count column **1**.
-//
-// 🛑 **ONE PRINTING IS ONE PRINTING, AND THE CASE FOR THE ROW IS SAID AT THE TOP
-// RATHER THAN LEFT TO BE READ OUT OF THE CENSUS DELTA.** What carries it is (a) the
-// near-total REUSE — zero new `EffectOp` members, zero new `EffectPrompt` kinds,
-// zero new `EffectChoice` members, zero new readers (`attackReaderSurface()` stays
-// **13**), zero `packages/schema` bytes, zero projection arms, zero new dialog
-// components; (b) an EXPIRED REFUSAL retired at the address that wrote it
-// (`effects.ts`'s *"NO `to`"* paragraph, whose every clause is still true and which
-// is simply no longer a refusal once a second value is printed); and (c) 🛑 **A REAL
-// CLIENT-SIDE DEFECT THAT ARRIVES WITH THE OP AND IS FIXED IN THE SAME SLICE.**
-//
-// 🛑 **THE APP TIER DOES MOVE, AND THE DEFECT IS COMPILER-INVISIBLE.** The app reads
-// the PROMPT, not the op. This build creates the engine's FIRST **MANDATORY**
-// (`min === max === 3`) `chooseCards` park with `dest: "deck"` — every other
-// producer of a `"deck"` pick (`discardPileRetrieval`) parks at `min: 0`, so the
-// "up to" cell of the HUDs' Confirm-verb tables shipped live and the MANDATORY cell
-// did not. `GameHud.tsx`'s `CHOOSE_CARDS_VERB` is a TOTAL RECORD over the `dest`
-// union and its `deck.mandatory` cell already reads *"Shuffle"*, so the local HUD
-// needed no byte. `OnlineHud.tsx`'s mandatory branch was a **TERNARY**
-// (`dest === "deckBottom" ? "Put under deck" : "Discard"`), so this prompt rendered
-// **"Discard 0/3"** under a heading promising a shuffle — `tsc` silent, every suite
-// green. The irony was already in the tree: `GameHud.tsx` documents fixing EXACTLY
-// this hole on the local HUD (*"A record keyed on the union goes red at `tsc` when a
-// member is added; a ternary goes quiet"*) and the online client still had the
-// ternary. §8 names the rung that can see it; the rung itself is
-// `OnlineHud.chooseCardsVerb.dom.test.tsx`, because a dom assertion does not belong
-// in an engine suite.
-//
-// 🛑 **THE ONE SITE THE COMPILER CANNOT SEE IS WHAT THIS SUITE EXISTS FOR.**
-// `applyChoice`'s `switch` ends `default: return state;` (*"Synchronous ops never
-// park, so never reach the choice path"*) — and here the deck route is not even an
-// arm, it is a BRANCH INSIDE an arm. Delete it and the op still parks, still
-// dialogs, still validates the answer, and then lands the three picked cards in the
-// DISCARD PILE while the caption, the log row and the printed sentence all say deck.
-// **MEASURED rather than argued** (D540's method): at this head, deleting that
-// branch and running `bunx tsc -b --force` prints NOTHING and exits 0. §4 is the
-// only rung that can see it, and it asserts the uids ON A BOARD — out of the hand,
-// IN the owner's deck, and **NOT** in the owner's discard (D421).
-//
-// ⚠️ **AND THE FORCED ARM IS A SECOND INVISIBLE HALF, REACHED FROM THE OTHER SIDE.**
-// The §8.6 *"do as much as you can"* path (`hand.length <= take`) never touches
-// `applyChoice` at all, so a build that widened only the PARK passes every §4
-// assertion and still sends a three-card hand to the discard. §5 drives it.
-//
-// ⚠️ **NO CARD ID RESOLVES FOR THIS SENTENCE ON THIS CHECKOUT AND THAT WAS
-// MEASURED** — `git grep -nF` over the printed bytes returns SEVEN lines at HEAD
-// (the corpus row, `opponentHandDiscard.test.ts:143`, and five `docs/progress.md`
-// close-outs) and **no catalog row**; `registry.ts` and `catalogManifest.ts` both
-// return zero. So this suite rides file-local DECLARED demonstrators `d542-*`
-// (D425) in their OWN 60-card deck (D270).
-// ⚠️ **AND THE INSTRUMENT IS NAMED, BECAUSE IT MISSED ONE.** That same one-line
-// grep does NOT reach `effects.ts`'s family-sweep paragraph, which carried the
-// claim *"…which is this mechanism with a DIFFERENT DESTINATION and is refused
-// whole"* — the comment WRAPS the sentence across two `//` lines, so the bytes the
-// grep keys on exist nowhere in that file. It was found by READING THE NEIGHBOURS
-// of the anchor being edited (D540's rule) and re-pointed in place.
-
 const SENTENCE =
   "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.";
 
-/** The four family siblings that ARE built at HEAD, byte for byte off
-    `legalAttackCorpus()` (§1 asserts that rather than trusting these copies), with
-    the program each derives to. §1 drives all five against all five. */
 const FAMILY = [
   {
     text: "Your opponent discards 2 cards from their hand.",
@@ -121,7 +53,7 @@ const FAMILY = [
   },
   {
     text: "Discard a card from your hand. If you do, your opponent discards a card from their hand.",
-    ops: undefined, // shape asserted only as NON-null: it is D515's program, not this slice's
+    ops: undefined,
     printings: 1,
   },
 ] as const satisfies readonly {
@@ -130,7 +62,6 @@ const FAMILY = [
   printings: number;
 }[];
 
-/** The program this slice's sentence derives to. TWO ops in printed order. */
 const PROGRAM: readonly EffectOp[] = [
   { op: "opponentDiscardsFromHand", count: 3, to: "deck" },
   { op: "shuffleDeck", whose: "opponent" },
@@ -156,18 +87,8 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** ⚠️ FIVE DISTINCT HAND CARDS, and the distinctness is load-bearing twice: §4 reads
-    the moved uids back individually, and §3 asserts that NONE of them appears in the
-    ACTOR's snapshot — a hand of five copies of one card could not tell a leak of one
-    from a leak of all five. */
 const HAND_IDS = ["fix-item", "fix-tool", "fix-gatedsup", "fix-stadium", "fix-energy"] as const;
 
-/** Its OWN deck (D270): counted by the helper rather than in prose, because 60 is a
-    `createGame` precondition and a miscount is a mulligan storm, not a red rung.
-      • `d542-shuffler` — the demonstrator, three indices;
-      • `d542-wall` — the opponent's body, which nothing here can Knock Out;
-      • the five `HAND_IDS` fillers, which §3-§6 draw into the opponent's hand by id;
-      • `fix-energy` — Colorless Basic: every printed cost in this deck is {C}. */
 const SHUFFLE_DECK = deckOf({
   "d542-shuffler": 4,
   "d542-wall": 4,
@@ -235,9 +156,6 @@ function withHand(state: GameState, seat: Seat, ids: readonly string[]): GameSta
   return next;
 }
 
-/** `attacker` fields `d542-shuffler` with an empty Bench; the other seat fields a
-    body of its own and holds exactly `hand`. The attacker moves FIRST so the
-    opponent's own first turn is behind us and the attack is legal. */
 function ready(hand: readonly string[] = HAND_IDS, attacker: Seat = "p1", seed = SEED): GameState {
   const opponent = other(attacker);
   let state = localSetup(seed, attacker);
@@ -254,8 +172,6 @@ function ready(hand: readonly string[] = HAND_IDS, attacker: Seat = "p1", seed =
 const attack = (state: GameState, index: number, seat: Seat = "p1") =>
   mustApply(state, { type: "attack", seat, index });
 
-/** The parked prompt, narrowed. Throws rather than returning null, so a board that
-    FORCED instead of parking names itself at the call site (D424's live-axis rule). */
 function parkedPrompt(state: GameState) {
   if (state.phase.kind !== "effect:choose")
     throw new Error(`expected the park, got ${state.phase.kind}`);
@@ -272,22 +188,11 @@ function answerWith(state: GameState, seat: Seat, uids: readonly string[]) {
   } satisfies GameAction);
 }
 
-/** ⚠️ **THE ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], SO THE HAND'S OWNER DRAWS EXACTLY ONE CARD
-    BEFORE ANY POST-RESOLUTION ASSERTION RUNS — AND THAT DRAW COMES OFF THE DECK THE
-    PICKED CARDS JUST ENTERED.** So *"the three cards are in the deck"* is not a
-    board-observable statement after the fact: one of them may legitimately be back
-    in hand. Every §4/§5 rung therefore asserts the PARTITION — each picked uid is
-    in `deck ∪ hand`, none is in `discard`, and the DISCARD PILE IS PINNED
-    UNCHANGED, which is precisely the zone the `applyChoice` mutant moves them to.
-    Stated here once rather than re-derived at six call sites (D426's rule about a
-    decision that is not pinned being indistinguishable from an oversight). */
 function zones(state: GameState, seat: Seat) {
   const side = state.players[seat];
   return { hand: side.hand, deck: side.deck, discard: side.discard };
 }
 
-/** The flattened text of the one action row a batch produced that mentions `needle`
-    — the string a player actually reads. */
 function rowText(state: GameState, events: GameEvent[], needle: string): string {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   const row = logFromEvents(events, ctx).find(
@@ -297,19 +202,9 @@ function rowText(state: GameState, events: GameEvent[], needle: string): string 
   return row.segments.map((s) => s.text).join("");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE READING: the anchor claims this row and REFUSES the four siblings, and
-//      the two existing family anchors refuse this row. A five-by-five matrix
-//      driven off the LIVE module (D541 §2's shape), plus the near-misses.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the anchor, driven against the whole printed family", () => {
-  it("🛑 derives to TWO SHIPPED OPS in printed order — and `to` is the only new byte", () => {
+  it("derives to TWO SHIPPED OPS in printed order — and `to` is the only new byte", () => {
     expect(deriveAttackEffect(SENTENCE)).toEqual(PROGRAM);
-    // The destination is a FIELD and not a second op member: strip it and what is
-    // left is byte-for-byte the shipped pre-D542 program for the discard printings.
-    // This is D131's widen-don't-add test written as an assertion rather than as a
-    // sentence, and it is the whole argument for `MATCH_RECORD_VERSION` holding (§9).
     const [head] = deriveAttackEffect(SENTENCE) ?? [];
     if (head === undefined || head.op !== "opponentDiscardsFromHand") throw new Error("no head op");
     const { to, ...withoutTo } = head;
@@ -322,24 +217,15 @@ describe("§1 — the anchor, driven against the whole printed family", () => {
     ]);
   });
 
-  it("🛑 THE FIVE-BY-FIVE MATRIX — every family sentence lands on its OWN reading", () => {
-    // ⚠️ The anchors are module-private, so the matrix is driven through the ONE
-    // public funnel that reads them all (`deriveAttackEffect`) and every cell is a
-    // measurement of which arm claimed the string. A build in which this slice's
-    // anchor over-claimed a sibling, or in which a sibling's anchor swallowed this
-    // row, moves a cell — which is what makes this a matrix rather than five
-    // positive rungs. Arm ORDER is load-bearing and this is what asserts it.
+  it("THE FIVE-BY-FIVE MATRIX — every family sentence lands on its OWN reading", () => {
     for (const sibling of FAMILY) {
       const got = deriveAttackEffect(sibling.text);
       expect(got, sibling.text).not.toBeNull();
       if (sibling.ops !== undefined) expect(got, sibling.text).toEqual(sibling.ops);
-      // …and NONE of the four siblings derives to this slice's program.
       expect(got, sibling.text).not.toEqual(PROGRAM);
       // …nor does any of them carry the new field anywhere in its program.
       expect(JSON.stringify(got), sibling.text).not.toContain('"to":"deck"');
     }
-    // …and the five sentences are five DISTINCT strings, without which the loop
-    // above could be satisfied by one row repeated.
     expect(new Set([SENTENCE, ...FAMILY.map((f) => f.text)]).size).toBe(5);
   });
 
@@ -350,33 +236,18 @@ describe("§1 — the anchor, driven against the whole printed family", () => {
     expect(deriveAttackEffect(SENTENCE)).not.toBeNull();
   });
 
-  it("🛑 `^` — A PREFIX THAT KEEPS THE CAPITAL is refused (D539(1a))", () => {
-    // The caret rung, spelled so it cannot be satisfied by the tail's anchor: the
-    // sentence is glued on WHOLE, capital and all, so the only thing refusing this
-    // string is `^`. `D542-anchor-loses-its-caret` is the declared row.
+  it("`^` — A PREFIX THAT KEEPS THE CAPITAL is refused (D539(1a))", () => {
     expect(deriveAttackEffect(`Flip a coin. ${SENTENCE}`)).toBeNull();
     expect(deriveAttackEffect(`If heads, ${SENTENCE}`)).toBeNull();
   });
 
-  it("🛑 `$` — A TRAILING CLAUSE THAT KEEPS THE PERIOD is refused (D540(1a))", () => {
-    // ⚠️ AND THIS IS A SEPARATE RUNG FROM THE ONE ABOVE FOR A SEPARATE REASON. A
-    // trailing near-miss glued on with `slice(0, -1)` STRIPS the period the anchor's
-    // tail demands, so the string refuses for a reason that has nothing to do with
-    // `$` and a `$`-less pattern refuses it too. The killer KEEPS the period: with
-    // `$` gone the anchor matches the PREFIX and the engine authors a program for a
-    // card whose trailing clause it silently dropped.
+  it("`$` — A TRAILING CLAUSE THAT KEEPS THE PERIOD is refused (D540(1a))", () => {
     expect(deriveAttackEffect(`${SENTENCE} Then, draw a card.`)).toBeNull();
     expect(deriveAttackEffect(`${SENTENCE} Draw a card.`)).toBeNull();
-    // …and the period-stripped spelling too, which refuses for the OTHER reason —
-    // both are kept because they are two claims (D539/D540's two-reasons rule).
     expect(deriveAttackEffect(`${SENTENCE.slice(0, -1)} and draws a card.`)).toBeNull();
   });
 
-  it("🛑 THE `3` IS A LITERAL, NOT A CAPTURE (D121's warrant, run not inherited)", () => {
-    // This sweep varies no number: one printed sentence, one count. A capture here
-    // would be a template over a population of one, which is what D231 refuses.
-    // `D542-anchor-number-becomes-capture` is the declared row, and these are the
-    // strings that kill it — every one of them is unprinted.
+  it("THE `3` IS A LITERAL, NOT A CAPTURE (D121's warrant, run not inherited)", () => {
     for (const n of [1, 2, 4, 10]) {
       const spelled = SENTENCE.split(" chooses 3 cards ").join(` chooses ${n} cards `);
       expect(deriveAttackEffect(spelled), spelled).toBeNull();
@@ -386,11 +257,7 @@ describe("§1 — the anchor, driven against the whole printed family", () => {
     expect(deriveAttackEffect(SENTENCE)).toEqual(PROGRAM);
   });
 
-  it("⚠️ NO POSSESSIVE IS PRINTED, so NO `['’]` CLASS IS OWED (D137 does not reach it)", () => {
-    // The sentence says *their hand* and *their deck* and never *your opponent's* —
-    // so there is no apostrophe SLOT for a re-ingest to curl, and a class over a slot
-    // no byte can occupy is a rule nothing can see. Read off the LIVE corpus row
-    // rather than off this file's constant, so a re-ingest reddens HERE first.
+  it("NO POSSESSIVE IS PRINTED, so NO `['’]` CLASS IS OWED (D137 does not reach it)", () => {
     const row = legalAttackCorpus().find(([, s]) => s === SENTENCE);
     expect(row).toBeDefined();
     expect(row?.[1]).not.toContain("'");
@@ -413,16 +280,10 @@ describe("§1 — the anchor, driven against the whole printed family", () => {
   });
 
   it("neither splitter claims it — the row leaves through the READER summand", () => {
-    // Driven through the splitters themselves rather than inferred, and through both
-    // of the two that serve unresolved sentences (D425).
     expect(splitAttackTrailingClause(SENTENCE)).toBeNull();
     expect(splitAttackGateClause(SENTENCE)).toBeNull();
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — THE CENSUS, driven off the module rather than retyped (D423/D230).
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — the corpus figures, read off the population", () => {
   it("the row is IN the legal attack column at 1 printing, exactly once", () => {
@@ -435,10 +296,7 @@ describe("§2 — the corpus figures, read off the population", () => {
     expect(corpus.findIndex(([, s]) => s === SENTENCE)).toBe(612);
   });
 
-  it("🛑 THE FAMILY IS FIVE ROWS / NINE PRINTINGS, AND ALL FIVE NOW RESOLVE", () => {
-    // The published pattern (D424/D425), re-run WIDE and then narrowed, so the edges
-    // of the net are visible rather than described. Before this slice four of the
-    // five resolved; the family closes here.
+  it("THE FAMILY IS FIVE ROWS / NINE PRINTINGS, AND ALL FIVE NOW RESOLVE", () => {
     const corpus = legalAttackCorpus();
     const mentionsAHand = corpus.filter(([, s]) => /their hand|opponent's hand/i.test(s));
     expect(mentionsAHand.length).toBeGreaterThan(20);
@@ -450,25 +308,17 @@ describe("§2 — the corpus figures, read off the population", () => {
     for (const [, sentence] of family) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(true);
     }
-    // …and the five are exactly this slice's sentence plus the four in `FAMILY`,
-    // which is what makes the closure a partition rather than a count.
     expect(family.map(([, s]) => s).sort()).toEqual(
       [SENTENCE, ...FAMILY.map((f) => f.text)].sort(),
     );
-    // The printing counts too, per row, off the ROW and not off this file.
     for (const sibling of FAMILY) {
       expect(family.find(([, s]) => s === sibling.text)?.[0], sibling.text).toBe(sibling.printings);
     }
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §3 — THE PARK: the OWNER decides, the pick is MANDATORY and EXACT, the
-//      destination is the DECK, and the ACTOR sees none of it.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§3 — the park, its decider and its redaction", () => {
-  it("🛑 parks under the CONTROLLER with the OWNER as answerer", () => {
+  it("parks under the CONTROLLER with the OWNER as answerer", () => {
     const { state: parked, events } = attack(deepFreeze(ready()), SHUFFLE);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(parked.phase.seat).toBe("p1");
@@ -476,7 +326,7 @@ describe("§3 — the park, its decider and its redaction", () => {
     expect(find(events, "EFFECT_PENDING")?.seat).toBe("p2");
   });
 
-  it("🛑 MANDATORY AND EXACT AT THREE, INTO THE DECK", () => {
+  it("MANDATORY AND EXACT AT THREE, INTO THE DECK", () => {
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const prompt = parkedPrompt(attack(state, SHUFFLE).state);
@@ -486,16 +336,10 @@ describe("§3 — the park, its decider and its redaction", () => {
     // The WHOLE hand is the offer — no interchangeable collapse, because the
     // answerer owns this hand and is looking at it.
     expect(prompt.candidates).toEqual(oppHand);
-    // ⚠️ WITHOUT THIS §4 MEANS NOTHING (D416): a board offering exactly `min`
-    // candidates auto-resolves and never parks.
     expect(prompt.candidates.length).toBeGreaterThan(prompt.min);
   });
 
-  it("🛑 THE CAPTION IS IN THE ANSWERER'S VOICE AND NAMES THE DECK", () => {
-    // D426's rule: the player reading this dialog IS the opponent the card names, so
-    // a verbatim caption would tell them to make someone else act. `D542-note-says-
-    // discard` is the declared row — the answerer being told to DISCARD while the
-    // engine shuffles is a lie no board and no type can catch.
+  it("THE CAPTION IS IN THE ANSWERER'S VOICE AND NAMES THE DECK", () => {
     const note = parkedPrompt(attack(ready(), SHUFFLE).state).note;
     expect(note).toBe("Shuffle 3 cards from your hand into your deck.");
     expect(note).not.toContain("Discard");
@@ -507,7 +351,7 @@ describe("§3 — the park, its decider and its redaction", () => {
     );
   });
 
-  it("🛑 `redactedPromptOf` sends the uids to the OWNER ALONE", () => {
+  it("`redactedPromptOf` sends the uids to the OWNER ALONE", () => {
     // Both halves, from both chairs. A build that dropped `decider` would hand the
     // CONTROLLER a face-up list of the opponent's hidden hand AND the choice.
     const state = ready();
@@ -556,13 +400,8 @@ describe("§3 — the park, its decider and its redaction", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 🛑 §4 — THE ANSWER, ON A BOARD AND NOT ON A SHAPE (D421). This is the ONLY
-//      section that can see `D542-apply-choice-drops-deck-branch`.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("🛑 §4 — the picked cards land in the DECK and not in the discard", () => {
-  it("🛑 OUT of the hand, IN the owner's DECK, NOT in the owner's discard", () => {
+describe("§4 — the picked cards land in the DECK and not in the discard", () => {
+  it("OUT of the hand, IN the owner's DECK, NOT in the owner's discard", () => {
     const start = ready();
     const { state: parked } = attack(start, SHUFFLE);
     const picked = parkedPrompt(parked).candidates.slice(0, 3);
@@ -571,13 +410,8 @@ describe("🛑 §4 — the picked cards land in the DECK and not in the discard"
     const after = zones(state, "p2");
     for (const uid of picked) {
       expect([...after.deck, ...after.hand], uid).toContain(uid);
-      // 🛑 THE LINE THE SLICE EXISTS FOR. A build that dropped the `to === "deck"`
-      // branch in `applyChoice` typechecks GREEN, parks, dialogs, validates the
-      // answer and then puts these three uids HERE.
       expect(after.discard, uid).not.toContain(uid);
     }
-    // …and the discard pile is not merely missing the picks, it is UNCHANGED — the
-    // exact assertion the mutant moves.
     expect(after.discard).toEqual(before.discard);
     // THE ZONE ARITHMETIC, which is what turns the union above into a statement
     // about the DECK: three cards left the hand for the deck and the turn-end draw
@@ -593,7 +427,7 @@ describe("🛑 §4 — the picked cards land in the DECK and not in the discard"
     );
   });
 
-  it("🛑 THE EVENT NAMES THE DECK, AND IT IS FILED UNDER THE OWNER", () => {
+  it("THE EVENT NAMES THE DECK, AND IT IS FILED UNDER THE OWNER", () => {
     const { state: parked } = attack(ready(), SHUFFLE);
     const picked = parkedPrompt(parked).candidates.slice(0, 3);
     const { events } = answerWith(parked, "p2", picked);
@@ -601,8 +435,6 @@ describe("🛑 §4 — the picked cards land in the DECK and not in the discard"
     expect(row?.seat).toBe("p2");
     expect(row?.to).toBe("deck");
     expect(row?.uids).toEqual([...picked]);
-    // …and NO `actor` field, which is the whole of D426's voice argument and the
-    // reason this event could be widened on DESTINATION rather than split on VOICE.
     expect(row === undefined ? true : "actor" in row).toBe(false);
   });
 
@@ -621,29 +453,8 @@ describe("🛑 §4 — the picked cards land in the DECK and not in the discard"
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §5 — §8.6 SHORT BOARDS. The FORCED arm never reaches `applyChoice`, so a build
-//      that widened only the PARK passes §4 and fails here.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
   it("an EMPTY hand moves no card and asks nothing — and the TAIL still runs", () => {
-    // 🛑 **THE EMPTY-HAND BOARD IS WHERE THE COMPOSITION DIVERGES FROM THE PRINTED
-    // SENTENCE, AND IT IS DRIVEN RATHER THAN LEFT SILENT.** The hand op is a silent
-    // no-op (§8.6, and `randomFromOpponentHand`'s own empty-hand ending): no event,
-    // no park, no card moved. But `shuffleDeck` is a SEPARATE OP in the program, so
-    // the opponent's deck IS shuffled even though nothing went into it — where the
-    // RANDOM twin, which owns its shuffle inside one op, spends no RNG at all on
-    // this board.
-    // ⚠️ **D342's RECORDED DECISION IS WHAT GOVERNS, AND IT WAS READ BEFORE THIS
-    // WAS ACCEPTED** (`discardEnergy.to`'s doc block, verbatim): a destination that
-    // also shuffles *"would buy the identical board and cost the day a card prints a
-    // deck return with no shuffle"*, and *"would additionally make the op advance
-    // `rngState` from inside a park"*. This op PARKS, so the second half is load-
-    // bearing here in a way it is not for the random twin. **THE CONDITION THAT
-    // WOULD REVERSE IT** (D422): a printing whose shuffle is conditional on cards
-    // actually moving — at that point the tail needs a gate and this rung is the
-    // one that changes.
     const start = ready([]);
     const { state, events } = attack(start, SHUFFLE);
     expect(state.phase.kind).toBe("turn:action");
@@ -657,8 +468,7 @@ describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
     expect(state.players.p2.discard).toEqual(start.players.p2.discard);
   });
 
-  it("🛑 A HAND OF EXACTLY 3 IS FORCED — AND THE CARDS LAND IN THE DECK", () => {
-    // `D542-forced-arm-still-discards` lives here and nowhere else.
+  it("A HAND OF EXACTLY 3 IS FORCED — AND THE CARDS LAND IN THE DECK", () => {
     const start = ready(HAND_IDS.slice(0, 3));
     const hand = [...start.players.p2.hand];
     const before = zones(start, "p2");
@@ -676,11 +486,7 @@ describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
     expect(find(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
   });
 
-  it("🛑 A HAND OF FEWER THAN 3 DOES WHAT IT CAN — into the DECK", () => {
-    // A SHORT hand and an EXACT hand are two decisions sharing one line: at 3 the
-    // printed count is met and there is no choice; at 2 it CANNOT be met and the
-    // card does what it can. Both are driven, because a decision that is not pinned
-    // is indistinguishable from an oversight.
+  it("A HAND OF FEWER THAN 3 DOES WHAT IT CAN — into the DECK", () => {
     const start = ready(HAND_IDS.slice(0, 2));
     const hand = [...start.players.p2.hand];
     const { state, events } = attack(start, SHUFFLE);
@@ -711,17 +517,7 @@ describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — the printed shuffle, and whose deck it reaches", () => {
-  it("🛑 the SHUFFLE lands on the OPPONENT's deck and rngState moves", () => {
-    // `D542-shuffle-tail-dropped`: without the tail the three picked cards stay where
-    // `deckChosenFromHand` appended them — at the BOTTOM of the opponent's deck, in
-    // pick order. (⚠️ This comment first said TOP and was the MIRROR of the code;
-    // withdrawn here and at the row's own `what` and the helper's doc block, D539.
-    // Index 0 is the TOP: every draw and mill cuts `deck.slice(0, n)`.) The defect is
-    // real either way and does not depend on the end: `rngState` never moves, three
-    // deck positions become KNOWN, and it is invisible to every membership assertion
-    // in §4 — which is why the rung below reads the TAIL, the measured landing site.
-    // `D542-shuffle-whose-dropped`: with `whose` gone the ATTACKER's deck is
-    // shuffled instead — D534's recorded loss direction, one op over.
+  it("the SHUFFLE lands on the OPPONENT's deck and rngState moves", () => {
     const { state: parked } = attack(ready(), SHUFFLE);
     const picked = parkedPrompt(parked).candidates.slice(0, 3);
     const attackerDeckBefore = [...parked.players.p1.deck];
@@ -756,24 +552,14 @@ describe("§6 — the printed shuffle, and whose deck it reaches", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — THE LOG ROW: a COUNT, naming the DECK, and never the word discard.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§7 — the log row, both spellings", () => {
-  it("🛑 the DECK arm speaks in COUNTS, names the deck, and does NOT say discard", () => {
-    // `D542-log-row-says-discard`. The row must not say *discarded*, because a
-    // player reading it would look for three cards in a pile that never received
-    // them — and it must not say *shuffled* either, because the real SHUFFLE row
-    // lands right after and one word secretly meaning two events is the thing
-    // `events.ts` states the house rule against.
+  it("the DECK arm speaks in COUNTS, names the deck, and does NOT say discard", () => {
     const { state: parked } = attack(ready(), SHUFFLE);
     const picked = parkedPrompt(parked).candidates.slice(0, 3);
     const { state, events } = answerWith(parked, "p2", picked);
     const text = rowText(state, events, "from their hand");
     expect(text).toContain("put 3 cards from their hand into their deck");
     expect(text).not.toContain("discard");
-    // A COUNT and not an identity list: no picked uid appears in the rendered row.
     for (const uid of picked) expect(text).not.toContain(uid);
   });
 
@@ -797,29 +583,14 @@ describe("§7 — the log row, both spellings", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — THE CLIENT. The dom rung lives in `OnlineHud.chooseCardsVerb.dom.test.tsx`
-//      (a dom assertion does not belong in an engine suite); what is asserted HERE
-//      is the ENGINE-SIDE fact that rung keys on.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§8 — the prompt shape the HUDs' Confirm-verb tables read", () => {
-  it('🛑 THE FIRST MANDATORY `dest: "deck"` PARK IN THIS ENGINE', () => {
-    // This is the fact that turned two guessed HUD cells into live ones and exposed
-    // the ONLINE ternary. It is asserted here so a future build that made this park
-    // declinable (`min: 0`) reddens beside the dom rung rather than silently
-    // retiring it — a rung whose premise moved is a rung that has stopped measuring.
+  it('THE FIRST MANDATORY `dest: "deck"` PARK IN THIS ENGINE', () => {
     const prompt = parkedPrompt(attack(ready(), SHUFFLE).state);
     expect(prompt.dest).toBe("deck");
     expect(prompt.min).toBeGreaterThan(0);
     expect(prompt.min).toBe(prompt.max);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §8b — THE DESCRIBER. `describeBranch` is USER-VISIBLE and the reader is not, so a
-//      widening that stops at the reader is D515's own recorded defect one field over.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8b — the gate caption names the DECK, driven from a hand-built program", () => {
   /** The note on the §9.2 payment park for `[payFromHand, recordGate → ops]`. */
@@ -840,17 +611,10 @@ describe("§8b — the gate caption names the DECK, driven from a hand-built pro
     return result.prompt.note;
   };
 
-  it("🛑 THE DECK BRANCH SAYS DECK — and it is unreachable from print, so it is DRIVEN", () => {
-    // ⚠️ **NO PRINTING COMPOSES A §9.2 GATE WITH THIS SENTENCE**, which is why the branch
-    // exists at all: `drawCards`' stated reason one screen up in `interpreter.ts`, and
-    // D455's correction to three false *"recorded as an equivalent mutant"* claims — a
-    // line nothing executes is not covered by saying so. `D542-describe-branch-phrase-
-    // unwidened` is the declared row and this is the only rung that can kill it.
+  it("THE DECK BRANCH SAYS DECK — and it is unreachable from print, so it is DRIVEN", () => {
     expect(gatedNote([{ op: "opponentDiscardsFromHand", count: 3, to: "deck" }])).toBe(
       "Discard a card from your hand. If you do, your opponent shuffles 3 cards from their hand into their deck.",
     );
-    // …and the SINGULAR arm of the same branch, written for `drawCards`' reason and
-    // driven for D455's.
     expect(gatedNote([{ op: "opponentDiscardsFromHand", count: 1, to: "deck" }])).toBe(
       "Discard a card from your hand. If you do, your opponent shuffles a card from their hand into their deck.",
     );
@@ -868,14 +632,8 @@ describe("§8b — the gate caption names the DECK, driven from a hand-built pro
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 🛑 §9 — `MATCH_RECORD_VERSION` STAYS 30, DRIVEN BOTH D450 DIRECTIONS OVER THE
-//      SERIALIZED BYTES. This op PARKS, so a record really does hold the new
-//      inhabitant and `"cont" in phase` is TRUE.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
-  it('🛑 `"cont" in phase` IS TRUE and the new field IS in the bytes', () => {
+describe("§9 — the persisted op, over the serialized bytes", () => {
+  it('`"cont" in phase` IS TRUE and the new field IS in the bytes', () => {
     const { state } = attack(ready(), SHUFFLE);
     const phase = state.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -885,7 +643,7 @@ describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
     );
   });
 
-  it("🛑 DIRECTION 1 — the parked program survives a JSON round trip and resolves", () => {
+  it("DIRECTION 1 — the parked program survives a JSON round trip and resolves", () => {
     const parked = attack(ready(), SHUFFLE).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const picked = parkedPrompt(revived).candidates.slice(0, 3);
@@ -895,12 +653,7 @@ describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
     expect(types(events)).toContain("SHUFFLE");
   });
 
-  it("🛑 DIRECTION 2 — STRIP THE KEY AND A v30 RECORD MEANS WHAT IT ALWAYS MEANT", () => {
-    // D131's widen-don't-add test, driven on the SERIALIZED bytes rather than argued
-    // from the type's name (D427): the optional key is deleted from the record a v30
-    // deploy could not have written, and what is left is a shipped pre-D542 program
-    // that discards — same park, same answerer, same `chooseCards` inhabitant, and
-    // the cards land in the PILE. The alphabet grew; nothing already in it changed.
+  it("DIRECTION 2 — STRIP THE KEY AND A v30 RECORD MEANS WHAT IT ALWAYS MEANT", () => {
     const parked = attack(ready(), SHUFFLE).state;
     const bytes = JSON.stringify(parked);
     expect(bytes).toContain('"count":3,"to":"deck"');

@@ -17,20 +17,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D561 — THE TWO STADIUMS OF THE TRAINER BUNDLE ──
-//
-//   Academy at Night  sv06.5-054  Stadium  once per player's turn: a hand card on top of the deck
-//   Perilous Jungle   sv05-156    Stadium  Checkup: 2 more counters on each Poisoned non-{D} Pokémon
-//
-// Academy at Night is a Stadium ability whose whole program is `payFromHand { count: 1, to:
-// "deckTop" }` (V1's new destination) and whose activation now asks `handCostUnmet` (R-AN).
-// Perilous Jungle is `StadiumEffects.poisonExtraCounters` (V9), read once in flow.ts's §13.1
-// loop and SUMMED into its one `COUNTERS_PLACED { source: "poison" }` row (R-PJ). Both driven
-// BOTH WAYS on the real ids, on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck
-// (D270). Texts, subtypes and legality off tcgdex (the audit's card JSON), 2026-09-27. The
-// seven Items / Supporters are `trainersD561.test.ts`. docs/decisions.md D561.
 
 const ACADEMY = "sv06.5-054";
 const JUNGLE = "sv05-156";
@@ -72,7 +60,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [ACADEMY]: 2,
   [JUNGLE]: 2,
@@ -87,11 +74,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -263,26 +245,26 @@ describe("D561 stadiums §1 — the prints, and the registry rows that map them"
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D561 stadiums §2 — Perilous Jungle: +20 on each Poisoned non-{D} Pokémon, summed into ONE row (R-PJ)", () => {
-  it("🛑 an opposing Poisoned Active takes 10 + 20 on ONE `COUNTERS_PLACED { poison }` row", () => {
+  it("an opposing Poisoned Active takes 10 + 20 on ONE `COUNTERS_PLACED { poison }` row", () => {
     const { state, events } = checkup(poison(stadium(table(), JUNGLE), "p2"));
     expect(state.players.p2.active?.damage).toBe(30);
     expect(placed(events)).toEqual([["p2", 30, "poison"]]);
   });
 
-  it("🛑 \"both yours and your opponent's\" — the Stadium's OWNER's Poisoned Active takes it too", () => {
+  it("\"both yours and your opponent's\" — the Stadium's OWNER's Poisoned Active takes it too", () => {
     const { state, events } = checkup(poison(poison(stadium(table(), JUNGLE, "p2"), "p1"), "p2"));
     expect(state.players.p1.active?.damage).toBe(30);
     expect(state.players.p2.active?.damage).toBe(30);
     expect(placed(events).map(([, amount]) => amount)).toEqual([30, 30]);
   });
 
-  it("🛑 a {D} body is exempt — the condition's own 10 and nothing more", () => {
+  it("a {D} body is exempt — the condition's own 10 and nothing more", () => {
     const { state, events } = checkup(poison(stadium(table(FILLER, DARK), JUNGLE), "p2"));
     expect(state.players.p2.active?.damage).toBe(10);
     expect(placed(events)).toEqual([["p2", 10, "poison"]]);
   });
 
-  it("🛑 a DUAL-type body carrying {D} is exempt too — the top card's `types` ARRAY is read", () => {
+  it("a DUAL-type body carrying {D} is exempt too — the top card's `types` ARRAY is read", () => {
     const { state } = checkup(poison(stadium(table(FILLER, DUAL), JUNGLE), "p2"));
     expect(state.players.p2.active?.damage).toBe(10);
   });
@@ -301,7 +283,7 @@ describe("D561 stadiums §2 — Perilous Jungle: +20 on each Poisoned non-{D} Po
     ]);
   });
 
-  it("🛑 R-PJ with Pecharunt — the SUMMED poison row (30) lands FIRST, then Toxic Subjugation's 50 (D556 R7's order)", () => {
+  it("R-PJ with Pecharunt — the SUMMED poison row (30) lands FIRST, then Toxic Subjugation's 50 (D556 R7's order)", () => {
     const { state, events } = checkup(poison(stadium(table(PECHARUNT), JUNGLE), "p2"));
     expect(state.players.p2.active?.damage).toBe(80);
     expect(placed(events)).toEqual([
@@ -370,7 +352,7 @@ describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck
     expect(state.players.p1.hand).toEqual([]);
   });
 
-  it("🛑 R-AN — an EMPTY hand is REFUSED (the printed cost is unpayable) and the turn's one use is NOT spent", () => {
+  it("R-AN — an EMPTY hand is REFUSED (the printed cost is unpayable) and the turn's one use is NOT spent", () => {
     const board = setHand(stadium(table(), ACADEMY), "p1", []);
     expectErr(board, { type: "useStadiumAbility", seat: "p1" }, "PLAY_CONDITION_NOT_MET");
     const refused = applyAction(board, { type: "useStadiumAbility", seat: "p1" });
@@ -380,10 +362,6 @@ describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck
         "Academy at Night can only be used if you put a card from your hand on top of your deck (§7.3)",
       );
     }
-    // 🆕🆕🆕 D561 review: the first draft closed on ~~`expect(board.allowances.stadiumAbilityUsed).toBe(false)`~~ —
-    // a read of the UNMODIFIED input board that could not go red (WITHDRAWN as decorative). "Not spent" is carried by
-    // the refusal above (a refused action returns no board to spend it on); what CAN go red is the same turn, the
-    // same allowance bag, with a card now in hand: the use is still there to take, and taking it spends it.
     const stocked = setHand(board, "p1", [ITEM_A]);
     expect(stocked.allowances).toEqual(board.allowances);
     const { state } = activate(stocked);
@@ -391,11 +369,7 @@ describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck
     expect(state.players.p1.deck[0]).toBe(stocked.players.p1.hand[0]);
   });
 
-  // 🆕🆕🆕 D561 review — R-AN made the engine gate a FIFTH term, and the wire fold (`redact.ts`'s
-  // `redactedStadiumAbilityOf`, which claims to mirror `useStadiumAbility` TERM FOR TERM) did not
-  // follow it in the first draft: an empty hand lit a row the engine refused — D46/D47's
-  // afford-then-reject. Driven against `applyAction`, never against a restatement of its terms.
-  it("🛑 R-AN on the WIRE — the actor's row greys on an EMPTY hand with the printed clause, and lights once a card is in hand", () => {
+  it("R-AN on the WIRE — the actor's row greys on an EMPTY hand with the printed clause, and lights once a card is in hand", () => {
     const offer = (state: GameState) => {
       const phase = redactGame(state, "p1").phase;
       if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);

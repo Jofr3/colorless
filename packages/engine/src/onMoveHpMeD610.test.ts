@@ -19,19 +19,8 @@ import {
   setBenchDamage,
   specialEnergy,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D610 — WP37a: THE FIRST PART OF THE `me` ON-MOVE / AS-OFTEN / HP PASSIVES ──
-//
-// 8 printed texts / 16 `me` printings on seven new registry objects. Every id and text measured on the
-// LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; before this slice
-// the ids appeared in the tree only as Mega Venusaur ex's rule-box fixture (D582) and Tyrantrum's
-// Wreak Havoc fixture (D595), neither of which reads a program. One new piece:
-// `hpBonus.requiresEnergyCount` (plus `requiresEnergyType` widened to "special"). Left and named (§9):
-// Fall Back to Reload ×2 [🆕🆕🆕 D636 (D539): BUILT at D636], Last-Ditch Catch ×3, [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)] Luminous Wing ×4 (WP37b) and five passives.
-// Two new readings, both ⚠️ UNRULED: R-HL1 (§6), Holes resolves before Palafin's Zero to Hero, with no
-// Knock Out check between them [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]; R-MR1 (§4), Metal Road's printed moment is Buzzing Boost's use-time gate,
-// so a use later the same turn sweeps {M} attached to the Bench after the move.
 
 const SOLAR_TRANSFER =
   "As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon.";
@@ -57,7 +46,7 @@ const DUGTRIO = ["me02.5-101", "me02.5-239"] as const;
 const EXEGGUTOR = ["mep-094", "30th-002", "30th-129"] as const;
 const TYRANTRUM = ["mep-066", "me03-045"] as const;
 
-const PALAFIN = "sv06-060"; // "Zero to Hero" (D565) — the R-HL1 case in §6
+const PALAFIN = "sv06-060";
 const PALAFIN_EX = "sv06-061";
 const SWITCH = "sv01-194"; // Item — "Switch your Active Pokémon with 1 of your Benched Pokémon."
 const BOSS = "sv02-172"; // Supporter — the gust
@@ -169,18 +158,11 @@ const DECK = deckOf({
   [M]: 6,
   [SP]: 2,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 function refusal(result: ReturnType<typeof applyAction>): { code: string; message: string } {
   if (result.ok) throw new Error("expected a refusal");
   return { code: result.error.code, message: result.error.message };
 }
 
-/** Both hands back into the decks and every Prize swapped for deck filler, so each named card is
-    findable by `lay` (D602's `p1Turn`). */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {
@@ -519,7 +501,7 @@ describe("D610 §4 — Metal Road: after moving up from the Bench, any {M} Energ
     expect(refusal(use(other, "Metal Road", benchAt(at))).code).toBe("ABILITY_ACTIVE_ONLY");
   });
 
-  it("🛑 R-MR1 (UNRULED): the moment is read as a use-time gate — {M} attached to the Bench AFTER the move is swept up too", () => {
+  it("R-MR1 (UNRULED): the moment is read as a use-time gate — {M} attached to the Bench AFTER the move is swept up too", () => {
     // The print allows the use only when Cobalion moves up (2 {M} on the Bench then). The gate is
     // re-checked at use time, so a later attach from hand onto a Benched Pokémon rides the sweep:
     // the reading AFFORDS here (it does not only refuse, as Buzzing Boost's doc once claimed).
@@ -630,12 +612,7 @@ describe("D610 §6 — Holes: 2 damage counters on the opponent's Active that mo
     expect(lethal.phase.kind === "ko:takePrizes" && lethal.phase.seat).toBe("p1");
   });
 
-  it("🛑 R-HL1 (UNRULED): Holes resolves BEFORE Palafin's Zero to Hero, with no Knock Out check between them (🆕🆕🆕 D625: this inverts D356's turn-player-first order; the reversal is D356's)", () => {
-    // [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
-    // p2's Palafin (100 HP) has 80 damage and retreats (one Energy pays the cost). Holes makes it
-    // 100 — lethal on Palafin — and then Zero to Hero swaps Palafin ex (340 HP) in, the damage riding
-    // along: no Knock Out and no Prize. The control without a Palafin ex in the deck (R-ZH2: the
-    // search fails) shows the same counters Knock Palafin Out.
+  it("R-HL1 (UNRULED): Holes resolves BEFORE Palafin's Zero to Hero, with no Knock Out check between them ( D625: this inverts D356's turn-player-first order; the reversal is D356's)", () => {
     const board = (withEx: boolean): GameState => {
       let state = lay(lay(turnOf("p2"), "p1", BASIC, [DUGTRIO[0]]), "p2", PALAFIN, [BASIC]);
       state = hurt(attachFromDeck(state, "p2", R, 1), "p2", 80);
@@ -716,13 +693,11 @@ describe("D610 §8 — Tyrannically Gutsy: any Special Energy attached, +150 HP"
 });
 
 describe("D610 §9 — what WP37 leaves, and the version", () => {
-  it('the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — "Last-Ditch Catch" is keyed since D628; Clawitzer stays dropped) (🆕🆕🆕 D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631) (🆕🆕🆕 D636 (D539): WITHDRAWN for Clawitzer — keyed since D636)', () => {
-    // 🆕🆕🆕 D636 (D539) — Clawitzer ×2 is keyed at D636 (L1 + Clawitzer, `nextTurnLocksD636.test.ts`).
+  it('the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) ( D628 (D539): WITHDRAWN for Meowth ex — "Last-Ditch Catch" is keyed since D628; Clawitzer stays dropped) ( D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631) ( D636 (D539): WITHDRAWN for Clawitzer — keyed since D636)', () => {
     for (const id of [
       ...["me01-038", "me01-141"], // Clawitzer "Fall Back to Reload"
     ])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["abilities"]);
-    // 🆕🆕🆕 D631 (D539) — the WP37 rest is keyed at D631 (P1, `passiveRestMeD631.test.ts`).
     for (const id of [
       "me02.5-148", // Kingambit "Supreme Overlord"
       "me04-057", // Garbodor "Gloomy Garbage"
@@ -731,11 +706,8 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
       "30th-100", // Yveltal "Life-Locked"
     ])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
-    // 🆕🆕🆕 D614 (D539) — Mega Clefable ex ×4 "Luminous Wing" (WP37b) left this list: keyed at D614
-    // (`abilityShieldMeD614.test.ts`).
     for (const id of ["mep-072", "me03-031", "me03-103", "me03-119"])
       expect(programFor(id)?.passive, id).toEqual({ preventAbilityEffects: true });
-    // 🆕🆕🆕 D628 — Meowth ex ×3 carry "Last-Ditch Catch" (onBenchMoveMeD628.test.ts §2).
     for (const id of ["me03-062", "me03-107", "me03-121"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack", "triggered"]);
   });

@@ -15,28 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: the hand cost that is NOT a discard — the BOTTOM OF THE DECK.
-//
-// Two cards reach that destination and they are the same sentence at two
-// widths:
-//   • DENDRA (sv02-179, Supporter) — "Put A CARD from your hand on the bottom of
-//     your deck. If you do, draw cards until you have 5 cards in your hand. (If
-//     you have no other cards in your hand, you can't use this card.)" One
-//     CHOSEN card, so it is `payFromHand` with `to: "deckBottom"`: the same
-//     mandatory-exact pick, the same "if you do" conditional benefit, and the
-//     same printed play gate the discard family states as "only if".
-//   • SKWOVET (sv01-151) — "Nest Stash": "Once during your turn, you may shuffle
-//     your hand and put it on the bottom of your deck. If you put any cards on
-//     the bottom of your deck in this way, draw a card." The WHOLE hand, which
-//     is `handRefresh` with the two riders Iono already built — no new op, and
-//     the first `handRefresh` reached through an Ability rather than a Trainer.
-//
-// What the destination changes, and what it does not: nothing about the pick
-// (mandatory, exact, interchangeable copies collapsed), everything about what is
-// KNOWABLE afterwards. A discarded card is public; a card under the deck went
-// from one hidden zone to another, which is why HAND_COST_PAID carries `to` and
-// the log prints a different verb for each.
-
 const SEED = 20260721;
 
 const DENDRA = "sv02-179";
@@ -49,9 +27,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Every uid the seat holds anywhere, sorted — the card-conservation census. A
-    payment MOVES a card hand → deck; it must never create or destroy one, and
-    this destination is the one where a duplicate would hide for a whole game. */
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
   const inPlay = [side.active, ...side.bench].flatMap((p) =>
@@ -67,10 +42,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** Rebuild p1's HAND outright: every dealt card back into the deck, then exactly
-    `ids` dealt off it. Both cards turn on hand SIZE (the draw counts it) and hand
-    CONTENTS (the gate counts candidates), so a suite that kept whatever setup
-    dealt would ask a different question per seed. */
 function withHand(state: GameState, ids: readonly string[]): GameState {
   const side = state.players.p1;
   let next: GameState = {
@@ -112,10 +83,6 @@ function withDeckSize(state: GameState, n: number): GameState {
 
 describe("the registry rows", () => {
   it("resolves a program for every authored id, reprints included", () => {
-    // The slice's headline is "Dendra ×3, Skwovet ×2" and only two of those ids
-    // are ever exercised by a test — the reprints are pure data, so this is the
-    // only thing standing between a dropped row and a card that silently cannot
-    // be played (`TRAINER_NOT_SIMULATED`) at exactly one rarity.
     for (const id of ["sv02-179", "sv02-250", "sv02-266"]) {
       expect(programFor(id)?.trainer?.[0]).toEqual({
         op: "payFromHand",
@@ -251,8 +218,6 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
   it("draws NOTHING when paying still leaves 5 or more — drawUntilHandSize never trims", () => {
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
-    // 7 cards: Dendra + 6 → 6 in hand after the play, 5 after paying. Exactly at
-    // the floor, so the draw is zero and emits no misleading "drew 0 cards" row.
     state = withHand(state, [
       DENDRA,
       "fix-item",
@@ -273,10 +238,6 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
   });
 
   it("can draw the paid card straight back when the deck is shallower than the draw", () => {
-    // The bottom of a 2-card deck is 3 cards from the top once the payment lands.
-    // Paper says the same thing, and it is the one line where "the bottom" is not
-    // out of reach — worth pinning, because it is exactly what a short-draw guard
-    // written to "never return the paid card" would break.
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, [DENDRA, "fix-grass-energy", "fix-water-energy"]);
@@ -304,10 +265,6 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
   });
 
   it("REFUSES the play on a hand of nothing else — the printed parenthetical, verbatim", () => {
-    // "(If you have no other cards in your hand, you can't use this card.)" is the
-    // discard family's "only if" stated as its contrapositive, and the same gate
-    // answers it — including the word OTHER, which is why a lone Dendra cannot
-    // pay for itself.
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, [DENDRA]);
@@ -328,9 +285,6 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
   });
 
   it("is a SUPPORTER — one per turn, and the second copy is refused", () => {
-    // The slice's only new Trainer, and its type is what decides both the §7.2
-    // allowance and the §4 turn-1 ban. Nothing else in the suite reads it, so a
-    // fixture typo ("Item") would make Dendra a card you could play four of.
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, [DENDRA, DENDRA, "fix-item", "fix-item"]);
@@ -371,11 +325,6 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
 
 describe("the deckBottom apply's wire guards", () => {
   it("never conjures a card into the deck from outside the hand", () => {
-    // Driven through applyChoice directly, since validateChoice makes it
-    // unreachable through the action API — which is exactly why the guard needs
-    // its own test at this destination: a uid taken from the DECK would be
-    // appended to the deck a second time, i.e. duplicated into a hidden zone
-    // where nothing would ever surface the extra copy.
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, ["fix-item", "fix-grass-energy"]);
@@ -415,10 +364,6 @@ describe("the deckBottom apply's wire guards", () => {
   });
 
   it("ignores a choice of the wrong KIND rather than paying something", () => {
-    // The op parks on `chooseCards`, so every other choice shape is unreachable
-    // through the action API — but this guard is the last thing between a
-    // malformed wire message and an apply reading `uids` off an object that has
-    // none.
     let state = board(SEED);
     state = withBoard(state, "fix-basic-1", []);
     state = withHand(state, ["fix-item", "fix-grass-energy"]);
@@ -493,8 +438,6 @@ describe("Skwovet 'Nest Stash' — the same destination, the WHOLE hand", () => 
     const { state: done, events } = mustApply(state, NEST_STASH);
     expect(types(events)).not.toContain("CARDS_DRAWN");
     expect(done.players.p1.hand).toHaveLength(0);
-    // The allowance is spent all the same — a hand refresh is always usable
-    // (D39), so the empty-hand line is a live, self-inflicted no-op.
     expectErr(done, NEST_STASH, "ABILITY_ALREADY_USED");
   });
 

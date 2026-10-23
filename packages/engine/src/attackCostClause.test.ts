@@ -37,53 +37,12 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.429.0 → 0.430.0 — D545, THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM:
-//
-//   :316  "If this Pokémon has any damage counters on it, this attack can be used for {F}."
-//   :324  "If this Pokémon is affected by a Special Condition, ignore all Energy in this
-//          attack's cost."
-//
-// `censusAttackCorpus.ts` FILE LINES 316 and 324, leading count column 1 each: **2 sentences
-// / 2 legal printings** (census classes SUBST-20 and SUBST-19 at `SUBMAX=12`). Each is the
-// WHOLE printed effect text of its attack, so each is a clause-only row of
-// `ATTACK_GATE_CLAUSES` (D395's Miltank path, `body: ""`) — rows six and seven — mapped to
-// two NEW `AttackTimingGate` members that never block: `alternateCostIf { condition, cost }`
-// and `costWaivedIf { condition }`. They are read by ONE new function, `attackCostAt`
-// (attack.ts), at the THREE payability sites (the §8.2 check, `redactedAttacksOf`, GameHud).
-// (🆕🆕🆕 D563 (D539): `attackCostAt` now reads a SECOND seam after this one —
-// `passivesOf(...).attackCostClauses`, the same two shapes printed by an ABILITY (Noivern,
-// Kyurem), §9-suppressible — consulted only when this attack-level gate did not fire. Every
-// board in this file carries no such Ability, so each answer here is unchanged;
-// `abilityCostEvolveD563.test.ts` drives the second seam.)
-//
-// 🛑 THE TRAP: `BlockingAttackGate` is an `Exclude` over the union, so both new members
-// landed in it BY DEFAULT — and `attackTimingBlocked` reads every non-`onlyIf` member as a
-// `barredIf`. Without the exclusion the attack compiles, derives, and is REFUSED with
-// `ATTACK_PREVENTED` exactly when its condition holds. §4 is that board.
-//
-// ⚠️ NO CARD ID RESOLVES FOR EITHER SENTENCE ON THIS CHECKOUT (D425): no `registry.ts`,
-// `catalogManifest.ts` or `testFixtures.ts` row prints either string (the one fixture that
-// printed `:316` was re-homed onto `:78` by this slice). So every board rides file-local
-// DECLARED `d545-*` demonstrators in their OWN 60-card deck (D270), and **the real printed
-// costs of both attacks are UNMEASURED** — each demonstrator prints a cost that differs
-// from BOTH the alternate `{F}` and the waived `[]`, so no board can pass by coincidence.
-//
-// Sections: §1 the derivation and the table · §2 the member and its seat · §3 `:316` the
-// alternate · §4 the trap · §5 `:324` the waive · §6 the continuous surcharges (the order
-// pins) · §7 the wire.
-
 const ALT = "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
 const WAIVE =
   "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.";
-/** The SHIPPED D436 extra-Energy sentence, carried as the BODY behind `:324`'s clause on a
-    CONSTRUCTED demonstrator (no corpus row prints this compound) — the one board on which
-    the CHARGED array `attackCostAt` returns is visible in DAMAGE, because
-    `scaledAttackDamage` reads "extra" against it. */
 const EXTRA =
   "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 50 more damage.";
 
-/** The five rows `ATTACK_GATE_CLAUSES` carried before this slice, spelled so the
-    disjointness rung can quantify over all seven. */
 const OLD_CLAUSES = [
   "If you go second, you can't use this attack during your first turn.",
   "If you go first, you can use this attack during your first turn.",
@@ -123,9 +82,6 @@ const LOCAL_CARDS: Record<string, Card> = {
       { cost: [...WAIVE_PRINTED], name: "Plain Vine", damage: "40" },
     ],
   },
-  /** `:324`'s clause LEADING the D436 extra-Energy sentence — a constructed compound (the
-      leading gate split hands the body to the damage readers, D282's path), so the waive's
-      `[]` reaches `scaledAttackDamage` as the charged cost. */
   "d545-waive-extra": {
     ...(FIXTURE_POOL["fix-basic-1"] as Card),
     id: "d545-waive-extra",
@@ -155,7 +111,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270). */
 const COST_DECK = deckOf({
   "d545-alt": 4,
   "d545-waive": 4,
@@ -257,7 +212,6 @@ function rejected(state: GameState, index: number, code: string): string {
   return result.error.message;
 }
 
-/** The declaration APPLIES — the row that says the attack happened, and no skip row. */
 function applied(state: GameState, index: number): GameEvent[] {
   const result = declare(state, index);
   if (!result.ok) {
@@ -312,7 +266,7 @@ describe("§1 — both sentences are WHOLE gate clauses, and nothing else moved"
     });
   });
 
-  it("all SEVEN rows are pairwise disjoint under the leading AND trailing splits (🆕🆕🆕 D593: the list's EIGHTH row, Cutting Riposte's {D}, is clauseRowsMeD593 §1's)", () => {
+  it("all SEVEN rows are pairwise disjoint under the leading AND trailing splits ( D593: the list's EIGHTH row, Cutting Riposte's {D}, is clauseRowsMeD593 §1's)", () => {
     const all = [...OLD_CLAUSES, ALT, WAIVE];
     expect(new Set(all).size).toBe(7);
     for (const a of all) {
@@ -321,20 +275,17 @@ describe("§1 — both sentences are WHOLE gate clauses, and nothing else moved"
         expect(a.startsWith(`${b} `)).toBe(false);
         expect(a.endsWith(` ${b}`)).toBe(false);
       }
-      // …and each old row still maps to what it mapped to: none of them is a cost clause.
       if (!([ALT, WAIVE] as string[]).includes(a)) {
         expect(["onlyIf", "barredIf", "firstTurnExempt"]).toContain(
           timingGateFromAttackText(a)?.kind,
         );
       }
     }
-    // Two gate clauses in one string is the splitter's tripwire, so neither new row can ride
-    // in front of or behind another.
     expect(splitAttackGateClause(`${ALT} ${WAIVE}`)).toBeNull();
     expect(splitAttackGateClause(`${OLD_CLAUSES[0]} ${ALT}`)).toBeNull();
   });
 
-  it("🛑 NO OTHER CORPUS ROW NEWLY SPLITS — the gate population is 9 sentences / 19 printings", () => {
+  it("NO OTHER CORPUS ROW NEWLY SPLITS — the gate population is 9 sentences / 19 printings", () => {
     const split = legalAttackCorpus().filter(([, s]) => splitAttackGateClause(s) !== null);
     expect(split).toHaveLength(9);
     expect(split.reduce((sum, [n]) => sum + n, 0)).toBe(19);
@@ -376,7 +327,7 @@ describe("§2 — `yourActiveHasSpecialCondition` is the SELF twin, and reads th
     }
   });
 
-  it("🛑 the OPPONENT's condition does not satisfy it — the seat is the caller's", () => {
+  it("the OPPONENT's condition does not satisfy it — the seat is the caller's", () => {
     const foe = setConditions(ready("d545-waive", {}), "p2", { poisonDamage: 10 });
     expect(conditionHolds(foe, "p1", cond)).toBe(false);
     expect(conditionHolds(foe, "p2", cond)).toBe(true);
@@ -413,9 +364,7 @@ describe("§3 — `:316` is an ALTERNATE cost: never stricter than printed", () 
     applied(state, ALT_INDEX);
   });
 
-  it("🛑 condition TRUE, only the PRINTED cost payable: still applies — NOT a replacement", () => {
-    // The replacement reading (charge `{F}` whenever the condition holds) refuses this
-    // damaged body the attack it could pay for undamaged. UNRULED; decisions.md D545.
+  it("condition TRUE, only the PRINTED cost payable: still applies — NOT a replacement", () => {
     const state = damaged(ready("d545-alt", { W: 2, C: 1 }));
     expect(charged(state, ALT_INDEX)).toEqual(ALT_PRINTED);
     applied(state, ALT_INDEX);
@@ -427,7 +376,7 @@ describe("§3 — `:316` is an ALTERNATE cost: never stricter than printed", () 
     applied(state, ALT_INDEX);
   });
 
-  it("🛑 condition TRUE, NEITHER payable: rejected, and the message names the PRINTED cost", () => {
+  it("condition TRUE, NEITHER payable: rejected, and the message names the PRINTED cost", () => {
     // The third UNRULED decision: with nothing payable the gate publishes the printed
     // (effective) charge, not the alternate.
     const state = damaged(ready("d545-alt", { W: 1 }));
@@ -458,7 +407,7 @@ describe("§3 — `:316` is an ALTERNATE cost: never stricter than printed", () 
 // §4 — THE TRAP.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§4 — 🛑 THE TRAP: a cost clause whose condition HOLDS never blocks", () => {
+describe("§4 — THE TRAP: a cost clause whose condition HOLDS never blocks", () => {
   it("`attackTimingBlocked` answers undefined for both kinds, condition true AND false", () => {
     for (const state of [
       ready("d545-alt", {}),
@@ -519,7 +468,7 @@ describe("§5 — `:324` waives the whole cost while the attacker carries a Spec
     }
   });
 
-  it("🛑 the OPPONENT being Poisoned waives nothing — the condition is on THIS Pokémon", () => {
+  it("the OPPONENT being Poisoned waives nothing — the condition is on THIS Pokémon", () => {
     const state = setConditions(ready("d545-waive", {}), "p2", { poisonDamage: 10 });
     expect(charged(state, WAIVE_INDEX)).toEqual(WAIVE_PRINTED);
     rejected(state, WAIVE_INDEX, "ATTACK_COST_UNMET");
@@ -537,13 +486,7 @@ describe("§5 — `:324` waives the whole cost while the attacker carries a Spec
     expect(costMet(charged(state, WAIVE_INDEX), [])).toBe(true);
   });
 
-  it("🛑 …and the extra-Energy reader SEES it: the waived `[]` is what `scaledAttackDamage` counts against", () => {
-    // The rung above can only say the charge is `[]`; this one says `attack()` HANDS that
-    // `[]` on. `{G}{G}{C}` attached pays the printed `[Grass, Grass, Colorless]` exactly, so
-    // against the PRINTED cost there are 0 extra units and the bonus is withheld (40); against
-    // the WAIVED cost all 3 are extra and it pays (40 + 50). The control is the same body with
-    // no Special Condition, where the charge IS the print. Killed-by for
-    // `D545-extra-energy-reads-printed-cost`, which hands `scaledAttackDamage` the print.
+  it("…and the extra-Energy reader SEES it: the waived `[]` is what `scaledAttackDamage` counts against", () => {
     const dealt = (state: GameState): number => {
       const hit = applied(state, WAIVE_INDEX).find((e) => e.type === "DAMAGE_DEALT") as
         | { damage?: number }
@@ -576,7 +519,7 @@ describe("§6 — League HQ and Quaking Zone: alternate-THEN-surcharge, surcharg
     );
   });
 
-  it("🛑 League HQ, `:316` TRUE, `{F}` alone: the ALTERNATE takes the surcharge too — rejected", () => {
+  it("League HQ, `:316` TRUE, `{F}` alone: the ALTERNATE takes the surcharge too — rejected", () => {
     const state = withLeagueHq(damaged(ready("d545-alt", { F: 1 })));
     // Neither `[F, C]` nor the printed-plus-{C} is payable, so the charge (and the message)
     // is the EFFECTIVE printed cost.
@@ -609,13 +552,13 @@ describe("§6 — League HQ and Quaking Zone: alternate-THEN-surcharge, surcharg
     );
   });
 
-  it("🛑 League HQ, `:324` TRUE, no Energy: WAIVE-LAST — the surcharge is ignored with the rest", () => {
+  it("League HQ, `:324` TRUE, no Energy: WAIVE-LAST — the surcharge is ignored with the rest", () => {
     const state = withLeagueHq(setConditions(ready("d545-waive", {}), "p1", { poisonDamage: 10 }));
     expect(charged(state, WAIVE_INDEX)).toEqual([]);
     applied(state, WAIVE_INDEX);
   });
 
-  it("🛑 Quaking Zone, `:324` TRUE, no Energy: WAIVE-LAST on the opposing aura too", () => {
+  it("Quaking Zone, `:324` TRUE, no Energy: WAIVE-LAST on the opposing aura too", () => {
     const state = setConditions(ready("d545-waive", {}, "sv03-052"), "p1", { burned: true });
     expect(charged(state, WAIVE_INDEX)).toEqual([]);
     applied(state, WAIVE_INDEX);

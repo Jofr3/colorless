@@ -23,73 +23,9 @@ import {
 } from "./testFixtures";
 import { BENCH_MAX, otherSeat } from "./types";
 
-// D297 — "UP TO N" OUT OF THE OPPONENT'S REVEALED HAND, AND THE ROW THAT FOUR
-// HANDOFFS PRICED AT THREE BLOCKERS AND HAS ONE AND A HALF.
-//
-// THE SENTENCE. *"Your opponent reveals their hand. Put up to 2 Basic Pokémon you
-// find there onto your opponent's Bench."* — Lickitung, TWO Standard-legal
-// printings, `sv05-124` and `sv05-180`, whose `attacks_json` is BYTE-IDENTICAL
-// (remote D1 `colorless`, re-queried 2026-08-09 in one flat `WHERE id IN (…)`:
-// both `legal_standard = 1`, both regulation mark **H**, both **Basic**, both
-// carrying Tongue Pull at **attack index 0** with cost **{C}** and "Strength"
-// {C}{C}{C} for 50 at index 1, and both blobs 236 bytes of identical text).
-// ⚠️ **AND THAT IS THE WHOLE POPULATION OF THE PHRASE**: `instr(attacks_json,
-// 'you find there onto your opponent') > 0` over all 3,786 rows returns exactly
-// these two.
-//
-// ── WHAT WAS PRICED, AND WHAT THE BODIES ACTUALLY SAID ──────────────────────
-//
-// The row carried THREE named blockers into this slice. One was real, one was
-// real for the wrong reason, and one had already evaporated:
-//
-//   · **THE COUNT.** Real. The park was hard-coded `min: 1, max: 1`, so "up to 2"
-//     could not be expressed. → `bottomFromOpponentHand.upTo`.
-//   · **THE INTERCHANGEABLE COLLAPSE.** Real, and 🛑 **THE DOUBT RAISED AGAINST IT
-//     WAS THE THING THAT WAS WRONG.** The handoff flagged its own claim as most
-//     likely mistaken — *"`cardIdentity` keys a Pokémon on the catalog `id`, so
-//     two DIFFERENT Basics never collapsed and the cap may not be load-bearing at
-//     all"* — and every word of the mechanism is TRUE while the conclusion is
-//     FALSE. **DRIVEN, both boards, before a line was written** (the pair of tests
-//     in §3 below): two DIFFERENT Basics offer 2 candidates with or without the
-//     cap, and TWO COPIES OF ONE PRINTED BASIC offered exactly **1** — so the
-//     second copy could never reach the Bench, and the same board ALSO tripped the
-//     one-candidate auto-resolve and benched a card without asking. **THE CAP IS
-//     LOAD-BEARING ON THE BOARD THE DOUBT DID NOT NAME.**
-//   · **THE DECLINE.** Already there: `chooseCards` has carried `min: 0` since the
-//     search family and four live sites print "up to" through it.
-//
-// 🛑 **THE ONE DESIGN CALL, AND IT IS THE SHARPEST LINE IN THE DIFF:** the
-// `candidates.length === 1` AUTO-RESOLVE is now conditional on `upTo` being
-// ABSENT. Under a printed "up to" the two answers are "a card moves" and "nothing
-// moves", which are not the same state, so the M1 no-choice rule does not reach
-// them and a lone candidate must still be ASKED.
-//
-// ⚠️ **AND NOTHING WENT RED WHEN THAT LINE CHANGED, WHICH IS CORRECT AND WAS
-// FORECAST AS THE OPPOSITE.** The handoff wrote *"predict that deletion REDDENS an
-// existing suite … if nothing goes red, you have made it conditional on the wrong
-// thing."* The reasoning inverts: the five printings without `upTo` keep the
-// shortcut BY CONSTRUCTION, so a correct conditional reddens nothing and only a
-// DELETION would have. The three suites that did redden are the deriver census
-// ones, and they reddened on the new anchor.
-//
-// ── WHAT THIS ROW COSTS ──────────────────────────────────────────────────────
-//
-// ONE optional op field (`upTo`), ONE regex, ONE deriver arm, ONE `cap` in the
-// offer, ONE conditional on the auto-resolve and ONE printed note form. **NO new
-// op, NO new prompt kind, NO new choice kind, NO new event, NO new error code, NO
-// `GameState` field and NO registry row** — `packages/schema`, `redact.ts` and
-// `src/` take ZERO for the FOURTH slice running, and because the row is
-// DERIVER-ONLY, `raw.length` and the non-attack pool move by ZERO (D296's third
-// rule).
-
 const TONGUE_PULL_TEXT =
   "Your opponent reveals their hand. Put up to 2 Basic Pokémon you find there onto your opponent's Bench.";
 
-/** The two printings as ONE fixture body, because the catalog blobs are one blob.
-    ⚠️ THE HOST IS A BASIC AND ITS HP IS IRRELEVANT TO THE FILTER — the filter reads
-    the cards in the OPPONENT's hand — but Lickitung is printed Basic and a fixture
-    that quietly evolved it would make the attack unreachable for a reason nothing
-    in this file is about. */
 function lickitung(id: string): Card {
   return battler(id, {
     name: "Lickitung",
@@ -118,10 +54,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The THIRTEENTH seeded deck (D270's rule: a seeded suite gets its OWN deck).
-    `fix-victim` is stocked EIGHT deep because the whole cap argument needs two
-    copies of ONE printed Basic in one hand, and `fix-basic-1` is a SECOND printed
-    Basic so "two of one" and "one of two" are different boards here. */
 const PULL_DECK = deckOf({
   "sv05-124": 4,
   "sv05-180": 4,
@@ -169,11 +101,6 @@ function emptyHand(state: GameState, seat: Seat): GameState {
   };
 }
 
-/** `seat` has Lickitung ACTIVE and one other body benched; the OPPONENT's hand
-    holds exactly `hand` (an id/count table, because the point of this row is how
-    many COPIES of one id sit there), and their Bench holds `benched`.
-    ⚠️ THE ACTOR'S BENCH BODY IS LOAD-BEARING — §14.2 makes an empty Bench a LOSS
-    the moment the Active leaves, and a `gameOver` board proves nothing. */
 function board(
   seed: number,
   hand: readonly (readonly [string, number])[],
@@ -195,11 +122,6 @@ function board(
   return state;
 }
 
-/** `runProgram` with the two out-parameters this file does not want to thread —
-    the OP-LEVEL driver, used where no printed card produces the op (the
-    attribution controls in §2 and the without-cap arm in §3). `runProgram` hands
-    back a `RunResult`; it does NOT install the phase, which `settleProgram` does
-    for the action path below. */
 function runOps(state: GameState, ops: readonly EffectOp[], seat: Seat) {
   const events: GameEvent[] = [];
   const ctx: EffectContext = { seat, sourceUid: state.players[seat].active?.stack[0] ?? "" };
@@ -224,10 +146,6 @@ function cardsPrompt(state: GameState) {
   return phase.prompt;
 }
 
-/** A board with Lickitung Active, ONE {C} attached and Tongue Pull DECLARED —
-    the phase is whatever the printed attack left behind (a park, or the turn
-    again when the offer was empty). Every behavioural test below drives THIS,
-    because the op under test is the one the DERIVER built off the card text. */
 function pull(
   seed: number,
   hand: readonly (readonly [string, number])[],
@@ -246,28 +164,18 @@ function benchIds(state: GameState, seat: Seat): string[] {
   );
 }
 
-/** The op the DERIVER produces for the printed sentence — used as the subject of
-    every behavioural test below, so the two halves of the row cannot drift. */
 const TONGUE_PULL_OPS: readonly EffectOp[] = [
   { op: "bottomFromOpponentHand", filter: { kind: "basicPokemon" }, dest: "bench", upTo: 2 },
 ];
 
 const SEEDS = [7, 19, 52, 88, 101] as const;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. THE DERIVER — one anchor, one sentence, two printings.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D297 — the printed sentence, as ops", () => {
   it("derives to ONE op with `upTo: 2`, a bare `basicPokemon` filter and the bench dest", () => {
     expect(deriveAttackEffect(TONGUE_PULL_TEXT)).toEqual(TONGUE_PULL_OPS);
   });
 
-  it("🛑 NO `maxHp` RIDER — Mandibuzz's 70 is Mandibuzz's word, not this sentence's", () => {
-    // D135: an absent field means what the sentence means. The two cards share an
-    // op, a destination and a source zone and differ in exactly this, so a filter
-    // copied across would silently refuse every Basic over 70 HP that Lickitung
-    // plainly reaches.
+  it("NO `maxHp` RIDER — Mandibuzz's 70 is Mandibuzz's word, not this sentence's", () => {
     const ops = deriveAttackEffect(TONGUE_PULL_TEXT);
     const first = ops?.[0];
     if (first === undefined || first.op !== "bottomFromOpponentHand") throw new Error("no op");
@@ -288,18 +196,13 @@ describe("D297 — the printed sentence, as ops", () => {
     }
   });
 
-  it("🛑 authors NO registry row — the column moves by a DERIVER arm alone", () => {
-    // D296's third rule, asserted rather than promised: a deriver-only row writes
-    // no registry entry, so `raw.length` and the non-attack pool move by ZERO.
+  it("authors NO registry row — the column moves by a DERIVER arm alone", () => {
     for (const id of ["sv05-124", "sv05-180"]) {
       expect(programFor(id), id).toBeUndefined();
     }
   });
 
   it("reads the U+2019 spelling identically — and NO printing of it exists", () => {
-    // D137's class, and the reason the anchor spells `['’]`. The catalog sweep
-    // returns zero curly rows for this sentence, so the witness is CONSTRUCTED and
-    // labelled as such (D228/D231).
     const curly = TONGUE_PULL_TEXT.replaceAll("'", "’");
     expect(curly).not.toBe(TONGUE_PULL_TEXT);
     expect(deriveAttackEffect(curly)).toEqual(TONGUE_PULL_OPS);
@@ -310,7 +213,7 @@ describe("D297 — the printed sentence, as ops", () => {
     expect(deriveAttackEffect(`${TONGUE_PULL_TEXT} Draw a card.`)).toBeNull();
   });
 
-  it("🛑 the printed number is a CAPTURE with a guard, not a welded 2", () => {
+  it("the printed number is a CAPTURE with a guard, not a welded 2", () => {
     // Both ends of the guard, and the guard's ceiling is the BENCH's (§4) rather
     // than the attach family's 10 — this number sizes a Bench.
     for (const n of [1, 2, 3, BENCH_MAX]) {
@@ -327,7 +230,7 @@ describe("D297 — the printed sentence, as ops", () => {
     ).toBeNull();
   });
 
-  it("🛑 the NEIGHBOURING sentence in the same family is still a DIFFERENT anchor", () => {
+  it("the NEIGHBOURING sentence in the same family is still a DIFFERENT anchor", () => {
     // The punctuation argument, driven: Ortega/Purrloin's joined clause and this
     // one are two patterns, and neither reads the other's string.
     const joined =
@@ -347,9 +250,7 @@ describe("D297 — the printed sentence, as ops", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the ABSENT `upTo` is the M5 op, unchanged in every respect", () => {
-  it("🛑 a lone candidate with NO `upTo` still AUTO-RESOLVES — the shortcut survives", () => {
-    // The half of the conditional that must not move: five legal printings print a
-    // compulsory single pick, and one candidate there really is no decision.
+  it("a lone candidate with NO `upTo` still AUTO-RESOLVES — the shortcut survives", () => {
     const state = board(SEEDS[0], [["fix-victim", 1]]);
     const out = runOps(state, [{ op: "bottomFromOpponentHand" }], "p1");
     expect(out.parked).toBe(false);
@@ -357,7 +258,7 @@ describe("the ABSENT `upTo` is the M5 op, unchanged in every respect", () => {
     expect(out.events.some((e) => e.type === "CARD_TO_BOTTOM_OF_DECK")).toBe(true);
   });
 
-  it("🛑 and its park is still `min: 1, max: 1` when two classes are offered", () => {
+  it("and its park is still `min: 1, max: 1` when two classes are offered", () => {
     const state = board(SEEDS[1], [
       ["fix-victim", 1],
       ["fix-basic-1", 1],
@@ -381,10 +282,7 @@ describe("the ABSENT `upTo` is the M5 op, unchanged in every respect", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the interchangeable collapse, on the board the doubt did not name", () => {
-  it("🛑 TWO COPIES OF ONE PRINTED BASIC offer TWO candidates under `upTo: 2`", () => {
-    // THE WHOLE ARGUMENT. Before this slice the same board offered ONE — measured,
-    // not inferred — because `cardIdentity` keys a Pokémon on its catalog `id` and
-    // both copies wear the same key. A hand of two Ralts is an ordinary hand.
+  it("TWO COPIES OF ONE PRINTED BASIC offer TWO candidates under `upTo: 2`", () => {
     const state = pull(SEEDS[0], [["fix-victim", 2]]);
     const prompt = cardsPrompt(state);
     expect(prompt.candidates).toHaveLength(2);
@@ -394,7 +292,7 @@ describe("the interchangeable collapse, on the board the doubt did not name", ()
     ]);
   });
 
-  it("🛑 and BOTH of them can actually land — the second copy is reachable", () => {
+  it("and BOTH of them can actually land — the second copy is reachable", () => {
     const state = pull(SEEDS[0], [["fix-victim", 2]]);
     const uids = cardsPrompt(state).candidates;
     const done = mustApply(state, {
@@ -403,16 +301,10 @@ describe("the interchangeable collapse, on the board the doubt did not name", ()
       choice: { kind: "cards", uids: [...uids] },
     }).state;
     expect(benchIds(done, "p2")).toEqual(["fix-victim", "fix-victim"]);
-    // ⚠️ The hand is not EMPTY — resolving ends the turn and p2 draws — so the
-    // assertion is on the UIDS that left, which is the fact this test is about.
     for (const uid of uids) expect(done.players.p2.hand).not.toContain(uid);
   });
 
-  it("⚠️ TWO DIFFERENT BASICS offer two candidates WITH OR WITHOUT the cap — the fixture the doubt used shows NOTHING", () => {
-    // The control that makes the test above worth writing. This is the board the
-    // handoff reasoned from, and on it the cap is genuinely invisible: the classes
-    // differ, so nothing was ever collapsed. A slice that priced the cap off this
-    // fixture alone would have concluded it was dead code.
+  it("TWO DIFFERENT BASICS offer two candidates WITH OR WITHOUT the cap — the fixture the doubt used shows NOTHING", () => {
     const twoKinds = [
       ["fix-victim", 1],
       ["fix-basic-1", 1],
@@ -441,7 +333,7 @@ describe("the interchangeable collapse, on the board the doubt did not name", ()
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('the printed "up to" is declinable, and a LONE candidate is still asked', () => {
-  it("🛑 ONE candidate under `upTo` PARKS — the auto-resolve does not fire", () => {
+  it("ONE candidate under `upTo` PARKS — the auto-resolve does not fire", () => {
     // The sharpest line in the diff. Under the old arm this board resolved inline
     // and put a Basic on the opponent's Bench with nobody asked.
     const state = pull(SEEDS[3], [["fix-victim", 1]]);
@@ -450,7 +342,7 @@ describe('the printed "up to" is declinable, and a LONE candidate is still asked
     expect(prompt.min).toBe(0);
   });
 
-  it("🛑 and answering with NO cards leaves the board untouched", () => {
+  it("and answering with NO cards leaves the board untouched", () => {
     const state = pull(SEEDS[3], [["fix-victim", 1]]);
     const offered = cardsPrompt(state).candidates[0];
     if (offered === undefined) throw new Error("empty offer");
@@ -517,7 +409,7 @@ describe("the filter reads the OPPONENT's hand, and the Bench caps the ask", () 
     expect(cardsPrompt(state).candidates.map((u) => state.cardIdByUid[u])).toEqual(["fix-victim"]);
   });
 
-  it("🛑 a bench with ONE slot left asks for at most ONE, not two", () => {
+  it("a bench with ONE slot left asks for at most ONE, not two", () => {
     // searchDeck's and discardPileRetrieval's clamp, taken at the same place and
     // for the same reason: never ask a question whose second answer cannot land.
     const benched = ["fix-basic-1", "fix-basic-1", "fix-basic-1", "fix-basic-1"];
@@ -544,7 +436,7 @@ describe("the filter reads the OPPONENT's hand, and the Bench caps the ask", () 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the prompt note is the CARD's sentence, character for character", () => {
-  it("🛑 the note round-trips to the catalog string", () => {
+  it("the note round-trips to the catalog string", () => {
     // The check `effects.ts` cannot run and this file can: the note is built from
     // the op's fields and the filter's PLURAL noun, and it lands exactly on the
     // text the anchor above matches. A drift in either would show up here.
@@ -573,7 +465,7 @@ describe("the prompt note is the CARD's sentence, character for character", () =
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Tongue Pull as an ATTACK, from the action down", () => {
-  it("🛑 the attack at INDEX 0 parks the choose — {C} is the whole cost", () => {
+  it("the attack at INDEX 0 parks the choose — {C} is the whole cost", () => {
     const prompt = cardsPrompt(pull(SEEDS[0], [["fix-victim", 2]]));
     expect(prompt.candidates).toHaveLength(2);
     expect([prompt.min, prompt.max]).toEqual([0, 2]);
@@ -604,10 +496,7 @@ describe("Tongue Pull as an ATTACK, from the action down", () => {
     expect([b.min, b.max]).toEqual([a.min, a.max]);
   });
 
-  it("🛑 the SECOND attack on the same body is plain damage — index 1 is untouched", () => {
-    // `Strength` costs {C}{C}{C} and prints no effect, so it cannot reach this
-    // row's code at all. Asserted off the fixture rather than the engine, because
-    // the point is that the printed body carries TWO attacks and only one is ours.
+  it("the SECOND attack on the same body is plain damage — index 1 is untouched", () => {
     const attacks = POOL["sv05-124"]?.attacks ?? [];
     expect(attacks).toHaveLength(2);
     expect(attacks[1]?.effect).toBeUndefined();
@@ -624,11 +513,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     return pull(SEEDS[0], [["fix-victim", 2]]);
   }
 
-  it("🛑 the persisted continuation's op carries EXACTLY these keys", () => {
-    // THE LITERAL KEY ANCHOR (D279's pairing rule): a diff between two boards from
-    // ONE build is blind to "every op grew a key", because the key sits on both
-    // sides. This names them, and the list has grown by exactly ONE (`upTo`)
-    // against D294's `["dest", "filter", "op"]`.
+  it("the persisted continuation's op carries EXACTLY these keys", () => {
     const phase = parked().phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const revived = JSON.parse(JSON.stringify(phase)) as {
@@ -638,11 +523,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     expect(revived.cont.rest).toEqual([]);
   });
 
-  it("🛑 FORWARD: a version-16 record with NO `upTo` replays as the mandatory single pick", () => {
-    // The direction the repo's rule actually tests — "can the PREVIOUS deploy's
-    // RECORD hold the new TYPE". An old continuation has no `upTo`; this build
-    // reads `undefined`; `undefined` IS the exactly-one compulsory pick the old
-    // record was written under, auto-resolve and all.
+  it("FORWARD: a version-16 record with NO `upTo` replays as the mandatory single pick", () => {
     const state = board(SEEDS[1], [["fix-victim", 2]]);
     const run = runOps(state, [{ op: "bottomFromOpponentHand", dest: "bench" }], "p1");
     expect(run.parked).toBe(false);
@@ -650,7 +531,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     expect(run.state.players.p2.hand).toHaveLength(1);
   });
 
-  it("🛑 BACKWARD: the parked prompt round-trips through JSON unchanged", () => {
+  it("BACKWARD: the parked prompt round-trips through JSON unchanged", () => {
     const before = parked();
     const revived = JSON.parse(JSON.stringify(before)) as GameState;
     expect(revived.phase).toEqual(before.phase);
@@ -685,16 +566,6 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
 
 describe("the engine version", () => {
   it("moved PAST 0.207.0 with the new op field, and the two files agree", () => {
-    // BEHAVIOUR moved inside `packages/engine` (an op field, an anchor, a deriver
-    // arm, a park's bounds and the note), so the number moves. The manifest and
-    // the exported constant are asserted TOGETHER — the tie IS the assertion, and
-    // either drifting alone is the defect (D275). 🛑 THIS FILE NOW OWNS THE
-    // LITERAL; `aquaWash.test.ts` kept the tie and the direction when it handed it
-    // over, which is the same handoff it received from `chillTeaserToy.test.ts`.
-    // 🆕 D298 moved it again (0.208.0 → 0.209.0), so this suite now asserts the
-    // TIE and the DIRECTION rather than re-stating a literal that belongs to
-    // whichever slice bumped it last. `legacyEnergy.test.ts` carries the literal —
-    // the same hand-off this file received from `aquaWash.test.ts`.
     expect(manifest.version).toBe(engineVersion);
   });
 });

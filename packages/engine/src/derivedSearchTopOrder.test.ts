@@ -8,99 +8,15 @@ import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testFixtures";
-
-// ── D342 — "SEARCH YOUR DECK FOR 2 CARDS, SHUFFLE YOUR DECK, THEN PUT THOSE
-//    CARDS ON TOP OF IT **IN ANY ORDER**": THE FIRST PROGRAM WHOSE SECOND PARK
-//    READS THE FIRST PARK'S ANSWER — THROUGH THE DECK. ────────────────────────
-//
-// ── THE ONE PRINTED SENTENCE, IN TWO COLUMNS ────────────────────────────────
-//   "Search your deck for 2 cards, shuffle your deck, then put those cards on
-//    top of it in any order."
-//      • `effect`        — Ciphermaniac's Codebreaking `sv05-145` / `sv05-198` /
-//                          `sv08.5-104` (Supporter, mark H). **3 legal**, an
-//                          authored REGISTRY row.
-//      • `attacks_json`  — Dialga `sv08-135` "Time Manipulation", attack index
-//                          0, cost {C}. **1 legal**, read by a DERIVER.
-//   **4 Standard-legal printings, ONE byte-identical sentence, TWO columns.**
-//
-// ── THE CENSUS, RE-DERIVED AT THIS HEAD RATHER THAN INHERITED ───────────────
-// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
-// `legal_standard`) on 2026-08-15, in one 3-arm `UNION ALL` (D340/D341's shape;
-// the compound-SELECT cap is five arms).
-//
-//   (a) THE FAMILY — `instr(<col>,'in any order') > 0`, all three columns:
-//         `effect` 8 rows / 6 legal · `attacks_json` 7 / 5 · `abilities_json` 0 / 0
-//         TOTAL **15 printings / 11 legal on 7 sentences.**
-//         8 + 7 + 0 = 15 ✅   6 + 5 + 0 = 11 ✅   (D341's figure, re-confirmed)
-//
-//   (b) THIS SENTENCE — `instr(<col>,'on top of it') > 0`, all three columns:
-//         **4 rows, ALL `legal_standard = 1`, ONE sentence** — `sv05-145`,
-//         `sv05-198`, `sv08.5-104` (`effect`) and `sv08-135` (`attacks_json`).
-//
-//   (c) THE SAME QUERY AT A SECOND WIDTH, because one width is an anecdote:
-//         `instr(<col>,'then put those cards on top') > 0` returns **the SAME
-//         4 rows**. Two widths, one answer.
-//
-//   (d) 🛑 THE WORD ORDER PROBE THAT CLOSES THE FAMILY.
-//         `instr(effect,'on top of your deck') > 0 OR instr(attacks_json,
-//         'on top of your deck') > 0` returns **ZERO ROWS**. There is no
-//         possessive spelling of this destination anywhere in the catalog, so
-//         the anchor is not leaving a wider grammar on the table — the family is
-//         **CLOSED AT FOUR** and a `dest` that reads only "on top of it" reads
-//         all of it.
-//         [🆕🆕🆕 D611 (D539): "CLOSED AT FOUR" and "the SAME 4" WITHDRAWN for the
-//         Standard pool — Crobat ×3 `me` "Nighttime Maneuvers" prints *"…then put
-//         that card on top of it"* (an Ability, one card, registry-keyed), so (b)
-//         returns 7 rows today. Kept as written: this file pins the 4 attack rows.]
-//
-//   (e) THE STANDING-STILL, MEASURED RATHER THAN ASSUMED. All three
-//       Ciphermaniac's ids carry `attacks_json IS NULL` AND `abilities_json IS
-//       NULL` against a byte-identical 96-char `effect`; Dialga carries `effect
-//       IS NULL` AND `abilities_json IS NULL` against a 234-char `attacks_json`.
-//       So `BUILT.ability` cannot see any of the four, no attack reader can see
-//       the three Supporters, and no trainer reader can see the Pokémon.
-//
-// ── WHAT THIS ROW OWED, AND THE HALF OF THE PRICE THAT WAS WRONG ────────────
-// The resume point priced it: *"a `searchDeck` whose PICKS are then sequenced
-// onto the deck — i.e. the `orderCards` prompt parked a second time, behind the
-// search's own park, over the cards the first answer chose. **What is new is a
-// prompt whose candidates are the previous answer, which no op in this engine
-// does yet.**"*
-//
-// ✅ **THE FIRST CLAUSE IS EXACTLY RIGHT** — two printed decisions, two parks,
-//    and D216's correction of D206 says two parks means two OPS.
-//
-// 🛑 **THE SECOND CLAUSE IS FALSE AT THIS HEAD, AND ITS FALSENESS IS THE WHOLE
-//    REASON THIS ROW COST WHAT IT DID.** No channel has to be built, because
-//    **THE CHANNEL IS THE DECK**. `searchDeck { dest: "deckTop" }` puts the
-//    picks on top; `reorderTop { n: 2 }` — with no `from`, the TOP fork, which
-//    is the only one that existed when this was written — then reads
-//    `deck.slice(0, 2)`, which
-//    ARE the picks, by construction, with nothing carried across the park and no
-//    `continuationOps` member. A program has parked twice since D186
-//    (`resumeProgram` → `runProgram(rest)`, Koraidon "Dino Cry"), so the second
-//    park was already free; what looked like a missing mechanism was a missing
-//    OBSERVATION about where two ops can meet.
-//
-// 🆕 **THE LESSON: "NO OP DOES THIS YET" IS A CLAIM ABOUT OPS, AND A PROGRAM IS
-//    NOT AN OP.** Every previous re-pricing of this row asked what a single op
-//    could carry between two questions. The answer was that it does not have to
-//    carry anything — the ZONE between the two ops already holds it. **BEFORE
-//    BUYING A CHANNEL BETWEEN TWO PARKS, CHECK WHETHER THE BOARD IS ONE.**
-//
-// 🛑 **AND `exact` IS THE CLAUSE NOBODY PRICED AT ALL.** It reads like a caption
-//    field (the print says "2 cards", not "up to 2") and it is a CORRECTNESS
-//    field: left at the standing `min: 0`, a player who declines the search — or
-//    takes 1 of 2 — is handed an ordering window containing a card they never
-//    searched for and were never shown, which is an information gain and a
-//    re-ordering the print does not grant. §4 drives exactly that board.
-//
-// ── WHAT MOVED, AND WHAT DID NOT ────────────────────────────────────────────
-//   `BUILT.attack` 1197 → 1198 through its **RAW** summand alone (1168 → 1169),
-//   `BUILT.trainer` 105 → 108, `MATCH_RECORD_VERSION` **STAYS 20** — both the
-//   `dest` inhabitant and the `exact` field are ADDED INHABITANTS of persisted
-//   unions (D125's widening test), not D309's rename.
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  must,
+  firstBasicInHand,
+} from "./testFixtures";
 
 const CIPHER_A = "sv05-145";
 const CIPHER_B = "sv05-198";
@@ -114,34 +30,6 @@ const DIALGA = "sv08-135";
 const PRINTED =
   "Search your deck for 2 cards, shuffle your deck, then put those cards on top of it in any order.";
 
-/** 🛑 THE THREE NEAR MISSES, and each is a REAL printing rather than a mutation
-    of the sentence. They are here because the `$` anchor is the only thing
-    refusing them and a dropped `$` is exactly the mutant D234 left behind:
-      • Kofu `sv07-138`/`-165` — a DIFFERENT verb and zone pair, plus a printed
-        "if you do" gate. 2 legal. **THIS DERIVER DOES NOT READ IT**, and that is
-        the permanent claim; it is an AUTHORED REGISTRY ROW (`const KOFU`), so
-        `deriveAttackEffect` must return nothing for it no matter what the
-        registry does.
-        🆕🛑 **D343 — THIS BULLET USED TO SAY "deliberately unbuilt" AND THAT WAS
-        ALREADY FALSE WHEN IT WAS WRITTEN.** `const KOFU` was in `registry.ts`
-        and wired at both ids at the head that wrote it; D343 then added the
-        `reorderTop { from: "bottom" }` its printed "in any order" needs, making
-        the sentence doubly false. **AN ASSERTION ABOUT WHAT IS NOT BUILT HAS A
-        SHELF LIFE — AND THIS ONE HAD EXPIRED BEFORE IT WAS PRINTED.** The
-        narrower claim above ("this deriver does not read it") is the one that
-        cannot rot, because it is about THIS FILE'S anchor and not about the
-        engine's coverage.
-      • Deduction Kit `sv08-171` — the `reorderTop` sentence PLUS a printed
-        two-armed `or`. 1 legal; **this deriver does not read it** (the same
-        narrower claim, for the same reason).
-        🆕 **D344 BUILT IT** (`const DEDUCTION_KIT`, an authored registry row), and
-        the narrower claim is exactly what survives the build — which is the whole
-        point of the bullet above it. Note the ASYMMETRY with Kofu: that bullet
-        rotted because it asserted "deliberately unbuilt", a claim about the
-        ENGINE; this one asserts only what THIS ANCHOR reads, and a build cannot
-        touch it.
-      • Raifort `sv06-161`/`sv08.5-142` — a `lookAtTopN` whose LEFTOVERS are
-        ordered, two parks in one sentence. 0 legal. */
 const KOFU =
   "Put 2 cards from your hand on the bottom of your deck in any order. If you put 2 cards on the bottom of your deck in this way, draw 4 cards. (If you can't put 2 cards from your hand on the bottom of your deck, you can't use this card.)";
 const DEDUCTION_KIT =
@@ -149,26 +37,11 @@ const DEDUCTION_KIT =
 const RAIFORT =
   "Look at the top 5 cards of your deck and discard any number of them. Put the other cards back in any order.";
 
-/** 🆕 D342 — an AUTHORED registry program this slice did not write, carried in
-    the local pool purely so §3's "nothing widened" claim can be DRIVEN rather
-    than asserted: Earthen Vessel's `searchDeck` has no `exact` and must keep the
-    printed "up to". The registry program is what runs; the effect text on the
-    fixture is never read (Trainers have no text deriver). */
 const EARTHEN_VESSEL = "sv06.5-096";
 const METAL_ENERGY = "fix-d342-metal";
 const WALL = "fix-d342-wall";
 const FILLERS = ["fix-d342-f1", "fix-d342-f2", "fix-d342-f3", "fix-d342-f4"] as const;
 
-/** 🆕 A LOCAL `cardPool` (D275's idiom, `derivedReorderTop.test.ts`'s shape one
-    slice over), NOT an addition to `FIXTURE_POOL` — the four ids under test are
-    REAL catalog printings and already carry real registry keys, so nothing here
-    owes a `fix-*` registry row and `raw.length` moves by exactly the three
-    Supporter ids this slice authors.
-    ⚠️ AND THE LOCAL POOL IS NO LONGER LOAD-BEARING FOR THE AUDITORS. D341
-    re-pointed `preventBlock`'s §11 sweep at the DERIVER (`OFF_POOL_ATTACK_TEXT`)
-    precisely because a fixture pool is a SAMPLE and not a domain; the pool stays
-    local here for isolation, which is the honest reason, and no longer to hold a
-    census rung still. */
 const LOCAL_CARDS: Record<string, Card> = {
   ...Object.fromEntries(CIPHER_IDS.map((id) => [id, trainerCard(id, "Supporter", PRINTED)])),
   [DIALGA]: battler(DIALGA, {
@@ -219,11 +92,6 @@ const DECK = deckOf({
   ...Object.fromEntries(FILLERS.map((id) => [id, 6])),
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function apply(
   state: GameState,
   action: Parameters<typeof applyAction>[1],
@@ -238,15 +106,6 @@ function find<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -307,8 +166,6 @@ function supporterBoard(seed: number): GameState {
   return must(applyAction(localSetup(seed, "p2"), { type: "endTurn", seat: "p2" }));
 }
 
-/** Play a Ciphermaniac's printing out of p1's hand and return the parked SEARCH
-    prompt with it. */
 function playCipher(state: GameState, id: string = CIPHER_A) {
   const { state: withCard, uid } = toHand(state, "p1", id);
   const { state: parked, events } = apply(withCard, { type: "playTrainer", seat: "p1", uid });
@@ -354,12 +211,6 @@ describe("§1 the reader — one sentence, one program, and the near misses it r
   });
 
   it("`shuffleDeck` LEADS, and the order of the three ops is the assertion", () => {
-    // The print reads search → shuffle → place; the program reads shuffle →
-    // search-and-place. The transposition is sound (the answer is a SET of cards,
-    // so shuffling before or after their removal is the same distribution) and it
-    // is what keeps `"deckTop"` a pure destination. Asserted as a SEQUENCE rather
-    // than as a set, because "the shuffle is in the program somewhere" is exactly
-    // the claim that would be true of a version that buried the picks.
     const program = deriveAttackEffect(PRINTED) ?? [];
     expect(program.map((op) => op.op)).toEqual(["shuffleDeck", "searchDeck", "reorderTop"]);
   });
@@ -388,25 +239,12 @@ describe("§1 the reader — one sentence, one program, and the near misses it r
   });
 
   it("refuses the three REAL neighbouring printings — the `$` anchor, not a guard", () => {
-    // Each of these is a printing in the same "in any order" family that owes a
-    // second mechanism. A dropped `$` would read the first two as this arm and
-    // silently drop a printed draw and a printed alternative.
     for (const text of [KOFU, DEDUCTION_KIT, RAIFORT]) {
       expect(deriveAttackEffect(text), text.slice(0, 40)).toBeNull();
     }
   });
 
   it("refuses a trailing clause welded onto the exact sentence", () => {
-    // 🛑 THE FIRST FORM HERE IS THE ONE THAT DOES **NOT** TEST THE `$`, AND THE
-    // SWEEP IS WHAT SAID SO. `PRINTED.slice(0, -1)` drops the final period, so
-    // the anchor's own `\.` already refuses it and the trailing anchor is never
-    // reached — the D342 `$` mutant SURVIVED against exactly this assertion. It
-    // is kept because refusing a comma-spliced clause is still a real claim, and
-    // the SECOND form is the one that reaches the `$`: it keeps the printed
-    // period and appends a whole further sentence, which is how Kofu and Raifort
-    // actually print (a complete ordered-answer sentence, then another one).
-    // **AN ASSERTION THAT REFUSES A STRING FOR THE WRONG REASON IS GREEN AND
-    // WORTHLESS; ONLY A MUTANT CAN TELL YOU WHICH ONE YOU WROTE.**
     expect(deriveAttackEffect(`${PRINTED.slice(0, -1)}, then draw a card.`)).toBeNull();
     expect(deriveAttackEffect(`${PRINTED} Then, draw a card.`)).toBeNull();
     expect(deriveAttackEffect(`${PRINTED} If you do, draw 4 cards.`)).toBeNull();
@@ -460,8 +298,6 @@ describe("§2 the registry — three printings, ONE object, one card", () => {
   });
 
   it("no attack and no ability program rides along — the column standing-still", () => {
-    // Measured on remote D1 this session: all three ids are `attacks_json IS NULL`
-    // and `abilities_json IS NULL`. The registry must not contradict the catalog.
     for (const id of CIPHER_IDS) {
       const program = programFor(id);
       expect(program?.attack, id).toBeUndefined();
@@ -470,9 +306,6 @@ describe("§2 the registry — three printings, ONE object, one card", () => {
   });
 
   it("Dialga carries NO registry row — it is READER-keyed, which is the summand", () => {
-    // The +1 on `BUILT.attack` this slice is RAW, not registry. If this id ever
-    // gained a row the raw remainder and the registry summand would both move and
-    // `censusAtHead`'s partition would go red for a reason nobody wrote down.
     expect(programFor(DIALGA)).toBeUndefined();
   });
 });
@@ -529,24 +362,10 @@ describe("§3 the search park — a MANDATORY pick into a destination that is no
     const search = program[1];
     if (search?.op !== "searchDeck") throw new Error("expected the search op");
     expect(search.exact).toBe(true);
-    // NO `reveal`: this sentence prints none, and D135 says absent rather than
-    // `false` because these ops are compared by value.
     expect("reveal" in search).toBe(false);
   });
 
-  it("🛑 an OTHER search still parks at `min: 0` — driven on a board, not asserted", () => {
-    // 🛑 **THIS CASE EXISTS BECAUSE THE SWEEP SAID THE OLD ONE DID NOT.** The
-    // rung this replaces read `exact` off the program literal and called that
-    // "nothing widened" — so the mutant that DELETES the rider check and makes
-    // EVERY search mandatory (`min: Math.min(max, candidates.length)` for all six
-    // pre-existing producers, so Nest Ball and Earthen Vessel can no longer be
-    // declined) survived untouched. A claim about the other producers has to be
-    // driven on one of the other producers.
-    //
-    // Earthen Vessel `sv06.5-096` parks its printed hand COST first
-    // (`payFromHand{1}`), so that is resolved and the SEARCH behind it is the
-    // subject — an authored registry program this slice did not write, whose
-    // `searchDeck` carries no `exact` and must still spell the printed "up to".
+  it("an OTHER search still parks at `min: 0` — driven on a board, not asserted", () => {
     const board = supporterBoard(11);
     const { state: withCard, uid } = toHand(board, "p1", EARTHEN_VESSEL);
     const { state: costParked } = apply(withCard, { type: "playTrainer", seat: "p1", uid });
@@ -611,10 +430,6 @@ describe("§4 the placement — the picks land on TOP and the deck never changes
   });
 
   it("the SHUFFLE happens, and it happens BEFORE the placement", () => {
-    // Seed a known deck order, play the card, pick the two cards that were NOT on
-    // top, and assert both halves at once: the picks are on top (so the placement
-    // ran last) and the tail is no longer the seeded sequence (so the shuffle ran
-    // at all). A program that shuffled AFTER placing would fail the first half.
     let board = supporterBoard(11);
     const deck = [...board.players.p1.deck];
     board = setDeck(board, "p1", deck);
@@ -784,20 +599,12 @@ describe("§7 the log and the events — a count row, and no card is named", () 
   });
 
   it("the LOOK is announced when the window opens, not when the answer lands", () => {
-    // 🛑 `DECK_TOP_REORDERED` rides the action that RAN `reorderTop` — the search
-    // resolve — and not the ordering resolve behind it. That is D241's rule ("the
-    // look is announced on every path, including the ones that do not park") and
-    // it is asserted here rather than assumed because the intuitive reading is
-    // the other one: the opponent is owed the fact that cards were LOOKED AT the
-    // moment they were, whether or not the looker ever answers.
     const { parked, prompt } = playCipher(supporterBoard(11));
     const { state: ordering, events: opened } = pick(parked, prompt.candidates.slice(4, 6));
     const row = find(opened, "DECK_TOP_REORDERED");
     expect(row?.count).toBe(2);
     expect(row?.seat).toBe("p1");
     expect(row?.actor).toBe("p1");
-    // And the answer itself files nothing — the sequence is private, so there is
-    // no second row and no card is ever named on either.
     const { events: answered } = order(ordering, [...orderPrompt(ordering).candidates].reverse());
     expect(find(answered, "DECK_TOP_REORDERED")).toBeUndefined();
   });
@@ -870,28 +677,6 @@ describe("§9 the short deck — the floor clamps and the second park collapses"
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 the version anchor", () => {
   it("the engine version moved PAST the D342 bump", () => {
-    // 🆕 D342 — re-pointed here from `derivedReorderTop.test.ts` (D341's file),
-    // which is where this assertion has lived since that slice. ONE bump: a new
-    // `dest` inhabitant, a new optional op field, one new reader and one new
-    // registry object — no persisted literal was RENAMED, so
-    // `MATCH_RECORD_VERSION` stays 20 and only the engine version moves.
-    //
-    // 🆕🛑🛑 **D343 — D342 WROTE THE LESSON AND THEN COMMITTED THE DEFECT ONE FILE
-    // OVER, IN THE SAME COMMIT.** Its own handoff says it plainly: *"A FILE THAT
-    // PINS A VERSION IT DOES NOT OWN IS A RUNG THAT REDDENS FOR SOMEONE ELSE'S
-    // REASON — `derivedReorderTop.test.ts` pinned `engineVersion` exactly; the
-    // anchor now lives with the slice that owns the number and the old site keeps
-    // the permanent `>=` claim."* It converted D341's site to `>=` and then wrote
-    // a fresh EXACT pin here, which went red at D343 for D343's reason. **THE
-    // REMEDY WAS UNDERSTOOD, APPLIED BACKWARDS, AND SURVIVED ITS OWN AUTHOR BY
-    // ONE SLICE.**
-    //
-    // So this site now keeps the claim that is permanently true of it: the row
-    // this file is about shipped at 0.248.0, and nothing later can un-ship it.
-    // **THE EXACT PIN LIVES IN `legacyEnergy.test.ts` AND NOWHERE ELSE** — it is
-    // the site whose whole subject IS the number, it is one of the four that a
-    // bump must touch anyway, and a second exact pin is not a second measurement,
-    // it is a second thing to remember.
     expect(engineVersion >= "0.248.0").toBe(true);
   });
 });

@@ -11,10 +11,6 @@ describe("lobbyDisplayName", () => {
   });
 
   it("reports NOTHING for a blank name rather than substituting one", () => {
-    // The caller falls back to the client-announced handle. The one substitution
-    // that suggests itself — the email, which AccountButton uses — must never be
-    // made here: that control shows a user their OWN address, while a lobby name
-    // is broadcast to the opponent and to spectators.
     expect(lobbyDisplayName("")).toBeNull();
     expect(lobbyDisplayName("   ")).toBeNull();
   });

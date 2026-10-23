@@ -1,9 +1,3 @@
-// The fixtures are verbatim live responses from https://api.tcgdex.net/v2/en/
-// (fetched 2026-07-09; the two D581 Trainer faces, sv07-129 and sv08-188,
-// fetched 2026-10-07). Positive tests: every fixture parses with its schema.
-// Negative tests: structurally broken payloads are rejected. For broader
-// coverage against the live API, run `bun packages/schema/scripts/validate-live.ts`.
-
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 import cardEnergyBasic from "./__fixtures__/card-energy-basic-sve-002.json";
@@ -80,8 +74,6 @@ describe("tcgdexCardSchema (full cards)", () => {
     }
   });
 
-  // 🆕 D581 — a Trainer's printed Pokémon face survives the parse instead of
-  // being stripped as an unknown key (the Antique Fossils, the Technical Machines).
   it("keeps a fossil Trainer's hp and Ability (sv07-129 Antique Cover Fossil)", () => {
     const card = expectParses(tcgdexCardSchema, cardTrainerFossil);
     expect(card.category).toBe("Trainer");

@@ -12,30 +12,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.47.0 → 0.48.0 — Mewtwo VSTAR swsh10.5-031 "Psy Purge": the CAPPED Hail Blade
-// shape. "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90
-// damage for each card you discarded in this way."
-//
-// The same three-part machinery Chien-Pao ex built (a `from: "yours"` whole-board
-// discard, `count: "any"` declinable, `recordAs: "discarded"` feeding
-// `damageDefender`), plus ONE new field:
-//   • `cap: 3` — bounds the `count: "any"` up-to BELOW the whole board, the
-//     printed "up to N". The park's `upTo` max becomes min(cap, offered), and the
-//     wire validator rejects a pick above it.
-// And the first authored attack on a MULTI-attack card: index-1 "Star Raid" must
-// fall through to unsimulated, which is WHY the `programFor(id)?.attack` seam is
-// keyed by attack INDEX (D97) — a card authors only the attacks it needs.
-
-/** The VERBATIM swsh10.5-031 print (tcgdex-confirmed). 🆕🆕 **D402 RE-POINTED THIS
-    COMMENT'S CLAIM, EXACTLY AS IT DID HAIL BLADE'S** (D178: kept, not deleted). It
-    read *"Like Hail Blade's, the deriver refuses this sentence"* — true from D97 to
-    D401 and false now, on purpose. *"The registry program is authoritative"* is
-    unchanged: `attack.ts` reads the row first, so this card's board did not move.
-    ⚠️ AND IT IS THE SPELLED-OUT `Psychic` THAT MAKES THIS SENTENCE WORTH ASSERTING
-    SEPARATELY FROM HAIL BLADE'S BRACE-CODED `{W}` — the anchor's notation
-    alternations are built from `ENERGY_TYPE_BY_NAME` and `ENERGY_TYPE_BY_CODE`, and
-    these two printings are the only place both are pinned against a hand-authored
-    program that was written years before either alternation existed. */
 const PSY_PURGE_TEXT =
   "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90 damage for each card you discarded in this way.";
 
@@ -56,11 +32,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** P1 fields Mewtwo VSTAR with `energy` Basic {P} attached — two pay Psy Purge's
-    {P}{C}, and ALL of them are discard fuel (a cost is not spent) — against a P2
-    Active of `defender` (default: another Mewtwo VSTAR, whose 280 HP survives the
-    capped max of 90 × 3 = 270). setActiveFromDeck displaces each setup Active to
-    the bench, so a KO always has a Pokémon to promote into. */
 function psyPurge(seed: number, opts: { energy: number; defender?: string }): GameState {
   let state = setActiveFromDeck(board(seed), "p1", "swsh10.5-031");
   state = attachFromDeck(state, "p1", "fix-psychic-energy", opts.energy);
@@ -95,11 +66,6 @@ describe("Mewtwo VSTAR 'Psy Purge' — the REGISTRY-authored attack, keyed by in
     // The index-keying, from the other side: "Star Raid" (index 1) is NOT authored,
     // so it cannot inherit Psy Purge's program.
     expect(programFor("swsh10.5-031")?.attack?.[1]).toBeUndefined();
-    // 🆕🆕 **D402 — WAS `toBeNull()` FROM D97 TO D401.** The CAP is what this rung
-    // now pins on both producers at once: the derived program must carry `cap: 3`
-    // and not a bare `count: "any"`, so an anchor that captured the "up to N" and
-    // then dropped it — an uncapped Psy Purge offering the whole board — reddens
-    // here as well as in D402's own suite.
     expect(deriveAttackEffect(PSY_PURGE_TEXT)).toEqual(AUTHORED);
   });
 
@@ -112,9 +78,6 @@ describe("Mewtwo VSTAR 'Psy Purge' — the REGISTRY-authored attack, keyed by in
 
 describe("Psy Purge — the CAP: 'up to 3', not the whole board", () => {
   it("caps the upTo park at 3 even with more {P} attached", () => {
-    // Five {P} on the Active, but "up to 3": the ceiling is the CAP, not the offer.
-    // Every {P} still shows as a candidate row — you choose WHICH three — but the
-    // scope forbids a fourth, and the printed caption says so.
     const state = psyPurge(1, { energy: 5 });
     const offered = activeEnergy(state, "p1");
     deepFreeze(state);
@@ -246,10 +209,6 @@ describe("Psy Purge — the decline, and the suppressed printed base", () => {
 
 describe("Psy Purge — the multi-attack card: index 1 is a DIFFERENT attack", () => {
   it("Star Raid (index 1) does NOT inherit the program — it stays unsimulated", () => {
-    // The whole reason the seam is index-keyed (D97). If it were bound to the card
-    // id alone, declaring Star Raid would park on Psy Purge's discard. Instead
-    // index 1 finds no authored program, the deriver refuses its VSTAR-Power text,
-    // and it is loudly flagged — no discard prompt, no damage.
     const state = psyPurge(7, { energy: 2 });
     const { state: done, events } = mustApply(state, starRaid);
 
@@ -284,9 +243,6 @@ describe("Psy Purge — genuine attack damage, not flat counters (§8.5)", () =>
   });
 
   it("the KO it causes owes a VSTAR's 2 Prizes (D93)", () => {
-    // Mewtwo VSTAR vs Mewtwo VSTAR: 280 HP pre-damaged to 20, so 90 × 3 = 270 is
-    // lethal. "VSTAR" is a 2-Prize rule box (§8.1) — the first VSTAR the engine's
-    // authored pool KOs, and a witness that D93's prizeValueOf reads the name.
     let state = psyPurge(9, { energy: 5, defender: "swsh10.5-031" });
     state = setDamage(state, "p2", 20);
     const koed = state.players.p2.active?.stack.at(-1) ?? "";

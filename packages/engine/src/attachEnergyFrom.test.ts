@@ -15,18 +15,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// M5 op-slice — attachEnergyFrom (§6 energy acceleration), the top new-op unlock
-// from the coverage backlog. A new interpreter op attaches ONE Basic Energy from
-// a SOURCE (the controller's hand or discard pile) onto a CHOSEN own Pokémon:
-//   • Quaquaval "Energy Carnival" — a Basic Energy from HAND, once/turn;
-//   • Baxcalibur "Super Cold" — a Basic {W} from HAND, REPEATABLE (oncePerTurn:false);
-//   • fix-attacher "Recharge" — FIXTURE for the DISCARD-source + type-filter branch.
-// Same-type Basic Energy is fungible, so the only decision is the TARGET (parks
-// on choosePokemon); a source with no matching Energy blocks the Ability (whiff).
-// 🆕 Card revision B01: "fungible" holds for a TYPED noun only. Quaquaval's bare "a Basic Energy
-// card" over a dealt hand holding several types now asks WHICH card after the target (a
-// `chooseCards`, `dest: "attach"`); `useAttach` answers it with the {W} these rungs stage.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -42,8 +30,6 @@ function attachBoard(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** 🆕 Card revision B01 — answer the card question if one is parked: the first offered
-    `fix-water-energy` (the card these rungs stage), else the first candidate. */
 function answerEnergyPick(state: GameState): { state: GameState; events: GameEvent[] } {
   const phase = state.phase;
   if (phase.kind !== "effect:choose" || phase.prompt.kind !== "chooseCards")
@@ -58,10 +44,6 @@ function answerEnergyPick(state: GameState): { state: GameState; events: GameEve
   });
 }
 
-/** Use an Ability, then (if it parked on the target choice) attach to the ref.
-    Returns the resulting state AND the attached Energy uid (from ENERGY_ATTACHED)
-    — ~~the energy is fungible, so the op picks the first match, not a pre-chosen one~~ (card
-    revision B01: a typed noun still picks the first match; an untyped one asks, `answerEnergyPick`). */
 function useAttach(
   state: GameState,
   abilityName: string,
@@ -112,8 +94,6 @@ describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
       seat: "p1",
       choice: { kind: "pokemon", ref: ACTIVE_REF },
     });
-    // ~~Any Basic Energy is fungible — the op picks the first in hand; read it back.~~ Card revision
-    // B01: the dealt hand holds more than one Basic type, so the card is asked; the {W} is answered.
     const { state: done, events } = answerEnergyPick(targeted.state);
     const attached = find(events, "ENERGY_ATTACHED");
     expect(attached).toMatchObject({ seat: "p1" });

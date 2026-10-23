@@ -30,98 +30,9 @@ import {
   deepFreeze,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// 0.195.0 → 0.196.0 — D282: `DamageCountSource.yourBenchCount` AND THE SPLIT ANCHOR.
-//
-// TWO mechanisms, and the second one is the slice. The first is a rider by every
-// measure D193 set for this family (one union member, one evaluator `case`, two
-// regexes, two reader arms); the second changes WHICH STRING the seven readers
-// see, and it is the reason 7 of this member's 13 legal printings were
-// unreachable while its arithmetic was two lines away.
-//
-// ── 🛑 THE LEADING-CLAUSE CENSUS, RE-QUERIED FIRST — AND IT SAYS BUILD NARROW ──
-//
-// D281's handoff asked for one number before any design: *how many legal attack
-// units carry a leading clause of any kind*, "because that number is the entire
-// case for doing it generically", and predicted it is LARGER than 13. **IT IS
-// NOT. IT IS EXACTLY 13.** Remote D1 `colorless`, 2026-08-08, `json_each` over
-// `attacks_json`, five rungs and what each ACTUALLY returned:
-//
-//   1,732  legal attack units                        (the whole column)
-//     613  contain a sentence break (". ")           (multi-sentence)
-//     216  open "Flip …", 91 "This …", 89 "Search …" (the leading word census;
-//          48 "You …", 45 "Discard …", 16 "If …")     these are BODIES, not clauses
-//      16  open "If " AND are multi-sentence
-//       3  open "You can use this attack only if …"  (Illumise, Scream Tail ex ×2)
-//      ──
-//      13  a LEADING TIMING GATE with a body behind it — and every one of the 13
-//          is a D281 `attackGate` row. 10 of the 16 `If ` rows plus the 3 above.
-//
-// ⚠️ **THE OTHER 6 `If ` ROWS ARE NOT LEADING CLAUSES AND MUST NOT BE TREATED AS
-// ONE.** Chi-Yu `sv06-039`, Sandy Shocks `sv05-098`, Sawk `sv10.5w-049`/`-130`,
-// Ting-Lu `sv06-110`, Wo-Chien `sv08-015`: in each the `If` clause IS the
-// substance of the attack (a conditional bonus, a "does nothing" requirement, a
-// conditional snipe), and 5 of the 6 are already pinned in attack.ts as the
-// "rider-on-compound" deferrals — a DIFFERENT mechanism (a sentence-list composer)
-// that this slice deliberately does not build.
-//
-// 🛑 **SO THE HANDOFF'S OWN CONTINGENCY FIRES: "if it is not larger, REPORT THAT
-// AND BUILD THE NARROW THING — a generic mechanism whose population is one family
-// is scaffolding."** `splitAttackGateClause` is the narrow thing: a CLOSED list of
-// the three printed gate spellings, anchored at `^`, whose one call site fires
-// only where `attackGateOf` says the clause is already represented.
-//
-// ── THE POPULATION `yourBenchCount` REACHES — 13 PRINTINGS, TWO FOLDS ────────
-//
-//   n  fold      sentence                                     ids
-//   3  ADD       "This attack does 20 more damage for each     sv09-051 Tapu Koko ex,
-//                 of your Benched Pokémon."                    sv10.5b-076, sv10.5b-153
-//   3  MULTIPLY  "This attack does 20 damage for each of       sv06-018 Dipplin,
-//                 your Benched Pokémon."                       sv06-170, sv08.5-010
-//   7  MULTIPLY  the same sentence at 30, BEHIND the D281      Terapagos ex sv07-128/
-//     +SPLIT      BAN clause                                    -170/-173/sv08.5-092/
-//                                                               -169/-180/svp-165
-//   ──
-//  13  legal. Pool-only and NOT arms: `svp-027`'s "10 more" (the additive sentence
-//      at `legal_standard = 0`) and `sv03-022`/`sv04.5-005`/`-213`'s
-//      "…Benched Pokémon **that has any {G} Energy attached**." — a
-//      PREDICATE-narrowed noun, 0 legal, refused by the anchors and asserted so.
-//
-// ⚠️ AND A FOURTEENTH PRINTING RIDES THE SPLIT WITHOUT TOUCHING THIS MEMBER:
-// Volbeat `sv06-009` "Quick Sign", whose bench-search body effects.ts has named
-// as a deferral since D230 for exactly this reason. **14 printings BUILT: 6 raw +
-// 7 Terapagos + 1 Volbeat.**
-//
-// ── 🛑 WHAT THIS SUITE EXISTS TO PIN, IN THE ORDER IT PINS IT ────────────────
-//
-// 1. 🛑 **THE BOARD WHERE THE SPLIT IS DENIED, FIRST** (§4). D278/D279's standing
-//    lesson is that a permission's natural test is written on the board it is
-//    obviously about. The dangerous direction here is the opposite one: a build
-//    that splits on TEXT alone silently DELETES a printed restriction from any
-//    card whose clause is not represented. So §4 authors a body printing the
-//    Terapagos sentence VERBATIM with NO `attackGate`, and asserts it keeps its
-//    whole string and stays loud. A text-only split is green on every other line
-//    in this file.
-//    🆕🆕 **D444 — AND THAT RUNG WAS PINNING HALF A DEFECT.** "Keeps its whole
-//    string and stays loud" is a claim about the DAMAGE. The RULE on the same body
-//    was never asked about, and it was **silently absent**: measured before D444,
-//    `UNGATED_TWIN` could declare "Unified Beatdown" on exactly the turn its own
-//    printed sentence forbids. `attackGateOf` is `registry ?? derived` from that
-//    head, so §4 now drives the rule on `UNGATED_TWIN` and keeps the "text alone
-//    gates nothing" half on `NEAR_MISS_TWIN`, whose clause is one token off the
-//    table and therefore genuinely unrepresented. The suite is now 24 rungs, not
-//    23, because the two halves are two claims.
-// 2. **THE THREE COUNT SOURCES DISAGREE ON ONE BOARD** (§5). 3 mine / 1 theirs
-//    makes `yourBenchCount` 3, `opponentBenchCount` 1 and `bothSidesBenchCount` 4
-//    — three distinct numbers on one setup, so an arm that answered its
-//    neighbour's question cannot pass.
-// 3. **THE SPLIT DOES NOT LOOSEN AN ANCHOR** (§3/§6). It hands a WHOLE sentence
-//    to unchanged `^…$` patterns, so a body the readers refuse is still refused
-//    LOUDLY — and §6 asserts the remaining three gate families report their BODY
-//    alone on ATTACK_EFFECT_SKIPPED, which is the observable difference between
-//    "the clause was accounted for" and "the clause was dropped".
-// 4. **`MATCH_RECORD_VERSION` STAYS 14, DRIVEN BOTH WAYS** (§7).
 
 // ── the printed sentences, byte-for-byte off the D1 ─────────────────────────
 
@@ -138,8 +49,6 @@ const ILLUMISE_BODY =
   "Shuffle 1 of your opponent's Benched Pokémon and all attached cards into their deck.";
 const DIPPLIN_TEXT = "This attack does 20 damage for each of your Benched Pokémon.";
 const TAPU_KOKO_TEXT = "This attack does 20 more damage for each of your Benched Pokémon.";
-/** ⚠️ 0 LEGAL, 3 PRINTED — the PREDICATE-narrowed noun, and the one near miss a
-    `[^.]*` noun would have swallowed. */
 const NARROWED_NOUN =
   "This attack does 40 more damage for each of your Benched Pokémon that has any {G} Energy attached.";
 
@@ -153,29 +62,7 @@ const TERAPAGOS_IDS = [
   "svp-165",
 ] as const;
 
-// ── the local pool (FIXTURE_POOL untouched — D190's idiom, D275's `cardPool`) ─
-
-/** 🛑 THE CONTROL THIS WHOLE SUITE RESTS ON: the Terapagos sentence, VERBATIM,
-    on a body with NO registry row and therefore NO `attackGate`. A split keyed on
-    TEXT rather than on the authored gate resolves this card's damage and deletes
-    its printed restriction — and would be green on every other assertion here.
-
-    🆕🆕 **D444 — "AND THEREFORE NO `attackGate`" IS NO LONGER TRUE, AND THE OLD
-    RUNG THIS BODY CARRIED WAS PINNING A SILENT DEFECT.** `attackGateOf` is
-    `registry ?? timingGateFromAttackText` from D444's head, so this body derives the
-    same `barredIf` its registered twins author. What §4 used to assert — that the
-    body keeps its whole string and stays LOUD — was TRUE about the damage half and
-    said nothing about the RULE half, which was **silently absent**: MEASURED before
-    the change, this body could declare "Unified Beatdown" on exactly the turn its own
-    printed sentence forbids. §4 now drives the rule. The "text alone gates nothing"
-    discrimination moves to `NEAR_MISS_TWIN` below (D418: after re-pointing, ask what
-    the OLD claim could catch that the new one cannot). */
 const UNGATED_TWIN = "fix-d282-ungated-twin";
-/** 🆕🆕 **D444 — THE NEAR-MISS, AND IT IS WHAT KEEPS §4 A PAIR.** One token off the
-    printed clause ("next" for "first"), so it is not a row of `ATTACK_GATE_CLAUSES`,
-    derives no gate, keeps its whole printed string and stays on the loud path. ⚠️
-    Differs on EXACTLY ONE AXIS (D427) — a near-miss that were also re-worded or
-    re-cased could not show WHICH feature did the refusing. */
 const NEAR_MISS_TWIN = "fix-d444-near-miss-twin";
 const NEAR_MISS_TEXT =
   "If you go second, you can't use this attack during your next turn. This attack does 30 damage for each of your Benched Pokémon.";
@@ -184,10 +71,6 @@ const FILLER = "fix-d282-filler";
 const ENERGY = "fix-d282-energy";
 
 function terapagos(id: string): Card {
-  // Every scalar re-read off the D1 row (D146): hp 230, {C}, retreat 2, "30×" on
-  // idx 0 at {C}{C} and "Crown Opal" 180 at {G}{W}{L}. ⚠️ THE PRINTED "30×" IS
-  // LOAD-BEARING — the multiply fold DROPS the printed base, so a build that kept
-  // it would read 30 + 30×n here and only here.
   return battler(id, {
     name: "Terapagos ex",
     hp: 230,
@@ -298,19 +181,12 @@ const DECK = deckOf({
   "sv06-018": 4,
   "sv09-051": 4,
   [UNGATED_TWIN]: 4,
-  // 🆕🆕 D444 — the near-miss control; `ENERGY` drops 24 → 20 to keep the 60 honest.
   [NEAR_MISS_TWIN]: 4,
   [FILLER]: 8,
   [ENERGY]: 20,
 });
 
-/** Two seeds — nothing below rests on one shuffle (D270). */
 const SEEDS = [5171, 5179] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -319,17 +195,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
-/** D277's shape: the FIRST PLAYER is a parameter, because everything the gate
-    half of this file asserts is a per-seat fact. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -355,16 +220,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** `seat`'s Active is `activeId`, its Bench is EXACTLY `bench` fillers, the
-    opponent's is exactly `foeBench`, and two {C} are attached so no refusal below
-    can ever be an unpaid cost. Every count this suite measures is a POPULATION,
-    so both Benches are cleared first — a body the shuffle placed would move the
-    answer silently.
-
-    ⚠️ `passes` IS LOAD-BEARING AND IS NEVER DEFAULTED SILENTLY. §4 bans every
-    attack on turn 1, so a damage assertion made on turn 1 would be measuring the
-    first-turn ban rather than the fold; the turns are passed BEFORE the surgery
-    so that no draw or prize step can move a Bench this suite counts. */
 function board(
   seed: number,
   first: Seat,
@@ -397,34 +252,14 @@ function swing(state: GameState, seat: Seat, index: number) {
   return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. THE CENSUS, against the committed corpus rather than against memory.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D282 §1 — the gate-clause census (LEADING, and since D541 TRAILING), re-derived at HEAD", () => {
-  it("🛑 the corpus holds exactly 7 gate sentences / 17 printings (🆕 D541 6/14 → 7/17; 🆕🆕 D545 → 9/19), and NO other leading clause", () => {
+  it("the corpus holds exactly 7 gate sentences / 17 printings ( D541 6/14 → 7/17; D545 → 9/19), and NO other leading clause", () => {
     const corpus = legalAttackCorpus();
     const gated = corpus.filter(([, text]) => splitAttackGateClause(text) !== null);
-    // 🆕🆕 D395 — 5/13 -> **6/14**: Miltank `sv08.5-081`'s *"You can use this attack
-    // only if this Pokémon used Rollout during your last turn."* — a FOURTH row in
-    // `ATTACK_GATE_CLAUSES`, and the first that is a whole printed effect text
-    // rather than a leading clause. ⚠️ **IT MOVES THIS NUMBER AND NOT THE
-    // `leadingIf` ONE BELOW**, which is exactly the separation the comment there
-    // predicted a fourth spelling would test: the sentence neither starts with
-    // `If ` nor contains a `. `, so it is in NEITHER of that filter's two halves.
-    // 🆕🆕🆕 **D541 6/14 → 7/17** — the TRAILING gate clause (`censusAttackCorpus.ts` file line 82, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, **1 sentence / 3 legal printings**). ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — THEY DISAGREE** (D451), so this site was MEASURED and not copied from its neighbour.
-    expect(gated.length).toBe(9); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate sentences, 7 → 9 — both new rows are clause-only (like Miltank's, D395), so like it they move THIS number and NOT the `leadingIf` one below.)
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19); // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate printings, 17 → 19.)
+    expect(gated.length).toBe(9);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19);
 
-    // ⚠️ THE NEGATIVE HALF, AND IT IS THE ONE THAT DECIDED THE DESIGN. Every OTHER
-    // multi-sentence corpus row that opens with "If " is a sentence whose `If`
-    // clause is the SUBSTANCE — no split may touch them. Six of them, and the
-    // count is asserted so that a later slice adding a fourth gate spelling to
-    // `ATTACK_GATE_CLAUSES` moves the first number and not this one.
     const leadingIf = corpus.filter(([, text]) => text.startsWith("If ") && text.includes(". "));
-    // 8 DISTINCT sentences / 16 printings. Three of the eight are gate spellings
-    // (Terapagos ex, Volbeat, Exeggcute) carrying 10 of the 16 printings; the
-    // other five are the substantive ones, 6 printings between them.
     expect(leadingIf.length).toBe(8);
     expect(leadingIf.reduce((sum, [units]) => sum + units, 0)).toBe(16);
     const substantive = leadingIf.filter(([, text]) => splitAttackGateClause(text) === null);
@@ -437,10 +272,6 @@ describe("D282 §1 — the gate-clause census (LEADING, and since D541 TRAILING)
     expect(corpus.get(TAPU_KOKO_TEXT)).toBe(3);
     expect(corpus.get(DIPPLIN_TEXT)).toBe(3);
     expect(corpus.get(TERAPAGOS_TEXT)).toBe(7);
-    // 3 + 3 + 7 = 13, and the split half is 7 of them.
-    // ⚠️ 0-LEGAL AND SO ABSENT FROM THE CORPUS ENTIRELY — asserted rather than
-    // assumed, because "the reader refuses it" and "the corpus never offers it"
-    // are two different guarantees and only the first is a code fact.
     expect(corpus.get(NARROWED_NOUN)).toBeUndefined();
     expect(corpus.get("This attack does 10 more damage for each of your Benched Pokémon.")).toBe(
       undefined,
@@ -464,7 +295,7 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
     });
   });
 
-  it("🛑 THE POSSESSIVE IS THE WHOLE DISCRIMINATOR — the three Bench nouns stay apart", () => {
+  it("THE POSSESSIVE IS THE WHOLE DISCRIMINATOR — the three Bench nouns stay apart", () => {
     // One word separates these three sentences and they must produce three
     // different members. A reader that dropped the possessive would collapse them.
     expect(
@@ -491,7 +322,7 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
     ).toEqual({ per: 20, count: { kind: "damageCountersOnYourBench" } });
   });
 
-  it("⚠️ REFUSES the PREDICATE-narrowed noun (3 printed, 0 legal) and the anchors' near misses", () => {
+  it("REFUSES the PREDICATE-narrowed noun (3 printed, 0 legal) and the anchors' near misses", () => {
     const read = (t: string) => deriveAttackDamageBonus(t) ?? deriveAttackDamageMultiplier(t);
     expect(read(NARROWED_NOUN)).toBeNull();
     for (const sentence of [TAPU_KOKO_TEXT, DIPPLIN_TEXT]) {
@@ -500,7 +331,6 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
       expect(read(`Flip a coin. If heads, ${sentence.toLowerCase()}`)).toBeNull(); // leading text
       expect(read(`${sentence} Then, shuffle your deck.`)).toBeNull(); // trailing text
     }
-    // 🛑 AND THE GATED PRINTING IS REFUSED WHOLE, WHICH IS WHY THE SPLIT EXISTS.
     expect(read(TERAPAGOS_TEXT)).toBeNull();
   });
 
@@ -518,15 +348,9 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
 // 3. The split anchor as a PURE function — three clauses, and nothing else.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 🆕🆕 D395 — Miltank `sv08.5-081` idx 1 "Moomoo Rolling", the FOURTH
-    `ATTACK_GATE_CLAUSES` row and the only one that is a whole printed effect text.
-    Transcribed from the printing, not paraphrased. */
 const ROLLOUT_GATE_TEXT =
   "You can use this attack only if this Pokémon used Rollout during your last turn.";
 
-/** 🆕🆕🆕 **D541** — the Terapagos ex clause on its OWN, so the boundary rungs below can put a
-    listed clause at EITHER end of a body. Lifted off the assertion above rather than retyped:
-    the apostrophe in *"can't"* is U+0027 and a curled one would silently miss the closed list. */
 const TERAPAGOS_GATE = "If you go second, you can't use this attack during your first turn.";
 
 describe("D282 §3 — splitAttackGateClause", () => {
@@ -545,25 +369,10 @@ describe("D282 §3 — splitAttackGateClause", () => {
     });
   });
 
-  // 🆕🆕🆕 **D541 — THIS TITLE WAS A WITHDRAWN CLAIM LEFT STANDING, AND A REVIEW FOUND IT.**
-  // It read *"🛑 IS ANCHORED AT `^` — a gate clause anywhere but the front is not a split"*,
-  // which was true until D541 keyed the SAME closed literal list at the TRAILING end.
-  // 🛑 **AND THE LESSON IS THE OPPOSITE OF THE ONE THE SLICE FIRST WROTE DOWN.** The close-out
-  // claimed none of its withdrawn claims was reachable by `git grep -F` over the sentence. This
-  // one WAS: `git grep -n -F "anywhere but the front"` returns TWO lines, and the sweep that
-  // re-pointed `rolloutGate.test.ts:716` stopped at the first. The failure was not an ungreppable
-  // claim, it was an UNFINISHED GREP — D539's rule failing from the other end, and the count is
-  // SIX sites, not five.
-  // 🛑 **THE PROPERTY THAT SURVIVES IS RE-STATED RATHER THAN DROPPED** (D178/D418): the clause
-  // must sit at a SENTENCE BOUNDARY — `^` with `. ` behind it, or a SPACE with end-of-string in
-  // front of it. A clause quoted MID-string is still not a split. ⚠️ **AND THE OLD RUNGS WERE
-  // GREEN ONLY BECAUSE OF THE BOARDS THEY HAPPENED TO USE** — not one of them put a listed clause
-  // at the END — so the trailing direction is driven here rather than assumed.
-  it("🛑 SITS AT A SENTENCE BOUNDARY — mid-string is not a split, and EITHER end is", () => {
+  it("SITS AT A SENTENCE BOUNDARY — mid-string is not a split, and EITHER end is", () => {
     // ① MID-STRING, body on both sides: neither boundary is there, at either end.
     expect(splitAttackGateClause(`Draw a card. ${TERAPAGOS_TEXT}`)).toBeNull();
     expect(splitAttackGateClause(`Draw a card. ${TERAPAGOS_GATE} Then, draw a card.`)).toBeNull();
-    // ② 🆕 THE TRAILING END IS NOW A SPLIT — the rung whose absence let the old title stand.
     expect(splitAttackGateClause(`${TERAPAGOS_BODY} ${TERAPAGOS_GATE}`)).toEqual({
       clause: TERAPAGOS_GATE,
       body: TERAPAGOS_BODY,
@@ -578,33 +387,17 @@ describe("D282 §3 — splitAttackGateClause", () => {
     expect(splitAttackGateClause("")).toBeNull();
   });
 
-  it("🆕🆕 a clause with NO BODY behind it IS a split, and `body` is the empty string", () => {
-    // 🛑 **D395 REVERSES D282's EMPTY-REMAINDER REFUSAL, AND THE REFUSAL NAMED ITS
-    // OWN TRIGGER.** This case used to assert `null`, and its comment said why:
-    // *"No legal printing is clause-only today (all 13 carry a body), so this is a
-    // guard against a future one."* Miltank `sv08.5-081` idx 1 IS that printing, so
-    // the premise has expired. ⚠️ **AND THE OLD ANSWER WAS THE UNSAFE ONE ONCE IT
-    // WENT LIVE**, which is the opposite of what the old comment claimed: `null`
-    // hands the WHOLE printed string to the readers, every one of them refuses it,
-    // and `ATTACK_EFFECT_SKIPPED` fires naming a sentence the §8 seam enforced in
-    // full. `""` is what `attack.ts` already spells as "no text" at every
-    // downstream site.
+  it("a clause with NO BODY behind it IS a split, and `body` is the empty string", () => {
     expect(splitAttackGateClause(ROLLOUT_GATE_TEXT)).toEqual({
       clause: ROLLOUT_GATE_TEXT,
       body: "",
     });
-    // The two FIRST-TURN spellings answer the same way when nothing follows them —
-    // no legal printing spells either that way today, and the branch is one rule
-    // rather than one card.
     expect(
       splitAttackGateClause("If you go first, you can use this attack during your first turn."),
     ).toEqual({
       clause: "If you go first, you can use this attack during your first turn.",
       body: "",
     });
-    // ⚠️ TRAILING WHITESPACE IS THE SAME CASE AND NOT A THIRD ONE — the leading
-    // `trim()` is what makes it so, and this is the assertion that says the branch
-    // is reached through the trim rather than around it.
     expect(
       splitAttackGateClause("If you go first, you can use this attack during your first turn.  "),
     ).toEqual({
@@ -613,10 +406,7 @@ describe("D282 §3 — splitAttackGateClause", () => {
     });
   });
 
-  it("🛑 DOES NOT LOOSEN ANY READER — all TWELVE still refuse the WHOLE gated string", () => {
-    // The split's entire safety argument: it produces a different STRING, and the
-    // anchors are untouched. If any reader ever resolves the compound directly,
-    // `censusAtHead`'s split term double-counts and this line is the earlier warning.
+  it("DOES NOT LOOSEN ANY READER — all TWELVE still refuse the WHOLE gated string", () => {
     const readers = [
       deriveAttackEffect,
       deriveAttackDamageBonus,
@@ -624,75 +414,33 @@ describe("D282 §3 — splitAttackGateClause", () => {
       deriveAttackDamageMultiplier,
       deriveAttackCoinFlip,
       deriveAttackRequirement,
-      // 🆕🆕 D419 — COMPLETED TO THE MODULE'S TWELVE. This list was hand-kept INLINE,
-      // which is why D418's survey of forty module-level `READERS` arrays did not see
-      // it at all. ⚠️ A REFUSAL OVER A SHORT LIST IS NOT FALSE, IT IS NARROWER — the
-      // missing reader is simply never asked and the rung stays green, which is the
-      // failure mode this whole run is about.
       deriveAttackBonusConsequent,
       deriveAttackCancelRequirement,
       deriveAttackDiscardScaledBoost,
       deriveAttackOptionalBoost,
       deriveAttackOptionalCostBoost,
-      // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-      // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-      // array's LAST entries plus its closing bracket, and appending moves that anchor
-      // without a character of it changing.
       deriveAttackPreDamage,
-      // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
       deriveAttackCopy,
       deriveAttackDamageSuppression,
     ];
-    // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
-    // The diff names the drifting reader; the COUNT is pinned separately because a
-    // diff alone stays GREEN when a slice deletes a reader from the module and from
-    // this list in the same commit.
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
     for (const text of [TERAPAGOS_TEXT, VOLBEAT_TEXT, ILLUMISE_TEXT]) {
-      // 🆕🆕 D419 — the claim the TITLE makes, taken off the module rather than off
-      // the list beside it. The loop below names WHICH reader broke and is kept for
-      // that; this line is what makes "no reader resolves the compound" true of the
-      // engine and not merely of this array.
       expect(resolvedByAnyReader(text), text).toBe(false);
       for (const read of readers) expect(read(text), text).toBeNull();
     }
-    // …and the BODIES behind all three resolve. 🆕 **D299 — ILLUMISE'S JOINED
-    // THEM, WHICH IS WHY THIS LINE IS AN ASSERTION AND NOT A COMMENT.** It was
-    // the measured 8-of-13's odd one out for seventeen slices ("Illumise's does
-    // not, and that is the measured 8-of-13"); `returnBenched` reads it, and
-    // `censusAtHead`'s split term moved 10 → 11 in the same commit.
     expect(deriveAttackDamageMultiplier(TERAPAGOS_BODY)).not.toBeNull();
     expect(deriveAttackEffect(VOLBEAT_BODY)).not.toBeNull();
     expect(deriveAttackEffect(ILLUMISE_BODY)).not.toBeNull();
-    // 🛑 AND THE SAFETY ARGUMENT IS UNCHANGED BY THAT: the loop above still shows
-    // every reader refusing Illumise's WHOLE gated string, so the new anchor is
-    // reached through the split and by no other route. A reader loosened to
-    // swallow the gate clause would satisfy the line above and FAIL the loop.
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. 🛑 THE BOARD WHERE THE SPLIT IS DENIED — written before the one where it works.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D282 §4 — the split fires ONLY where the gate is already accounted for", () => {
-  // 🆕🆕 **D444 — THIS RUNG HAS MOVED FROM `UNGATED_TWIN` TO `NEAR_MISS_TWIN`, AND
-  // THE MOVE IS THE ONLY WAY TO KEEP WHAT IT WAS FOR.** It asserted that a body
-  // whose clause is NOT represented keeps its whole string — the discrimination that
-  // makes `D282-split-fires-without-a-gate` killable. D444 made every clause in the
-  // table represented BY CONSTRUCTION (`attackGateOf` is `registry ?? derived`), so
-  // `UNGATED_TWIN` is no longer such a body and re-pointing this at it would assert
-  // something TRUE that nothing can falsify. `NEAR_MISS_TWIN` is such a body: one
-  // token off the printed clause, no table row, no gate, no split.
-  it("🛑 a NEAR-MISS clause keeps its whole string and stays LOUD — the split is a TABLE, not a pattern", () => {
+  it("a NEAR-MISS clause keeps its whole string and stays LOUD — the split is a TABLE, not a pattern", () => {
     expect(programFor(NEAR_MISS_TWIN)).toBeUndefined();
     expect(splitAttackGateClause(NEAR_MISS_TEXT)).toBeNull();
     const state = board(SEEDS[0], "p1", "p1", NEAR_MISS_TWIN, 3);
     const { events } = swing(state, "p1", 0);
-    // ⚠️ THE FOLD NEVER RAN, so the printed "30×" lands as an UNEXPLAINED flat 30
-    // — not the 90 the gated twin below deals off the identical Bench. That is the
-    // observable a text-only split would erase.
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     // …and the engine SAYS SO, with the WHOLE printed compound in the report and
     // the unexplained "×" beside it.
@@ -701,14 +449,8 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
     expect(skipped?.damageModifier).toBe("×");
   });
 
-  // 🆕🆕 **D444 — THE DEFECT THE OLD RUNG WAS PINNING, NOW DRIVEN THE OTHER WAY.**
-  it("🆕🆕 D444 — the UNGATED twin is now GATED off its own printed clause, with no registry row", () => {
+  it("D444 — the UNGATED twin is now GATED off its own printed clause, with no registry row", () => {
     expect(programFor(UNGATED_TWIN)).toBeUndefined();
-    // ① THE RULE. `passes = 1` lands on TURN 2 with `first = "p1"`, which is p2's
-    // OWN FIRST TURN as the going-SECOND player — the one board the printed clause
-    // names. 🛑 **BEFORE D444 THIS DECLARATION SUCCEEDED**: `attackGateOf` had one
-    // producer, keyed by card id, and an unregistered printing lost its rule in
-    // silence while the damage half of the same sentence was loudly withheld.
     const barred = board(SEEDS[0], "p1", "p2", UNGATED_TWIN, 3, 0, 1);
     expect(barred.turn).toBe(2);
     const refused = applyAction(deepFreeze(barred), { type: "attack", seat: "p2", index: 0 });
@@ -724,9 +466,6 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
     });
     expect(refusedReal.ok).toBe(false);
     expect(refusedReal.ok === false && refusedReal.error.code).toBe("ATTACK_PREVENTED");
-    // ② THE ADMISSION (D424: a refusal rung owes one on the same axis). On a turn
-    // the clause does NOT name, the same body resolves the fold to 90 — so the bar
-    // is a GATE and not a build that refuses everything.
     const { events } = swing(board(SEEDS[0], "p1", "p1", UNGATED_TWIN, 3), "p1", 0);
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
@@ -748,9 +487,7 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D282 §5 — the count, driven", () => {
-  it("🛑 3 MINE / 1 THEIRS: the answer is 3 × 30, not 1 × 30 and not 4 × 30", () => {
-    // Three distinct numbers on ONE setup, so an arm reading `defenderSeat` or
-    // summing both sides cannot pass. This is the mutant-killing board.
+  it("3 MINE / 1 THEIRS: the answer is 3 × 30, not 1 × 30 and not 4 × 30", () => {
     for (const seed of SEEDS) {
       const state = board(seed, "p1", "p1", "sv07-128", 3, 1);
       expect(find(swing(state, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(90);
@@ -761,7 +498,6 @@ describe("D282 §5 — the count, driven", () => {
     const state = board(SEEDS[0], "p1", "p1", "sv07-128", 0);
     const { events } = swing(state, "p1", 0);
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    // ⚠️ AND IT IS STILL NOT "SKIPPED" — the sentence resolved; it resolved to 0.
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
@@ -780,8 +516,6 @@ describe("D282 §5 — the count, driven", () => {
   });
 
   it("the ADDITIVE fold KEEPS the printed base: 60 + 2 × 20 = 100 (Tapu Koko ex)", () => {
-    // The un-gated half of the member, on the other fold, so the arm and the
-    // evaluator are exercised on a printing that never reaches the split.
     const state = board(SEEDS[0], "p1", "p1", "sv09-051", 2, 3);
     const { events } = swing(state, "p1", 0);
     expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(40);
@@ -799,26 +533,17 @@ describe("D282 §5 — the count, driven", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D282 §6 — the gate still bites, and the unread bodies stay loud", () => {
-  it("🛑 THE GATE IS UNTOUCHED: going second on turn 1, Terapagos is still BARRED", () => {
-    // The split runs AFTER the §4/§8 declaration seam, so a slice that reached the
-    // damage must not have reached it by loosening the gate. Driven from the seat
-    // that goes SECOND on its own first turn — the exact board D281 built.
-    // `passes: 1` puts p2 on turn 2 — p2's OWN first turn, having gone second.
+  it("THE GATE IS UNTOUCHED: going second on turn 1, Terapagos is still BARRED", () => {
     const turn = board(SEEDS[0], "p1", "p2", "sv07-128", 3, 0, 1);
     expect(turn.turn).toBe(2);
     const refused = applyAction(deepFreeze(turn), { type: "attack", seat: "p2", index: 0 });
     expect(refused.ok).toBe(false);
-    // …and the wire agrees, per row.
     const phase = redactGame(turn, "p2").phase;
     if (phase.kind !== "turn:action") throw new Error("expected turn:action on the wire");
     expect(phase.attacks.find((a) => a.index === 0)?.playable).toBe(false);
   });
 
   it("VOLBEAT's licensed body RUNS — the search program the split unblocked", () => {
-    // `sv06-009` idx 0 is D281's LICENCE arm: legal on turn 1 when you go first.
-    // Its body has been a named deferral in effects.ts since D230 for exactly the
-    // reason this slice removed. A `searchDeck` op parks for a choice, so the
-    // observable is the pending prompt rather than an event.
     const state = board(SEEDS[0], "p1", "p1", "sv06-009", 1, 0, 0);
     expect(state.turn).toBe(1);
     const { state: after, events } = swing(state, "p1", 0);
@@ -826,22 +551,7 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
     expect(after.pending).not.toBeNull();
   });
 
-  it("🆕 D299 — ILLUMISE's body is READ NOW, and the split is still what delivers it", () => {
-    // 🛑 **THIS TEST INVERTED AT D299 AND THE INVERSION IS THE POINT.** It read
-    // "ILLUMISE's body is STILL REFUSED, and the report names the BODY not the
-    // compound" — the loud `ATTACK_EFFECT_SKIPPED` path carrying the SPLIT half
-    // was the observable that told the two failure modes apart. `returnBenched`
-    // reads that body, so the loud row is gone and the observable moves to the
-    // effect itself; what does NOT change is the route, and that is what the
-    // second board below pins.
-    // p1 goes SECOND (first = p2) and attacks on turn 2 — its own first turn,
-    // which is the only board Illumise's `onlyIf` gate admits.
-    //
-    // ① The opponent's Bench is EMPTY (foeBench = 0), which on turn 2 going
-    // second is the ordinary board rather than an edge case: `parkOrForce` finds
-    // no candidate and the op is a silent no-op. 🛑 STILL NOT A SKIP — an effect
-    // that ran and found nothing is not an effect the engine could not read, and
-    // conflating the two is exactly what the old assertion was guarding.
+  it("D299 — ILLUMISE's body is READ NOW, and the split is still what delivers it", () => {
     const empty = board(SEEDS[0], "p2", "p1", "sv06-010", 1, 0, 1);
     const { state: afterEmpty, events: emptyEvents } = swing(empty, "p1", 0);
     expect(find(emptyEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
@@ -862,10 +572,6 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
     expect(returned?.actor).toBe("p1");
     expect(returned?.dest).toBe("deck");
     expect(after.players.p2.bench).toHaveLength(0);
-    // ⚠️ NOT A DECK-LENGTH ASSERTION. The attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so p2's own
-    // turn-start draw takes a card back off the deck in the same result — a
-    // length would net to +0 and read as "nothing happened". The uid is the
-    // observable that survives the draw.
     expect(returned?.uids).toEqual([benchedUid]);
     expect(one.players.p2.deck).not.toContain(benchedUid);
     expect(after.players.p2.deck).toContain(benchedUid);
@@ -878,8 +584,6 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
 
 describe("D282 §7 — the persisted shape is untouched", () => {
   it("a scaled attack and a plain one write the SAME top-level keys, against a literal anchor", () => {
-    // ⚠️ A DIFF BETWEEN TWO BOARDS FROM ONE BUILD IS A HALF-GUARD (D279) — it is
-    // blind to "every body grew a key". So the diff is PAIRED with a literal list.
     const scaled = swing(board(SEEDS[0], "p1", "p1", "sv07-128", 3), "p1", 0).state;
     const plain = swing(board(SEEDS[0], "p1", "p1", FILLER, 3), "p1", 0).state;
     expect(Object.keys(scaled).sort()).toEqual(Object.keys(plain).sort());
@@ -892,12 +596,11 @@ describe("D282 §7 — the persisted shape is untouched", () => {
         "lastKoMarks",
         "lastKoTurn",
         "oncePerGameSpent",
-        // 🆕 D283 — `handPlayLockedTurn`, the turn-scoped imposed hand-play bar.
         "handPlayLockedTurn",
         "pending",
         "phase",
         "players",
-        "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
+        "recentAttackers",
         "rngState",
         "stadium",
         "turn",
@@ -905,18 +608,7 @@ describe("D282 §7 — the persisted shape is untouched", () => {
     );
   });
 
-  it("🛑 NOTHING THIS SLICE ADDS CAN REACH A PERSISTED STRUCTURE — the source is a DERIVED value", () => {
-    // The version question, answered structurally rather than by inspection of one
-    // board. `DamageCountSource` is produced by a reader at attack time from the
-    // printed string and consumed inside the same call; it is NEVER stored, and the
-    // registry authors none of it. Measured as an absence with its own control: the
-    // whole registry is swept and the string `yourBenchCount` appears in no
-    // authored program at all, while `attackGate` (D281's field) appears in 13 —
-    // so the sweep is answering rather than empty.
-    // 🆕🆕 **D395 — THE 13 IS A FACT ABOUT `POOL`, NOT ABOUT THE REGISTRY**, and it
-    // stays 13 for that reason: the fourteenth gate (Miltank `sv08.5-081`) is driven
-    // from a LOCAL pool in `rolloutGate.test.ts` and never enters `FIXTURE_POOL`.
-    // `splitOrder.test.ts` §1 holds the registry-wide count, which IS 14.
+  it("NOTHING THIS SLICE ADDS CAN REACH A PERSISTED STRUCTURE — the source is a DERIVED value", () => {
     let programsWalked = 0;
     let gatesFound = 0;
     let countSourcesFound = 0;

@@ -12,19 +12,8 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D591 — WP20a: THE `me` ACTIVATED ABILITIES (the Flapping trio and the draw engines) ──
-//
-// 11 printed texts / 19 `me` printings on seven new registry objects, all on shipped vocabulary
-// (`drawCards`, `drawCards who: "eachPlayer"`, `attachEnergyFrom` `toSelf` from the hand,
-// `payFromHand`, `drawUntilHandSize`, `playableIf` with `allOf` / `yourNamedPokemonInPlay`, and
-// Flip the Script's `oncePerTurn: "sharedByName"`). Every id and text measured on the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was
-// referenced anywhere in the tree before this slice. The `30th` faces spell the Energy type as a
-// word ("Basic Fire Energy card") where the `mep` faces print "{R}": the same sentence, one object.
-// [🆕🆕🆕 D612: the ingest now writes the word form as "{R}" too (cardText.ts, WP06).]
-// No `me` row is a fixture, so the printed faces are carried HERE.
 
 const RUN_ERRAND =
   "Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn.";
@@ -46,7 +35,6 @@ const LUNATONE = ["me01-074", "mep-004", "me02.5-105"] as const;
 const DELPHOX = ["me04-013", "mep-074"] as const;
 
 type Lock = true | "sharedByName";
-/** [Ability name, the keyed printings, the printed lock, `activeOnly`]. */
 const ABILITIES: readonly (readonly [string, readonly string[], Lock, boolean])[] = [
   ["Run Errand", KANGASKHAN, "sharedByName", true],
   ["Alluring Wings", [FROSMOTH], true, true],
@@ -304,13 +292,6 @@ const DECK = deckOf({
   "fix-energy": 9,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4; both hands back into the decks and the Prizes swapped out
-    for deck filler, so every named card is findable (D590's `p1Turn`). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 5911, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -408,7 +389,7 @@ describe("D591 §2 — Run Errand: draw 2 from the Active Spot, one Run Errand p
     expect(refusal(use(state, "Run Errand", bench(0)))).toBe("ABILITY_ACTIVE_ONLY");
   });
 
-  it("🛑 a SECOND Kangaskhan (another printing) switched into the Active Spot the same turn is refused", () => {
+  it("a SECOND Kangaskhan (another printing) switched into the Active Spot the same turn is refused", () => {
     let state = used(table({ active: KANGASKHAN[0], hand: [] }), "Run Errand", ACTIVE);
     state = setActiveFromDeck(state, "p1", KANGASKHAN[3]); // the first one is displaced to the Bench
     expect(state.cardIdByUid[state.players.p1.active?.stack.at(-1) ?? ""]).toBe(KANGASKHAN[3]);
@@ -443,7 +424,6 @@ describe("D591 §3 — Alluring Wings: each player draws a card, from the Active
   });
 });
 
-/** [the printing, its `30th` copy, the Ability, partner A, partner B, own Energy, another Energy]. */
 const TRIO = [
   [MOLTRES[0], MOLTRES[1], "Fiery Flapping", ARTICUNO[0], ZAPDOS[0], R, W],
   [ZAPDOS[0], ZAPDOS[1], "Flash-Pop Flapping", MOLTRES[0], ARTICUNO[0], L, R],
@@ -509,7 +489,7 @@ describe("D591 §5 — Lunar Cycle: Solrock in play, a Basic {F} Energy paid, dr
     expect(refusal(use(noCost, "Lunar Cycle", bench(0)))).toBe("ABILITY_COST_UNMET");
   });
 
-  it("🛑 a second Lunatone (another printing) is refused the same turn", () => {
+  it("a second Lunatone (another printing) is refused the same turn", () => {
     let state = table({ active: SOLROCK, bench: [LUNATONE[0], LUNATONE[1]], hand: [F, F] });
     state = used(state, "Lunar Cycle", bench(0));
     expect(state.allowances.abilitiesUsed).toEqual(["*:Lunar Cycle"]);
@@ -544,12 +524,10 @@ describe("D591 §6 — Flaring Magic: a Basic {R} Energy paid, draw until 7, onc
 });
 
 describe("D591 §7 — the printed attacks these keys carry, and the version", () => {
-  it("the attacks left unbuilt are Delphox's, Frosmoth's and the `30th` Hail's markup — five printings (🆕🆕🆕 D607: Delphox's is built — WP28a; three left; 🆕🆕🆕 D612: Hail's is built — WP06; one left; 🆕🆕🆕 D615: Frosmoth's is built — WP31a; none left)", () => {
+  it("the attacks left unbuilt are Delphox's, Frosmoth's and the `30th` Hail's markup — five printings ( D607: Delphox's is built — WP28a; three left; D612: Hail's is built — WP06; one left; D615: Frosmoth's is built — WP31a; none left)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get("This attack does 30 damage for each Energy attached to all Pokémon.")).toBe(2);
     expect(me.get("Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.")).toBe(1);
-    // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06): the two `30th` Hail printings join the clean
-    // sentence's row (1 → 3), which a reader builds.
     expect(
       me.get(
         "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",

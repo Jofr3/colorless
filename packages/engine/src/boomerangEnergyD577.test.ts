@@ -4,22 +4,18 @@ import { returnsAfterAttackDiscard } from "./continuous";
 import type { GameEvent } from "./events";
 import { advance } from "./flow";
 import { applyAction, createGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, specialEnergy } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  specialEnergy,
+  must,
+  mustApply as run,
+} from "./testFixtures";
 import { type PendingStage, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D577 — BOOMERANG ENERGY `sv06-166`: DISCARDED BY ITS HOLDER'S OWN ATTACK, BACK AFTER ATTACKING ──
-//
-// *"As long as this card is attached to a Pokémon, it provides {C} Energy. If this card is discarded by an
-// effect of an attack used by the Pokémon this card is attached to, attach this card from your discard pile
-// to that Pokémon after attacking."*
-//
-// R-BE1 (only the ATTACKER's own Boomerang, only to the DISCARD PILE, only by the attack's program), R-BE2
-// (re-attached at the `attackEpilogue`, found by uid, nothing if the attacker or the card is gone), R-BE3
-// (each Boomerang returns), R-BE4 (a COPIED attack's discard returns to the copier — the record belongs to
-// the epilogue that runs), R-BE5 (the one writer is `discardEnergyApply`) — decisions.md D577.
 
 const BOOMERANG = "sv06-166";
 const DISCARDER = "d577b-discarder";
@@ -118,18 +114,6 @@ const DECK = deckOf({
   [FILLER]: 30,
   "fix-energy": 19,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -240,7 +224,6 @@ describe("D577 Boomerang §1 — the registry row", () => {
 
   it("returnsAfterAttackDiscard reads the card, not the zone", () => {
     const { state, energy } = table({ active: DISCARDER, energy: [BOOMERANG, "fix-energy"] });
-    // 🆕🆕🆕 D604 — the predicate takes the holder too (Nitro Fire's {R} gate); Boomerang names no type.
     const holder = state.players.p1.active;
     if (holder === null) throw new Error("no Active");
     expect(energy.map((uid) => returnsAfterAttackDiscard(state, uid, holder))).toEqual([

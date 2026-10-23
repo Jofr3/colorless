@@ -34,35 +34,8 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.306.0 → 0.307.0 — 🆕🆕 D402: THE DISCARD-COUNT-SCALED ATTACK.
-//
-// "<You may discard any amount of|Discard all|Discard up to N> <{X}|Type|Basic>
-//  Energy[ cards] from <this|your> Pokémon. This attack does P damage for each card
-//  you discarded in this way." — 6 sentences / 13 legal printings, read by
-// `ENERGY_DISCARD_SCALED_DAMAGE` into the two ops `registry.ts` has spelled BY HAND
-// on two cards since D96: `discardEnergy {recordAs: "discarded"}` then
-// `damageDefender {per, count: "discarded"}`.
-//
-// 🛑 THE SLICE IS A RE-PRICING OF A REFUSAL, AND WHAT WAS RE-DERIVED IS THE
-// REFUSAL'S REASON. D96 wrote "a variable-count park the deriver deliberately
-// refuses" on the day it INVENTED `count: "any"`, `recordAs` and `damageDefender`;
-// D97 added `cap`. The sentence was unreadable then because there was nothing to
-// read it INTO. Every piece has shipped since — so the arm costs one anchor.
-//
-// 🛑 AND ONLY THE MULTIPLY HALF IS TAKEN. §1 measures the split: the printed
-// "does N damage for each" DROPS the base (the "N×" IS the per-unit, which is what
-// a top-level `damageDefender` already means to `attack.ts`), while "does N MORE
-// damage for each" KEEPS it — and this op cannot express that, because its hit is a
-// separate `snipeActive` pass and Resistance, the reduction passive and the §8.1
-// survival clamp are each paid once PER HIT. The additive half is a second reader,
-// which is D163's finding on the sibling count source reproduced.
-
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 
-/** Every reader `exOnlyActive.test.ts` and `censusAtHead.test.ts` sweep with, so a
-    sentence this file calls "unread" is unread by the WHOLE engine and not merely by
-    the one reader it is about (D382's rule: a refusal claim that only asks its own
-    producer is a claim about nothing). */
 const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -74,19 +47,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
-  // 🆕🆕 D419 — the TWELFTH reader (D417, `deriveAttackCancelRequirement`), which
-  // this list never had.
-  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
-  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
-  // `];`, and appending moves that anchor without a character of it changing —
-  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
   deriveAttackCancelRequirement,
-  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-  // array's LAST entries plus its closing bracket, and appending moves that anchor
-  // without a character of it changing.
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
@@ -94,10 +56,6 @@ const READERS: readonly ((t: string) => unknown)[] = [
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 
-/** The SIX printed sentences this anchor takes, transcribed from
-    `legalAttackCorpus()` byte for byte. §1 asserts each one is really in the column
-    at the printing count quoted beside it — the attribution control without which a
-    paraphrase would pass every rung below it (D183). */
 const TAKEN: readonly (readonly [number, string])[] = [
   [
     6,
@@ -125,33 +83,15 @@ const TAKEN: readonly (readonly [number, string])[] = [
   ],
 ];
 
-/** The two sentences the REGISTRY authored (D96, D97) — neither is in the legal
-    column any more, both cards having rotated, which is the whole of D187's argument
-    for an arm. Kept here as the notation pair: `{W}` is brace-coded and `Psychic` is
-    spelled out, so between them they exercise both alternations. */
 const HAIL_BLADE =
   "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.";
 const PSY_PURGE =
   "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90 damage for each card you discarded in this way.";
 
 describe("D402 §1 — the family, split by its FOLD, measured live over the column", () => {
-  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
-    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
-    // it could sit short of the module indefinitely — which is precisely the state
-    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
-    // D418. A guard in another file guards that file's copy alone.
-    //
-    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
-    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
-    // off the MODULE surface, so no edit here can move a census number again. What
-    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
-    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
-    // module and from this list in the SAME commit, and the figures would then move
-    // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the whole 'discarded in this way' family is 12 sentences / 27 printings", () => {
@@ -162,24 +102,6 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
 
   it("this anchor takes SIX of them, worth THIRTEEN printings — and only those", () => {
     const rows = legalAttackCorpus();
-    // ⚠️ `"discarded in this way"` and not `"in this way"`: the shorter literal also
-    // catches an ATTACH sentence ("If you attached Energy to a Pokémon in this way…",
-    // 3 legal printings) that has nothing to do with this family and was already read.
-    // A census is as narrow as the literal it matches — measured, not assumed.
-    //
-    // 🆕🆕🆕 **D488 RE-POINTED THIS PREDICATE RATHER THAN THIS NUMBER, AND THE
-    // DISTINCTION IS THE WHOLE OF WHY THE RUNG SURVIVED (D438/D444/D477).** It used to
-    // ask *"does `deriveAttackEffect` claim it?"*, which was a faithful stand-in for
-    // *"does THIS ANCHOR claim it?"* only for as long as this anchor was the file's
-    // only claimant of the family. D488 built the DECK-MILL half — the two sentences
-    // the rung below has named as refused since D402 — through a second arm of the
-    // SAME reader, so the old predicate now answers 8 / 15 and would have made this
-    // file's headline figure a claim about someone else's work.
-    // 🛑 **THE CLAIM IS THE OP, WHICH DISCRIMINATES THE TWO ARMS BY VALUE**: D402's
-    // program opens with `discardEnergy` (Energy off a BOARD) and D488's with
-    // `discardDeckTop` (cards off a DECK). A `.length` re-point would have been the
-    // trap — the number would have gone on being right while the sentence it names
-    // stopped being true.
     const takesEnergyOffTheBoard = (text: string): boolean => {
       const program = deriveAttackEffect(text);
       return program !== null && program[0]?.op === "discardEnergy";
@@ -189,43 +111,21 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     );
     expect(taken).toHaveLength(6);
     expect(units(taken)).toBe(13);
-    // …and the two D488 took are claimed by the OTHER arm, named here so the 8 / 15 the
-    // old predicate now answers is attributable rather than merely different.
     const mills = rows.filter(
       ([, s]) =>
         s.includes("discarded in this way") && deriveAttackEffect(s)?.[0]?.op === "discardDeckTop",
     );
     expect(mills).toHaveLength(2);
     expect(units(mills)).toBe(2);
-    // …and they are exactly the six transcribed above, at exactly those counts. A
-    // sentence in `TAKEN` that the column does not print would make every parse rung
-    // below it an assertion about a card nobody prints (D183).
     expect([...taken].sort()).toEqual([...TAKEN].sort());
   });
 
-  it("🛑 the ADDITIVE half is 3 sentences / 10 printings, and D403 took 2 / 8 of them", () => {
-    // The fold is the family's real split. "does N MORE damage for each" keeps the
-    // printed base; `damageDefender {per, count}` deals its hit through a SEPARATE
-    // `snipeActive` pass, so a kept base would pay Resistance, the reduction passive
-    // and the §8.1 clamp TWICE.
-    //
-    // 🆕🆕 D403 — RE-POINTED RATHER THAN DELETED (D178), AND THE CLAIM IT USED TO
-    // MAKE IS NAMED SO NOBODY THINKS IT WAS ALWAYS THIS. This rung read *"…and NOT
-    // ONE of them is read"* and asserted `readByAny` FALSE on all three. D403 built
-    // the mechanism it was blocked on — an optional `base` on `damageDefender`, which
-    // makes `base + P × N` ONE §8.5 pass — so the refusal is now TWO sentences wide,
-    // not three, and the rung asserts the SPLIT instead of the blanket. **THE SIZE OF
-    // THE HALF IS UNCHANGED (3 / 10): what moved is how much of it is refused.**
+  it("the ADDITIVE half is 3 sentences / 10 printings, and D403 took 2 / 8 of them", () => {
     const more = legalAttackCorpus().filter(
       ([, s]) => s.includes("discarded in this way") && s.includes("more damage for each"),
     );
     expect(more).toHaveLength(3);
     expect(units(more)).toBe(10);
-    // 🆕🆕🆕 **D490 — THE SPLIT CLOSES: 2 / 8 TAKEN AND 1 / 2 LEFT BECOMES 3 / 10 AND
-    // NOTHING.** The half's SIZE is still unchanged at 3 / 10 — what moved a second time
-    // is how much of it is refused. ⚠️ The prose above says *"all ELEVEN readers"* and
-    // the surface has been THIRTEEN since D417; the count is corrected here and the
-    // claim is asserted off the MODULE (`readByAny`) rather than off a number.
     const taken = more.filter(([, s]) => deriveAttackDiscardScaledBoost(s) !== null);
     expect(taken).toHaveLength(3);
     expect(units(taken)).toBe(10);
@@ -237,22 +137,13 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     for (const [, s] of more) expect(readByAny(s), s).toBe(true);
   });
 
-  it("🛑 the two NAMED FALSIFIERS interact: every Bench-only printing is ADDITIVE", () => {
-    // The prediction this slice was handed said all 12 sentences were expressible
-    // with no new op and no new field, the ONE widening being a Bench-only member on
-    // `discardEnergy.from`. It is false, and the interesting part is WHY: the zone
-    // and the fold are not independent. Every printing that says "from your Benched
-    // Pokémon" also says "more", so the fold split removes the need for the union
-    // member ENTIRELY rather than compounding with it — which is also why
-    // `MATCH_RECORD_VERSION` stays 25.
+  it("the two NAMED FALSIFIERS interact: every Bench-only printing is ADDITIVE", () => {
     const bench = legalAttackCorpus().filter(
       ([, s]) => s.includes("discarded in this way") && s.includes("from your Benched Pokémon"),
     );
     expect(bench).toHaveLength(2);
     expect(units(bench)).toBe(8);
     for (const [, s] of bench) expect(s.includes("more damage for each"), s).toBe(true);
-    // …and NOT ONE multiply printing names the Bench. Named as empty rather than
-    // left unsaid (D400): this is the evidence cell the prediction was resting on.
     const benchMultiply = legalAttackCorpus().filter(
       ([, s]) =>
         s.includes("discarded in this way") &&
@@ -262,30 +153,7 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect(benchMultiply).toHaveLength(0);
   });
 
-  it("🆕🆕🆕 the MULTIPLY half is now COMPLETE — nothing is left, and each half is named", () => {
-    // What is left of the 12 once the 6 and the 3 are taken out USED TO BE THREE: two
-    // DECK MILLS whose record is cards off a deck rather than Energy off a board, and
-    // one HAND discard whose damage goes to a CHOSEN opponent Pokémon instead of the
-    // defender. The rung's stated reason was *"both would need a recording mill or a
-    // `damageChosen` that reads a slot"*.
-    //
-    // 🆕🆕🆕 **D488 BUILT THE RECORDING MILL AND D489 BUILT THE `damageChosen` THAT
-    // READS A SLOT, SO BOTH NAMED REASONS ARE NOW PAID AND THE SET IS EMPTY.** D488's
-    // note said in as many words: *"the `damageChosen` that reads a slot is still
-    // unbuilt, and it is what the one remaining sentence needs."* That was a claim
-    // about a mechanism and it was correct — `damageChosen.perRecorded` is the field,
-    // `snipeAmount` is the fold it reaches, and both call sites already had the §9.2
-    // record in scope. **Leaving the second blocker NAMED rather than editing the
-    // comment down to what shipped is what made this slice one grep long** (D488's own
-    // rule, and the receipt for it).
-    //
-    // 🛑 **AN EMPTY SET IS A WEAK CLAIM, SO THE RUNG DOES NOT STOP THERE (D438/D444).**
-    // `toHaveLength(0)` is true under a reader widened to eat the whole column as well
-    // as under the real build. What replaces the refusal is the PARTITION: every member
-    // of the multiply half is claimed, by NAME, by the arm that owns it — a board
-    // discard (`discardEnergy`), a deck mill (`discardDeckTop`) or a HAND discard
-    // (`payFromHand`) — so a reader that widened past its own clause reddens here even
-    // though the emptiness would not.
+  it("the MULTIPLY half is now COMPLETE — nothing is left, and each half is named", () => {
     const multiply = legalAttackCorpus().filter(
       ([, s]) => s.includes("discarded in this way") && !s.includes("more damage for each"),
     );
@@ -307,11 +175,6 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
         openedBy("discardDeckTop").length +
         openedBy("payFromHand").length,
     ).toBe(multiply.length);
-    // 🆕🆕🆕 **D489's ROW, PINNED BY VALUE RATHER THAN BY MEMBERSHIP.** The old rung
-    // asserted this sentence STARTS with the hand-discard head and derives to null; a
-    // re-point onto `.not.toBeNull()` would be green under a reader that eats the whole
-    // column (D438's polarity rule). The claim is the two-op program, both quantifiers
-    // and the slot that joins them — the ONE thing a wrong build gets wrong.
     const [handRow] = openedBy("payFromHand");
     if (handRow === undefined) throw new Error("the hand-discard row left the family");
     expect(handRow[1].startsWith("Discard up to 3 Energy cards from your hand."), handRow[1]).toBe(
@@ -336,13 +199,6 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
         perRecorded: "discarded",
       },
     ]);
-    // 🆕🆕🆕 **D490 — THE ADDITIVE HALF'S LEFTOVER IS BUILT, SO THE REFUSAL BECOMES A
-    // PARTITION RATHER THAN A SHORTER LIST.** D489 kept this as *"still unread by every
-    // reader … a mill of BOTH decks with a kept base"*, which was an exact description of
-    // the price and is now paid: `discardDeckTop.whose` gained `"eachPlayer"` and the
-    // additive reader gained a second member. Re-pointing to `toHaveLength(0)` alone would
-    // have been true under a build that stopped matching the population at all, so the
-    // POPULATION and its OWNER are both named (D438/D423).
     const additive = legalAttackCorpus().filter(
       ([, s]) => s.includes("discarded in this way") && s.includes("more damage for each"),
     );
@@ -350,10 +206,6 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect(units(additive)).toBe(10);
     const additiveLeft = additive.filter(([, s]) => !readByAny(s));
     expect(additiveLeft).toEqual([]);
-    // …and the OWNER is `deriveAttackDiscardScaledBoost` on all three, `deriveAttackEffect`
-    // on NONE — which is the refusal this rung has really carried since D402: the printed
-    // *"more"* keeps the attack's base, and `deriveAttackEffect` takes only a STRING, so an
-    // arm there could never populate it. That claim survives the build intact.
     for (const [, s] of additive) {
       expect(deriveAttackEffect(s), s).toBeNull();
       expect(deriveAttackDiscardScaledBoost(s), s).not.toBeNull();
@@ -361,8 +213,6 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect(
       additive.filter(([, s]) => s.startsWith("Discard the top card of each player's deck.")),
     ).toHaveLength(1);
-    // The two that LEFT this list, and BY WHAT — a re-point onto the shape rather than
-    // a deletion (D178/D438), so the day either regresses this rung says which.
     const built = legalAttackCorpus().filter(
       ([, s]) =>
         s.includes("discarded in this way") &&
@@ -430,9 +280,6 @@ describe("D402 §2 — the parse: every capture is a field of the two ops", () =
       },
       { op: "damageDefender", per: 50, count: "discarded" },
     ]);
-    // The ONE printing that spells the plural noun — "Energy **cards**" — and the ONE
-    // that pairs "up to N" with the whole-board zone. Both on the same sentence, which
-    // is why the noun alternation and the zone capture cannot be tested apart here.
     expect(deriveAttackEffect(TAKEN[4]?.[1] as string)).toEqual([
       {
         op: "discardEnergy",
@@ -457,11 +304,7 @@ describe("D402 §2 — the parse: every capture is a field of the two ops", () =
     ]);
   });
 
-  it("🛑 the two ROTATED registry sentences derive to their own authored programs", () => {
-    // D187, as an assertion: an arm transfers across sets and a row does not. Neither
-    // of these is in the legal column any more, so both rows serve ZERO Standard-legal
-    // printings while the arm serves 13 — and the arm reads them anyway, because
-    // rotation decides who may PLAY a card, not what the card SAYS (D358).
+  it("the two ROTATED registry sentences derive to their own authored programs", () => {
     expect(legalAttackCorpus().some(([, s]) => s === HAIL_BLADE)).toBe(false);
     expect(legalAttackCorpus().some(([, s]) => s === PSY_PURGE)).toBe(false);
     expect(deriveAttackEffect(HAIL_BLADE)).toEqual([
@@ -488,10 +331,6 @@ describe("D402 §2 — the parse: every capture is a field of the two ops", () =
   });
 
   it("the TYPE comes from the MAP, so every code and every name resolves", () => {
-    // `TYPED_SELF_DISCARD`'s convention, one anchor over: a type is a PARAMETER and
-    // both alternations are built FROM `ENERGY_TYPE_BY_CODE` / `ENERGY_TYPE_BY_NAME`,
-    // so a tenth type costs no line. `{Y}`/`Fairy` has ZERO printings on this shape
-    // and derives regardless — which is exactly the claim.
     for (const [code, type] of [
       ["G", "Grass"],
       ["R", "Fire"],
@@ -528,12 +367,7 @@ describe("D402 §2 — the parse: every capture is a field of the two ops", () =
 });
 
 describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
-  it("🛑 the FOLD and the ZONE each refuse INDEPENDENTLY of the other", () => {
-    // D399's rule: a near-miss the anchor already refuses for another reason proves
-    // nothing about the byte you meant to test. The printed additive sentence differs
-    // from a derivable one in TWO places at once, so each is varied alone.
-    // THE POSITIVE CONTROL FIRST, so the three refusals below are known to be one
-    // byte from a sentence this anchor really does read.
+  it("the FOLD and the ZONE each refuse INDEPENDENTLY of the other", () => {
     const derivable =
       "Discard up to 2 Basic Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.";
     expect(deriveAttackEffect(derivable)).not.toBeNull();
@@ -549,8 +383,6 @@ describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
         "Discard up to 2 Basic Energy from your Benched Pokémon. This attack does 60 damage for each card you discarded in this way.",
       ),
     ).toBeNull();
-    // …and the sentence AS PRINTED, which differs in both places at once plus the
-    // uncoupled "You may". It is the one the column actually carries (6 printings).
     expect(
       deriveAttackEffect(
         "You may discard up to 2 Energy from your Benched Pokémon. This attack does 60 more damage for each card you discarded in this way.",
@@ -559,12 +391,6 @@ describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 
   it("the QUANTIFIER is three COUPLED literals — the cross-product is not derived", () => {
-    // D361's rule. The column prints "You may discard any amount of", "Discard all"
-    // and "Discard up to N"; it prints NEITHER of the two crossings below, so a
-    // `(?:You may )?` prefix times an `(any amount|all|up to N)` tail would have
-    // derived two sentences nobody prints. (🆕🆕🆕 D597 (D539): true of this PERIOD
-    // spelling only — the `me` column prints "Discard any amount of" with a comma
-    // (Inferno X), read by `COMMA_DISCARD_SCALED_DAMAGE`; the rung below still holds.)
     for (const text of [
       "Discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
       "You may discard all {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
@@ -574,13 +400,7 @@ describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
     }
   });
 
-  it("an UNTYPED noun is refused — this half of the family never prints one (🆕🆕🆕 D597 (D539): of the PERIOD spelling only — the `me` comma spelling prints a bare noun, Garland Ray / Double Eater)", () => {
-    // The filter is REQUIRED. Every multiply printing narrows the discard to a type
-    // or to "Basic"; a bare "Energy" appears only behind the Bench-only additive
-    // spellings (🆕🆕🆕 D597 (D539): in the `sv` column — the `me` comma spelling's
-    // Garland Ray ×3 and Double Eater print "Energy cards", read by
-    // `COMMA_DISCARD_SCALED_DAMAGE` as `anyEnergy`), so admitting `anyEnergy` here would resolve a sentence the column
-    // does not carry on this shape.
+  it("an UNTYPED noun is refused — this half of the family never prints one ( D597 (D539): of the PERIOD spelling only — the `me` comma spelling prints a bare noun, Garland Ray / Double Eater)", () => {
     expect(
       deriveAttackEffect(
         "Discard up to 2 Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
@@ -705,11 +525,6 @@ function discardPrompt(state: GameState) {
 
 describe('D402 §4 — the `count: "all"` arm: the record filed with NOTHING parking', () => {
   it("strips every {L}, keeps the rest, and deals 50 × 3 = 150 in ONE action", () => {
-    // "Discard all {L} Energy from this Pokémon." asks nothing — every match comes
-    // off — so this is the first program in the engine to file a §9.2 record from the
-    // interpreter's INLINE branch. The `fix-energy` that paid the {C} cost and the
-    // `fix-special` stay attached: the filter is `providesEnergy` Lightning and a
-    // Special Energy provides {C}.
     const state = fielded(1, "fix-allscale", {
       "fix-lightning-energy": 3,
       "fix-energy": 1,
@@ -739,7 +554,7 @@ describe('D402 §4 — the `count: "all"` arm: the record filed with NOTHING par
     ]);
   });
 
-  it("🛑 ZERO {L} attached deals ZERO — the printed `50×` base is SUPPRESSED", () => {
+  it("ZERO {L} attached deals ZERO — the printed `50×` base is SUPPRESSED", () => {
     // The whole point of `programDamage`. With no match the record is EMPTY, the
     // per-unit multiplies to nothing, and the printed 50 must not leak through the
     // pre-program pipeline. A kept base would deal 50 here.
@@ -762,7 +577,7 @@ describe('D402 §4 — the `count: "all"` arm: the record filed with NOTHING par
 });
 
 describe("D402 §5 — the declinable arm, and the caption `energyNoun` grew for it", () => {
-  it("🛑 the prompt is the PRINTED noun phrase, and the offer is Basic Energy only", () => {
+  it("the prompt is the PRINTED noun phrase, and the offer is Basic Energy only", () => {
     // "from your Pokémon" is the whole own side, so a BENCHED Basic Energy is fuel.
     // `fix-special` is refused: "Basic Energy" names the CARD, not what it provides.
     let state = fielded(4, "fix-basicscale", { "fix-energy": 2, "fix-special": 1 });
@@ -777,9 +592,6 @@ describe("D402 §5 — the declinable arm, and the caption `energyNoun` grew for
     const { state: parked, events } = mustApply(state, attack);
 
     expect(parked.phase.kind).toBe("effect:choose");
-    // 🆕🆕 D402 — the caption used to fall through to the generic "Energy", which
-    // would have promised the player any Energy over a Basic-only pick. `energyNoun`
-    // grew a `basicEnergy` arm for exactly this prompt.
     expect(discardPrompt(parked).note).toBe(
       "Discard any amount of Basic Energy from your Pokémon.",
     );

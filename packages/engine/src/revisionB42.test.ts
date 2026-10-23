@@ -14,20 +14,6 @@ import {
   typedEnergy,
 } from "./testFixtures";
 
-// ── CARD REVISION, BATCH B42 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B42"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`
-// / `cards.abilities_json`, byte for byte below):
-//   §1 Ditto "Surprisingly Transform" (`30th-115`, `mep-106`, U0119) — *"search your deck for a
-//      Pokémon and switch it with this Pokémon"*. Palafin ex (`sv06-061` / `sv06-193` /
-//      `sv08.5-151` / `svp-126`) prints Hero's Spirit: *"Put this Pokémon into play only with the
-//      effect of Palafin's Zero to Hero Ability."* Ditto's deck offer (`deckSwapCandidates`) admitted
-//      it, and the swap put it into play. The offer now drops a card whose program carries
-//      `intoPlayOnlyVia` — the same refusal `evolveFromDeckOffer` and the hand evolve make.
-//   §2 the control: a deck whose only Pokémon are Palafin ex offers nothing; the search whiffs, the
-//      deck is still shuffled (the printed "Then, shuffle your deck"), and Ditto stays Active.
-
 const TRANSFORM =
   "Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.";
 const HEROS_SPIRIT =
@@ -80,7 +66,6 @@ const LOCAL: Record<string, Card> = {
   [C]: typedEnergy(C, "Colorless"),
 };
 
-/** P1's turn 3 on a deck of `withFiller` Fillers, both Dittos, every Palafin ex printing and Energy. */
 function base(withFiller: boolean): GameState {
   const deck = deckOf({
     [DITTOS[0]]: 1,
@@ -97,8 +82,6 @@ function base(withFiller: boolean): GameState {
     if (!result.ok) throw new Error(`endTurn rejected: ${result.error.code}`);
     state = result.state;
   }
-  // Every non-play card back into the deck; with `withFiller` false the Fillers leave the game
-  // entirely (P1's only deck Pokémon are then the Palafin ex printings and the other Ditto).
   const side = state.players.p1;
   const pile = [...side.deck, ...side.hand, ...side.prizes, ...side.discard];
   const prizes = pile.filter((u) => state.cardIdByUid[u] === C).slice(0, 6);
@@ -156,7 +139,6 @@ describe("B42 §1 — Surprisingly Transform never offers a Hero's Spirit Pokém
   for (const dittoId of DITTOS) {
     it(`${dittoId}: heads offers the deck's Pokémon but none of the four Palafin ex printings`, () => {
       const start = table(dittoId, true);
-      // Non-vacuous: every Palafin ex printing is in P1's deck.
       expect(new Set(idsOf(start, start.players.p1.deck))).toEqual(
         new Set([...PALAFINS, FILLER, C, DITTOS.find((d) => d !== dittoId)]),
       );

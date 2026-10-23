@@ -18,25 +18,8 @@ import {
   setDamage,
   trainerCard,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D556 B + C — THREE CONDITIONAL TRAINERS ON THREE NEW `BoardCondition` MEMBERS,
-//    AND THREE ZERO-VOCABULARY RIDERS ──
-//
-//   Team Rocket's Ariana      sv10-171 / -224 / -237  Supporter  draw to 5, or to 8 if ALL your Pokémon are Team Rocket's
-//   Billy & O'Nare            sv09-142                Supporter  draw 2; then at 10+ cards in hand, draw 2 more
-//   Dragon Elixir             sv08-172                Item       heal 60 from your Active {N} Pokémon
-//   Team Rocket's Great Ball  sv10-175                Item       coin: an Evolution / a Basic Team Rocket's Pokémon → hand
-//   Caretaker                 sv06-144 / -203         Supporter  draw 2 (the Community Center clause unreachable, R5)
-//                             (🆕🆕🆕 D564 — "unreachable, R5" WITHDRAWN, D539: Community Center is BUILT and the
-//                             clause with it; §7's guard is INVERTED. The rider's own suite: trainerBundleD564.test.ts.)
-//   Pecharunt                 svp-129 / -149          Ability    "Toxic Subjugation": Checkup, Active, +50 on a Poisoned Active
-//
-// The three NEW members — `yourPokemonAllOwner`, `yourHandAtLeast`, `yourActiveHasType` —
-// are driven both ways through `conditionHolds` and `conditionNote`, then every card is
-// played end-to-end on a REAL id on a LOCAL `cardPool` (D275). Texts, subtypes and
-// legality off tcgdex, 2026-09-25. The side-wide bonus of the slice is
-// `sideAttackBonusThisTurn.test.ts`. docs/decisions.md D556 (R2-R7).
 
 const ARIANA = ["sv10-171", "sv10-224", "sv10-237"] as const;
 const BILLY = ["sv09-142"] as const;
@@ -141,11 +124,6 @@ const DECK = deckOf({
   [DRAGON]: 3,
   "fix-energy": 6,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -404,7 +382,6 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
       ids: CARETAKER,
       text: CARETAKER_TEXT,
       subtype: "Supporter",
-      // 🆕🆕🆕 D564 — the rider: the second sentence is BUILT (Community Center has a board now).
       program: {
         trainer: [
           { op: "drawCards", count: 2, recordAs: "moved" },
@@ -578,7 +555,7 @@ describe("D556 §4 — Billy & O'Nare: draw 2; then, at 10 or more, draw 2 more"
     expect(state.players.p1.hand).toHaveLength(12);
   });
 
-  it("🛑 R2 — the count EXCLUDES Billy itself: 7 others + 2 = 9 stops at 9 (counting Billy would say 10)", () => {
+  it("R2 — the count EXCLUDES Billy itself: 7 others + 2 = 9 stops at 9 (counting Billy would say 10)", () => {
     const { uid, state, events } = play(table(FILLER), BILLY[0], Array(7).fill(FILLER));
     expect(state.players.p1.hand).not.toContain(uid);
     expect(state.players.p1.discard).toContain(uid);
@@ -608,7 +585,7 @@ describe("D556 §5 — Dragon Elixir: heal 60 from your Active {N} Pokémon", ()
     expect(state.players.p1.active?.damage).toBe(0);
   });
 
-  it("🛑 R3 (UNRULED) — a NON-Dragon Active: the Item PLAYS and whiffs, nothing healed", () => {
+  it("R3 (UNRULED) — a NON-Dragon Active: the Item PLAYS and whiffs, nothing healed", () => {
     const { uid, state, events } = play(setDamage(table(FILLER), "p1", 100), ELIXIR[0]);
     expect(types(events)).toEqual(["TRAINER_PLAYED"]);
     expect(state.players.p1.discard).toContain(uid);
@@ -651,7 +628,7 @@ describe("D556 §6 — Team Rocket's Great Ball: the coin picks the stage; the s
     expect([...prompt.candidates].sort()).toEqual(deckOfIds(before, (id) => id === ROCKET));
   });
 
-  it("🛑 the park RESUMES into the queued shuffle: the pick lands in hand, revealed, then the deck shuffles", () => {
+  it("the park RESUMES into the queued shuffle: the pick lands in hand, revealed, then the deck shuffles", () => {
     for (const face of ["heads", "tails"] as const) {
       const { state: parked } = flipped(face);
       if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
@@ -689,7 +666,7 @@ describe("D556 §6 — Team Rocket's Great Ball: the coin picks the stage; the s
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D556 §7 — Caretaker: draw 2, and the Community Center clause (🆕🆕🆕 D564: REACHABLE — the guard below is inverted)", () => {
+describe("D556 §7 — Caretaker: draw 2, and the Community Center clause ( D564: REACHABLE — the guard below is inverted)", () => {
   it("draws 2 and goes to the discard", () => {
     const { uid, state, events } = play(table(FILLER), CARETAKER[0], [FILLER]);
     expect(drawn(events)).toEqual([2]);
@@ -698,13 +675,7 @@ describe("D556 §7 — Caretaker: draw 2, and the Community Center clause (🆕�
     expect(play(table(FILLER), CARETAKER[1], []).state.players.p1.hand).toHaveLength(2);
   });
 
-  // 🆕🆕🆕 D564 — THE GUARD TURNED RED EXACTLY AS IT PROMISED, AND IS INVERTED RATHER THAN
-  // DELETED (re-point, do not delete): it was *"Community Center is UNBUILT and cannot be
-  // played, so Caretaker's second sentence has no board (turns RED the day it is built)"*.
-  // The OLD claim's discrimination is kept by the new one's second half — a Caretaker WITHOUT
-  // Community Center still goes to the discard (the "draws 2 and goes to the discard" rung
-  // above), and one WITH it now leaves the discard for the deck.
-  it("🛑 GUARD, INVERTED (D564) — Community Center is BUILT and PLAYABLE, so Caretaker's second sentence has a board and runs", () => {
+  it("GUARD, INVERTED (D564) — Community Center is BUILT and PLAYABLE, so Caretaker's second sentence has a board and runs", () => {
     expect(programFor(COMMUNITY_CENTER)?.stadium?.ability).toBeDefined();
     const board = setHand(table(FILLER), "p1", [COMMUNITY_CENTER]);
     const staged = mustApply(board, {
@@ -723,7 +694,7 @@ describe("D556 §7 — Caretaker: draw 2, and the Community Center clause (🆕�
 describe('D556 §8 — Pecharunt "Toxic Subjugation": +50 on a Poisoned Active at every Checkup', () => {
   const checkup = (board: GameState) => mustApply(board, { type: "endTurn", seat: "p1" });
 
-  it("🛑 R7 — the Poison tick (10) lands FIRST, then +50 from the Ability, then the KO sweep", () => {
+  it("R7 — the Poison tick (10) lands FIRST, then +50 from the Ability, then the KO sweep", () => {
     const { state, events } = checkup(afflict(table(PECHARUNT[0]), "p2", "poisoned"));
     expect(state.players.p2.active?.damage).toBe(60);
     const placed = all(events, "COUNTERS_PLACED").map((e) => [e.seat, e.amount, e.source]);
@@ -748,7 +719,7 @@ describe('D556 §8 — Pecharunt "Toxic Subjugation": +50 on a Poisoned Active a
     expect(order.indexOf("KNOCKED_OUT")).toBeGreaterThan(order.lastIndexOf("COUNTERS_PLACED"));
   });
 
-  it("🛑 R6 — NOT Poisoned: no extra counters, but the ABILITY_TRIGGERED row is STILL filed, exactly once", () => {
+  it("R6 — NOT Poisoned: no extra counters, but the ABILITY_TRIGGERED row is STILL filed, exactly once", () => {
     const { state, events } = checkup(table(PECHARUNT[0]));
     expect(state.players.p2.active?.damage).toBe(0);
     expect(all(events, "COUNTERS_PLACED")).toHaveLength(0);

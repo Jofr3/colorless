@@ -18,20 +18,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: attachFromTop — the from-the-top ATTACH the lookAtTopN slice
-// deferred. Look at the top N of your own deck and attach the Energy you find
-// there straight onto your Pokémon, "in any way you like" (so each card names
-// its OWN destination — the first prompt whose answer is a map). Two real cards,
-// differing in every rider the op has:
-//   • Electric Generator (sv01-170, Item) — top 5, up to 2 Basic {L} Energy
-//     CARDS, onto your BENCHED {L} Pokémon; the other cards shuffle back (the
-//     trailing shuffleDeck op);
-//   • Hydreigon (sv02-140) "Tri Howl" (Ability, once per turn) — top 3, ANY
-//     number of Energy cards (Basic or Special), onto ANY of your Pokémon, and
-//     the other cards are DISCARDED (the op's own `discardRest`).
-// The discard is what makes the leftovers clause load-bearing: it fires on the
-// whiff and the decline too, where a shuffle is invisible either way.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -55,8 +41,6 @@ function deckAt(state: GameState, seat: Seat, index: number): string {
 
 const cardIdOf = (state: GameState, uid: string): string | undefined => state.cardIdByUid[uid];
 
-/** Every uid the seat holds anywhere, sorted — the card-conservation census. A
-    play may move cards between zones but must never create or destroy one. */
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
   const inPlay = [side.active, ...side.bench].flatMap((p) =>
@@ -108,10 +92,6 @@ function parkedGenerator(seed: number): GameState {
   return state;
 }
 
-/** Hydreigon parked: it sits on the BENCH (the Ability is not Active-only), a
-    plain Colorless Active, and a seeded top 3 — one Basic {L} Energy, one SPECIAL
-    Energy (which `anyEnergy` takes and Electric Generator's filter would not) and
-    one Item (a non-candidate, so the leftovers are never empty). */
 function parkedTriHowl(seed: number): GameState {
   let state = board(seed);
   state = withBoard(state, "fix-basic-1", ["sv02-140"]);
@@ -216,10 +196,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
   });
 
   it("Electric Generator can attach both cards to the SAME Pokémon", () => {
-    // "In any way you like" is not "one each": the destinations are independent,
-    // so a single benched {L} may take both — the shape a per-card map allows and
-    // a shared destination (moveEnergy's) would too, but a one-per-target rule
-    // would not.
     const state = parkedGenerator(3);
     const topA = deckAt(state, "p1", 0);
     const topB = deckAt(state, "p1", 1);
@@ -258,13 +234,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
   });
 
   it("Electric Generator with no Benched {L} Pokémon is STILL playable — it shuffles", () => {
-    // The card has NO `programPlayable` gate, deliberately (see effects.ts): a
-    // per-op veto would refuse the whole card, including its second printed
-    // sentence — "Shuffle the other cards back into your deck" — which always
-    // resolves. So this board attaches nothing and shuffles, exactly like a
-    // whiffed Great Ball. The Active here is itself a Lightning Pokémon, so the
-    // board has no eligible target at all (`benchOnly`), which is the path
-    // stepOp's empty-targets branch exists for.
     let state = board(5);
     state = withBoard(state, "fix-lightning-1", ["fix-basic-1"]);
     state = handFromDeck(state, "p1", "sv01-170", 1);
@@ -303,9 +272,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
   });
 
   it("Electric Generator's cap follows the SHORTER of the print and the window", () => {
-    // "Up to 2" with one Basic {L} up there is a pick of ONE. A prompt reporting
-    // the printed 2 would have the dialog count "0/2" over a single row and
-    // invite a pick that does not exist.
     let state = board(18);
     state = withBoard(state, "fix-basic-1", ["fix-lightning-1"]);
     state = handFromDeck(state, "p1", "sv01-170", 1);
@@ -376,7 +342,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     expect(deckAt(done, "p1", 0)).toBe(fourth);
     // No shuffle: "Discard the other cards" is the whole leftovers clause here.
     expect(types(events)).not.toContain("SHUFFLE");
-    // The attach announces itself before the discard row.
     expect(types(events).indexOf("ENERGY_ATTACHED")).toBeLessThan(
       types(events).indexOf("DECK_TOP_DISCARDED"),
     );
@@ -384,10 +349,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
   });
 
   it("Tri Howl attaches ALONGSIDE Energy already on the target, and appends to a non-empty discard", () => {
-    // Two invariants nothing else in the suite can see, because the fixtures'
-    // Active is bare and the discard pile is empty at every seed used here: an
-    // attach must not CLOBBER what is already attached, and the leftovers must be
-    // APPENDED to the pile (§2 pile order), not prepended.
     let state = parkedTriHowl(19);
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // already on the Active
     state = discardFromDeck(state, "p1", "fix-item", 2); // a non-empty pile
@@ -497,12 +458,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     });
 
     it("refuses more than the printed cap", () => {
-      // THREE distinct candidates against Electric Generator's "up to 2" — the
-      // only board on which the cap is the rule that rejects. Everywhere else in
-      // this suite `max === candidates.length`, so an over-cap answer is caught by
-      // the was-it-offered check first and the cap itself goes unexercised. It is
-      // also the ONLY enforcement of "up to 2" anywhere: the apply takes the
-      // validated answer as given.
       let state = board(20);
       state = withBoard(state, "fix-basic-1", ["fix-lightning-1", "fix-lightning-1"]);
       state = handFromDeck(state, "p1", "sv01-170", 1);
@@ -546,9 +501,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     });
 
     it("never spreads the client's ref into the event", () => {
-      // The D44 lesson: refEquals compares only seat/spot/index, so any extra key
-      // hung on the ref would ride a spread into an event handed to the animator,
-      // the log and (P4) the opponent.
       const state = parkedGenerator(16);
       const topA = deckAt(state, "p1", 0);
       const uid = handUid(state, "p1", "sv01-170");
@@ -568,13 +520,6 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
   });
 
   it("the apply SKIPS an assignment the validator would never have passed", () => {
-    // `applyChoice` directly, because these guards are unreachable through the
-    // action API — validateChoice rejects each of these first. They exist because
-    // the apply is the last place a card can be duplicated or destroyed, and the
-    // docstring promises them: a uid outside the window, a repeat, an opponent's
-    // Pokémon, and an out-of-range bench index (the dangerous one — without the
-    // check `bench.map` silently no-ops while the uid still leaves the deck, so
-    // the card lands in NO zone).
     const state = parkedTriHowl(21);
     const energy = deckAt(state, "p1", 0);
     const deeper = deckAt(state, "p1", 5); // outside the top 3

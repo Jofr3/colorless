@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { seatDamageReduction } from "./continuous";
 import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -15,21 +15,10 @@ import {
   deckOf,
   setActiveFromDeck,
   trainerCard,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D564 — JASMINE'S GAZE: THE SIDE-WIDE NEXT-TURN REDUCTION ──
-//
-//   Jasmine's Gaze  sv08-178 / -233 / -245  Supporter — "During your opponent's next turn, all of
-//   your Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying
-//   Weakness and Resistance). (This includes new Pokémon that come into play.)"
-//
-// ONE new op, `installSideDamageReductionNextTurn { amount: 30 }`, stamps the CONTROLLER's side
-// with a REQUIRED `PlayerSide.sideDamageReduction { turn: state.turn + 1, amount }` (MRV 35 → 36,
-// THE NINTH POSITION); continuous.ts `seatDamageReduction` pays it for the damaged side, after
-// the own-side return and under `"all"` only. Readings R-JG1 (Feint Attack drops it), R-JG2
-// (own-side hits unpaid), R-JG3 (side-level: new Pokémon covered, no §10 shed): decisions.md
-// D564. Driven on the REAL ids on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270).
 
 const JASMINE = ["sv08-178", "sv08-233", "sv08-245"] as const;
 const FULL_METAL_LAB = "sv05-148";
@@ -85,7 +74,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [JASMINE[0]]: 2,
   [JASMINE[1]]: 1,
@@ -102,18 +90,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -248,10 +224,9 @@ describe("§1 — the row", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§2 — the install: a record on the PLAYER's side, stamped for the opponent's next turn", () => {
-  it("🛑 the stamp is `state.turn + 1` (the opponent form's `+ 1`), on the INSTALLER's side only", () => {
+  it("the stamp is `state.turn + 1` (the opponent form's `+ 1`), on the INSTALLER's side only", () => {
     const board = table();
     expect(board.turn).toBe(2);
-    // 🆕🆕🆕 D630 (D539): the record is a SUMMED LIST since D630 — `null` reads `[]`, a record `[record]`.
     expect(board.players.p1.sideDamageReduction).toEqual([]);
     const { state, events } = gaze(board);
     expect(state.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: REDUCTION }]);
@@ -270,7 +245,7 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
       ]);
   });
 
-  it("🛑 OVERWRITE, not sum: a second install replaces the record (one Supporter per turn — named at the type) (🆕🆕🆕 D630 (D539): WITHDRAWN — a second install APPENDS and the two SUM; Iron Defender is an Item)", () => {
+  it("OVERWRITE, not sum: a second install replaces the record (one Supporter per turn — named at the type) ( D630 (D539): WITHDRAWN — a second install APPENDS and the two SUM; Iron Defender is an Item)", () => {
     const { state } = gaze(table());
     const events: GameEvent[] = [];
     const again = runProgram(
@@ -297,7 +272,7 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§3 — the window is the OPPONENT's NEXT turn, and it expires on arithmetic", () => {
-  it("🛑 p2's turn 3: a 90 hit on p1's Active deals 60", () => {
+  it("p2's turn 3: a 90 hit on p1's Active deals 60", () => {
     expect(dealt(window())).toBe(STRIKE - REDUCTION);
   });
 
@@ -306,7 +281,7 @@ describe("§3 — the window is the OPPONENT's NEXT turn, and it expires on arit
     expect(dealt(passed)).toBe(STRIKE);
   });
 
-  it("🛑 NOT on the installer's own turn (turn 2), and NOT on the opponent's turn AFTER (turn 5)", () => {
+  it("NOT on the installer's own turn (turn 2), and NOT on the opponent's turn AFTER (turn 5)", () => {
     const { state } = gaze(table());
     expect(seatDamageReduction(state, body(state.players.p1.active), "all", "p2")).toBe(0);
     const turn3 = run(state, { type: "endTurn", seat: "p1" }).state;
@@ -316,14 +291,14 @@ describe("§3 — the window is the OPPONENT's NEXT turn, and it expires on arit
     const turn5 = run(turn4, { type: "endTurn", seat: "p1" }).state;
     expect(turn5.turn).toBe(5);
     // The record is still on the side — it is not cleared, it EXPIRED.
-    expect(turn5.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: REDUCTION }]); // 🆕🆕🆕 D630 — a list
+    expect(turn5.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: REDUCTION }]);
     expect(dealt(turn5)).toBe(STRIKE);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§4 — R-JG3: a SIDE record — new Pokémon are covered, and switching sheds nothing", () => {
-  it("🛑 a Pokémon benched AFTER the install is covered on the opponent's turn", () => {
+  it("a Pokémon benched AFTER the install is covered on the opponent's turn", () => {
     const { state } = gaze(table());
     const later = bench(state, "p1", WEAK);
     const turn3 = run(later, { type: "endTurn", seat: "p1" }).state;
@@ -332,7 +307,7 @@ describe("§4 — R-JG3: a SIDE record — new Pokémon are covered, and switchi
     );
   });
 
-  it("🛑 a RETREAT after the install: the promoted body is covered end to end, and the retreated one still is", () => {
+  it("a RETREAT after the install: the promoted body is covered end to end, and the retreated one still is", () => {
     const { state } = gaze(table(WALL, [WEAK]));
     const retreated = run(state, {
       type: "retreat",
@@ -352,7 +327,7 @@ describe("§4 — R-JG3: a SIDE record — new Pokémon are covered, and switchi
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('§5 — R-JG2: "from your opponent\'s Pokémon" — an own-side hit is never paid', () => {
-  it("🛑 the same body, the same turn: the opponent's attack is reduced, p1's own is not", () => {
+  it("the same body, the same turn: the opponent's attack is reduced, p1's own is not", () => {
     const turn3 = window();
     const target = body(turn3.players.p1.active);
     expect(seatDamageReduction(turn3, target, "all", "p2")).toBe(REDUCTION);
@@ -367,13 +342,13 @@ describe('§5 — R-JG2: "from your opponent\'s Pokémon" — an own-side hit is
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§6 — it STACKS: with the in-play Stadium and with the side's Ability auras", () => {
-  it("🛑 Full Metal Lab on a {M} body: 30 + 30 = 60, and 90 − 60 = 30 dealt", () => {
+  it("Full Metal Lab on a {M} body: 30 + 30 = 60, and 90 − 60 = 30 dealt", () => {
     const turn3 = window(stadium(table(METAL), FULL_METAL_LAB));
     expect(seatDamageReduction(turn3, body(turn3.players.p1.active), "all", "p2")).toBe(60);
     expect(dealt(turn3)).toBe(STRIKE - 60);
   });
 
-  it("🛑 Hariyama's seat-wide aura on the Bench: 10 + 30 = 40", () => {
+  it("Hariyama's seat-wide aura on the Bench: 10 + 30 = 40", () => {
     const turn3 = window(table(WALL, [HARIYAMA]));
     expect(seatDamageReduction(turn3, body(turn3.players.p1.active), "all", "p2")).toBe(40);
     expect(dealt(turn3)).toBe(STRIKE - 40);
@@ -382,7 +357,7 @@ describe("§6 — it STACKS: with the in-play Stadium and with the side's Abilit
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§7 — AFTER Weakness and Resistance", () => {
-  it("🛑 a Fire hit on a body Weak to Fire: (90 × 2) − 30 = 150 (pre-W/R would be 120)", () => {
+  it("a Fire hit on a body Weak to Fire: (90 × 2) − 30 = 150 (pre-W/R would be 120)", () => {
     expect(dealt(window(table(WEAK)))).toBe(STRIKE * 2 - REDUCTION);
   });
 
@@ -393,14 +368,14 @@ describe("§7 — AFTER Weakness and Resistance", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('§8 — R-JG1: Feint Attack\'s `"othersOnly"` DROPS it (an effect on the damaged Pokémon), where the Stadium stays', () => {
-  it('🛑 under `"othersOnly"` the Gaze is 0, the benched Hariyama\'s aura stays, and the Stadium stays', () => {
+  it('under `"othersOnly"` the Gaze is 0, the benched Hariyama\'s aura stays, and the Stadium stays', () => {
     const turn3 = window(stadium(table(METAL, [HARIYAMA]), FULL_METAL_LAB));
     const target = body(turn3.players.p1.active);
     expect(seatDamageReduction(turn3, target, "all", "p2")).toBe(30 + 10 + 30);
     expect(seatDamageReduction(turn3, target, "othersOnly", "p2")).toBe(10 + 30);
   });
 
-  it("🛑 end to end: Feint Attack's 50 on p1's shielded Active lands whole", () => {
+  it("end to end: Feint Attack's 50 on p1's shielded Active lands whole", () => {
     let turn3 = window(table(WALL, [], FEINT));
     const side = turn3.players.p2;
     const energy = side.deck.find((u) => turn3.cardIdByUid[u] === "fix-energy") as string;
@@ -423,24 +398,23 @@ describe('§8 — R-JG1: Feint Attack\'s `"othersOnly"` DROPS it (an effect on t
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 → 36)", () => {
-  it("🛑 the side record round-trips through JSON and still pays", () => {
+  it("the side record round-trips through JSON and still pays", () => {
     const turn3 = window();
-    expect(JSON.stringify(turn3.players.p1.sideDamageReduction)).toBe('[{"turn":3,"amount":30}]'); // 🆕🆕🆕 D630 — a list
+    expect(JSON.stringify(turn3.players.p1.sideDamageReduction)).toBe('[{"turn":3,"amount":30}]');
     expect(dealt(JSON.parse(JSON.stringify(turn3)) as GameState)).toBe(STRIKE - REDUCTION);
   });
 
-  it("🛑 (i) A v35 ROLLBACK resuming a v36 record in the window drops the 30 — a played Supporter's effect silently gone, NOT inert", () => {
+  it("(i) A v35 ROLLBACK resuming a v36 record in the window drops the 30 — a played Supporter's effect silently gone, NOT inert", () => {
     const v36 = JSON.parse(JSON.stringify(window())) as GameState;
     const asRollbackReadsIt: GameState = {
       ...v36,
-      // 🆕🆕🆕 D630 — `[]` is what a rollback without the record reads now (the field is a list).
       players: { ...v36.players, p1: { ...v36.players.p1, sideDamageReduction: [] } },
     };
     expect(dealt(asRollbackReadsIt)).toBe(STRIKE);
     expect(dealt(v36)).toBe(STRIKE - REDUCTION);
   });
 
-  it("🛑 (ii) a v36 engine reading a v35 side (no key) THROWS on the opponent's first damaging hit — D326", () => {
+  it("(ii) a v36 engine reading a v35 side (no key) THROWS on the opponent's first damaging hit — D326", () => {
     const turn3 = run(table(), { type: "endTurn", seat: "p1" }).state;
     const { sideDamageReduction: _dropped, ...v35Side } = turn3.players.p1;
     const v35 = { ...turn3, players: { ...turn3.players, p1: v35Side } } as unknown as GameState;

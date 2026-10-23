@@ -20,32 +20,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: `attachFromDeck` — SEARCH your deck for Energy and attach it
-// straight onto your own Pokémon. The deck-search sibling of `attachFromTop`
-// (which reaches only a window on the deck's top), sharing its `attachCards` MAP
-// prompt because the printed clause is the same one: several cards, several
-// places, chosen together.
-//
-//   • CHARIZARD EX (sv03-125/-215/-223/-228) — "Infernal Reign": "When you play
-//     this Pokémon from your hand to evolve 1 of your Pokémon during your turn,
-//     you may search your deck for up to 3 Basic {R} Energy cards and attach them
-//     to your Pokémon IN ANY WAY YOU LIKE. Then, shuffle your deck." The plain
-//     arm: no target rider, no per-target cap, all three may land on one Pokémon.
-//   • JANINE'S SECRET ART (sv06.5-059/-088, Supporter) — "Choose up to 2 of your
-//     {D} Pokémon. FOR EACH OF THOSE POKÉMON, search your deck for a Basic {D}
-//     Energy card and attach it to THAT Pokémon. Then, shuffle your deck. If you
-//     attached Energy to your Active Pokémon IN THIS WAY, it is now Poisoned."
-//     Three riders at once: `targetType` ({D} bodies only), `maxPerTarget: 1`
-//     (one apiece, never both on one), and a §9.2 `recordGate` whose `contains`
-//     narrowing asks not "did you attach anything" but "did anything land on your
-//     ACTIVE".
-//
-// The two headline claims this file exists to pin:
-//   1. the OFFER COLLAPSES interchangeable candidates (a real deck holds a dozen
-//      Basic {D}, and a Basic keys on what it PROVIDES, not on its catalog id);
-//   2. `contains: "yourActive"` is a NARROWING — attaching two Energy to the
-//      Bench records two uids and still does not poison anything.
-
 const SEED = 20260722;
 
 const JANINE = "sv06.5-059";
@@ -100,16 +74,6 @@ function laterBoard(seed = SEED): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** P1's board rebuilt from nothing: `activeId` in the Active spot, `benchIds`
-    benched, everything setup dealt returned to the deck.
- *
- *  Every board in this file goes through here, because this whole slice is about
- *  WHICH Pokémon are eligible to receive an attach — and setup places whatever
- *  Basic it happens to deal, which in this pool is sometimes a {D} body. A
- *  suite that kept the dealt Active would ask a different question per seed, and
- *  the two riders under test (`targetType`, and the bare "your Pokémon") would
- *  both look right for the wrong reason. Legal-shaped: every uid stays in
- *  exactly one zone. */
 function withBoard(state: GameState, activeId: string, benchIds: readonly string[]): GameState {
   const side = state.players.p1;
   const returned = [side.active, ...side.bench].flatMap((p) =>
@@ -222,8 +186,6 @@ describe("Janine's Secret Art — the offer", () => {
   });
 
   it("clamps max to the candidates actually there", () => {
-    // One Basic {D} left in the whole deck: "up to 2" is a pick of one, and a
-    // prompt saying 2 over a single row would invite a pick that does not exist.
     let state = withoutInDeck(janineBoard(), DARK_ENERGY_ALT);
     const side = state.players.p1;
     const darks = side.deck.filter((uid) => state.cardIdByUid[uid] === DARK_ENERGY);
@@ -485,10 +447,6 @@ describe("wire safety — validateChoice is the one gate, the apply is the belt"
   });
 
   it("the apply SKIPS an out-of-range bench index rather than destroying the card", () => {
-    // Driven through the interpreter directly: validateChoice would reject this,
-    // so the only way to reach the apply's guard is to hand it the bad ref. Drop
-    // the guard and the bench.map no-ops, the event fires, and the uid still
-    // leaves the deck — a card deleted from the game.
     const played = playJanine(janineBoard());
     if (played.state.phase.kind !== "effect:choose") throw new Error("expected a park");
     const cont = played.state.phase.cont;
@@ -541,11 +499,6 @@ describe("wire safety — validateChoice is the one gate, the apply is the belt"
 });
 
 describe("the record CARRIES across a park — the mechanism, not just the storage", () => {
-  // The §9.2 review's sharpest finding was that both shipped cards recorded and
-  // read inside ONE runProgram, so `resumeProgram`'s record seeding could be
-  // deleted with the suite green. Janine is the same shape. This drives a
-  // program that records, then parks on a LATER op, so the gate can only be
-  // answered from the record the CONTINUATION carried.
   const laterPark: EffectOp[] = [
     {
       op: "attachFromDeck",
@@ -589,9 +542,6 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
     // The record rode the continuation out of the first park and into this one.
     expect(second.cont.record?.moved).toHaveLength(1);
 
-    // A host that persists state between actions round-trips it through JSON
-    // (D14) — so the record has to survive serialization, not just object
-    // identity.
     const wire = JSON.parse(JSON.stringify(second)) as typeof second;
     const events3: GameEvent[] = [];
     const third = resumeProgram(wire.state, wire.cont, { kind: "cards", uids: [] }, events3);
@@ -708,12 +658,6 @@ describe("the opponent is untouched", () => {
   });
 });
 
-// ── REVIEW ADDITIONS ────────────────────────────────────────────────────────
-// Everything below came out of the adversarial review of this slice. Each block
-// kills a mutation that survived the suite as first written, and its comment
-// says WHICH claim it pins — a test whose subject is visible only in a mutation
-// table is a test the next author deletes.
-
 /** A card's interchangeable class, as `cardIdentity` computes it: the two
     Darkness prints collapse into one, and fix-special is not a Basic at all so
     no `basicEnergy` filter ever admits it. */
@@ -725,13 +669,6 @@ const CLASS_OF: Record<string, string> = {
 };
 
 describe("the offer's CLAMP — invisible on both shipped cards, load-bearing anyway", () => {
-  // Charizard and Janine both print a SINGLE-class filter ({R} only / {D} only),
-  // and the collapse already caps a class at `max` — so for them
-  // `candidates.length` never exceeds `max` and `Math.min(op.max,
-  // candidates.length)` is indistinguishable from `candidates.length`. The cap is
-  // PER CLASS, so the moment a filter admits several classes the offer is bigger
-  // than the printed number and the clamp is the only thing keeping "up to 2" on
-  // the prompt. Geeta ("up to 2 Basic Energy", deferred) is exactly that shape.
   const anyBasic: EffectOp[] = [{ op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 2 }];
 
   it("offers `max` per CLASS but still caps the pick at the printed max", () => {
@@ -792,10 +729,6 @@ describe("the apply is the BELT — every guard in it, driven past the validator
   });
 
   it("SKIPS an assignment aimed at the opponent's seat", () => {
-    // Without the `to.seat !== ctx.seat` guard the card lands on the CONTROLLER's
-    // Active anyway — the apply reads `active`/`bench` off the controller's side
-    // and never consults `to.seat` again — so the census stays conserved and only
-    // the board and the event betray it.
     const { state, cont, prompt } = park(1);
     const uid = prompt.candidates[0] as string;
     const events: GameEvent[] = [];
@@ -812,10 +745,6 @@ describe("the apply is the BELT — every guard in it, driven past the validator
   });
 
   it("SKIPS the Active slot when the Active is gone — applyAction never throws", () => {
-    // The crafted-snapshot guard (attack.ts's rule, applied here): the parked
-    // prompt still offers the Active, so `validateChoice` passes, and only the
-    // apply's `active === null` check stands between a hostile snapshot and a
-    // TypeError out of `applyAction` (the D14 contract).
     const { state, prompt } = park(1);
     const side = state.players.p1;
     const doctored: GameState = {
@@ -858,11 +787,6 @@ describe("the apply is the BELT — every guard in it, driven past the validator
 });
 
 describe("the §9.2 record files what MOVED — read without the board narrowing", () => {
-  // Janine's gate reads the BOARD (`contains: "yourActive"`), and that masks the
-  // record's own contents: a uid filed but never attached is not on the Active
-  // either, so a wrong record still gives the right answer. A PLAIN gate ("did
-  // you do anything") reads the record and nothing else, and that is where "what
-  // was ATTACHED, not what was picked" is actually observable.
   const plainGate: EffectOp[] = [
     {
       op: "attachFromDeck",
@@ -904,12 +828,6 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
   });
 
   it("a SKIPPED uid that is already on the Active cannot open the narrowed gate", () => {
-    // The sharpest form of "what was ATTACHED, not what was picked". One
-    // assignment lands on the BENCH (so the apply does not short-circuit) and a
-    // second names an Energy ALREADY sitting on the Active — which the apply
-    // skips, because it never left the deck. File the picks instead of the moves
-    // and that second uid is both "filed" and "on the Active", and Janine
-    // poisons herself for an attach she never made.
     const state = attachFromDeck(janineBoard(SEED, 1), "p1", DARK_ENERGY, 1);
     const alreadyOnActive = energyOn(state, ACTIVE)[0] as string;
     const gateProgram: EffectOp[] = [
@@ -949,10 +867,6 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
   });
 
   it("a WHIFFED attachFromDeck overwrites the slot instead of leaving a stale one", () => {
-    // Two writers, one slot: the first attaches and files a uid, the second finds
-    // no {M} Energy anywhere and must file an EMPTY answer — the rule
-    // `discardPileRetrieval` states beside it. File nothing and the gate answers
-    // for the FIRST op, which is the one shape §9.2 exists to forbid.
     const twoWriters: EffectOp[] = [
       {
         op: "attachFromDeck",
@@ -1077,10 +991,6 @@ describe("the prompt note — the branches no shipped card reaches", () => {
   });
 
   it("says NOTHING about a branch it has no phrase for — the defender arm", () => {
-    // `applyStatus target: "defender"` belongs to an attack program, where no
-    // §9.2 gate exists. Describing it here would put "it is now Poisoned" over a
-    // prompt whose gate poisons the OPPONENT — half a consequence, which the
-    // describer's whole design refuses.
     expect(
       noteOf([
         search({ recordAs: "moved" }),
@@ -1097,18 +1007,6 @@ describe("the prompt note — the branches no shipped card reaches", () => {
 });
 
 describe("one eligible Pokémon: the printed 'up to 2' is a hard 1", () => {
-  // §8.6 "do as much as you can", arriving from the TARGET side — with a single
-  // {D} Pokémon in play, `maxPerTarget: 1` is what makes the second Energy
-  // unattachable, and no rule is broken by that.
-  //
-  // THE PROMPT HAS TO SAY SO. `targets.length × maxPerTarget` is a real ceiling
-  // and the offer is clamped to it, for the reason attachFromTop's own doc gives
-  // for clamping to the candidate count: a prompt reading "up to 2" over a board
-  // where 1 is the maximum has the dialog count "0/2" and invites a second pick
-  // the validator then refuses. (An earlier draft of this suite asserted the
-  // refusal by handing the validator `candidates[1]` — which after the clamp is
-  // `undefined`, so it was rejected as "not an attachable card" and the test
-  // passed while proving nothing. Hence the assertions on the OFFER below.)
   it("offers ONE row and a max of 1, not the printed 2", () => {
     const state = handFromDeck(withBoard(board(SEED), DARK_BODY, []), "p1", JANINE, 1);
     const prompt = promptOf(playJanine(state).state);
@@ -1155,15 +1053,6 @@ describe("one eligible Pokémon: the printed 'up to 2' is a hard 1", () => {
 });
 
 describe('§9.2 `contains: "yourActive"` resolves on the LATER truth', () => {
-  // THE REVIEW'S HEADLINE FINDING. The gate asks the BOARD, not the record, so it
-  // answers "is a filed uid on the Active NOW" — which is the printed "you
-  // attached Energy to your Active Pokémon in this way" only while nothing
-  // between the two ops moves it. Three ops already in this vocabulary do:
-  // `switchActive`, `moveEnergy` and `discardEnergy { from: "yourActive" }`. No
-  // shipped program sequences any of them before this gate (Janine's is
-  // attachFromDeck → shuffleDeck → recordGate, and shuffleDeck touches nothing
-  // this reads), so nothing is wrong on the board today — these pin the
-  // semantics so the next author meets them as a decision rather than a bug.
   const attachOp: EffectOp = {
     op: "attachFromDeck",
     filter: { kind: "basicEnergy", energyType: "Darkness" },

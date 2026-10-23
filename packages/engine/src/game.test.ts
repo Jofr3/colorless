@@ -41,10 +41,6 @@ function findInHand(
   });
 }
 
-/** A deterministic little bot: same seed ⇒ same choices ⇒ same game. Each
-    turn it attaches the first energy in hand, benches the first Basic, and
-    retreats whenever the active's cost is already covered, then passes —
-    until someone decks out. Returns the full event log and final state. */
 function playScriptedGame(seed: number): { state: GameState; events: GameEvent[] } {
   const created = createGame({
     seed,
@@ -195,10 +191,6 @@ describe("purity", () => {
   });
 
   it("hands out event payloads that do not alias state or the action", () => {
-    // An event is a value handed to consumers (animators, the P4 broadcast, a
-    // persisted log). One that sorts or splices a payload must never reach
-    // back into game state — nor may a caller mutate an already-emitted event
-    // by reusing the action object it passed in.
     const created = createGame({
       seed: 1,
       decks: { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK },
@@ -357,7 +349,6 @@ describe("scripted end-to-end game", () => {
     const loser = outcome.winner === "p1" ? "p2" : "p1";
     expect(state.players[loser].deck).toHaveLength(0);
 
-    // Event census: the whole M1 surface was exercised, exactly once ended.
     const count = (type: GameEvent["type"]) => events.filter((e) => e.type === type).length;
     expect(count("COIN_FLIP")).toBe(1);
     expect(count("FIRST_PLAYER_CHOSEN")).toBe(1);

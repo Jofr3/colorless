@@ -28,36 +28,6 @@ import {
   setPrizes,
 } from "./testFixtures";
 
-// 🆕🆕🆕 D548 — CRESCENT PURGE: THE FACE-UP PRIZE, ON THE REAL CARD.
-//
-//   Cresselia `sv06.5-021` "Crescent Purge" ({P}{P}{P}, `80+`, attack INDEX 1 — index 0
-//   is "Healing Pirouette", D133's own-board heal), `censusAttackCorpus.ts` **file line
-//   664**, leading count column **2**:
-//     "You may turn 1 of your face-down Prize cards face up. If you do, this attack does
-//      80 more damage. (That Prize card remains face up for the rest of the game.)"
-//   **1 sentence / 2 legal printings.**
-//
-// The LAST refused member of D381's reversed optional-cost family, refused since D381 for
-// *"a `PlayerState` field"* — a type that does not exist in the engine (the engine's is
-// `PlayerSide`; `PlayerState` is the LOBBY's seat type). What it actually cost:
-//   · `PlayerSide.faceUpPrizes: string[]` — REQUIRED, uids, a subset of `prizes`
-//     (`MATCH_RECORD_VERSION` 31 → 32, §11 below is the measurement);
-//   · `optionalCostOps`' FIFTH row → `{cond: yourFaceDownPrizeRemains, ops:
-//     [turnPrizeFaceUp]}`, and the printed reminder stripped as an optional exact suffix
-//     behind that row only;
-//   · the OWNER PICKS which prize (the D548 ruling): ≥2 face-down → park `choosePrize`
-//     over the face-down INDICES; exactly 1 → inline; 0 → unreachable, silent no-op;
-//   · `PRIZE_TURNED_FACE_UP`, whose log row NAMES the (now public) card;
-//   · the wire: `RedactedSide.faceUpPrizes {index, card}[]` for every viewer.
-//
-// ⚠️ ON THE REAL CARD, IN A FILE-LOCAL 60-CARD DECK (D270): `sv06.5-021` is a
-// `FIXTURE_POOL` row whose index-1 text matches the corpus byte for byte (§1 asserts it),
-// so no demonstrator is declared. The deck's other cards are file-local: a 400-HP wall
-// that survives two Purges, a 150-HP body that a paid Purge (160) Knocks Out and a
-// declined one (80) does not, and two ENERGY tokens (`d548-secret` ×5, `d548-shown` ×1)
-// that §9 stacks into the prize rows so "no face-down card id crosses the wire" is a
-// claim about a string that CANNOT appear anywhere else.
-
 const SENTENCE =
   "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)";
 const BARE =
@@ -76,7 +46,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 };
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), counted by the helper: 60 is a `createGame` precondition. */
 const PURGE_DECK = deckOf({
   [CRESSELIA]: 4,
   "d548-wall": 4,
@@ -110,9 +79,6 @@ function localSetup(seed: number): GameState {
   return state;
 }
 
-/** Stack `seat`'s prize row so its cards are `ids`, in order — each wanted uid swapped in
-    from wherever it sits (deck or hand), the displaced prize going to its old place. Card
-    counts per zone are unchanged; only WHICH cards are prizes moves. */
 function stackPrizes(state: GameState, seat: Seat, ids: readonly string[]): GameState {
   const side = state.players[seat];
   const taken = new Set<string>();
@@ -137,9 +103,6 @@ function stackPrizes(state: GameState, seat: Seat, ids: readonly string[]): Game
   };
 }
 
-/** p1 fields Cresselia with {P}{P}{P} and an empty Bench; p2 fields `defender` Active
-    and one benched `d548-wall` (so a Knock Out does not end the game on §14.2). p1 moves
-    first, both first turns are behind us, and it is p1's turn: the attack is legal. */
 function ready(
   opts: { defender?: string; prizes?: number; stacked?: boolean; seed?: number } = {},
 ): GameState {
@@ -197,10 +160,6 @@ function rowText(state: GameState, events: GameEvent[], needle: string): string 
   return row.segments.map((s) => s.text).join("");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE READING: the fifth cost row, the reminder as an optional exact suffix.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the reading, on the real card's bytes", () => {
   it("the card's index-1 text IS the corpus row, byte for byte, at 2 legal printings", () => {
     expect(POOL[CRESSELIA]?.name).toBe("Cresselia");
@@ -210,7 +169,7 @@ describe("§1 — the reading, on the real card's bytes", () => {
     expect(legalAttackCorpus().filter(([, s]) => s === SENTENCE)).toEqual([[2, SENTENCE]]);
   });
 
-  it("🛑 derives the gate, the op and the +80 — and the TENTH reader is the one that claims it", () => {
+  it("derives the gate, the op and the +80 — and the TENTH reader is the one that claims it", () => {
     expect(deriveAttackOptionalCostBoost(SENTENCE)).toEqual({
       cond: { kind: "yourFaceDownPrizeRemains" },
       ops: [{ op: "turnPrizeFaceUp" }],
@@ -221,12 +180,12 @@ describe("§1 — the reading, on the real card's bytes", () => {
     expect(deriveAttackEffect(SENTENCE)).toBeNull();
   });
 
-  it("🛑 the PRINTED and the BARE spellings derive the SAME reading — the reminder is optional", () => {
+  it("the PRINTED and the BARE spellings derive the SAME reading — the reminder is optional", () => {
     expect(SENTENCE).toBe(BARE.replace(/\.$/, `.${REMINDER}`));
     expect(deriveAttackOptionalCostBoost(BARE)).toEqual(deriveAttackOptionalCostBoost(SENTENCE));
   });
 
-  it("🛑 the reminder behind ANY OTHER cost row refuses — it is stripped behind the face-up row only", () => {
+  it("the reminder behind ANY OTHER cost row refuses — it is stripped behind the face-up row only", () => {
     for (const cost of [
       "discard a Stadium in play",
       "discard your hand",
@@ -238,7 +197,7 @@ describe("§1 — the reading, on the real card's bytes", () => {
     }
   });
 
-  it("🛑 the nearest misses refuse: the wrong ZONE, the wrong COUNT, a mangled reminder", () => {
+  it("the nearest misses refuse: the wrong ZONE, the wrong COUNT, a mangled reminder", () => {
     // An OPPONENT's Prize — the one-axis side swap.
     expect(
       deriveAttackOptionalCostBoost(
@@ -281,7 +240,7 @@ describe("§1 — the reading, on the real card's bytes", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — ACCEPT, then PICK: 160, and exactly the picked slot turns", () => {
-  it("🛑 a NON-FIRST pick flips THAT slot and no other (a first-slot auto-pick dies here)", () => {
+  it("a NON-FIRST pick flips THAT slot and no other (a first-slot auto-pick dies here)", () => {
     const start = ready();
     const prizesBefore = [...start.players.p1.prizes];
     expect(prizesBefore).toHaveLength(6);
@@ -297,7 +256,6 @@ describe("§2 — ACCEPT, then PICK: 160, and exactly the picked slot turns", ()
     expect(defenderDamage(offered)).toBe(0); // the hit waits behind the pick
     const { state: done, events } = pick(offered, 3);
     expect(done.players.p1.faceUpPrizes).toEqual([prizesBefore[3]]);
-    // Still a prize, at its own index: the row is untouched.
     expect(done.players.p1.prizes).toEqual(prizesBefore);
     expect(defenderDamage(done)).toBe(160);
     expect(all(events, "PRIZE_TURNED_FACE_UP")).toEqual([
@@ -314,7 +272,7 @@ describe("§2 — ACCEPT, then PICK: 160, and exactly the picked slot turns", ()
 });
 
 describe("§3 — DECLINE pays the printed 80 and turns nothing", () => {
-  it("🛑 no second park, no flip, no event", () => {
+  it("no second park, no flip, no event", () => {
     const { state: done, events } = confirm(purge(ready()).state, false);
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(defenderDamage(done)).toBe(80);
@@ -324,7 +282,7 @@ describe("§3 — DECLINE pays the printed 80 and turns nothing", () => {
 });
 
 describe("§4 — ONE face-down prize: accept turns it with NO second park", () => {
-  it("🛑 the forced pick resolves inline (the no-choice doctrine)", () => {
+  it("the forced pick resolves inline (the no-choice doctrine)", () => {
     const start = ready({ prizes: 1 });
     const only = start.players.p1.prizes[0];
     const { state: done, events } = confirm(purge(start).state, true);
@@ -350,7 +308,7 @@ describe("§4 — ONE face-down prize: accept turns it with NO second park", () 
 });
 
 describe("§5 — an ALL-face-up row pays 80 with NO confirm (the gate)", () => {
-  it("🛑 the gate is not vacuous: `prizes.length > 0` is true here and the offer must not be made", () => {
+  it("the gate is not vacuous: `prizes.length > 0` is true here and the offer must not be made", () => {
     let state = ready({ prizes: 1 });
     state = confirm(purge(state).state, true).state; // the one prize is now face up
     state = nextP1Turn(state);
@@ -365,7 +323,7 @@ describe("§5 — an ALL-face-up row pays 80 with NO confirm (the gate)", () => 
 });
 
 describe("§6 — two Purges on two turns: the second offers only what is still face down", () => {
-  it("🛑 the turned slot leaves the offer", () => {
+  it("the turned slot leaves the offer", () => {
     let state = ready();
     const row = [...state.players.p1.prizes];
     state = pick(confirm(purge(state).state, true).state, 4).state;
@@ -390,7 +348,7 @@ describe("§7 — ko:takePrizes prunes a taken face-up prize and leaves the rest
     return done;
   }
 
-  it("🛑 taking the FACE-UP slot prunes it out of `faceUpPrizes`", () => {
+  it("taking the FACE-UP slot prunes it out of `faceUpPrizes`", () => {
     const state = koWithFlip(2);
     const row = [...state.players.p1.prizes];
     const done = mustApply(state, { type: "takePrizes", seat: "p1", prizeIndices: [2] }).state;
@@ -399,7 +357,7 @@ describe("§7 — ko:takePrizes prunes a taken face-up prize and leaves the rest
     expect(done.players.p1.faceUpPrizes).toEqual([]);
   });
 
-  it("🛑 taking a FACE-DOWN slot leaves `faceUpPrizes` untouched (and the face-up index shifts)", () => {
+  it("taking a FACE-DOWN slot leaves `faceUpPrizes` untouched (and the face-up index shifts)", () => {
     const state = koWithFlip(2);
     const row = [...state.players.p1.prizes];
     const done = mustApply(state, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;
@@ -417,7 +375,7 @@ describe("§7 — ko:takePrizes prunes a taken face-up prize and leaves the rest
 describe("§8 — redact: the face-up card at its index, for p1, p2 and a spectator", () => {
   const flipped = () => pick(confirm(purge(ready({ stacked: true })).state, true).state, 4).state;
 
-  it("🛑 every viewer sees the same face-up card at slot 4, and the count is unchanged", () => {
+  it("every viewer sees the same face-up card at slot 4, and the count is unchanged", () => {
     const state = flipped();
     const shownUid = state.players.p1.prizes[4] as string;
     expect(state.cardIdByUid[shownUid]).toBe("d548-shown");
@@ -435,7 +393,7 @@ describe("§8 — redact: the face-up card at its index, for p1, p2 and a specta
     expect(redactGame(state, "p2").board.you.faceUpPrizes).toEqual([]);
   });
 
-  it("🛑 no FACE-DOWN prize uid or card id appears anywhere in any viewer's JSON", () => {
+  it("no FACE-DOWN prize uid or card id appears anywhere in any viewer's JSON", () => {
     const state = flipped();
     const faceDown = (["p1", "p2"] as const).flatMap((seat) =>
       state.players[seat].prizes.filter((u) => !state.players[seat].faceUpPrizes.includes(u)),
@@ -448,8 +406,6 @@ describe("§8 — redact: the face-up card at its index, for p1, p2 and a specta
     ]) {
       const json = JSON.stringify(view);
       for (const uid of faceDown) expect(json.includes(`"${uid}"`), uid).toBe(false);
-      // Every `d548-secret` in the game is a face-down prize, so the id cannot leak by
-      // appearing anywhere else — and it does not appear at all.
       expect(json.includes("d548-secret")).toBe(false);
       expect(json.includes("d548-shown")).toBe(true);
     }
@@ -478,13 +434,11 @@ describe("§8 — redact: the face-up card at its index, for p1, p2 and a specta
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — §14: face-up prizes still count, and taking the last one wins", () => {
-  it("🛑 a flip leaves `prizesRemaining` and every prizes-remaining reading unchanged", () => {
+  it("a flip leaves `prizesRemaining` and every prizes-remaining reading unchanged", () => {
     const start = ready();
     const done = pick(confirm(purge(start).state, true).state, 1).state;
     expect(done.players.p1.prizes).toHaveLength(6);
     expect(redactGame(done, "p1").board.you.prizesRemaining).toBe(6);
-    // `yourPrizesRemaining` (D-era prizes-remaining member) reads the WHOLE row: 6 before,
-    // 6 after, and it would read 5 if a flip were mistaken for a take.
     expect(conditionHolds(start, "p1", { kind: "yourPrizesRemaining", counts: [6] })).toBe(true);
     expect(conditionHolds(done, "p1", { kind: "yourPrizesRemaining", counts: [6] })).toBe(true);
     // …and the opponent's `morePrizesThanOpponent` reading is unmoved (6 vs 6).
@@ -492,7 +446,7 @@ describe("§9 — §14: face-up prizes still count, and taking the last one wins
     expect(done.phase.kind).not.toBe("gameOver");
   });
 
-  it("🛑 the LAST prize, turned face up by the Purge that KOs, is taken and WINS", () => {
+  it("the LAST prize, turned face up by the Purge that KOs, is taken and WINS", () => {
     const start = ready({ prizes: 1, defender: "d548-frail" });
     const only = start.players.p1.prizes[0];
     const { state: done, events } = confirm(purge(start).state, true);
@@ -528,7 +482,7 @@ describe("§9 — §14: face-up prizes still count, and taking the last one wins
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§10 — the log row names the turned card (it is public)", () => {
-  it("🛑 'turned d548-shown face up (Prize 5)'", () => {
+  it("'turned d548-shown face up (Prize 5)'", () => {
     const offered = confirm(purge(ready({ stacked: true })).state, true).state;
     const { state, events } = pick(offered, 4);
     expect(rowText(state, events, "face up")).toContain("turned d548-shown face up (Prize 5)");
@@ -539,7 +493,7 @@ describe("§10 — the log row names the turned card (it is public)", () => {
 // §11 — THE BUMP'S MEASUREMENT: a reconstructed v31 state THROWS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key throws (🆕🆕🆕 this slice's bump; the record is v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646 and still carries the field)", () => {
+describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key throws ( this slice's bump; the record is v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646 and still carries the field)", () => {
   const v31 = (state: GameState): GameState => {
     const strip = (seat: Seat) => {
       const { faceUpPrizes: _dropped, ...rest } = state.players[seat];
@@ -548,12 +502,12 @@ describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key t
     return { ...state, players: { p1: strip("p1"), p2: strip("p2") } };
   };
 
-  it("🛑 every projection throws (redactedSideOf reads the key for every prize)", () => {
+  it("every projection throws (redactedSideOf reads the key for every prize)", () => {
     expect(() => redactGame(v31(ready()), "p1")).toThrow(TypeError);
     expect(() => redactGame(v31(ready()), "p2", true)).toThrow(TypeError);
   });
 
-  it("🛑 every prize take throws (resolveTakePrizes prunes the key)", () => {
+  it("every prize take throws (resolveTakePrizes prunes the key)", () => {
     const koed = confirm(purge(ready({ defender: "d548-frail" })).state, false).state;
     const next = confirm(purge(nextP1Turn(koed)).state, false).state;
     expect(next.phase.kind).toBe("ko:takePrizes");
@@ -580,18 +534,18 @@ describe("§12 — validateChoice refuses out-of-range, face-up and multi-index 
       "BAD_EFFECT_CHOICE",
     );
 
-  it("🛑 an index the row does not have", () => {
+  it("an index the row does not have", () => {
     refuse(second(), { kind: "prize", index: 9 });
     refuse(second(), { kind: "prize", index: -1 });
   });
 
-  it("🛑 a FACE-UP index — slot 2 is already turned and is not offered", () => {
+  it("a FACE-UP index — slot 2 is already turned and is not offered", () => {
     const state = second();
     expect(promptOf(state)).toMatchObject({ indices: [0, 1, 3, 4, 5] });
     refuse(state, { kind: "prize", index: 2 });
   });
 
-  it("🛑 more than one index, a string, a fraction, or the wrong answer kind", () => {
+  it("more than one index, a string, a fraction, or the wrong answer kind", () => {
     const state = second();
     refuse(state, { kind: "prize", index: [0, 1] });
     refuse(state, { kind: "prize", index: "0" });

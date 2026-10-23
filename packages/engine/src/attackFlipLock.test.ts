@@ -26,32 +26,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.431.0 → 0.432.0 — D547 (A), THE FLIP-TO-ATTACK LOCK:
-//
-//   "During your opponent's next turn, if the Defending Pokémon tries to use an
-//    attack, your opponent flips a coin. If tails, that attack doesn't happen."
-//
-// `censusAttackCorpus.ts` FILE LINE 176 (leading count column 2): ONE row, TWO
-// sentences, 2 legal printings — OPAQUE at SUBMAX=12 before this slice. Claimed WHOLE
-// by `deriveAttackEffect` through ONE new anchor (`DEFENDER_FLIP_ATTACK_LOCK`, two
-// `['’]` slots, no capture) and ONE new arm (26e) emitting ONE new op,
-// `flipLockAttack` — field-free, defender-only. The installer stamps
-// `InPlayPokemon.attackFlipLockTurn = turn + 1`; `attack.ts` flips at the §8 step-3
-// seam, BEFORE the Confusion flip — the official rulebook's "Full details of
-// attacking" step B ("Apply any effects that might alter or cancel the attack",
-// whose printed example is this sentence family) precedes step C, the Confusion
-// check (docs/decisions.md D547 ruling 1).
-//
-// ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID PRINTS THE SENTENCE ON THIS CHECKOUT, AND THAT
-// WAS MEASURED (D425, `git grep`). Every board rides file-local DECLARED `d547-*`
-// demonstrators in their OWN 60-card deck (D270). Which two real printings are legal
-// is UNMEASURED; nothing here claims their attacks, costs or damage.
-//
-// Sections: §1 the derivation · §2 the install · §3 heads and tails · §4 the window ·
-// §5 the rng is spent only while the lock is live · §6 the lock before Confusion · §7 the hard
-// lock still refuses first · §8 the declaration stays LEGAL (redact) · §9 the four
-// §10 clears · §10 §11 · §11 the log rows · §12 the v31 bytes and the v30 reject.
-
 const S176 =
   "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.";
 const P176: readonly EffectOp[] = [{ op: "flipLockAttack" }];
@@ -83,7 +57,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     attacks: TARGET_ATTACKS,
   }),
-  /** Evolves from `d547-target` with the same attacks — the evolve clear. */
   "d547-target-evolved": battler("d547-target-evolved", {
     types: ["Fighting"],
     stage: "Stage1",
@@ -102,7 +75,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "d547-locker": 4,
   "d547-target": 4,
@@ -417,11 +389,6 @@ describe("§5 — no lock, no coin", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — the LOCK flips BEFORE Confusion (the rulebook's step B before step C,
-// docs/decisions.md D547 ruling 1).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§6 — stacked with Confusion, in the rulebook's order", () => {
   it("lock TAILS: fails as `flipLock`, the Confusion coin is NEVER flipped, NO counters", () => {
     const window = withFaces(confused(installed().state), ["tails"]);
@@ -659,8 +626,8 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
 // §12 — `MATCH_RECORD_VERSION` 30 → 31.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, 42 since D583, 43 since D621, 44 since D630, 45 since D636, 46 since D637, 47 since D640, 48 since D643, 49 since D646, and still carries the field)", () => {
-  it("🛑 v31: the stamp is in the serialized state, and a JSON round-trip still flips", () => {
+describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved ( D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, 42 since D583, 43 since D621, 44 since D630, 45 since D636, 46 since D637, 47 since D640, 48 since D643, 49 since D646, and still carries the field)", () => {
+  it("v31: the stamp is in the serialized state, and a JSON round-trip still flips", () => {
     const window = installed().state;
     const bytes = JSON.stringify(window);
     expect(bytes.includes('"attackFlipLockTurn":4')).toBe(true);
@@ -668,7 +635,7 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     expect(find(attack(revived, JAB, "p2").events, "ATTACK_FAILED")?.reason).toBe("flipLock");
   });
 
-  it("🛑 v30-SHAPED body (the key genuinely ABSENT): the gate silently never flips", () => {
+  it("v30-SHAPED body (the key genuinely ABSENT): the gate silently never flips", () => {
     const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v30 record looks like (D124).
@@ -676,8 +643,6 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     expect("attackFlipLockTurn" in target).toBe(false);
     const legacy = withFaces(revived, ["tails"]);
     const { events } = attack(legacy, JAB, "p2");
-    // The printed coin is silently gone — a plausible-looking wrong board, which is
-    // why a v30 record is RETIRED rather than read (apps/api match.ts, D547).
     expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });

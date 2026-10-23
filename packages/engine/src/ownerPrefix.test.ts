@@ -23,106 +23,6 @@ import {
   trainerCard,
 } from "./testFixtures";
 
-// D200 — THE OWNER-PREFIX SUBGROUP FILTER (`CardFilter.ownerPokemon`), the
-// dimension two independent censuses named the largest gap in the project — and
-// the measured finding that the filter ALONE finishes SIX printings.
-//
-// ── THE CENSUS, RE-DERIVED ───────────────────────────────────────────────────
-// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
-// 20 sets, 2,021 `legal_standard = 1`), swept 2026-08-04 over ALL THREE text
-// columns — `effect`, `attacks_json` and `abilities_json` (the two JSON columns
-// via `json_each` + `json_extract(value,'$.effect')`) — for a possessive owner
-// prefix. `CENSUS` below is that result.
-//
-// ⚠️ THREE THINGS THE PRIOR CENSUSES GOT WRONG, EACH FOUND BY WIDENING A VERB.
-//
-//   (1) **THE MATCH MUST BE CASE-SENSITIVE.** SQLite's `LIKE` is ASCII
-//       case-insensitive, so `LIKE '%N''s %'` matches "Pokémon's" and reports
-//       `N's` at 95 text units. `GLOB` (case-sensitive) with a leading
-//       non-letter guard reports SIX. Any owner whose name is a suffix of an
-//       ordinary English word is exposed to this; `N` is the extreme case and
-//       the only one-letter owner in the catalog.
-//   (2) **`Team Rocket's` 31 / `Ethan's` 11 / … WAS NEVER AN ATTACK-ONLY COUNT.**
-//       D187's table totals 67 across all three columns, not 67 attack units:
-//       `Team Rocket's` is 9 attack + 10 ability + 12 effect. Attacks alone are
-//       25 legal units in total, across every owner.
-//   (3) **THE PRIOR LIST WAS SHORT BY FIVE OWNERS AND THIRTEEN UNITS.** D187
-//       named eight prefixes; the sweep finds THIRTEEN with legal text, adding
-//       `Hop's` 5, `Arven's` 3, `Marnie's` 2, `Janine's` 1, `Xerosic's` 1. The
-//       legal total is **80 text units**, not 67. (`Erika's` 2 and `Giovanni's`
-//       2 exist in the catalog at ZERO legal printings and are excluded.)
-//
-// AND THE SWEEP'S OWN NEGATIVE RESULT: **no printing names an owner subgroup
-// WITHOUT the possessive.** The non-possessive family is a different, already
-// known shape — *"a Supporter card that has \"Team Rocket\" in its name"*
-// (2 legal printings) — which is a quoted-substring predicate over a CARD NAME,
-// not a subgroup, and is not this filter (it also matches Trainers, which this
-// filter is built to exclude). Every text unit below carries U+0027; the catalog
-// holds ZERO U+2019 in any of the three columns, so no apostrophe fold is owed.
-//
-// ── WHAT THE PREDICATE READS ─────────────────────────────────────────────────
-// THE CARD NAME, because the catalog carries nothing else. The ingested row has
-// `name`, `category`, `stage`, `evolveFrom`, `trainerType`, `energyType` — no
-// owner, subgroup or family column — so membership is the printed prefix, read
-// exactly as `hasRuleBox` reads "Radiant " and `pokemonSuffixOf` reads " ex".
-// Every Pokémon named in the 46 distinct legal sentences has a name beginning
-// `<owner>'s `; the rule holds without exception on the Pokémon side.
-//
-// ⚠️ AND ONE CARD BREAKS THE NAME-ONLY RULE: **`Team Rocket's Energy`
-// (sv10-182)**, a Special Energy whose name carries the prefix — and the card
-// that prints *"This card can only be attached to a Team Rocket's Pokémon."*, so
-// a name-only predicate makes it a legal target for itself. It is not a corner:
-// across the eleven owners that have Pokémon, 32 of 214 prefixed printings are a
-// Trainer or that Energy. `category === "Pokemon"` is therefore a CONJUNCT of the
-// predicate, not a tidy-up.
-//
-// ── THE ONE-MEMBER-VS-SEVERAL VERDICT ────────────────────────────────────────
-// `owner` is a PARAMETER (the set is open — zero owners through sv08, eleven with
-// Pokémon by sv10 — and every read site's code is identical across them).
-// `stage` is a RIDER rather than three members, and the standing rule is what
-// decides it rather than being waived: "when one-member-with-a-flag and
-// two-members cost the READ SITE the same, the members win." They do NOT cost the
-// same here. Both read sites (`matchesFilter`, interpreter.ts `retrieveNoun`)
-// must branch on `owner` regardless, and `retrieveNoun` owes ONE noun phrase —
-// "a Basic Hop's Pokémon" — which is not the concatenation of "a Basic Pokémon"
-// and "a Hop's Pokémon". Three members cost those two switches six arms with the
-// owner logic copied three times; the rider costs two.
-//
-// ── COMPOSITION ──────────────────────────────────────────────────────────────
-// NEEDED — four of the six landed printings print a second axis ("Basic X's
-// Pokémon") — and the vocabulary has NO conjunction to compose with. There is no
-// `allOf`; `pokemonOrBasicEnergy` is a bespoke DISJUNCTION member and
-// `basicPokemon.noRuleBox` / `basicEnergy.energyType` are bespoke RIDERS. So the
-// filter carries the second axis itself, which is the house pattern.
-//
-// ── WHICH READ SITES LEARNED IT ──────────────────────────────────────────────
-// TWO, and both were forced by an exhaustive switch: `matchesFilter` (cards.ts —
-// the deck/hand/discard scanner behind `searchDeck`, `lookAtTopN`,
-// `discardPileRetrieval`, and via `matchesAttached` the in-play Energy scanner)
-// and `retrieveNoun` (interpreter.ts — the prompt captions).
-//
-// ⚠️ THE IN-PLAY TARGET PATHS DID **NOT** LEARN IT, AND COULD NOT. `CardFilter`
-// is the CARD vocabulary; in-play Pokémon targets are picked by op-specific
-// `targetType` (an energy-type string), `basicOnly` and `zone` riders, and NO op
-// takes a `CardFilter` for a target. So "1 of your Benched Iono's Pokémon" is out
-// of this member's reach by construction — it is a second piece, flagged in
-// `DROPPED` below rather than half-built. That makes the printed split honest
-// rather than arbitrary: the sentences that SEARCH A DECK are finished, the
-// sentences that POINT AT THE BOARD are not.
-//
-// ── THE YIELD, WHICH IS THE FINDING ──────────────────────────────────────────
-// 80 legal text units name the dimension. **SIX legal printings are finished by
-// the filter.** Everything else needs a second missing piece, enumerated in
-// `DROPPED` with the exact piece and asserted unbuilt. This is D186's shape
-// repeating (a gate priced at 78 whose true yield was 12), and it is a real
-// result: the dimension is wide, and it is wide across mechanisms this engine
-// does not have yet, not across one it now does.
-
-/** The full sweep, legal scope, per owner per column. `total` is the owner's
-    legal text units; the three columns are `effect` (Trainers, Stadiums, Tools,
-    Special Energy), `attack` and `ability`. Owners with catalog text but ZERO
-    legal printings (`Erika's` 2, `Giovanni's` 2) are excluded — this is the
-    LEGAL pool. */
 const CENSUS = [
   { owner: "Team Rocket", effect: 12, attack: 9, ability: 10, total: 31 },
   { owner: "Ethan", effect: 3, attack: 3, ability: 5, total: 11 },
@@ -139,9 +39,6 @@ const CENSUS = [
   { owner: "Xerosic", effect: 0, attack: 1, ability: 0, total: 1 },
 ] as const;
 
-/** The five programs this slice lands, with the COMPLETE catalog id set for each
-    printed sentence (measured — no printing of any of these five sentences is
-    outside Standard, so `ids.length === legal` for every row). */
 const LANDED = [
   {
     program: "Champion's Call (Cynthia's Gabite)",
@@ -176,196 +73,17 @@ const LANDED = [
     fixture: "fix-invitingflowers",
     ids: ["sv09-068"],
     legal: 1,
-    // 🆕🆕🆕 D577 (D539) — `max: BENCH_CEILING` now (an Area Zero Underdepths Bench holds 8); the
-    // clamp argument is unchanged.
     ops: "the printed 'any number' at max BENCH_MAX, which the bench clamp makes exact rather than approximate",
   },
 ] as const;
 
-/** ⚠️ THE WORK ORDER — every owner-prefix sentence this filter does NOT finish,
-    with THE EXACT SECOND PIECE it needs. Ranked by legal printings. Every id is
-    asserted below to still have no program, so a later slice cannot half-build
-    one and leave this table lying.
-
-    🆕🆕🆕 **D536 — `surface` IS ANNOTATED RATHER THAN INFERRED, AND THE ANNOTATION
-    IS LOAD-BEARING.** With D536's `attack` row retired the three survivors are two
-    `trainer` rows and one `stadium`, so an INFERRED `as const` type narrows `surface`
-    to `"trainer" | "stadium"` — and `tsc` then rejects the guard's
-    `surface === "attack"` branch as a comparison with no overlap. Widening the field's
-    TYPE keeps the second channel COMPILING while it is empty, which is the honest
-    shape: the channel is not wrong, it is UNPOPULATED, and §"the attack channel"
-    below measures that as ZERO so it can never be mistaken for coverage. */
 const DROPPED: readonly {
   readonly sentence: string;
   readonly ids: readonly string[];
   readonly legal: number;
   readonly surface: "attack" | "trainer" | "stadium";
   readonly needs: string;
-}[] = [
-  // ✅ D204 BUILT THIS ROW — the Iono's Bellibolt ex attach (svp-194,
-  // sv09-053/-172/-183/-188, 5 legal). This row's own `needs` named the piece
-  // exactly right ("an IN-PLAY TARGET filter"), and D204 landed it as one rider
-  // on `AttachTargetRiders` — the interface that already spells the eligibility
-  // rule once for all three attach ops — rather than as a `CardFilter` on the op.
-  // Removed rather than annotated: the UNBUILT assertion below is what keeps this
-  // work order from rotting, and it would fail on a built row.
-  // ✅ D205 BUILT THIS ROW — Ethan's Ho-Oh ex "Golden Flame"
-  // (sv10-039/-209/-230/-239, 4 legal). ⚠️ AND ITS `needs` WAS FALSE AS WRITTEN,
-  // which is worth recording because D204 corrected this row's IDS and left the
-  // sentence beside them standing. It said the rider "plus nothing else —
-  // `attachEnergyFrom` already has `benchOnly` for the printed zone word **and a
-  // count of 2**". There was no count field of any kind: the engine's only
-  // multi-attach was N separate ops, each parking on its own free choice of
-  // target, which for this print would have let a player split the two Energy
-  // across two bodies. D204 measured that and flagged the row; D205 built
-  // `attachEnergyFrom.count`. Removed rather than annotated in place — the
-  // UNBUILT assertion below is what keeps this work order from rotting, and it
-  // fails on a built row.
-  // ✅ D206 BUILT THIS ROW — Team Rocket's Giovanni sv10-174/-225/-238, 3 legal.
-  // ⚠️ AND ITS `needs` WAS RIGHT IN BOTH HALVES, which is worth recording after
-  // Ethan's row above: it named "an in-play target filter on `switchActive` …
-  // applied to BOTH ends of the switch, plus a `recordAs`/gate seam so the second
-  // sentence's 'If you do' can read whether the first happened", and that is
-  // exactly what shipped — one `ownerPokemon` read at both printed nouns, plus
-  // `recordAs` feeding §9.2's existing `recordGate`. The clause "`gust` exists
-  // for the second clause" held too: `TEAM_ROCKETS_GIOVANNI`'s consequent is
-  // `BOSSS_ORDERS`' whole program byte-for-byte. Removed rather than annotated in
-  // place — the UNBUILT assertion below is what keeps this work order from
-  // rotting, and it fails on a built row.
-  // ✅ D439 BUILT THIS ROW — Team Rocket's Spidops sv10-020/sv10-187, 2 legal,
-  // *"This attack does 30 damage for each of your Team Rocket's Pokémon in play."*
-  // ⚠️ **AND ITS `needs` WAS RIGHT IN EVERY CLAUSE, WHICH IS WORTH RECORDING
-  // BECAUSE THE CELL HAD ALREADY BEEN CORRECTED ONCE.** It named "a
-  // `DamageCountSource` that counts OWN BODIES IN PLAY MATCHING A PREDICATE",
-  // and it named the two narrowings D282 left behind — the owner PREDICATE and
-  // the ZONE, *"`in play`, which is Active + Bench and NOT the Bench this member
-  // walks"*. That is `yourPokemonInPlay` and `countPokemonInPlay` word for word.
-  // The predicate was already spellable (`CardFilter.ownerPokemon`, D200's own
-  // arm) and the price was ONE union member, ONE evaluator arm, TWO anchors and a
-  // noun vocabulary — shared with four other printed nouns.
-  //
-  // 🛑 **IT IS A DERIVER ARM AND NOT A REGISTRY ROW, WHICH IS WHY THIS ROW ROTTED
-  // SILENTLY AND WHY THE GUARD BELOW IS NOW WIDER.** `programFor(id)?.attack`
-  // reads the REGISTRY only, while an attack program resolves
-  // `registry ?? deriveAttackEffect` — the vacuity `conventions.md` records
-  // against D204 verbatim. So the moment D439 claimed this sentence through the
-  // TEXT path, the row was a stale work order and **nothing reddened**. It was
-  // found by grepping the suites for the sentence before building it, not by a
-  // failing test. The guard now asks the DERIVER as well, for `attack` rows.
-  //
-  // ⚠️ **AND IT LEAVES `LANDED` ALONE, DELIBERATELY.** That table counts D200's
-  // REGISTRY printings and this is not one; the two printings simply leave DROPPED
-  // without arriving in LANDED, so the census's 80 units now split three ways
-  // (registry-built, deriver-built, unbuilt) rather than two. Said out loud rather
-  // than folded into a number, because "the gap between the census and the yield"
-  // is what the rung below it asserts.
-  // ✅ D536 BUILT THIS ROW — Moltres ex sv10-031/-208/-229, 3 legal, *"Discard a
-  // Team Rocket's Energy from this Pokémon. If you do, discard your opponent's
-  // Active Pokémon and all attached cards."* Through the DERIVER (arm 44c), like
-  // D439's row above and unlike D204/D205/D206's, so `LANDED` is again left alone.
-  //
-  // ⚠️ **BOTH HALVES OF ITS `needs` CELL WERE WRONG BY THE TIME IT WAS BUILT, AND
-  // THEY WENT WRONG FOR DIFFERENT REASONS — recorded rather than deleted (D466
-  // step 3: a falsified reason is CORRECTED, never dropped).**
-  //
-  //   HALF 1 — *"an owner-prefixed ENERGY predicate this member deliberately does
-  //   not answer"* — was TRUE OF `ownerPokemon` AND IRRELEVANT TO THE SENTENCE. It
-  //   was written before D207, and D207 bought the answer: the printed cost names a
-  //   CARD, not an owner class, so it is `CardFilter.byName` — which `matchesAttached`
-  //   defers to unchanged and `attachedEnergies` walks. The engine has read this noun
-  //   as a NAME since D207, and the row went on advertising a blocker that had been
-  //   bought 329 decisions earlier. **A `needs` CELL IS A CLAIM ABOUT THE ENGINE AND
-  //   GOES STALE LIKE A COUNT.**
-  //
-  //   HALF 2 — *"no op removes a body from the board outside the §8.1 KO sweep, and
-  //   no Prize is taken"* — was the honest price at D200 and was PAID IN PIECES by
-  //   slices that had never heard of this row. D435 shipped the MOVE itself
-  //   (`discardFromStack(…, "all")` + `active: null` + one `POKEMON_RETURNED`, on the
-  //   ending player's own board) together with its NO-PRIZE verdict; D311/D312 shipped
-  //   the promotion seam (`orphanedPromotions`), whose own comment forecasts THIS OP
-  //   BY NAME. D536's whole interpreter cost was eleven lines: that payload pointed one
-  //   seat over, plus `knockOutDefender`'s two guards.
-  //
-  // 🛑 **AND THE PIN BELOW HALVES, 6 → 3, WHICH IS THE LARGEST SINGLE STEP THIS
-  // TABLE HAS TAKEN** — worth saying out loud, because the remaining 3 are now a
-  // SMALL enough population that the next build empties it, and an empty DROPPED
-  // table would make the UNBUILT guard below VACUOUS rather than green.
-  // 🆕🆕🆕 D556 — 3 → **2** printings / 2 rows (Great Ball built); still not empty.
-  // 🆕🆕🆕 D557 — 2 → **1** printing / 1 row (Arven's Sandwich built); still not empty.
-  // 🆕🆕🆕 D558 — 1 → **0** printings / 0 rows (N's Castle built). 🛑 **THE TABLE IS NOW
-  // EMPTY, AND THE WARNING ABOVE FIRED EXACTLY AS WRITTEN**: the UNBUILT guard below would
-  // be VACUOUS rather than green, so it is INVERTED — it now asserts the empty table and
-  // keeps its loop, which goes live again the day a row is added back.
-  // ✅ D224 BUILT THIS ROW — Team Rocket's Proton sv10-177/-227, 2 legal, and it
-  // is this table's ONLY row to have been dropped for a piece that a LATER,
-  // UNRELATED SLICE then bought: D223 built `trainerFirstTurnExempt` for Carmine,
-  // whose printed first sentence is byte-identical, and D224 spent it here for
-  // ZERO new engine code. **An engine piece transfers across cards; a registry
-  // row does not** — this row is the worked example of both halves.
-  // ⚠️ AND ITS `needs` WAS RIGHT IN BOTH HALVES, which is worth recording after
-  // the Ethan's row above: "the search half is now fully expressible
-  // (`searchDeck{ownerPokemon 'Team Rocket' + stage basic, hand, 3}`)" is
-  // byte-for-byte what shipped, and "a `CardProgram` field read at that gate" is
-  // the flag — though D223 had to discover that "that gate" is THREE gates.
-  // ⚠️ WHAT NEITHER THIS ROW NOR D223's PRICED: the printed "reveal them". The
-  // engine does not model it (the opponent gets a count-only DECK_SEARCHED row),
-  // it is shared by all 16 to-hand search rows, and it is measured and pinned in
-  // `proton.test.ts` rather than left as prose. Removed rather than annotated —
-  // the UNBUILT assertion below is what keeps this work order from rotting, and
-  // it fails on a built row.
-  // ✅ 🆕🆕🆕 D556 BUILT THIS ROW — Team Rocket's Great Ball `sv10-175`, 1 legal, and it
-  // is REMOVED rather than annotated (D204/D224's precedent: the UNBUILT guard below
-  // fails on a built row). Its `needs` — *"`coinFlipGate`'s `otherwise` BRANCH"* — had
-  // been PAID since D269 (Picnicker, the printed "If tails"), 287 decisions before this
-  // row was retired: the `stage: 'evolution'` rider was D200's own and the second
-  // branch was D269's, so the card cost ZERO vocabulary when it was finally built
-  // (`TEAM_ROCKETS_GREAT_BALL`, registry.ts; `conditionalTrainersD556.test.ts`). The
-  // table's own warning above is honoured: TWO rows remain, so the guard is not vacuous.
-  // ✅ 🆕🆕🆕 D558 BUILT THIS ROW — N's Castle `sv09-152`, 1 legal (D204's correction held:
-  // `sv10-165` is Ethan's Adventure), REMOVED rather than annotated (D204/D224/D556/D557's
-  // precedent: the UNBUILT guard fails on a built row). Its `needs` — *"a subgroup scope
-  // on the retreat aura … on BOTH sides"* — was RIGHT, and was bought as a STADIUM field
-  // rather than a widening of `noRetreatCostAura` (an Ability, §9-gated, own side only):
-  // `StadiumEffects.retreat { filter: ownerPokemon "N", free }`, a stage-agnostic member of
-  // `effectiveRetreatCost`'s free tier (`NS_CASTLE`, registry.ts;
-  // `continuousToolsStadiumsD558.test.ts` §11). And the two Stadiums its `needs` named
-  // "beside it" were built by the SAME slice on the damage seams it predicted — Granite
-  // Cave (`StadiumEffects.damageReductionAfterWR`, Steven's) and Postwick
-  // (`StadiumEffects.damageBonusBeforeWR`, Hop's).
-  // ✅ D204 BUILT THIS ROW — Spikemuth Gym sv10-169, the row this list called
-  // FREE and told the next slice to take first. It was: Champion's Call's two ops
-  // verbatim on `StadiumAbility.program`, using only the CARD filter D200 shipped
-  // and none of D204's target rider. The prediction held exactly.
-  // ✅ 🆕🆕🆕 D557 BUILT THIS ROW — Arven's Sandwich `sv10-161`, 1 legal, REMOVED rather
-  // than annotated (D204/D224/D556's precedent: the UNBUILT guard below fails on a built
-  // row). Its `needs` was RIGHT in both halves and both were bought exactly as priced: a
-  // `BoardCondition` reading the ACTIVE's subgroup (`yourActiveOwner { owner: "Arven" }`,
-  // through `ownerPokemon`'s prefix rule) and the either/or heal as `conditionGate`'s
-  // `otherwise` — so an Arven's Active heals 100 and never 30 + 70
-  // (`ARVENS_SANDWICH`, registry.ts; `riderTrainersD557.test.ts`). ⚠️ THE TABLE'S OWN
-  // WARNING IS NOW ONE ROW FROM FIRING: ONE row remains (N's Stadium), so the UNBUILT
-  // guard is still not vacuous — and the next build of this table empties it.
-  // (🆕🆕🆕 D558 — it did: N's Castle was built, the table is EMPTY, and the guard is
-  // inverted rather than left vacuous. See the ✅ D558 block above.)
-];
-
-// ── The demonstrator pool. Synthetic `fix-*` bodies, declared HERE and not in
-//    `testFixtures.ts` — D190/D199's idiom and their reason: a fixture id naming
-//    a real printing must appear in `catalogManifest.ts`, which is generated off
-//    the LOCAL sqlite (`SQLITE_CANTOPEN` in this clone, and measuring a
-//    978-row / 6-set catalog that holds no sv09 or sv10 row at all). `createGame`
-//    takes `cardPool` as a PARAMETER, so this pool stays local and `FIXTURE_POOL`
-//    is untouched.
-//
-//    ⚠️ THE `name` IS THE POINT. Every other fixture in this repo takes
-//    `name: id`; these cannot, because the NAME is what the predicate reads. The
-//    names are real printed names off the D1 sweep, and the ids stay `fix-*` so
-//    the manifest's generator and checker both skip them (D190's rule).
-//
-//    ⚠️ AND `FIXTURE_POOL` WAS SWEPT AS ITS OWN POPULATION BEFORE ANY OF THIS WAS
-//    WRITTEN: it holds **no owner-prefixed name at all** — no card in it can
-//    satisfy `ownerPokemon` for any owner — so nothing there could be reused and
-//    nothing there changes behaviour under the new member. ──
+}[] = [];
 
 /** A Pokémon in an owner's subgroup. `name` carries the printed possessive
     prefix; `id` stays synthetic. */
@@ -502,8 +220,6 @@ const DECK = deckOf({
   "fix-bigbody": 9,
 });
 
-/** `driveSetup` against the LOCAL pool (D190/D199's helper verbatim — the shared
-    one closes over `FIXTURE_POOL`). */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -529,8 +245,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** P1 to move on turn 3 — past §4's going-first restrictions, none of which this
-    slice's rows have anything to do with. */
 function board(seed: number): GameState {
   let state = localSetup(seed, "p1");
   while (state.turn < 3) {
@@ -584,19 +298,7 @@ describe("D200 — the census, as data", () => {
   it("the landed yield is SIX printings — 7.5 % of the dimension it is named after", () => {
     const landed = LANDED.reduce((n, r) => n + r.legal, 0);
     expect(landed).toBe(6);
-    // The gap between the census and the yield is the whole finding, so it is
-    // asserted rather than described: everything else is in DROPPED with a piece.
-    //
-    // ⚠️ 23 AT D200, **17 AFTER D204**, **13 AFTER D205**, **10 AFTER D206**,
-    // **8 AFTER D224** — the Iono's attach (5) and Spikemuth Gym (1) left at
-    // D204, Ethan's Ho-Oh ex (4) at D205, Team Rocket's Giovanni (3) at D206,
-    // Team Rocket's Proton (2) at D224. The remainder is NOT the
-    // whole backlog: D204's own census found FIVE MORE SENTENCES / TEN LEGAL
-    // PRINTINGS this table never had (N's PP Up 1 and Marnie's Grimmsnarl ex 1,
-    // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
-    // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
-    // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(0); // 🆕🆕🆕 D558 −1 printing — N's Castle sv09-152 left through the REGISTRY (`NS_CASTLE`), and `LANDED` stands still at 6 (D200's own landing, D224/D556/D557's precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. THE TABLE IS EMPTY: see the ✅ D558 block where the row stood and the INVERTED guard below. // 🆕🆕🆕 D557 −1 printing — Arven's Sandwich sv10-161 left through the REGISTRY (`ARVENS_SANDWICH`), and `LANDED` stands still at 6 (D200's own landing, D224/D556's precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D557 block where the row stood. // 🆕🆕🆕 D556 −1 printing — Team Rocket's Great Ball sv10-175 left through the REGISTRY (`TEAM_ROCKETS_GREAT_BALL`), and `LANDED` stands still at 6 because that table is D200's own landing (D224's Proton precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D556 block where the row stood. 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(0);
   });
 });
 
@@ -615,8 +317,6 @@ describe("D200 — the registry map", () => {
   });
 
   it("Hop's Bag and Summoning Sign are SEPARATE objects, not one shared near-twin", () => {
-    // Byte-identical apart from the owner. Sharing would let an edit to either
-    // card silently move the other — D199's rule for its own near-twins.
     expect(programFor("sv09-147")).not.toBe(programFor("sv10-083"));
   });
 
@@ -626,14 +326,6 @@ describe("D200 — the registry map", () => {
       expect(programFor(id)?.attack?.[0], `${id} idx 0`).toBeDefined();
       expect(programFor(id)?.attack?.[1], `${id} idx 1 was adopted`).toBeUndefined();
     }
-    // 🆕 **D313 — LILLIE'S COMFEY `sv09-068` LEFT THIS LIST BY BEING BUILT, NOT BY
-    // BEING WRONG.** Index 1 is "Fade Out" — *"Put this Pokémon and all attached
-    // cards into your hand."* — which D313 authored as `returnSelf { dest: "hand" }`
-    // while settling that op's destination over all four printed spellings at once.
-    // 🛑 **THE GUARD IS RE-POINTED RATHER THAN DELETED, AND ADOPTION IS STILL WHAT
-    // IT ASKS**: the two indices must carry DIFFERENT programs, because the defect
-    // this rung exists for is index 1 inheriting index 0's, and a card where both
-    // are authored is exactly where that would now hide.
     const comfey = programFor("sv09-068")?.attack;
     expect(comfey?.[0], "sv09-068 idx 0").toBeDefined();
     expect(comfey?.[1], "sv09-068 idx 1").toEqual([{ op: "returnSelf", dest: "hand" }]);
@@ -641,54 +333,7 @@ describe("D200 — the registry map", () => {
     expect(comfey?.[2], "sv09-068 idx 2 — the card prints two attacks").toBeUndefined();
   });
 
-  // 🛑 D263 SHARPENED THIS GUARD FROM THE CARD TO THE **SURFACE**, AND IT WAS A
-  //    REAL DEFECT RATHER THAN A TIDY-UP. The assertion used to read
-  //    `expect(programFor(id)).toBeUndefined()` — a claim about the whole CARD —
-  //    for a work order that is about ONE PRINTED SENTENCE. Team Rocket's Spidops
-  //    `sv10-020`/`sv10-187` carries **two** printed surfaces: the ATTACK this row
-  //    is about ("This attack does 30 damage for each of your Team Rocket's
-  //    Pokémon in play.", still unbuilt, still blocked on a `DamageCountSource`)
-  //    and an ABILITY that is a different sentence entirely ("Charging Up",
-  //    BUILT at D263). Authoring the Ability made this guard fail on a row whose
-  //    claim is still perfectly true.
-  //    ⚠️ **THE FIX IS TO NAME THE SURFACE, NOT TO REMOVE THE ROW** — removing it
-  //    would have thrown away a live work order to silence a guard that was
-  //    asking the wrong question. Every row now declares which `CardProgram` key
-  //    its sentence would land on, and the guard checks THAT key. The table is
-  //    strictly stronger afterwards: it can now tell "this sentence was built"
-  //    from "some other sentence on the same cardboard was".
-  //    🆕 **GROUP BY SENTENCE, NOT PRINTING — AND ASSERT BY SENTENCE TOO.** The
-  //    census discipline has said the first half for twenty slices; this is the
-  //    first time a GUARD has been caught violating the second.
-  //    🛑🛑 **D439 WIDENED THIS GUARD FROM THE REGISTRY TO THE READER, AND IT WAS
-  //    THE SAME DEFECT ONE LAYER DOWN.** D263's fix asked the right KEY of the
-  //    right CARD — and still asked only `programFor`, which is the REGISTRY.
-  //    An attack program resolves `registry ?? deriveAttackEffect`, so a sentence
-  //    claimed by a DERIVER ARM leaves this guard perfectly green. That is the
-  //    vacuity `conventions.md` records against D204 in those exact words, and it
-  //    happened: D439 built *"This attack does 30 damage for each of your Team
-  //    Rocket's Pokémon in play."* through two new anchors, and this table went on
-  //    advertising it as unbuilt work with NOTHING RED. It was caught by grepping
-  //    the suites for the sentence, which is luck rather than a process.
-  //    ⚠️ **THE FIX ASKS BOTH CHANNELS, AND ONLY FOR THE SURFACE THAT HAS TWO.**
-  //    `resolvedByAnyReader` is the attack column's text path; the `trainer` and
-  //    `stadium` rows have no deriver behind them at all, so asking it of them
-  //    would be a rung that could never fire. Measured before it was written: of
-  //    the five DROPPED rows, two are `attack`, and the OTHER one
-  //    (*"Discard a Team Rocket's Energy from this Pokémon. …"*) is still refused
-  //    by every reader — so the widening removes a live blind spot and moves no
-  //    other row, which is what makes it a fix rather than a re-scoping.
-  //    ✅ **THAT LAST SENTENCE IS HISTORY AS OF D536, AND THE WIDENING IS WHAT MADE
-  //    IT SO** (D178 — provenance annotated, never overwritten). `resolvedByAnyReader`
-  //    flipped to `true` on that very sentence the moment arm 44c landed, and THIS
-  //    GUARD IS WHAT WENT RED AND DEMANDED THE ROW BE RETIRED — which is the whole
-  //    reason the second channel exists. The D439 rot it was built for did NOT repeat:
-  //    a deriver-built row could not leave this table quietly a second time.
-  // 🆕🆕🆕 D558 — INVERTED, NOT DELETED. N's Castle emptied the table, so the loop below runs
-  // ZERO times and this rung would be vacuous-green; it now ASSERTS the empty table first,
-  // and keeps the loop for the day a row is added back (at which point the length pin goes
-  // red and must be stepped consciously, putting the loop back to work).
-  it("🆕 DROPPED is EMPTY — and every row added back must still be UNBUILT on its own SURFACE", () => {
+  it("DROPPED is EMPTY — and every row added back must still be UNBUILT on its own SURFACE", () => {
     expect(DROPPED).toHaveLength(0);
     for (const { sentence, ids, legal, surface } of DROPPED) {
       expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(
@@ -700,8 +345,6 @@ describe("D200 — the registry map", () => {
           `${id}'s ${surface} was quietly authored; update DROPPED`,
         ).toBeUndefined();
       }
-      // 🛑 THE SECOND CHANNEL. An `attack` row can also be built by TEXT, and that
-      // is the road this table was blind to for as long as it existed.
       if (surface === "attack") {
         expect(
           resolvedByAnyReader(sentence),
@@ -711,21 +354,9 @@ describe("D200 — the registry map", () => {
     }
   });
 
-  // 🆕🆕🆕 D536 — THE SECOND CHANNEL IS NOW UNPOPULATED, AND THAT IS SAID WITH AN
-  // ASSERTION RATHER THAN WITH A COMMENT. D536 retired the LAST `attack` row in this
-  // table, so the `resolvedByAnyReader` branch above runs ZERO times: it is not wrong,
-  // it is empty, and an empty branch that nobody names reads exactly like coverage.
-  // 🛑 The rung is written to go RED IN BOTH DIRECTIONS — the day an `attack` row is
-  // added back the count stops being 0 and this line says so, which is the moment the
-  // branch above becomes live again and worth trusting.
-  it("🆕 the DERIVER channel currently covers ZERO rows — the vacuity measured, not described", () => {
+  it("the DERIVER channel currently covers ZERO rows — the vacuity measured, not described", () => {
     expect(DROPPED.filter((r) => r.surface === "attack")).toHaveLength(0);
-    // 🆕🆕🆕 D556 — ["stadium", "trainer", "trainer"] → two rows: Great Ball (trainer) was built.
-    // 🆕🆕🆕 D557 — ["stadium", "trainer"] → ONE row: Arven's Sandwich (trainer) was built.
-    // 🆕🆕🆕 D558 — ["stadium"] → NO rows: N's Castle (stadium) was built; the table is empty.
     expect(DROPPED.map((r) => r.surface).sort()).toEqual([]);
-    // …and the control that keeps THIS rung from being vacuous in its turn: the
-    // predicate it would run DOES discriminate, asked of the sentence D536 just built.
     expect(
       resolvedByAnyReader(
         "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.",
@@ -750,7 +381,7 @@ describe("D200 — what the predicate reads", () => {
     expect(matchesFilter(card("fix-basic-1"), cynthia)).toBe(false);
   });
 
-  it("⚠️ REFUSES `Team Rocket's Energy` — the one card that breaks the name rule", () => {
+  it("REFUSES `Team Rocket's Energy` — the one card that breaks the name rule", () => {
     // sv10-182 carries the prefix and is a Special Energy. The `category`
     // conjunct is what stops the card that PRINTS "only be attached to a Team
     // Rocket's Pokémon" from being one.
@@ -803,7 +434,6 @@ describe("D200 — what the predicate reads", () => {
     expect(matchesFilter(card("fix-cynthia-basic"), evo)).toBe(false);
     expect(matchesFilter(card("fix-cynthia-evo"), basic)).toBe(false);
     expect(matchesFilter(card("fix-cynthia-evo"), evo)).toBe(true);
-    // …and the unmarked printing takes both (§ the "a Cynthia's Pokémon" arm).
     for (const id of ["fix-cynthia-basic", "fix-cynthia-evo"]) {
       expect(matchesFilter(card(id), cynthia)).toBe(true);
     }
@@ -828,26 +458,6 @@ describe("D200 — what the predicate reads", () => {
   });
 
   it("exactly D242's TWO prefixed POKÉMON match, and no other fixture matches any owner", () => {
-    // ⚠️ **THIS CONTROL EXPIRED AT D242 AND IS RE-HOMED RATHER THAN DELETED**
-    // (progress.md's standing rule). It read "no card in `FIXTURE_POOL` matches ANY
-    // owner", which was true for 42 slices and is the reason every demonstrator in
-    // this file is a local body. D242 fielded four prefixed NAMES, and the value of
-    // the control is now in which of them the PREDICATE admits:
-    //   • `fix-powersaver` / `fix-tr-body` — Pokémon, prefix at position 0: MATCH.
-    //   • `fix-tr-energy` — prefixed and NOT a Pokémon (`Team Rocket's Energy`
-    //     sv10-182's shape): REFUSED by the `category` conjunct.
-    //   • `fix-not-tr-body` — a Pokémon whose name CONTAINS the prefix without
-    //     starting with it: REFUSED by `startsWith`.
-    // So the two near misses this file's arm exists for are asserted HERE, on the
-    // predicate itself, as well as through the count in `abilityAttackGate.test.ts`.
-    //
-    // ⚠️ **AND IT EXPIRED A SECOND TIME AT D243**, which is what an enumeration is
-    // FOR. The seat-wide pre-W/R aura fielded three more prefixed Pokémon, and they
-    // are here for a reason this file cares about: `seatDamageBonusBeforeWR.
-    // beneficiary` is `matchesFilter`'s `ownerPokemon` arm, so D243 is the arm's
-    // FIFTH consumer and the first to read it against an ATTACKING body rather than
-    // a search or attach target. Two owners on one board is new too — a `Cynthia's`
-    // and a `Hop's` row in the same pool, where D242's four were one owner.
     const owners = CENSUS.map((r) => r.owner);
     const matched: string[] = [];
     for (const [id, c] of Object.entries(FIXTURE_POOL)) {
@@ -862,75 +472,17 @@ describe("D200 — what the predicate reads", () => {
         "fix-cynthia-aura/Cynthia",
         "fix-cynthia-body/Cynthia",
         "fix-hop-aura/Hop",
-        // ⚠️ **A THIRD EXPIRY, AT D260**, and this one is the arm's SIXTH consumer:
-        // `PassiveEffects.preventAttackEffectsForGroup` (Team Rocket's Articuno
-        // `sv10-051` "Repelling Veil") carries a `CardFilter` and
-        // `groupShieldedFromAttackEffects` answers it with THIS predicate. Both new
-        // bodies are prefixed on purpose — the holder because the printed card is a
-        // member of its own group, and `fix-tr-stage1` because the row's `stage`
-        // conjunct had no negative in the pool until it arrived. ⚠️ Note the sweep
-        // here passes NO `stage`, so the Stage 1 body matches the bare owner filter
-        // and is refused only by the row's own `stage: "basic"`.
         "fix-repellingveil/Team Rocket",
         "fix-tr-stage1/Team Rocket",
-        // ⚠️ **A FOURTH EXPIRY, AT D298** — and this one is NOT a consumer of
-        // `matchesFilter` at all, which is the finding. Lillie's Pearl `sv09-151`
-        // prints *"the **Lillie's** Pokémon this card is attached to"* — the same
-        // printed vocabulary read at the §8.1 KO sweep (flow.ts) against ONE
-        // HOLDER rather than against a zone, so it answers the prefix with
-        // `startsWith` directly instead of through a `CardFilter`. That both
-        // readings agree on these two bodies is exactly what this sweep is for,
-        // and `Lillie` being in `CENSUS`'s own owner list is the catalog
-        // confirming the prefix is real.
         "fix-lillie-body/Lillie",
         "fix-legacy-ex/Lillie",
-        // ⚠️ **A FIFTH EXPIRY, AT D337**, and this one is the arm's SEVENTH consumer
-        // AND the first to read it INSIDE a union: Ethan's Adventure
-        // `sv10-165`/`-221`/`-236` is `anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}]`
-        // under a flat cap, so `matchesFilter` recurses into this arm from the
-        // combinator rather than reaching it directly. All three bodies match the
-        // BARE owner filter this sweep passes — which is the point of the middle
-        // one: `fix-ethans-typhlosion` is a STAGE 2, and the printed noun carries no
-        // stage, so a build that added `stage: "basic"` would keep this line green
-        // and refuse the card the print admits. `Ethan` is already in `CENSUS`'s own
-        // owner list (11 printings: 3 effect + 3 attack + 5 ability), which is the
-        // catalog confirming the prefix is real — and the `effect` 3 are exactly
-        // this slice's three printings.
-        //
-        // ⚠️ AND `fix-ethans-pichu` IS {L}, NOT {R}. It matches here for the same
-        // reason it is admitted on the board: this predicate reads the OWNER and
-        // nothing else. The printed `{R}` belongs to the union's OTHER member.
         "fix-ethans-cyndaquil/Ethan",
         "fix-ethans-typhlosion/Ethan",
         "fix-ethans-pichu/Ethan",
-        // ⚠️ **AND AN EXPIRY AT D392, WHICH THIS PREDICATE DID NOT ASK FOR AND WHICH IT
-        // ANSWERS CORRECTLY ANYWAY.** The SUBSTRING name read is demonstrated on Team
-        // Rocket's Nidoqueen `sv10-116` and its Standard satisfier Team Rocket's
-        // Nidoking ex, so two more `Team Rocket's ` bodies exist in the pool — and
-        // `ownerPokemon` matches the possessive WHOLE, which is why both land here and
-        // why the plain `fix-nidoking` (named "Nidoking", no prefix) does not.
         "fix-loveimpact/Team Rocket",
         "fix-trnidoking/Team Rocket",
-        // 🆕🆕 D393 — AND A SECOND OWNER JOINS THE POOL FOR THE FIRST TIME IN THIS
-        // RUN. The EVOLVE PAIR's Misty's Starmie `sv10-047` and its printed
-        // pre-evolution Misty's Staryu both carry `Misty's `, so `ownerPokemon`
-        // matches a possessive this predicate has never been shown before — which is
-        // what makes these two rows evidence that the arm reads the PREFIX and not a
-        // fixed list of owners. Neither was added for this test; both are the printed
-        // bytes the D393 clause key compares against.
         "fix-abruptflash/Misty",
         "fix-mistystaryu/Misty",
-        // 🆕🆕 **AN EXPIRY AT D439, AND IT IS THE ARM'S EIGHTH CONSUMER** —
-        // `DamageCountSource.yourPokemonInPlay`, the first to read `ownerPokemon`
-        // as a COUNT over a whole side rather than as an eligibility test on one
-        // card. `fix-inplaybodies` ("Team Rocket's Fixmon") is the holder of the
-        // five printed nouns this slice claims, and it is prefixed ON PURPOSE: the
-        // owner sentence's own board needs the Active Spot to be inside the counted
-        // set, so that a walk which skipped the Active answers 0 where the truth is
-        // 1. ⚠️ It is a STAGE 1 and the sweep passes no `stage`, so it matches the
-        // bare filter exactly as `fix-tr-stage1` does — the two together are why the
-        // count in `bodiesInPlayScaling.test.ts` reads 1 on the attacker's side and
-        // 2 on the defender's, which is the seat rung.
         "fix-inplaybodies/Team Rocket",
       ].sort(),
     );
@@ -1040,7 +592,7 @@ describe("D200 — the `stage` rider on the board", () => {
 });
 
 describe("D200 — Inviting Flowers (Lillie's Comfey sv09-068): the printed 'any number'", () => {
-  it("offers the whole Bench when the Bench is empty — BENCH_MAX is a cap, not a guess (🆕🆕🆕 D577: the cap is BENCH_CEILING; the live limit binds here)", () => {
+  it("offers the whole Bench when the Bench is empty — BENCH_MAX is a cap, not a guess ( D577: the cap is BENCH_CEILING; the live limit binds here)", () => {
     let state = withActive(7, "fix-invitingflowers");
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
@@ -1050,8 +602,6 @@ describe("D200 — Inviting Flowers (Lillie's Comfey sv09-068): the printed 'any
       "Search your deck for up to 5 Basic Lillie's Pokémon onto your Bench.",
     );
     expect(new Set(offered(parked))).toEqual(new Set(["fix-lillie-basic", "fix-invitingflowers"]));
-    // D186's finding, driven rather than quoted: the printed "You may" needs no
-    // `optional` wrapper because THIS prompt already legalises taking none.
     expect(prompt.min).toBe(0);
   });
 

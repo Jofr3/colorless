@@ -17,26 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: the `providesEnergy` CardFilter — "an Energy that PROVIDES {X}".
-//
-// The last missing piece of the energy-discard family, and the first filter a
-// CARD alone cannot answer. Two claims carry the whole slice:
-//
-//   1. PROVISION, NOT PRINT. "{L} Energy" is not "a Basic Lightning Energy card".
-//      A Special Energy that provides {L} IS one; a Special that provides only
-//      {C} is not. The predicate therefore reads the same units §8.2's cost
-//      matcher reads (continuous.ts) — pay a {L} cost with a card and the very
-//      same attack must be able to discard it.
-//   2. HOST, NOT CARD. Provision is a while-ATTACHED property, and for Luminous
-//      Energy it depends on the holder's OTHER attachments. The identical card is
-//      a {L} Energy alone and NOT one beside another Special Energy, so the
-//      filter is answered per Energy on its host (`matchesAttached`) and the
-//      card-only pile scanner (`matchesFilter`) answers false for it.
-//
-// TWO consumers, one vocabulary (the D40 shape): the DERIVED typed self-discard
-// (Kilowattrel, Arcanine ex, Charmeleon, Charizard — no registry rows) and
-// `moveEnergy`'s new benchToActive route (Armarouge's "Fire Off").
-
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so attacking and Abilities are both legal (§4). */
 function board(seed: number): GameState {
@@ -128,12 +108,6 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
   });
 
   it("the map's vocabulary IS BASIC_ENERGY_TYPES — no more, no less", () => {
-    // The engine has ONE basic-energy vocabulary (@colorless/schema §6.1) and the
-    // deriver must not grow a second. Colorless and Dragon are absent there on
-    // purpose, and their absence here is load-bearing rather than incidental:
-    // Colorless is the conservative provision FALLBACK for every unauthored
-    // Special Energy, so a "{C} Energy" filter would quietly match cards nobody
-    // meant. A re-ingest that adds a printed type fails this line first.
     expect(Object.values(ENERGY_TYPE_BY_CODE).sort()).toEqual([...BASIC_ENERGY_TYPES].sort());
     expect(deriveAttackEffect("Discard a {C} Energy from this Pokémon.")).toBeNull();
     expect(deriveAttackEffect("Discard a Colorless Energy from this Pokémon.")).toBeNull();
@@ -148,26 +122,7 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
       // Bellibolt ex (sv02-079): "You may" — OPTIONAL, where this op is mandatory,
       // and the discard buys an effect rather than paying a cost.
       "You may discard 2 {L} Energy from this Pokémon to make your opponent's Active Pokémon Paralyzed.",
-      // 🆕🛑 **D402 MOVED TWO STRINGS OUT OF THIS LIST, AND THIS COMMENT IS THE
-      //     RECORD OF WHY — D361's move at this same site, made a second time.**
-      //     Mewtwo VSTAR `swsh10.5-031` *"Discard up to 3 Psychic Energy from your
-      //     Pokémon. This attack does 90 damage for each card you discarded in this
-      //     way."* and Chien-Pao ex `sv02-061` *"You may discard any amount of {W}
-      //     Energy from your Pokémon. …"* stood here from D191 to D401 as REFUSALS.
-      //     They derive now: D402's `ENERGY_DISCARD_SCALED_DAMAGE` reads the whole
-      //     COMPOUND — the discard AND the scaling clause — into the two-op program
-      //     their registry rows already spell, and both are asserted POSITIVELY in
-      //     `psyPurge.test.ts` and `hailBlade.test.ts` instead.
-      //     ⚠️ **WHAT THEY WERE PINNING HERE IS NOT ABANDONED, IT IS RE-POINTED:**
-      //     the claim was always that `TYPED_SELF_DISCARD` refuses a sentence that
-      //     does not END at "this Pokémon.", and the rung below now makes it with
-      //     the one string that no other anchor claims — the SAME whole-board "up
-      //     to" discard with NO scaling clause behind it, which is a sentence the
-      //     column does not print and which therefore still derives to null.
       "Discard up to 3 Psychic Energy from your Pokémon.",
-      // Decidueye (sv06.5-005): a Basic {G} Energy CARD FROM YOUR HAND — the one
-      // row in the family that really is about a PRINT and not about provision,
-      // and the reason `basicEnergy` still exists alongside this filter.
       "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.",
       // Not a printed card; a silent no-op is the worst possible derivation.
       "Discard 0 {R} Energy from this Pokémon.",
@@ -177,23 +132,6 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
       "This attack does 30 damage. Discard a {L} Energy from this Pokémon.",
       "Discard a {L} Energy from this Pokémon. Then, flip a coin.",
       "Discard all Fire Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
-      // The type must sit where the pattern puts it, not merely appear.
-      // 🆕🛑 **D361 MOVED ONE STRING OUT OF THIS LIST, AND THIS COMMENT IS THE
-      //     RECORD OF WHY.** `"Discard a {L} Energy from your opponent's Active
-      //     Pokémon."` stood here from D191 to D360 as a REFUSAL. It derives now:
-      //     the catalog prints that shape (Ducklett `sv10.5w-025`/`-109`,
-      //     `{R}`, 2 Standard-legal; Growlithe `sv03.5-058`, `{W}`, rotated), so
-      //     `OPPONENT_ACTIVE_DISCARD` widened its noun phrase into a capture and
-      //     the sentence is asserted POSITIVELY in `crossSeatEnergyDiscard.test.ts`
-      //     §1 instead. `{L}` itself has ZERO printings on this shape and derives
-      //     anyway — the same convention the loop above pins for the SELF form
-      //     ("every code in the map resolves"): a type is a PARAMETER and the
-      //     alternation is built FROM `ENERGY_TYPE_BY_CODE`, never from the
-      //     printed subset.
-      //     ⚠️ **THE CLAIM THIS LINE MADE IS NOT ABANDONED, IT IS RE-POINTED** —
-      //     the two strings below still pin "the type must sit where the pattern
-      //     puts it", one on a DESTINATION the family does not print and one on
-      //     word order, and both are real refusals rather than a softened list.
       "Discard a {L} Energy from 1 of your opponent's Pokémon.",
       "Discard an Energy of type {L} from this Pokémon.",
     ]) {
@@ -232,10 +170,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("a LUMINOUS Energy IS a {L} Energy — the wildcard provides every type", () => {
-    // Luminous "provides every type of Energy but only 1 at a time" (ANY_ENERGY),
-    // so it is a {L} Energy for a card that asks for one. With a Basic Lightning
-    // beside it the pick becomes a genuine question — which is itself the proof
-    // that the wildcard entered the offer.
     const state = fielded(4, "sv01-079", [
       { id: "fix-lightning-energy", count: 1 },
       { id: "sv02-191", count: 1 },
@@ -260,12 +194,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("…and STOPS being one when another Special Energy demotes it to {C}", () => {
-    // THE host-dependence test. Same Luminous card, same attacker, same attack —
-    // but a Jet Energy attached beside it fires Luminous's own clause ("if the
-    // Pokémon this card is attached to has any other Special Energy attached,
-    // this card provides {C} Energy instead"), so it provides only {C} and is no
-    // longer a {L} Energy. The offer collapses to the Basic Lightning and the
-    // whole decision disappears. A card-only filter CANNOT produce this.
     const state = fielded(5, "sv01-079", [
       { id: "fix-lightning-energy", count: 1 },
       { id: "sv02-191", count: 1 },
@@ -297,13 +225,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("what PAID the cost is what can be discarded — one provision rule, two readers", () => {
-    // The agreement the design rests on. Kilowattrel's [L][C][C] is paid here
-    // with a Luminous covering the {L} slot and two Colorless basics; the attack
-    // is therefore legal ONLY because Luminous provides {L}. The same attack then
-    // discards "a {L} Energy" — and since exactly one attached Energy provides
-    // {L}, it is forced onto that same Luminous. If the cost matcher and the
-    // filter ever disagreed, this board would either be unattackable or would
-    // discard nothing at all.
     const state = fielded(7, "sv01-079", [
       { id: "sv02-191", count: 1 },
       { id: "fix-energy", count: 2 },
@@ -318,16 +239,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("the exact-N typed discard takes N of the matching type, ignoring the rest", () => {
-    // Arcanine ex "Discard 2 {R} Energy". The Water is never a candidate, so the
-    // count and the type constrain one pick from two directions.
-    //
-    // The Luminous is what makes this a QUESTION rather than a forced pick, and
-    // for a reason worth stating: two different Basic Fire PRINTS are one class
-    // (a Basic keys on what it PROVIDES — the catalog prints Basic Fire under
-    // several ids), so no number of Fire basics is ever more than one
-    // distinguishable answer. A wildcard Special is a genuinely different card,
-    // hence a second class — "both basics" and "a basic + the Luminous" are
-    // different boards afterwards.
     const state = fielded(8, "sv01-032", [
       { id: "fix-fire-energy", count: 2 },
       { id: "sv02-191", count: 1 },
@@ -351,17 +262,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("three interchangeable Fire and a count of 2 ask nothing — the collapse, capped", () => {
-    // D43's cap, now under a filter: the offer keeps `count` copies per class, so
-    // three IDENTICAL Fire prints collapse to two — an offer no bigger than the
-    // count, which is forced. The Water is not a candidate at all, so it cannot
-    // be dragged in to make up a number either.
-    //
-    // A genuinely SHORT typed board (fewer matches than the count) is unreachable
-    // through a printed attack in this family: paying Bright Flame's [R][R][R]
-    // takes three Energy that provide {R}, which is already more than the two it
-    // discards — every typed card costs at least what it discards. The
-    // do-as-much-as-you-can path is exercised untyped, on the fix-discard4
-    // fixture built for exactly that (attackDiscards.test.ts).
     const state = fielded(9, "sv01-032", [
       { id: "fix-fire-energy", count: 3 },
       { id: "fix-water-energy", count: 1 },
@@ -375,11 +275,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it('the typed "all" strips its type ONLY — where the untyped "all" strips the lot', () => {
-    // Charizard's "Discard all Fire Energy": every Fire goes, and the Water and
-    // Colorless stay attached. This is the case that proves the filter is doing
-    // work in the APPLY and not only in the prompt — `count: "all"` never asks a
-    // question, so the filter is the only thing standing between this and a
-    // board stripped bare.
     const state = fielded(10, "swsh10.5-010", [
       { id: "fix-fire-energy", count: 2 },
       { id: "fix-fire-energy-alt", count: 1 },
@@ -413,13 +308,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("nothing of the type attached is a clean no-op — the attack still resolves", () => {
-    // A typed discard that matches nothing must not park, not throw, and not
-    // reach for a different type. The attack itself is unaffected (§8 declares it
-    // legally; the cost is met by other Energy).
-    //
-    // On a FIXTURE, because no printed card can reach this: every one of them
-    // discards a type its own cost already required, so a real attack always has
-    // at least one match. fix-typeddiscard costs [C] and discards a {W}.
     const state = fielded(12, "fix-typeddiscard", [
       { id: "fix-energy", count: 2 },
       { id: "fix-fire-energy", count: 1 },
@@ -452,11 +340,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("rejects a wire choice that names an Energy of the wrong type", () => {
-    // The prompt is the contract: an Energy the filter excluded was never
-    // offered, so naming it is a BAD_EFFECT_CHOICE — not a discard of a card the
-    // card never asked for.
-    // Two DISTINGUISHABLE {L} providers are what make it park at all; the deck
-    // holds a single Lightning print, so the Luminous wildcard is the second.
     const state = fielded(14, "sv01-079", [
       { id: "fix-lightning-energy", count: 1 },
       { id: "sv02-191", count: 1 },
@@ -475,13 +358,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("a Special providing TWO distinct types answers to BOTH of them", () => {
-    // `EnergyProgram.provides` has always been a LIST, and the predicate asks
-    // whether the type is AMONG the units — not whether it is the first one. No
-    // authored card could tell those apart (Jet provides ["Colorless"], Luminous
-    // [ANY_ENERGY]), so a fixture carries the multi-unit shape: fix-blend provides
-    // {R} and {W}, and must be a candidate for a Fire discard and a Water one
-    // alike. Without this the "which unit" question is decided by an untested
-    // accident, and the first Blend/Reversal-style print would find it.
     const fire = fielded(17, "swsh10.5-009", [
       { id: "fix-blend", count: 1 }, // provides {R} AND {W}
       { id: "fix-fire-energy", count: 1 },
@@ -504,12 +380,6 @@ describe("M5 op-slice — the providesEnergy filter: provision on a board", () =
   });
 
   it("finds NOTHING in a deck — a card in a pile is attached to nothing", () => {
-    // The filter's other half, and the authoring mistake it is designed to make
-    // harmless: `providesEnergy` handed to a DECK search matches no card at all,
-    // because provision is a while-ATTACHED property ("As long as this card is
-    // attached to a Pokémon, it provides…"). The deck here is FULL of Fire
-    // Energy, so a card-shaped guess ("a Basic Fire Energy card") would have
-    // grabbed one — the loud no-op is the whole point.
     let state = board(16);
     state = setActiveFromDeck(state, "p1", "fix-basic-1");
     state = setActiveFromDeck(state, "p2", "fix-titan");
@@ -665,10 +535,6 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
   });
 
   it("works from the BENCH — the card never says 'this Pokémon'", () => {
-    // §9: an Ability works wherever the Pokémon is unless the card says
-    // otherwise, and "Fire Off" names its endpoints outright rather than saying
-    // "this Pokémon". So a BENCHED Armarouge may move its OWN {R} to whatever is
-    // Active — a use the Active-only flag would have wrongly refused.
     let state = board(24);
     state = setActiveFromDeck(state, "p1", "fix-basic-1");
     state = setActiveFromDeck(state, "p2", "fix-titan");
@@ -715,12 +581,6 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
   });
 
   it("the ENERGY_MOVED destination is the engine's own value, not the client's object", () => {
-    // The event payload is the §2 copy contract, and `dest` arrives over the WIRE.
-    // validateChoice proves it refEquals an offered ref — but refEquals compares
-    // seat/spot/index only, so any extra key a client hangs on it would ride a
-    // spread straight into an event handed to the animator, the log, and (P4) the
-    // opponent. The state was never at risk; the EVENT is, and a copy of
-    // attacker-controlled data is not a copy of the engine's own value.
     let state = fireOffBoard(28);
     state = attachBenchFromDeck(state, "p1", 0, "fix-fire-energy", 1);
     const [benched] = benchEnergy(state, "p1", 0);

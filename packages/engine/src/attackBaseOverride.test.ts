@@ -32,42 +32,10 @@ import {
 } from "./testFixtures";
 import type { BoostedAttack } from "./types";
 
-// 0.428.0 → 0.429.0 — D544, THE NAMED ATTACK'S BASE DAMAGE, OVERRIDDEN FOR ONE WINDOW:
-//
-//   "During your next turn, this Pokémon's Hyper Fang attack's base damage is 240."
-//
-// `censusAttackCorpus.ts` FILE LINE 166, leading count column 2: **1 sentence / 2
-// legal printings** (Raticate — `imperviousShell.test.ts`'s rung-2 census names it).
-// Claimed WHOLE by `deriveAttackEffect` through ONE new anchor
-// (`SELF_ATTACK_BASE_SET`, two `['’]` slots) and ONE new arm (24b') that emits the
-// SHIPPED `boostAttack` op with a `base: true` RIDER — not a new op and not a new
-// `InPlayPokemon` field. The record is D155's `BoostedAttack` with an OPTIONAL
-// `base?: number`; the installer writes `amount: 0` beside it, so the unedited
-// additive reader pays +0 by construction, and ONE new reader
-// (`boostedAttackBase`, continuous.ts) hands `attack.ts`'s one `parseAttackDamage`
-// line the number that REPLACES the printed base.
-//
-// ⚠️ NO CATALOG OR REGISTRY ID CARRIES THIS SENTENCE ON THIS CHECKOUT, AND THAT WAS
-// MEASURED (D425): `git grep -c "Hyper Fang"` over `registry.ts`,
-// `catalogManifest.ts` and `testFixtures.ts` returns zero. So every board here rides
-// file-local DECLARED `d544-*` demonstrators in their OWN 60-card deck (D270), and
-// Hyper Fang's real printed damage is UNMEASURED — which is why the "×"-marker case
-// (a multiply clause whose base is overridden) is NAMED AS UNREACHED and not
-// asserted anywhere below.
-//
-// Sections: §1 the derivation · §2 the install and the record · §3 the board
-// (W/R order, additive terms) · §4 the window · §5 §10 clears · §6 §9 and §11 ·
-// §7 confusion · §8 the log row · §9 the fieldwise merge · §10 the serialized bytes.
-
 const SENTENCE = "During your next turn, this Pokémon's Hyper Fang attack's base damage is 240.";
 const PROGRAM: readonly EffectOp[] = [
   { op: "boostAttack", attack: "Hyper Fang", amount: 240, base: true },
 ];
-/** The LEGAL additive sentence at `censusAttackCorpus.ts:165` (Meloetta ex's Echoed
-    Voice, "80 more" — NOT D155's Seismitoad `sv03-052`, which prints "100 more" and
-    is a local-D1 printing), one of THREE additive neighbours at the same address
-    (🆕🆕🆕 D546: three NAMED ones — five additive in all, with the two ALL-ATTACKS
-    sentences at `:76`/`:148`, `everyAttackBoost.test.ts`). */
 const ECHOED_VOICE =
   "During your next turn, this Pokémon's Echoed Voice attack does 80 more damage (before applying Weakness and Resistance).";
 
@@ -106,9 +74,6 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  /** Evolves from `d544-fang` and prints Hyper Fang at the SAME index, so a record
-      that survived evolution would pay the new card — the failure a §10 clear rules
-      out is "boosted somewhere else", not only "still boosted". */
   "d544-fang-evolved": battler("d544-fang-evolved", {
     types: ["Colorless"],
     stage: "Stage1",
@@ -138,8 +103,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), counted by the helper because 60 is a `createGame`
-    precondition. */
 const FANG_DECK = deckOf({
   "d544-fang": 4,
   "d544-fang-plus": 2,
@@ -219,8 +182,6 @@ function ready(
 const attack = (state: GameState, index: number, seat: Seat = "p1") =>
   mustApply(state, { type: "attack", seat, index });
 
-/** `ready`, then Fang Charge DECLARED — asserting the row landed so no case can
-    assert a number against an install that never happened. Returns P2's turn. */
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, CHARGE);
@@ -286,8 +247,6 @@ describe("§1 — the anchor claims the sentence WHOLE, and only it", () => {
   it("the corpus row itself derives, off the committed bytes (file line 166, 2 printings)", () => {
     const rows = legalAttackCorpus().filter(([, text]) => text === SENTENCE);
     expect(rows).toEqual([[2, SENTENCE]]);
-    // …and it is the ONLY corpus row that derives a base-set op — the population is
-    // one sentence, measured rather than assumed.
     const baseRows = legalAttackCorpus().filter(([, text]) =>
       boostOps(deriveAttackEffect(text)).some((op) => op.base === true),
     );
@@ -323,7 +282,6 @@ describe("§1 — the anchor claims the sentence WHOLE, and only it", () => {
       "During your next turn, this Pokémon's Hyper Fang attack does 240 more damage.",
       // No period.
       SENTENCE.slice(0, -1),
-      // Lowercase "during" — the mid-sentence form a gated printing would carry.
       `d${SENTENCE.slice(1)}`,
       // The OPPONENT's body.
       "During your opponent's next turn, the Defending Pokémon's Hyper Fang attack's base damage is 240.",
@@ -357,14 +315,6 @@ describe("§1 — the anchor claims the sentence WHOLE, and only it", () => {
         "During your next turn, this Pokémon's Echoed Voice attack's does 80 more damage (before applying Weakness and Resistance).",
       ),
     ).toBeNull();
-    // Every additive corpus row derives with NO `base` key at all.
-    // 🆕🆕🆕 D546 — RE-POINTED: this loop used to FILTER on the text
-    // "more damage (before applying", which the two ALL-ATTACKS sentences
-    // (`censusAttackCorpus.ts:148`/`:76`, "…more damage to your opponent's Active
-    // Pokémon (before applying …") do not contain — so the `toBe(3)` below stayed
-    // green only because the filter excluded them, a NARROWED claim. It now counts
-    // every `boostAttack` a corpus row derives that is not a base-set install, by
-    // the OP rather than by a substring.
     let additive = 0;
     for (const [, text] of legalAttackCorpus()) {
       for (const op of boostOps(deriveAttackEffect(text))) {
@@ -373,18 +323,10 @@ describe("§1 — the anchor claims the sentence WHOLE, and only it", () => {
         expect(Object.keys(op), text).not.toContain("base");
       }
     }
-    // EXACT, not `> 0`: the prose that argues from this population (continuous.ts,
-    // attack.ts, index.ts, types.ts, match.ts) counts ~~THREE~~ additive sentences —
-    // 🆕🆕🆕 D546: FIVE, three NAMED (Echoed Voice, Meteor Mash, Tornado Rush) and two
-    // ALL-ATTACKS (`:76`, `:148`).
     expect(additive).toBe(5);
   });
 
-  it("the record's WHOLE legal population: FOUR sentences / 8 printings — three ADDITIVE, one BASE-SET (🆕🆕🆕 D546: SIX sentences / 10 printings — FIVE ADDITIVE, two of them ALL-ATTACKS, one BASE-SET)", () => {
-    // The measured census every "N sentences write this record" claim in the
-    // engine's prose rests on (D539: a count is measured, never copied). Leading
-    // count column, attack name (🆕🆕🆕 D546: `null` for the ALL-ATTACKS address),
-    // amount, and the rider. Corpus order: `:76`, `:148`, `:165`–`:168`.
+  it("the record's WHOLE legal population: FOUR sentences / 8 printings — three ADDITIVE, one BASE-SET ( D546: SIX sentences / 10 printings — FIVE ADDITIVE, two of them ALL-ATTACKS, one BASE-SET)", () => {
     const rows: [number, string | null, number, boolean][] = [];
     for (const [count, text] of legalAttackCorpus()) {
       for (const op of boostOps(deriveAttackEffect(text))) {
@@ -399,7 +341,6 @@ describe("§1 — the anchor claims the sentence WHOLE, and only it", () => {
       [2, "Meteor Mash", 60, false],
       [1, "Tornado Rush", 100, false],
     ]);
-    // 🆕🆕🆕 D546 — 8 → 10: the two ALL-ATTACKS printings (`:76`, `:148`).
     expect(rows.reduce((sum, [count]) => sum + count, 0)).toBe(10);
   });
 });
@@ -498,9 +439,6 @@ describe("§3 — Hyper Fang does 240 instead of its printed 80, and §8.5 runs 
   });
 
   it("the '+'-marker variant: the override is the base the scaling reading ADDS TO", () => {
-    // d544-fang-plus prints "80+" with "10 more damage for each damage counter on
-    // this Pokémon"; three counters make the reading's term 30 either way, so the
-    // base is the whole difference: 240 + 30 against the control's 80 + 30.
     const control = attack(setDamage(ready({ attacker: "d544-fang-plus" }), "p1", 30), FANG);
     expect(find(control.events, "DAMAGE_DEALT")?.dealt).toBe(80 + 30);
 
@@ -604,9 +542,6 @@ describe("§5 — retreat, a forced switch and evolution each clear it", () => {
 
 describe("§6 — an INSTALLATION, not an Ability; a self-install, not an effect done to a body", () => {
   it("§9: an Ability-lock aura switches the printed +30 OFF and leaves the base override ON", () => {
-    // `fix-booster-ability` prints a §9-SUPPRESSIBLE +30; Ting-Lu ex's Cursed Land
-    // locks a DAMAGED non-ex Active. The override is constructed onto its "Hum"
-    // (20) — the printed demonstrator has no Ability, and this is D155's board.
     let state = ready({ attacker: "fix-booster-ability", defender: "sv02-127" });
     state = attachFromDeck(state, "p1", "fix-water-energy", 1); // "Hum" costs {W}
     const armed = runOne(
@@ -666,10 +601,6 @@ describe("§7 — a confused holder: tails pays nothing, heads pays 240", () => 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — the log row.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§8 — the row says BASE DAMAGE, under both seats, and never 'more damage'", () => {
   it("renders the install and reads it back", () => {
     const { state, events } = installed();
@@ -704,10 +635,6 @@ describe("§8 — the row says BASE DAMAGE, under both seats, and never 'more da
     ]);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §9 — the merge, constructed (unreachable off any printing).
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — a second install on the SAME address merges FIELDWISE by max", () => {
   const BASE: EffectOp = { op: "boostAttack", attack: "Hyper Fang", amount: 240, base: true };
@@ -789,12 +716,8 @@ describe("§9 — a second install on the SAME address merges FIELDWISE by max",
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §10 — MATCH_RECORD_VERSION stays 30, driven over SERIALIZED BYTES (D456's shape).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS included", () => {
-  it("🛑 a v30 additive record reads unchanged, a v30 record carrying the optional `base` key round-trips, and a stripped one is inert", () => {
+  it("a v30 additive record reads unchanged, a v30 record carrying the optional `base` key round-trips, and a stripped one is inert", () => {
     // Every direction is read INSIDE the window, so the clock cannot answer for the
     // bytes (installedRecoil.test.ts §5's rule).
     const window = inWindow(installed().state);
@@ -827,25 +750,13 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
     expect(find(attack(degraded, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
   });
 
-  it("🛑 …and that residue is UNAUTHORABLE by the surviving path — every producer measured", () => {
-    // `amount: 0` with no `base` is written by NO additive install: every corpus
-    // row's additive `boostAttack` carries amount >= 1 (arm 24b's guard — 🆕🆕🆕 D546: arm
-    // 24b'' carries the same guard verbatim on the ALL-ATTACKS producer), and the
-    // registry holds no `boostAttack` at all — walked DEEP, so a gate cannot hide one.
-    // 🆕🆕🆕 D563 CORRECTION (D539): ~~"the registry holds no `boostAttack` at all"~~ is
-    // WITHDRAWN — Feraligatr `svp-089` / `sv05-041` "Torrential Heart" authors one (an
-    // Ability's all-attacks, this-turn install of 120). The argument survives because the
-    // walk now PINS that one producer and its amount, which is >= 1 — still no path writes
-    // `amount: 0` without `base`.
+  it("…and that residue is UNAUTHORABLE by the surviving path — every producer measured", () => {
     const additive: number[] = [];
     for (const [, text] of legalAttackCorpus()) {
       for (const op of boostOps(deriveAttackEffect(text))) {
         if (op.base !== true) additive.push(op.amount);
       }
     }
-    // 🆕🆕🆕 D546 — `[80, 60, 100]` → five: the two ALL-ATTACKS producers (`:76`'s
-    // 100 and `:148`'s 120) come first in corpus order. Every one is still >= 1 (arm
-    // 24b'' carries 24b's guard verbatim), so the argument holds unchanged.
     expect(additive).toEqual([100, 120, 80, 60, 100]);
     expect(additive.every((n) => n >= 1)).toBe(true);
     const authored: [string, number][] = [];

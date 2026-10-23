@@ -259,8 +259,6 @@ describe("retreat", () => {
       discardEnergy: [energy],
       promoteBenchIndex: 0,
     });
-    // The promoted Pokémon arrives UNCHANGED except for the one thing a retreat
-    // is: it moved up from the Bench on this turn (D124's `promotedTurn`).
     expect(next.players.p1.active).toEqual({ ...promoted, promotedTurn: state.turn });
     expect(promoted.promotedTurn).toBeNull();
     // The retreater fills the promoted Pokémon's slot, cost discarded.
@@ -456,7 +454,7 @@ describe("endTurn", () => {
       supporterPlayedUid: null,
       endOfTurnHandDiscard: null,
       attackAgainUid: null,
-    }); // 🆕🆕🆕 D570 — no Festival Lead attack-again window open, wiped with the rest (REQUIRED, MRV 36 → 37) // 🆕🆕🆕 D564 — the played Supporter's uid and Amarys's pending threshold, wiped with the rest (both REQUIRED, MRV 35 → 36) // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
+    });
     expect(next.players.p2.hand).toHaveLength(p2HandBefore + 1);
   });
 

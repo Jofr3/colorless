@@ -13,53 +13,11 @@ import {
   clearBench,
   deckOf,
   setActiveFromDeck,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
 import { stackUids } from "./types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 🆕🆕🆕 D537 — KEEP THREE, SHUFFLE THE REST: THE ONLY SENTENCE IN THIS CORPUS
-// WHOSE PICK NAMES THE BODIES THAT *STAY*.
-//
-// `censusAttackCorpus.ts` **FILE LINE 84** — *"Choose 3 of your opponent's Benched
-// Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't
-// choose, and all cards attached to those Pokémon, into their deck."* — **1 sentence
-// / 2 legal printings** (`legalAttackCorpus()` index 31, leading count column `2`).
-//
-// ⚠️ **NO CARD ID IS RESOLVED FOR THIS SENTENCE ON THIS CHECKOUT**, and that was
-// MEASURED rather than assumed: `git grep -F "Benched Pokémon that you didn"` over the
-// whole repo at HEAD returns the corpus row and ONE refusal row in
-// `counterPutChosen.test.ts`, and nothing anywhere — `index.ts`'s D373 name-only block
-// included — claims an id or a name for it. So the whole suite rides a FILE-LOCAL
-// DECLARED demonstrator, `d537-bencher` (D425, conventions.md:765: state unresolved,
-// never invent), in D534's `d534-inkay` / D535's `d535-sniper` / D536's `d536-moltres`
-// shape. ⚠️ **A REACHABILITY ARGUMENT BUILT ON A POPULATION GOES STALE LIKE A COUNT**
-// (D536's sharpest finding, whose falsifier was sitting in `index.ts` all along), which
-// is why the grep is recorded here beside the declaration rather than in a commit body.
-//
-// engine 0.421.0 → 0.422.0. ONE new whole-sentence anchor (`CHOOSE_KEEP_SHUFFLE_REST`,
-// beside `RETURN_BENCHED`), ONE new arm (42-bis), ONE new `EffectOp` member
-// (`returnBenchedRest`), ONE new interpreter writer, one `stepOp` case, one
-// `applyChoice` case and one note function.
-//
-// 🛑 **THE MEMBER IS NOT AN OPTIONAL `keep` RIDER ON `returnBenched`, AND THAT IS
-// D421's EXACT FAILURE MODE** (conventions.md:506-517, restated at :1193-1204): a build
-// that DROPPED an optional `keep` would not do nothing — `returnBenched` shuffles the
-// body the answer NAMES, so the degraded program shuffles the CHOSEN THREE away and
-// leaves the rest. An INVERTED but entirely plausible board, silent in every log row.
-// §4 is the rung that names the inversion and `D537-returns-the-chosen-not-the-rest` is
-// the mutant that proves the decision was MADE.
-//
-// 🛑 **`MATCH_RECORD_VERSION` HELD AT 30, ON D125's WIDENING AND ON NOTHING ELSE.** A
-// new `EffectOp` MEMBER widens a persisted union: no v30 deploy could author the byte
-// `{"op":"returnBenchedRest","keep":3}`, because no v30 deploy had the member, and every
-// byte a v30 deploy DID write still means exactly what it meant. ⚠️ **AND THIS OP
-// PARKS**, so that byte really is written into the persisted record — §7 MEASURES which
-// door it goes through rather than arguing it, because *"it never parks, so it is not
-// persisted"* was false of D536's op and would be false here twice over.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** The printed sentence, read off the corpus in §1 and used as a constant everywhere
-    else. Retyped ONCE, here, and §1's first rung is what proves the bytes agree. */
 const PRINTED =
   "Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck.";
 
@@ -100,9 +58,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     types: ["Colorless"],
     attacks: [
-      // ⚠️ 10 IS THIS FILE'S DECLARATION AND NOT A PRINTING'S — no id is resolved for
-      // this sentence (D425). Nothing this suite asserts is about the number; it is
-      // non-zero only so the attack leaves a visible mark that is NOT this op's.
       { cost: ["Colorless"], name: "Bench Sweep", damage: 10, effect: PRINTED },
       // THE CONTROL, one index over: same attacker, same cost, same declared 10 and NO
       // effect text — so every §3 "no park AND no board change" verdict is a claim
@@ -143,20 +98,6 @@ const DECK = deckOf({
   [TOOL]: 2,
   [ENERGY]: 24,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
 
 function localSetup(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -272,8 +213,6 @@ function fuel(state: GameState, seat: Seat, count: number): GameState {
   return next;
 }
 
-/** p1's turn; `d537-bencher` Active; p2's Active is `WALL` and its Bench is exactly
-    `bench`, in the order given. */
 function board(seed: number, bench: readonly string[]): GameState {
   let state = localSetup(seed);
   state = setActiveFromDeck(state, "p2", WALL);
@@ -310,12 +249,6 @@ const benchIds = (state: GameState, seat: Seat): string[] =>
   state.players[seat].bench.map((b) => state.cardIdByUid[b.stack[b.stack.length - 1] ?? ""] ?? "?");
 const benchRef = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "bench", index } });
 const rows = (events: readonly GameEvent[], type: string) => events.filter((e) => e.type === type);
-/** ⚠️ **AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]**, so every board this suite measures AFTER the answer
-    has already run p2's turn tail — and that tail DRAWS ONE CARD off the very deck this
-    op just shuffled into. The pile this op writes is therefore `deck ∪ hand`, and
-    asserting on `deck` alone would be a rung whose colour depends on which card the
-    shuffle happened to leave on top. The op's own `SHUFFLE` row and the `POKEMON_RETURNED`
-    payload are what pin the destination; this pins the PILE. */
 const libraryOf = (state: GameState, seat: Seat): string[] => [
   ...state.players[seat].deck,
   ...state.players[seat].hand,
@@ -346,46 +279,33 @@ function parkedPrompt(state: GameState) {
   return prompt;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE CENSUS ROW AND THE ANCHOR.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D537 §1 — the corpus row, read off the census rather than retyped", () => {
-  it("🛑 the row is READ by index and by units, never retyped (D183/D456)", () => {
+  it("the row is READ by index and by units, never retyped (D183/D456)", () => {
     const corpus = legalAttackCorpus();
     const row = corpus[31];
     expect(row?.[1]).toBe(PRINTED);
-    // The LEADING COUNT COLUMN is the printing count, and it is the unit the census
-    // delta is measured in — 1 sentence, 2 legal printings.
     expect(row?.[0]).toBe(2);
-    // EXACTLY ONE row carries this string: the sentence is the key of the census delta,
-    // so a duplicate would double-count the printings under one build.
     expect(corpus.filter(([, s]) => s === PRINTED)).toEqual([[2, PRINTED]]);
   });
 
-  it("🛑 the sentence is READ by `resolvedByAnyReader` at head — the census delta's own predicate", () => {
+  it("the sentence is READ by `resolvedByAnyReader` at head — the census delta's own predicate", () => {
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
   });
 
-  it("🛑 THREE apostrophe slots, not two — COUNTED off the printed bytes", () => {
-    // D536's anchor had two possessives; this one has two possessives AND the
-    // contraction in "didn't". The count is pinned so a future re-read of the sentence
-    // cannot quietly lose a slot.
+  it("THREE apostrophe slots, not two — COUNTED off the printed bytes", () => {
     expect((PRINTED.match(/'/g) ?? []).length).toBe(3);
     expect(PRINTED.split("opponent's")).toHaveLength(3);
     expect(PRINTED).toContain("didn't choose");
   });
 
-  it("🛑 SLOT 1 (the first possessive) curls alone, and derives IDENTICALLY", () => {
+  it("SLOT 1 (the first possessive) curls alone, and derives IDENTICALLY", () => {
     const curly = PRINTED.replace("opponent's", "opponent’s");
     expect(curly).not.toBe(PRINTED);
     expect((curly.match(/'/g) ?? []).length).toBe(2);
-    // EQUALITY, never merely non-null: a non-null check passes on a reader that folded
-    // the sentence into some other row.
     expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(PRINTED));
   });
 
-  it("🛑 SLOT 2 (the second possessive) curls alone, and derives IDENTICALLY", () => {
+  it("SLOT 2 (the second possessive) curls alone, and derives IDENTICALLY", () => {
     const head = PRINTED.indexOf("opponent's") + "opponent's".length;
     const curly = `${PRINTED.slice(0, head)}${PRINTED.slice(head).replace("opponent's", "opponent’s")}`;
     expect(curly).not.toBe(PRINTED);
@@ -395,14 +315,14 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
     expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(PRINTED));
   });
 
-  it("🛑 SLOT 3 (the CONTRACTION in `didn't`) curls alone, and derives IDENTICALLY", () => {
+  it("SLOT 3 (the CONTRACTION in `didn't`) curls alone, and derives IDENTICALLY", () => {
     const curly = PRINTED.replace("didn't", "didn’t");
     expect(curly).not.toBe(PRINTED);
     expect((curly.match(/'/g) ?? []).length).toBe(2);
     expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(PRINTED));
   });
 
-  it("🛑 …and ALL THREE curled together derive identically too", () => {
+  it("…and ALL THREE curled together derive identically too", () => {
     const curly = PRINTED.replaceAll("'", "’");
     expect((curly.match(/'/g) ?? []).length).toBe(0);
     expect((curly.match(/’/g) ?? []).length).toBe(3);
@@ -441,7 +361,7 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
     expect(deriveAttackEffect(PRINTED.replace("If you do", "if you do"))).toBeNull();
   });
 
-  it("🛑 NEAR MISS 1 — `COUNTER_PUT_ON_CHOSEN_OPPONENTS`, in BOTH directions", () => {
+  it("NEAR MISS 1 — `COUNTER_PUT_ON_CHOSEN_OPPONENTS`, in BOTH directions", () => {
     // It SHARES the first word and is refused by the TAIL, which is why both anchors
     // are whole-sentence `^…$`.
     const PUT = "Choose 2 of your opponent's Pokémon and put 3 damage counters on each of them.";
@@ -451,24 +371,20 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
     ]);
     // …and THIS sentence does not derive to THAT one.
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
-    // And the neighbour is a real catalog row, not a constructed one.
     expect(legalAttackCorpus().some(([, s]) => s === PUT)).toBe(true);
   });
 
-  it("🛑 NEAR MISS 2 — corpus line 82 (Angelite), THE INVERSION, in BOTH directions", () => {
-    // Angelite's pick names the bodies that LEAVE; this sentence's names the bodies
-    // that STAY. Same opening, opposite mechanism — the sharpest miss in the corpus.
+  it("NEAR MISS 2 — corpus line 82 (Angelite), THE INVERSION, in BOTH directions", () => {
     const ANGELITE =
       "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.";
     expect(legalAttackCorpus().some(([, s]) => s === ANGELITE)).toBe(true);
-    // Still UNBUILT at D537 — this arm does not quietly eat it.
     expect(deriveAttackEffect(ANGELITE)).toBeNull();
     expect(resolvedByAnyReader(ANGELITE)).toBe(false);
     // …and the other direction: this sentence is not a `returnBenched`.
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
   });
 
-  it("🛑 NEAR MISS 3 — arm 42's OWN four sentences, in BOTH directions (the 41-bis ordering argument, RE-MEASURED)", () => {
+  it("NEAR MISS 3 — arm 42's OWN four sentences, in BOTH directions (the 41-bis ordering argument, RE-MEASURED)", () => {
     // Both anchors are `^…$` and the FIRST WORD differs ("Choose" vs
     // "Shuffle"/"Put"/"Flip"), so neither can claim a string the other matches. Driven
     // rather than asserted, because "the order is free" is a claim about two regexes.
@@ -499,15 +415,9 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
     expect(JSON.stringify(deriveAttackEffect(COIN))).not.toContain("returnBenchedRest");
   });
 
-  it("🛑 ONE all-640 predicate, LOOSER than the anchor, over the whole corpus", () => {
-    // The loosest plausible pattern for "the pick names the bodies that stay" — a stem
-    // with no surrounding sentence at all. Over the whole `legal_standard = 1` corpus it
-    // returns exactly this row, so the family is ONE sentence and the anchor is not
-    // hiding a sibling. A LOOSER predicate than the anchor is the point (D428): an
-    // anchor-shaped one would be the anchor asserting itself.
+  it("ONE all-640 predicate, LOOSER than the anchor, over the whole corpus", () => {
     const loose = legalAttackCorpus().filter(([, s]) => /that you didn['’]t choose/.test(s));
     expect(loose).toEqual([[2, PRINTED]]);
-    // …and the whole corpus is still 640 sentences, so the predicate ran over all of it.
     expect(legalAttackCorpus()).toHaveLength(640);
   });
 });
@@ -517,23 +427,20 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D537 §2 — arm 42-bis derives ONE op, and the capture is the number KEPT", () => {
-  it("🛑 the exact one-op program — a LITERAL `toEqual`, keys and all", () => {
+  it("the exact one-op program — a LITERAL `toEqual`, keys and all", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual([{ op: "returnBenchedRest", keep: 3 }]);
-    // FIELD SET pinned as a literal: `whose` and `dest` are OMITTED because the single
-    // printed sentence fixes opponent/deck, and a field no reader can vary is a field
-    // that reads like a choice (D193/D196, D426's "absent IS the printed article").
     const op = (deriveAttackEffect(PRINTED) ?? [])[0] as Record<string, unknown>;
     expect(Object.keys(op).sort()).toEqual(["keep", "op"]);
   });
 
-  it("🛑 the capture is the number KEPT, not the number REMOVED — driven at 1, 2 and 4", () => {
+  it("the capture is the number KEPT, not the number REMOVED — driven at 1, 2 and 4", () => {
     for (const keep of [1, 2, 4, 12]) {
       const text = PRINTED.replace("Choose 3", `Choose ${keep}`);
       expect(deriveAttackEffect(text), text).toEqual([{ op: "returnBenchedRest", keep }]);
     }
   });
 
-  it("🛑 the `>= 1` FLOOR: a synthetic `Choose 0` is REFUSED, loudly", () => {
+  it("the `>= 1` FLOOR: a synthetic `Choose 0` is REFUSED, loudly", () => {
     // "Choose 0" names no pick at all, and the complement of an empty pick is the whole
     // Bench under a caption that asked for nothing. Unreadable goes to the loud
     // `ATTACK_EFFECT_SKIPPED` path rather than to a plausible board.
@@ -558,16 +465,9 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
     it(`🛑 bench ${bench.length} — no park AND no board change`, () => {
       const start = board(SEED, bench);
       const { state, events } = attack(start);
-      // THE ABSENCE OF THE PARK, asserted positively rather than inferred from the
-      // board (D423: a true assertion can stand in for a false claim).
       expect(state.phase.kind).not.toBe("effect:choose");
       expect("prompt" in state.phase).toBe(false);
-      // …AND no board change: the bench stands, the deck is untouched, and neither the
-      // movement row nor the shuffle row was filed.
       expect(benchIds(state, "p2")).toEqual([...bench]);
-      // The deck is the start deck MINUS its top card, and that one card is the TURN
-      // TAIL's draw rather than anything this op did — an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]. The
-      // ORDER is untouched, which is the half a stray shuffle would break.
       expect(state.players.p2.deck).toEqual(start.players.p2.deck.slice(1));
       expect(state.rngState).toBe(start.rngState);
       expect(rows(events, "POKEMON_RETURNED")).toHaveLength(0);
@@ -575,7 +475,7 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
     });
   }
 
-  it("🛑 bench 3 is the BOUNDARY — `<=`, not `<`: a pick with exactly one legal answer is not asked", () => {
+  it("bench 3 is the BOUNDARY — `<=`, not `<`: a pick with exactly one legal answer is not asked", () => {
     // At bench === keep the complement is EMPTY, so there is nothing to ask about at
     // all. `parkOrForce`'s M1 no-choice rule states both halves; this op states them
     // in its own gate because its candidate set is not the set the effect lands on.
@@ -584,7 +484,7 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
     expect(state.players.p2.bench).toHaveLength(3);
   });
 
-  it("🛑 bench 4 PARKS — one body in the complement is still a decision about WHICH three stay", () => {
+  it("bench 4 PARKS — one body in the complement is still a decision about WHICH three stay", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4]));
     const prompt = parkedPrompt(state);
     expect(prompt.candidates).toHaveLength(4);
@@ -593,7 +493,7 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
     expect(prompt.declinable).toBe(false);
   });
 
-  it("🛑 bench 5 PARKS, and the candidates are the WHOLE opponent bench — UNFILTERED", () => {
+  it("bench 5 PARKS, and the candidates are the WHOLE opponent bench — UNFILTERED", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     const prompt = parkedPrompt(state);
     expect(prompt.candidates.map((c) => c.spot.spot === "bench" && c.spot.index)).toEqual([
@@ -620,7 +520,7 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D537 §4 — the pick names the bodies that STAY, and the COMPLEMENT leaves", () => {
-  it("🛑 THE INVERSION: pick {0,1,2} on a 5-bench — those three STAY, the other two leave", () => {
+  it("THE INVERSION: pick {0,1,2} on a 5-bench — those three STAY, the other two leave", () => {
     const start = board(SEED, [B1, B2, B3, B4, B5]);
     const parked = attack(start).state;
     // The UIDS, captured against the PRE-ANSWER bench — the deck already holds three
@@ -628,21 +528,19 @@ describe("D537 §4 — the pick names the bodies that STAY, and the COMPLEMENT l
     const leaving = [topOfBench(parked, "p2", 3), topOfBench(parked, "p2", 4)];
     const staying = [0, 1, 2].map((i) => topOfBench(parked, "p2", i));
     const { state } = answer(parked, [benchRef(0), benchRef(1), benchRef(2)]);
-    // The CHOSEN are the survivors. A build that dropped the complement — D421's
-    // dropped-rider degradation — would leave exactly [B4, B5] here instead.
     expect(benchIds(state, "p2")).toEqual([B1, B2, B3]);
     for (const uid of leaving) expect(libraryOf(state, "p2"), uid).toContain(uid);
     for (const uid of staying) expect(libraryOf(state, "p2"), uid).not.toContain(uid);
   });
 
-  it("🛑 …and the inversion again on a DIFFERENT pick, so the answer is read and not assumed", () => {
+  it("…and the inversion again on a DIFFERENT pick, so the answer is read and not assumed", () => {
     const start = board(SEED, [B1, B2, B3, B4, B5]);
     const parked = attack(start).state;
     const { state } = answer(parked, [benchRef(2), benchRef(3), benchRef(4)]);
     expect(benchIds(state, "p2")).toEqual([B3, B4, B5]);
   });
 
-  it("🛑 the bodies that leave land in the OWNER's deck, never the actor's", () => {
+  it("the bodies that leave land in the OWNER's deck, never the actor's", () => {
     const start = board(SEED, [B1, B2, B3, B4, B5]);
     const parked = attack(start).state;
     const beforeP1 = libraryOf(parked, "p1").length;
@@ -669,10 +567,7 @@ describe("D537 §4 — the pick names the bodies that STAY, and the COMPLEMENT l
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DESCENDING", () => {
-  it("🛑 exactly ONE `SHUFFLE` row and TWO `POKEMON_RETURNED` rows for a two-body complement", () => {
-    // A loop over the shipped `returnBenched` would file TWO SHUFFLE rows and take TWO
-    // RNG draws for one printed shuffle: the right board with the wrong log, which is
-    // exactly D433's false-prevention row all over again.
+  it("exactly ONE `SHUFFLE` row and TWO `POKEMON_RETURNED` rows for a two-body complement", () => {
     const start = board(SEED, [B1, B2, B3, B4, B5]);
     const parked = attack(start).state;
     const { events } = answer(parked, [benchRef(0), benchRef(1), benchRef(2)]);
@@ -682,7 +577,7 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
     expect(rows(events, "SHUFFLE").map((e) => (e as { seat: Seat }).seat)).toEqual(["p2"]);
   });
 
-  it("🛑 exactly ONE RNG DRAW — the rngState is the ONE shuffle's, computed rather than remembered", () => {
+  it("exactly ONE RNG DRAW — the rngState is the ONE shuffle's, computed rather than remembered", () => {
     const start = board(SEED, [B1, B2, B3, B4, B5]);
     const parked = attack(start).state;
     const leaving = [3, 4].flatMap((i) => stackUids(bodyAt(parked, "p2", i)));
@@ -694,7 +589,7 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
     expect(state.rngState).toBe(expected);
   });
 
-  it("🛑 THE DESCENDING-SPLICE RUNG: a NON-ADJACENT complement on a 5-bench", () => {
+  it("THE DESCENDING-SPLICE RUNG: a NON-ADJACENT complement on a 5-bench", () => {
     // Pick {0,2,4} → the complement is {1,3}, which is NON-ADJACENT and therefore the
     // board an ASCENDING splice gets wrong: removing index 1 first compacts the bench,
     // and index 3 then names B5 instead of B4.
@@ -708,7 +603,7 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
     ).toEqual([B2, B4]);
   });
 
-  it("🛑 …and the complement {0,1} — the ADJACENT-FROM-THE-FRONT board the shipped writer gets wrong", () => {
+  it("…and the complement {0,1} — the ADJACENT-FROM-THE-FRONT board the shipped writer gets wrong", () => {
     // Remove {0,1} with an index splice that never re-reads: A leaves, the bench
     // compacts, and index 1 then removes C rather than B. Driven because the defect is
     // SILENT — the event names a plausible body either way.
@@ -718,7 +613,7 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
     expect(benchIds(state, "p2")).toEqual([B3, B4, B5]);
   });
 
-  it("🛑 …and the complement {1,3} on a 5-bench where the TAIL index would read `undefined`", () => {
+  it("…and the complement {1,3} on a 5-bench where the TAIL index would read `undefined`", () => {
     // The other half of the shipped writer's defect: remove {1,3} ascending and
     // `bench[3]` is `undefined` after the first splice, so its own silent guard fires
     // and ONE BODY SURVIVES. Here both leave.
@@ -729,7 +624,7 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
     expect(rows(events, "POKEMON_RETURNED")).toHaveLength(2);
   });
 
-  it("🛑 TOOLS and ATTACHED ENERGY ride along — every `stackUids` byte lands in the deck", () => {
+  it("TOOLS and ATTACHED ENERGY ride along — every `stackUids` byte lands in the deck", () => {
     let start = board(SEED, [B1, B2, B3, B4, B5]);
     start = attachToBench(start, "p2", 4, ENERGY, "energy");
     start = attachToBench(start, "p2", 4, TOOL, "tools");
@@ -746,7 +641,7 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
     expect(row?.uids.slice().sort()).toEqual(riding.slice().sort());
   });
 
-  it("🛑 an EVOLUTION STACK rides along too — the card UNDER the body reaches the deck", () => {
+  it("an EVOLUTION STACK rides along too — the card UNDER the body reaches the deck", () => {
     let start = board(SEED, [B1, B2, B3, B4, B5]);
     start = underBench(start, "p2", 3, STAGE1);
     const parked = attack(start).state;
@@ -769,12 +664,8 @@ describe("D537 §5 — one printed shuffle is ONE shuffle, and the splice is DES
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 — §11 ON THE COMPLEMENT ONLY (D433 — ask the shield AFTER narrowing).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothing else", () => {
-  it("🛑 a shielded body in the COMPLEMENT files exactly ONE `ATTACK_EFFECT_PREVENTED` and STAYS", () => {
+  it("a shielded body in the COMPLEMENT files exactly ONE `ATTACK_EFFECT_PREVENTED` and STAYS", () => {
     const start = board(SEED, [B1, B2, B3, TEAPARTY, B5]);
     const parked = attack(start).state;
     const { state, events } = answer(parked, [benchRef(0), benchRef(1), benchRef(2)]);
@@ -786,11 +677,7 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
     expect(rows(events, "SHUFFLE")).toHaveLength(1);
   });
 
-  it("🛑 THE CONTROL THAT PROVES THE ASK HAPPENS AFTER NARROWING: a shielded CHOSEN body files NOTHING", () => {
-    // D433: asking §11 over the whole candidate set and filtering afterwards leaves the
-    // board IDENTICAL and files a FALSE row about a body the effect could never reach.
-    // Every board is the same under both builds; the only casualty is a log row, which
-    // is exactly why it survives review.
+  it("THE CONTROL THAT PROVES THE ASK HAPPENS AFTER NARROWING: a shielded CHOSEN body files NOTHING", () => {
     const start = board(SEED, [TEAPARTY, B2, B3, B4, B5]);
     const parked = attack(start).state;
     const { state, events } = answer(parked, [benchRef(0), benchRef(1), benchRef(2)]);
@@ -798,7 +685,7 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
     expect(benchIds(state, "p2")).toEqual([TEAPARTY, B2, B3]);
   });
 
-  it("🛑 the shield is not asked at PARK TIME either — a shielded body is still a CANDIDATE", () => {
+  it("the shield is not asked at PARK TIME either — a shielded body is still a CANDIDATE", () => {
     // The pick is not an effect done to the kept bodies, so filtering the candidates
     // would refuse a body on behalf of an effect it will never receive — and would make
     // the printed "choose 3" unanswerable on a 4-bench holding one shielded body.
@@ -807,7 +694,7 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
     expect(prompt.candidates).toHaveLength(4);
   });
 
-  it("🛑 …and when EVERY unchosen body is shielded, the op moves nothing and files NO shuffle", () => {
+  it("…and when EVERY unchosen body is shielded, the op moves nothing and files NO shuffle", () => {
     const start = board(SEED, [B1, B2, B3, TEAPARTY]);
     const parked = attack(start).state;
     const { state, events } = answer(parked, [benchRef(0), benchRef(1), benchRef(2)]);
@@ -821,33 +708,21 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — THE PERSISTED BYTES (D450's doors), MEASURED IN BOTH DIRECTIONS.
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646)", () => {
-  it("🛑 THE FIRST DOOR, MEASURED: `phase.cont.pendingOp` carries the op as a LITERAL", () => {
-    // 🛑 **DO NOT RE-DERIVE *\"it never parks, so it is not persisted\"*.** This op parks,
-    // so the serialized alphabet GROWS: `{\"op\":\"returnBenchedRest\",\"keep\":3}` is a byte
-    // string no v30 deploy could ever have authored.
+describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 ( held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640; 48 since D643; 49 since D646)", () => {
+  it("THE FIRST DOOR, MEASURED: `phase.cont.pendingOp` carries the op as a LITERAL", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(JSON.parse(JSON.stringify(state.phase.cont.pendingOp))).toEqual(PROGRAM[0]);
     expect(JSON.stringify(state)).toContain('{"op":"returnBenchedRest","keep":3}');
   });
 
-  it("🛑 THE SECOND DOOR, SCOPED HONESTLY (D423): `cont.rest` is EMPTY on THIS program", () => {
-    // D450's second door is `EffectContinuation.rest`, and the honest measurement is
-    // that the PRINTED program is a single op, so `rest` is `[]` and the byte reaches
-    // the record through `pendingOp` alone. `rest` is typed `EffectOp[]` and would carry
-    // this member the moment any program places it behind another park — which is why
-    // the version answer rests on D125's WIDENING and never on reachability.
+  it("THE SECOND DOOR, SCOPED HONESTLY (D423): `cont.rest` is EMPTY on THIS program", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(state.phase.cont.rest).toEqual([]);
   });
 
-  it("🛑 THE OTHER DIRECTION: on a NON-PARKING board the byte is NOWHERE in the record", () => {
+  it("THE OTHER DIRECTION: on a NON-PARKING board the byte is NOWHERE in the record", () => {
     // The rung goes red both ways: green here on a build that persisted the op
     // unconditionally, and red above on a build that never parked it.
     const { state } = attack(board(SEED, [B1, B2, B3]));
@@ -855,7 +730,7 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
     expect(JSON.stringify(state)).not.toContain("returnBenchedRest");
   });
 
-  it("🛑 the parked record REPLAYS — the persisted op is applied from `pendingOp` and nothing else", () => {
+  it("the parked record REPLAYS — the persisted op is applied from `pendingOp` and nothing else", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     const revived = JSON.parse(JSON.stringify(state)) as GameState;
     expect(revived.phase.kind).toBe("effect:choose");
@@ -869,11 +744,7 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` trusts its ref", () => {
-  it("🛑 a wire answer naming a body that has since LEFT PLAY narrows nothing, and does not throw", () => {
-    // `returnBenched`'s trust level one arm up, verbatim: the complement is recomputed
-    // off the LIVE bench, so a stale ref matches nothing and the writer re-reads every
-    // slot it touches. Here bench[4] is dropped while the question is open and the
-    // answer still names it.
+  it("a wire answer naming a body that has since LEFT PLAY narrows nothing, and does not throw", () => {
     const start = board(SEED, [B1, B2, B3, B4, B5]);
     const parked = dropBench(attack(start).state, "p2", 4);
     expect(parked.players.p2.bench).toHaveLength(4);
@@ -884,7 +755,7 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
     expect(rows(events, "SHUFFLE")).toHaveLength(1);
   });
 
-  it("🛑 a 2-pick frame is refused with `BAD_EFFECT_CHOICE` — `min` is the printed number", () => {
+  it("a 2-pick frame is refused with `BAD_EFFECT_CHOICE` — `min` is the printed number", () => {
     const parked = attack(board(SEED, [B1, B2, B3, B4, B5])).state;
     const result = applyAction(parked, {
       type: "resolveEffect",
@@ -895,7 +766,7 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
     expect(result.ok ? "" : result.error.code).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 a 4-pick frame is refused with `BAD_EFFECT_CHOICE` — `max` is the printed number too", () => {
+  it("a 4-pick frame is refused with `BAD_EFFECT_CHOICE` — `max` is the printed number too", () => {
     const parked = attack(board(SEED, [B1, B2, B3, B4, B5])).state;
     const result = applyAction(parked, {
       type: "resolveEffect",
@@ -906,7 +777,7 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
     expect(result.ok ? "" : result.error.code).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 an EMPTY frame is refused — `declinable` is false, and this sentence prints no `you may`", () => {
+  it("an EMPTY frame is refused — `declinable` is false, and this sentence prints no `you may`", () => {
     const parked = attack(board(SEED, [B1, B2, B3, B4, B5])).state;
     const result = applyAction(parked, {
       type: "resolveEffect",
@@ -917,7 +788,7 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
     expect(result.ok ? "" : result.error.code).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 a REPEATED ref is refused — `validateChoice`'s distinctness check, RE-ASKED at min === max === 3", () => {
+  it("a REPEATED ref is refused — `validateChoice`'s distinctness check, RE-ASKED at min === max === 3", () => {
     const parked = attack(board(SEED, [B1, B2, B3, B4, B5])).state;
     const result = applyAction(parked, {
       type: "resolveEffect",
@@ -928,7 +799,7 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
     expect(result.ok ? "" : result.error.code).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 a ref OUTSIDE the offered candidates is refused — membership, on the ACTOR's own bench", () => {
+  it("a ref OUTSIDE the offered candidates is refused — membership, on the ACTOR's own bench", () => {
     const parked = attack(board(SEED, [B1, B2, B3, B4, B5])).state;
     const result = applyAction(parked, {
       type: "resolveEffect",
@@ -942,7 +813,7 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
     expect(result.ok ? "" : result.error.code).toBe("BAD_EFFECT_CHOICE");
   });
 
-  it("🛑 the CONTROLLER answers, not the owner of the bodies — no `decider` on this park", () => {
+  it("the CONTROLLER answers, not the owner of the bodies — no `decider` on this park", () => {
     // §9.4: "the target is theirs, the choice is yours." This sentence prints no
     // chooser, so nothing inverts it — the call `knockOutChosen` and `damageChosen`'s
     // `opponentAny` arm already make.
@@ -962,20 +833,13 @@ describe("D537 §8 — the answer is trusted exactly as far as `returnBenched` t
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §9 — THE NOTE, BYTE FOR BYTE (D205/D515).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("D537 §9 — the caption speaks to the ANSWERER and quotes the PRINTED number", () => {
-  it("🛑 the note, byte for byte", () => {
+  it("the note, byte for byte", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     expect(parkedPrompt(state).note).toBe(NOTE);
   });
 
-  it("🛑 …and it says the pick is what STAYS — the one fact the bare first clause hides", () => {
-    // D515's defect, one card over: a caption that degraded to "Shuffle which of your
-    // opponent's Benched Pokémon into their deck?" would describe the exact OPPOSITE
-    // decision while the answer decides which bodies leave play.
+  it("…and it says the pick is what STAYS — the one fact the bare first clause hides", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     const note = parkedPrompt(state).note;
     expect(note).toContain("to leave in play");
@@ -983,7 +847,7 @@ describe("D537 §9 — the caption speaks to the ANSWERER and quotes the PRINTED
     expect(note).not.toContain("into their deck");
   });
 
-  it("🛑 the number in the caption is the PRINTED `keep`, and it is NOT clamped to the board", () => {
+  it("the number in the caption is the PRINTED `keep`, and it is NOT clamped to the board", () => {
     // The prompt's own `min`/`max` are `op.keep` exactly, so a board-clamped caption
     // would contradict the frame it is captioning.
     const four = attack(board(SEED, [B1, B2, B3, B4])).state;

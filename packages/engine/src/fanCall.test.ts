@@ -25,80 +25,9 @@ import {
 } from "./testFixtures";
 import { isFirstTurnOf } from "./types";
 
-// D275 — THE PER-SEAT TURN ORDINAL, AND THE LAST ROW ON THE NAME-LOCK SWEEP.
-//
-// THE SENTENCE. *"Once during your **first** turn, you may search your deck for
-// up to 3 {C} Pokémon with 100 HP or less, reveal them, and put them into your
-// hand. Then, shuffle your deck. You can't use more than 1 Fan Call Ability
-// during your turn."* — Fan Rotom, TWO Standard-legal printings, `sv07-118` and
-// `sv08.5-085`, whose `abilities_json` is BYTE-IDENTICAL (re-queried against
-// remote D1 `colorless`, 2026-08-08, both `legal_standard = 1`, both
-// `types_json ["Colorless"]`, both `hp` 70).
-//
-// ── WHAT THIS SLICE SETTLED BEFORE IT BUILT ANYTHING ────────────────────────
-//
-// 🛑 **THE TURN-ORDINAL GATE IS A DERIVED READ, NOT A `GameState` FIELD**, and
-// the question was settled by READING SIGNATURES rather than by analogy. D273's
-// handoff priced it both ways and left the choice open; D274's resume point made
-// settling it the required first step. `GameState` already carries `turn`
-// (1-based, 0 in setup) and `firstPlayer` (`Seat | null`), and `phaseViewOf` —
-// the ONE exhaustive reading of turn ownership — spells the invariant that
-// decides it: **odd turns belong to `firstPlayer`**. So the going-first seat's
-// first turn is turn 1, the other seat's is turn 2, and there is no third case.
-// A field would have been a cached copy of that comparison, costing a write
-// site, an initialiser, a `MATCH_RECORD_VERSION` question and a way to be wrong.
-//
-// ⚠️ **AND THE EXPRESSION WAS ALREADY WRITTEN THREE TIMES AT HEAD** — `turn.ts`
-// `evolve`, `cardplay.ts` `rareCandy` and `rareCandyOptions`, all spelling §4's
-// first-turn evolve ban inline. This slice's gate would have been a FOURTH copy.
-// It is instead ONE exported reader (`isFirstTurnOf`, types.ts) with four
-// callers: **widen a funnel, do not add a parallel one**, and one reading of
-// "your first turn" rather than four that can drift.
-//
-// 🛑 **THE CONTRAST WITH D271 IS THE TRANSFERABLE PART.** `lastKoTurn` DID need
-// a `GameState` field, and the difference is not scale — it is whether the live
-// board can still answer the question. "Which turn did this seat lose a Pokémon"
-// is HISTORY: the body has left play and no allowance survives the boundary, so
-// nothing can recompute it. "Is this my first turn" is ARITHMETIC over two
-// fields that are still sitting there. **Ask whether the state can recompute it
-// before you decide to store it.**
-//
-// ── WHAT ELSE THE ROW COST, AND WHAT IT DID NOT ─────────────────────────────
-//
-// ONE new `BoardCondition` member (`yourFirstTurn`), ONE new optional property on
-// an existing `CardFilter` member (`typedPokemon.maxHp` — D265's rider arriving
-// exactly where D265's own doc block said it was owed), ZERO new `EffectOp`
-// members, ZERO new reject codes, ZERO new events, ZERO `GameState` fields and
-// ZERO `src/` files: `GameHud.tsx` reads `playableIf` through `conditionHolds` /
-// `conditionNote` generically, so the new gate greys the button and captions
-// itself with no app diff at all.
-//
-// ── THE HAZARD THIS SUITE IS SHAPED AROUND ─────────────────────────────────
-//
-// ⚠️ **A ONE-SEAT BOARD IS VACUOUS ON A PER-SEAT ORDINAL.** `state.turn === 1`
-// and `isFirstTurnOf(state, seat)` are INDISTINGUISHABLE on every board where
-// the going-FIRST player is the one using the Ability — which is every board a
-// lazy fixture builds. The second player's first turn is turn **2**, so §5 below
-// drives the Ability from BOTH seats under BOTH first-player assignments, and
-// that is the only place the difference between the two readings shows up.
-//
-// ⚠️ **AND A ONE-COPY BOARD IS VACUOUS ON A CROSS-COPY LOCK** (D272's hazard,
-// inherited whole). §6 benches `sv07-118` AND `sv08.5-085` — two DISTINCT
-// catalog ids, one Ability name — because a build keyed `${cardId}:${name}`
-// passes a two-copy board of ONE printing and fails the print.
-
-// ── the local pool (FIXTURE_POOL is left untouched — D190's idiom) ───────────
-
-/** The printed text, once, byte-for-byte, shared by both printings. */
 const FAN_CALL_TEXT =
   "Once during your first turn, you may search your deck for up to 3 {C} Pokémon with 100 HP or less, reveal them, and put them into your hand. Then, shuffle your deck. You can't use more than 1 Fan Call Ability during your turn.";
 
-/** A Fan Rotom printing, carrying the catalog's OWN hp (70) and type
-    (`Colorless`) — read off the D1 row rather than invented, because a fixture
-    that disagrees with the catalog tests a card nobody printed. The id is REAL,
-    so `programFor` resolves the shipped `FAN_CALL` row rather than a stand-in.
-    ⚠️ IT IS ITSELF A LEGAL CANDIDATE for its own search (70 HP, {C}), which is a
-    fact about the card and not an accident of the fixture. */
 function fanRotom(id: string): Card {
   return battler(id, {
     name: "Fan Rotom",
@@ -116,17 +45,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The ELEVENTH seeded deck (D270's rule: a seeded suite gets its OWN deck). The
-    Pokémon rows are chosen for what the FILTER must say about each:
-      · `fix-basic-1` (60 HP {C}) and `fix-victim` (30 HP {C}) — ADMITTED;
-      · `fix-stage1` (90 HP {C}, an Evolution) — ADMITTED, because the printed
-        noun carries no stage word and this filter therefore has no `stage`;
-      · `fix-tough` (120 HP {C}) — REFUSED by the threshold alone;
-      · `fix-zero-hp` (0 HP {C}) — REFUSED by the NULL, `hpOf`'s data-gap read;
-      · `fix-psychic-1` (60 HP {P}) — REFUSED by the type alone;
-      · the two Fan Rotom printings themselves (70 HP {C}) — ADMITTED.
-    Every one of those verdicts is asserted in §4 at the unit AND in §5 as the
-    candidate list an actual park offers. */
 const FAN_DECK = deckOf({
   "sv07-118": 4,
   "sv08.5-085": 4,
@@ -164,10 +82,6 @@ function localSetup(seed: number, first: Seat): GameState {
   return state;
 }
 
-/** A board with `seat`'s Fan Rotom ACTIVE and a second body benched, at whatever
-    turn `localSetup` opens on (turn 1, owned by `first`).
-    ⚠️ THE BENCH BODY IS LOAD-BEARING — §14.2 makes an empty Bench a LOSS the
-    moment the Active leaves, and a `gameOver` board proves nothing about a gate. */
 function board(seed: number, first: Seat, seat: Seat, activeId = "sv07-118"): GameState {
   let state = localSetup(seed, first);
   state = setActiveFromDeck(state, seat, activeId);
@@ -226,18 +140,11 @@ describe("Fan Rotom — the two printings as registry data", () => {
     for (const id of ["sv07-118", "sv08.5-085"]) {
       const ability = programFor(id)?.abilities?.[0];
       expect(ability?.name, id).toBe("Fan Call");
-      // "You can't use more than 1 Fan Call Ability DURING YOUR TURN" — note the
-      // wording differs from the other two carriers of this lock ("each turn")
-      // and the FIELD DOES NOT CARE. `true` here would be a live bug on any board
-      // with a second copy, driven for real in §6.
       expect(ability?.oncePerTurn, id).toBe("sharedByName");
-      // "Once during your FIRST turn" — the slice.
       expect(ability?.playableIf, id).toEqual({ kind: "yourFirstTurn" });
       // No "in the Active Spot" clause is printed, which is also what makes the
       // benched-copy board in §6 reachable.
       expect(ability?.activeOnly, id).toBe(false);
-      // The search: Genesect ex's "Metallic Signal" program with a different
-      // filter, plus D265's threshold rider on `typedPokemon`.
       expect(ability?.program, id).toEqual([
         {
           op: "searchDeck",
@@ -256,18 +163,10 @@ describe("Fan Rotom — the two printings as registry data", () => {
   });
 
   it("no `trainerPlayableIf` was authored — this gate is on the ABILITY surface", () => {
-    // ⚠️ THE MUTANT THIS KILLS: parking the gate on `trainerPlayableIf`. A Pokémon
-    // is not a Trainer and `playTrainer` never sees this card, so a gate authored
-    // there would be UNREACHABLE — green everywhere, enforcing nothing.
     expect(programFor("sv07-118")?.trainerPlayableIf).toBeUndefined();
   });
 
   it("the filter carries NO `stage` — the printed noun has no stage word", () => {
-    // ⚠️ A NEGATIVE WORTH SPELLING. `typedPokemon` admits `stage`, and "{C}
-    // Pokémon" reads to a hurried author like "Basic {C} Pokémon" because most
-    // search targets are Basics. A `stage: "basic"` here would silently refuse
-    // every Stage 1 in the deck — the quiet-wrong-answer direction — and §5 shows
-    // an Evolution really is offered.
     const ability = programFor("sv07-118")?.abilities?.[0];
     const op = ability?.program?.[0];
     expect(op?.op).toBe("searchDeck");
@@ -290,7 +189,7 @@ describe("isFirstTurnOf — the per-seat turn ORDINAL, derived and not stored", 
     expect(isFirstTurnOf(at(1, "p1"), "p2")).toBe(false);
   });
 
-  it("🛑 turn 2 is the SECOND player's first turn — the whole point of the reader", () => {
+  it("turn 2 is the SECOND player's first turn — the whole point of the reader", () => {
     // THE CASE `state.turn === 1` GETS WRONG. A build that read the turn number
     // alone would refuse the going-second seat's Ability on the only turn it is
     // printed for, and no board with p1 acting could ever show it.
@@ -306,9 +205,6 @@ describe("isFirstTurnOf — the per-seat turn ORDINAL, derived and not stored", 
   });
 
   it("is FALSE for both seats from turn 3 onward — it is an ORDINAL, not 'early'", () => {
-    // ⚠️ THE MUTANT THIS KILLS: `turn <= 1 ? 1 : 2` and every other reading that
-    // makes the predicate a WINDOW instead of a point. A turn-3 Fan Call is a
-    // late-game tutor, which is the reading the printed word "first" forbids.
     for (const turn of [3, 4, 5, 12]) {
       expect(isFirstTurnOf(at(turn, "p1"), "p1"), `turn ${turn}`).toBe(false);
       expect(isFirstTurnOf(at(turn, "p1"), "p2"), `turn ${turn}`).toBe(false);
@@ -324,11 +220,6 @@ describe("isFirstTurnOf — the per-seat turn ORDINAL, derived and not stored", 
   });
 
   it("§4's evolve ban and the printed gate ask the SAME function on a REAL board", () => {
-    // ⚠️ THE CROSS-CHECK THE EXTRACTION EXISTS FOR. Before this slice the
-    // expression was copied at three sites; the risk of a fourth copy is not that
-    // it is wrong on day one but that it drifts. Driven rather than asserted
-    // structurally: on the same live states, the rules ban and the card gate
-    // agree seat by seat and turn by turn.
     let state = localSetup(SEEDS[0], "p1");
     for (const turn of [1, 2, 3, 4]) {
       expect(state.turn, "the board really is on this turn").toBe(turn);
@@ -342,12 +233,7 @@ describe("isFirstTurnOf — the per-seat turn ORDINAL, derived and not stored", 
     }
   });
 
-  it("🛑 §4's EVOLVE BAN fires on exactly the turns the new gate opens on", () => {
-    // ⚠️ THE CROSS-CHECK THE EXTRACTION EXISTS FOR, DRIVEN RATHER THAN ARGUED.
-    // The rules ban (`turn.ts evolve`) and the printed card gate (`useAbility` →
-    // `conditionHolds`) now call ONE function; if they ever stop agreeing, this
-    // goes red without anyone having to notice the second copy. Four consecutive
-    // turns, whoever is acting, with a REAL evolution available every time.
+  it("§4's EVOLVE BAN fires on exactly the turns the new gate opens on", () => {
     let state = localSetup(SEEDS[1], "p1");
     for (const turn of [1, 2, 3, 4]) {
       expect(state.turn).toBe(turn);
@@ -401,19 +287,12 @@ describe("BoardCondition.yourFirstTurn — the fifth turn-reading member", () =>
   });
 
   it("captions itself in the printed vocabulary", () => {
-    // The note is what a player reads off a greyed HUD row (`GameHud.tsx` prints
-    // `Only if ${conditionNote(...)}`), so it is the printed clause and not the
-    // engine's arithmetic — nobody's card says "turn 1 or 2 depending on seat".
     expect(conditionNote(COND)).toBe("it is your first turn");
     expect(conditionNote(COND)).not.toBe(
       conditionNote({ kind: "yourPokemonKoedOnOpponentsLastTurn" }),
     );
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. `typedPokemon.maxHp` — D265's rider on its second member.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("CardFilter.typedPokemon.maxHp — the printed HP threshold", () => {
   const FAN: CardFilter = { kind: "typedPokemon", pokemonType: "Colorless", maxHp: 100 };
@@ -438,11 +317,7 @@ describe("CardFilter.typedPokemon.maxHp — the printed HP threshold", () => {
     );
   });
 
-  it("🛑 REFUSES a NULL HP rather than admitting it — `null <= 100` is TRUE in JS", () => {
-    // D265's trap, inherited byte for byte. `hpOf` returns null for a
-    // non-Pokémon and for a non-positive printed value (a data gap), and an
-    // unguarded comparison would offer every one of them to a sentence that names
-    // a Pokémon with a printed HP. An unknown HP is not "100 HP or less".
+  it("REFUSES a NULL HP rather than admitting it — `null <= 100` is TRUE in JS", () => {
     expect(matchesFilter(FIXTURE_POOL["fix-zero-hp"], FAN)).toBe(false);
     // …and the SAME card passes the bare filter, so the refusal is the rider's
     // and not the type conjunct's.
@@ -455,9 +330,6 @@ describe("CardFilter.typedPokemon.maxHp — the printed HP threshold", () => {
   });
 
   it("ADMITS a DUAL-type body — the read is `.includes`, not `types[0]`", () => {
-    // D238's rule, re-driven under the new conjunct: dual-type Pokémon are
-    // printed, and a `types[0] === …` read would drop them silently. There is no
-    // dual {C} body under 100 HP in `FIXTURE_POOL`, so the witness is built here.
     const dual = battler("t-dual-c", { hp: 90, types: ["Water", "Colorless"] });
     expect(matchesFilter(dual, FAN)).toBe(true);
     expect(
@@ -466,19 +338,11 @@ describe("CardFilter.typedPokemon.maxHp — the printed HP threshold", () => {
   });
 
   it("is OPTIONAL — the bare member is UNCHANGED, which is what makes it a widening", () => {
-    // ⚠️ THE MUTANT THIS KILLS: a mandatory threshold, or a default. Every
-    // `typedPokemon` authored before this slice (Metallic Signal, the Lilligant
-    // aura, the brace-coded deriver) carries no `maxHp` and must keep admitting
-    // bodies of any size.
     expect(matchesFilter(FIXTURE_POOL["fix-tough"], BARE)).toBe(true); // 120
     expect(matchesFilter(FIXTURE_POOL["fix-bigbody"], BARE)).toBe(true); // 200
   });
 
   it("leaves `basicPokemon.maxHp` alone — two members, one reading", () => {
-    // The rider now spans TWO members and the two must agree on every card,
-    // because they call the same `hpOf`. `fix-stage1` is the discriminator: a
-    // Stage 1 under the threshold, admitted by one member and refused by the other
-    // for a reason that has nothing to do with HP.
     const basic: CardFilter = { kind: "basicPokemon", maxHp: 100 };
     expect(matchesFilter(FIXTURE_POOL["fix-basic-1"], basic)).toBe(true);
     expect(matchesFilter(FIXTURE_POOL["fix-stage1"], basic)).toBe(false);
@@ -493,21 +357,14 @@ describe("CardFilter.typedPokemon.maxHp — the printed HP threshold", () => {
 
 describe("the Fan Call park — `retrieveNoun` and the candidate set", () => {
   it("captions the offer with the printed THRESHOLD, not with the bare noun", () => {
-    // D245's lesson, re-applied: a describer arm is only built when a BOARD reads
-    // it, and a caption that disagrees with the offer is the defect. This is the
-    // first `typedPokemon` caption in the pool to carry a threshold suffix.
     const parked = must(useFanCall(board(SEEDS[2], "p1", "p1"), "p1", ACTIVE));
     expect(cardsPrompt(parked).note).toBe(
       "Search your deck for up to 3 Colorless Pokémon with 100 HP or less into your hand.",
     );
   });
 
-  it("🛑 OFFERS exactly the bodies the filter admits — the caption's own claim", () => {
+  it("OFFERS exactly the bodies the filter admits — the caption's own claim", () => {
     const parked = must(useFanCall(board(SEEDS[2], "p1", "p1"), "p1", ACTIVE));
-    // Every {C} body at or under 100 in the deck, and nothing else: the 120 HP
-    // `fix-tough`, the 0 HP `fix-zero-hp` and the {P} `fix-psychic-1` are all in
-    // the same deck and all absent. `fix-stage1` being present is the proof that
-    // no stage word was invented.
     expect(offeredIds(parked)).toEqual([
       "fix-basic-1",
       "fix-stage1",
@@ -560,11 +417,7 @@ describe("Fan Call on a real board", () => {
     }
   });
 
-  it("🛑 the SECOND player may use it on TURN 2 — the board `state.turn === 1` fails", () => {
-    // THE HEADLINE. Turn 2 is the going-second seat's FIRST turn, and this is the
-    // only assertion in the suite that distinguishes the shipped reader from the
-    // one-line turn-number read. Swept over five seeds because the setup draw
-    // decides which bodies are in hand and none of that may matter.
+  it("the SECOND player may use it on TURN 2 — the board `state.turn === 1` fails", () => {
     for (const seed of SEEDS) {
       const turn2 = passTurns(board(seed, "p1", "p2"), 1);
       expect(turn2.turn).toBe(2);
@@ -573,20 +426,13 @@ describe("Fan Call on a real board", () => {
     }
   });
 
-  it("🛑 and may NOT use it on turn 1, which is the OPPONENT's first turn", () => {
-    // The other half of the same fact, and the one a `turn <= 2` build gets
-    // wrong: on turn 1 the going-second seat is not even the acting seat, so the
-    // refusal here is the phase gate — which is why the assertion that carries the
-    // weight is the turn-3 one below, where the seat DOES own the turn.
+  it("and may NOT use it on turn 1, which is the OPPONENT's first turn", () => {
     const state = board(SEEDS[0], "p1", "p2");
     const rejected = useFanCall(state, "p2", ACTIVE);
     expect(rejected.ok).toBe(false);
   });
 
-  it("🛑 REFUSES it on the seat's SECOND turn, naming the printed clause", () => {
-    // Turn 3 with p1 first: p1 owns the phase, holds an unused Ability, and the
-    // ONLY thing standing in the way is the ordinal. This is the assertion the
-    // whole slice exists for.
+  it("REFUSES it on the seat's SECOND turn, naming the printed clause", () => {
     const turn3 = passTurns(board(SEEDS[0], "p1", "p1"), 2);
     expect(turn3.turn).toBe(3);
     const rejected = useFanCall(turn3, "p1", ACTIVE);
@@ -603,10 +449,7 @@ describe("Fan Call on a real board", () => {
     expect(rejected.ok).toBe(false);
   });
 
-  it("🛑 the cross-copy lock: TWO DISTINCT printings share ONE use per turn", () => {
-    // D272's hazard, inherited: a build keyed `${uid}:${name}` gives each body its
-    // own use, and a build keyed `${cardId}:${name}` passes a two-copy board of
-    // one printing. Both are refused by benching the OTHER printing.
+  it("the cross-copy lock: TWO DISTINCT printings share ONE use per turn", () => {
     let state = board(SEEDS[3], "p1", "p1");
     state = benchFromDeck(state, "p1", "sv08.5-085");
     const parked = must(useFanCall(state, "p1", ACTIVE));
@@ -617,23 +460,13 @@ describe("Fan Call on a real board", () => {
         choice: { kind: "cards", uids: [] },
       }),
     );
-    // The SECOND Fan Rotom, a different catalog id, on the same turn. It sits at
-    // bench index 1 — `board` fills slot 0 with `fix-basic-1`, and naming the
-    // wrong slot gets NO_SUCH_ABILITY, which is a green-looking refusal for the
-    // wrong reason (this assertion caught exactly that on first run).
     const second = useFanCall(resolved, "p1", BENCH_1);
     expect(second.ok).toBe(false);
     if (second.ok) throw new Error("expected a refusal");
     expect(second.error.code).toBe("ABILITY_ALREADY_USED");
   });
 
-  it("🛑 an already-used Ability reports the LOCK, not the gate — the refusal ORDER", () => {
-    // ⚠️ THE ORDER MUTANT: hoisting `playableIf` above the once-per-turn lock. On
-    // this card the two rejects can never BOTH be true (the lock only fires on a
-    // turn the gate allows), so the hoist is invisible here — which is exactly why
-    // the assertion is written on the board where the lock IS reachable: the
-    // first turn, after one use. `ABILITY_ALREADY_USED` is the message that tells
-    // the player something they did not know.
+  it("an already-used Ability reports the LOCK, not the gate — the refusal ORDER", () => {
     const state = board(SEEDS[3], "p1", "p1");
     const parked = must(useFanCall(state, "p1", ACTIVE));
     const resolved = must(
@@ -665,27 +498,13 @@ describe("Fan Call on a real board", () => {
 
 describe("MATCH_RECORD_VERSION stays 14", () => {
   it("a v14-shaped park — a `searchDeck` with NO `maxHp` — replays BENIGNLY", () => {
-    // The standing test is "can the PREVIOUS deploy's RECORD be read by THIS
-    // deploy" (apps/api/src/lobby/match.ts). Nothing was added to `GameState`, to
-    // any event or to any allowance — the gate is DERIVED from two fields v14
-    // already carried, which is the version question answering itself. But a
-    // PARKED program serializes into the phase, so the new filter property does
-    // cross the record boundary and the question is real rather than rhetorical.
     const parked = must(useFanCall(board(SEEDS[2], "p1", "p1"), "p1", ACTIVE));
     const roundTripped = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(cardsPrompt(roundTripped).candidates.length).toBeGreaterThan(0);
 
-    // A v14 record holds a `searchDeck` with no `maxHp`, because no v14 deploy had
-    // a registry row that could write one. Stripped from a live continuation:
     const legacy = JSON.parse(
       JSON.stringify(parked).replaceAll('"maxHp":100', '"unused":0'),
     ) as GameState;
-    // 🆕 AND THE DRIVE ANSWERS WHAT THE ARGUMENT WOULD HAVE GUESSED AT. The filter
-    // is NOT re-read on resume — `parkOrForce` files the CANDIDATE LIST and the
-    // CAPTION into the phase, so the record carries the narrowing's RESULT rather
-    // than its inputs. The park therefore resumes with the same rows and the same
-    // caption, which is BENIGN in the strongest available sense: a pre-D275 park
-    // holds a pre-D275 candidate list, computed by the deploy that wrote it.
     expect(cardsPrompt(legacy).note).toBe(cardsPrompt(parked).note);
     expect(cardsPrompt(legacy).candidates).toEqual(cardsPrompt(parked).candidates);
     // …and answering it still works, which is what "replays" means.
@@ -715,26 +534,11 @@ describe("MATCH_RECORD_VERSION stays 14", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("engineVersion and the package manifest are ONE number", () => {
-  // 🛑 **FOUND WHILE BUMPING, NOT WHILE LOOKING.** At the head of this slice
-  // `packages/engine/package.json` read **0.189.0** and `engineVersion` still said
-  // **0.187.0**: D272 and D273 each bumped the manifest and left the constant
-  // behind, and nothing anywhere compared the two. That is the FIFTH version-block
-  // debt this branch has paid (D208 paid three, D221 a fourth), and every previous
-  // payment fixed the numbers without stopping the next drift — `conventions.md`
-  // has named the cause all along, that the version is a shared mutable resource
-  // held in TWO files.
-  //
-  // ⚠️ **A DEBT PAID FIVE TIMES IS A MISSING GUARD, NOT A RECURRING MISTAKE.**
-  // This is the tie. It is deliberately a READ of the manifest rather than a
-  // recorded literal: a literal here would be a THIRD copy of the number and would
-  // itself go stale, which is the same defect one file over.
   it("the constant IS the manifest's version", () => {
     expect(engineVersion).toBe(manifest.version);
   });
 
   it("and it is a real semver triple, so neither side can satisfy the tie with junk", () => {
-    // ⚠️ WITHOUT THIS, `""` on both sides passes. The tie above says the two
-    // AGREE; this says the thing they agree on is a version.
     expect(engineVersion).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });

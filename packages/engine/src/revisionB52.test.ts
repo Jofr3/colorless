@@ -1,30 +1,17 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { GameAction, GameEvent, GameState } from "./index";
+import type { GameEvent, GameState } from "./index";
 import { applyAction, createGame } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { battler, completeSetup, deckOf, specialEnergy, typedEnergy } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  specialEnergy,
+  typedEnergy,
+  mustApply as must,
+} from "./testFixtures";
 import { type InPlayPokemon, type Seat, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B52 (Attacks) ──
-//
-// The audit finding (docs/reference/card-revision.md "B52"), driven on a real board through
-// `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`, byte for byte
-// below). NOTHING WAS CHANGED IN THE ENGINE: the finding was DEFERRED, and this suite pins the current
-// reading on every printing.
-//   §1 *"Your opponent's Active Pokémon is now Asleep and Poisoned."* (Vileplume "Pollen Bomb",
-//      Erika's Vileplume ex "Bloom Powder", Dustox "Twilight Poison" ×2). The derived program is two
-//      `applyStatus` ops, and each one asks the §11 funnel `effectRefused` on its own. Into a body
-//      wearing Mist Energy `sv05-161` both are refused and the damage lands (correct). Each refusal
-//      files its own `ATTACK_EFFECT_PREVENTED`, so the log reads "B52 Filler prevented the effect of
-//      the attack" twice for one attack. That is the RECORDED D142 design: *"A refusal is LOUD: one
-//      ATTACK_EFFECT_PREVENTED row per refused op"* (interpreter.ts), *"One row per refused op, so
-//      Poison Ring's two clauses produce two"* (events.ts), pinned by `defenderStatusPair.test.ts` §6
-//      ("TWO `ATTACK_EFFECT_PREVENTED` ROWS FOR ONE PRINTED SENTENCE — and that is CORRECT") and by
-//      `revisionB35.test.ts` (Corrosive Liquid, one row per half). So §1 pins it. Making the two rows
-//      distinguishable (naming the refused condition) is a log-design change, recorded in the doc.
-//   §2 the controls: with no shield both conditions land (an Asleep and a Poison row, Poison at the
-//      default 10, already ticked once by the between-turns Checkup) and no prevention row is filed.
 
 const TEXT = "Your opponent's Active Pokémon is now Asleep and Poisoned.";
 const MIST_TEXT =
@@ -121,8 +108,6 @@ function base(): GameState {
   return state;
 }
 
-/** TEST SURGERY — P1's Active is the printing with Energy paying its printed cost; P2's Active is
-    a 400-HP Filler carrying `defenderEnergy`. No Bench either side, 10-card decks. */
 function table(p: Printing, defenderEnergy: readonly string[]): GameState {
   const state: GameState = JSON.parse(JSON.stringify(base()));
   let n = 0;
@@ -156,13 +141,6 @@ function table(p: Printing, defenderEnergy: readonly string[]): GameState {
     };
   }
   return state;
-}
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
 }
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);

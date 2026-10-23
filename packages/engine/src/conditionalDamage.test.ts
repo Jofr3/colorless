@@ -22,40 +22,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.65.0 → 0.66.0 — the CONDITIONAL flat attack-damage bonus (D115): "If
-// <clause>, this attack does N more damage."
-//
-// The additive family's THIRD arithmetic shape, and the first whose "count" is not
-// a count: the clause is a 0-or-1 INDICATOR, so `per × count` is the printed flat
-// bonus when it holds and 0 when it does not. That degenerate reading is the whole
-// design — it lets the sentence reuse the additive fold WHOLE (no new branch in the
-// §8.5 pipeline, no new event field, no dropped base), paying for itself with one
-// new `DamageCountSource` member, one anchored regex, a four-entry clause table and
-// the ATTACKER's seat threaded into `scaledAttackDamage`.
-//
-// Before this slice `deriveAttackDamageBonus` recognised only the trailing `for
-// each` scaling family, so EVERY leading-conditional print fell onto the loud
-// ATTACK_EFFECT_SKIPPED path with its "+" marker unsimulated. The leading-`If`
-// family is 32 distinct sentences / 43 printings in the ingested pool; this slice
-// maps FOUR of them — 11 printings across 11 card ids (7 distinct cards), on ZERO registry rows, every
-// one deriving off its printed text:
-//
-//   • `yourStadiumInPlay`          — Palossand sv02-096 "Earthen Power" (+80)
-//   • `morePrizesThanOpponent`     — Gyarados sv02-043 "Revengeful Storm" (+100)
-//   • `opponentActiveDamaged`      — Gyarados ex sv01-045/-225 "Tyrannical Tail"
-//                                    (+180), Meowscarada ex sv02-015/-231/-256/-271
-//                                    "Scratching Nails" (+60)
-//   • `opponentActiveIsEvolution`  — Seviper sv02-137 "Cross-Cut" (+50), Houndoom
-//                                    sv03-133 "Daring Strike", Toxicroak
-//                                    sv06.5-024 "Clean Hit"
-//
-// The first two REUSE `BoardCondition` members that already existed (the 2026-07-21
-// board-condition slice built them for Falkner and Fighting Au Lait), which makes
-// this family the vocabulary's fourth consumer and its first through printed ATTACK
-// text. The other two are new members. The remaining ~28 printed clauses stay
-// deliberately UNMAPPED and therefore LOUD — an unrecognised clause returns null
-// and keeps its skipped row, which is strictly better than silently scoring 0.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -63,10 +29,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-// The four printed sentences, pinned here and asserted char-for-char against
-// FIXTURE_POOL below. These cards DERIVE — not one carries a registry row — so the
-// sentence IS the wiring: a drifted apostrophe or a lookalike é does not fail
-// loudly, it silently un-simulates the card.
 const EARTHEN_POWER = "If you have a Stadium in play, this attack does 80 more damage.";
 const REVENGEFUL_STORM =
   "If you have more Prize cards remaining than your opponent, this attack does 100 more damage.";
@@ -75,14 +37,6 @@ const TYRANNICAL_TAIL =
 const CROSS_CUT =
   "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 50 more damage.";
 
-/** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
-    unrestricted turn, so the attack step is legal (§4) — with BOTH Active spots
-    pinned to a neutral 200 HP fix-bigbody. Pinning is what keeps every assertion
-    seed-independent: CONDITIONAL_DAMAGE_DECK carries Seviper, a BASIC that could
-    otherwise be the dealt starter, and fix-bigbody is simultaneously the
-    Evolution clause's NEGATIVE and the arithmetically clean defender (Colorless,
-    no Weakness, no Resistance) every damage number below is measured against.
-    Each displaced starter lands on its own bench. */
 function board(seed: number): GameState {
   let state = driveSetup(
     seed,
@@ -95,10 +49,6 @@ function board(seed: number): GameState {
   return state;
 }
 
-/** Pay a printed cost symbol-for-symbol onto `seat`'s Active — typed Energy for
-    the typed symbols, plain {C} (fix-energy) for the Colorless ones, rather than
-    leaning on a typed card to cover both. Must run AFTER the attacker is fielded
-    (attachFromDeck attaches to whatever is in the Active Spot). */
 function pay(state: GameState, seat: Seat, spec: [string, number][]): GameState {
   let next = state;
   for (const [id, count] of spec) next = attachFromDeck(next, seat, id, count);
@@ -114,10 +64,6 @@ function playStadium(state: GameState, seat: Seat): GameState {
   return mustApply(withCard, { type: "playTrainer", seat, uid }).state;
 }
 
-/** TEST SURGERY: empty `seat`'s Active Spot, parking its cards in the discard so
-    every uid stays in exactly one zone. The one edge the two new conditions have
-    to answer for directly — the live attack gate guarantees a Defending Pokémon,
-    so no board reachable through `attack` can present a null Active here. */
 function clearActive(state: GameState, seat: Seat): GameState {
   const side = state.players[seat];
   const active = side.active;
@@ -137,8 +83,6 @@ function clearActive(state: GameState, seat: Seat): GameState {
 
 describe("the printed sentences — the fixture-text-verbatim guard", () => {
   it("matches FIXTURE_POOL char-for-char on all four cards", () => {
-    // These cards derive off text, so this is not decoration: it is the assertion
-    // that the fixture row and the deriver still agree on every byte.
     expect(FIXTURE_POOL["sv02-096"]?.attacks?.[1]?.effect).toBe(EARTHEN_POWER);
     expect(FIXTURE_POOL["sv02-043"]?.attacks?.[0]?.effect).toBe(REVENGEFUL_STORM);
     expect(FIXTURE_POOL["sv01-045"]?.attacks?.[1]?.effect).toBe(TYRANNICAL_TAIL);
@@ -229,9 +173,6 @@ describe("deriveAttackDamageBonus — the conditional flat bonus, all four claus
 describe("deriveAttackDamageBonus — the anchor guards (everything else stays LOUD)", () => {
   it("refuses the coin-flip rider, the near-misses and an UNMAPPED clause", () => {
     for (const text of [
-      // The 26-printing flip family — a genuinely different mechanism that must
-      // announce its flip. It can never reach an anchored `^If` anyway (the flip
-      // sentence always precedes it), which is exactly why the anchor is the guard.
       "Flip a coin. If heads, this attack does 20 more damage.",
       // A lowercase leading "if" — refused independently of the anchors (no /i).
       "if you have a Stadium in play, this attack does 80 more damage.",
@@ -245,34 +186,6 @@ describe("deriveAttackDamageBonus — the anchor guards (everything else stays L
       "Draw a card. If you have a Stadium in play, this attack does 80 more damage.",
       // A printed 0 adds nothing — the guard every arm in this family carries.
       "If you have a Stadium in play, this attack does 0 more damage.",
-      // A well-formed sentence whose CLAUSE is not in the table: Lokix sv02-021
-      // "Assaulting Kick" (30+), one printing. Until it is mapped it stays LOUD rather than
-      // silently scoring its bonus at 0. (This is the FIFTH occupant of this
-      // slot: the witness was Venoshock's "is Poisoned" until D116 mapped that
-      // clause, then Ceruledge's "ex or V" until D117, then Greedent's Pokémon
-      // Tool until D122, then Pikachu's Supporter clause until D123, then
-      // Revavroom ex's "moved from your Bench" until D124. If you map this one
-      // too, re-point the witness again rather than deleting the case — it is the
-      // only thing pinning the fall-through.)
-      //
-      // THE OCCUPANT IS NOW SHARED with clauseTable.test.ts, and that is a fact
-      // about the POOL, not a slip: only THREE unmapped clauses are left in 978
-      // cards (this one, Lucario sv01-114's cross-turn KO clause, and Slither
-      // Wing sv06.5-026's, which is blocked on an ingest change), against four
-      // suites that each need a witness. energyClause/energyInPlay already share
-      // one for the same reason.
-      // (🆕🆕🆕 D569 (D539): "Slither Wing … blocked on an ingest change" is WITHDRAWN —
-      // "Iron Smasher" is a literal `CONDITIONAL_DAMAGE_CLAUSES` row now
-      // (`opponentBannerPokemonInPlay` Future, over `banners.ts`), with no ingest change.)
-      //
-      // WHY THIS OCCUPANT IS HARD TO MAP OUT FROM UNDER, in the terms D124's
-      // predecessors kept getting wrong: it is not one fact but TWO — "evolved"
-      // AND "from Nymble" — and the name half is OPEN-vocabulary, so D120's
-      // precondition forbids a template and D119's corollary forbids calling it a
-      // single varying token. It needs its own state (an evolved-this-turn stamp,
-      // which D124's `promotedTurn` is deliberately NOT: evolving is not moving)
-      // plus a name comparison against the pre-evolution card. No one-row
-      // extension can reach it.
       "If this Pokémon evolved from Nymble during this turn, this attack does 100 more damage.",
     ]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
@@ -396,9 +309,6 @@ describe("Gyarados 'Revengeful Storm' — morePrizesThanOpponent, the §14 comeb
   });
 
   it("is the ATTACKER's seat, not the defender's — the asymmetry, run backwards", () => {
-    // The mirror of the case above: shrinking P1's OWN prize row puts P1 AHEAD on
-    // prizes taken, so the clause is false for P1 (and true for P2, who is not
-    // attacking). A seat-swapped read would score 100 here.
     const state = setPrizes(revengefulStorm(board(5)), "p1", 4);
     expect(conditionHolds(state, "p2", { kind: "morePrizesThanOpponent" })).toBe(true);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
@@ -471,10 +381,6 @@ describe("Seviper 'Cross-Cut' — opponentActiveIsEvolution, the D105 reading", 
   });
 
   it("vs an EVOLUTION Active it adds 50 → 100", () => {
-    // Gyarados (Stage 1 from Magikarp) is the positive: `evolveFromOf` is non-null,
-    // the exact complement of `basicPokemon`. Chosen over Palossand as the neutral
-    // half of the pair — Gyarados's Lightning weakness never fires against a
-    // Darkness attacker, so 50 + 50 lands unmultiplied, and its 180 HP survives.
     const state = setActiveFromDeck(crossCut(board(10)), "p2", "sv02-043");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -482,11 +388,6 @@ describe("Seviper 'Cross-Cut' — opponentActiveIsEvolution, the D105 reading", 
   });
 
   it("folds the bonus BEFORE §8.5 Weakness — (base + scaled) is what doubles", () => {
-    // Palossand is an Evolution AND ×2 Darkness: (50 + 50) × 2 = 200, where a fold
-    // AFTER Weakness would give 50×2 + 50 = 150. Its printed Fighting −30
-    // resistance never fires anywhere in this suite — no attacker in the cast is a
-    // Fighting Pokémon — which is precisely why fix-bigbody, not Palossand, is the
-    // measuring stick everywhere else.
     const state = setActiveFromDeck(crossCut(board(11)), "p2", "sv02-096");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({

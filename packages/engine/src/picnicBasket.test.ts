@@ -12,12 +12,6 @@ import {
   setBenchDamage,
 } from "./testFixtures";
 
-// M5 single-op long-tail slice (D103): Picnic Basket (sv01-184, Item) — "Heal 30
-// damage from each Pokémon (both yours and your opponent's)." A no-choice,
-// no-target whole-TABLE heal, so the new `healEachAll` op never parks: it is the
-// seat-blind twin of `healEach` (Garganacl), each heal clamped to the Pokémon's
-// damage and emitting its own HEALED tagged with THAT Pokémon's own seat.
-
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,

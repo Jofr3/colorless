@@ -11,18 +11,6 @@ import {
   setPrizes,
 } from "./testFixtures";
 
-// M5 op-slice: handRefresh — the Iono/Judge hand-refresh Supporter family: put
-// your hand back into your deck, then draw. Five real cards land on it, verified
-// end to end through playTrainer:
-//   • Youngster (sv01-198) — shuffle hand into deck, draw 5 (self only);
-//   • Judge (sv01-176) — EACH player shuffles hand into deck, draws 4 (both);
-//   • Brassius (sv03-187) — shuffle hand into deck, draw (hand size + 1);
-//   • Katy (sv01-177) — shuffle hand into deck, draw 8, YOUR TURN ENDS;
-//   • Iono (sv02-185) — EACH player's hand to the BOTTOM (deck order survives),
-//     each draws their own remaining Prize count, and only if a hand moved.
-// The op is fully automatic (never parks). `who: "both"` (Judge, Iono) reaches
-// the OPPONENT's hand/deck — count-only events keep every card hidden.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -208,10 +196,6 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     };
     deckSurvived("p1", p1Deck, p1Hand, p1Prizes);
     deckSurvived("p2", p2Deck, p2Hand, p2Prizes);
-    // "Each player SHUFFLES their hand and puts it on the bottom": the bottomed
-    // cards are not in hand order — the only thing stopping a player who watched
-    // that hand from knowing the deck's tail exactly (the deck itself is NOT
-    // shuffled here, so nothing else hides it).
     expect(after.players.p1.deck.slice(p1Deck.length - p1Prizes)).not.toEqual(p1Hand);
     expect(after.players.p2.deck.slice(p2Deck.length - p2Prizes)).not.toEqual(p2Hand);
     expect(after.rngState).not.toBe(state.rngState); // two hand shuffles were drawn

@@ -7,28 +7,18 @@ import {
   pokemonSuffixOf,
   prizeValueOf,
 } from "./cards";
-import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
-import { FIXTURE_POOL, battler, deckOf, setPrizes, trainerCard } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  setPrizes,
+  trainerCard,
+  must,
+  mustApply as run,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D582 — THE MEGA EVOLUTION POKÉMON ex RULE ──
-//
-// Every `me` "Mega … ex" prints this rule box (Mega Venusaur ex `me01-003`, the printed face):
-//
-//   Mega Evolution ex rule — When your Mega Evolution Pokémon ex is Knocked Out, your opponent
-//   takes 3 Prize cards.
-//
-// tcgdex carries no rule-box text and its `suffix` column never says MEGA (the 133 legal printings
-// are tagged `ex` 94 / `EX` 27 / none 12 — LOCAL D1, 2026-10-07), so the class is read off the NAME,
-// as `pokemonSuffixOf` reads every other rule box. The 3 REPLACES the Pokémon ex rule's 2 and is the
-// BASE that flow.ts `planPrizes` composes every existing modifier over.
-//
-// What does NOT change, checked against the printed face: a Mega ex evolves from its printed
-// `evolveFrom` (Mega Venusaur ex is a Stage 2 from Ivysaur; Mega Absol ex is a Basic), its turn does
-// not end when it evolves (the 2014 "M Pokémon-EX" rule; no `me` printing carries it), and it is
-// still a Pokémon ex — every "Pokémon ex" sentence reaches it.
 
 const MEGA_VENUSAUR = "me01-003";
 const IVYSAUR = "me01-002";
@@ -166,18 +156,6 @@ const DECK = deckOf({
   [FILLER]: 28,
   "fix-energy": 20,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 /** Setup with p2 first, then p2 passes: p1's turn 2 (`rounds` more full rounds on top). */
 function opened(seed: number, rounds = 0): GameState {

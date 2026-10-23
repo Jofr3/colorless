@@ -17,19 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 9 — on-KO triggered Abilities (§9): the Abilities that fire "when
-// this Pokémon is Knocked Out". Unlike the slice-6 board triggers (which fire on
-// the controller's OWN turn), an on-KO trigger fires during the OPPONENT's turn,
-// mid-KO-sweep — the hairiest timing, because a decision must PAUSE the sweep and
-// then RESUME it draining the remaining prize/promotion stages (resume-the-tail).
-//   • Glimmora "Shattering Crystal" (real, sv02-126) — a coin-flip PRIZE guard:
-//     heads → the opponent takes no Prize for it. Resolved inline in the KO sweep
-//     (flow.ts collectKnockOuts / planPrizes), before the §14 tie guard.
-//   • fix-onko "Last Wish" (FIXTURE) — the resume-the-tail PARKING demonstrator:
-//     an on-KO program (search a Basic → hand) that PARKS on effect:choose (no
-//     real SV on-KO Ability requires a decision — the fix-sniper precedent).
-//     [🆕🆕🆕 D598 (D539): of the `sv` column only — Pecharunt `me02.5-143` "Final Chain" parks the same way.]
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -37,11 +24,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** P1 (going SECOND, so their turn 2 has no §4 attack ban) with an energied
-    fix-attacker Active (Bite [C] 30, index 0) vs P2 whose Active is `p2Active`
-    (a 30-HP body → Bite one-shots it). setActiveFromDeck displaces each setup
-    Active to the bench, so P2 always keeps a lone benched fix-basic-1 to promote
-    into after their Active is Knocked Out. */
 function onkoBoard(seed: number, p2Active: string): GameState {
   let state = driveSetup(seed, { p1: ONKO_DECK, p2: ONKO_DECK }, { first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" })); // → P1's turn 2
@@ -134,11 +116,6 @@ describe("Glimmora's Shattering Crystal — on-KO prize denial (§8.1)", () => {
   });
 
   it("resolves BEFORE the §14 win check — heads can DENY a game-winning prize", () => {
-    // P1 is one prize from victory, and Glimmora's prize would be their last (a
-    // §14.1 win). But the guard flips FIRST (inline in the KO sweep): heads
-    // DENIES the prize, so P1 does NOT win and the game continues; tails GRANTS
-    // it and P1 wins outright. Both branches are reachable — the flip really is
-    // resolved before the win check, not skipped by an imminent win.
     let sawHeads = false;
     let sawTails = false;
     for (let seed = 0; seed < 30 && !(sawHeads && sawTails); seed++) {

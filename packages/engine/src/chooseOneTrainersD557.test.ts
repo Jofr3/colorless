@@ -25,22 +25,6 @@ import {
   types,
 } from "./testFixtures";
 
-// ── 🆕🆕🆕 D557 A — KIERAN'S PRINTED "Choose 1:" AND TEAM ROCKET'S VENTURE BOMB ──
-//
-//   Kieran                      sv06-154 / -206 / -218, sv08.5-113 / -174  Supporter (5 legal)
-//   "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During
-//    this turn, attacks used by your Pokémon do 30 more damage to your opponent's
-//    Active Pokémon ex and Active Pokémon V (before applying Weakness and Resistance)."
-//   Team Rocket's Venture Bomb  sv10-179                                    Item (1 legal)
-//   "Flip a coin. If heads, put 2 damage counters on 1 of your opponent's Pokémon. If
-//    tails, put 2 damage counters on your Active Pokémon."
-//
-// Kieran is the `optional` gate with the new `labels` rider (the dialog's two button
-// captions) over D556's `boostSideAttacksThisTurn`; Venture Bomb is a two-armed
-// `coinFlipGate` whose placements carry the new `"trainer"` provenance. Real ids on a
-// LOCAL `cardPool` (D275) in their OWN 60-card deck (D270). `MATCH_RECORD_VERSION`
-// HOLDS at 35 — driven in §8, not asserted. docs/decisions.md D557.
-
 const KIERAN = ["sv06-154", "sv06-206", "sv06-218", "sv08.5-113", "sv08.5-174"] as const;
 const VENTURE = "sv10-179";
 const BLACK_BELT = "sv08.5-096";
@@ -144,7 +128,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [KIERAN[0]]: 4,
   ...Object.fromEntries(KIERAN.slice(1).map((id) => [id, 1])),
@@ -411,7 +394,7 @@ describe("D557 §2 — the park: a labelled `confirm`, answered by the controlle
     expect(redactedEffectPromptSchema.safeParse({ kind: "confirm", note: "x" }).success).toBe(true);
   });
 
-  it("🛑 an UNLABELED `optional` parks the byte-identical two-field prompt (D135)", () => {
+  it("an UNLABELED `optional` parks the byte-identical two-field prompt (D135)", () => {
     const start = ready();
     const program: EffectOp[] = [
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
@@ -453,7 +436,7 @@ describe("D557 §3 — the FIRST bullet (yes): the switch, and no bonus", () => 
     expect(state.allowances.sideAttackBonuses).toEqual([]);
   });
 
-  it("⚠️ R-K1 (UNRULED) — the switch chosen with an EMPTY Bench whiffs SILENTLY: no row, no bonus, Supporter spent", () => {
+  it("R-K1 (UNRULED) — the switch chosen with an EMPTY Bench whiffs SILENTLY: no row, no bonus, Supporter spent", () => {
     const start = ready({ bench: [] });
     const parked = play(start).state;
     const { state, events } = confirm(parked, true);
@@ -492,13 +475,7 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
     }
   });
 
-  // ⚠️ R-K2 is a STANDING ENGINE DEVIATION (a named debt), not the printed reading: the
-  // Sword & Shield-era rules count Pokémon VMAX and VSTAR as Pokémon V, but
-  // `suffixPokemon` matches the name suffix exactly (`pokemonSuffixOf`, D92/D446). No
-  // V-family Pokémon is Standard-legal. This rung pins the CURRENT behaviour so fixing
-  // the classification turns it red on purpose. (Title before the review: "🛑 R-K2 —
-  // the EXACT-SUFFIX reading: …", withdrawn as a claim of correctness.)
-  it("⚠️ R-K2 DEVIATION (debt) — the engine's exact-suffix classification: a VMAX, a VSTAR and a non-rule-box Pokémon get NOTHING today", () => {
+  it("R-K2 DEVIATION (debt) — the engine's exact-suffix classification: a VMAX, a VSTAR and a non-rule-box Pokémon get NOTHING today", () => {
     for (const defender of ["d557-wall-vmax", "d557-wall-vstar", "d557-wall"]) {
       const row = dealt(kieran(false, { defender }).state);
       expect(row?.bonus, defender).toBeUndefined();
@@ -530,7 +507,7 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
     expect(row?.dealt).toBe(30 + KIERAN_BONUS);
   });
 
-  it("🛑 it STACKS with Black Belt's Training's +40 in the same bag: 50 + 30 + 40 = 120 on an ex, 80 on a V", () => {
+  it("it STACKS with Black Belt's Training's +40 in the same bag: 50 + 30 + 40 = 120 on an ex, 80 on a V", () => {
     const blackBelt = programFor(BLACK_BELT)?.trainer ?? [];
     expect(blackBelt).toHaveLength(1);
     for (const [defender, expected] of [
@@ -565,13 +542,13 @@ describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a wide
     expect(JSON.stringify(stripped(parked).phase)).not.toContain('"labels"');
   });
 
-  it("🛑 a revived park with the labels STRIPPED (the v35 reader) still resolves yes = switch", () => {
+  it("a revived park with the labels STRIPPED (the v35 reader) still resolves yes = switch", () => {
     const { state } = confirm(stripped(play(ready()).state), true);
     expect(state.cardIdByUid[body(state.players.p1.active).stack[0] as string]).toBe("d557-relief");
     expect(state.allowances.sideAttackBonuses).toEqual([]);
   });
 
-  it("🛑 …and no = +30, byte for byte what the labelled park resolves to", () => {
+  it("…and no = +30, byte for byte what the labelled park resolves to", () => {
     const labelled = confirm(play(ready()).state, false).state;
     const bare = confirm(stripped(play(ready()).state), false).state;
     expect(bare.allowances.sideAttackBonuses).toEqual([{ amount: KIERAN_BONUS, target: EX_OR_V }]);
@@ -644,7 +621,7 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
     });
   });
 
-  it("🛑 an Active WITH A WEAKNESS takes a flat 20 — a placement is not attack damage (no W/R)", () => {
+  it("an Active WITH A WEAKNESS takes a flat 20 — a placement is not attack damage (no W/R)", () => {
     const { state, events } = venture({ defender: "d557-weak-ex" }, "heads");
     expect(body(state.players.p2.active).damage).toBe(20);
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
@@ -663,7 +640,7 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
     expect(rows.some((t) => t.startsWith("Ability:") || t.includes("to itself"))).toBe(false);
   });
 
-  it("🛑 preventTrainerEffects REFUSES it: a shielded Active is never offered, and alone it whiffs with a refusal row", () => {
+  it("preventTrainerEffects REFUSES it: a shielded Active is never offered, and alone it whiffs with a refusal row", () => {
     const withBench = venture({ defender: "fix-unnerve", oppBench: ["d557-bench"] }, "heads");
     expect(withBench.state.phase.kind).toBe("turn:action");
     expect(body(withBench.state.players.p2.active).damage).toBe(0);
@@ -710,7 +687,7 @@ describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
     );
   });
 
-  it("🛑 a SELF-KO is swept by `resolveMidTurnKnockOuts`, and the OPPONENT takes the Prize", () => {
+  it("a SELF-KO is swept by `resolveMidTurnKnockOuts`, and the OPPONENT takes the Prize", () => {
     let start = ready({ card: VENTURE });
     start = setDamage(start, "p1", 300 - 20);
     const { state, events } = play(withCoin(start, "tails"), VENTURE);

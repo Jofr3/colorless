@@ -17,56 +17,10 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.312.0 → 0.313.0 — 🆕🆕 D408: THE BARE ATTACK LOCK ON BOTH SEATS, AND A REPAIR
-// NO CENSUS RUNG IN THIS REPO COULD SEE.
-//
-// Three printed sentences, 11 legal printings, and they are NOT three of a kind:
-//
-//   "During your opponent's next turn, the Defending Pokémon can't attack."    (3)
-//   "During your opponent's next turn, the Defending Pokémon can't use attacks." (4)
-//        — UNREAD before this slice. D148 read this rule only as the second clause
-//          of two compounds and wrote in `effects.ts` that the bare form "is printed
-//          NOWHERE in the pool as a standalone attack sentence". That was measured
-//          against the SIX-SET local D1 (978 cards / 6 sets) and it was true of that
-//          population; the `legal_standard = 1` attack column prints both spellings
-//          standalone. §1 holds the correction as a GUARD.
-//
-//   "During your next turn, this Pokémon can't use attacks."                   (4)
-//        — 🛑 READ WRONGLY since D154, which is a different and worse thing.
-//          `SELF_CANT_USE_ATTACK` is written for "…can't use {AttackName}" and its
-//          lazy `(.+?)` swallowed the bare plural, so the sentence derived
-//          `preventAttackUse { attack: "attacks" }` — a lock keyed on an attack no
-//          card is named. `resolveAttackIndex` answers -1, the op writes NOTHING,
-//          and four legal printings were counted BUILT and did nothing at all.
-//
-// 🛑 WHY THIS FILE EXISTS AT ALL, AND WHY THE REPAIR NEEDED A BOARD. A sentence that
-// RESOLVES to a program that does nothing is invisible to every coverage instrument
-// in this repo: `BUILT.attack`, both reader instruments, the unbuilt-column count
-// and the whole-census residue all count what resolves, never what resolves
-// CORRECTLY. All of them stand still across the self-side repair, in both
-// directions. So the ONLY rungs that can go red on it are a program comparison and
-// a BOARD, and §3 and §4 are those rungs — measured red on the defective build
-// before the arm was written, which is the order `conventions.md` asks for.
-//
-// ⚠️ AND THE REPAIR IS A REFUSAL IN THE PATTERN RATHER THAN AN ARM ORDERING.
-// `SELF_CANT_USE_ATTACK`'s capture is now `([A-Z].+?)` — an attack name is a PROPER
-// NOUN, which is the same capitalisation device that keeps the thirteen lowercase
-// "you can't use…" Ability limiters off that path — and the bare plural's own arm
-// sits BELOW the capture arm so that the refusal is what routes the sentence there.
-// Ordering the new arm ABOVE would have repaired the board and left the pattern
-// wrong in isolation, with a refusal nothing could falsify.
-//
-// SEED-FREE, like both suites it sits between: none of the three sentences flips
-// anything, so a seed table would describe a shuffle rather than a rule. §5 pins
-// that with an unchanged `rngState` across a whole install.
-
-/** The three printed sentences, byte for byte off `legalAttackCorpus()`. */
 const DEFENDER_BARE = "During your opponent's next turn, the Defending Pokémon can't attack.";
 const DEFENDER_PLURAL =
   "During your opponent's next turn, the Defending Pokémon can't use attacks.";
 const SELF_PLURAL = "During your next turn, this Pokémon can't use attacks.";
-/** D143's self-side sentence and D148's compound — the two SHIPPED controls this
-    slice's programs must equal, rather than merely resemble. */
 const SELF_BARE = "During your next turn, this Pokémon can't attack.";
 const EISCUE_COMPOUND =
   "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.";
@@ -143,27 +97,14 @@ function ops(text: string): EffectOp[] {
   return derived as EffectOp[];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — the printed datum, and the correction D148's census owed.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the supply check, and the claim it falsifies", () => {
   it("all three sentences are in the legal attack column, at 3 / 4 / 4", () => {
-    // 🛑 THE EXECUTABLE CORRECTION. `effects.ts` said of the first of these that it
-    // "is printed NOWHERE in the pool as a standalone attack sentence", and
-    // `defenderLock.test.ts` asserted the consequence as a `toBeNull`. Both were
-    // readings of the SIX-SET local D1 and both were right about it. This rung
-    // reads the committed `legal_standard = 1` column instead, so the correction is
-    // a guard rather than a comment: if a re-ingest ever takes these rows away, the
-    // arm they justify goes with them and this line says so first.
     const corpus = legalAttackCorpus();
     const unitsOf = (sentence: string): number =>
       corpus.filter(([, s]) => s === sentence).reduce((sum, [n]) => sum + n, 0);
     expect(unitsOf(DEFENDER_BARE)).toBe(3);
     expect(unitsOf(DEFENDER_PLURAL)).toBe(4);
     expect(unitsOf(SELF_PLURAL)).toBe(4);
-    // Each is ONE record, so "printings" and "sentences" are not the same step and
-    // the census annotations that say +2 / +7 are reading two different columns.
     for (const sentence of [DEFENDER_BARE, DEFENDER_PLURAL, SELF_PLURAL]) {
       expect(
         corpus.filter(([, s]) => s === sentence),
@@ -173,18 +114,12 @@ describe("§1 — the supply check, and the claim it falsifies", () => {
   });
 
   it("the fixtures print those bytes, and no registry row exists for either", () => {
-    // D183's rule: author and assert against the PRINTED BYTES. The ids that print
-    // these sentences are unknown to this container (no D1 credentials, D369), so
-    // the fixtures carry `fix-*` keys and every scalar but the effect text is
-    // CHOSEN — which is exactly why the text itself must be checked against the
-    // corpus and not against this file's own constants.
     const plural = FIXTURE_POOL["fix-lockplural"];
     expect(plural?.attacks?.[SELF_INSTALL_INDEX]?.effect).toBe(SELF_PLURAL);
     expect(plural?.attacks?.[SELF_SIBLING_INDEX]?.effect).toBeUndefined();
     const deflock = FIXTURE_POOL["fix-deflock"];
     expect(deflock?.attacks?.[DEF_BARE_INDEX]?.effect).toBe(DEFENDER_BARE);
     expect(deflock?.attacks?.[DEF_PLURAL_INDEX]?.effect).toBe(DEFENDER_PLURAL);
-    // The printed text IS the program — no authored row behind either body.
     expect(programFor("fix-lockplural")).toBeUndefined();
     expect(programFor("fix-deflock")).toBeUndefined();
   });
@@ -202,17 +137,10 @@ describe("§2 — three sentences, two programs, and both were already shipped",
     expect(deriveAttackEffect(DEFENDER_PLURAL)).toEqual([
       { op: "preventAttack", target: "defender" },
     ]);
-    // No stray key: `toEqual` on a two-key object would not catch a third that the
-    // shape happens to allow, so the key SET is asserted (D143's idiom).
     expect(Object.keys(ops(DEFENDER_BARE)[0] as object)).toEqual(["op", "target"]);
   });
 
   it("both are BYTE-IDENTICAL to the shipped compound's SECOND op", () => {
-    // The family's checkable claim, and the reason ONE alternation is honest here:
-    // there is one action, printed two ways, and the compound has been running it
-    // since D148. If the bare arm and the compound ever diverge, one of the two has
-    // grown a meaning the other has not — which no board can see, because both
-    // write the same field on the same body.
     const compound = ops(EISCUE_COMPOUND);
     expect(compound).toHaveLength(2);
     expect(ops(DEFENDER_BARE)[0]).toEqual(compound[1]);
@@ -228,20 +156,11 @@ describe("§2 — three sentences, two programs, and both were already shipped",
   });
 
   it("the two seats stay APART — one field, two directions, never one program", () => {
-    // The sharpest cross-family warrant this file has. All four sentences read here
-    // write `InPlayPokemon.attackLockedTurn`; the only thing that decides WHOSE body
-    // and WHICH turn is `target`. A reader that drifted between the seats would put
-    // the right durated fact on the wrong side of the table, and every assertion
-    // about the record's shape would still pass.
     expect(ops(SELF_PLURAL)).not.toEqual(ops(DEFENDER_PLURAL));
     expect(ops(SELF_BARE)).not.toEqual(ops(DEFENDER_BARE));
   });
 
   it("the typographic apostrophe derives IDENTICALLY on all three", () => {
-    // D136/D137: a re-ingest that changes only punctuation must not silently
-    // un-simulate 11 printings. The defender pair exposes a POSSESSIVE and a
-    // CONTRACTION on one string, which is the asymmetry D137 found two tables
-    // missing; the self plural exposes the contraction alone.
     for (const text of [DEFENDER_BARE, DEFENDER_PLURAL, SELF_PLURAL]) {
       expect(deriveAttackEffect(text.replace(/'/g, "’")), text).toEqual(deriveAttackEffect(text));
     }
@@ -253,12 +172,7 @@ describe("§2 — three sentences, two programs, and both were already shipped",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — the mis-read sentence, and why nothing in the repo could see it", () => {
-  it("🛑 the bare plural is NOT read as a proper noun — the defect, named", () => {
-    // THE ASSERTION THIS SLICE EXISTS FOR. On the build before D408 this derived
-    // `[{ op: "preventAttackUse", attack: "attacks" }]` — it RESOLVED, so it was
-    // counted BUILT by every census rung in this repo, and it installed nothing.
-    // Asserting the positive program is not enough on its own: the failure mode has
-    // a NAME, so the name is refused too.
+  it("the bare plural is NOT read as a proper noun — the defect, named", () => {
     const derived = ops(SELF_PLURAL);
     expect(derived).toEqual([{ op: "preventAttack" }]);
     for (const op of derived) expect(op.op).not.toBe("preventAttackUse");
@@ -266,10 +180,6 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
   });
 
   it("…and the capture still reads every PROPER NOUN the column prints", () => {
-    // The narrowing is `([A-Z].+?)`, so the repair must not cost D154 a printing.
-    // Swept over the whole legal column rather than over this file's own list:
-    // every "During your next turn, this Pokémon can't use X." sentence except the
-    // bare plural still derives a `preventAttackUse` naming X verbatim.
     const named = legalAttackCorpus().filter(
       ([, s]) =>
         s.startsWith("During your next turn, this Pokémon can't use ") && s !== SELF_PLURAL,
@@ -284,14 +194,7 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
     }
   });
 
-  it("🛑 the DEFECTIVE program, run on a real board, installs NOTHING", () => {
-    // THE OTHER HALF OF "no instrument could see it", DRIVEN rather than argued.
-    // The op is CONSTRUCTED here — after D408 no sentence derives it — and it is
-    // constructed through the deriver so the shape is the real one and only the
-    // noun is invented. `resolveAttackIndex` answers -1 for a name the holder does
-    // not print, so the op returns early: no event, no stamp, no refusal. That is
-    // why four legal printings could be "built" for fifty-four decisions and do
-    // nothing, and why a census can never be the guard for this class of defect.
+  it("the DEFECTIVE program, run on a real board, installs NOTHING", () => {
     const before = armed("fix-lockplural", "fix-titan");
     const bogus = ops("During your next turn, this Pokémon can't use Attacks.");
     expect(bogus).toEqual([{ op: "preventAttackUse", attack: "Attacks" }]);
@@ -320,21 +223,13 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§4 — the SELF-side plural, driven across a real turn boundary", () => {
-  it("🛑 locks the POKÉMON — BOTH indexes refused on the holder's own next turn", () => {
-    // THE BOARD THE REPAIR OWES. On the defective build this body attacks freely on
-    // turn 4: the lock named an attack no card is named, so nothing installed and
-    // BOTH of these read "ok". The window is `state.turn + 2` — declaring an attack
-    // ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the holder's own next turn is one full round later.
+  it("locks the POKÉMON — BOTH indexes refused on the holder's own next turn", () => {
     let state = installed("fix-lockplural", "fix-titan", SELF_INSTALL_INDEX);
     expect(state.players.p1.active?.attackLockedTurn).toBe(4);
     expect(state.players.p2.active?.attackLockedTurn ?? null).toBeNull();
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     expect(state.turn).toBe(4);
     expect(refusal(state, "p1", SELF_INSTALL_INDEX)).toBe("ATTACK_PREVENTED");
-    // …and the SIBLING, which is the assertion that separates this sentence from
-    // the twelve "can't use {AttackName}" printings one arm above it: those bar ONE
-    // index and leave the other live. "Tail Whip" costs {C} and two are attached,
-    // so this refusal cannot be an Energy shortfall.
     expect(refusal(state, "p1", SELF_SIBLING_INDEX)).toBe("ATTACK_PREVENTED");
     expect(attackLocked(state, state.players.p1.active as InPlayPokemon)).toBe(true);
   });
@@ -352,8 +247,6 @@ describe("§4 — the SELF-side plural, driven across a real turn boundary", () 
   });
 
   it("the turn IN BETWEEN is untouched — a `+ 1` stamp would bar the wrong seat", () => {
-    // The failure D143 named on this window: a defender-side number on a self-side
-    // sentence bars the victim of nothing and leaves the drawback unpaid.
     const state = installed("fix-lockplural", "fix-titan", SELF_INSTALL_INDEX);
     expect(state.turn).toBe(3);
     expect(attackLocked(state, state.players.p1.active as InPlayPokemon)).toBe(false);
@@ -361,7 +254,7 @@ describe("§4 — the SELF-side plural, driven across a real turn boundary", () 
 });
 
 describe("§4b — the OPPONENT-side lock, in BOTH printed verbs", () => {
-  it("🛑 both verbs write the SAME window on the SAME body — the index is the only diff", () => {
+  it("both verbs write the SAME window on the SAME body — the index is the only diff", () => {
     // ONE anchor, one alternation, two printed spellings: the claim is that the
     // verb changes nothing, and the only honest way to say that on a board is to
     // drive both indexes of ONE fixture and compare the stamps.
@@ -388,7 +281,6 @@ describe("§4b — the OPPONENT-side lock, in BOTH printed verbs", () => {
     let state = installed("fix-deflock", "fix-attacker", DEF_BARE_INDEX);
     expect(state.turn).toBe(3);
     expect(refusal(state, "p2", VICTIM_FREE_INDEX)).toBe("ATTACK_PREVENTED");
-    // The INSTALLER's own turn 4 — the turn D143's `+ 2` would have hit instead.
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     expect(state.turn).toBe(4);
     expect(refusal(state, "p1", DEF_BARE_INDEX)).toBe("ok");
@@ -423,39 +315,9 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     }
   });
 
-  it("🆕 D495 BUILT the COIN-GATED defender lock — re-pointed onto the OP, refusals kept", () => {
-    // D408 WROTE THIS RUNG AS A `toBeNull` AND SAID WHY, and the paragraph is kept
-    // rather than deleted because it is the record of a PRICE (D427/D466):
-    //
-    //   > "1 legal printing, and the arm would be one regex and one `coinFlipGate`
-    //   >  whose `then` is this slice's own program. It is OUT on the WITNESS rather
-    //   >  than on the arm: this suite and both suites it sits between are
-    //   >  deliberately SEED-FREE, and a coin-gated printing turns that determinism
-    //   >  claim into a coincidence of one shuffle. One printing against a seed sweep
-    //   >  and a fourth fixture is worse than the residue head it would be taken from."
-    //
-    // 🛑 D495 RE-DERIVED BOTH HALVES OF THAT PRICE AND ONLY ONE WAS REAL.
-    //   • the SEED half STANDS. The board is NOT here — it is in
-    //     `flipDefenderAttackLock.test.ts`, which owns the seeds. §5's own
-    //     "consumes no rng across a whole install" rung below is untouched, and it
-    //     stays true because DERIVING a program consumes nothing.
-    //   • the FOURTH FIXTURE half was WRONG. D452's file-local `cardPool` idiom keeps
-    //     the demonstrator out of `FIXTURE_POOL` entirely, so the pool-size pin, the
-    //     eleven-deep `ids.length` ladder in `opponentResistanceBonus.test.ts` and
-    //     `clauseApostrophe.test.ts`'s derivable sweep (which iterates `FIXTURE_POOL`,
-    //     not the corpus) all take a ZERO term. The quoted price was one fixture high.
-    //
-    // ⚠️ RE-POINTED ONTO THE OP AND NOT ONTO A BOOLEAN (D438/D488). A bare
-    // `.not.toBeNull()` would be true under a build that claims this string with the
-    // WRONG program, and it would silently discard the twelve-way refusal the old
-    // rung carried. So: the owner is named by VALUE, and every OTHER reader is still
-    // asserted to refuse — strictly stronger in both directions than either half.
+  it("D495 BUILT the COIN-GATED defender lock — re-pointed onto the OP, refusals kept", () => {
     const PRINTED =
       "Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't attack.";
-    // The specimen is a ROW OF THE COMMITTED CORPUS at its committed count, not a
-    // hand-typed string (D452/D490 — a byte pin measures an invention as faithfully
-    // as it measures the truth). Corpus FILE LINE 250; the card id is UNRESOLVABLE in
-    // this checkout (no local D1, D425) and is deliberately not invented.
     expect(legalAttackCorpus().filter(([, s]) => s === PRINTED)).toEqual([[1, PRINTED]]);
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
@@ -464,39 +326,22 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
-    // 🛑 THE `then` IS THE BARE ANCHOR'S WHOLE PROGRAM, BYTE FOR BYTE — the family's
-    // checkable claim since D134, and the reason the bare arm is this arm's control.
     const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0] as { then: EffectOp[] };
     expect(gate.then).toEqual(deriveAttackEffect(DEFENDER_BARE));
-    // …and the TAILS spelling is still refused: the pool prints no such row, and the
-    // anchor's `If heads,` is what refuses it. One axis, one difference (D427).
     expect(
       deriveAttackEffect(
         "Flip a coin. If tails, during your opponent's next turn, the Defending Pokémon can't attack.",
       ),
     ).toBeNull();
-    // The TWELVE refusals the old rung carried, kept rather than traded away (D438).
     for (const name of attackReaderSurface()) {
       if (name === "deriveAttackEffect") continue;
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(PRINTED) ?? null, name).toBeNull();
     }
-    // The surface COUNT beside the loop, because a loop over a shrinking surface
-    // stays green (D417: pin the diff AND the count).
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it('🆕🆕🆕 D549 — both SIDE-WIDE spellings map to their OWN op, `lockSideAttacks`, and never to `preventAttack` (was: "refuses both SIDE-WIDE spellings — they name a zone this op has no member for")', () => {
-    // 1 + 1 legal printings, and OUT for a reason that is not a price: `preventAttack`
-    // locks ONE body (`state.players[seat].active`), and both of these lock a SIDE,
-    // including bodies that arrive later. That is a different mechanism, not a
-    // wider `target`, and mapping it here would be the wrong-but-plausible program
-    // this whole file is a repair of.
-    // (🆕🆕🆕 D549: the reasoning above STAYS TRUE of `preventAttack` — it is exactly why
-    // the build is a NEW op writing a SIDE record, `PlayerSide.sideAttackLock`, read by
-    // `attackLocked` — but *"a zone this op has no member for"* is WITHDRAWN as a refusal:
-    // the zone now HAS a member. Re-pointed from two `toBeNull`s to the two programs,
-    // not deleted (D438); `sideAttackLock.test.ts` drives them.)
+  it('D549 — both SIDE-WIDE spellings map to their OWN op, `lockSideAttacks`, and never to `preventAttack` (was: "refuses both SIDE-WIDE spellings — they name a zone this op has no member for")', () => {
     const side = deriveAttackEffect(
       "During your next turn, your Pokémon can't attack. (This includes new Pokémon that come into play.)",
     );
@@ -512,10 +357,6 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
   });
 
   it("leaves every neighbour in the family reading exactly what it read before", () => {
-    // The whole `can't attack` / `can't use attacks` neighbourhood, asserted as
-    // PROGRAMS rather than as nulls (D299/D382): each of these has its own arm, and
-    // a drift between any two of them is invisible on a board because they all
-    // write one field.
     expect(deriveAttackEffect(SELF_BARE)).toEqual([{ op: "preventAttack" }]);
     expect(
       deriveAttackEffect(
@@ -562,14 +403,7 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — the persisted question, asked and DRIVEN", () => {
-  it("🛑 MATCH_RECORD_VERSION stays 25 — nothing new can reach a saved record", () => {
-    // ⚠️ `MATCH_RECORD_VERSION` IS NOT AN EXPORTED CONSTANT (D406), so the claim is
-    // DRIVEN rather than asserted. Two things could put something new into a saved
-    // record: a PARKED op (it rides `GameState.phase.cont.pendingOp`) and a new
-    // stamped field. This slice adds neither — `preventAttack` has never parked,
-    // and it writes `InPlayPokemon.attackLockedTurn`, which D148 already reused
-    // unchanged from D143. Every op this slice produces is an inhabitant a v25
-    // record could already carry, and means there exactly what it means here.
+  it("MATCH_RECORD_VERSION stays 25 — nothing new can reach a saved record", () => {
     expect(ops(DEFENDER_BARE)).toEqual(ops(DEFENDER_PLURAL));
     const before = armed("fix-deflock", "fix-attacker");
     const { state } = mustApply(before, { type: "attack", seat: "p1", index: DEF_BARE_INDEX });

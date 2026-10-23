@@ -12,26 +12,8 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D632 — D1, DAMP: 2 TEXTS / 5 `me` PRINTINGS ──
-//
-// Psyduck `me02.5-039` / `-226` and Golduck `me02.5-040`: *"Pokémon in play (both yours and your opponent's) lose any
-// Ability that requires the Pokémon using it to Knock Out itself."* Psyduck `mep-007` and Golduck `mep-008`:
-// *"Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked
-// Out."* Two NEW objects (one per wording) on the NEW `disableAbilities.selfKnockOutAbility`; the mep wording is
-// read as the same class (R-DMP1 ⚠️ UNRULED). Every id and text off the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. Before this slice the ids appeared
-// only in D598's unkeyed pin. Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
-//
-// THE CLASS, MEASURED ON THE LOCAL D1 (every `abilities_json` effect naming a Knock Out, both corpora, 2026-10-10):
-// only three printed texts make their user Knock Itself Out — Cursed Blast at 5 (Dusclops `sv06.5-019` / `-069`,
-// `sv08.5-036`) and at 13 (Dusknoir `sv06.5-020` / `-070`, `sv08.5-037`) and Overvolt Discharge (Magneton `svp-153`
-// / `-159`, `sv08-059`): 9 printings, all legal, all built on `knockOutSelf`. Forretress ex "Exploding Energy"
-// (`sv02-005` / `-230`, `sv04.5-002` / `-212`) prints the class too, but none of its 4 printings is legal and it
-// is not built. `me` prints no member. Every other Knock Out wording answers a Knock Out (Fainting Spell, Final
-// Chain, Photon Cord, Fragile Husk, Shadowy Concealment, the "(even if this Pokémon is Knocked Out)" recoils, …)
-// or survives one (Tenacious Body, Sturdy, Resolute Heart): none is used by Knocking Out its user.
 
 const DAMP_ITSELF_TEXT =
   "Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.";
@@ -59,7 +41,7 @@ const DUSKNOIR = "sv06.5-020";
 const MAGNETON = "sv08-059";
 const FORRETRESS_EX = ["sv02-005", "sv02-230", "sv04.5-002", "sv04.5-212"] as const;
 
-const GENGAR_EX = "30th-090"; // "Fainting Spell" — an Ability that ANSWERS a Knock Out (R-DMP1's control)
+const GENGAR_EX = "30th-090";
 const FLUTTER = "sv05-078"; // "Midnight Fluttering" — a lock that reaches an opposing Active Psyduck
 const WALL = "d632-wall";
 const L = "d632-lightning";
@@ -185,7 +167,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "me02.5-039": 2,
   "me02.5-040": 2,
@@ -200,11 +181,6 @@ const DECK = deckOf({
   [WALL]: 20,
   [L]: 18,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p1 going first; returns p1's first turn, both hands back into the decks. */
 function opened(): GameState {
@@ -314,7 +290,7 @@ describe("D632 §2 — the class, measured over the registry", () => {
     expect(anywhere.sort()).toEqual([...SELF_KO_IDS].sort());
   });
 
-  it("🛑 the lock is by BODY, which is exact: each holder of the class prints that ONE Ability and nothing else", () => {
+  it("the lock is by BODY, which is exact: each holder of the class prints that ONE Ability and nothing else", () => {
     for (const id of SELF_KO_IDS) {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["abilities"]);
       expect(programFor(id)?.abilities, id).toHaveLength(1);
@@ -338,7 +314,6 @@ describe("D632 §2 — the class, measured over the registry", () => {
       expect(programFor(id), id).toBeDefined();
       expect(hasSelfKnockOutAbility(asCard(id)), id).toBe(false);
     }
-    // And no Damp printing is in its own class.
     for (const id of DAMP_IDS) expect(hasSelfKnockOutAbility(asCard(id)), id).toBe(false);
   });
 });

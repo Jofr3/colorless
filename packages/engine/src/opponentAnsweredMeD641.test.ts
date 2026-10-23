@@ -22,20 +22,8 @@ import {
   setPrizes,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D641 — W1 + Y1b: EFFECTS THE OPPONENT ANSWERS, AND DECK SWAP / REVEAL ──────────────────────────────────
-//
-// 4 printed texts / 7 printings, every id and text off the LOCAL D1, 2026-10-10, `legal_standard = 1`; before this
-// slice no program named any of them (Ditto's text was flipGatedOp.test.ts's unmapped near miss, Delibird's the
-// D615 / D616 / D624 drop, Bug Out and Lt. Surge's Bargain only backlog prose).
-//
-//   Ditto ×2 "Surprisingly Transform" — `coinFlipGate` over the NEW `switchWithDeckChosen` (R-DIT1).
-//   Sizzlipede "Bug Out"              — the NEW `revealDeckBottomCount` + the shipped `damageDefender` (R-BUG1).
-//   Delibird "Pleasing Present"       — two `attachFromHand { max: 3 }`, the opponent's first and answered by
-//                                       them (`whose`, R-PP1).
-//   Lt. Surge's Bargain ×3            — `optional { askOpponent }` over the NEW `eachPlayerTakesPrize`, or draw 4
-//                                       (R-LSB1).
 
 const TRANSFORM =
   "Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.";
@@ -46,7 +34,6 @@ const PRESENT =
 const BARGAIN =
   "Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards.";
 
-/** [attack text, the printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [TRANSFORM, ["mep-106", "30th-115"]],
   [BUG_OUT, ["me05-009"]],
@@ -186,11 +173,6 @@ const DECK = deckOf({
   [W]: 10,
   "fix-energy": 24,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks; six `fix-energy`
     Prizes each. */
@@ -388,11 +370,6 @@ describe("D641 §4 — Bug Out: 50 per Bug Out Pokémon in the bottom 7; Pokémo
   });
 });
 
-// 🆕 Card revision B45 (U0759) — the printed "Reveal the bottom 7 cards of your deck" was never shown: the
-// op emitted only the discard of the non-Pokémon and the shuffle, so the opponent could not check the
-// count (the Bug Out Pokémon that set the damage were never named). D241's rule — a look is announced
-// even when nothing moves — and Haughty Order's public `DECK_TOP_REVEALED { dest: "deck" }` row (D574),
-// with `from: "bottom"` (D557).
 describe("D641 §4b — Bug Out names every revealed card to both players (card revision B45)", () => {
   const line = (events: GameEvent[], state: GameState): string[] => {
     const ctx: LogContext = {

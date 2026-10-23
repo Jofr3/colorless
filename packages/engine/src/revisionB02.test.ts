@@ -15,19 +15,8 @@ import {
   setActiveFromDeck,
   setConditions,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B02 (Supporters) ──
-//
-// Two findings from the per-unit audit (docs/reference/card-revision.md "B02"), each driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect`,
-// byte for byte below):
-//   §1 Caretaker — "shuffle this Caretaker into your deck instead of discarding it": the end state
-//      was right, but the log announced a discard-pile retrieval ("shuffled 1 card from their
-//      discard pile into their deck"). The row now names the played Caretaker going into the deck.
-//   §2 Roxie's Performance — the opponent's Poisoned Pokémon can't retreat on their next turn: the
-//      lock held, but the refusal blamed "an attack effect". A Supporter's side lock now gets its
-//      own message (same RETREAT_PREVENTED code).
 
 const CARETAKER = ["sv06-144", "sv06-203"] as const;
 const CARETAKER_TEXT =
@@ -76,14 +65,6 @@ const DECK = deckOf({
   "fix-energy": 36, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P2 first, then P1's SECOND turn (turn 4). Hands and discard piles emptied into the deck, six `fix-energy`
-    made each prize row. P1's Active is a
-    Basic; P2's Active is a Basic (retreat 0) with one Filler on its Bench. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 2020, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -142,7 +123,6 @@ describe("B02 §1 — Caretaker: the log names the played Caretaker going into t
       const log = rows(events, state);
       expect(log).toContain("shuffled Caretaker into their deck instead of discarding it");
       expect(log.some((r) => r.includes("from their discard pile"))).toBe(false);
-      // The trailing SHUFFLE row still follows the move.
       expect(events.map((e) => e.type).slice(-2)).toEqual(["DISCARD_RETRIEVED", "SHUFFLE"]);
     });
   }

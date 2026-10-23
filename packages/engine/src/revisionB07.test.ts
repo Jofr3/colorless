@@ -16,18 +16,8 @@ import {
   setDamage,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B07 (Tools + Special Energy) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B07"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect` /
-// `attacks_json`, byte for byte below):
-//   §1 Heavy Baton `sv05-151` — "… and is Knocked Out by damage from an attack from your opponent's
-//      Pokémon …": a damage-free "that Pokémon is Knocked Out" (Mega Absol ex `me01-086` "Terminal
-//      Period", a `knockOutDefender` doom) offered the move. flow.ts `runKoToolTrigger` now refuses a
-//      `knockOutDefender` doom (`lethalByEffect`) for EVERY entry of the KO-moment scan, not only the
-//      Ability arm (Miraidon "Photon Cord", R-PHC1) — the reading Amulet of Hope already had (R-AH).
 
 const BATON_TEXT =
   "If the Pokémon this card is attached to has a Retreat Cost of exactly 4, is in the Active Spot, and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 3 Basic Energy cards from that Pokémon to your Benched Pokémon in any way you like.";
@@ -95,13 +85,6 @@ const DECK = deckOf({
   "fix-energy": 20, // 60 cards
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P1 first, then P1's SECOND turn (turn 3). Hands, prizes and discards back into the
-    deck; six `fix-energy` make each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 707, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -171,7 +154,7 @@ describe('B07 §1 — Heavy Baton: "… and is Knocked Out by damage from an att
     expect(programFor(BATON)?.triggered?.[0]?.trigger).toBe("onHolderActiveKnockedOut");
   });
 
-  it('🛑 Terminal Period\'s damage-free "that Pokémon is Knocked Out" offers NO move: the Onix goes down with its three Energy', () => {
+  it('Terminal Period\'s damage-free "that Pokémon is Knocked Out" offers NO move: the Onix goes down with its three Energy', () => {
     const state = board(60);
     const energy = state.players.p2.active?.energy ?? [];
     expect(energy).toHaveLength(3);
@@ -185,7 +168,7 @@ describe('B07 §1 — Heavy Baton: "… and is Knocked Out by damage from an att
     expect(after.players.p2.bench.flatMap((p) => p.energy)).toEqual([]);
   });
 
-  it("🛑 the control: Claw of Darkness's 200 damage Knocks the same Onix Out BY DAMAGE, and the Baton's move parks for P2", () => {
+  it("the control: Claw of Darkness's 200 damage Knocks the same Onix Out BY DAMAGE, and the Baton's move parks for P2", () => {
     const state = board(60);
     const energy = state.players.p2.active?.energy ?? [];
     const { state: after } = mustApply(state, clawOfDarkness);

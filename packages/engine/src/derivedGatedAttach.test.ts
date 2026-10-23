@@ -18,58 +18,6 @@ import {
   setDamage,
 } from "./testFixtures";
 
-// 0.161.0 → 0.162.0 — D246, THE GATED ATTACH AND THE BARE NOUN: the last two
-// single printings on the D233 backlog page's attach rows, plus a THIRD the page
-// never named.
-//
-// ✅ THE COUNT RE-DERIVES TO THE DIGIT FOR THE THIRTEENTH ROW RUNNING — and it
-// re-derives to **3**, where the two backlog cells this slice was handed said
-// **2**. Remote D1 `colorless`, `legal_standard = 1`, `json_each` over
-// `attacks_json`/`abilities_json` PLUS the bare `effect` column, GLOB (never
-// LIKE), GROUPED BY SENTENCE, on 2026-08-06:
-//
-//   WHERE t GLOB '*If you do, attach*'   -- attack 1/1 legal · effect 3/1 rotated
-//   WHERE t GLOB '*ttach an Energy card*'
-//     -- attack: sv06-136 (hand, 1 legal) · sv08-110 (DISCARD, 1 legal)
-//     --         sv03-166 (hand, 1 rotated)
-//
-// 🆕 **THE THIRD PRINTING IS THE FINDING, AND IT COST NOTHING.** Landorus
-// `sv08-110` "Fist of Focus" prints the bare noun one ZONE over, and no cell on
-// the backlog page mentions it: the row-12 cell named `sv06-136` and the row-9
-// cell had the sentence sitting in its own `UNREAD` table with the right reason
-// beside it, and nothing connected the two. **WIDENING THE ROW'S QUERY FROM ITS
-// IDS TO THE PRINTED NOUN** is what joined them — the third slice in four where
-// that move found a printing the row did not have.
-//
-// 🆕 **A WIDENED NOUN TRANSFERS ACROSS EVERY ZONE THE FACTORY SERVES**, which is
-// the exact converse of D236's finding. That slice mirrored a family's SOURCE
-// ZONE and found the ratio did NOT transfer with the anchor (12 of 17 became 9 of
-// 16, because the two zones print different grammar). This one widens the NOUN
-// instead, and the widening lands on both zones by construction, because the noun
-// is in the shared clause and the zone is the argument. **Mirror the argument and
-// you get one family; widen the shared part and you get all of them.**
-//
-// ✅ AND BOTH `needs` CELLS WERE RIGHT, WHICH HAS NOT HAPPENED ON THIS PAGE
-// BEFORE. `sv06-136` was priced "one `anyEnergy` rider away" and it is exactly
-// that; `sv08-068` was priced "EVERY OP IT NEEDS EXISTS" — a sentence that has
-// been printed five times on that page and been wrong four times — and this time
-// it survives being checked FIELD BY FIELD rather than by name.
-//
-// ⚠️ WHAT THIS FILE IS FOR, AND IT IS NOT "did an Energy attach".
-// `attachEnergyFrom.test.ts` owns the op; `derivedHandAttach.test.ts` and
-// `derivedDiscardAttach.test.ts` own the two bare anchors and the arithmetic.
-// What is NEW here is three claims that are all about WHICH BODY and WHEN:
-//   1. the §9.2 GATE — the clause NEITHER cell priced. An attacker with an empty
-//      Bench cannot switch, so nothing attaches. A build that emitted the two ops
-//      without the gate accelerates on a board where the printed card does
-//      nothing, and passes every "two Energy attached" assertion in the repo;
-//   2. `toSelf` AFTER a self-switch — "this Pokémon" is the ATTACKER, which by
-//      the time the attach runs is on the BENCH. Every prior `toSelf` printing
-//      feeds a body that has not moved, so this is the first board on which
-//      `sourceRef`'s "wherever it sits" is observable rather than merely true;
-//   3. the printed BARE NOUN — a SPECIAL Energy is in reach, and it is the only
-//      thing that tells `anyEnergy` from the absent field.
-
 // ── The printed sentences, verbatim off the remote D1 ────────────────────────
 
 /** Kilowattrel ex `sv08-068` "Return Charge" ({L}, index 0, no printed damage). */
@@ -100,7 +48,6 @@ const PROGRAMS: Record<string, EffectOp[]> = {
   [FIST_OF_FOCUS]: [{ op: "attachEnergyFrom", source: "discard", anyEnergy: true, toSelf: true }],
 };
 
-// ── The board. Indices 58-60 on `fix-trainerops`, appended by D246. ──
 const RETURN_CHARGE_IDX = 58;
 const BUT_FIRST_FOOD_IDX = 59;
 const FIST_OF_FOCUS_IDX = 60;
@@ -114,13 +61,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** p1 attacks with `fix-trainerops`, holding one {C} for the cost, over a Bench
-    built to order, a HAND stocked line by line and (optionally) a stocked DISCARD
-    pile. p2 is a plain body so nothing across the table is reachable by accident.
-
-    ⚠️ THE BENCH DEFAULTS TO **TWO**, which is the whole reason this deck exists:
-    `switchActive` only PARKS at two or more candidates, and the park is where the
-    §9.2 describer clause lives. */
 function ready(
   seed: number,
   {
@@ -172,14 +112,6 @@ function promptOf(state: GameState): { note: string; candidates: readonly Pokemo
 
 const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
 
-/** 🆕🆕 D359 — **RETURN CHARGE NOW PARKS TWICE, AND THE SECOND PARK IS THE
-    SLICE.** The program is `switchActive` (a mandatory `choosePokemon` over the
-    Bench) then a `recordGate` whose `then` is the `toSelf` attach — and that
-    attach prints *"attach **up to 2** Basic {L} … to this Pokémon"*, which is
-    three answers over one body, so `parkOrForce` no longer forces it. Answers the
-    attach park with `take` (absent = the whole printed batch) and folds both event
-    batches together, so every assertion below still reads one list. A board where
-    the gate holds nothing back never parks a second time and comes back as it is. */
 function takeAttach(
   from: { state: GameState; events: GameEvent[] },
   take?: number,
@@ -220,17 +152,7 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
     }
   });
 
-  it("⚠️ ONE new arm for three printings, and the other two came off a WIDENED clause", () => {
-    // 🛑 THE EDIT ESTIMATE, GRADED. The resume point predicted "ONE new deriver
-    // arm at most", and that held — but it predicted the arm would be for
-    // `sv06-136`, and it is not: the bare noun is a widening of the SHARED clause
-    // that both zone anchors already call, so it costs no arm at all, and the one
-    // new arm is the GATED sentence's. **Right number, wrong sentence.**
-    //
-    // The property, driven rather than asserted in prose: strip the leading clause
-    // off Return Charge and the remainder is a sentence the HAND anchor already
-    // read before this slice, which is what makes "the gated arm is a wrapper"
-    // checkable.
+  it("ONE new arm for three printings, and the other two came off a WIDENED clause", () => {
     const consequent = "Attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.";
     expect(RETURN_CHARGE).toContain(
       `If you do, ${consequent[0]?.toLowerCase()}${consequent.slice(1)}`,
@@ -250,11 +172,7 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
     });
   });
 
-  it("🛑 the LEADING clause is anchored, so neither half is readable alone", () => {
-    // The `^…$` convention, on the one sentence in this family that has TWO
-    // clauses. A build anchored only at `^` reads the switch and drops the attach;
-    // one anchored only at `$` reads the attach and drops the switch. Both are
-    // silent, and both are refused.
+  it("the LEADING clause is anchored, so neither half is readable alone", () => {
     expect(deriveAttackEffect(`${RETURN_CHARGE} Draw a card.`)).toBeNull();
     expect(deriveAttackEffect(`Draw a card. ${RETURN_CHARGE}`)).toBeNull();
     // …and the bare antecedent still derives to its own one-op program, so the
@@ -263,21 +181,13 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
       { op: "switchActive" },
     ]);
     expect(deriveAttackEffect(RETURN_CHARGE)).not.toEqual([{ op: "switchActive" }]);
-    // 🛑 AND THE CASE OF THE CONSEQUENT'S VERB IS LOAD-BEARING. The printed
-    // "If you do, **a**ttach" is lowercase; the two bare anchors print a capital.
-    // A `[Aa]` class in the shared clause would let a sentence that merely begins
-    // mid-clause derive as a whole-string match.
     expect(
       deriveAttackEffect(RETURN_CHARGE.replace("If you do, attach", "If you do, Attach")),
     ).toBeNull();
     expect(deriveAttackEffect("attach an Energy card from your hand to this Pokémon.")).toBeNull();
   });
 
-  it("🛑 the BARE noun and the BASIC noun are two different narrowings, both ways", () => {
-    // ⚠️ THE PAIR THAT MAKES `anyEnergy` FALSIFIABLE AT THE TEXT LEVEL. One word
-    // apart in print, one field apart in the program — and the article moves with
-    // the noun, which is why this is a third alternative rather than an optional
-    // "Basic ".
+  it("the BARE noun and the BASIC noun are two different narrowings, both ways", () => {
     expect(
       deriveAttackEffect("Attach a Basic Energy card from your hand to this Pokémon."),
     ).toEqual([{ op: "attachEnergyFrom", source: "hand", toSelf: true }]);
@@ -289,9 +199,6 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
       deriveAttackEffect("Attach an Basic Energy card from your hand to this Pokémon."),
     ).toBeNull();
     expect(deriveAttackEffect("Attach a Energy card from your hand to this Pokémon.")).toBeNull();
-    // 🛑 AND THE BARE NOUN NEVER CARRIES A TYPE, which is a fact about the catalog
-    // rather than about the regex: no printing spells "an {L} Energy card", so the
-    // two fields never co-occur and are left independently readable.
     expect(
       deriveAttackEffect("Attach an {L} Energy card from your hand to this Pokémon."),
     ).toBeNull();
@@ -309,7 +216,7 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
 // 2. THE GATE — the clause NEITHER backlog cell priced
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () => {
+describe("Return Charge — the §9.2 gate, and the body that MOVED", () => {
   it("parks the switch, and the park says what answering it BUYS", () => {
     const state = ready(3, { hand: { "fix-lightning-energy": 2 } });
     deepFreeze(state);
@@ -322,25 +229,11 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
     // the board this whole describer half needs and the reason the deck is not
     // shared with a sibling suite.
     expect(promptOf(parked).candidates).toHaveLength(2);
-    // ⚠️ THE NEW `describeBranch` ARM, DRIVEN. `withConsequence` reads the gate out
-    // of the queue and appends the clause; without the arm the dialog announces the
-    // switch and stays silent about the Energy, which is the entire reason to use
-    // the attack. 🛑 THE STANDING LESSON APPLIED: an arm nobody parks into is an
-    // undrivable line — this one is reached by a real printing on a real board.
     expect(promptOf(parked).note).toContain("If you do");
     expect(promptOf(parked).note).toContain("attach up to 2 Energy to this Pokémon");
   });
 
-  it("🛑 the two Energy land on the ATTACKER — which is now on the BENCH", () => {
-    // ⚠️⚠️ THE ASSERTION THIS SLICE EXISTS FOR. The printed "this Pokémon" is the
-    // attacker, and by the time the attach runs the attacker has SWITCHED ITSELF
-    // OFF THE ACTIVE SPOT. `toSelf` reads `sourceRef`, which finds the body by uid
-    // wherever it sits — every prior `toSelf` printing feeds a body that has not
-    // moved, so this is the first board on which that is observable.
-    //
-    // A build that resolved "this Pokémon" as "the Active Spot" attaches two
-    // Energy, emits two ENERGY_ATTACHED rows, empties the same hand and is wrong
-    // about WHICH Pokémon got them.
+  it("the two Energy land on the ATTACKER — which is now on the BENCH", () => {
     const state = ready(3, { hand: { "fix-lightning-energy": 2 } });
     const attackerUid = state.players.p1.active?.stack[0];
     deepFreeze(state);
@@ -365,15 +258,7 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(2);
   });
 
-  it("🛑 an EMPTY Bench switches nothing, so the gate holds NOTHING BACK — and attaches none", () => {
-    // ⚠️ THE PAIR THAT MAKES THE GATE LOAD-BEARING, and the clause neither `needs`
-    // cell priced. Same attack, same hand, same two {L}: a Bench of ZERO means
-    // `switchActive` finds no candidate, `parkOrForce` takes its silent
-    // zero-candidate ending, NOTHING is filed under "moved", `recordGateHolds`
-    // reads the empty slot as false, and the attach never runs.
-    //
-    // A build that emitted the two ops WITHOUT the gate attaches two Energy here
-    // and passes every assertion in the case above.
+  it("an EMPTY Bench switches nothing, so the gate holds NOTHING BACK — and attaches none", () => {
     const state = ready(3, { bench: [], hand: { "fix-lightning-energy": 2 } });
     const handBefore = state.players.p1.hand.length;
     deepFreeze(state);
@@ -421,8 +306,6 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
   });
 
   it("'up to 2' with ONE {L} in hand attaches ONE, silently", () => {
-    // D205's rule on the op, reached from a gated program for the first time:
-    // fewer than `count` is normal, not a failure — the print says UP TO.
     const state = ready(7, { hand: { "fix-lightning-energy": 1 } });
     deepFreeze(state);
     const { state: parked } = mustApply(state, {
@@ -434,7 +317,7 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
   });
 
-  it("🆕🛑 D359 — the printed MIDDLE answer behind the §9.2 gate: ONE of two", () => {
+  it("D359 — the printed MIDDLE answer behind the §9.2 gate: ONE of two", () => {
     // The quantity axis at its hardest reachable site: the attach is not the
     // program's first op, it is the `then` of a `recordGate`, and it targets the
     // body the FIRST park moved. Two {L} in hand, the controller takes ONE.
@@ -463,13 +346,8 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
 // 3. THE BARE NOUN — the one thing `anyEnergy` is for
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("🛑 the printed bare noun reaches a SPECIAL Energy, in both zones", () => {
+describe("the printed bare noun reaches a SPECIAL Energy, in both zones", () => {
   it("But First, Food attaches a SPECIAL Energy out of the hand", () => {
-    // ⚠️ THE ONLY OBSERVABLE `anyEnergy` HAS. `attachableEnergies` filtered on
-    // `card.energyType === "Normal"` — a Basic Energy — so before this slice the
-    // op could not see a Special at all, in any zone, on any board. The hand here
-    // holds ONE card and it is the Special, so a build with the field dropped
-    // attaches nothing and the difference is the whole event count.
     const state = ready(11, { hand: { "fix-special": 1 } });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -477,9 +355,6 @@ describe("🛑 the printed bare noun reaches a SPECIAL Energy, in both zones", (
       seat: "p1",
       index: BUT_FIRST_FOOD_IDX,
     });
-    // ⚠️ A `toSelf` attach offers at most one target, so `parkOrForce` FORCES and
-    // this never parks — which is also the discriminator against a build that lost
-    // `toSelf` and started asking a question the card does not.
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
     expect(energyIdsOn(done, { seat: "p1", spot: { spot: "active" } })).toEqual([
@@ -489,9 +364,6 @@ describe("🛑 the printed bare noun reaches a SPECIAL Energy, in both zones", (
   });
 
   it("Fist of Focus attaches one out of the DISCARD PILE — the zone nobody sent this slice to", () => {
-    // The printing NO backlog cell names, reached by the SAME field with no arm of
-    // its own. Its 30 printed damage rides along, which is what says the reader
-    // took the whole card rather than just its effect string.
     const state = ready(13, { discard: { "fix-special": 1 } });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -509,11 +381,6 @@ describe("🛑 the printed bare noun reaches a SPECIAL Energy, in both zones", (
   });
 
   it("…and the BASIC-noun sibling on the same board attaches NOTHING", () => {
-    // 🛑 THE CONTROL THAT MAKES THE FIELD FALSIFIABLE RATHER THAN DECORATIVE. Same
-    // hand, one Special and nothing else; the program is the bare-noun one with
-    // `anyEnergy` removed, i.e. exactly what the sibling sentence "Attach a Basic
-    // Energy card from your hand to this Pokémon." derives to. It cannot see the
-    // card. Driven through `programPlayable`, where the same helper answers.
     const state = ready(11, { hand: { "fix-special": 1 } });
     const bare: EffectOp[] = [
       { op: "attachEnergyFrom", source: "hand", anyEnergy: true, toSelf: true },
@@ -528,11 +395,7 @@ describe("🛑 the printed bare noun reaches a SPECIAL Energy, in both zones", (
     expect(programPlayable(withBasic, basicOnly, "p1")).toBe(true);
   });
 
-  it("⚠️ the widened noun is a LIFT, not a swap — a Basic is still in reach", () => {
-    // The third direction, and the one a "Special only" build would fail: the
-    // printed "an Energy card" means the whole category, so a hand holding only
-    // Basics still attaches. `specialEnergy` is the filter that would mean the
-    // other thing, and it lives one vocabulary over.
+  it("the widened noun is a LIFT, not a swap — a Basic is still in reach", () => {
     const state = ready(11, { hand: { "fix-energy": 1 } });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -578,11 +441,7 @@ describe("the heal tail's NUMBER — printed 60, clamped by the board", () => {
     expect(done.players.p1.active?.damage).toBe(0);
   });
 
-  it("🛑 an EMPTY hand attaches nothing, so the printed 'If you do' heals NOTHING", () => {
-    // ⚠️ THE SECOND GATE IN THIS SLICE, and it is the op's early returns rather
-    // than a `recordGate` — see `attachEnergyFrom`'s doc. Same damage, same
-    // attack, no Energy: a build that healed unconditionally passes the two cases
-    // above and gives the card a free 60 on every whiff.
+  it("an EMPTY hand attaches nothing, so the printed 'If you do' heals NOTHING", () => {
     const state = ready(11, { damage: 100 });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -596,10 +455,6 @@ describe("the heal tail's NUMBER — printed 60, clamped by the board", () => {
   });
 
   it("the tail is on ONE zone, measured — the discard printing carries none", () => {
-    // Fist of Focus is the same noun and the same destination one zone over, and
-    // it prints NO tail. The whole `*If you do, heal*` family is two sentences and
-    // both are hand-source (remote D1, all three text columns, 2026-08-06), which
-    // is why the discard anchor's `tail` argument is still the empty string.
     const state = ready(13, { discard: { "fix-special": 1 }, damage: 100 });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
@@ -613,37 +468,11 @@ describe("the heal tail's NUMBER — printed 60, clamped by the board", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. PROVENANCE — the printings, present and pinned
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("PROVENANCE — the demonstrator carries the three sentences at 58-60", () => {
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields them at 58-60, appended and not inserted", () => {
-    // 61 at D246, which appended 58-60; 58 at D241 (55-57); 48 at D236 (43-47); 43
-    // at D235 (35-42); 35 at D234 (29-34); 29 at D232 (25-28); 25 at D231, 20 at
-    // D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181. ELEVEN
-    // slices, eleven appends, zero inserts — which is what every index constant in
-    // eleven suites depends on.
-    // 🆕🆕 **63 AT D426**, which appended **61-62** — the opponent-chooses hand
-    // discard (*"Your opponent discards 2 cards from their hand."* / *"…a card…"*).
-    // `opponentHandDiscard.test.ts` owns them, and the append-never-insert
-    // discipline this whole paragraph exists for holds again: 0-60 are addressed by
-    // constant in a dozen sibling suites and every one of them still means what it
-    // meant. ⚠️ NO ORDINAL IS CLAIMED (*"the Nth slice"*) — the running count above
-    // was last written at D241 and was already one append behind by D246, which is
-    // exactly how a count in a comment rots. The LENGTH is the executable half and
-    // it is the line below.
-    // 🆕🆕 **68 AT D443**, which appended **66-67** — the OPPONENT-BOARD pair
-    // (`derivedOpponentEnergyMove.test.ts` owns them). TWELVE sibling suites carry
-    // this pin and all twelve were stepped in one pass, as D442 stepped eleven.
-    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
-    // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
-    // same length pin and ALL of them were stepped in one pass (D431): a green run
-    // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
-    // (🆕🆕🆕 D569 (D539): "DATA-BLOCKED rather than merely unbuilt" is WITHDRAWN — the real printings (Miraidon `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written REGISTRY attack over `banners.ts`; the DERIVERS still refuse the sentence, so index 71 stays an unread control and this pin is unchanged)
+    expect(attacks()).toHaveLength(73);
     expect(attacks()[RETURN_CHARGE_IDX]?.effect).toBe(RETURN_CHARGE);
     expect(attacks()[BUT_FIRST_FOOD_IDX]?.effect).toBe(BUT_FIRST_FOOD);
     expect(attacks()[FIST_OF_FOCUS_IDX]?.effect).toBe(FIST_OF_FOCUS);
@@ -656,21 +485,13 @@ describe("PROVENANCE — the demonstrator carries the three sentences at 58-60",
     );
   });
 
-  it("⚠️ the printed DAMAGE is the catalog's — 30 on one of the three and none on two", () => {
-    // Off the remote D1 rather than invented (D227's corrected fixture is the
-    // precedent). It matters here because "Fist of Focus" is the only printing in
-    // this slice whose attack does anything at all on an empty zone.
+  it("the printed DAMAGE is the catalog's — 30 on one of the three and none on two", () => {
     expect(attacks()[RETURN_CHARGE_IDX]?.damage).toBeUndefined();
     expect(attacks()[BUT_FIRST_FOOD_IDX]?.damage).toBeUndefined();
     expect(attacks()[FIST_OF_FOCUS_IDX]?.damage).toBe(30);
   });
 
-  it("⚠️ the FIXTURE is a Basic where two of the prints are not, and nothing depends on it", () => {
-    // The standing rule: say which claim is the FIXTURE's shape and which is the
-    // PRINT's. Kilowattrel ex `sv08-068` is a STAGE 1 and Landorus `sv08-110` a
-    // Basic; this demonstrator is a Basic for all three. No assertion in this file
-    // reads the attacker's stage — `toSelf` asks for a UID and the switch offers
-    // the controller's whole Bench, neither of which is stage-sensitive.
+  it("the FIXTURE is a Basic where two of the prints are not, and nothing depends on it", () => {
     expect(FIXTURE_POOL["fix-trainerops"]?.stage).toBe("Basic");
     for (const program of Object.values(PROGRAMS)) {
       for (const op of program) {

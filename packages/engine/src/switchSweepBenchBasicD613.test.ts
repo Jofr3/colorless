@@ -18,19 +18,8 @@ import {
   handUid,
   setActiveFromDeck,
   toDeckTop,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D613 — TWO CORRECTNESS FIXES ─────────────────────────────────────────────────────────
-//
-// §1–§2: D610's open review finding. Jet Energy `sv02-190` (*"When you attach this card from your hand
-// to 1 of your Benched Pokémon, switch that Pokémon with your Active Pokémon."*) runs `switchInto`
-// from turn.ts `attachEnergy`, outside any program, so no `settleProgram` sweep follows it. Team
-// Rocket's Dugtrio "Holes" counters placed by that switch were never Knock-Out-checked. The other
-// `switchInto` routes are programs (`settleProgram` / `finishAttack` sweep) and `retreat` sweeps itself.
-//
-// §3–§7: R-BC1 / D238. An effect that puts a Pokémon "onto your Bench" admits Basic Pokémon only,
-// unless the printed noun names its card (Ninjask's "a Shedinja", Charjabug's "up to 3 Charjabug").
-// Texts measured on the LOCAL D1 2026-10-09.
 
 const HOLES =
   "Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon.";
@@ -44,7 +33,7 @@ const CINNABAR_LURE =
 const PARALLEL_PLACEMENT =
   "Search your deck for up to 3 Charjabug and put them onto your Bench. Then, shuffle your deck."; // Charjabug `sv07-052`
 
-const DUGTRIO = "me02.5-101"; // Team Rocket's Dugtrio "Holes" (D610)
+const DUGTRIO = "me02.5-101";
 const JET = "sv02-190";
 const FREE = "fix-basic-0"; // 60 HP, retreat 0
 const BASIC = "fix-basic-1";
@@ -120,12 +109,6 @@ const DECK = deckOf({
   [BASIC]: 20,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Both hands back into the decks and every Prize swapped for deck filler (D610's `reset`). */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {
@@ -144,7 +127,6 @@ function reset(state: GameState): GameState {
   return next;
 }
 
-/** Setup with p2 first; then the clock walks to `seat`'s turn ≥ 3 (D610's `turnOf`). */
 function turnOf(seat: Seat, seed = 6131): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -208,7 +190,7 @@ const attachJet = (state: GameState) =>
   });
 
 describe("D613 §1 — a Jet Energy switch runs the mid-turn Knock Out check (D610's review finding)", () => {
-  it("🛑 the reviewer's repro: 40 damage + Holes' 20 on a 60-HP body that Jet moved is a Knock Out for p1's Prize", () => {
+  it("the reviewer's repro: 40 damage + Holes' 20 on a 60-HP body that Jet moved is a Knock Out for p1's Prize", () => {
     const before = jetBoard(40, [DUGTRIO]);
     const moved = top(before.players.p2.active);
     const after = must(attachJet(before));
@@ -373,14 +355,12 @@ describe("D613 §6 — the opponent's hand onto their Bench: Basic only", () => 
 
 describe("D613 §7 — the predicate, and the version", () => {
   const card = (id: string) => POOL[id] as Card;
-  it("`benchMatches`: a matching Basic yes, a matching Stage 1 no unless named, a non-match no, a matching non-Pokémon is the filter's business (🆕🆕🆕 D635 (D539): a Trainer only with an in-play face)", () => {
+  it("`benchMatches`: a matching Basic yes, a matching Stage 1 no unless named, a non-match no, a matching non-Pokémon is the filter's business ( D635 (D539): a Trainer only with an in-play face)", () => {
     const water: CardFilter = { kind: "typedPokemon", pokemonType: "Water" };
     expect(benchMatches(card(W_BASIC), water)).toBe(true);
     expect(benchMatches(card(W_STAGE1), water)).toBe(false);
     expect(benchMatches(card(N_BASIC), water)).toBe(false);
     expect(benchMatches(card(CHARJABUG), { kind: "byName", name: "Charjabug" })).toBe(true);
-    // 🆕🆕🆕 D635 (D539): ~~true~~ — a Trainer goes onto the Bench only with an in-play Pokémon face
-    // (`FOSSIL_IDS`, Fossil Quarry); this Item has none. An Energy is still the filter's business.
     expect(benchMatches(card(TRAINER), { kind: "item" })).toBe(false);
     expect(benchMatches(card("fix-energy"), { kind: "anyEnergy" })).toBe(true);
     expect(benchMatches(undefined, { kind: "anyCard" })).toBe(false);

@@ -18,16 +18,8 @@ import {
   setBenchDamage,
   setDamage,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D587 — WP04: TRAINER PARAMETERS I ──
-//
-// 19 `me` Trainer printings / 9 printed texts, each a built program's op at the printed parameter
-// (a type, an amount, a count, a filter). Measured on the LOCAL D1 (`apps/api/.wrangler/…/
-// 8437d866….sqlite`), 2026-10-07, `legal_standard = 1` on every row. No `me` row is a fixture, so
-// the printed bytes are carried HERE and the face rung rebuilds each `me` text from its twin's
-// through the stated edits. Driven on the real ids in a LOCAL `cardPool` (D275), so no `fix-*`
-// key is owed.
 
 /** [me ids, twin id, card name, me text, twin text, edits]. Each edit is [twin phrase, me
     phrase]; applied in order, they turn the twin's text into the `me` text. */
@@ -300,7 +292,6 @@ const mon = (id: string, name: string, type: string, extra: Partial<Card> = {}):
     ...extra,
   });
 
-/** The LOCAL pool (D275's idiom): the real Trainer ids, printed names and texts. */
 const LOCAL: Record<string, Card> = {
   [PATCH]: trainer(PATCH, "Wondrous Patch", "Item"),
   [PHILIPPE]: trainer(PHILIPPE, "Philippe", "Supporter"),
@@ -366,13 +357,8 @@ const DECK = deckOf({
   "fix-fighting-energy": 4,
   "fix-fire-energy": 8,
   "fix-water-energy": 3,
-  "fix-energy": 6, // the prize row (p1Turn), so every card the boards pull stays in the deck
+  "fix-energy": 6,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own turn (P2 went first and passed). The surgery never depends on the deal. */
 function p1Turn(): GameState {
@@ -399,8 +385,6 @@ function p1Turn(): GameState {
   for (const s of ["p1", "p2"] as const)
     state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
-  // Both hands back into the deck, and the prize row re-dealt from the six `fix-energy` cards, so
-  // no card a board pulls can be sitting in the hand or the prizes.
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
     const pile = [...side.deck, ...side.hand, ...side.prizes];
@@ -570,7 +554,6 @@ describe("D587 §6 — Firebreather: up to 7 Basic {R} Energy from the deck to t
     const { state: done, events } = mustApply(parked, cards(take));
     for (const uid of take) expect(done.players.p1.hand).toContain(uid);
     expect(events.some((e) => e.type === "SHUFFLE")).toBe(true);
-    // The printed "reveal them": the search event carries the reveal flag (D225).
     expect(all(events, "DECK_SEARCHED")).toMatchObject([
       { seat: "p1", dest: "hand", reveal: true },
     ]);

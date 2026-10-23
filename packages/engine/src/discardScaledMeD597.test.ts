@@ -23,25 +23,8 @@ import {
   setActiveFromDeck,
   specialEnergy,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D597 — WP29: THE DISCARD-SCALED ATTACKS ──
-//
-// 8 printed attack texts / 18 `me` printings, every id and text measured on the LOCAL D1,
-// 2026-10-08, `legal_standard = 1`; no id was referenced in the tree before this slice except
-// Mega Diancie ex's three (registry-keyed on `COPPERAJAH_EX` for its Ability; its attack derives)
-// and `me02-013` (megaEvolutionRuleD582.test.ts's Mega Charizard X ex). No `me` row is a fixture,
-// so the printed faces used on a board are carried HERE.
-//   • effects.ts `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d): Inferno X ×4 (Mega Charizard X ex `me02`),
-//     Garland Ray ×3 (Mega Diancie ex), Steel Cutter (Skarmory `me05-060`), Double Eater (Mawile
-//     `me03-032`).
-//   • `milledCardFilter`'s typed Basic noun: Hammer-lanche ×2 (Mega Abomasnow ex), Iceberg Breaker
-//     (Avalugg `me04-024`).
-//   • `deriveAttackDiscardScaledBoost`'s `handDiscard` member: Shooting Moons ×4 (Mega Clefable ex;
-//     "Luminous Wing" stays unbuilt).
-//   • registry.ts `INFERNO_X`: the two `mep` Inferno X, whose text prints tcgdex's "[R]".
-//     [🆕🆕🆕 D612: RETIRED — WP06's normaliser reads "[R]" as {R} (at ingest and in cards.ts
-//     `cardOfUid`), so both printings play the comma arm off their text (R-IX1 resolved).]
 
 const T = {
   infernoX:
@@ -68,7 +51,6 @@ const DIANCIE = ["me02-041", "me02.5-267", "me02.5-282"];
 const ABOMASNOW = ["me01-036", "me01-157"];
 const CLEFABLE = ["mep-072", "me03-031", "me03-103", "me03-119"];
 
-/** [text, legal `me` printings, the ids] — the seven reader-built rows. */
 const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
   [T.infernoX, 4, CHARIZARD_ME02],
   [T.garlandRay, 3, DIANCIE],
@@ -95,7 +77,6 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, n, ids] of ROWS) {
-      // 🆕🆕🆕 D612 — Inferno X's row is 6: the two `mep` "[R]" printings normalise into it (WP06).
       expect([text, me.get(text)]).toEqual([
         text,
         text === T.infernoX ? n + CHARIZARD_MEP.length : n,
@@ -105,8 +86,7 @@ describe("D597 §1 — the eight sentences and their readings", () => {
       expect(ids).toHaveLength(n);
     }
     expect(ROWS.reduce((sum, [, n]) => sum + n, 0)).toBe(16);
-    for (const id of CHARIZARD_MEP) expect(programFor(id)?.attack, id).toBeUndefined(); // 🆕🆕🆕 D612
-    // Only Mega Diancie ex is registry-keyed (its Ability, `COPPERAJAH_EX`), and with no attack entry.
+    for (const id of CHARIZARD_MEP) expect(programFor(id)?.attack, id).toBeUndefined();
     for (const [, , ids] of ROWS) {
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
@@ -117,10 +97,8 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     expect(deriveAttackEffect(T.infernoX)).toEqual(INFERNO_PROGRAM);
   });
 
-  it('~~the "[R]" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X`~~ (🆕🆕🆕 D612: the raw text is still unread, but it normalises to the `{R}` sentence and the key is retired)', () => {
+  it('~~the "[R]" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X`~~ ( D612: the raw text is still unread, but it normalises to the `{R}` sentence and the key is retired)', () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
-    // 🆕🆕🆕 D612 (D539): the corpus no longer prints "[R]" (WP06's re-ingest); the raw text a persisted
-    // face may still carry is unread by the readers, and the normaliser turns it into the `{R}` sentence.
     expect(me.get(T.infernoXBracket)).toBeUndefined();
     expect(resolvedByAnyReader(T.infernoXBracket)).toBe(false);
     expect(normalizeCardText(T.infernoXBracket)).toBe(T.infernoX);
@@ -360,12 +338,6 @@ const DECK = deckOf({
   "fix-energy": 2,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4 with both hands and Prizes back in the decks (D596's idiom). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 5971, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -532,7 +504,7 @@ describe("D597 §3 — Inferno X: {R} Energy from the whole own board", () => {
     expect(of(events, "ENERGY_DISCARDED")).toHaveLength(0);
   });
 
-  it('the keyed "[R]" printing `mep-023` plays the same program (🆕🆕🆕 D612: unkeyed — its raw face, as a persisted pre-D612 pool holds it, is read through `cardOfUid`\'s normaliser)', () => {
+  it('the keyed "[R]" printing `mep-023` plays the same program ( D612: unkeyed — its raw face, as a persisted pre-D612 pool holds it, is read through `cardOfUid`\'s normaliser)', () => {
     const parked = swing(board(CHARIZARD_KEYED)).state;
     const prompt = discardPrompt(parked);
     expect(prompt.discardable).toHaveLength(4);

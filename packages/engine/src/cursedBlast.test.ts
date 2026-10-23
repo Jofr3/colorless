@@ -12,104 +12,9 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ── D345 — "CURSED BLAST", AND `knockOutSelf`: THE PRINTED SELF-KNOCK-OUT COST.
-//
-// ── THE TWO PRINTED SENTENCES ───────────────────────────────────────────────
-//   Dusclops sv06.5-019 / sv06.5-069 / sv08.5-036
-//     "Once during your turn, you may put 5 damage counters on 1 of your
-//      opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out."
-//   Dusknoir sv06.5-020 / sv06.5-070 / sv08.5-037
-//     …the same sentence at 13 counters.
-//   Both ACTIVATED Abilities. **6 Standard-legal printings, 2 sentences.**
-//
-// ── HOW THIS ROW WAS CHOSEN, AND WHAT WAS REFUSED ───────────────────────────
-// D344 declined to pre-price a successor and left a METHOD instead, on the
-// evidence that the last five handoffs that priced a row were each wrong. The
-// method, run:
-//
-//   (1) THE LARGEST LIVE `ROWS` RESIDUE in `censusAtHead.test.ts` is **row 9**
-//       (attach from the DISCARD PILE) — 5 `abilityIds` + 5 `effectIds` = 10.
-//       Read off the file, not off the handoff: the eight rows are
-//       10 · 5 · 4 · 3 · 0 · 0 · 0 · 0.
-//
-//   (2) CENSUS THE SENTENCE, NOT THE CARD (D340). Row 9's ability half is 5
-//       printings on TWO sentences, and its own note prices the bigger one
-//       (Magneton "Overvolt Discharge" ×3) at *"NO op in this engine knocks out
-//       its own host; grepped"*. So the thing to census is that CLAUSE. Over ALL
-//       THREE text columns on remote D1 `colorless` (2026-08-15):
-//
-//         instr(<col>, 'If you use this Ability, this Pokémon is Knocked Out') > 0
-//           effect          0 printings /  0 legal / 0 sentences
-//           abilities_json  9 printings /  9 legal / 3 sentences
-//           attacks_json    0 printings /  0 legal / 0 sentences
-//           ─────────────────────────────────────────────────────
-//           TOTAL           9 printings /  9 legal / 3 sentences   ✅ 0 + 9 + 0
-//
-//       Every printing of the clause is Standard-legal — the only family this
-//       run has censused where `printings === legal`.
-//
-//   (3) IS THE CARD THE CHEAPEST THING THAT SENTENCE BUYS? **NO** (D341's
-//       lesson, and this is its second instance). The three sentences are
-//       Dusclops (3 legal), Dusknoir (3 legal) and Magneton (3 legal) — and
-//       Magneton is the EXPENSIVE one. Its effect half is *"attach up to 3 Basic
-//       Energy cards from your discard pile to your {L} Pokémon **in any way you
-//       like**"*, a DISTRIBUTION across several bodies: `attachEnergyFrom.count`
-//       (D205) lands the whole batch on ONE picked target, and `toEach` (D248) is
-//       a fold with no pick in it. **The card the residue points at owes TWO
-//       mechanisms; the other two-thirds of its own family owe exactly this one.**
-//
-//   🛑🛑 **(3) IS WRONG, AND D346 BUILT MAGNETON FOR A REGISTRY ROW AND NO ENGINE
-//       LINE.** *"In any way you like"* AT A PRINTED COUNT is N independent
-//       `attachEnergyFrom` ops — `ASSEMBLE_ALLOY`'s reading since D263, and
-//       `attachEnergyFrom.count`'s own doc since D205 (*"N ops park N times and may
-//       land on N different bodies … where `count` parks ONCE and pins the batch"*).
-//       The compound `attachCards` MAP this note reached for exists for *"any
-//       NUMBER"*, which names no unit to unroll. So Magneton owed exactly ONE
-//       mechanism, `legalNonAttackPrograms.test.ts` had said so correctly since
-//       D263 — and this slice spent it and then overwrote that correct note with
-//       this wrong one, in nine files. **See `overvoltDischarge.test.ts`.**
-//
-//   (4) HAS IT SHIPPED? No. `grep -rn "Cursed Blast|sv06.5-019|sv06.5-020|
-//       sv08.5-036|sv08.5-037"` over the tree at `7f2b0d9` returned **4 hits, all
-//       PROSE** — `attackLock.test.ts`, `effects.ts` ×2 and `counterPut.test.ts`,
-//       every one of them a NEAR-MISS note saying the deriver refuses the
-//       sentence. **And all four enumerate FOUR printings where the catalog has
-//       SIX**: `sv08.5-036`/`-037` appear nowhere in the repo. A prose
-//       enumeration rots exactly like a count (D343), and these had been stale
-//       since the Prismatic Evolutions reprints landed.
-//
-// ── WHAT THIS SLICE REFUSED, WITH THE MEASUREMENT BESIDE IT ─────────────────
-//   • **Magneton `svp-153`/`svp-159`/`sv08-059` (3 legal)** — see (3). It owes
-//     the distribution and this op; only one of the two is here.
-//     🛑 **REFUSED IN ERROR — BUILT AT D346 with zero engine code.** The refusal
-//     below (§2) is spent and now asserts the opposite.
-//   • **Glass Trumpet `sv07-135`/`sv08.5-110` (2 legal)**, row 9's biggest
-//     `effectIds` shape — *"You can use this card only if you have any **Tera**
-//     Pokémon in play."* The Tera predicate has NO SUPPLY-SIDE DATUM: `SELECT
-//     suffix, COUNT(*) FROM cards GROUP BY 1` is two rows (NULL 3,157 / `ex` 629)
-//     and every `Tera` hit in the catalog is DEMAND (registry.ts's Briar note).
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
-//     A permanent floor, not a remainder.
-//   • **Reboot Pod `sv05-158` (1 legal)** — *"to each of your **Future**
-//     Pokémon"*, the same dead datum (D243).
-//   • **Powerglass `sv06.5-063`/`-097` (2 legal)** — needs an `endOfTurn`
-//     `TriggerTiming` the union does not have plus a Tool hook in the turn
-//     machine. Censused before refusing: `instr(<col>,'the end of your turn')`
-//     is `effect` 10/4/4 + `abilities_json` 5/**0**/3 + `attacks_json` 0/0/0, and
-//     **2 of the 4 legal `effect` printings are the Technical Machine / Ignition
-//     Energy SELF-DISCARD tail**, a different mechanism wearing the same words.
-//     The timing buys 2 legal printings today. Not one slice with this one.
-//     🆕🆕🆕 D566 (D539): BUILT — the timing is `atEndOfYourTurnInActive` and the
-//     hook is flow.ts's parking `endTurnToolTrigger` stage (`koToolsD566.test.ts` §4).
-//
-// ── THE PRICE ───────────────────────────────────────────────────────────────
-//   ONE new `EffectOp` (`knockOutSelf`, FIELD-FREE), TWO registry programs, SIX
-//   id-map entries. **NO new event** (the §8.1 sweep's own `KNOCKED_OUT`), **NO
-//   new prompt kind**, **NO new `TriggerTiming`**, and **`MATCH_RECORD_VERSION`
-//   STAYS 20** — the op never parks, so it adds no `PendingStage` inhabitant, and
-//   it has no field, so no persisted union gains a member.
 
 const DUSCLOPS = "sv06.5-019";
 const DUSCLOPS_REPRINT = "sv06.5-069";
@@ -121,8 +26,6 @@ const DUSKNOIR_PRISMATIC = "sv08.5-037";
 const DUSCLOPS_IDS = [DUSCLOPS, DUSCLOPS_REPRINT, DUSCLOPS_PRISMATIC] as const;
 const DUSKNOIR_IDS = [DUSKNOIR, DUSKNOIR_REPRINT, DUSKNOIR_PRISMATIC] as const;
 
-/** The clause's THIRD sentence — censused in (2) above, REFUSED in (3), and
-    pinned here so the refusal is driven rather than described. */
 const MAGNETON_IDS = ["svp-153", "svp-159", "sv08-059"] as const;
 
 const CLAUSE = "If you use this Ability, this Pokémon is Knocked Out.";
@@ -132,24 +35,9 @@ const DUSKNOIR_TEXT = `Once during your turn, you may put 13 damage counters on 
 const WEAK_TO_PSYCHIC = "fix-d345-psychic-weak";
 const WALL = "fix-d345-wall";
 const CHAFF = "fix-d345-chaff";
-/** The REAL Ludicolo `sv09-037` "Vibrant Dance" — a registry `seatHpBonus` of +40
-    over the WHOLE side (D324). Held here as a real catalog id in a LOCAL pool, so
-    the aura case below is a claim about the ENGINE's aura and not about an
-    invented fixture that carries no program: `programFor("sv09-037")` is asserted
-    DEFINED in §4, which is the attribution control this case would be vacuous
-    without. `sv09` is not among `catalogManifest`'s six sets, so a shared-pool
-    body would have owed a `fix-*` key — the local pool costs nothing. */
 const AURA = "sv09-037";
 const ENERGY = "fix-d345-energy";
 
-/** The two real printings, carried VERBATIM off the remote D1 row (2026-08-15) —
-    the printed HP, stage, type, retreat, the Ability text and the printed attack
-    at its printed index. Held in a LOCAL pool, never in `FIXTURE_POOL`: D275's
-    idiom, and here it is the only option that costs nothing, because
-    `catalogManifest.test.ts` classifies real-looking fixture ids against a
-    generated manifest of SIX sets and `sv08.5` is not one of them — a shared-pool
-    body would have owed a `fix-*` key for each card on `censusAtHead`'s
-    `raw.length` line. **THE KEY IS THE SET, NOT THE SURFACE.** */
 const LOCAL_CARDS: Record<string, Card> = Object.fromEntries([
   ...DUSCLOPS_IDS.map((id) => [
     id,
@@ -257,11 +145,6 @@ const DECK = deckOf({
   [ENERGY]: 8,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function step(state: GameState, action: Parameters<typeof applyAction>[1]) {
   const result = applyAction(state, action);
   if (!result.ok) {
@@ -277,18 +160,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
-/** Setup driven against a LOCAL `cardPool` (D275's idiom). Nothing is added to
-    `FIXTURE_POOL` — which is what keeps `censusAtHead`'s `raw.length` and
-    `nonAttackRegistryIds()` lines 0 apart this slice. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -341,8 +212,6 @@ describe("D345 §1 — the two registry rows, read off the LIVE registry", () =>
     for (const ids of [DUSCLOPS_IDS, DUSKNOIR_IDS]) {
       const first = programFor(ids[0]);
       expect(first).toBeDefined();
-      // Identity, not deep equality: three separate-but-equal objects would pass a
-      // `toEqual` and would be three rows in `censusAtHead`'s object decomposition.
       for (const id of ids) expect(programFor(id), id).toBe(first);
     }
   });
@@ -415,8 +284,6 @@ describe("D345 §1 — the two registry rows, read off the LIVE registry", () =>
   });
 
   it("`knockOutSelf` is FIELD-FREE, and that is the census rather than a shortcut", () => {
-    // The clause is byte-identical across all THREE sentences that print it, so
-    // there is nothing for a field to vary over (D104's minimal-shape rule).
     for (const id of [DUSCLOPS, DUSKNOIR]) {
       expect(programFor(id)?.abilities?.[0]?.program?.[1]).toEqual({ op: "knockOutSelf" });
     }
@@ -435,19 +302,7 @@ describe("D345 §1 — the two registry rows, read off the LIVE registry", () =>
   });
 });
 
-describe("🆕 D346 — §2's REFUSAL IS SPENT: the clause's THIRD sentence is BUILT", () => {
-  // 🛑🛑 **THIS SECTION USED TO ASSERT THE OPPOSITE, AND IT WAS WRONG THE DAY IT
-  // WAS WRITTEN.** D345 drove *"Magneton ×3 has no program"* with the reason
-  // *"the SECOND mechanism its effect half needs … a DISTRIBUTION across several
-  // bodies that `attachEnergyFrom` cannot spell"*. `attachEnergyFrom` spells it by
-  // being written THREE TIMES, which is `ASSEMBLE_ALLOY` (D263) and the op's own
-  // `count` doc (D205). D346 built the card for a registry row and no engine line.
-  //
-  // ⚠️ **KEPT AS AN INVERTED SECTION RATHER THAN DELETED**, because the pair of
-  // assertions below is the same guard pointed the other way: the six Cursed Blast
-  // ids and the three Magneton ids must stay THREE program objects on ONE op, and
-  // a tenth id or a fourth object is still a row nobody decided. **A REFUSAL THAT
-  // GETS SPENT SHOULD BECOME THE CORRESPONDING ADMISSION, NOT A DELETED TEST.**
+describe("D346 — §2's REFUSAL IS SPENT: the clause's THIRD sentence is BUILT", () => {
   it("Magneton ×3 IS authored, on ONE object, sharing this op", () => {
     const first = programFor(MAGNETON_IDS[0]);
     expect(first).toBeDefined();
@@ -456,11 +311,6 @@ describe("🆕 D346 — §2's REFUSAL IS SPENT: the clause's THIRD sentence is B
   });
 
   it("`knockOutSelf` has exactly THREE producers in the whole registry", () => {
-    // The op is not a capability sitting unused, and it is not quietly spreading
-    // either: a FOURTH producer means a slice authored a row this note does not
-    // describe. Counted over PROGRAM OBJECTS, not ids — nine ids, three objects.
-    // 🆕 D346 — 2 → 3, and the third arrived one decision after the op, which is
-    // the fastest a producer has ever followed an op in this registry.
     const objects = new Set(
       registryCardIds()
         .map((id) => programFor(id))
@@ -499,7 +349,6 @@ describe("D345 §3 — Cursed Blast from the BENCH: the counters land, the host 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    // The counters: a COUNTERS_PLACED row, not DAMAGE_DEALT — this is a placement.
     expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 50, source: "ability" });
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(after.players.p2.bench[0]?.damage).toBe(50);
@@ -593,9 +442,6 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
   });
 
   it("the host dies with NO `DAMAGED`/`COUNTERS_PLACED` row of its own", () => {
-    // The op marks the body lethal and hands it to §8.1; it emits nothing. The
-    // ONLY counter row in the batch is the one aimed at the opponent, and the
-    // only thing said about the host is that it was Knocked Out.
     const state = board({ p1: [WALL, DUSCLOPS], p2: [WALL, CHAFF] });
     const blaster = benchTopUid(state, "p1", 0);
     const { state: parked } = blast(state, { spot: "bench", index: 0 });
@@ -614,15 +460,6 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
   });
 
   it("an HP AURA on the host's own side is read AT THE MOMENT THE OP RUNS", () => {
-    // `effectiveMaxHp` is the number the op must meet, not the printed HP — a
-    // Ludicolo raising the whole side's maximum is on the board when Cursed Blast
-    // resolves, so the Dusclops still dies. This is the one branch where "set
-    // damage to the printed HP" and "set damage to the effective maximum" differ,
-    // and it is driven rather than argued.
-    // THE ATTRIBUTION CONTROL FIRST: the aura is a REAL registry program, not an
-    // invented fixture. Without this the case is vacuous — a body carrying Ability
-    // TEXT and no program raises nobody's maximum, and the Dusclops would die of
-    // its printed 90 while the assertion below looked satisfied.
     expect(programFor(AURA)?.passive?.seatHpBonus).toEqual({
       ability: "Vibrant Dance",
       amount: 40,
@@ -641,10 +478,6 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    // 🛑 BY UID, NOT `toBeDefined`. A reader that met the PRINTED 90 instead of
-    // the effective 130 would leave the Dusclops alive at 90/130 and this case
-    // would still see a `KNOCKED_OUT` if any other body happened to die — the uid
-    // is what makes the aura load-bearing rather than decorative.
     expect(find(events, "KNOCKED_OUT")?.uid).toBe(blaster);
     // Exactly ONE body left play, and it is not the Ludicolo: the aura raises the
     // whole side's maximum, so a mark aimed at the wrong body would kill the
@@ -655,10 +488,6 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
   });
 
   it("an ALREADY-DAMAGED host is not healed by the marking — `Math.max`, not `=`", () => {
-    // The op raises `damage` to the effective maximum and can never LOWER it. A
-    // plain assignment would be behaviour-identical on every board the catalog can
-    // build (the body dies either way) — so the claim is about the STATE the KO
-    // sweep reads, and it is asserted through the event the sweep emits.
     const seeded = board({ p1: [WALL, DUSCLOPS], p2: [WALL, CHAFF] });
     const damaged: GameState = {
       ...seeded,
@@ -725,8 +554,6 @@ describe("D345 §5 — the ACTIVE Spot: §8.1's promotion, through the shared se
   });
 
   it("a blaster with an EMPTY Bench behind it loses the game (§14.2)", () => {
-    // The §8.1 promotion has nowhere to go, which is the same terminal
-    // `returnSelf` found at D311 — reached here by a Knock Out instead.
     const state = board({ p1: [DUSCLOPS], p2: [WALL, CHAFF] });
     const { state: parked } = blast(state, { spot: "active" });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -761,17 +588,6 @@ describe("D345 §6 — the FORCED path: one candidate, no park, same two ops", (
   });
 
   it("a board with NOTHING to snipe is refused at the ACTION layer, so the cost is never paid for nothing", () => {
-    // 🛑 THE TWO FACTS ARE SEPARATE AND BOTH ARE DRIVEN. The OP carries no gate
-    // (§1: `{ op: "knockOutSelf" }` is field-free, and the printed condition is
-    // *"if you use this Ability"*, not *"if you placed any counters"*), so nothing
-    // inside the program would stop the host dying after a whiffed snipe. What
-    // stops it is `programPlayable`, one layer up: an Ability whose FIRST op has
-    // an empty candidate set is refused before it is spent — the engine's
-    // would-only-whiff judgement, not a rule on the card.
-    //
-    // ⚠️ AND THIS IS THE BOARD THAT CAUGHT `programPlayable`'s `damageChosen` arm
-    // reading the opponent's BENCH for an `opponentAny` op. With the funnel shared
-    // (`snipeTargets`), a bare Active is playable and a bare board is not.
     const seeded = board({ p1: [WALL, DUSCLOPS], p2: [WALL] });
     const empty: GameState = {
       ...seeded,

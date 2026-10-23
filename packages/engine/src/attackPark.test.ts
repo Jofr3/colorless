@@ -16,22 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: ATTACK EFFECT PROGRAMS CAN PARK — the `attackEpilogue` stage.
-//
-// attack.ts used to run an attack's effect program as `runProgram(...).state`,
-// which silently DROPPED a parked prompt and every op behind it. It now seeds a
-// one-stage `pending` queue before the program runs and folds through
-// settleProgram's `resumeTail`, so a program that stops for a decision leaves the
-// epilogue (the §8.1 KO sweep + the §5.3 turn end) [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] waiting in the queue, and
-// resolveEffect drains it once the answer lands.
-//
-// The card family that needs it is the self-discard attack COST, a DERIVED effect
-// (there is no registry row — effects.ts reads the printed sentence):
-//   • "Discard an Energy from this Pokémon."  → discardEnergy yourActive (PARKS
-//     when the attacker holds two distinguishable Energy);
-//   • "Discard all Energy from this Pokémon." → the same op with count "all",
-//     which asks nothing and resolves inline.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -73,27 +57,12 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(deriveAttackEffect("Discard all Energy from this Pokémon.")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ]);
-    // What is left on the loud skipped path is a RIDER after the discard, or a
-    // gate this engine cannot express — never a shape of the discard itself.
-    // (Everything this list used to hold now derives: the NUMERIC counts and the
-    // opponent-side twins in attackDiscards.test.ts, the TYPED ones in
-    // providesEnergy.test.ts.)
     for (const text of [
       // Whole-sentence anchoring: a rider after the discard is a different card.
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    // ⚠️ RE-POINTED AT D401, NOT DELETED — the FOURTH row this list has moved rather
-    // than dropped, and the last of D145's four compounds to leave it. Kyurem
-    // sv06.5-047 "Trifrost" sat here as a NULL witness for the whole-sentence
-    // anchoring claim; `SELF_DISCARD_THEN_ANY_TARGET` maps it, so the claim moves
-    // from "nothing reads this" to the strictly stronger "THIS anchor does not reach
-    // it, and the anchor that does derives BOTH halves in printed order". The
-    // distinction is worth more here than on any earlier row, because a build whose
-    // bare `SELF_DISCARD_ALL` swallowed the compound as a PREFIX would return the
-    // discard op ALONE — an attack that pays every Energy on the body and then does
-    // nothing at all — and a `toBeNull` could no longer tell that from a refusal.
     expect(
       deriveAttackEffect(
         "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -109,16 +78,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
         deals: true,
       },
     ]);
-    // ⚠️ RE-POINTED AT D148, NOT DELETED — the THIRD row this list has moved
-    // rather than dropped, and the first on the "an" form rather than the "all"
-    // one. Eiscue ex sv03-042/-210/-222 "Scalding Block" sat here as a NULL
-    // witness for the whole-sentence anchoring claim; D148 mapped it, so the claim
-    // moves from "nothing reads this" to the strictly stronger "THIS anchor does
-    // not reach it, and the anchor that does derives BOTH halves in printed
-    // order". The distinction matters most on exactly this pair, because a build
-    // whose bare `SELF_DISCARD_ONE` swallowed the compound as a PREFIX would
-    // return the discard op ALONE — a card that pays the Energy and installs
-    // nothing — and a `toBeNull` could no longer tell that from a refusal.
     expect(
       deriveAttackEffect(
         "Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.",
@@ -127,15 +86,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
       { op: "preventAttack", target: "defender" },
     ]);
-    // ⚠️ RE-POINTED AT D147, NOT DELETED — and this is the SECOND time this list
-    // has had to move a row rather than drop one. Eiscue sv02-048/-205 "Frigid
-    // Block" sat here as a NULL witness with the note that "Eiscue's rider is a
-    // family the engine will map"; D147 mapped it, so the claim moves from
-    // "nothing reads this" to the strictly stronger "THIS anchor does not reach
-    // it, and the anchor that does derives BOTH halves in printed order". A build
-    // whose bare discard anchor swallowed the compound would return the discard
-    // op ALONE, which a `toBeNull` could no longer distinguish from a correct
-    // refusal — the shape claim can.
     expect(
       deriveAttackEffect(
         "Discard all Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
@@ -144,13 +94,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
       { op: "reduceDamage", amount: 100 },
     ]);
-    // ⚠️ RE-POINTED AT D145, NOT DELETED. This list held the TAILS-GATED form of
-    // the "all" sentence as a null witness until D145 mapped it; the claim was
-    // never "unmapped", it was "THIS anchor does not reach it", so the row moves
-    // from a NULL to a SHAPE claim — strictly stronger, because a build where the
-    // bare body claimed the gated string would return the inner op UNWRAPPED and
-    // a `toBeNull` could no longer say so. The gated program's `then` is this
-    // anchor's own output, byte for byte.
     expect(
       deriveAttackEffect("Flip a coin. If tails, discard all Energy from this Pokémon."),
     ).toEqual([
@@ -186,19 +129,11 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(parked.phase.prompt.note).toBe("Discard an Energy from this Pokémon.");
     expect(parked.phase.prompt.scope).toEqual({ kind: "total", count: 1 });
 
-    // The epilogue is QUEUED, not run: the turn has not ended and nothing was
-    // discarded yet. This is the whole regression — the old code returned here
-    // with the prompt thrown away and the turn already over.
-    // D189 — and the stage NAMES THE ATTACKER, which is the field that makes the
-    // epilogue survive a program that moves its own actor. It is the same uid the
-    // ATTACK_DECLARED row carries, not a re-read of whoever is in the spot.
     expect(parked.pending).toEqual([
       {
         kind: "attackEpilogue",
         seat: "p1",
         uid: find(events, "ATTACK_DECLARED")?.uid,
-        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
-        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
         attack: find(events, "ATTACK_DECLARED")?.attack,
       },
     ]);
@@ -328,10 +263,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
   });
 
   it("'this Pokémon' is the ACTIVE — Energy on the attacker's own Bench is untouchable", () => {
-    // §8: only the Active attacks, so the printed "this Pokémon" can never reach
-    // the Bench. Without the Active-only scope the attacker's benched Energy
-    // would be offered as a candidate and the attack would park on a choice the
-    // card does not grant.
     let state = matchup(12, "sv02-028", "fix-bigbody", [{ id: "fix-fire-energy", count: 3 }]);
     state = benchFromDeck(state, "p1", "fix-basic-1");
     state = attachBenchFromDeck(state, "p1", 0, "fix-energy", 1);
@@ -350,11 +281,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
   });
 
   it("Basic Energy of the same TYPE is interchangeable even across catalog prints", () => {
-    // The catalog prints one Basic Fire Energy under several ids (sve-002 /
-    // sve-010 / sve-018). A card-id key would call those three separate answers
-    // and park on a non-choice; a Basic Energy has no in-play identity beyond the
-    // type it provides. fix-fire-energy and fix-fire-energy-alt are two ids with
-    // one name, exactly that shape.
     const state = matchup(13, "sv02-028", "fix-bigbody", [
       { id: "fix-fire-energy", count: 2 },
       { id: "fix-fire-energy-alt", count: 1 },
@@ -380,11 +306,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
   });
 
   it("a mid-tail park with an EMPTY pending queue is rejected, not silently looped", () => {
-    // resumeTail's DONE branch hands control to `advance` and writes no phase of
-    // its own, so an empty queue would return this very effect:choose phase with
-    // the same continuation — forever, with the discard re-applied each time.
-    // Unreachable through the engine's transitions; this is the ko:* handlers'
-    // crafted-snapshot guard applied to the one fold that cannot self-recover.
     const state = matchup(15, "sv02-028", "fix-bigbody", [
       { id: "fix-fire-energy", count: 2 },
       { id: "fix-energy", count: 1 },
@@ -429,11 +350,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
   // ── The paths the epilogue must NOT disturb ──
 
   it("an attack with NO effect program is byte-identical to before the stage existed", () => {
-    // Paldean Tauros' Raging Horns now SIMULATES its scaling ("20+" folds the
-    // self-counter clause into the base, 0.34.0) but has NO PARKING program:
-    // scaling is pre-damage math, not an EffectOp, so `program` is still null and
-    // the epilogue runs inline. At 0 damage counters it deals its printed base 20
-    // with no `scaled` and no skip — the "no park, inline epilogue" intent is kept.
     const state = matchup(8, "sv02-028", "fix-bigbody", [{ id: "fix-fire-energy", count: 2 }]);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 

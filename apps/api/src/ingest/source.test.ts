@@ -1,10 +1,3 @@
-// The transport seam (./source.ts), exercised entirely with stubs — no network.
-// What these prove: both transports issue the RIGHT request, hand the payload
-// on VERBATIM (the property the Zod boundary depends on), fail LOUDLY, and pace
-// themselves. What they cannot prove is that the SDK's own HTTP call works
-// against the live API; that is the one line `createDefaultSdkClient` isolates,
-// and `bun scripts/ingest.ts --transport=sdk --dry-run` is what proves it.
-
 import { describe, expect, it } from "vitest";
 import cardPokemonAttacks from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-swsh3-136.json";
 import {

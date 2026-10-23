@@ -15,19 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.54.0 → 0.55.0 — Florges sv01-093 "Blooming Garden" (P3-M5, D104): the first
-// long-tail continuous PASSIVE aura. "Your Pokémon in play have no Weakness." —
-// the only "no Weakness" Ability in the sv01–03 pool (verbatim off the live D1).
-//
-// Modelled as a bare `PassiveEffects.removeWeakness` flag (own board,
-// unconditional, NO "in the Active Spot" clause) read through the new
-// `seatRemovesWeakness(state, seat)` — the own-board twin of `disabledAbilityUids`.
-// The two Weakness read sites null the DEFENDER's Weakness before the §8.5
-// pipeline (Resistance is untouched): attack.ts's main hit and interpreter.ts's
-// snipeActive (Chien-Pao ex "Hail Blade"). Bench Pokémon never take
-// Weakness-modified damage anyway, so the only observable effect is on the seat's
-// Active while it defends — and the aura's source may sit on the Bench.
-
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // fix-attacker Bite — {C}, 30
 const hailBlade = { type: "attack", seat: "p1", index: 0 } as const; // Chien-Pao ex — the parked discard
 
@@ -38,12 +25,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Setup then open P1's turn (P2 went first and passed — so P1's first turn
-    carries no §4 attack ban). ASSERTS both seats opened on the neutral,
-    mulligan-free fix-bigbody: Ting-Lu ex is a Basic ex that could otherwise open
-    Active and smuggle a live Cursed Land lock onto the board, and a fix-weak /
-    fix-water-weak opener would pre-place a defender — either would quietly poison
-    the assertions below. Every seed used here was picked against this gate. */
 function board(seed: number): GameState {
   const state = driveSetup(
     seed,
@@ -68,10 +49,6 @@ function fireMatchup(seed: number): GameState {
   return setActiveFromDeck(state, "p2", "fix-weak");
 }
 
-/** P1's Chien-Pao ex (Water, two {W} attached) across from P2's fix-water-weak
-    (200 HP, ×2 Water) — Hail Blade's `damageDefender` re-enters snipeActive's full
-    §8.5 pipeline, so a {W} attacker doubles here. Two {W} pay the cost AND are
-    discard fuel. */
 function hailMatchup(seed: number): GameState {
   let state = setActiveFromDeck(board(seed), "p1", "sv02-061");
   state = attachFromDeck(state, "p1", "fix-water-energy", 2);

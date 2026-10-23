@@ -21,18 +21,8 @@ import {
   setPrizes,
   specialEnergy,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D625 — T1: THE REST OF THE `me` TRAINERS ──
-//
-// 13 `me` printings / 7 printed texts on seven NEW objects (registry.ts D625 block): Special Red Card
-// (`handRefresh` opponent, behind `opponentPrizesRemaining`), Jumbo Ice Cream (`heal` behind
-// `yourActiveEnergyAtLeast 3`), Dark Bell (two `conditionGate`s with an empty `then`), Wally's
-// Compassion (`healChosen.energyToHandFromHealed`), Blowtorch (the NEW `chooseOneOffered`), Great
-// Haul Net (two deck retrievals, one shuffle) and Strange Timepiece (`devolveChosen` on the own side).
-// Texts measured on the LOCAL D1, 2026-10-09, `legal_standard = 1` on every row; driven on the real
-// ids in a LOCAL `cardPool` (D275). Readings R-SRC1, R-JIC1, R-DB1, R-WC1, R-BT1, R-GHN1, R-ST1 (all
-// ⚠️ UNRULED).
 
 const RED_CARD = "me04-082";
 const ICE_CREAM = "me02-091";
@@ -187,8 +177,8 @@ describe("D625 §1 — the faces: 13 `me` printings / 7 texts, one object per te
 const PLAIN = "d625-plain"; // a Basic {C}
 const DARK = "d625-dark"; // a Basic {D}
 const DUAL = "d625-dual"; // a Basic {D}{P}
-const MEGA = "d625-mega"; // "Mega D625 ex", a Mega Evolution Pokémon ex (a Basic for the board)
-const PLAIN_EX = "d625-ex"; // "D625 Brute ex", not a Mega
+const MEGA = "d625-mega";
+const PLAIN_EX = "d625-ex";
 const PSY = "d625-psy"; // a Basic {P}
 const PSY_S1 = "d625-psy-s1"; // a Stage 1 {P} from PSY
 const PSY_S2 = "d625-psy-s2"; // a Stage 2 {P} from PSY_S1
@@ -264,12 +254,6 @@ const DECK = deckOf({
   "fix-energy": 14,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Hands and prize rows reset: every hand back into the deck, six `fix-energy` the prize row. */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {

@@ -24,18 +24,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D594 — WP33a: BONUS / REQUIREMENT ROWS ON SHIPPED CONDITION MEMBERS ──
-//
-// 6 printed texts / 10 `me` printings. Four attack clause rows on shipped members — Chi-Yu
-// (`yourActiveDamageCountersAtLeast`, with D494's Weakness-only rider), Steelix (`yourPrizesRemaining`),
-// Slowbro ×3 (`yourHandExactly` 0) and Solrock ×2 (`yourBenchHasNamed`, a "does nothing" row with
-// Sawk's W/R companion) — plus two Ability keys on shipped passive fields: Luxio "Fighting Roar"
-// (`evolveEarlyExempt` with the new `ifCondition` rider) and Chesnaught "Needly Armor"
-// (`damageAttacker` with `perAttachedEnergy`). Every id and text off the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was referenced in
-// the tree before this slice. No `me` row is a fixture, so the printed bytes are carried HERE.
 
 const WHIRLING_ENVY =
   "If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness.";
@@ -49,7 +39,6 @@ const FIGHTING_ROAR =
 const NEEDLY_ARMOR =
   "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon for each {G} Energy attached to this Pokémon.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [WHIRLING_ENVY, ["me05-059"]],
   [COSMIC_BEAM, ["me01-075", "me02.5-106"]],
@@ -78,9 +67,6 @@ describe("D594 §1 — the texts: 4 attack sentences / 8 printings, 2 Abilities 
     ]) {
       expect(resolvedByAnyReader(near), near).toBe(false);
     }
-    // WP33a's two dropped texts (see decisions.md D594): no shipped member reads either.
-    // [🆕🆕🆕 D600 (D539): WITHDRAWN, kept as written — WP33b builds both on two new members
-    // (`yourActiveRemainingHpAtMost`, `opponentActiveNoRetreatCost`; handCountConditionsMeD600).]
     for (const dropped of [
       "If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.",
       "If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.",
@@ -136,8 +122,6 @@ describe("D594 §2 — the readings: shipped members at the printed parameters",
     expect(programFor("me04-007")).toEqual({
       passive: { damageAttacker: { amount: 30, perAttachedEnergy: "Grass" } },
     });
-    // Fighting Roar prints no "Active Spot" clause, so no zone gate: driven on a BENCHED Luxio
-    // in §7 (and by the `D594-roar-active-only` mutant). Needly Armor's per-{G} count: §8.
   });
 });
 
@@ -152,7 +136,6 @@ const RESIST_F = "d594-resist-fighting";
 const LUNATONE = "d594-lunatone";
 const LUXRAY = "d594-luxray";
 const SHINX = "d594-shinx";
-/** A {C} attacker printing a legal bench spread (`censusAttackCorpus.ts`), for §8's benched Chesnaught. */
 const SPREADER = "d594-spreader";
 const SPREAD =
   "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -330,11 +313,6 @@ const BOARD_IDS = [
   ...Object.keys(LOCAL).filter((id) => !id.startsWith("d594-")),
   // (SPARE is deliberately absent.)
 ];
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
@@ -577,9 +555,6 @@ describe("D594 §7 — Fighting Roar: Luxio evolves early while the opponent's A
   });
 
   it("Shinx → Luxio → Luxray in ONE turn: the Luxio evolved INTO keeps the licence on top (only against an ex)", () => {
-    // Fighting Roar's main real use, and the board that makes turn.ts' "twice in one turn" half
-    // observable (D594's D539 note there): "the turn you play it" for an evolution card is the
-    // turn it evolved. Surgery: turn 4 is P1's second turn, the Active Shinx a setup body.
     const chain = (defender: string): GameState => {
       const state = { ...table(SHINX, [], defender), turn: 4 };
       return handFromDeck(handFromDeck(state, "p1", "me03-027", 1), "p1", LUXRAY, 1);

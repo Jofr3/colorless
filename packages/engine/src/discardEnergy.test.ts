@@ -15,17 +15,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: discardEnergy (§15 energy removal — the "hammer" family). One op
-// takes Energy off the OPPONENT's board; `from` names both the eligible Pokémon
-// and how many are hit, and all three arms land with a real printed card:
-//   • opponentActive  — Mawile (sv03-143) "Special Eater", an onPlayToBench trigger;
-//   • opponentChosen  — Crushing Hammer (sv01-168), behind a coin flip;
-//   • opponentEach    — Giacomo (sv02-182), the sweep across their whole board.
-// MANDATORY and exactly one Energy per affected Pokémon, so the only decision is
-// WHICH: nothing matching is a no-op, a forced pick auto-resolves, and the park
-// has NO decline. The fixture fix-hammer is the opponentChosen arm without the
-// coin gate, so the park / forced pick / whiff gate are pinned without a seeded flip.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -174,11 +163,6 @@ describe("M5 op-slice — discardEnergy", () => {
   });
 
   it("offers the bench in INDEX order, and 'one' rejects a second Energy off a SECOND Pokémon", () => {
-    // Two BENCHED holders and a bare Active — the board that tells the two bench
-    // slots apart (a candidate list keyed only by "bench" would fuse them) and the
-    // one where an over-long pick could otherwise slip past the per-Pokémon rule:
-    // two uids off two DIFFERENT Pokémon break no "one Energy per Pokémon" check,
-    // so only the exact count stops "1 of your opponent's Pokémon" taking two.
     let state = board(15);
     state = benchFromDeck(state, "p2", "fix-basic-2");
     state = benchFromDeck(state, "p2", "fix-basic-2");
@@ -258,11 +242,6 @@ describe("M5 op-slice — discardEnergy", () => {
   });
 
   it("Crushing Hammer into an Energy-less board is REJECTED — the flip is not an effect", () => {
-    // §7 "you cannot play a card if it has no valid target" (Compendium 906,
-    // reconfirmed 2025-06-26). A coin gate has no `otherwise`, so its heads branch
-    // is the only thing the card can do; a branch that could only whiff makes the
-    // whole card unplayable, and the flip — procedure, not effect — cannot rescue
-    // it. `programPlayable` therefore DESCENDS into `coinFlipGate.then`.
     const bare = handFromDeck(board(6), "p1", "sv01-168", 1);
     const bareUid = handUid(bare, "p1", "sv01-168");
     expectErr(bare, { type: "playTrainer", seat: "p1", uid: bareUid }, "NO_LEGAL_TARGET");
@@ -351,12 +330,6 @@ describe("M5 op-slice — discardEnergy", () => {
   });
 
   it("Giacomo asks NOTHING when a Pokémon carries two copies of ONE print — the 'each' cap is 1", () => {
-    // The `each` arm's collapse cap: exactly ONE representative per (host, Energy)
-    // class, because the answer for that Pokémon is one Energy no matter how many
-    // it holds. Two copies of the SAME print are one question wearing two hats, so
-    // the whole sweep auto-resolves. The sibling test below uses two DIFFERENT
-    // prints, which is what makes it park — these two together are what pin the
-    // cap at 1 rather than at the count.
     let state = board(11);
     state = benchFromDeck(state, "p2", "fix-basic-2");
     state = attachFromDeck(state, "p2", "fix-special", 1); // Active — one match

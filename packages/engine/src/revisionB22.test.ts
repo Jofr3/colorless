@@ -3,22 +3,15 @@ import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { battler, completeSetup, deckOf, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  trainerCard,
+  typedEnergy,
+  mustApply as must,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B22 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B22"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`,
-// byte for byte below):
-//   §1 Mamoswine "Wreck" (`me02-025`), Mega Hawlucha ex "Somersault Dive" (`me02.5-116` / `-268` /
-//      `-283`), Chi-Yu "Ground Melter" (`sv06-039`) — *"… Then, discard that Stadium."* — and
-//      Eternatus "World Ender" (`sv08-141`) — *"Discard a Stadium in play. …"*. The state was right
-//      (the Stadium reached its OWNER's discard pile, the zone emptied), but the `discardStadium` op
-//      reused `playStadium`'s `STADIUM_DISCARDED` event and the log rendered every one of those rows as
-//      "<Stadium> left play — replaced" — on a board where nothing replaced it. The event now carries a
-//      `cause` ("replaced" | "effect") and the log words each one.
-//   §2 the control: a Stadium REPLACED by a different-named one played from hand still says "replaced".
 
 const WRECK =
   "If a Stadium is in play, this attack does 120 more damage. Then, discard that Stadium.";
@@ -160,13 +153,6 @@ function table(
   state.stadium =
     stadium === null || stadiumUid === null ? null : { uid: stadiumUid, owner: stadium.owner };
   return { state, stadiumUid };
-}
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
 }
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);

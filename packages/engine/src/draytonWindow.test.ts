@@ -12,113 +12,6 @@ import {
   toDeckTop,
 } from "./testFixtures";
 
-// D332 — DRAYTON `sv08-174`/`-232`/`-244`/`sv08.5-172`, THE DOUBLE-FILTER
-// WINDOW, AND THE HALF OF ITS OWN PRICE THAT WAS FALSE.
-//
-// ── THE PRINTED SENTENCE ────────────────────────────────────────────────────
-//   "Look at the top 7 cards of your deck. You may reveal **a Pokémon and a
-//    Trainer card** you find there and put them into your hand. Shuffle the
-//    other cards back into your deck."
-//   Supporter, **4 Standard-legal printings and they are the whole population.**
-//
-// ── THE CENSUS, AT THREE WIDTHS AND OVER ALL THREE TEXT COLUMNS ─────────────
-// Re-run against the remote D1 `colorless` at THIS head (2026-08-14) rather than
-// inherited, and every per-column split is re-added against its own total,
-// because a split that does not sum is the cheapest census check there is.
-//
-//   (a) `instr(<col>,'a Pokémon and a Trainer card') > 0` — the CONJUNCTION:
-//         `effect`         4 rows / 4 legal — the four Drayton, only.
-//         `attacks_json`   0 rows / 0 legal.
-//         `abilities_json` 0 rows / 0 legal.
-//       TOTAL 4 rows / 4 legal.  4 + 0 + 0 = 4 ✅   4 + 0 + 0 = 4 ✅
-//       The REVERSED word order, `'a Trainer card and a Pokémon'`, returns
-//       **0 rows over all three columns** — so the population is closed under
-//       word order too, not merely under the one literal that was convenient.
-//
-//   (b) `instr(<col>,'Look at the top') > 0` — the OP, widened off the
-//       conjunction so a different noun pair cannot hide behind it:
-//         `effect`         25 rows / 14 legal
-//         `attacks_json`   23 rows / 15 legal
-//         `abilities_json`  0 rows /  0 legal
-//       TOTAL 48 rows / 29 legal. 25 + 23 + 0 = 48 ✅  14 + 15 + 0 = 29 ✅
-//       Of those 29 legal, Drayton's 4 are the ONLY ones taking a bounded number
-//       of each of TWO kinds. The near misses are worth naming because they are
-//       what the arity was measured against: Bug Catching Set `sv06-143`/
-//       `sv08.5-102` (2 legal) prints *"up to 2 in any combination of {G}
-//       Pokémon and Basic {G} Energy cards"* — a UNION under ONE shared cap,
-//       which is `anyOf` with a flat `max: 2` and needs nothing from this slice —
-//       and Roto-Stick `sv08.5-127` (1 legal) prints *"any number of Supporter
-//       cards"*, which is an unbounded `max` and also not this.
-//
-//   (c) `instr(<col>,', and a ') > 0` — the THREE-AND-FOUR-noun form, i.e. the
-//       arity this slice deliberately does NOT ship:
-//         `effect`          3 rows / 3 legal — Larry's Skill `sv08.5-115`/`-139`
-//                           (*"a Pokémon, a Supporter card, and a Basic Energy
-//                           card"*, 2 legal) and Secret Box `sv06-163` (FOUR
-//                           nouns, 1 legal).
-//         `attacks_json`    0 rows / 0 legal.
-//         `abilities_json`  0 rows / 0 legal.
-//       TOTAL 3 rows / 3 legal.  3 + 0 + 0 = 3 ✅   2 + 1 = 3 ✅
-//
-// 🛑 **SO ARITY TWO IS A MEASUREMENT AND NOT A CONVENIENCE.** Every `lookAtTopN`
-//    printing in the pool takes either ONE kind or exactly TWO; the three- and
-//    four-noun sentences all sit on `searchDeck`, a different op with a different
-//    park. `also` is therefore a single pair rather than a list — D331's rule
-//    against shipping a value no printing spells — while the PROMPT half
-//    (`chooseCards.caps`) is a list, so the `searchDeck` slice that eventually
-//    takes Larry's Skill and Secret Box buys only its own op field.
-//
-// ── WHAT THE `DROPPED` ROW PRICED, AND THE CLAUSE THAT WAS FALSE ────────────
-// The row read: *"TWO filters on one `lookAtTopN` window. The op takes one
-// `filter` and one `max`; this sentence takes one of each of two kinds out of a
-// SHARED window, which two sequential ops cannot express … **One op field or a
-// second `max`.**"*
-//
-// ✅ **THE FIRST CLAUSE IS TRUE, AND READING THE PARK MAKES IT SHARPER THAN THE
-//    ROW DID.** The window is `deck.slice(0, op.n)` recomputed at every op, so a
-//    second `lookAtTopN` sees a deck the first one has already taken from: the
-//    card at index `n` slides INTO the window and becomes takeable though nobody
-//    looked at it. The obvious repair — a second op at `n - 1` — is right on the
-//    take-one path and WRONG on the decline, which this printed "you may"
-//    permits: take no Pokémon and index 6 is unreachable for the Trainer.
-//
-// 🛑 **"ONE OP FIELD OR A SECOND `max`" IS THE FALSE HALF, AND IT IS FALSE IN
-//    EXACTLY THE CLAUSE THAT MADE THE ROW CHEAP.** `lookAtTopN.max` is forwarded
-//    straight into `prompt.max`, and `validateChoice` (cardplay.ts) enforces ONE
-//    FLAT TOTAL shared by all six `chooseCards` producers. A second `max` on the
-//    OP is therefore invisible to the only thing that checks a wire answer: under
-//    a total of 2 a client takes TWO Pokémon and the printed conjunction is gone.
-//    The cap had to reach the PROMPT, and the prompt has a wire tail.
-//
-// 🛑 **AND THE PIECE THE ROW TREATED AS THE OBSTACLE WAS FREE ALL ALONG.**
-//    `{ kind: "anyOf" }` has been in `CardFilter` since D245 and produces exactly
-//    this candidate set. It is not used here because it captions a DISJUNCTION —
-//    `retrieveNoun`'s `anyOf` arm joins its members with **" or "**, deliberately,
-//    because a union asked about one card reads that way — while Drayton prints a
-//    conjunction of two SEPARATELY CAPPED nouns, which no single filter expresses
-//    whatever its caption says. That conclusion is unchanged.
-//
-// ⚠️ **CORRECTED AT D333: THIS PARAGRAPH ALSO CALLED THAT ARM "UNREACHABLE FROM
-//    ANY PROMPT", AND IT WAS NOT — IT HAD BEEN LIVE SINCE D264.** Lana's Aid
-//    `sv06-155`/`-207`/`-219` parks a `chooseCards` whose note IS that arm's
-//    output, asserted byte for byte in `legalNonAttackPrograms.test.ts` under a
-//    case literally named *"the `anyOf` arm's first witness"*. This file inherited
-//    the claim from a stale comment in `interpreter.ts` that D264 never moved, and
-//    then passed it forward into the resume point, which sent D333 to build Bug
-//    Catching Set as *"`anyOf`'s first live prompt consumer"* — its THIRD.
-//    **A STALE COMMENT PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING CAN
-//    GO RED ON IT**, and the check that would have caught it is the one this repo
-//    already runs on every count: ask which query, or which line, produced the
-//    claim you are about to repeat.
-//
-// 🆕 **THE LESSON: THE PRICE NAMED THE RIGHT OP AND THE WRONG PIECE OF IT.**
-//    D331's row named the right piece and the wrong READER. This one names the
-//    right op, the right window and the wrong HALF: it priced the candidate set
-//    (already free) and not the cap (which crosses a validator with six
-//    producers). **A `needs` STRING CAN BE RIGHT ABOUT WHAT IS HARD AND WRONG
-//    ABOUT WHICH PART OF IT IS HARD** — and the way to tell is to read the thing
-//    that CHECKS the answer, not the thing that OFFERS it.
-
 const DRAYTON_IDS = ["sv08-174", "sv08-232", "sv08-244", "sv08.5-172"] as const;
 
 function find<T extends GameEvent["type"]>(
@@ -146,13 +39,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** A seeded top 7: **two** Pokémon, **two** Trainers and three cards that are
-    neither, with a Pokémon and a Trainer buried at indices 7 and 8 so the window
-    boundary is observable from both filters at once.
-
-    🛑 THE SECOND OF EACH KIND IS THE WHOLE POINT. A window holding one Pokémon
-    and one Trainer is admitted in full by the flat `max` of 2, so every
-    assertion in this file would pass with `caps` deleted. */
 function seeded(state: GameState): GameState {
   let next = state;
   next = toDeckTop(next, "p1", "fix-basic-2", 1); // index 8 — a Pokémon PAST the window
@@ -178,10 +64,6 @@ function play(state: GameState, id: string) {
 
 describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
   it("the registry resolves a program for every one of the four printings", () => {
-    // 🛑 D330's finding, kept as a standing check: a filter or an op field can be
-    // wired at every site, type-check everywhere and have ZERO printed consumers.
-    // These four keys plus the `fix-drayton` demonstrator below are what stop
-    // `also` from being that.
     for (const id of DRAYTON_IDS) {
       expect(programFor(id), id).toBeDefined();
     }
@@ -209,9 +91,6 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
   });
 
   it("the fixture pool prints the sentence this slice built", () => {
-    // 🛑 D330's other half: a program can be reachable from the catalog and
-    // unreachable from the only pool the tests own. The printed bytes are what
-    // the boards below actually play.
     expect(FIXTURE_POOL["fix-drayton"]?.effect).toContain("a Pokémon and a Trainer card");
     expect(FIXTURE_POOL["fix-drayton"]?.trainerType).toBe("Supporter");
   });
@@ -296,12 +175,7 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
     expect(new Set(revealed?.uids)).toEqual(new Set([pokemon, trainer]));
   });
 
-  it("🛑 REFUSES TWO POKÉMON — the answer the flat `max` alone would have allowed", () => {
-    // THE ROW'S PRICE, DRIVEN. Two Pokémon is two cards out of the offered
-    // candidates with no uid repeated, so every check that existed before this
-    // slice passes it: `uids.length <= prompt.max` (2 <= 2), `uids ⊆ candidates`,
-    // no duplicate. Only `caps` refuses it. Delete the field and this is the case
-    // that goes green while the card silently stops printing "and".
+  it("REFUSES TWO POKÉMON — the answer the flat `max` alone would have allowed", () => {
     const state = board(6);
     const { parked } = play(state, "fix-drayton");
     const seededState = seeded(state);
@@ -314,7 +188,7 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
     );
   });
 
-  it("🛑 REFUSES TWO TRAINERS — the same defect on the OTHER cap", () => {
+  it("REFUSES TWO TRAINERS — the same defect on the OTHER cap", () => {
     // The mirror, and it is not redundant: a `caps` array built with both entries
     // pointing at the first filter's uids would refuse two Pokémon and admit two
     // Trainers, which is a defect the case above cannot see.
@@ -390,14 +264,13 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.hand.length).toBe(handBefore);
     expect(done.players.p1.deck.length).toBe(deckBefore);
-    // D241 — the look is the announcement, the move only its consequence.
     expect(find(events, "DECK_TOP_REVEALED")?.uids).toEqual([]);
     // The printed "Shuffle the other cards back" is the trailing op, and a
     // decline is not a whiff: it fires either way.
     expect(find(events, "SHUFFLE")).toBeDefined();
   });
 
-  it("🛑 THE ATTRIBUTION CONTROL — Great Ball on the SAME seeded window caps at 1 and offers only Pokémon", () => {
+  it("THE ATTRIBUTION CONTROL — Great Ball on the SAME seeded window caps at 1 and offers only Pokémon", () => {
     // Identical board, identical seeded top 7, the same op, no `also`. If this
     // prompt and Drayton's were the same, `also` would be doing nothing — which
     // is the vacuous-guard defect a one-of-each window would have hidden.
@@ -429,10 +302,7 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     const prompt = parked.phase.prompt;
-    expect(prompt.candidates).toHaveLength(2); // the two Pokémon
-    // The Trainer cap is still PRESENT and still 1 — it caps an empty group, which
-    // is what keeps the two halves independent rather than conditional on each
-    // other. The total does NOT shrink to the satisfied half.
+    expect(prompt.candidates).toHaveLength(2);
     expect(prompt.max).toBe(2);
     expect(prompt.caps?.[1]?.uids).toEqual([]);
   });

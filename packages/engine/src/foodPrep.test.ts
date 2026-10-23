@@ -18,53 +18,6 @@ import {
   trainerCard,
 } from "./testFixtures";
 
-// D327 — THE COST SEAM'S SECOND AND THIRD COUNT SOURCES, AND THE ROW NO BACKLOG
-// CARRIED.
-//
-// THE TWO SENTENCES, byte-for-byte off remote D1 `colorless` (2026-08-11, all six
-// printings `legal_standard = 1`, `category = 'Pokemon'`):
-//
-//   "Attacks used by this Pokémon cost {C} less for each Kofu card in your
-//    discard pile."                              — "Food Prep", FOUR printings
-//   "Attacks used by this Pokémon cost {C} less for each of your opponent's
-//    Benched Pokémon."                           — "Hustle Play", TWO printings
-//
-// ── WHY THIS SUITE EXISTS IN THE SHAPE IT DOES ──────────────────────────────
-//
-// 🛑 **FOUR PRINTINGS, TWO CARD NAMES.** `svp-134` / `sv07-042` / `sv07-149` are
-// **Crabominable** (Stage 1 off Crabrawler, 160 HP, {W}); `sv07-045` is
-// **Veluza**, a **BASIC** with 130 HP and a different attack. The
-// `abilities_json` is BYTE-IDENTICAL across all four, so one program object
-// serves them — and a reader who assumed "reprint group" meant "one card" would
-// have keyed three ids and called the row done. `censusAtHead.test.ts`'s
-// (name, object) join is where that costs a number; here it costs a §9 CONTROL,
-// because the stage difference is what Klefki's Basic-only lock discriminates on.
-//
-// 🛑 **AND THE STAGE SPLIT MAKES THE §9 GATE ASSERTABLE IN BOTH DIRECTIONS ON ONE
-// PROGRAM.** D113's rule is that the reachability of a §9 lock follows the
-// SOURCE's stage. Klefki `sv01-096` "Mischievous Lock" silences BASICS: so a
-// Veluza's Food Prep really is switched off and a Crabominable's really is not,
-// with the same object under both. Every previous member of this seam could only
-// show the positive (Radiant Charizard is a Basic) — this is the first NEGATIVE
-// control the seam has had, and Incineroar ex (a **Stage 2**) is the second.
-//
-// ⚠️ **THE UNSCOPED FIELD IS EXACT HERE RATHER THAN ASSUMED.** `SEASONED_SKILL`
-// one row over rests on a flagged assumption — its sentence names ONE attack
-// ("Blood Moon used by this Pokémon costs…") and the field discounts every attack
-// the holder has. BOTH of this slice's sentences say "**Attacks** used by this
-// Pokémon", plural and unqualified, so the field's scope IS the printed scope and
-// there is nothing to flag — and §1 asserts THAT, off the fielded sentences
-// rather than off this paragraph. `abilityAttackGate.test.ts` keeps the alarm for
-// the OTHER row (a demonstrator with a SECOND attack, so the day a two-attack
-// printing of Blood Moon is ingested the control fails loudly); this row needs no
-// such alarm, and the reason it needs none is the assertion.
-//
-// 🛑 **REACHING IS NOT DRIVING (D326).** The census counts these six printings
-// because a registry key matched; that says nothing about WHICH count source the
-// program mapped to. So §4 below asserts the MAPPING itself: Food Prep responds
-// to Kofu and NOT to the opponent's bench, Hustle Play the exact converse, and
-// each is driven on a board where the other's count is non-zero.
-
 /** The printed sentences, byte-for-byte. */
 const FOOD_PREP_TEXT =
   "Attacks used by this Pokémon cost {C} less for each Kofu card in your discard pile.";
@@ -78,19 +31,11 @@ const SONIC_EDGE = ["Colorless", "Colorless", "Colorless", "Colorless"] as const
 const HAYMAKER = ["Water", "Colorless", "Colorless", "Colorless", "Colorless"] as const;
 const BLAZE_BLAST = ["Fire", "Colorless", "Colorless", "Colorless", "Colorless"] as const;
 
-/** Kofu's printed text, off remote D1 `colorless` (`sv07-138` / `sv07-165`, both
-    `legal_standard = 1`, `trainer_type = 'Supporter'`). Cosmetic here — nothing in
-    this file plays the card, and the count is over the NAME — but fielded verbatim
-    because a fixture that invents text is a fixture that can drift from the print. */
 const KOFU_TEXT =
   "Put 2 cards from your hand on the bottom of your deck in any order. If you put 2 cards on the bottom of your deck in this way, draw 4 cards. (If you can't put 2 cards from your hand on the bottom of your deck, you can't use this card.)";
 
-/** One seed: nothing in this family flips a coin (D143's rule). */
 const SEED = 31;
 
-/** A body carrying one printed passive Ability, at a REAL catalog id so
-    `programFor` resolves the REAL registry row — D190's idiom, and required here
-    because `catalogManifest.ts` holds no `sv07` or `sv05` row at all. */
 function abilityBody(id: string, name: string, effect: string, overrides: Partial<Card>): Card {
   return battler(id, {
     retreat: 1,
@@ -125,7 +70,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Water"],
     attacks: [{ name: "Haymaker", cost: [...HAYMAKER], damage: 250 }],
   }),
-  // ⚠️ THE BASIC, AND A DIFFERENT CARD NAME ENTIRELY.
   "sv07-045": abilityBody("sv07-045", "Food Prep", FOOD_PREP_TEXT, {
     name: "Veluza",
     hp: 130,
@@ -150,9 +94,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Fire"],
     attacks: [{ name: "Blaze Blast", cost: [...BLAZE_BLAST], damage: 240 }],
   }),
-  // Kofu's TWO Standard printings (`sv07-138` / `sv07-165`), fielded as plain
-  // Supporters with no program: the count is over the NAME, and nothing here needs
-  // the card to be playable.
   "sv07-138": { ...trainerCard("sv07-138", "Supporter", KOFU_TEXT), name: "Kofu" },
   "sv07-165": { ...trainerCard("sv07-165", "Supporter", KOFU_TEXT), name: "Kofu" },
   /** THE NEAR MISS, and the reason the count is not "any Supporter": a card whose
@@ -169,9 +110,6 @@ const FOOD_DECK = deckOf({
   "sv07-045": 2,
   "sv05-034": 2,
   "sv05-187": 2,
-  // EIGHT of each Kofu printing and SIX near-misses: the opening 7 and the 6
-  // Prizes are dealt off a pinned shuffle, so a deck holding exactly the four this
-  // suite discards would run dry on the draw rather than on the rule.
   "sv07-138": 12,
   "sv07-165": 12,
   "fix-notkofu": 6,
@@ -180,9 +118,6 @@ const FOOD_DECK = deckOf({
   "fix-energy": 4,
 });
 
-/** `driveSetup`'s body against a LOCAL pool — `flipTheScript.test.ts`'s idiom
-    verbatim, and needed for its reason: `driveSetup` deals off `FIXTURE_POOL`
-    and none of this slice's six ids is in it. */
 function localSetup(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: FOOD_DECK, p2: FOOD_DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -208,10 +143,6 @@ function localSetup(seed: number): GameState {
   return state;
 }
 
-/** Both seats normalised onto the inert body with empty benches, on P1's turn 3 —
-    `attackCostDelta.test.ts`'s board, so nothing below inherits a starter that
-    carries an Ability of its own (a Klefki in the opposing spot would silence
-    every Basic holder in this file at once). */
 function board(): GameState {
   let state = localSetup(SEED);
   state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
@@ -258,8 +189,6 @@ describe("§1 the registry rows", () => {
       expect(programFor(id)?.attack).toBeUndefined();
       expect(programFor(id)?.abilities).toBeUndefined();
     }
-    // ONE object, by identity — four keys, one program, so a future edit to one
-    // printing cannot silently diverge from the other three.
     for (const id of FOOD_IDS) expect(programFor(id)).toBe(programFor("svp-134"));
   });
 
@@ -273,20 +202,15 @@ describe("§1 the registry rows", () => {
     expect(programFor("sv05-187")).toBe(programFor("sv05-034"));
   });
 
-  it("🛑 the two rows are DIFFERENT objects, and neither carries the other's field", () => {
-    // The mapping, at the type level: a slice that reached for the nearest
-    // existing field would have keyed both to the same count source and every
-    // census instrument in this repo would still have counted six.
+  it("the two rows are DIFFERENT objects, and neither carries the other's field", () => {
     expect(programFor("svp-134")).not.toBe(programFor("sv05-034"));
     expect(programFor("svp-134")?.passive?.attackCostDiscountPerOpponentBenched).toBeUndefined();
     expect(programFor("sv05-034")?.passive?.attackCostDiscountPerNamedInDiscard).toBeUndefined();
-    // …and NEITHER is the seam's FIRST count source, which is the field this row's
-    // `DROPPED` entry named as the thing it could not reuse.
     expect(programFor("svp-134")?.passive?.attackCostDiscountPerOpponentPrize).toBeUndefined();
     expect(programFor("sv05-034")?.passive?.attackCostDiscountPerOpponentPrize).toBeUndefined();
   });
 
-  it("🛑 FOUR printings and TWO card names — the group a name-keyed reader closes one id short", () => {
+  it("FOUR printings and TWO card names — the group a name-keyed reader closes one id short", () => {
     const names = FOOD_IDS.map((id) => POOL[id]?.name);
     expect(names).toEqual(["Crabominable", "Crabominable", "Veluza", "Crabominable"]);
     expect(new Set(names).size).toBe(2);
@@ -342,7 +266,7 @@ describe("§2 Food Prep — the discard-pile count", () => {
     ]);
   });
 
-  it("🛑 counts BOTH Kofu printings, because the sentence says 'each Kofu card'", () => {
+  it("counts BOTH Kofu printings, because the sentence says 'each Kofu card'", () => {
     // The whole reason the field carries a NAME and not an id. `sv07-138` and
     // `sv07-165` are two ids for one printed card, and a discard holding one of
     // each is a discard holding TWO Kofu.
@@ -359,11 +283,7 @@ describe("§2 Food Prep — the discard-pile count", () => {
     expect(POOL["fix-notkofu"]?.name).toBe("Kofu's Wailord");
   });
 
-  it("🛑 the pile is YOURS — four Kofu in the OPPONENT's discard discount nothing", () => {
-    // "for each Kofu card in **your** discard pile". The seat is derived from the
-    // body holding the passive, and the sibling count on this same scan looks the
-    // OTHER way ("your opponent has taken"), so getting this backwards would have
-    // been invisible on any one-sided board.
+  it("the pile is YOURS — four Kofu in the OPPONENT's discard discount nothing", () => {
     let state = active(board(), "p1", "sv07-042");
     state = discardFromDeck(state, "p2", "sv07-138", 4);
     expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(0);
@@ -420,7 +340,7 @@ describe("§3 Hustle Play — the opposing-bench count", () => {
     }
   });
 
-  it("🛑 counts the BENCH and not the ACTIVE — a full board is FIVE, never six", () => {
+  it("counts the BENCH and not the ACTIVE — a full board is FIVE, never six", () => {
     let state = active(board(), "p1", "sv05-034");
     state = benchN(state, "p2", 5);
     expect(state.players.p2.active).not.toBeNull();
@@ -428,7 +348,7 @@ describe("§3 Hustle Play — the opposing-bench count", () => {
     expect(effectiveAttackCost(state, activeOf(state, "p1"), BLAZE_BLAST)).toEqual(["Fire"]);
   });
 
-  it("🛑 counts the OPPONENT's bench and not YOUR OWN", () => {
+  it("counts the OPPONENT's bench and not YOUR OWN", () => {
     let state = active(board(), "p1", "sv05-034");
     state = benchN(state, "p1", 4);
     expect(state.players.p1.bench).toHaveLength(4);
@@ -443,19 +363,15 @@ describe("§3 Hustle Play — the opposing-bench count", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §4 — THE MAPPING ITSELF (D326's lesson: reaching is not driving).
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§4 the sentence → count-source mapping, driven both ways", () => {
-  it("🛑 Food Prep ignores a FULL opposing bench, on a board where Hustle Play would read five", () => {
+  it("Food Prep ignores a FULL opposing bench, on a board where Hustle Play would read five", () => {
     let state = active(board(), "p1", "sv07-042");
     state = benchN(state, "p2", 5);
     expect(state.players.p2.bench).toHaveLength(5);
     expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(0);
   });
 
-  it("🛑 Hustle Play ignores EIGHT Kofu, on a board where Food Prep would read eight", () => {
+  it("Hustle Play ignores EIGHT Kofu, on a board where Food Prep would read eight", () => {
     let state = active(board(), "p1", "sv05-034");
     state = discardFromDeck(state, "p1", "sv07-138", 4);
     state = discardFromDeck(state, "p1", "sv07-165", 4);
@@ -463,10 +379,7 @@ describe("§4 the sentence → count-source mapping, driven both ways", () => {
     expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(0);
   });
 
-  it("🛑 NEITHER reads the seam's FIRST count source — six taken Prizes discount nothing", () => {
-    // The third arm of the same check. `attackCostDiscountPerOpponentPrize` is the
-    // field this row's `DROPPED` entry said could not be reused, and a slice that
-    // reused it anyway would pass every census in this repo and fail here.
+  it("NEITHER reads the seam's FIRST count source — six taken Prizes discount nothing", () => {
     for (const id of ["sv07-042", "sv05-034"]) {
       let state = active(board(), "p1", id);
       state = setPrizes(state, "p2", 0);
@@ -497,10 +410,7 @@ describe("§5 the §9 lock — the seam's first NEGATIVE control", () => {
     expect(effectiveAttackCost(state, activeOf(state, "p1"), SONIC_EDGE)).toEqual([...SONIC_EDGE]);
   });
 
-  it("🛑 does NOT silence Crabominable — SAME program object, STAGE 1 holder", () => {
-    // The controlled pair. One program, two printings, opposite outcomes under the
-    // identical lock — which is only possible because the four printings of this
-    // sentence do not all share a stage.
+  it("does NOT silence Crabominable — SAME program object, STAGE 1 holder", () => {
     let state = active(board(), "p1", "sv07-042");
     state = discardFromDeck(state, "p1", "sv07-138", 4);
     state = withLock(state);
@@ -508,7 +418,7 @@ describe("§5 the §9 lock — the seam's first NEGATIVE control", () => {
     expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(4);
   });
 
-  it("🛑 does NOT silence Incineroar ex — a STAGE 2 holder", () => {
+  it("does NOT silence Incineroar ex — a STAGE 2 holder", () => {
     // The lock goes in FIRST and the bench is built behind it, because promoting a
     // body out of the Active spot pushes the displaced one onto the bench — which
     // would make the count 4 and the assertion accidental.

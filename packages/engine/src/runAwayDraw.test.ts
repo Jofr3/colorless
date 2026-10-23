@@ -15,94 +15,12 @@ import {
   setDamage,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
 
-// ── D311 — "ONCE DURING YOUR TURN, YOU MAY DRAW 3 CARDS. IF YOU DREW ANY CARDS IN
-//    THIS WAY, SHUFFLE THIS POKÉMON AND ALL ATTACHED CARDS INTO YOUR DECK."
-//    THE SELF-REMOVAL FAMILY'S **ABILITY** HALF. ─────────────────────────────
-//
-// THE POPULATION, queried against remote Cloudflare D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, WHOLE
-// COLUMN read (D306's rule — every arm, `damage` and `cost` included):
-//
-//   SELECT id, name, category, stage, evolve_from, legal_standard,
-//          types_json, abilities_json, attacks_json, effect
-//     FROM cards
-//    WHERE instr(coalesce(abilities_json,''),'this Pokémon and all attached cards') > 0
-//       OR instr(coalesce(attacks_json,''),  'this Pokémon and all attached cards') > 0
-//       OR instr(coalesce(effect,''),        'this Pokémon and all attached cards') > 0;
-//
-// **EIGHT LEGAL ROWS**, and two of them are Dudunsparce `sv05-129` /
-// `sv08.5-080` — `Stage1` off `Dunsparce`, 140 HP, retreat 3,
-// `types_json = ["Colorless"]`, one attack ("Land Crush", `cost` three
-// Colorless, `damage: 90`, **no `effect` key**, so this row contributes ZERO
-// attack units and cannot move `BUILT.attack` even in principle).
-//
-// ── 🛑 THE HANDOFF'S CENSUS WAS RIGHT AND STILL SHORT, AND THAT IS THIS
-//    SLICE'S FIRST RESULT. ──────────────────────────────────────────────────
-//
-// The `returnBenched` doc block has carried a refused list since D299 whose
-// quoted statement sweeps `attacks_json` ALONE. D310 re-ran it across
-// `abilities_json` too, found this card, and handed the corrected count over as
-// EIGHT. **Eight is what a wider set of COLUMNS returns for the SAME LITERAL,
-// and the literal is the other half of the same mistake:**
-//
-//   SELECT id, name, legal_standard, abilities_json, attacks_json, effect
-//     FROM cards
-//    WHERE legal_standard = 1
-//      AND (instr(coalesce(abilities_json,''),'it and all attached cards') > 0
-//        OR instr(coalesce(attacks_json,''),  'it and all attached cards') > 0
-//        OR instr(coalesce(effect,''),        'it and all attached cards') > 0);
-//
-// returns **Abra `sv06-080`** — *"Once during your turn, if this Pokémon is in
-// the Active Spot, you may shuffle **it** and all attached cards into your
-// deck."* The same removal, spelled with a PRONOUN, which
-// `'this Pokémon and all attached cards'` cannot see at ANY column width. (The
-// other two rows the pronoun query returns are Sylveon `svp-172`/`sv06.5-022`,
-// where "that Pokémon" is the OPPONENT's chosen body — already built at D299.)
-//
-// ⚠️ **A CENSUS IS AS NARROW AS *BOTH* THE COLUMNS ITS QUERY NAMES AND THE
-// LITERAL IT MATCHES. WIDENING ONE PROVES NOTHING ABOUT THE OTHER.**
-//
-// ── 🛑 THE BLOCKER, SETTLED AGAINST THE CODE RATHER THAN AGAINST THE PRICE ──
-//
-// The row arrived priced as *"an ABILITY with no Active-Spot clause, so a
-// BENCHED Dudunsparce removing itself owes no promotion at all"*, with the
-// Active half deferred. **Both halves of that are answered here, and the answer
-// to the second one is what made the slice affordable:**
-//
-//   • The Active case genuinely DOES owe a promotion. `settleProgram` (flow.ts)
-//     ends in `resolveMidTurnKnockOuts`, which swept KNOCK OUTS only, and
-//     `returnBenched` hard-refuses a non-bench ref — so nothing in the engine
-//     had ever left the Active Spot empty without a Knock Out.
-//   • **And the promotion was never a STAGE, it was a QUEUEING SEAM.**
-//     `PendingStage {kind:"promote"}` has been total over the three boards it
-//     can meet since M4: it POPS on a spot something refilled, AUTO-RESOLVES a
-//     Bench of one, and falls into the §14.2 loss on a Bench of none. The whole
-//     cost is asking for it. §3 and §4 below drive all three.
-//
-// That is D307's third question — *does the new caller actually reach the
-// stage* — answered for the fourth time in five slices, and this time the honest
-// answer is "yes, and the stage was already there".
-//
-// ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
-//
-// ONE new `EffectOp` (`returnSelf`), ONE optional field on `drawCards`
-// (`recordAs`), ONE queueing seam and ONE registry row over TWO ids. **NO new
-// `PendingStage` kind, prompt kind, choice kind, event, error code, `GameState`
-// field, `AbilityProgram` field, regex or deriver arm** — `POKEMON_RETURNED` and
-// `PROMOTION_REQUIRED` are both reused, and there is no ability deriver in this
-// engine at all, which is why an ability row is registry-keyed by construction
-// and buys exactly its own legal printings. `packages/schema` takes ZERO.
-
-/** The printed sentence, transcribed off the D1 row rather than assembled
-    (D306: transcribe, never interpolate). */
 const PRINTED =
   "Once during your turn, you may draw 3 cards. If you drew any cards in this way, shuffle this Pokémon and all attached cards into your deck.";
 
-/** Abra `sv06-080` "Teleporter" — the PRONOUN spelling this slice's census
-    correction turns on. Transcribed off the D1 row; not built, and asserted
-    UNBUILT in §7 so the list and the registry cannot drift apart. */
 const ABRA_PRINTED =
   "Once during your turn, if this Pokémon is in the Active Spot, you may shuffle it and all attached cards into your deck.";
 
@@ -112,13 +30,6 @@ const FILLER = "fix-d311-filler";
 const TOOL = "fix-d311-tool";
 const ENERGY = "fix-d311-energy";
 
-/** The LOCAL pool (D275's idiom). The two real ids live HERE and not in
-    `FIXTURE_POOL`, deliberately: `catalogManifest.test.ts` diffs every `sv*` id
-    in that pool against the 978-row / 6-set manifest, which holds
-    sv01/sv02/sv03/sv06.5 ONLY — so a real `sv05`/`sv08.5` fixture there would
-    fail, and a `fix-*` demonstrator is the price a TRAINER pays for that. A
-    Pokémon BODY does not: it is put into play by surgery off a local deck, so
-    the real ids are driven directly and NO demonstrator is owed. */
 const LOCAL_CARDS: Record<string, Card> = {
   [DUDUNSPARCE]: battler(DUDUNSPARCE, {
     name: "Dudunsparce",
@@ -161,13 +72,7 @@ const DECK = deckOf({
   [ENERGY]: 36,
 });
 
-/** Two seeds — nothing below rests on one shuffle (D270). */
 const SEEDS = [3119, 3121] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -273,7 +178,6 @@ function find<T extends GameEvent["type"]>(
 // ────────────────────────────────────────────────────────────────────────────
 describe("D311 §1 — the print, the population, and the registry row that maps it", () => {
   it("the fixture carries the printed sentence VERBATIM, on BOTH printings", () => {
-    // D183's rule: author and assert against the printed bytes, not a paraphrase.
     for (const id of [DUDUNSPARCE, REPRINT]) {
       expect(POOL[id]?.abilities?.[0]?.effect).toBe(PRINTED);
       expect(POOL[id]?.abilities?.[0]?.name).toBe("Run Away Draw");
@@ -347,7 +251,6 @@ describe("D311 §2 — the BENCH case: the body and everything on it go into the
       expect(returned?.dest).toBe("deck");
       expect(returned?.uid).toBe(body.stack[body.stack.length - 1]);
       expect([...(returned?.uids ?? [])].sort()).toEqual([...carried].sort());
-      // A deck destination is shuffled, and the shuffle is its own row (D299).
       expect(find(events, "SHUFFLE")?.seat).toBe("p1");
     });
   }
@@ -415,7 +318,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
     expect(find(events, "PROMOTION_REQUIRED")).toBeUndefined();
   });
 
-  it("🛑 a Bench of NONE is the §14.2 LOSS, and it costs no code at all", () => {
+  it("a Bench of NONE is the §14.2 LOSS, and it costs no code at all", () => {
     const before = active(0);
     expect(before.players.p1.bench).toHaveLength(0);
     const after = apply(before, USE_ACTIVE).state;
@@ -433,7 +336,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
     expect(after.players.p1.hand.length).toBe(hand + 3);
   });
 
-  it("🛑 a KO'd seat is NOT given a SECOND promotion — the seam skips what the batch named", () => {
+  it("a KO'd seat is NOT given a SECOND promotion — the seam skips what the batch named", () => {
     // The dedup case, reached through the function itself: a lethal Active is
     // KO'd by `collectKnockOuts`, which empties the spot AND queues the
     // promotion. Without the skip, the empty-spot sweep would queue another.
@@ -473,7 +376,7 @@ describe("D311 §4 — the printed 'in this way', which is not decoration", () =
     expect(after.players.p1.deck).toHaveLength(1);
   });
 
-  it("🛑 an EMPTY deck on the ACTIVE owes NO promotion either — the gate is upstream of the seam", () => {
+  it("an EMPTY deck on the ACTIVE owes NO promotion either — the gate is upstream of the seam", () => {
     const before = deckOfSize(active(2), 0);
     const { state: after, events } = apply(before, USE_ACTIVE);
     expect(after.players.p1.active).not.toBeNull();
@@ -498,7 +401,6 @@ describe("D311 §5 — §9's once-per-turn, and the scope it is NOT", () => {
   it("the ability is usable from the ACTIVE SPOT — `activeOnly` is false and the print says so", () => {
     const result = applyAction(active(2), USE_ACTIVE);
     expect(result.ok).toBe(true);
-    // …and the reject that WOULD fire if the row carried Abra's clause.
     expect(result.ok === false && result.error.code).not.toBe("ABILITY_ACTIVE_ONLY");
   });
 });
@@ -512,9 +414,6 @@ describe("D311 §6 — the record slot, and why `MATCH_RECORD_VERSION` does not 
     const program = programFor(DUDUNSPARCE)?.abilities?.[0]?.program ?? [];
     const draw = program[0];
     expect(draw?.op === "drawCards" && draw.recordAs).toBe("moved");
-    // The widening is OPTIONAL at the type level, which is the whole claim: the
-    // op is well-formed without it, and every op authored before this slice is
-    // unchanged.
     const v18Shaped = { op: "drawCards", count: 3 } as const;
     expect(Object.hasOwn(v18Shaped, "recordAs")).toBe(false);
   });
@@ -532,61 +431,29 @@ describe("D311 §6 — the record slot, and why `MATCH_RECORD_VERSION` does not 
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D311 §7 — the CORRECTED census, and what each remaining printing owes", () => {
-  /** The self-removal family, re-derived 2026-08-10 over `attacks_json` +
-      `abilities_json` + `effect` at `legal_standard = 1`.
-      🆕 **RE-POINTED AT D312 FROM NINE TO THIRTEEN**, and the four it gains are
-      the whole lesson: D311's union of `'this Pokémon and all attached cards'`
-      and `'it and all attached cards'` fixed the COLUMNS and then the LITERAL,
-      and both fixes are blind to a sentence that prints the noun and the
-      participle the other way round. `'cards attached'` returns **Team Rocket's
-      Crobat ex ×4**, which no literal containing the substring `attached cards`
-      can match at ANY column width. The `owes` string is the mechanism the engine
-      still lacks, and the built rows carry `null`. */
   const FAMILY: readonly (readonly [string, string, string | null])[] = [
     ["sv05-129", "Dudunsparce — Run Away Draw (Ability)", null],
     ["sv08.5-080", "Dudunsparce — Run Away Draw (Ability, reprint)", null],
-    ["sv06-080", "Abra — Teleporter (Ability, activeOnly)", null], // 🆕 BUILT at D312
-    ["sv08-131", "Gholdengo — Surf Back (attack idx 1)", null], // 🆕 BUILT at D312
+    ["sv06-080", "Abra — Teleporter (Ability, activeOnly)", null],
+    ["sv08-131", "Gholdengo — Surf Back (attack idx 1)", null],
     [
       "sv06-043",
       "Poliwrath — Jumping Uppercut (attack)",
       "a conditional damage BOOST behind the decision",
     ],
-    // 🆕 D314 — BUILT, and the `owes` string it carried for three sessions was
-    // WRONG about the field. There is no `recordAs`: the printed *"If you do"*
-    // has no separating board on this card (see `breezyGift.test.ts` §2), so the
-    // row is `returnSelf` + `searchDeck` + `shuffleDeck`, three existing ops.
-    ["sv07-011", "Eldegoss — Breezy Gift (attack idx 0)", null], // 🆕 BUILT at D314
-    // 🆕 D313 — the DESTINATION axis, all three remaining zones at once. `dest`
-    // could not be authored honestly over one spelling (D311 and D312 both refused
-    // it and said so), so these seven landed together.
-    ["sv09-068", "Lillie's Comfey — Fade Out (attack idx 1)", null], // 🆕 BUILT at D313
-    ["sv06.5-015", "Revavroom ex — Shattering Speed (attack idx 1)", null], // 🆕 BUILT at D313
-    ["sv06.5-081", "Revavroom ex — Shattering Speed (idx 1, reprint)", null], // 🆕 BUILT at D313
-    // 🆕 D312's WORD-ORDER FIND, BUILT AT D313 — the body to the HAND and the
-    // attachments to the DISCARD, a SPLIT destination neither Comfey nor Revavroom
-    // has, and the reason `dest` is one zone plus an override rather than two.
-    ["sv10-122", "Team Rocket's Crobat ex — Assassin's Return", null], // 🆕 BUILT at D313
-    ["sv10-217", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
-    ["sv10-234", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
-    ["sv10-242", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
+    ["sv07-011", "Eldegoss — Breezy Gift (attack idx 0)", null],
+    ["sv09-068", "Lillie's Comfey — Fade Out (attack idx 1)", null],
+    ["sv06.5-015", "Revavroom ex — Shattering Speed (attack idx 1)", null],
+    ["sv06.5-081", "Revavroom ex — Shattering Speed (idx 1, reprint)", null],
+    ["sv10-122", "Team Rocket's Crobat ex — Assassin's Return", null],
+    ["sv10-217", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null],
+    ["sv10-234", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null],
+    ["sv10-242", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null],
   ];
 
-  it("🆕 the family is THIRTEEN — re-pointed at D312 — and TWELVE are built at D314", () => {
-    // ⚠️ THIS RUNG WAS WRITTEN AT D311 SAYING NINE, AND IT WAS WRONG THEN. Kept as
-    // the record of how a census that had already been corrected twice was still
-    // short: the fix is not a wider column set and not a shorter literal, it is
-    // reading the printed sentence for a spelling the query cannot imagine.
+  it("the family is THIRTEEN — re-pointed at D312 — and TWELVE are built at D314", () => {
     expect(FAMILY).toHaveLength(13);
     const built = FAMILY.filter(([, , owes]) => owes === null).map(([id]) => id);
-    // 🆕 D314 — 11 → 12, and the ONE left is refused on a piece no registry row
-    // can supply. D313 wrote that the two remaining COMPOUNDS were each behind
-    // "one named piece"; Eldegoss's named piece turned out not to exist (no
-    // `recordAs` is owed), and Poliwrath's is a change to the DAMAGE FOLD rather
-    // than a field — *"You may do 120 more damage"* puts a player decision in
-    // FRONT of §8.5, which `attack.ts` folds before the program runs. `effects.ts`
-    // already refuses the identical shape one family over (Copperajah
-    // `sv06.5-042`). **So the family cannot be closed by another registry row.**
     expect(built).toEqual([
       DUDUNSPARCE,
       REPRINT,
@@ -605,24 +472,7 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     expect(owed).toEqual(["sv06-043"]);
   });
 
-  it("🛑 every REFUSED printing is refused LIVE — no registry row hides behind the list", () => {
-    // The converse guard D304 taught: a list of "not built" that nobody asks the
-    // registry about is a list that rots the moment a row lands.
-    //
-    // ⚠️ THE QUESTION IS ABOUT THE SENTENCE AND NOT ABOUT THE CARD, which this
-    // rung learned the hard way: Lillie's Comfey `sv09-068` DOES carry a registry
-    // program — for its OTHER attack, "Inviting Flowers" — and a bare
-    // `programFor(id) === undefined` would have called the card built and gone red
-    // on a row that has nothing to do with this family. The live question is
-    // whether any authored op on that id is a `returnSelf`.
-    //
-    // 🆕 **D312 WIDENED THAT LESSON AND THIS RUNG WITH IT.** The old shape also
-    // asserted `programFor(id)?.abilities` on every BUILT row, which was true only
-    // while every built row happened to be an Ability. Gholdengo `sv08-131` is a
-    // registry ATTACK, so "built" is now the `returnSelf` and nothing else — and
-    // the refusal half gained TWO more cards that carry a program for an unrelated
-    // printed sentence (Crobat ex ×4, "Biting Spree"), which is Comfey's own shape
-    // arriving four more times.
+  it("every REFUSED printing is refused LIVE — no registry row hides behind the list", () => {
     for (const [id, , owes] of FAMILY) {
       const authored = JSON.stringify(programFor(id) ?? null);
       if (owes === null) {
@@ -631,16 +481,6 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
         expect(authored, id).not.toContain('"returnSelf"');
       }
     }
-    // 🆕 **D313 — THE WITNESS LIST IS NOW EMPTY, AND THAT IS THE OPPOSITE OF THIS
-    // RUNG GOING VACUOUS.** D311 and D312 kept a list of refused printings that
-    // nonetheless carried a program for an unrelated sentence (Comfey, Crobat ex
-    // ×4) precisely because a bare `toBeUndefined()` would have called them built.
-    // This slice BUILDS all five, so the list empties — and the discrimination it
-    // was making is now carried by the loop above, which asks about the OP and not
-    // about the card, on eleven built rows instead of four. ⚠️ The two refusals
-    // that remain are cards with NO registry program at all, so the assertion
-    // below can only stay green while that is true: build Poliwrath's other attack
-    // and this reddens, which is exactly the rot it was written to catch.
     const refusedButProgrammed = FAMILY.filter(
       ([id, , owes]) => owes !== null && programFor(id) !== undefined,
     ).map(([id]) => id);

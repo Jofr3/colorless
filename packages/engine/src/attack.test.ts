@@ -191,10 +191,6 @@ describe("damage pipeline (§8.5)", () => {
     expect(first.events.find((e) => e.type === "DAMAGE_DEALT")).toEqual({
       type: "DAMAGE_DEALT",
       seat: "p2",
-      // 🆕🆕 D425 — the DEALER, required on this row since the own-side bench spread
-      // made `otherSeat(seat)` a wrong answer for the first time. This is the
-      // STRICT-equality rung in the repo, so it is where a build that dropped the
-      // field or filled it from the damaged seat goes red.
       by: "p1",
       uid: defenderUid,
       base: 30,
@@ -256,10 +252,6 @@ describe("damage pipeline (§8.5)", () => {
   });
 
   it("simulates a self-damage-counter scaling clause, no longer flagged", () => {
-    // fix-attacker's Rage — "This attack does 10 more damage for each damage
-    // counter on this Pokémon." — now DERIVES (0.34.0), so its "+" is simulated
-    // rather than flagged. At 0 damage counters it just deals its printed base 10,
-    // with no `scaled`; the deep scaling coverage lives in scaledDamage.test.ts.
     const { events } = mustApply(matchup("fix-wall"), { type: "attack", seat: "p1", index: 3 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     const dealt = events.find((e) => e.type === "DAMAGE_DEALT");
@@ -380,11 +372,6 @@ describe("prize taking (§8.1)", () => {
   });
 
   it("handles a multi-prize pick (the ex flow) including duplicate rejection", () => {
-    // Craft the 2-prize decision directly — in BOTH encodings (the phase AND the
-    // head pending stage), exactly the way parking writes them — to pin the PICK
-    // HANDLER (duplicate rejection) in isolation; prizeValue.test.ts covers the
-    // KO→count wiring that now feeds it (an ex/V owes 2 via prizeValueOf). The
-    // handler cross-checks the two encodings and the resolution takes `count`.
     const { state } = parkedOnPrizes();
     const twoPrize: GameState = {
       ...state,
@@ -491,9 +478,6 @@ describe("promotion (§8.1)", () => {
       uid: chosen === undefined ? "?" : topUid(chosen),
       benchIndex: 1,
     });
-    // Unchanged but for the §8.1 move itself: the replacement is stamped with
-    // the turn it came up on (D124's `promotedTurn`), which is the ATTACKER's
-    // turn — so it reads "did not move this turn" once p2's own turn starts.
     expect(done.players.p2.active).toEqual({ ...chosen, promotedTurn: state.turn });
     expect(done.players.p2.bench).toEqual([remaining]);
     expect(types(events)).toEqual([
@@ -618,7 +602,7 @@ describe("allowances across interrupts", () => {
       supporterPlayedUid: null,
       endOfTurnHandDiscard: null,
       attackAgainUid: null,
-    }); // 🆕🆕🆕 D570 — no Festival Lead attack-again window open, wiped with the rest (REQUIRED, MRV 36 → 37) // 🆕🆕🆕 D564 — the played Supporter's uid and Amarys's pending threshold, wiped with the rest (both REQUIRED, MRV 35 → 36) // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
+    });
   });
 });
 

@@ -11,104 +11,9 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ── D340 — FROSLASS `sv06-053`/`sv06-174`/`svp-117` "FREEZING SHROUD", THE
-//    SELF-EXEMPTING CHECKUP AURA. ────────────────────────────────────────────
-//
-// ── THE PRINTED SENTENCE ────────────────────────────────────────────────────
-//   "During Pokémon Checkup, put 1 damage counter on each Pokémon that has an
-//    Ability (both yours and your opponent's), **except any Froslass**."
-//   An ABILITY, `trigger: "betweenTurns"`. **3 Standard-legal printings.**
-//
-// ── 🛑 WHY THIS ROW AND NOT IRON CROWN EX — THE BACKLOG WAS MISPRICED ───────
-// The resume point sent this session at Iron Crown ex's *"Future Pokémon,
-// except any Iron Crown ex"* aura, split into a blocked half and a *"genuinely
-// cheaper engine half"*. **BOTH HALVES ARE REFUSED, AND THE SECOND FOR A REASON
-// THE HANDOFF HAD BACKWARDS.**
-//
-//   (1) THE SUBTYPE PREDICATE IS BLOCKED ON THE INGEST, re-derived at this head
-//       rather than carried: `SELECT suffix, COUNT(*) FROM cards GROUP BY 1`
-//       returns exactly two rows — NULL 3,157 and `ex` 629. 3,157 + 629 = 3,786
-//       ✅, the whole table. **NO COLUMN CLASSIFIES THE Ancient/Future BANNER**,
-//       so a `CardFilter` member for *"Future"* would have nothing to read.
-//       (🆕🆕🆕 D569 (D539): ~~would have nothing to read~~ WITHDRAWN — `bannerPokemon`
-//       reads `banners.ts`, an engine table keyed by printing id (D568 Tera, D569
-//       Ancient/Future), and Cobalt Command is BUILT on it; "NO COLUMN CLASSIFIES the
-//       banner" stays TRUE.)
-//
-//   (2) THE BY-NAME EXEMPTION IS NOT A MISSING CAPABILITY — **IT SHIPPED AT
-//       D273.** The handoff priced it as *"a genuine engine addition, because
-//       `CardFilter` has no negation member of any kind"*. The premise is TRUE
-//       (the union has 19 members and `anyOf` is its only combinator — grepped,
-//       not assumed) and the CONCLUSION does not follow, because this engine does
-//       not negate through the filter union at all. It negates through a RIDER,
-//       and it has done so TWICE and on purpose:
-//         • `switchActive.exceptNamed` (D273) — Pecharunt ex `sv06.5-039`/
-//           `-085`/`-093`/`-095`/`sv08.5-163`, *"except any Pecharunt ex"*, 5
-//           legal and BUILT;
-//         • `preventOpponentPokemonPlay.only`/`except` (D285, continuous.ts) —
-//           *"except for Team Rocket's Pokémon"*, the same subtraction shape.
-//       `switchActive.exceptNamed`'s own doc block PRICED the `CardFilter` route
-//       and REFUSED it in writing: a `notNamed` member would need `allOf` (the
-//       printed noun is an INTERSECTION) plus a `retrieveNoun` arm no printing
-//       drives — *"two union members and a dead caption arm, to say what one
-//       string field says"*. **D330's shape exactly: THE PIECE HAD ALREADY
-//       SHIPPED**, and adding `except` to `seatDamageBonusBeforeWR` on its own
-//       would be a member with NO CONSUMER, since its beneficiary noun is the
-//       unreadable banner from (1).
-//
-// ── THE CENSUS THAT FOUND THIS ROW: THE *GRAMMAR*, NOT THE CARD ─────────────
-// Re-queried against remote D1 `colorless` (3,786 rows, 2,021 `legal_standard`)
-// on 2026-08-15, across ALL THREE text columns, selecting the WHOLE column.
-//
-//   `instr(<col>,'except any') > 0`:
-//     `abilities_json`  19 rows / 14 legal
-//     `attacks_json`     1 row  /  0 legal   (Simisage `sv04-005`)
-//     `effect`           0 rows /  0 legal
-//   TOTAL **20 printings / 14 legal**.  19 + 1 + 0 = 20 ✅  14 + 0 + 0 = 14 ✅
-//
-// Those 20 are **FIVE SENTENCES ON FIVE CARDS**, and only three are legal:
-//     • Iron Crown ex   6 legal — BLOCKED on the banner, see (1) above
-//                         (🆕🆕🆕 D569 (D539): ~~BLOCKED~~ BUILT — Cobalt Command ×6, over
-//                         `banners.ts`; so all 14 legal printings of the family are built)
-//     • Pecharunt ex    5 legal — **BUILT at D273**
-//     • Froslass        3 legal — **THIS ROW**, the last legal one unbuilt
-//     • Ditto ×2, Moltres/Articuno/Zapdos ×3, Simisage ×1 — `legal_standard = 0`
-//   6 + 5 + 3 = 14 ✅, and 14 + 2 + 3 + 1 = 20 ✅.
-//
-// 🛑 **THE ILLEGAL THREE ARE THE SHARPEST NEAR-MISS THIS FAMILY HAS**: Moltres
-//    `swsh10.5-012` prints *"Your Basic Fire Pokémon's attacks, **except any
-//    Moltres**, do 10 more damage … (before applying Weakness and Resistance)"* —
-//    Iron Crown ex's aura with a base noun the engine CAN read. It is rotated out
-//    of Standard, so it buys nothing; it is named here because it is the printing
-//    that would unblock `seatDamageBonusBeforeWR.exceptNamed`, and the next
-//    session should not have to re-find it.
-//
-// ── THE SUMMAND THIS ROW MOVES, AND WHAT IT IS KEYED ON ────────────────────
-// **`BUILT.ability` 249 → 252, KEYED ON LEGALITY** (all three printings are
-// `legal_standard = 1`), so `built` 1,555 → 1,558 and the residue 828 → 825.
-//
-// ⚠️ **`BUILT.attack` STANDS STILL ON ALL THREE SUMMANDS (1,164 raw / 16
-//    registry / 13 split) AND IT IS MEASURED, NOT ASSUMED.** All three ids carry
-//    `effect IS NULL` against a **65-char** `attacks_json` holding a bare attack
-//    with NO effect text, and a byte-identical **192-char** `abilities_json`
-//    (`IS NULL` / `length()` / `category`, remote D1, 2026-08-15). So no attack
-//    reader can resolve anything on any of the three, `BUILT.trainer` (105) and
-//    `BUILT.specialEnergy` (8) cannot see the sentence at all, and `unbuiltAttack`
-//    holds at 539.
-//
-// ── THE ENGINE DIFF — ONE OP, AND THE FIRST IN FOUR SLICES ─────────────────
-// D337/D338/D339 were zero-diff registry rows. This one authors `counterEachAll`,
-// `healEachAll`'s COUNTER TWIN — and the parenthetical is the argument: Picnic
-// Basket prints *"each Pokémon **(both yours and your opponent's)**"* and this
-// card prints the same six words, so the seat-blind `SEATS` walk is the printed
-// shape rather than a generalisation. `filter: abilityPokemon` reuses D285's
-// existing member whole; `exceptNamed` reuses D273's rider spelling verbatim.
-//
-// ⚠️ **NO `flow.ts` DIFF**: `trigger: "betweenTurns"` and `runCheckupTriggers`
-//    already existed, and the Checkup's own KO sweep resolves a counter-caused
-//    Knock Out — `damageActive`'s contract at the same trigger since Trevenant.
 
 const FROSLASS = "sv06-053";
 const FROSLASS_REPRINT = "sv06-174";
@@ -120,13 +25,7 @@ const ABILITY_BODY = "fix-d340-abilitybody";
 /** The SAME body without an Ability — the noun's negative case, and the only
     thing separating it from `ABILITY_BODY` is the `abilities` array itself. */
 const PLAIN_BODY = "fix-d340-plainbody";
-/** 🛑 A body NAMED "Froslass" that is NOT one of the three catalog ids and has
-    NO registry program. The exemption is keyed on the printed NAME, so this must
-    be exempt too — and it is the body that tells `card.name === exceptNamed`
-    apart from any read of the SOURCE, of the id, or of the program. */
 const IMPOSTOR_FROSLASS = "fix-d340-impostor";
-/** 🛑 A name that strictly CONTAINS "Froslass" as a prefix. **NOT exempt** — it
-    catches a `startsWith` where the printed word is an equality. */
 const FROSLASSY = "fix-d340-froslassy";
 const WALL = "fix-d340-wall";
 const ENERGY = "fix-d340-energy";
@@ -229,11 +128,6 @@ const DECK = deckOf({
   [ENERGY]: 10,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function countersOn(events: readonly GameEvent[]): { seat: Seat; uid: string; amount: number }[] {
   return events
     .filter(
@@ -242,21 +136,6 @@ function countersOn(events: readonly GameEvent[]): { seat: Seat; uid: string; am
     .map((e) => ({ seat: e.seat, uid: e.uid, amount: e.amount }));
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
-/** Setup driven against a LOCAL `cardPool` (D275's idiom, D338's and D339's
-    practice). Nothing is added to `FIXTURE_POOL` — which is what keeps
-    `raw.length`'s two lines 0 apart.
-    🛑 D343: this note used to end "and `revealClause`'s `swept.size` at 27". The
-    sweep's population is now `registryCardIds()` ∪ the pool and `swept.size` is
-    **103**, so the pool clause buys nothing here any more. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -314,9 +193,6 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
     const first = programFor(FROSLASS);
     expect(first).toBeDefined();
     for (const id of FROSLASS_IDS) {
-      // Identity, not deep equality: three separate-but-equal objects would pass a
-      // `toEqual` and would be three rows in `censusAtHead`'s object decomposition,
-      // which this slice asserts steps by exactly ONE.
       expect(programFor(id), id).toBe(first);
     }
   });
@@ -328,9 +204,6 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
     const ability = program?.triggered?.[0];
     expect(ability?.name).toBe("Freezing Shroud");
     expect(ability?.trigger).toBe("betweenTurns");
-    // 🛑 NO `activeOnly` — the printed sentence carries no spot clause, where
-    // Trevenant's "if this Pokémon is in the Active Spot" does. That absence is
-    // the whole difference between the two Checkup rows, and §3 drives it.
     expect(ability?.activeOnly).toBeUndefined();
     // Mandatory: "put", not "you may put".
     expect(ability?.optional).toBeUndefined();
@@ -345,11 +218,6 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
         op: "counterEachAll",
         amount: 10,
         filter: { kind: "abilityPokemon" },
-        // 🆕🆕🆕 D450 — TWO REQUIRED FIELDS ARRIVED WITH THE OP'S FIRST ATTACK PRODUCER,
-        // and this row's values are the ones that were HARDCODED in the interpreter
-        // until then: the printed parenthetical is `side: "both"`, and the provenance
-        // the COUNTERS_PLACED row prints is `source: "ability"` — true of this trigger
-        // and false of every one of `deriveAttackEffect`'s three fold arms.
         side: "both",
         source: "ability",
         exceptNamed: "Froslass",
@@ -357,21 +225,13 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
     ]);
   });
 
-  it("🛑 `amount` is 10 HP and NOT the printed 1 — the ×10 happens once", () => {
+  it("`amount` is 10 HP and NOT the printed 1 — the ×10 happens once", () => {
     const op = programFor(FROSLASS)?.triggered?.[0]?.program?.[0];
-    // ⚠️ THE MUTANT THIS KILLS: `amount: 1`. The printed text says "1 damage
-    // counter"; §12 makes a counter 10 HP, and the conversion is done HERE at the
-    // registry (TREVENANT's rule) so the interpreter cannot convert twice. A `1`
-    // would be a silent tenth-strength aura that every board-level assertion below
-    // would also catch — which is the point of asserting it in both places.
     expect(op).toMatchObject({ amount: 10 });
   });
 
-  it("🛑 `exceptNamed` is the FULL printed name and matches the catalog rows", () => {
+  it("`exceptNamed` is the FULL printed name and matches the catalog rows", () => {
     const op = programFor(FROSLASS)?.triggered?.[0]?.program?.[0];
-    // ⚠️ THE MUTANT THIS KILLS: `exceptNamed: "Froslas"` / `"Froslass ex"`. The
-    // rider is exact-case equality on `Card.name`, so a truncation or a suffix
-    // would silently stop exempting the card the sentence names.
     expect(op).toMatchObject({ exceptNamed: "Froslass" });
     for (const id of FROSLASS_IDS) {
       expect(LOCAL_CARDS[id]?.name, id).toBe("Froslass");
@@ -383,8 +243,6 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
     const live = registryCardIds()
       .filter((id) => programFor(id) === target)
       .sort();
-    // Both directions: an id added to the registry without a census visit reddens
-    // here, and an id removed from the registry reddens here too.
     expect(live).toEqual([...FROSLASS_IDS].sort());
   });
 });
@@ -398,12 +256,9 @@ describe("D340 §2 — the printed noun: only Pokémon that HAVE an Ability", ()
     expect(damageOf(after, "p1", 2)).toBe(0);
   });
 
-  it("🛑 the WALL is untouched — the filter is not `anyPokemon`", () => {
+  it("the WALL is untouched — the filter is not `anyPokemon`", () => {
     const state = board({ p1: [WALL, ABILITY_BODY, FROSLASS], p2: [WALL, PLAIN_BODY] });
     const after = checkup(state).state;
-    // ⚠️ THE MUTANT THIS KILLS: `filter: { kind: "anyPokemon" }`. Every body on
-    // this board that lacks an Ability sits at 0, on BOTH seats, so a widened
-    // filter reddens in four places at once rather than one.
     expect(damageOf(after, "p1", 0)).toBe(0);
     expect(damageOf(after, "p2", 0)).toBe(0);
     expect(damageOf(after, "p2", 1)).toBe(0);
@@ -411,16 +266,10 @@ describe("D340 §2 — the printed noun: only Pokémon that HAVE an Ability", ()
   });
 
   it("the two bodies differ in `abilities` and in NOTHING else — the attribution control", () => {
-    // Without this, §2's first case could pass because the two fixtures differ in
-    // HP, type or attacks and the filter read one of THOSE. D214's rule: a check
-    // whose subject is a shared artifact needs an attribution control.
     const withAbility = { ...LOCAL_CARDS[ABILITY_BODY], id: "", name: "", abilities: undefined };
     const without = { ...LOCAL_CARDS[PLAIN_BODY], id: "", name: "", abilities: undefined };
     expect(withAbility).toEqual(without);
     expect(LOCAL_CARDS[ABILITY_BODY]?.abilities).toHaveLength(1);
-    // ⚠️ `battler`'s blank spells an absent Ability as `null`, not `undefined` —
-    // asserted as the falsy value it actually is rather than the one a reader
-    // would guess, because `toBeUndefined()` passes on neither.
     expect(LOCAL_CARDS[PLAIN_BODY]?.abilities).toBeNull();
   });
 });
@@ -433,10 +282,6 @@ describe("D340 §3 — *(both yours and your opponent's)*: the seat-blind walk",
     });
     const after = checkup(state).state;
     expect(damageOf(after, "p1", 1)).toBe(10);
-    // ⚠️ THE MUTANT THIS KILLS: a `ctx.seat` walk instead of a `SEATS` walk —
-    // `healEach` instead of `healEachAll`. The opponent's two bodies would sit at
-    // 0 and the controller's would be right, which is exactly the shape a
-    // single-seat board could never distinguish.
     expect(damageOf(after, "p2", 0)).toBe(10);
     expect(damageOf(after, "p2", 1)).toBe(10);
   });
@@ -452,7 +297,7 @@ describe("D340 §3 — *(both yours and your opponent's)*: the seat-blind walk",
     for (const row of placed) expect(row.amount).toBe(10);
   });
 
-  it("🛑 a Froslass on the BENCH still fires — there is no `activeOnly`", () => {
+  it("a Froslass on the BENCH still fires — there is no `activeOnly`", () => {
     const state = board({ p1: [WALL, FROSLASS], p2: [ABILITY_BODY] });
     const after = checkup(state).state;
     // Garganacl's "Blessed Salt" shape, and the opposite of Trevenant's. A build
@@ -470,19 +315,14 @@ describe("D340 §3 — *(both yours and your opponent's)*: the seat-blind walk",
 });
 
 describe("D340 §4 — *except any Froslass*: the SUBTRACTION, not a conjunction", () => {
-  it("🛑 the source Froslass exempts ITSELF, though it satisfies the noun", () => {
+  it("the source Froslass exempts ITSELF, though it satisfies the noun", () => {
     const state = board({ p1: [FROSLASS, ABILITY_BODY], p2: [WALL] });
     const after = checkup(state).state;
-    // 🛑 THE CENTRAL CLAIM OF THE ROW. Froslass HAS an Ability, so it passes
-    // `abilityPokemon` and is removed ONLY by the exemption.
-    // ⚠️ THE MUTANTS THIS KILLS: dropping `exceptNamed` entirely, and reading the
-    // two predicates as `&&` instead of as a subtraction — under either, this
-    // body sits at 10.
     expect(damageOf(after, "p1", 0)).toBe(0);
     expect(damageOf(after, "p1", 1)).toBe(10);
   });
 
-  it("🛑 EVERY Froslass is exempt, on both seats — the word is *any*", () => {
+  it("EVERY Froslass is exempt, on both seats — the word is *any*", () => {
     const state = board({
       p1: [FROSLASS, FROSLASS_REPRINT, ABILITY_BODY],
       p2: [FROSLASS_PROMO, ABILITY_BODY],
@@ -494,36 +334,22 @@ describe("D340 §4 — *except any Froslass*: the SUBTRACTION, not a conjunction
     expect(damageOf(after, "p1", 0)).toBe(0);
     expect(damageOf(after, "p1", 1)).toBe(0);
     expect(damageOf(after, "p2", 0)).toBe(0);
-    // 🛑 AND THE NON-EXEMPT BODIES TAKE **30**, NOT 10 — THREE Froslass are in
-    // play and the sentence prints no non-stacking clause, so the Checkup runs
-    // three separate firings. The first draft of this case asserted 10 and was
-    // simply FALSE: the board was never too narrow, the assertion was wrong, and
-    // widening the board would have fixed nothing (D339's rule, met again). It is
-    // written as arithmetic so the count of SOURCES is what the number says.
     const sources = 3;
     expect(damageOf(after, "p1", 2)).toBe(sources * 10);
     expect(damageOf(after, "p2", 1)).toBe(sources * 10);
   });
 
-  it("🛑 a body merely NAMED Froslass is exempt — the rider reads the NAME, not the id", () => {
+  it("a body merely NAMED Froslass is exempt — the rider reads the NAME, not the id", () => {
     const state = board({ p1: [FROSLASS, IMPOSTOR_FROSLASS, ABILITY_BODY], p2: [WALL] });
     const after = checkup(state).state;
-    // `IMPOSTOR_FROSLASS` has NO registry program and is not one of the three
-    // catalog ids; it is exempt purely because `card.name === "Froslass"`.
-    // ⚠️ THE MUTANT THIS KILLS: an exemption implemented as `programFor(id) ===
-    // <this program>` or as an id-set membership test, both of which are green on
-    // every board that holds only real Froslass printings.
     expect(damageOf(after, "p1", 1)).toBe(0);
     expect(damageOf(after, "p1", 2)).toBe(10);
     expect(programFor(IMPOSTOR_FROSLASS)).toBeUndefined();
   });
 
-  it('🛑 "Froslassy" is NOT exempt — equality, not `startsWith`', () => {
+  it('"Froslassy" is NOT exempt — equality, not `startsWith`', () => {
     const state = board({ p1: [FROSLASS, FROSLASSY], p2: [WALL] });
     const after = checkup(state).state;
-    // ⚠️ THE MUTANT THIS KILLS: `card.name.startsWith(exceptNamed)`. That reading
-    // is byte-identical on every board holding only real printings, and only a
-    // name that strictly CONTAINS the printed one as a prefix can tell them apart.
     expect(damageOf(after, "p1", 1)).toBe(10);
   });
 
@@ -532,7 +358,6 @@ describe("D340 §4 — *except any Froslass*: the SUBTRACTION, not a conjunction
     const { events } = checkup(state);
     const placed = countersOn(events);
     expect(placed).toHaveLength(1);
-    // A zero-amount row would put a lie in the log even with the board right.
     expect(placed[0]?.amount).toBe(10);
   });
 });
@@ -543,16 +368,12 @@ describe("D340 §5 — the walk itself", () => {
     const first = checkup(state).state;
     expect(damageOf(first, "p1", 1)).toBe(10);
     const second = checkup(first, "p2").state;
-    // `damage + amount`, not `damage = amount` — a mutant that assigned would be
-    // green after one Checkup and wrong after two.
     expect(damageOf(second, "p1", 1)).toBe(20);
   });
 
   it("TWO Froslass fire TWICE — the sentence prints no non-stacking clause", () => {
     const state = board({ p1: [FROSLASS, FROSLASS_REPRINT, ABILITY_BODY], p2: [WALL] });
     const after = checkup(state).state;
-    // Gnawing Curse's rule rather than Darkest Impulse's: `doesNotStack` is absent
-    // from the row (§1), so two sources place two counters.
     expect(damageOf(after, "p1", 2)).toBe(20);
     // …and both Froslass are still exempt from BOTH firings.
     expect(damageOf(after, "p1", 0)).toBe(0);
@@ -604,25 +425,15 @@ describe("D340 §6 — the census this row moves, asserted as ARITHMETIC", () =>
   it("the three printings are ONE card, ONE sentence and ONE object", () => {
     expect(new Set(FROSLASS_IDS.map((id) => LOCAL_CARDS[id]?.name)).size).toBe(1);
     expect(new Set(FROSLASS_IDS.map((id) => programFor(id))).size).toBe(1);
-    // So the column steps 3, the name list 1, the object list 1 and the JOIN 1 —
-    // a 3:1:1:1 step, which is what `censusAtHead` records.
     expect(FROSLASS_IDS).toHaveLength(3);
   });
 
-  it("🛑 the `except any` family closes at 14 legal, of which 3 were unbuilt", () => {
-    // 6 (Iron Crown ex, blocked on the banner — 🆕🆕🆕 D569 (D539): BUILT now, Cobalt Command)
-    // + 5 (Pecharunt ex, BUILT at D273)
-    // + 3 (this row) = 14 legal, and 14 + 6 illegal = the 20 printings the census
-    // returned. Written as arithmetic so a future re-query can disagree with a
-    // NUMBER rather than with a paragraph.
+  it("the `except any` family closes at 14 legal, of which 3 were unbuilt", () => {
     expect(6 + 5 + 3).toBe(14);
     expect(14 + 2 + 3 + 1).toBe(20);
   });
 
-  it("🛑 the by-name exemption predates this row — `switchActive.exceptNamed` is LIVE", () => {
-    // The claim the backlog got wrong, asserted against the registry rather than
-    // argued in prose: Pecharunt ex already consumes an `exceptNamed` rider, so
-    // this slice REUSES a spelling rather than inventing one.
+  it("the by-name exemption predates this row — `switchActive.exceptNamed` is LIVE", () => {
     const pecharunt = programFor("sv06.5-039");
     expect(pecharunt).toBeDefined();
     const ops = JSON.stringify(pecharunt);
@@ -630,14 +441,6 @@ describe("D340 §6 — the census this row moves, asserted as ARITHMETIC", () =>
   });
 
   it("the suite adds NOTHING to the shared FIXTURE_POOL — the census decision", () => {
-    // 🛑 THIS IS WHAT KEEPS `raw.length`'s two lines 0 apart. (It used to claim
-    // `swept.size` at 27 as well; D343 repointed that sweep at
-    // `registryCardIds()` ∪ the pool and the figure is **103**, so the pool
-    // clause no longer carries it.) Neither `sv06` nor `svp` is among
-    // `catalogManifest`'s six sets, so a
-    // shared-pool body would owe a `fix-froslass` key AND redden
-    // `revealClause`'s sweep — exactly what D335's `fix-drakloak` (also a Pokémon,
-    // also `sv06`) had to pay. THE KEY IS THE SET, NOT THE SURFACE.
     for (const id of Object.keys(LOCAL_CARDS)) {
       expect(Object.hasOwn(FIXTURE_POOL, id), `${id} leaked into FIXTURE_POOL`).toBe(false);
     }

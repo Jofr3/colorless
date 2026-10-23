@@ -1,22 +1,11 @@
 import type { Card } from "@colorless/schema";
 import { redactedGameSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard } from "./testFixtures";
-
-// ── 🆕🆕🆕 D577 — TYME `sv08-190` / `sv08.5-143`: THE NAMED, FACE-DOWN HP GUESS ──
-//
-// *"Tell your opponent the name of a Pokémon in your hand and put that Pokémon face down in front of you.
-// Your opponent guesses that Pokémon's HP, and then you reveal it. If your opponent guessed right, they
-// draw 4 cards. If they guessed wrong, you draw 4 cards. Then, return the Pokémon to your hand."*
-//
-// R-TY1 (only Pokémon-category cards in hand; refused on a hand with none), R-TY2 (any integer ≥ 0, exact
-// equality with the printed HP), R-TY3 (no zone move; the uid and the HP never reach the opponent before
-// the reveal; the reveal is public; a short draw is allowed) — decisions.md D577.
+import { FIXTURE_POOL, battler, deckOf, trainerCard, must, mustApply as run } from "./testFixtures";
 
 const TYME = "sv08-190";
 const TYME_2 = "sv08.5-143";
@@ -55,18 +44,6 @@ const DECK = deckOf({
   [FILLER]: 20,
   "fix-energy": 32,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -212,7 +189,6 @@ describe("D577 Tyme §2 — what can be named (R-TY1)", () => {
       note: "Guess the HP of your opponent's D577 Big.",
     });
     expect(named.phase.answerer).toBe("p2");
-    // No zone move (R-TY3): the named card is still in the hand.
     expect(named.players.p1.hand).toContain(uidOf(state, BIG));
   });
 });

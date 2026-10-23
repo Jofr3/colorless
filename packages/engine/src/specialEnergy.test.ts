@@ -17,12 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M4 slice 5 — Special Energy (§6.1). Provision as data (a special energy's
-// EnergyProgram gives its units — a concrete type, a WILDCARD, or several),
-// the wildcard-aware cost matcher, and on-attach effects (Jet Energy switches a
-// benched holder to Active). Representative set: Jet Energy (sv02-190) +
-// Luminous Energy (sv02-191); an unauthored special falls back to Colorless.
-
 /** Setup then open P1's turn 2 (P2 went first, passed). */
 function p1Turn2(seed: number): GameState {
   const state = driveSetup(

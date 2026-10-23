@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deckIdsFromRows, loadPlayerDeck } from "./deckLoad";
 
-// The pure fold from compressed (cardId, count) deck rows into the flat 60-id
-// list the engine wants, plus loadPlayerDeck's AUTH guards (which short-circuit
-// before any query). The owner-scoped D1 read itself is untested here, the
-// `loadCardPool` pattern.
-
 /** A db that throws if any method is touched — proves the guards below never
     reach a query. */
 const NO_DB = new Proxy(

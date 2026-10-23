@@ -1,13 +1,6 @@
-// The sentinel guard, pinned against the values MEASURED in the production
-// catalog (3,786 cards, 2026-08-04) rather than invented ones — see
-// ./sentinel.ts for the full sweep.
-
 import { describe, expect, it } from "vitest";
 import { facetVocabulary, normalizeSentinel } from "./sentinel";
 
-/** The catalog's REAL `select distinct rarity from cards order by 1` today,
-    verbatim — including the 34-row "None" bucket (every card in the `mfb`
-    set). This list is what GET /facets pipes through facetVocabulary. */
 const PRODUCTION_RARITIES = [
   "ACE SPEC Rare",
   "Black White Rare",
@@ -71,10 +64,6 @@ describe("normalizeSentinel", () => {
   });
 
   it("leaves near-misses alone — only exact sentinel spellings are absence", () => {
-    // "Nonet" is not "None"; a card illustrated by someone called "None-ko"
-    // keeps their credit. Values that merely LOOK like absence to a human
-    // ("N/A", "-", "unknown") are NOT in the alphabet, because the sweep
-    // measured zero of them and guessing is how this breaks.
     for (const value of ["Nonet", "None-ko", "no-none", "N/A", "-", "unknown", "0"]) {
       expect(normalizeSentinel(value)).toBe(value);
     }
@@ -93,10 +82,6 @@ describe("facetVocabulary", () => {
   });
 
   it("cannot emit a sentinel — pinned as an EMPTINESS over both real facets", () => {
-    // The user-visible symptom stated as the invariant it violated: a facet
-    // list is rendered one chip per value in the builder's FilterRail, so a
-    // sentinel surviving here IS the dead "None" chip. Measured over the
-    // catalog's actual vocabularies plus every spelling the guard knows.
     const noisy = [...PRODUCTION_RARITIES, ...PRODUCTION_MARKS, "", "  ", "none", "NONE", null];
     const sentinels = facetVocabulary(noisy).filter(
       (value) => value.trim() === "" || value.trim().toLowerCase() === "none",

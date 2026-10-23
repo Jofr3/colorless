@@ -22,18 +22,9 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
-
-// ── 🆕🆕🆕 D598 — WP32: KO / DAMAGE-TAKEN ABILITIES ──
-//
-// 6 printed texts / 13 `me` printings: Mega Gengar ex "Shadowy Concealment" ×5 (a seat-wide Prize
-// reduction on the KO'd side, `seatKoPrizeReduction`), Mega Hawlucha ex "Tenacious Body" ×3 and
-// Annihilape "Durable Body" (the coin-flip survival, `survivesKoOnCoinFlip`), Shedinja "Fragile Husk"
-// ×2 (the `pokemonExAttackPrevent` Prize guard), Gengar "Infinite Shadow" (`koSelfToHand`) and
-// Pecharunt "Final Chain" (an on-KO program behind `byOpponentAttack`). Every id and text off the
-// LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`. No `me` row
-// is a fixture, so the printed bytes are carried HERE.
 
 const SHADOWY_CONCEALMENT =
   "If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack.";
@@ -99,12 +90,7 @@ describe("D598 §1 — the texts and the registry rows", () => {
     expect(programFor(PECHARUNT)?.triggered?.[0]?.program).toEqual(deriveAttackEffect(consequent));
   });
 
-  it("the five dropped WP32 texts stay unkeyed (decisions.md D598) (🆕🆕🆕 D626 (D539): ~~five~~ — Fainting Spell ×2 and Photon Cord ×2 are keyed since D626, K1) (🆕🆕🆕 D632 (D539): WITHDRAWN for Damp — keyed since D632, D1) (🆕🆕🆕 D642 (D539): WITHDRAWN for the rest — Spiteful Swirl ×2 and Counterattack Grouping keyed since D642, K2)", () => {
-    // Spiteful Swirl ×2, Counterattack Grouping [🆕🆕🆕 D642 (D539): BUILT at D642], Damp [🆕🆕🆕 D632 (D539): BUILT at D632]. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2
-    // BUILT at D626 — `koTriggerRestMeD626.test.ts`.]
-    // 🆕🆕🆕 D632 (D539) — Damp `me02.5-039` / `-040` left this list: keyed at D632 (`dampD632.test.ts`).
-    // 🆕🆕🆕 D642 (D539) — WITHDRAWN for Spiteful Swirl ×2 and Counterattack Grouping: keyed since D642 (K2,
-    // `stadiumWatchedMeD642.test.ts`); the rung is inverted.
+  it("the five dropped WP32 texts stay unkeyed (decisions.md D598) ( D626 (D539): ~~five~~ — Fainting Spell ×2 and Photon Cord ×2 are keyed since D626, K1) ( D632 (D539): WITHDRAWN for Damp — keyed since D632, D1) ( D642 (D539): WITHDRAWN for the rest — Spiteful Swirl ×2 and Counterattack Grouping keyed since D642, K2)", () => {
     for (const id of ["me01-087", "me01-148", "30th-022"]) {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
     }
@@ -135,7 +121,6 @@ const MILOTIC = "sv06-050";
 const LEGACY = "sv06-167";
 /** Togekiss — "Wonder Kiss" (registry `WONDER_KISS`): a coin for 1 more Prize when the opposing Active is KO'd. */
 const TOGEKISS = "sv08-072";
-/** Survival Brace — the full-HP KO-survival Tool (registry, D562): answers before the coin (R-SB2). */
 const BRACE = "sv06-164";
 const E = "fix-energy";
 const D = "d598-darkness";
@@ -313,11 +298,6 @@ const BOARD_IDS = Object.keys(LOCAL)
   .filter((id) => id !== SPARE)
   .concat([E]);
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
   const created = createGame({
@@ -468,9 +448,6 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
     expect(of(events, "PRIZE_REDUCED").map((e) => e.count)).toEqual([0]);
   });
 
-  // 🆕🆕🆕 D601 — R-GC2 (UNRULED): the attached reductions answer BEFORE Shadowy Concealment, so a Legacy
-  // Energy on a 1-Prize {D} body is spent (its once-per-game latch) and Concealment finds 0. Reversal:
-  // Concealment first, which reaches 0 alone and leaves Legacy unspent.
   it("nothing left to reduce is not an application: Legacy Energy took the 1-Prize {D} body to 0 first (R-GC2)", () => {
     const state = attachFromDeck(gengarBench(DARK), "p2", LEGACY, 1);
     const { state: after, events } = mustApply(state, attack(0));
@@ -489,9 +466,6 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
     expect(of(events, "ABILITY_TRIGGERED")).toHaveLength(1);
   });
 
-  // 🆕🆕🆕 D601 — R-GC3 (UNRULED): "If 1 of your {D} Pokémon is Knocked Out … 1 fewer" is read PER KNOCK
-  // OUT, so one ex attack that KOs two {D} bodies reduces each. The reversal (1 fewer for the whole
-  // Prize-taking) would leave 3 here.
   it("R-GC3: two {D} ex KO'd by one ex attack (the Active and a benched one): 1 fewer for EACH, 2 → 1 twice", () => {
     const state = hurt(
       gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], DARK_EX]),
@@ -564,8 +538,6 @@ describe('D598 §3 — the "KO\'d by an ex" condition, by clause', () => {
     expect(koByOpponentAttack(state, ref, "p1")).toBe(true);
   });
 
-  // 🆕🆕🆕 D601 (D598 review M2) — a ref with no body on the board answers FALSE, not `byAttackFor`'s TRUE:
-  // the D598 rows had no pre-D414 behaviour to degrade to, so a miss withholds (decisions.md D601).
   it("a ref whose body is not on the board answers false (fail-closed, unlike `byAttackFor`)", () => {
     const ghost = { seat: "p2" as Seat, uid: "d601-no-such-body" };
     expect(koByOpponentAttack(state, ghost, "p1")).toBe(false);
@@ -739,9 +711,6 @@ describe("D598 §5 — Tenacious Body / Durable Body: a coin for the would-be Kn
       const base = where === "active" ? hawlucha() : table(FOE, FILLER, [ANNIHILAPE]);
       return seeded(attachToolFromDeck(base, "p2", where, BRACE), "heads");
     };
-    // Each survivor is left at 10 HP (Hawlucha 250 → 240, Annihilape 150 → 140); a heads seed, so a
-    // coin asked after the Brace would show as an ABILITY_COIN_FLIP row and an advanced rng.
-    // The main hit (attack.ts).
     let state = braced("active");
     let done = mustApply(state, attack(0));
     expect(of(done.events, "ABILITY_COIN_FLIP")).toEqual([]);

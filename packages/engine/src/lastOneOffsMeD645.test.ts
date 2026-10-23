@@ -17,18 +17,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D645 — THE LAST ONE-OFFS ──
-//
-// 3 printed texts / 5 `me` printings: Meganium `me01-010` / `mep-001` "Wild Growth" (the NEW
-// `PassiveEffects.basicEnergyProvidesTwice`, continuous.ts `doubledBasicEnergyType` inside `unitsOf`; R-WGR1, R-WGR2),
-// Goodra `me04-068` / `mep-077` "Slimy Sliding" (the NEW `PassiveEffects.retreatFailsOnTails`, continuous.ts
-// `retreatCoinFlipSource`, asked by turn.ts `retreat`; R-SLD1, R-SLD2, R-SLD3) and Deoxys `me04-032` "Psyspear"
-// (`CONDITIONAL_BENCH_SNIPE` over the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at declaration by
-// attack.ts `resolveDeclarationGates`; R-PSP1). Every id and text off the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. Driven on a LOCAL `cardPool` (D275) in
-// the suite's OWN 60-card deck (D270).
 
 const WILD_GROWTH_TEXT =
   "Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack.";
@@ -169,11 +159,6 @@ const BOARD_IDS = new Set(
     .filter((id) => id !== SPARE)
     .concat(["fix-energy"]),
 );
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

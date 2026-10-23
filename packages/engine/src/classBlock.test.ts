@@ -18,64 +18,11 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.94.0 → 0.95.0 — the ATTACKER-CLASS filter (P3-M5 long tail, D146):
-//
-//   "During your opponent's next turn, prevent all damage done to this Pokémon
-//    by attacks from Basic Pokémon."                               (3 printings)
-//
-// D142's own `preventDamage`, widened on a SECOND axis by a SECOND optional
-// field — `effects` says what a block refuses, `fromClass` says whose attacks it
-// refuses at all — and the four things this slice turns on are none of them the
-// duration, which was bought whole at D142:
-//
-//   • it is the family's first UNGATED producer. No coin is printed, so the
-//     derived program is the BARE op rather than a `coinFlipGate` body, and this
-//     entire suite is seed-free — pinned by an unchanged `rngState` across an
-//     install (D143's move), not by a seed table;
-//   • the predicate is evaluated at the READ SITES and not at the install, for
-//     the reason `preventDamageFromExV` is: the block is written on the
-//     installer's own body during the installer's own turn, and the Pokémon it
-//     will refuse has not declared anything yet. It is folded INTO
-//     `attackBlockOf` so no read site can honour the stamp and forget the class;
-//   • the two installers are each other's negative case — a Stage 2 and a Stage
-//     1 — so "the filter failed" is driven off printed cards rather than posed;
-//   • the printed sentence is the NARROW reading, so a MATCHED attacker still
-//     lands every EFFECT it prints: the damage is nulled and the Energy discard,
-//     the placed counter and the §12 status all go through.
-//
-// ⚠️ AND THE FOURTH PRINTING OF THIS SENTENCE IS NOT MAPPED. Iron Moth
-// sv06.5-009's index-1 "Anachronism Repulsor" says "…from ANCIENT Pokémon", and
-// Ancient is a BANNER printed on the card face: no column of the persisted
-// catalog carries it and no field of tcgdex's own card model does either
-// (checked upstream against Roaring Moon ex sv04-124, the canonical Ancient
-// print). It has no reader because it has no DATUM (🆕🆕🆕 D569 (D539): ~~no DATUM~~
-// WITHDRAWN as the reason — `banners.ts`, an engine table keyed by printing id, supplies
-// Ancient since D569; it stays unread because `fromClass` is PERSISTED and an optional
-// `AttackerClass.stage` falls out of 0.452's `attackerMatchesStage` switch on rollback — an
-// MRV bump, deferred, docs/decisions.md D569 (e)) — and a species-name table
-// would answer three real cards WRONGLY, since Great Tusk ex sv01-123 is the same
-// species with no banner. So the sentence stays LOUD, which is this family's
-// standing answer to a token it cannot resolve.
-//
-// 🆕🆕🆕 D575 (D539): ~~"THE FOURTH PRINTING OF THIS SENTENCE IS NOT MAPPED … it stays
-// unread … an MRV bump, deferred … So the sentence stays LOUD"~~ is WITHDRAWN — the
-// paragraph above is kept as the record (D418). D575 MAPS the fourth printing: the MRV
-// bump was PAID (`MATCH_RECORD_VERSION` 37 → 38, the ELEVENTH position), `AttackerClass.stage`
-// gained `"ancient"` (kept REQUIRED, read through `bannerOf` by printing id at damage
-// time — R-IM1; the Great Tusk ex species argument above still holds), and Iron Moth's
-// sentence DERIVES `{ op: "preventDamage", fromClass: { stage: "ancient" } }` — see the
-// ANCIENT rung below and mrvAttackSliceD575.test.ts.
-
 const BASIC_TEXT =
   "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.";
 const ANCIENT_TEXT =
   "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.";
-/** D146's class as it is STORED since D239 — the record, not the string literal.
-    Named once here so this suite reads as a statement about the printed class
-    rather than about the shape that carries it; `typedClassBlock.test.ts` is
-    where the shape itself is driven. */
 const BASIC_CLASS = { stage: "basic" } as const;
-/** D142's NARROW spelling — the same installation with no filter and a coin. */
 const UNFILTERED_TEXT =
   "Flip a coin. If heads, during your opponent's next turn, prevent all damage done to this Pokémon by attacks.";
 
@@ -98,10 +45,6 @@ function findAll<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-/** P2 opens and passes, so P1's turn 2 carries no §4 attack restriction. The
-    installer goes on P1's Active with the two {C} its index-0 attack costs; both
-    installers are evolutions, fielded by surgery exactly as Ninetales sv03-029
-    and Oinkologne sv01-157 are in the neighbouring suites. */
 function armed(installer: string, energy = 2): GameState {
   let state = must(
     applyAction(driveSetup(SEED, { p1: CLASS_BLOCK_DECK, p2: CLASS_BLOCK_DECK }, { first: "p2" }), {
@@ -113,10 +56,6 @@ function armed(installer: string, energy = 2): GameState {
   return attachFromDeck(state, "p1", "fix-energy", energy);
 }
 
-/** `armed`, then the install declared. Asserts the row actually landed rather
-    than trusting the arithmetic, so a board that failed to install can never
-    leave a case asserting "nothing was blocked" against nothing. Returns P2's
-    turn. */
 function installed(installer: string, energy = 2): GameState {
   const { state, events } = mustApply(armed(installer, energy), {
     type: "attack",
@@ -147,18 +86,12 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     expect(deriveAttackEffect(BASIC_TEXT)).toEqual([
       { op: "preventDamage", fromClass: BASIC_CLASS },
     ]);
-    // The typographic apostrophe derives identically — a re-ingest that changes
-    // only punctuation must not silently un-simulate three printings (D136/D137).
     expect(deriveAttackEffect(BASIC_TEXT.replace(/'/g, "’"))).toEqual(
       deriveAttackEffect(BASIC_TEXT),
     );
   });
 
   it("is UNGATED — the first producer of this op that is not a coinFlipGate body", () => {
-    // Every one of D142's 13 printings prints "Flip a coin. If heads,"; these
-    // three print nothing of the sort, so the whole gate/consequent shape is
-    // absent rather than defaulted. `toEqual` would not catch a wrapper that
-    // happened to be empty, so the op kinds are read out directly.
     const derived = deriveAttackEffect(BASIC_TEXT) as EffectOp[];
     expect(derived.map((op) => op.op)).toEqual(["preventDamage"]);
     const gated = deriveAttackEffect(UNFILTERED_TEXT) as EffectOp[];
@@ -167,17 +100,10 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
 
   it("keeps `effects` ABSENT and `fromClass` PRESENT — the two fields, two phrases", () => {
     const derived = deriveAttackEffect(BASIC_TEXT) as EffectOp[];
-    // ABSENT rather than `false` (D135's rule): the sentence never says "from and
-    // effects of", so the op carries no claim about the wider reading. `toEqual`
-    // ignores undefined keys, so the key SET is the assertion.
     expect(Object.keys(derived[0] as object).sort()).toEqual(["fromClass", "op"]);
   });
 
   it("differs from D142's unfiltered narrow body in EXACTLY `fromClass`", () => {
-    // The widen-don't-add claim (D131) asserted a second time on the same op:
-    // strip the one field and this program is the gated narrow spelling's BODY,
-    // byte for byte — so a second op member would have been two copies of one
-    // installation told apart by who it refuses.
     const filtered = deriveAttackEffect(BASIC_TEXT) as EffectOp[];
     const gate = (deriveAttackEffect(UNFILTERED_TEXT) as EffectOp[])[0] as Extract<
       EffectOp,
@@ -202,42 +128,20 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     expect(deriveAttackEffect(`${BASIC_TEXT} Draw a card.`)).toBeNull();
   });
 
-  // (🆕🆕🆕 D569 (D539): "because there is no DATUM" is WITHDRAWN — the datum is `banners.ts` since D569; Iron Moth still has no reader, because its block is a PERSISTED `AttackerClass` whose widening is an MRV question (deferred, decisions.md D569). The refusal this rung pins is unchanged)
-  // (🆕🆕🆕 D575 (D539): the TITLE below — ~~"refuses the ANCIENT spelling — no reader"~~ — is WITHDRAWN and kept as the record (D418): since D575 the rung pins that the Ancient spelling DERIVES `{ stage: "ancient" }`, not that it is refused)
   it("refuses the ANCIENT spelling — no reader, because there is no DATUM", () => {
-    // THE SLICE'S HEADLINE REFUSAL, and it is not "we ran out of time". "Ancient"
-    // is a banner printed on the card FACE from Paradox Rift (sv04) onward: it is
-    // in no column of the persisted catalog and in no field of tcgdex's own card
-    // model — checked upstream against Roaring Moon ex sv04-124, whose payload
-    // carries `suffix: "ex"` for its rule box and nothing at all for the banner.
-    // A species-name table would be WRONG rather than incomplete: Great Tusk ex
-    // sv01-123/-230/-246 is one of the Ancient species and carries no banner, so
-    // any name-keyed answer is wrong on three real cards with no failure anywhere.
-    // Loud is the only honest answer, and this is where it is pinned.
-    // 🆕🆕🆕 D575 (D539): ~~the refusal~~ is WITHDRAWN — the rung's title and the paragraph above
-    // are kept as the record (D418). D575 BUILDS the Ancient spelling: `AttackerClass.stage`
-    // gained `"ancient"` (read through `bannerOf`, by printing id — never a species table, so the
-    // Great Tusk ex argument above still holds) and `MATCH_RECORD_VERSION` stepped 37 → 38.
     expect(deriveAttackEffect(ANCIENT_TEXT)).toEqual([
       { op: "preventDamage", fromClass: { stage: "ancient" } },
     ]);
     // The two sentences differ in ONE WORD, so the refusal is a property of the
     // anchor rather than of the shape — assert that they really are one word apart.
     expect(ANCIENT_TEXT).toBe(BASIC_TEXT.replace("Basic Pokémon", "Ancient Pokémon"));
-    // …and the rest of the family's LOUD list, inherited from D142 rather than
-    // re-censused (effects.ts carries the same table).
     for (const text of [
-      // Corviknight sv02-148 "Accelerate" — gated on the attack's own RESULT.
-      // 🆕🆕🆕 D639 (D539): LEFT THIS LIST, removed rather than shortened silently (D575's move) — the sentence is
-      // BUILT at D639 (Shadowy Side Kick / Critical Slash, `opponentKnockedOutByDamage`), pinned positively below.
-      // Squawkabilly sv01-162 "Fly" — a SECOND consequent on the same flip.
       "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
       // Bronzong sv03-145 "Oracle Press" — effects WITHOUT damage.
       "During your opponent's next turn, prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    // 🆕🆕🆕 D639 — the row that left: the KO gate over the shipped effects shield (`koSweepMeD639.test.ts`).
     expect(
       deriveAttackEffect(
         "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
@@ -258,9 +162,6 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
   });
 
   it("keeps the fixtures' printed text, cost, damage and INDEX verbatim", () => {
-    // Ids, names, costs, printed damage and the INDEX all checked against the
-    // local D1 (2026-08-02, 978 cards / 6 sets) PER PRINTING — D144's rule, and the reason
-    // this slice found that four remainder lists had the two cards misnamed.
     expect(FIXTURE_POOL["sv01-150"]?.name).toBe("Staraptor");
     expect(FIXTURE_POOL["sv01-150"]?.attacks?.[0]).toEqual({
       cost: ["Colorless", "Colorless"],
@@ -284,22 +185,6 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
   });
 
   it("emits `fromClass` from a CLOSED vocabulary, swept over the whole pool", () => {
-    // Discovered rather than listed (D140's move): every `preventDamage` any
-    // attack in the pool can produce is walked, and the field is asserted to hold
-    // only vocabulary the predicate has an arm for. A slice that teaches the
-    // deriver a new class token fails HERE as well as at the compiler.
-    //
-    // ⚠️ D239 WIDENED WHAT "VOCABULARY" MEANS HERE, AND THE SWEEP WENT RED FIRST
-    // — which is the pin working. The field is now an `AttackerClass` RECORD, so
-    // the closed set is checked per KEY: `stage` against the one-member union the
-    // (🆕🆕🆕 D575 (D539): ~~"the one-member union"~~ — THREE members since D575,
-    // `"basic" | "ancient" | "ex"`; the sweep below still pins `"basic"` because it walks
-    // `FIXTURE_POOL`, where no card prints Iron Moth's Ancient sentence, and Miraidon's ex
-    // block rides `installSideAttackBlock`, not `preventDamage` — mrvAttackSliceD575.test.ts
-    // drives the two new members)
-    // predicate switches on, and `excludingType` against `POKEMON_TYPES` (absent
-    // is allowed and is D146's own reading). Asserting the whole record against a
-    // literal would have to list eleven exclusions the day a second code prints.
     const producers = new Set<string>();
     const walk = (ops: EffectOp[], id: string) => {
       for (const op of ops) {
@@ -321,10 +206,6 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
       const authored = programFor(card.id)?.attack;
       for (const ops of Object.values(authored ?? {})) walk(ops, card.id);
     }
-    // The producer SET, not a two-id predicate (D145's move): a third producer
-    // fails loudly instead of being absorbed — and D239's `fix-crown` is exactly
-    // that, admitted here BY NAME rather than by widening the assertion. Its two
-    // attack indexes are the two readings of one anchor, so it appears once.
     expect([...producers].sort()).toEqual(["fix-crown", "sv01-150", "sv02-153"]);
   });
 });
@@ -353,8 +234,6 @@ describe("the attacker-CLASS filter — installing it", () => {
       effects: false,
       fromClass: BASIC_CLASS,
     });
-    // The stamp is D142's, unchanged: turn 2 installed it, turn 3 is the
-    // opponent's, and that is the only turn it answers on.
     expect(done.players.p1.active?.attackBlock).toEqual({
       turn: 3,
       effects: false,
@@ -380,8 +259,6 @@ describe("the attacker-CLASS filter — installing it", () => {
         index: 0,
       });
       const order = types(events);
-      // The §8.5 hit lands FIRST and the install rides the tail behind it — free
-      // rather than lucky, since the block's whole effect is in the future (D125).
       expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ATTACK_BLOCK_APPLIED"));
       expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(printed);
       expect(done.players.p1.active?.attackBlock?.fromClass).toEqual(BASIC_CLASS);
@@ -402,10 +279,6 @@ describe("the attacker-CLASS filter — installing it", () => {
   });
 
   it("leaves the OTHER installer's unmapped sibling LOUD", () => {
-    // Noivern ex's index-1 "Dominating Echo" prints a Special-Energy / Stadium
-    // lock nothing in this engine reads. It is the live unmapped witness this
-    // slice adds to its own deck (D135's move): the day it is mapped, this case
-    // must be re-pointed rather than deleted.
     const { events } = mustApply(
       attachFromDeck(
         attachFromDeck(armed("sv02-153", 0), "p1", "fix-psychic-energy", 1),
@@ -420,9 +293,6 @@ describe("the attacker-CLASS filter — installing it", () => {
   });
 
   it("does NOT lift at the Checkup that ends the INSTALLER's own turn", () => {
-    // D142's finding, re-driven because the filter must not have moved it: the
-    // very first Checkup after the attack has `endedSeat` = the holder's seat,
-    // and a paralysis-clock clear would lift the block before its window opened.
     const { state: done, events } = mustApply(armed("sv01-150"), {
       type: "attack",
       seat: "p1",
@@ -447,12 +317,6 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
   });
 
   it("a NON-Basic attacker lands in FULL — and the two installers prove it to each other", () => {
-    // THE CASE THE WHOLE FIELD EXISTS FOR, driven off printed cards rather than a
-    // bespoke fixture: a STAGE 2 swings into the Stage 1's block for its whole
-    // 180, and the STAGE 1 swings into the Stage 2's for its whole 70. No row
-    // announces the failure — `DAMAGE_DEALT` with `prevented` absent and the real
-    // number in `dealt` is the whole story, and a "the block declined" row would
-    // be announcing a non-event.
     const intoNoivern = swing(installed("sv02-153"), "sv01-150", { id: "fix-energy", count: 3 }, 1);
     const bigHit = find(intoNoivern.events, "DAMAGE_DEALT");
     expect(bigHit).toMatchObject({ seat: "p1", dealt: 180 });
@@ -474,11 +338,6 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
   });
 
   it("the §8.5 pipeline still RUNS and the block nulls the RESULT", () => {
-    // Pincurchin is a BASIC and Lightning; Staraptor is ×2 LIGHTNING. So the
-    // unblocked number is 140, the row still REPORTS the Weakness it computed,
-    // and the block supersedes rather than stacks — exactly like Mimikyu's
-    // Safeguard on the same `||` one token away. A blocked 0 here is therefore 0
-    // rather than 0 by coincidence.
     const { state: done, events } = swing(installed("sv01-150"), "sv02-072", {
       id: "fix-lightning-energy",
       count: 3,
@@ -491,10 +350,6 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
   });
 
   it("protects THIS Pokémon and not the rest of the board", () => {
-    // fix-sniper is a BASIC, so the filter MATCHES — and one declaration still
-    // gives two answers: 30 prevented on the shielded Active, 20 landing on every
-    // benched body. "Done to this Pokémon" is a per-Pokémon claim and the class
-    // filter does not widen it.
     const state = installed("sv01-150");
     const benchBefore = state.players.p1.bench.map((p) => p.damage);
     expect(benchBefore.length).toBeGreaterThan(0);
@@ -522,8 +377,6 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
     expect(hit).toMatchObject({ dealt: 30 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(30);
-    // The stale stamp is still sitting there answering nothing — D142's design,
-    // and the filter changed nothing about it.
     expect(done.players.p1.active?.attackBlock).toEqual({
       turn: 3,
       effects: false,
@@ -534,11 +387,6 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
 
 describe("the attacker-CLASS filter — it is the NARROW reading, so effects go through", () => {
   it("nulls a matched Basic's DAMAGE and lets its Energy discard land", () => {
-    // ONE declaration, both halves: Pincurchin's "Needle Crush" is 70 damage AND
-    // a discard off the defender. The block matched — Pincurchin is a Basic — and
-    // still only the damage is refused, because the sentence never says "from and
-    // effects of". D142 shipped two readings precisely so this card would not
-    // have its discard refused by a printing that does not refuse it.
     const state = installed("sv01-150");
     expect(state.players.p1.active?.energy).toHaveLength(2);
     const { state: done, events } = swing(state, "sv02-072", {
@@ -552,11 +400,6 @@ describe("the attacker-CLASS filter — it is the NARROW reading, so effects go 
   });
 
   it("lets a matched Basic PLACE damage counters — a counter is not damage", () => {
-    // Mimikyu "Ghost Eye" puts 7 counters (70 HP) and is a BASIC, so the filter
-    // matches on the attacker and the placement still goes through: a placed
-    // counter skips Weakness, Resistance and every reduction in this engine
-    // (D138/D139), and the catalog prints the rule — "(Damage is not an effect.)"
-    // This is the only route to damaging a body under a matched filter.
     const { state: done, events } = swing(installed("sv01-150"), "sv02-097", {
       id: "fix-psychic-energy",
       count: 2,
@@ -579,11 +422,6 @@ describe("the attacker-CLASS filter — it is the NARROW reading, so effects go 
     );
     expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "asleep" });
     expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
-    // The ROW is the assertion rather than the residue, and deliberately: Yawn
-    // ends the turn, so §13.3's wake flip runs inside this very event stream and
-    // may already have lifted the condition. Asserting the residue would make
-    // this case a statement about a coin instead of about the block, which is
-    // the whole reason the suite is otherwise seed-free.
     const woke = find(events, "CHECKUP_COIN_FLIP");
     expect(done.players.p1.active?.conditions.rotation).toBe(
       woke?.result === "heads" ? "none" : "asleep",
@@ -592,17 +430,6 @@ describe("the attacker-CLASS filter — it is the NARROW reading, so effects go 
 });
 
 describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarded", () => {
-  /** Write a WIDE and FILTERED block onto P1's Active by surgery. No printing
-      installs one: all three `fromClass` printings are the narrow spelling, so
-      `effects: true` and `fromClass` never co-occur off a real card. It is
-      constructed rather than pretended into a board — D144's precedent for a rule
-      with no card — because the alternative is `fromClass` meaning one thing at
-      the four damage sites and another at the effects gate, which is precisely the
-      drift the single-read contract exists to stop.
-      (🆕🆕🆕 D575 (D539): ~~"all three `fromClass` printings"~~ — a stale count.
-      MEASURED at the D575 landing over `legalAttackCorpus()`: 8 legal printings
-      before D575 and **10** after (Iron Moth's Ancient and Miraidon's side-wide ex
-      added), all still the narrow spelling, so the point holds.) */
   function wideFiltered(state: GameState): GameState {
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active to shield");
@@ -622,9 +449,6 @@ describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarde
   }
 
   it("refuses a MATCHED Basic's effect and lets a NON-matching Stage 1's through", () => {
-    // The same op (`damageActive`), the same target and the same window, told
-    // apart by nothing but the attacker's stage: Mimikyu is a Basic and Polteageist
-    // is a Stage 1, so one placement is refused with a row and the other lands.
     const base = wideFiltered(installed("sv01-150"));
     const matched = swing(base, "sv02-097", { id: "fix-psychic-energy", count: 2 });
     expect(types(matched.events)).not.toContain("COUNTERS_PLACED");
@@ -640,10 +464,6 @@ describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarde
 
 describe("the attacker-CLASS filter — lifetime, merging and the early clears", () => {
   it("ends when the Pokémon leaves the Active Spot — a Boss's Orders inside the window", () => {
-    // D142's reachable §10 clear, re-driven: the holder is the ATTACKER's own
-    // body, so the opponent can drag it off the spot during the very turn the
-    // block covers. And it is GONE rather than merely unread — fix-sniper is a
-    // BASIC, so a block that survived the move would still have matched.
     let state = installed("sv01-150");
     const shielded = activeUid(state, "p1");
     expect(state.players.p1.bench.length).toBeGreaterThan(0);
@@ -666,7 +486,6 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
     const benchIndex = next.players.p1.bench.findIndex((p) => p.stack.includes(shielded));
     expect(benchIndex).toBeGreaterThanOrEqual(0);
     expect(next.players.p1.bench[benchIndex]?.attackBlock).toBeNull();
-    // Silent: the switch row already tells the story (D112's call, events.ts).
     expect(types(gusted.events)).not.toContain("ATTACK_BLOCK_APPLIED");
     next = setActiveFromDeck(next, "p2", "fix-sniper");
     next = attachFromDeck(next, "p2", "fix-energy", 1);
@@ -676,9 +495,6 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
   });
 
   it("ends on evolution (§10) — unreachable in play, pinned anyway", () => {
-    // No legal sequence reaches it: installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, whose four attacks install nothing and whose window admits only `attack` / `endTurn` (R-FL1); no board here builds it], the window is the
-    // opponent's, and nobody evolves during it. §10 sheds the effects of ATTACKS
-    // and this is one, so the rule is asserted by surgery (D142's own shape).
     let state = must(applyAction(installed("sv01-150"), { type: "endTurn", seat: "p2" }));
     state = setActiveFromDeck(state, "p1", "fix-basic-1");
     state = {
@@ -707,12 +523,6 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
   });
 
   it("a second install may only WIDEN — a filter landing on an unfiltered block drops", () => {
-    // The merge rule, and it reads the same on both axes: two installations must
-    // never leave the holder with less protection than one of them printed. So an
-    // unfiltered block already stamped for this window SURVIVES a filtered install
-    // landing on top of it, and the row says so. Unreachable off any printing (no
-    // card prints two of these attacks), constructed for the same reason the
-    // effects gate above is.
     const state = armed("sv01-150");
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active");
@@ -727,10 +537,6 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
       },
     };
     const { state: done, events } = mustApply(primed, { type: "attack", seat: "p1", index: 0 });
-    // …and because the merge said nothing NEW, the row is suppressed entirely
-    // (D142's idempotence rule, now answering on two fields instead of one): the
-    // holder was already protected from everything, so announcing a narrowing
-    // that did not happen would be the log's version of the bug this rule stops.
     expect(types(events)).not.toContain("ATTACK_BLOCK_APPLIED");
     expect(done.players.p1.active?.attackBlock).toEqual({ turn: 3, effects: true });
     expect(done.players.p1.active?.attackBlock?.fromClass).toBeUndefined();

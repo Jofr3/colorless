@@ -16,16 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 long-tail: the `evolutionPokemon` CardFilter (the searcher whose narrowing is
-// exactly one new filter kind, the D102 vocabulary-extension pattern). One real
-// card lands on it, verified end to end:
-//   • Jacq (sv01-175 / -236 / -250, Supporter) — "Search your deck for up to 2
-//     Evolution Pokémon, reveal them, and put them into your hand. Then, shuffle
-//     your deck."
-// It reuses the Flamigo search-to-hand shape (searchDeck dest:hand max:2 +
-// shuffleDeck); the only new thing is the predicate `evolveFromOf(card) !== null`
-// — the exact complement of `basicPokemon` inside `anyPokemon`.
-
 /** The card behind a uid (deck/hand cards for candidate classification). */
 function cardOf(state: GameState, uid: string): Card {
   const id = state.cardIdByUid[uid];

@@ -26,32 +26,6 @@ import {
 } from "./testFixtures";
 import type { BoostedAttack } from "./types";
 
-// 0.430.0 → 0.431.0 — D546, THE ALL-ATTACKS NEXT-TURN BUFF:
-//
-//   "During your next turn, attacks used by this Pokémon do 120 more damage to your
-//    opponent's Active Pokémon (before applying Weakness and Resistance)."
-//
-// `censusAttackCorpus.ts` FILE LINE 148 (leading count column 1), and the SAME sentence
-// at 100 behind "Both Active Pokémon are now Asleep." at FILE LINE 76 (count 1):
-// **2 sentences / 2 legal printings**, both OPAQUE at SUBMAX=12 and UNEXPLAINED +
-// CONTINUOUS at SUBMAX=4 before this slice. Claimed WHOLE by `deriveAttackEffect`
-// through ONE new anchor (`SELF_EVERY_ATTACK_BOOST`, one `['’]` slot, the Sleep
-// sentence an OPTIONAL prefix) and ONE new arm (24b'') emitting the SHIPPED
-// `boostAttack` op with `attack: null` — ONE op, ONE installer, ONE record (D165).
-// The record is D155's `BoostedAttack` with `attackIndex: null`, which the additive
-// reader pays on EVERY index; `snipeActive` folds it too (`everyAttackBoostOf`).
-//
-// ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID PRINTS EITHER SENTENCE ON THIS CHECKOUT, AND
-// THAT WAS MEASURED (D425, `git grep`). Every board rides file-local DECLARED `d546-*`
-// demonstrators in their OWN 60-card deck (D270). The real cards' attack lists,
-// costs and damage are UNMEASURED — so whether either real card prints a snipe, a
-// spread or a no-damage attack is not known; each is DEMONSTRATED here, not claimed.
-//
-// Sections: §1 the derivation · §2 the install and the record · §3 the window and
-// every index · §4 what the buff does NOT reach, and the snipe fold · §5 the Sleep
-// prefix (`:76`) · §6 §10 clears · §7 the merge and the refusals · §8 the log row ·
-// §9 the serialized bytes and the rollback.
-
 const S148 =
   "During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).";
 const SLEEP = "Both Active Pokémon are now Asleep.";
@@ -109,8 +83,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     attacks: ATTACKS,
   }),
-  /** Evolves from `d546-buffer` with the SAME attacks at the same indexes, so a record
-      that survived evolution would pay the new card. */
   "d546-buffer-evolved": battler("d546-buffer-evolved", {
     types: ["Colorless"],
     stage: "Stage1",
@@ -142,7 +114,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "d546-buffer": 4,
   "d546-buffer-evolved": 2,
@@ -225,7 +196,6 @@ const attack = (state: GameState, index: number, seat: Seat = "p1") =>
 const pass = (state: GameState, seat: Seat): GameState =>
   must(applyAction(state, { type: "endTurn", seat }));
 
-/** `ready`, then Rev Up DECLARED — asserting the row landed. Returns P2's turn 4. */
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, REV_UP);
@@ -467,7 +437,7 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
     expect(body(done.state.players.p2.bench[0]).damage).toBe(30);
   });
 
-  it("🛑 the SAME snipe landing on the ACTIVE (`snipeActive`) pays +120 — the D546 fold", () => {
+  it("the SAME snipe landing on the ACTIVE (`snipeActive`) pays +120 — the D546 fold", () => {
     const window = inWindow(installed({ p2Bench: 1 }).state);
     const parked = attack(window, PICK_OFF).state;
     const done = mustApply(parked, {
@@ -501,9 +471,6 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — `:76`: both Actives fall Asleep, and the holder may sleep through its window", () => {
-  /** Lullaby declared from a chosen rng cursor. The attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the first
-      Pokémon Checkup (both Actives flip, §13.3) runs inside this action; the cursor
-      is set BEFORE it because Lullaby itself flips nothing. */
   function lulled(rngState?: number) {
     const start = ready({ attacker: "d546-lullaby" });
     const from = rngState === undefined ? start : { ...start, rngState };
@@ -663,10 +630,6 @@ describe("§6 — retreat, a forced switch, evolution and devolution each clear 
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 — the merge (constructed — unreachable off any printing) and the refusals.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§7 — null is an ADDRESS: it merges with itself and replaces a named one", () => {
   const ALL = (amount: number): EffectOp => ({ op: "boostAttack", attack: null, amount });
   const NAMED: EffectOp = { op: "boostAttack", attack: "Strike", amount: 30 };
@@ -708,9 +671,6 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
   });
 
   it("a BAR and an all-attacks buff on one body: the barred attack is refused, the other pays +120", () => {
-    // Constructed: a self-bar on Strike beside the buff. D157's OPPONENT-chosen bar
-    // (stamped `turn + 1` from the opponent's turn) is the route by which the two can
-    // be live together in play — types.ts `BoostedAttack` records the re-read.
     let s = runOne(ready(), [ALL(BUFF)], []);
     s = runOne(s, [{ op: "preventAttackUse", attack: "Strike" }], []);
     const window = inWindow(pass(s, "p1"));
@@ -718,7 +678,7 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
     expect(find(attack(window, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + BUFF);
   });
 
-  it("🛑 a constructed `{ attack: null, base: true }` is REFUSED whole — no record, no row", () => {
+  it("a constructed `{ attack: null, base: true }` is REFUSED whole — no record, no row", () => {
     const start = ready();
     const events: GameEvent[] = [];
     const after = runOne(
@@ -737,10 +697,6 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
       expect(boostedAttackBase(window, holder, i)).toBeNull();
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §8 — the log row.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the row names no attack, under both seats, and never prints 'null'", () => {
   it('renders the install as "\'s attacks do 120 more damage next turn"', () => {
@@ -777,7 +733,7 @@ describe("§8 — the row names no attack, under both seats, and never prints 'n
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, and a rollback reads it as inert", () => {
-  it("🛑 the bytes this deploy writes round-trip and pay every index", () => {
+  it("the bytes this deploy writes round-trip and pay every index", () => {
     const window = inWindow(installed().state);
     const wire = JSON.stringify(window.players.p1.active?.boostedAttack);
     expect(wire).toBe(`{"turn":5,"attackIndex":null,"amount":${String(BUFF)}}`);
@@ -786,7 +742,7 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
     expect(find(attack(revived, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + BUFF);
   });
 
-  it("🛑 a v30 (numbered) record still means ONE attack", () => {
+  it("a v30 (numbered) record still means ONE attack", () => {
     const window = inWindow(installed().state);
     const v30 = JSON.parse(
       `{"turn":5,"attackIndex":${String(STRIKE)},"amount":30}`,
@@ -798,14 +754,6 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
   });
 
   it("ROLLBACK (an ILLUSTRATION, not a rung): the v30 reader's expression pays 0 on every index of a null record", () => {
-    // ⚠️ WHAT THIS DOES AND DOES NOT PROVE. `v30Reader` below is a LOCAL COPY of the D155
-    // compare a v30 deploy runs, evaluated against the revived bytes; no engine change can
-    // turn it red (only the trailing `engineVersion` line can). It illustrates the D456
-    // argument — the buff is LOST (inert), never mis-paid onto one attack — and nothing
-    // more. The RED-CAPABLE proof is the mutant `D546-reader-pays-null-nowhere`, whose
-    // replace is 8e2cdfe7's `boostedAttackDamage` line byte for byte: it puts the v30
-    // expression INSIDE the engine, and the boards of §3 and §9 kill it because the engine then pays 0
-    // on every index of a null record — which is exactly what a rollback deploy computes.
     const revived = JSON.parse(`{"turn":5,"attackIndex":null,"amount":${String(BUFF)}}`) as {
       turn: number;
       attackIndex: number | null;

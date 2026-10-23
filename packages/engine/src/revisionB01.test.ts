@@ -16,24 +16,8 @@ import {
   setPrizes,
   toDeckTop,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── CARD REVISION, BATCH B01 (Supporters) ──
-//
-// Three findings from the per-unit audit (docs/reference/card-revision.md "B01"), each driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.effect`,
-// byte for byte below):
-//   §1 Judge — three Standard-legal printings (sv04.5-228, sv10-167, sv10-222) had no registry row
-//      and refused as TRAINER_NOT_SIMULATED. Since 714256b3's reprint legality rule they are
-//      `legal_standard_effective = 1` (same print_key as me03-076).
-//   §2 Rosa's Encouragement — "Attach up to 2 Basic Energy cards from your discard pile": with no
-//      printed type the Energy cards are NOT fungible, and `attachEnergyFrom` used to attach the
-//      first ones in pile order. The player now picks the cards after the target (a `chooseCards`
-//      park, `dest: "attach"`), whenever the pick is a real decision. The same op serves N's PP Up
-//      (the mandatory, forced-target arm), driven in §2 too.
-//   §3 Grimsley's Move — with a full Bench the top-7 look offered a {D} Basic that could not be
-//      benched; the offer is now clamped to the Bench space, so a full Bench looks, takes nothing and
-//      puts all 7 under the deck.
 
 const JUDGE_IDS = ["sv01-176", "sv04.5-228", "sv10-167", "sv10-222", "me03-076"] as const;
 const JUDGE_TEXT = "Each player shuffles their hand into their deck and draws 4 cards.";
@@ -95,16 +79,9 @@ const DECK = deckOf({
   "fix-water-energy": 5,
   "fix-fire-energy": 5,
   "fix-psychic-energy": 5,
-  "fix-energy": 13, // the prize row (p1Turn) and filler — 60 cards
+  "fix-energy": 13,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup with P2 first, then P1's SECOND turn (turn 4 — Grimsley's Move reads `notYourFirstTurn`).
-    Hands and discard piles emptied into the deck and six `fix-energy` made each prize row. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 1010, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);

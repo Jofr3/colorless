@@ -15,18 +15,8 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D628 — A1: THE REST OF THE ON-BENCH / ON-MOVE ABILITIES ──
-//
-// 3 printed texts / 5 `me` printings: Meowth ex ×3 "Last-Ditch Catch" (an `onPlayToBench` trigger on D593's
-// `TUCK_TAIL`, with the NEW `TriggeredAbility.oncePerTurn: "sharedByName"` read by `runBoardTrigger`), Latios
-// "Lustrous Assist" (the NEW `BoardCondition` `yourActiveNamed` beside `yourActivePromotedThisTurn`) and Larry's
-// Komala "Lethargic Charge" (`attachFromHand` with the NEW `one` and the riders `activeOnly` (NEW) +
-// `ownerPokemon`). Clawitzer ×2 "Fall Back to Reload" is dropped and named (§1) [🆕🆕🆕 D636 (D539): BUILT at D636,
-// `nextTurnLocksD636.test.ts` §7]. Every id and text off the LOCAL
-// D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. No `me` row is a fixture, so
-// the printed bytes are carried HERE and the suite drives a LOCAL `cardPool` (D275).
 
 const LAST_DITCH_CATCH =
   'Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can\'t use more than 1 Ability that has "Last-Ditch" in its name each turn.';
@@ -138,11 +128,6 @@ const DECK = deckOf({
   [SPECIAL]: 2,
   [FILLER]: 36,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 function ok(result: ReturnType<typeof applyAction>) {
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result;
@@ -249,7 +234,7 @@ const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) 
 const benchIndexOf = (state: GameState, id: string) =>
   state.players.p1.bench.findIndex((b) => state.cardIdByUid[b.stack.at(-1) ?? ""] === id);
 
-describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects, Clawitzer dropped (🆕🆕🆕 D636 (D539): Clawitzer keyed at D636)", () => {
+describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects, Clawitzer dropped ( D636 (D539): Clawitzer keyed at D636)", () => {
   it("Meowth ex ×3: `Tuck Tail` kept, plus an `onPlayToBench` trigger with the name lock and an inner confirm", () => {
     for (const id of MEOWTH) {
       expect(programFor(id), id).toEqual({
@@ -332,8 +317,7 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
     });
   });
 
-  it("Clawitzer ×2 'Fall Back to Reload' stays unkeyed: a hand-attach choice inside the non-parking Active→Bench self sweep (🆕🆕🆕 D636 (D539): WITHDRAWN — keyed at D636 on the persisted moved-to-Bench stamp, `nextTurnLocksD636.test.ts`)", () => {
-    // 🆕🆕🆕 D636 (D539): both ids are keyed now, on one object (`FALL_BACK_TO_RELOAD`).
+  it("Clawitzer ×2 'Fall Back to Reload' stays unkeyed: a hand-attach choice inside the non-parking Active→Bench self sweep ( D636 (D539): WITHDRAWN — keyed at D636 on the persisted moved-to-Bench stamp, `nextTurnLocksD636.test.ts`)", () => {
     for (const id of CLAWITZER)
       expect(programFor(id)?.abilities?.[0]?.name, id).toBe("Fall Back to Reload");
   });
@@ -375,7 +359,7 @@ describe("D628 §2 — Last-Ditch Catch: bench Meowth ex, confirm, search a Supp
     expect(of(done.events, "DECK_SEARCHED")).toEqual([]);
   });
 
-  it("🛑 the name lock: a SECOND Meowth ex benched the same turn fires nothing — even after a declined confirm (R-LDC1, UNRULED)", () => {
+  it("the name lock: a SECOND Meowth ex benched the same turn fires nothing — even after a declined confirm (R-LDC1, UNRULED)", () => {
     for (const first of [true, false]) {
       const state = table({ hand: [MEOWTH[0], MEOWTH[1]] });
       const benched = playToBench(state, MEOWTH[0]);
@@ -465,7 +449,7 @@ describe("D628 §3 — Lustrous Assist: after your Mega Latias ex moved up this 
     );
   });
 
-  it("🛑 R-LSA1 (UNRULED): the moment is a use-time gate — usable later in the turn, and Latios's own spot is not asked", () => {
+  it("R-LSA1 (UNRULED): the moment is a use-time gate — usable later in the turn, and Latios's own spot is not asked", () => {
     const state = promoted();
     // An intervening action (a manual attach onto the Active) does not close the window.
     const withHand = toHand(state, "p1", [W]);
@@ -528,7 +512,7 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
     );
   });
 
-  it("🛑 R-LGC1 (UNRULED): the attach is mandatory — an empty answer attaches the first offered card", () => {
+  it("R-LGC1 (UNRULED): the attach is mandatory — an empty answer attaches the first offered card", () => {
     const state = table({ active: LARRYS, bench: [KOMALA], hand: [W, R] });
     const parked = ok(use(state, "Lethargic Charge", bench(0)));
     const first = (prompt(parked.state).candidates as string[])[0] as string;

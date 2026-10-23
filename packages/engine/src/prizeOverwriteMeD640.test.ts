@@ -19,23 +19,8 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D640 — Y1a + MRV47, CUT TO OVERWRITING BOLT AND CELEBRATION ────────────────────────────────────────────
-//
-// 2 attack sentences / 3 `30th` printings newly reader-built; every other text on the 3 cards was already built, so all
-// 3 are finished. Every id and text off the LOCAL D1, 2026-10-10, `legal_standard = 1`; before this slice only the
-// D633 / D639 drop pins and the census named any of them.
-//
-//   Overwriting Bolt (Pikachu `30th-040`)       — `retypeDefenderWeakness { type: "Lightning", asTimesTwo }`: the
-//                                                 record's NEW `WeaknessRetype.asTimesTwo`, read as a Weakness
-//                                                 REWRITE (continuous.ts `installedWeaknessRewriteOf`, R-OWB1).
-//   Celebration (Gholdengo `30th-108` / `-142`) — `conditionGate { yourHandExactly 30 }` over `takePrize { count: 2,
-//                                                 thenShuffleHand }`: the NEW `PendingStage` `shuffleHandIntoDeck`
-//                                                 behind the Prize stage (R-CEL1).
-//
-// `MATCH_RECORD_VERSION` 46 → 47 (both shapes are persisted; apps/api `prizeStageMigrationD640.test.ts`). NAMED, NOT
-// TAKEN: Rotom ex ×3 "Multi Adapter" (Y1a) owes 47 → 48 on its own. [🆕🆕🆕 D643 (D539): BUILT at D643, 47 → 48.]
 
 const BOLT =
   "The Defending Pokémon's Weakness is now {L} until the end of your next turn. (Apply Weakness as ×2.)";
@@ -50,7 +35,6 @@ const PICK_OFF =
 const FAIRY_ZONE_TEXT =
   "The Weakness of each of your opponent's {N} Pokémon in play is now {P}. (Apply Weakness as ×2.)";
 
-/** [attack text, the `30th` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [BOLT, ["30th-040"]],
   [CELEBRATION, ["30th-108", "30th-142"]],
@@ -69,8 +53,7 @@ describe("D640 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(3);
   });
 
-  it("Multi Adapter (Rotom ex ×3) stays unbuilt, named for 47 → 48: no program (🆕🆕🆕 D643 (D539): WITHDRAWN — built at D643, 47 → 48; inverted)", () => {
-    // 🆕🆕🆕 D643 (D539) — WITHDRAWN: Rotom ex ×3 is keyed since D643 (`multiAdapterMeD643.test.ts`); inverted.
+  it("Multi Adapter (Rotom ex ×3) stays unbuilt, named for 47 → 48: no program ( D643 (D539): WITHDRAWN — built at D643, 47 → 48; inverted)", () => {
     for (const id of ["me02-029", "me02-111", "me02-126"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
@@ -200,11 +183,6 @@ const DECK = deckOf({
   "fix-energy": 35,
 });
 const BOARD_IDS = new Set(Object.keys(LOCAL).filter((id) => id !== FILLER));
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

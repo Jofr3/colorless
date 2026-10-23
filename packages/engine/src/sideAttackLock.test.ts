@@ -26,29 +26,6 @@ import {
 } from "./testFixtures";
 import { type SideAttackLock, makeInPlay } from "./types";
 
-// 0.433.0 → 0.434.0 — D549 (C), THE SIDE-WIDE ATTACK LOCK:
-//
-//   "During your next turn, your Pokémon can't attack. (This includes new Pokémon that
-//    come into play.)"                                                   (file line 169)
-//   "During your opponent's next turn, Pokémon that have 2 or less Energy attached can't
-//    attack. (This includes new Pokémon that come into play.)"          (file line 170)
-//
-// 2 sentences / 2 legal printings (leading count column 1 each) — SUBST-16 and OPAQUE at
-// SUBMAX=12 before this slice. Claimed WHOLE by `deriveAttackEffect` through TWO new
-// anchors (`SIDE_CANT_ATTACK_NEXT_TURN`, `OPPONENT_LOW_ENERGY_CANT_ATTACK`; the printed
-// reminder REQUIRED) and ONE new op, `lockSideAttacks { whose, maxEnergy }`, writing
-// ONE new REQUIRED `PlayerSide.sideAttackLock` read by `attackLocked` (continuous.ts) —
-// so the §8 gate, `redactedAttacksOf` and GameHud refuse with ZERO bytes of their own.
-//
-// ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID PRINTS EITHER SENTENCE ON THIS CHECKOUT, AND
-// THAT WAS MEASURED (D425, `git grep`). Every board rides file-local DECLARED `d549-*`
-// demonstrators in their OWN 60-card deck (D270); the real cards are UNMEASURED.
-//
-// Sections: §1 the derivation · §2 the installs · §3 the self window · §4 "new Pokémon
-// that come into play" · §5 the Energy count, LIVE (R4) · §6 the merge (R6) · §7 no §11
-// refusal (R5) · §8 the installer leaving play (R7) · §9 the projections · §10 the
-// unplaceable body · §11 the log · §12 the v33 bytes and the v32 reject.
-
 const S169 =
   "During your next turn, your Pokémon can't attack. (This includes new Pokémon that come into play.)";
 const S170 =
@@ -91,7 +68,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   "d549-locker": 4,
   "d549-locker-evolved": 2,
@@ -248,7 +224,7 @@ describe("§1 — two anchors claim the two rows WHOLE, and only them", () => {
       });
       expect(claimants, text).toEqual(["deriveAttackEffect"]);
     }
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("every apostrophe slot is U+0027 in the corpus, and every U+2019 twin derives the same op", () => {
@@ -257,17 +233,15 @@ describe("§1 — two anchors claim the two rows WHOLE, and only them", () => {
     expect(slots(S170)).toEqual([20, 81]);
     expect(deriveAttackEffect(S169.replaceAll("'", "’"))).toEqual(P169);
     expect(deriveAttackEffect(S170.replaceAll("'", "’"))).toEqual(P170);
-    // …and each slot ALONE (a mixed-apostrophe printing).
     expect(deriveAttackEffect(S170.replace("opponent's", "opponent’s"))).toEqual(P170);
     expect(deriveAttackEffect(S170.replace("can't", "can’t"))).toEqual(P170);
   });
 
-  it("🛑 the printed reminder is REQUIRED: without it, neither sentence is claimed", () => {
+  it("the printed reminder is REQUIRED: without it, neither sentence is claimed", () => {
     const bare169 = S169.replace(" (This includes new Pokémon that come into play.)", "");
     const bare170 = S170.replace(" (This includes new Pokémon that come into play.)", "");
     expect(deriveAttackEffect(bare169)).toBeNull();
     expect(deriveAttackEffect(bare170)).toBeNull();
-    // …and the anchors are `^…$`: a sentence in front or behind is not either row.
     for (const text of [S169, S170]) {
       expect(deriveAttackEffect(`Draw a card. ${text}`), text).toBeNull();
       expect(deriveAttackEffect(`${text} Draw a card.`), text).toBeNull();
@@ -333,7 +307,7 @@ describe("§2 — the installs write ONE record on the named SIDE, with the side
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — :169 refuses on T+2 only, and only the installer's side", () => {
-  it("🛑 turn 5: every attack of P1's Active is REFUSED with ATTACK_PREVENTED", () => {
+  it("turn 5: every attack of P1's Active is REFUSED with ATTACK_PREVENTED", () => {
     const { window } = sealed();
     expect(window.turn).toBe(5);
     for (const index of [SEAL, DRAIN, JAB])
@@ -374,7 +348,7 @@ describe("§4 — bodies that come into play AFTER the install are locked by con
     expect(attackLocked(benched, fresh)).toBe(true);
   });
 
-  it("🛑 a Bench-to-Active PROMOTION mid-turn (retreat) stays locked", () => {
+  it("a Bench-to-Active PROMOTION mid-turn (retreat) stays locked", () => {
     const { window } = sealed();
     const retreated = mustApply(window, {
       type: "retreat",
@@ -420,7 +394,7 @@ describe("§5 — :170 counts Energy CARDS at each declaration", () => {
     expect(refusal(drained({ p2Energy: 3 }).window, "p2", JAB)).toBeNull();
   });
 
-  it("🛑 a PROMOTED body with 0 Energy is locked (the reminder, on the capped form)", () => {
+  it("a PROMOTED body with 0 Energy is locked (the reminder, on the capped form)", () => {
     const window = drained({ p2Energy: 2 }).window;
     const retreated = mustApply(window, {
       type: "retreat",
@@ -432,14 +406,7 @@ describe("§5 — :170 counts Energy CARDS at each declaration", () => {
     expect(attackLocked(retreated, body(retreated.players.p2.active))).toBe(true);
   });
 
-  it("🛑 the count is CARDS: `countAttachedEnergy(…, null)`, not provided units (R4)", () => {
-    // 🛑 THE DISCRIMINATING BOARD (the D549 review's finding 1): two basic `fix-energy`
-    // cards are two cards AND two units, so a board of those alone answers the same under
-    // either reading. ONE `fix-grassdouble` ({G}{G}, ONE Special card, TWO units) attached
-    // on the LOCKED turn beside one basic makes TWO cards and THREE units: the cards
-    // reading keeps the body locked ("2 or less Energy attached"), a units reading
-    // (`providedEnergy(…).length`) would free it. `D549-side-lock-counts-units` is that
-    // units reading, and this rung is what kills it.
+  it("the count is CARDS: `countAttachedEnergy(…, null)`, not provided units (R4)", () => {
     const window = drained({ p2Energy: 1 }).window;
     const withCard = handFromDeck(window, "p2", "fix-grassdouble", 1);
     const mixed = mustApply(withCard, {
@@ -462,10 +429,9 @@ describe("§5 — :170 counts Energy CARDS at each declaration", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — same seat, same window: null dominates, else the larger cap", () => {
-  it("🛑 PLAYED: P1's :169 (turn 3) then P2's :170 (turn 4) both land on P1 for turn 5 — P1 stays fully locked", () => {
+  it("PLAYED: P1's :169 (turn 3) then P2's :170 (turn 4) both land on P1 for turn 5 — P1 stays fully locked", () => {
     const { victim } = sealed({ p1Energy: 3, p2Energy: 1 });
     const { state, events } = attack(victim, DRAIN, "p2");
-    // The second install said nothing new, so it filed no row.
     expect(find(events, "SIDE_ATTACKS_LOCKED")).toBeUndefined();
     expect(state.players.p1.sideAttackLock).toStrictEqual({ turn: 5, maxEnergy: null });
     // P1's 3-Energy Active would be FREE under `:170` alone — `null` must dominate.
@@ -615,22 +581,20 @@ describe("§11 — the rows name the side, the cap and the reminder", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§12 — the v33 bytes round-trip, and a v32-shaped state THROWS (D549)", () => {
-  it("🛑 v33: the record is in the serialized state, and a JSON round-trip still refuses", () => {
+  it("v33: the record is in the serialized state, and a JSON round-trip still refuses", () => {
     const { window } = sealed();
     const bytes = JSON.stringify(window);
     expect(bytes.includes('"sideAttackLock":{"turn":5,"maxEnergy":null}')).toBe(true);
     expect(refusal(JSON.parse(bytes) as GameState, "p1", JAB)).toBe("ATTACK_PREVENTED");
   });
 
-  it("🛑 v32-SHAPED sides (the key genuinely ABSENT): the declaration and the projection THROW", () => {
+  it("v32-SHAPED sides (the key genuinely ABSENT): the declaration and the projection THROW", () => {
     const revived = JSON.parse(JSON.stringify(ready())) as GameState;
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;
       // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
       delete side.sideAttackLock;
     }
-    // `undefined === null` is false, so the reader dereferences `.turn` of undefined on
-    // EVERY declaration and on the turn player's EVERY projection — D326's throw.
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: JAB })).toThrow(
       TypeError,
     );

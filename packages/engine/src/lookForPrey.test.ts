@@ -24,77 +24,9 @@ import {
 } from "./testFixtures";
 import { BENCH_MAX, otherSeat } from "./types";
 
-// D294 — THE CROSS-SEAT DESTINATION, AND A ROW THAT WAS PRICED AT TEN TIMES ITS
-// COST FOR FOUR HANDOFFS.
-//
-// THE SENTENCE. *"Once during your turn, you may use this Ability. Your opponent
-// reveals their hand, and you put a Basic Pokémon with 70 HP or less that you
-// find there onto your opponent's Bench."* — Mandibuzz, TWO Standard-legal
-// printings, `sv10.5w-064` and `sv10.5w-145`, whose `abilities_json` is
-// BYTE-IDENTICAL (remote D1 `colorless`, re-queried 2026-08-08:
-// `GROUP BY lower(j.value ->> 'effect')` over `json_each(abilities_json)` at
-// `legal_standard = 1` returns ONE row, n = 2, these two ids). Both are Stage 1,
-// regulation mark I.
-//
-// ── WHAT THE RE-QUERY SETTLED BEFORE ANYTHING WAS BUILT ─────────────────────
-//
-// 🛑 **THE BACKLOG GROUPED FOUR PRINTINGS INTO "ONE CROSS-SEAT ZONE SLICE" AND
-// THEY ARE THREE DIFFERENT MECHANISMS.** Read off the catalog rather than off the
-// handoff:
-//   · **Illumise `sv06-010`** — an ATTACK: *"Shuffle 1 of your opponent's Benched
-//     Pokémon and all attached cards into their deck."* The source is an IN-PLAY
-//     BODY, and no op in this engine unmakes one (§10 stacks only grow; KO tears
-//     one down through the prize path). **REFUSED — missing CODE.**
-//   · **Mandibuzz `sv10.5w-064`/`-145`** — an ABILITY whose source is the
-//     OPPONENT'S HAND. **BUILT HERE**, and it never touches `searchMove` /
-//     `retrieveMove` at all.
-//   · **Chill Teaser Toy `sv08-166`** — an **ITEM**, not a Tool (`trainer_type =
-//     'Item'`, re-queried; the handoff predicted "Tool and therefore `attachTool`"
-//     and it is wrong): *"Put an Energy attached to 1 of your opponent's Pokémon
-//     into their hand."* The source is an ATTACHED ENERGY. **REFUSED — missing
-//     CODE.** ⚠️ Its printed GATE is already built (`youGoSecond` + `yourFirstTurn`,
-//     Call Bell `sv08-165`'s pair); only the body is missing.
-// **The three share the words "your opponent's" and nothing else.** Grouping them
-// is what produced the standing price — *"a `z.enum` in `packages/schema`,
-// `redact.ts` and two `src/` HUDs"* — and **NONE OF THOSE MOVES**: this slice's
-// diff is ZERO in `packages/schema`, ZERO in `redact.ts` and ZERO in `src/`.
-//
-// 🛑 **AND THE WIDENED QUERY FOUND A HALF THE BACKLOG NEVER NAMED.**
-// `%onto your opponent's Bench%` over all three text columns at
-// `legal_standard = 1` returns **4** printings, not 2: **Lickitung `sv05-124` /
-// `sv05-180` "Tongue Pull"** — *"Your opponent reveals their hand. Put up to **2**
-// Basic Pokémon you find there onto your opponent's Bench."* Same source, same
-// destination, an ATTACK. **REFUSED on a COUNT** (§7 below drives why): this op
-// parks `min: 1, max: 1` and its offer keeps ONE representative per
-// interchangeable class, and *"up to 2"* may legally take two copies of the same
-// Basic. **The mechanism's legal population is 4; this slice ships 2 and says
-// which 2 and why.**
-//
-// ⚠️ **WHAT THIS FILE IS FOR, AND IT IS NOT "a card left the hand".** Four things
-// can be wrong here that every "the hand shrank" assertion would miss:
-//   (a) **WHOSE BENCH.** `ctx.seat` versus its opposite is one character, and a
-//       build that put the card on the ACTOR's Bench is a strictly better card
-//       that passes every count. §4 asserts the owner at BOTH ends of the move.
-//   (b) **WHETHER THE DEFAULT MOVED.** `dest` is optional, so Ortega's and
-//       Greavard's unmarked op must still put a card on the bottom of the deck.
-//       §2 is that ATTRIBUTION CONTROL, and without it a broken default would be
-//       invisible from inside this file.
-//   (c) **WHETHER THE FILTER IS LIVE.** A Basic over 70 HP, an Evolution UNDER 70
-//       HP and a Trainer must each be refused, and the three fail for three
-//       different conjuncts. A fixture holding only admitted cards proves none.
-//   (d) **WHETHER A FULL BENCH IS SEEN TWICE.** Bench size is PUBLIC, so the
-//       affordance greys (`programPlayable`) AND the offer empties. One without
-//       the other is a dialog with no legal answer, or a card that lies about
-//       being usable.
-
 const LOOK_FOR_PREY_TEXT =
   "Once during your turn, you may use this Ability. Your opponent reveals their hand, and you put a Basic Pokémon with 70 HP or less that you find there onto your opponent's Bench.";
 
-/** The two printings as the ingested catalog spells them — Stage 1, 110 HP,
-    {D}. ⚠️ THE HOST'S OWN HP IS IRRELEVANT to the filter (the threshold reads the
-    card in the OPPONENT's hand), which is exactly why it is set to a value ABOVE
-    the threshold here: a build that compared the wrong card's HP would be green
-    on a fixture where the host also happened to be small. */
 function mandibuzz(id: string): Card {
   return battler(id, {
     name: "Mandibuzz",
@@ -107,10 +39,6 @@ function mandibuzz(id: string): Card {
   });
 }
 
-/** A Stage 1 UNDER the threshold — the fixture pool has none, and without one the
-    `basicPokemon` conjunct and the `maxHp` conjunct cannot be told apart: every
-    Evolution in `FIXTURE_POOL` is also over 70 HP, so a filter that had dropped
-    the stage word entirely would still refuse them. */
 function smallStage1(id: string): Card {
   return {
     ...battler(id, { hp: 60, types: ["Colorless"], retreat: 1 }),
@@ -127,15 +55,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The TWELFTH seeded deck (D270's rule: a seeded suite gets its OWN deck). Every
-    Pokémon row is here for what the FILTER must say about it:
-      · `fix-victim` (30 HP Basic) and `fix-basic-1` (60 HP Basic) — ADMITTED;
-      · `fix-tough` (120 HP Basic) — REFUSED by the THRESHOLD alone;
-      · `prey-small-stage1` (60 HP Stage 1) — REFUSED by the STAGE alone;
-      · `fix-zero-hp` (0 HP Basic) — REFUSED by the NULL, `hpOf`'s data-gap read;
-      · `fix-item` — REFUSED by the category;
-      · the two Mandibuzz printings themselves (110 HP Stage 1) — REFUSED twice
-        over, which is a fact about the card and not an accident of the fixture. */
 const PREY_DECK = deckOf({
   "sv10.5w-064": 4,
   "sv10.5w-145": 4,
@@ -186,11 +105,6 @@ function emptyHand(state: GameState, seat: Seat): GameState {
   };
 }
 
-/** `seat` has Mandibuzz ACTIVE and one other body benched; the OPPONENT's hand
-    holds exactly `handIds`, and their Bench is empty unless `benched` says
-    otherwise.
-    ⚠️ THE ACTOR'S BENCH BODY IS LOAD-BEARING — §14.2 makes an empty Bench a LOSS
-    the moment the Active leaves, and a `gameOver` board proves nothing. */
 function board(
   seed: number,
   first: Seat,
@@ -285,11 +199,7 @@ describe("Mandibuzz — the two printings as registry data", () => {
     expect(programFor("sv10.5w-145")).toBe(programFor("sv10.5w-064"));
   });
 
-  it("🛑 `oncePerTurn` is TRUE and NOT `sharedByName` — the card prints no name lock", () => {
-    // D272's wider scope is keyed on the printed "You can't use more than 1 <name>
-    // Ability each turn", which this sentence does not carry. Two Mandibuzz on one
-    // Bench therefore get a use EACH, and a `sharedByName` here would silently
-    // halve a legal board's output.
+  it("`oncePerTurn` is TRUE and NOT `sharedByName` — the card prints no name lock", () => {
     expect(programFor("sv10.5w-064")?.abilities?.[0]?.oncePerTurn).toBe(true);
     expect(LOOK_FOR_PREY_TEXT).not.toContain("can't use more than 1");
   });
@@ -301,10 +211,7 @@ describe("Mandibuzz — the two printings as registry data", () => {
     expect(programFor("sv10.5w-064")?.trainerPlayableIf).toBeUndefined();
   });
 
-  it("🛑 authors NO attack program and NO passive — the census term is an OP field", () => {
-    // The column this row moves is `BUILT.ability`, and nothing else. A passive
-    // bar or an attack table here would move a different constant and make the
-    // census's attribution control a lie.
+  it("authors NO attack program and NO passive — the census term is an OP field", () => {
     expect(programFor("sv10.5w-064")?.attack).toBeUndefined();
     expect(programFor("sv10.5w-064")?.passive).toBeUndefined();
   });
@@ -315,7 +222,7 @@ describe("Mandibuzz — the two printings as registry data", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the DEFAULT destination is untouched — `dest` absent is the M5 op", () => {
-  it("🛑 an op with NO `dest` puts the card on the BOTTOM OF THE DECK, as ever", () => {
+  it("an op with NO `dest` puts the card on the BOTTOM OF THE DECK, as ever", () => {
     // Without this, a widening that had made "bench" the default would be
     // invisible from inside this file: every assertion here is about the marked
     // op, and Ortega/Greavard live in `opponentHandFamily.test.ts`.
@@ -330,7 +237,7 @@ describe("the DEFAULT destination is untouched — `dest` absent is the M5 op", 
     expect(out.events.some((e: GameEvent) => e.type === "POKEMON_BENCHED")).toBe(false);
   });
 
-  it('🛑 the SAME op with `dest: "bench"` moves the SAME card the OTHER way', () => {
+  it('the SAME op with `dest: "bench"` moves the SAME card the OTHER way', () => {
     // The pair is the whole widening: one field, two destinations, everything
     // else identical — which is what makes `dest` falsifiable rather than
     // decorative.
@@ -346,9 +253,6 @@ describe("the DEFAULT destination is untouched — `dest` absent is the M5 op", 
   });
 
   it("the park's `dest` follows the op's, and the wire enum already had both", () => {
-    // `chooseCards.dest` has carried "bench" since the search family, which is
-    // why `packages/schema/src/match/redacted.ts` takes a ZERO diff for this
-    // slice. Asserted rather than argued, because the handoff priced a `z.enum`.
     const state = board(SEEDS[1], "p1", "p1", ["fix-victim", "fix-basic-1"]);
     const parked = must(useLookForPrey(state, "p1"));
     expect(cardsPrompt(parked).dest).toBe("bench");
@@ -370,13 +274,13 @@ describe("the Look for Prey offer", () => {
     "fix-energy", // Energy — refused by the CATEGORY
   ] as const;
 
-  it("🛑 OFFERS exactly the Basics at or under 70 HP and nothing else", () => {
+  it("OFFERS exactly the Basics at or under 70 HP and nothing else", () => {
     const state = board(SEEDS[2], "p1", "p1", MIXED);
     const parked = must(useLookForPrey(state, "p1"));
     expect(offeredIds(parked)).toEqual(["fix-basic-1", "fix-victim"]);
   });
 
-  it("🛑 a 60 HP STAGE 1 is refused — the stage conjunct, not the threshold", () => {
+  it("a 60 HP STAGE 1 is refused — the stage conjunct, not the threshold", () => {
     // The sharpest single card in the fixture: it satisfies `maxHp` and fails
     // `basicPokemon`, so a filter that had dropped the stage word would offer it.
     const state = board(SEEDS[2], "p1", "p1", ["prey-small-stage1"]);
@@ -387,7 +291,7 @@ describe("the Look for Prey offer", () => {
     expect(out.state.players.p2.bench.length).toBe(0);
   });
 
-  it("🛑 a 0 HP body is refused rather than admitted — `null <= 70` is TRUE in JS", () => {
+  it("a 0 HP body is refused rather than admitted — `null <= 70` is TRUE in JS", () => {
     const state = board(SEEDS[2], "p1", "p1", ["fix-zero-hp"]);
     const out = must(useLookForPrey(state, "p1"));
     expect(out.phase.kind).toBe("turn:action");
@@ -451,7 +355,7 @@ describe("Look for Prey on a real board", () => {
     };
   }
 
-  it("🛑 the chosen Basic lands on the OPPONENT's Bench and NOT the actor's", () => {
+  it("the chosen Basic lands on the OPPONENT's Bench and NOT the actor's", () => {
     const { before, resolved } = parkAndPick(SEEDS[0], "p1", "fix-victim");
     expect(benchIds(resolved.state, "p2")).toEqual(["fix-victim"]);
     // The actor's own Bench is byte-identical to before — the single most
@@ -484,7 +388,7 @@ describe("Look for Prey on a real board", () => {
     expect(put?.tools).toEqual([]);
   });
 
-  it("🛑 the OPPONENT may evolve it next turn — it is an ordinary Benched body", () => {
+  it("the OPPONENT may evolve it next turn — it is an ordinary Benched body", () => {
     // §10's came-into-play-this-turn ban is keyed on `turnPlayed`, and the stamp
     // above is what makes it fire. This is the reader that would notice a stamp
     // of 0 (which would let them evolve it immediately).
@@ -508,7 +412,7 @@ describe("Look for Prey on a real board", () => {
 describe("a full opponent Bench", () => {
   const FULL = Array.from({ length: BENCH_MAX }, () => "fix-basic-1");
 
-  it("🛑 `programPlayable` says NO — the affordance greys before it is offered", () => {
+  it("`programPlayable` says NO — the affordance greys before it is offered", () => {
     const state = board(SEEDS[0], "p1", "p1", ["fix-victim"], FULL);
     expect(state.players.p2.bench.length).toBe(BENCH_MAX);
     const program = programFor("sv10.5w-064")?.abilities?.[0]?.program ?? [];
@@ -517,7 +421,7 @@ describe("a full opponent Bench", () => {
     );
   });
 
-  it("🛑 the ACTION is refused outright — `useAbility` never reaches the program", () => {
+  it("the ACTION is refused outright — `useAbility` never reaches the program", () => {
     const state = board(SEEDS[1], "p1", "p1", ["fix-victim"], FULL);
     const out = useLookForPrey(state, "p1");
     expect(out.ok).toBe(false);
@@ -525,12 +429,7 @@ describe("a full opponent Bench", () => {
     expect(out.error.code).toBe("NO_LEGAL_TARGET");
   });
 
-  it("🛑 and the OFFER is empty too — one guard without the other is a dead dialog", () => {
-    // The resolve-time half, driven at the OP because `programPlayable` above
-    // stops the action first. Both are owed: if only the gate refused, a wire
-    // answer arriving on a board that filled up since would still have to whiff
-    // rather than destroy a card; if only the offer refused, the row would sit
-    // LIT and do nothing.
+  it("and the OFFER is empty too — one guard without the other is a dead dialog", () => {
     const state = board(SEEDS[1], "p1", "p1", ["fix-victim"], FULL);
     const out = runOps(state, [{ op: "bottomFromOpponentHand", dest: "bench" }], "p1");
     expect(out.parked).toBe(false);
@@ -557,7 +456,7 @@ describe("a full opponent Bench", () => {
     );
   });
 
-  it("🛑 a NON-EMPTY hand with no MATCH stays playable — the reveal still happens", () => {
+  it("a NON-EMPTY hand with no MATCH stays playable — the reveal still happens", () => {
     // ruling/284's line, already this op's rule: whether a hidden hand holds a
     // match is exactly what the board does NOT establish, so the card is played,
     // the hand is revealed, and the pick whiffs. Greying here would be a peek.
@@ -613,10 +512,7 @@ describe("the reveal and the row", () => {
     expect(resolved.events.filter((e) => e.type === "POKEMON_BENCHED").length).toBe(1);
   });
 
-  it("🛑 the opponent's hand is STILL hidden in the projection afterwards", () => {
-    // D232's rule, re-driven for a new destination: the printed reveal is
-    // INSTANTANEOUS, so a build that opened the hand in `redact.ts` would be lying
-    // about every later turn. The channel is the log and nothing else.
+  it("the opponent's hand is STILL hidden in the projection afterwards", () => {
     const { resolved } = drive(SEEDS[1]);
     const seen = redactGame(resolved.state, "p1");
     // Face-down BACKS with POSITIONAL ids, which is what "hidden" means here —
@@ -628,7 +524,7 @@ describe("the reveal and the row", () => {
     expect(backs.some((c) => c.cardId === "fix-victim" || c.cardId === "fix-basic-1")).toBe(false);
   });
 
-  it("🛑 the POKEMON_BENCHED row is filed under the ACTOR and names the OWNER", () => {
+  it("the POKEMON_BENCHED row is filed under the ACTOR and names the OWNER", () => {
     const { resolved } = drive(SEEDS[2]);
     const benched = resolved.events.find((e) => e.type === "POKEMON_BENCHED");
     expect(benched).toBeDefined();
@@ -645,9 +541,6 @@ describe("the reveal and the row", () => {
   });
 
   it("the ORDINARY §5.2 bench play keeps its row byte for byte — `actor` absent", () => {
-    // The widening is optional, and this is what "optional" has to mean: every
-    // pre-existing row is untouched. A build that had made `actor` required would
-    // still pass every assertion above.
     const state = board(SEEDS[3], "p1", "p1", ["fix-victim"]);
     const basic = state.players.p1.hand.find(
       (u) => POOL[state.cardIdByUid[u] ?? ""]?.stage === "Basic",
@@ -672,29 +565,13 @@ describe("the reveal and the row", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("what this slice REFUSED and why", () => {
-  it("🛑 Illumise `sv06-010` still carries its GATE and NO body", () => {
-    // *"Shuffle 1 of your opponent's Benched Pokémon and all attached cards into
-    // their deck."* MISSING: **CODE** — an op that unmakes an IN-PLAY body (its
-    // whole stack, attached Energy and Tools, damage and status) back into a
-    // library zone. Nothing in this engine does that: §10 stacks only grow and KO
-    // is the one teardown, through the prize path. It is NOT the schema-boundary
-    // row four handoffs priced, and it is NOT this slice's mechanism.
+  it("Illumise `sv06-010` still carries its GATE and NO body", () => {
     const program = programFor("sv06-010");
     expect(program?.attackGate?.[0]).toBeDefined();
     expect(program?.attack).toBeUndefined();
   });
 
-  it("✅ Chill Teaser Toy `sv08-166` is BUILT at D295 — and it is an ITEM, not a Tool", () => {
-    // 🆕 **THE INVERSION, CASHED — THE FIFTH TIME D284's DESIGN HAS PAID.** This
-    // `it` was written one commit earlier as a REFUSAL asserting
-    // `programFor("sv08-166")` undefined, precisely so that building it would cost
-    // a deliberate edit rather than a silent table widening. It cost exactly that,
-    // and the blocker it named — *"a DESTINATION that is a zone rather than the
-    // discard pile"* — is the field that was built: `discardEnergy.to`.
-    //
-    // ⚠️ **THE CATALOG CLAIM IS RE-ASSERTED AND NOT DROPPED.** The handoff
-    // predicted this card is a TOOL reaching `attachTool`; the D1 row says
-    // `trainer_type = 'Item'`, and a Tool would carry no `trainer` program at all.
+  it("Chill Teaser Toy `sv08-166` is BUILT at D295 — and it is an ITEM, not a Tool", () => {
     const program = programFor("sv08-166");
     expect(program?.trainer).toEqual([
       { op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" }, to: "hand" },
@@ -709,21 +586,11 @@ describe("what this slice REFUSED and why", () => {
     });
   });
 
-  it("🛑 Lickitung `sv05-124`/`-180` is unauthored — the same destination, on a COUNT", () => {
-    // *"Your opponent reveals their hand. Put up to 2 Basic Pokémon you find
-    // there onto your opponent's Bench."* MISSING: **CODE** — a count on this op
-    // AND a per-class-representative offer. The op parks `min: 1, max: 1` and
-    // collapses interchangeable copies to ONE representative, which is sound for
-    // exactly one pick; "up to 2" may take two copies of the same Basic, and a
-    // collapsed offer cannot express that. Found by the widened query, named by
-    // nothing in the backlog.
+  it("Lickitung `sv05-124`/`-180` is unauthored — the same destination, on a COUNT", () => {
     for (const id of ["sv05-124", "sv05-180"]) expect(programFor(id), id).toBeUndefined();
   });
 
-  it('🛑 the op has NO `dest: "hand"` — a member no printing reaches', () => {
-    // The obvious third destination, refused on the D104 minimal-shape rule.
-    // Chill Teaser Toy's "into their hand" moves an ATTACHED ENERGY, which this
-    // op's source cannot see, so a `"hand"` arm here would be unreachable.
+  it('the op has NO `dest: "hand"` — a member no printing reaches', () => {
     const state = board(SEEDS[0], "p1", "p1", ["fix-victim"]);
     const before = state.players.p2.hand.length;
     const out = runOps(state, [{ op: "bottomFromOpponentHand", dest: "bench" }], "p1");
@@ -743,10 +610,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     return must(useLookForPrey(state, "p1"));
   }
 
-  it("🛑 the persisted continuation's op carries EXACTLY these keys", () => {
-    // THE LITERAL KEY ANCHOR (D279's pairing rule): a diff between two boards
-    // from ONE build is blind to "every op grew a key", because the key is on
-    // both sides. This names them.
+  it("the persisted continuation's op carries EXACTLY these keys", () => {
     const phase = parked().phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     // Through JSON, because that is what STORAGE does to it.
@@ -757,11 +621,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     expect(revived.cont.rest).toEqual([]);
   });
 
-  it("🛑 FORWARD: a version-16 record with NO `dest` replays as bottom-of-deck", () => {
-    // The direction the repo's rule actually tests — "can the PREVIOUS deploy's
-    // RECORD hold the new TYPE". An old continuation has no `dest`; this build
-    // reads `undefined`; `undefined` IS the bottom of the deck the old record was
-    // written under. The old bytes mean here exactly what they meant there.
+  it("FORWARD: a version-16 record with NO `dest` replays as bottom-of-deck", () => {
     const state = board(SEEDS[1], "p1", "p1", ["fix-victim", "fix-basic-1"]);
     const deckBefore = state.players.p2.deck.length;
     const out = runOps(state, [{ op: "bottomFromOpponentHand" }], "p1");
@@ -769,7 +629,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     expect(out.parked || out.state.players.p2.deck.length > deckBefore).toBe(true);
   });
 
-  it("🛑 BACKWARD: the parked prompt round-trips through JSON unchanged", () => {
+  it("BACKWARD: the parked prompt round-trips through JSON unchanged", () => {
     // The other direction, and the one a version bump would exist to protect: a
     // record written HERE, read back HERE. If the park did not survive
     // serialisation the version question would be moot and the bug louder.
@@ -789,11 +649,6 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
   });
 
   it("no `GameState` field, no new `GameEvent` TYPE, no new error code", () => {
-    // What actually moved: an OPTIONAL field on an existing op (which an old
-    // continuation cannot carry and does not need) and an OPTIONAL field on
-    // `POKEMON_BENCHED` (and `GameEvent` is not persisted at all — `MatchRecord`
-    // stores the RENDERED `SeatLogEntry[]`). Neither can make a version-16 record
-    // unreadable here.
     const state = board(SEEDS[0], "p1", "p1", ["fix-victim"]);
     const keys = Object.keys(state).sort();
     expect(keys).toContain("phase");
@@ -803,10 +658,6 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
 
 describe("the engine version", () => {
   it("moved past 0.204.0 with the new op field, and the two files agree", () => {
-    // BEHAVIOUR moved inside `packages/engine` (an op field, an event field, two
-    // registry rows), so the number moves. The tie against the manifest is
-    // D275's guard; this re-states the literal because the literal IS this
-    // assertion (D275's own note about `D275-engine-version-drifts-again`).
     expect(engineVersion).toBe(manifest.version);
   });
 });

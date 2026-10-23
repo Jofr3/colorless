@@ -1,25 +1,3 @@
-// 🆕🆕🆕 D630 — M1 of the Mega backlog: THE PERSISTED-RECORD BUNDLE, 8 texts / 13 `me` printings, and
-// `MATCH_RECORD_VERSION` 43 → 44 (apps/api match.ts "43 → 44 AT D630", `recordKeysMigrationD630.test.ts`).
-//
-//   • Mega Heracross ex `me02-004` / `-108` "Juggernaut Horn" (100+) and Lycanroc `30th-085` / `-138` "Counter"
-//     (10+): *"If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that
-//     much more damage."* — the NEW `InPlayPokemon.attackDamageTaken`, written at the four §8.5 sites, read as
-//     `DamageCountSource.attackDamageTakenLastTurnOnSelf` (R-JH1 ⚠️ UNRULED).
-//   • Heatran `me05-007` "Lava Wall", Manectric `me05-024` / `-089` "Flashing Barrier", Deoxys `me04-033` "Psy
-//     Protection": `preventDamage` on the NEW `AttackerClass.stage` members `burned` / `evolution` / `hasAbility`
-//     (R-LVW1, R-PSY1 ⚠️ UNRULED).
-//   • Bronzong `me05-064` "Metal Block": `reduceDamage` with the NEW `DamageReduction.fromClass`.
-//   • Iron Defender `me01-118` / `me05-110` (Item): Jasmine's Gaze's op with the NEW `pokemonType`, on
-//     `PlayerSide.sideDamageReduction` made a SUMMED list (R-ID1 ⚠️ UNRULED).
-//   • Okidogi `me02.5-122` "Settle the Score": the NEW `PlayerSide.prizesTakenOnTurn` (flow.ts
-//     `resolveTakePrizes`), read as `DamageCountSource.opponentPrizesTakenLastTurn` (R-STS1 ⚠️ UNRULED).
-//   • Mabosstiff `me05-058` "Plunging Headbutt": the NEW op `exposeSelf` on D547's `damageVulnerability`
-//     (no new key; R-PH1 ⚠️ UNRULED: summed with a live record of the same window).
-//
-// Texts byte for byte off the LOCAL D1 (2026-10-10, `legal_standard = 1`); driven on the real ids in a LOCAL
-// `cardPool` (D275) in the suite's OWN 60-card deck (D270). Attack COSTS are dropped to `[]` on the local faces
-// (no Energy is needed to drive a declaration); names, stages, HP, types, Weakness and Resistance are printed.
-
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
@@ -40,6 +18,7 @@ import {
   setConditions,
   setDamage,
   trainerCard,
+  must,
 } from "./testFixtures";
 import { attackDamageTakenLastTurn, prizesTakenOnLastTurn, withAttackDamageTaken } from "./types";
 
@@ -74,7 +53,6 @@ const IRON_DEFENDER = "me01-118";
 
 const weak = (type: string): Card["weaknesses"] => [{ type, value: "×2" }] as Card["weaknesses"];
 
-/** The 13 printings' local faces, read off the LOCAL D1 (costs dropped). */
 const ME_FACES: Record<string, Card> = {
   ...Object.fromEntries(
     [HERACROSS, "me02-108"].map((id) => [
@@ -205,13 +183,13 @@ const ME_FACES: Record<string, Card> = {
 
 // ── THE SUITE'S OWN BODIES ──
 
-const WALL = "d630-wall"; // a 900-HP {C} Basic with no attack: the Active a hit is measured on
+const WALL = "d630-wall";
 const RAIDER = "d630-raider"; // a 900-HP {C} Basic: 60 to the Active, a 30 snipe, a 10 spread
 const EVOLVED = "d630-evolved"; // the same attacks on a Stage 1 (an Evolution Pokémon)
 const ABLE = "d630-able"; // the same attacks on a Basic that prints an Ability
 const FIRE = "d630-fire"; // a {R} Stage 1: 80 to the Active (Metal Block's Weakness rung)
 const FRAGILE = "d630-fragile"; // a 60-HP {C} Basic the Raider Knocks Out
-const FRAGILE_EX = "d630-fragile-ex"; // "D630 Fragile ex", the same at 60 HP: 2 Prize cards
+const FRAGILE_EX = "d630-fragile-ex";
 const STEEL = "d630-steel"; // a 900-HP {M} Basic with no attack
 const FILLER = "d630-filler";
 const DUSCLOPS = "sv06.5-019"; // "Cursed Blast": the off-turn take (its user's own Pokémon Knocked Out)
@@ -307,15 +285,9 @@ const DECK = deckOf({
   [FILLER]: 9,
   [DUSCLOPS]: 1,
   "fix-fire-energy": 13,
-  "fix-energy": 6, // the prize row
+  "fix-energy": 6,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Hands and prize rows reset: every hand back into the deck, the six `fix-energy` the prize row. */
 function reset(state: GameState): GameState {
   let next = state;
   for (const s of ["p1", "p2"] as const) {
@@ -691,7 +663,6 @@ describe("D630 §5 — Metal Block: 100 less from Evolution attackers, after Wea
   it("an Evolution attacker's 150 lands as 50; a Basic attacker's 150 lands whole", () => {
     const evolved = attack(attack(board(BRONZONG, [], EVOLVED), "p1", 1).state, "p2", 3);
     expect(evolved.state.players.p1.active?.damage).toBe(50);
-    // 150 Knocks the 130-HP Bronzong Out, so the row is read rather than the body.
     const basicBoard = attack(board(BRONZONG, [], RAIDER), "p1", 1).state;
     const basic = attack(basicBoard, "p2", 3);
     expect(dealtTo(basic.events, topOf(basicBoard, "p1"))).toBe(150);
@@ -882,7 +853,6 @@ describe("D630 §8 — Plunging Headbutt: this Pokémon takes 100 more during th
 
   it("the opponent's 60 lands as 160 next turn; two turns later the record has expired", () => {
     const window = attack(board(MABOSSTIFF), "p1", 1).state;
-    // 160 Knocks the 140-HP Mabosstiff Out, so the row is read rather than the body.
     expect(dealtTo(attack(window, "p2").events, topOf(window, "p1"))).toBe(JAB + 100);
     const later = endTurn(endTurn(window, "p2"), "p1");
     expect(attack(later, "p2").state.players.p1.active?.damage).toBe(JAB);

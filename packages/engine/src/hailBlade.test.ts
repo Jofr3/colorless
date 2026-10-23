@@ -14,35 +14,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.46.0 → 0.47.0 — Chien-Pao ex sv02-061 "Hail Blade": the variable-count
-// discard whose damage scales off it, and the engine's FIRST registry-AUTHORED
-// attack (`programFor(id)?.attack`).
-//
-// "You may discard any amount of {W} Energy from your Pokémon. This attack does
-// 60 damage for each card you discarded in this way."
-//
-// Three gaps close at once, and this suite pins each of them:
-//   • `discardEnergy` `from: "yours"` — the printed "your Pokémon" is the WHOLE
-//     own board (Active + Bench), wider than `yourActive`'s "this Pokémon";
-//   • `count: "any"` — the one DECLINABLE discard (0..all), an `upTo` scope whose
-//     pick MAY be empty, so it ALWAYS parks on a non-empty board;
-//   • `recordAs: "discarded"` + `damageDefender` — the "in this way" clause is
-//     literally an op→op record read, and the 60-per-card is dealt through
-//     `snipeActive`'s full §8.5 pipeline, so it is GENUINE attack damage
-//     (Weakness doubles it) and the card's printed "60×" base is SUPPRESSED.
-//
-// Model A (post-damage, §9.2 record-driven): §8 runs damage BEFORE the program,
-// so an attack whose number depends on a mid-attack choice cannot use the pre-W/R
-// fold — it re-enters the same math from INSIDE the program, after the choice.
-
-/** The VERBATIM sv02-061 print (tcgdex-confirmed). 🆕🆕 **D402 RE-POINTED THE
-    CLAIM THIS COMMENT USED TO MAKE (D178: kept, not deleted).** It read *"the
-    deriver deliberately refuses this sentence — the registry program is
-    authoritative"*, and the second half is still exactly true: `attack.ts` reads
-    `programFor(id)?.attack?.[index]` FIRST, so this card's board is byte-for-byte
-    what it was. The first half is now false, deliberately — D402's
-    `ENERGY_DISCARD_SCALED_DAMAGE` derives this sentence into the SAME two ops,
-    and the rung below asserts the AGREEMENT rather than the refusal. */
 const HAIL_BLADE_TEXT =
   "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.";
 
@@ -69,10 +40,6 @@ function board(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
-/** P1 fields Chien-Pao ex with `energy` Basic {W} attached — two of them pay Hail
-    Blade's {W}{W}, and ALL of them are discard fuel (a cost is not spent) — against
-    a P2 Active of `defender`. setActiveFromDeck displaces each setup Active to the
-    bench, so a KO always has a Pokémon to promote into. */
 function hailBlade(
   seed: number,
   opts: { energy: number; defender?: string; colorless?: number },
@@ -98,19 +65,6 @@ function activeEnergy(state: GameState, seat: "p1" | "p2"): string[] {
 
 describe("Chien-Pao ex 'Hail Blade' — the REGISTRY-authored attack", () => {
   it("is authored in the registry, and the deriver now AGREES with it op for op", () => {
-    // The first attack to use the `programFor(id)?.attack` seam. This rung asserted
-    // `deriveAttackEffect(HAIL_BLADE_TEXT) === null` from D96 to D401 — the
-    // variable-count sentence was one the deriver deliberately would not read,
-    // because on the day this card landed NONE of `count: "any"`, `cap`,
-    // `recordAs: "discarded"` or `damageDefender` existed to read it INTO.
-    //
-    // 🆕🆕 **D402 SPENT THAT REFUSAL AND THE RUNG GETS THE STRICTLY STRONGER
-    // CLAIM** (D361's move on `OPPONENT_ACTIVE_DISCARD` and Mawile, one family
-    // over): the two producers now build the IDENTICAL program for one printed
-    // sentence, BY CONSTRUCTION rather than by coincidence. The old rung could only
-    // go red by the deriver learning the sentence; this one goes red if EITHER
-    // producer changes an op, a field or a value while the other does not — which
-    // is the defect a hand-authored row and a text reader can actually have.
     const AUTHORED = [
       {
         op: "discardEnergy",
@@ -138,10 +92,6 @@ describe("Chien-Pao ex 'Hail Blade' — the REGISTRY-authored attack", () => {
 
 describe("Hail Blade — the upTo park over the attacker's WHOLE board", () => {
   it("offers every {W} on Active AND Bench, never a non-{W}, and always parks", () => {
-    // "from your Pokémon" is the whole own side — the distinction from
-    // `yourActive`'s "this Pokémon". Three {W} on the Active, two on a benched
-    // Chien-Pao, plus a Colorless Basic Energy that provides {C} and so is NEVER
-    // a candidate: five rows offered, one withheld.
     let state = hailBlade(1, { energy: 3, colorless: 1 });
     state = benchFromDeck(state, "p1", "sv02-061");
     const benchIndex = state.players.p1.bench.length - 1;
@@ -162,10 +112,6 @@ describe("Hail Blade — the upTo park over the attacker's WHOLE board", () => {
     expect(prompt.note).toBe("Discard any amount of Water Energy from your Pokémon.");
     // DECLINABLE: 0..all, so the max is the whole offer — not an exact count.
     expect(prompt.scope).toEqual({ kind: "upTo", max: 5 });
-    // Every candidate stays DISTINCT — no interchangeable collapse. Three
-    // identical {W} on one Pokémon are three pickable rows here, because the
-    // COUNT is what the damage reads (contrast the mandatory arms, where two
-    // copies of one print on one host collapse to a single question).
     expect(prompt.discardable.map((d) => d.uid)).toEqual([...activeWater, ...benchWater]);
     expect(prompt.discardable.map((d) => d.from)).toEqual([
       { seat: "p1", spot: { spot: "active" } },

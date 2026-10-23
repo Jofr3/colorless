@@ -12,21 +12,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.49.0 → 0.50.0 — the `onDamagedByAttack` reactive-TRIGGER row (P3-M5, D99):
-// Armarouge sv03-044 "Scorching Armor" — "If this Pokémon is in the Active Spot
-// and is damaged by an attack from your opponent's Pokémon (even if this Pokémon
-// is Knocked Out), the Attacking Pokémon is now Burned."
-//
-// The general trigger the D98 `damageAttacker` PASSIVE deliberately did NOT
-// build: this one runs an EffectOp program (`applyStatus`) reactively, so it is a
-// `TriggeredAbility` on a new `TriggerTiming` `onDamagedByAttack`, scanned at the
-// SAME attack.ts spot as the recoil — right after DAMAGE_DEALT, gated on
-// `dealt > 0`, main-hit Active only, BEFORE finishAttack's §8.1 sweep. So "even
-// if Knocked Out" is free (a lethally-damaged Armarouge still Burns the attacker)
-// and the "in the Active Spot" clause is enforced by the read site. The program
-// runs under the DAMAGED Pokémon's seat, so `applyStatus target:"defender"` lands
-// the Burn on the ATTACKER's Active (otherSeat).
-
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
 
@@ -99,10 +84,6 @@ describe("Scorching Armor — Burn the attacker when damaged (§9)", () => {
 
 describe("Scorching Armor — 'even if this Pokémon is Knocked Out'", () => {
   it("Burns the attacker even when the attack KOs Armarouge", () => {
-    // Armarouge pre-damaged to 100; Bite's 30 is lethal (130 ≥ 120): the Burn
-    // must STILL land, because the trigger fires before finishAttack's §8.1 sweep.
-    // The apply pauses at prize selection (before the Checkup), so the attacker's
-    // burned flag is still set in `done`.
     let state = fight(2);
     state = setDamage(state, "p2", 100);
     const armarouge = state.players.p2.active?.stack.at(-1) ?? "";

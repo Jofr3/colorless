@@ -17,17 +17,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.58.0 → 0.59.0 — Clefable ex sv03-082 (P3-M5 long tail, D108): "All of your
-// Pokémon that have {P} Energy attached have no Retreat Cost."
-//
-// The first CONDITIONAL continuous aura, and the first modifier on the
-// retreat-cost seam. Like `removeWeakness` (D104) it reaches OTHER Pokémon, so it
-// is read through a dedicated continuous.ts scan rather than `passivesOf` — but
-// its printed clause is evaluated PER TARGET, so the scan takes the Pokémon and
-// derives its seat (the aura is own-board), leaving `effectiveRetreatCost`'s
-// signature and its three readers (turn.ts retreat, redact.ts, the web HUD)
-// untouched. sv03-082 is the only "no Retreat Cost" print in the local pool.
-
 /** Setup on P1's turn, then field the retreat-2 beneficiary in P1's Active spot
     (the starter is displaced onto the bench, which a retreat then promotes). */
 function board(seed: number): GameState {
@@ -107,11 +96,6 @@ describe("Lunar Zone — own-board scoping and the §9 ability lock", () => {
   });
 
   it("an Active Klefki does not lock a Stage 1 source — the aura stands", () => {
-    // The gate IS consulted (hasFreeRetreatAura skips a §9-disabled source), but
-    // no lock in the sv01–03 pool can actually reach Clefable ex: Klefki
-    // "Mischievous Lock" and Spiritomb "Fettered in Misfortune" narrow to BASIC
-    // Pokémon (Clefable ex is a Stage 1) and Ting-Lu ex "Cursed Land" exempts ex.
-    // So the only assertable case is the negative — recorded here deliberately.
     let state = benchFromDeck(board(8), "p1", "sv03-082");
     state = attachFromDeck(state, "p1", "fix-psychic-energy", 1);
     state = setActiveFromDeck(state, "p2", "sv01-096");

@@ -17,57 +17,6 @@ import {
   setDamage,
 } from "./testFixtures";
 
-// 0.352.0 → 0.353.0 — 🆕🆕🆕 **D451: THE PLACEMENT WHOSE AMOUNT IS NOT PRINTED.**
-//
-// THREE sentences, FIVE legal printings, ONE new `EffectOp`:
-//   · `censusAttackCorpus.ts` line **425** — *"Put damage counters on each of your
-//     opponent's Benched Pokémon until its remaining HP is 100."* (2 printings), arm 23h;
-//   · line **427** — *"…on your opponent's Active Pokémon until its remaining HP is 50."*
-//     (2), arm 23g;
-//   · line **426** — the same sentence at **10** (1), arm 23g.
-//
-// 🛑 **THE CLASS IS CLOSED AND THAT IS MEASURED, NOT SAMPLED.** `\bHP\b` over all 640
-// corpus sentences returns exactly these three (§1). So there is no fourth destination
-// hiding in the column, no *"until its remaining HP is 0"* — which would change the
-// no-Knock-Out property below — and no destination that is not a multiple of ten.
-//
-// 🛑 **WHAT IS NEW IS ONLY THE AMOUNT.** Every sibling in the placement family reads a
-// printed COUNT and multiplies by ten at the producer (§12). These sentences print no
-// count at all: they print a DESTINATION, and the amount is
-// `effectiveMaxHp − damage − remainingHp`, computed PER BODY at the moment the op runs.
-// So the field holds HP rather than counters and the arms do NO conversion, which is
-// the one line they could have copied from a sibling and been wrong (§2).
-//
-// 🛑 **THE REFUSAL THIS SLICE OVERTURNS IS *"no capture can express it"*, WHICH IS HALF
-// TRUE AND HALF A NON-SEQUITUR — D450's shape, one slice later.** Two shipped doc
-// blocks (`effects.ts`'s `COUNTER_PUT_ON_DEFENDER` and index.ts's D139 paragraph) have
-// said since 0.88.0 that these rows *"read their amount off the TARGET rather than off
-// the text … which is a different mechanism and no capture can express it"*. The AMOUNT
-// really is unprintable. **The DESTINATION is printed, is a bare integer, and a capture
-// expresses it exactly.** Both blocks are corrected in place and dated (D423).
-//
-// 🛑 **A PREMISE OF THE WORK ORDER THAT DID NOT SURVIVE.** The brief said *"the Active
-// pair is now a one-axis near miss of the arm it built (23e)"*. The Active pair is not a
-// fold at all — *"your opponent's Active Pokémon"* names ONE body, and its nearest
-// sibling is arm 22 (`damageActive`), not 23e. It is the **BENCH** sentence (line 425)
-// that near-misses 23e, which is what D450's own resume point said (*"the FIRST of the
-// three"*, and 425 is the first). Driven in §1, not argued.
-//
-// 🛑 **AND THE FLOOR IS `healEachAll`'s, WHICH IS A THIRD SHIPPED SHAPE THE BRIEF DID
-// NOT NAME.** It offered two — D449's guard before the park, and `counterEachAll`'s
-// whole-op `amount <= 0` — and asked which to follow. Neither fits: both guard a
-// CONSTANT handed in by the producer, and this amount varies per body. `healEach` /
-// `healEachAll` have skipped per body on a computed `<= 0` since 0.x, and that is the
-// mirror of this op (they clamp to `damage`, it clamps to `max − damage − target`). So
-// the answer is an existing third rather than a new one (§6).
-//
-// 🛑 **`MATCH_RECORD_VERSION` STAYS 29.** A NEW `EffectOp` inhabitant is a WIDENING
-// (D383–D385): no v29 byte string can hold it, and every pre-existing inhabitant reads
-// identically. §3 drives that over the serialized bytes in three directions, and the
-// LOSS direction is where the argument is actually made — a lost `remainingHp` is not a
-// soft landing but **`NaN` damage on a body that can then never be Knocked Out**, which
-// is D435's silent-corruption shape at a new op.
-
 function find<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
   type: T,
@@ -140,9 +89,6 @@ const theirBench = (s: GameState) => s.players.p2.bench;
 
 describe("§1 — three sentences, five printings, and the class is CLOSED", () => {
   it("all three are in the legal attack column at the printing counts this slice claims", () => {
-    // ⚠️ A brief's printing count is a FLOOR until it is read off the corpus (D445),
-    // and this brief's was RIGHT — 2 + 1 + 2 = 5, which is the first time in this
-    // family that a sentence has carried more than one printing.
     const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     expect(rows.get(BENCH_100)).toBe(2);
     expect(rows.get(ACTIVE_10)).toBe(1);
@@ -152,70 +98,28 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     ).toBe(5);
   });
 
-  it("🛑 `\\bHP\\b` over the WHOLE column returns exactly these three — the class is closed", () => {
-    // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425). `\bHP\b` is the
-    // LOOSEST shape that can see this mechanism at all: the sentences print no count,
-    // no verb the family does not share and no noun that is theirs alone — the only
-    // token unique to them is the unit itself. It is CASE-SENSITIVE and word-bounded on
-    // purpose: `/hp/i` would also match nothing here (no corpus sentence spells it
-    // lowercase), and dropping the bounds would match nothing new either.
+  it("`\\bHP\\b` over the WHOLE column returns exactly these three — the class is closed", () => {
     const hp = legalAttackCorpus().filter(([, t]) => /\bHP\b/.test(t));
     expect(hp.map(([, t]) => t).sort()).toEqual([BENCH_100, ACTIVE_10, ACTIVE_50].sort());
     expect(hp.reduce((sum, [n]) => sum + n, 0)).toBe(5);
-    // …so THREE things follow that a sampled pattern could not establish:
-    //   (i)   there is no fourth destination in the column;
-    //   (ii)  there is no *"until its remaining HP is 0"* — the ONE printing that would
-    //         make this op lethal and owe it a Knock Out, a Prize and a cause marker;
-    //   (iii) every printed destination is a multiple of ten, so the §12 rounding
-    //         question §10 drives is about the BODY's damage and never about the target.
     for (const [, t] of hp) {
       const printed = Number(/remaining HP is (\d+)\./.exec(t)?.[1]);
       expect(printed).toBeGreaterThan(0);
       expect(printed % 10).toBe(0);
     }
-    // ⚠️ WHAT THIS PATTERN CANNOT SEE, STATED RATHER THAN GLOSSED. `legalAttackCorpus()`
-    // is the `legal_standard = 1` ATTACK column and nothing else — so it is blind to
-    // ability text (where *"if this Pokémon's remaining HP is 30 or less"* lives, D310),
-    // to Trainer text, and to every rotated-out printing. Two shipped doc blocks name
-    // "Alolan Raticate swsh10.5-042" and "Claydol sv03-095" as carriers off the LOCAL
-    // six-set D1; that is a different population, this checkout can resolve neither id,
-    // and neither is claimed (D425).
     expect(legalAttackCorpus().some(([, t]) => /remaining HP is 30 or less/.test(t))).toBe(false);
   });
 
   it("all three resolve through the reader SURFACE, and the surface did not grow", () => {
-    // Asked of the SURFACE rather than of one reader (D447): both arms sit inside
-    // `deriveAttackEffect`, so there is no fourteenth reader.
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(resolvedByAnyReader(s), s).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 the PLACEMENT family closes from SEVEN rows to FOUR to TWO, each refusal by name", () => {
-    // D449's pattern re-run rather than re-imagined: `/put \d* ?damage counters/i`, case
-    // INSENSITIVE with the count OPTIONAL. The optional count is what catches these
-    // three rows at all — they print no number before the noun — so the family figure
-    // has been able to see them since D449 published the shape.
+  it("the PLACEMENT family closes from SEVEN rows to FOUR to TWO, each refusal by name", () => {
     const family = legalAttackCorpus().filter(([, t]) => /put \d* ?damage counters/i.test(t));
     expect(family).toHaveLength(19);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(38);
     const unread = family.filter(([, t]) => !resolvedByAnyReader(t));
-    // ⚠️ **THE TWO FIGURES MOVE BY DIFFERENT AMOUNTS AND THAT IS THE SLICE'S ONE
-    // ARITHMETIC SURPRISE.** Sentences fall 7 → 4 and printings fall 12 → 7: −3 and −5.
-    // Every sentence D449 and D450 claimed carried exactly one printing, so three
-    // consecutive slices stepped both figures by the same number and a fourth that
-    // assumed it would have been wrong in one of them.
-    // 🆕🆕 **D456 — FOUR BECAME TWO AND SEVEN BECAME FOUR**, and the two that left are
-    // bullets (a) and (b) below, both re-pointed rather than deleted. ⚠️ **THE TWO FIGURES
-    // DISAGREE AGAIN, −2 AND −3**: line 179 carries 1 printing and line 180 carries 2.
-    // 🆕🆕🆕 D501 — TWO BECAME ONE AND FOUR BECAME THREE (corpus FILE LINE 685,
-    // 1 sentence / 1 printing, so the two steps AGREE this time — read off the corpus,
-    // not assumed from the row being singular).
-    // 🆕🛑 **D538 — ONE BECAME ZERO AND THREE BECAME ZERO; THE PLACEMENT FAMILY IS
-    // CLOSED.** An EMPTY `unbuilt` makes every `not.toContain` below VACUOUSLY TRUE
-    // (D536's `ownerPrefix.test.ts` finding), so the load-bearing claim is re-pointed
-    // onto the POSITIVE and asserted FIRST: all 19 sentences / 38 printings of this
-    // family resolve through the reader surface. The bullets below are KEPT, each still
-    // naming WHICH row left and why (D418), but they are no longer what reddens.
     expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
     expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
     expect(family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0)).toBe(
@@ -226,23 +130,6 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     const unbuilt = unread.map(([, t]) => t);
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(unbuilt).not.toContain(s);
 
-    // THE TWO THAT REMAIN, ENUMERATED WHOLE AND EACH WITH ITS OWN REASON — plus the two
-    // this slice's SUCCESSOR claimed, kept here as inequalities (D418: re-point, never
-    // delete, and then ask what the old claim could catch that the new one cannot).
-    //
-    // (a) THE DELAYED RETALIATION AT A PRINTED COUNT — 1 printing. 🆕🆕 **CLAIMED AT D456,
-    //     AND THIS BULLET'S REFUSAL WAS EXACT ABOUT THIS FILE'S ANCHOR AND SAID NOTHING
-    //     ABOUT THE SENTENCE.** It was refused here on the TIMING (a durated *"During your
-    //     opponent's next turn"* window, which no `^Put` anchor can open) and on the TARGET
-    //     (*"the Attacking Pokémon"*, a body no zone in this family names). Both are still
-    //     true of THIS family — and D152's `installRecoil` had opened that window and named
-    //     that body since long before D451 was written. The sentence needed ONE token: the
-    //     shipped anchor demanded *"(even if **it** is Knocked Out)"* and this printing
-    //     spells *"(even if **this Pokémon** is Knocked Out)"*.
-    //     ⚠️ **THE OLD CLAIM CAUGHT "NO READER TAKES THIS"; THE NEW ONE PINS *WHICH* OP AND
-    //     *WHICH* AMOUNT**, which is strictly the stronger rung here — a reader that took
-    //     the sentence with the wrong number would have passed the `toContain` the day it
-    //     stopped being unbuilt, and cannot pass this.
     expect(unbuilt).not.toContain(
       "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
     );
@@ -251,21 +138,6 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
         "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
       ),
     ).toEqual([{ op: "installRecoil", amount: 60 }]);
-    // (b) 🛑 **ITS TWIN WITH THE AMOUNT UNPRINTED — 2 printings, CLAIMED AT D456, AND
-    //     THIS IS THE BULLET WHOSE REASONING DID NOT SURVIVE.** It read: *"D451's quantity
-    //     is a fact about the BODY STANDING THERE, readable at the instant the op runs,
-    //     where this one is a HISTORY of what happened during the opponent's turn — it
-    //     needs a durated watcher and a recorded figure, neither of which this op has."*
-    //     🛑 **THE FIRST HALF IS EXACT AND THE SECOND HALF IS FALSE OF THE FAMILY, THOUGH
-    //     TRUE OF THIS OP.** The durated watcher is `InstalledRecoil` and has existed since
-    //     D152. And the figure never becomes a HISTORY at all: the §9 recoil site
-    //     (`attack.ts`) and the interpreter's `reactToAttackDamage` each hold the number in
-    //     a local named `dealt` — the same local their own `dealt > 0` gate reads — two
-    //     lines above the call that now consumes it. **Nothing is recorded and nothing is
-    //     carried**; `installedRecoilOf` gained a REQUIRED third parameter and that is the
-    //     whole of the channel. The refusal was right about `counterUntilRemainingHp` and
-    //     wrong as a statement about the sentence, which is the difference a refusal
-    //     scoped to an OP has to keep making (D422/D428: write the falsifier, and scope it).
     expect(unbuilt).not.toContain(
       "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
     );
@@ -286,14 +158,6 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
         "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
       ),
     );
-    // (c) THE SCALED TWIN — 3 printings, and it was the largest unread row in the family
-    //     until D538. 🆕🆕🆕 **BUILT AT D538 AS ARM 23b-bis**, which answers BOTH of the
-    //     reasons this bullet gave at once: the `{kind: "cardsInDiscardPile", …}` count
-    //     is carried as the PAYLOAD rider `damageChosen.perDiscardPileCard`, and the
-    //     readerless tail is `discardPileRetrieval { max: "all" }` + `shuffleDeck`. The
-    //     rung INVERTS rather than being deleted (D418), and the TAIL-ALONE nullity
-    //     SURVIVES unchanged — the anchor is whole-sentence, so no reader takes the tail
-    //     by itself, and that is the half of the old claim still doing work.
     expect(unbuilt).not.toContain(
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
     );
@@ -303,9 +167,6 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
       )?.map((o) => o.op),
     ).toEqual(["damageChosen", "discardPileRetrieval", "shuffleDeck"]);
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
-    // (d) THE CONFUSION SUBSTITUTION — 1 printing. Not a placement at all: it RAISES the
-    //     Checkup's own per-condition amount, a status field reached by a status op.
-    // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
     expect(unbuilt).not.toContain(
       "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
     );
@@ -314,9 +175,6 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
         "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
       ),
     ).toEqual([{ op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 }]);
-    // …and the one the published pattern CANNOT see, carried forward from D450 because
-    // a hole a predecessor named is a hole this slice inherits: `Put up to 9 …` puts the
-    // bound between the verb and the count.
     expect(
       deriveAttackEffect(
         "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
@@ -324,12 +182,7 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     ).toBeNull();
   });
 
-  it("🛑 the BENCH sentence is arm 23e's near miss and the ACTIVE pair is NOT — the brief had it backwards", () => {
-    // The work order said *"the Active pair is now a one-axis near miss of the arm it
-    // built (23e)"*. Arm 23e reads *"Put {N} damage counters on each of your opponent's
-    // Pokémon."* — a FOLD. Line 425 is a fold too (*"each of … Benched Pokémon"*) and
-    // differs from it on the amount and the zone; lines 426/427 name ONE body and share
-    // no quantifier with it at all. Driven as a program shape rather than argued.
+  it("the BENCH sentence is arm 23e's near miss and the ACTIVE pair is NOT — the brief had it backwards", () => {
     const fold = deriveAttackEffect("Put 2 damage counters on each of your opponent's Pokémon.");
     expect(fold?.[0]?.op).toBe("counterEachAll");
     expect(deriveAttackEffect(BENCH_100)?.[0]).toMatchObject({ target: "opponentBench" });
@@ -372,23 +225,13 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
         source: "attack",
       },
     ]);
-    // 🛑 **NO × 10, AND THIS IS THE RUNG THAT SAYS SO.** Every sibling arm in this family
-    // converts the printed COUNT to HP at the producer (§12); these two pass the printed
-    // number through because it is already HP. The two readings are 10 apart on the same
-    // digits, and the sibling is asserted beside it so the difference is visible rather
-    // than implied.
     expect(deriveAttackEffect(ACTIVE_10)?.[0]).toMatchObject({ remainingHp: 10 });
     expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual(
       [{ op: "damageActive", amount: 100, source: "attack" }],
     );
   });
 
-  it("🛑 refuses the CROSS PRODUCT — the determiner and the zone word CO-VARY", () => {
-    // This is the whole reason there are two anchors instead of one with two optional
-    // groups. The catalog prints *"each of … Benched"* and *"(nothing) … Active"*; a
-    // single regex with `(each of )?` and `(Benched|Active)` would additionally accept
-    // the two crossings below, whose readings nobody has decided — an "each of … Active"
-    // is a fold over one body and a bare "Benched" is a fold with its quantifier missing.
+  it("refuses the CROSS PRODUCT — the determiner and the zone word CO-VARY", () => {
     for (const [why, text] of [
       [
         "the determiner on the ACTIVE",
@@ -403,13 +246,7 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     }
   });
 
-  it("🛑 the `$` fences the printed COMPOUND, which is a STRICT PREFIX extension", () => {
-    // The Active sentence at 10 is printed again with a consequent riding it — the row
-    // `effects.ts`'s D139 block calls "Claydol sv03-095 with a self-damage rider", and
-    // which `counterPut.test.ts` has carried as a near miss since 0.88.0. Its first
-    // sentence is byte-identical to ACTIVE_10, so an unanchored read would claim it and
-    // silently drop a printed 120 damage. It is NOT in the legal column, so the refusal
-    // is asserted directly and never through `legalAttackCorpus()` (D413/D449).
+  it("the `$` fences the printed COMPOUND, which is a STRICT PREFIX extension", () => {
     const compound =
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10. If you placed any damage counters in this way, this attack also does 120 damage to this Pokémon.";
     expect(compound.startsWith(ACTIVE_10)).toBe(true);
@@ -424,7 +261,6 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
         "your own Active",
         "Put damage counters on your Active Pokémon until its remaining HP is 10.",
       ],
-      // THE PHRASE — "or less" is D349's PREDICATE and a different question entirely.
       [
         "the threshold reading",
         "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10 or less.",
@@ -434,8 +270,6 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
         "no period",
         "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10",
       ],
-      // A LOWERCASE first word: what keeps every mid-sentence ABILITY printing of this
-      // action off this path, and the standing reason there is no /i anywhere here.
       [
         "lowercase, mid-sentence",
         "put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
@@ -463,8 +297,6 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
   });
 
   it("derives the CURLY apostrophe identically, and rejects a NON-BREAKING space", () => {
-    // EQUALITY with the straight form, never merely non-null: a non-null check passes on
-    // a reader that folded the sentence into some other row (D136/D137).
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) {
       const curly = s.replaceAll("'", "’");
       expect(curly).not.toBe(s);
@@ -477,20 +309,13 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     expect(deriveAttackEffect(`\t  ${ACTIVE_50}\n`)).toEqual(deriveAttackEffect(ACTIVE_50));
   });
 
-  it("🛑 refuses a printed destination of ZERO, which is the ONE value that would make this op lethal", () => {
-    // The guard is `>= 1` at BOTH arms and again at the interpreter (§7). A destination
-    // of 0 means "fill to 0 remaining HP", i.e. `damage = max`, i.e. a Knock Out — and
-    // this op emits no KNOCKED_OUT, stages no `takePrizes` and stamps no cause marker.
-    // Refusing at the anchor is the loud half of that pair.
+  it("refuses a printed destination of ZERO, which is the ONE value that would make this op lethal", () => {
     for (const s of [
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 0.",
       "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 0.",
     ]) {
       expect(deriveAttackEffect(s), s).toBeNull();
     }
-    // …and an UNPRINTED positive destination IS accepted, which is D131/D135/D139's
-    // standing call: an unambiguous sentence the op expresses exactly is derived even
-    // where no card prints that number. A claim about the GAME, not about the INGEST.
     expect(
       deriveAttackEffect(
         "Put damage counters on your opponent's Active Pokémon until its remaining HP is 7.",
@@ -506,13 +331,7 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not move", () => {
-  it("🛑 the version PREDICTION, driven over the SERIALIZED BYTES in THREE directions", () => {
-    // 🛑 **WHICH SITUATION THIS IS, ASKED RATHER THAN INHERITED (D386/D443).** A new
-    // union member at a persisted address is D383–D385's WIDENING and free; a RENAME or
-    // a new REQUIRED key on an EXISTING member is not. This slice does the first and
-    // none of the second — `counterEachAll`, `damageActive` and `damageChosen` are
-    // untouched — and the reachability half is checked anyway.
-
+  it("the version PREDICTION, driven over the SERIALIZED BYTES in THREE directions", () => {
     // **DIRECTION 1 — FORWARD: the literal this deploy writes, whole.** Key sets are
     // asserted rather than eyeballed, because "the object looked right" is how a key
     // goes missing.
@@ -527,19 +346,6 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
       '{"op":"counterUntilRemainingHp","target":"opponentBench","remainingHp":100,"source":"attack"}',
     );
 
-    // **DIRECTION 2 — BACKWARD, AND IT IS THE ONE THAT DECIDES THE VERSION.** An
-    // `EffectOp` reaches storage by exactly one route: `EffectContinuation` carries
-    // `{pendingOp, rest, ctx, record}` and lives at `GameState.phase.cont`, which
-    // `MatchRecord.state` persists. A continuation is written only when a program PARKS.
-    // Three facts, each measured rather than recalled:
-    //   · **no v29 record can name this op at all** — it did not exist at v29, so no
-    //     byte string written by any earlier deploy can contain the string below;
-    //   · **it never parks** — its `stepOp` arm returns `{ done }`, driven on all three
-    //     printed sentences by the absence of an `effect:choose` phase;
-    //   · **and no producer could put it in `cont.rest` either**, because both arms
-    //     return programs of LENGTH 1 and the registry authors it nowhere. The registry
-    //     sweep is over `registryCardIds()` and not `FIXTURE_POOL` (D342): a pool-scoped
-    //     auditor audits the pool. Its four program-bearing keys are walked.
     expect(JSON.stringify(fresh)).toContain("counterUntilRemainingHp");
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) {
       expect(deriveAttackEffect(s), s).toHaveLength(1);
@@ -560,11 +366,6 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
       expect(state.phase.kind, `index ${index}`).not.toBe("effect:choose");
     }
 
-    // **DIRECTION 3 — THE LOSS DIRECTION, AND IT IS THE ONE THE BRIEF WAS RIGHT TO
-    // DEMAND.** Each of the three keys degrades DIFFERENTLY if a record could lose it,
-    // and one of them is worse than anything in this op's neighbourhood. Stated in full
-    // before the reachability argument, because the reachability argument alone reads as
-    // an excuse (D450's rule).
     for (const key of ["op", "target", "remainingHp", "source"] as const) {
       const dropped = JSON.parse(
         JSON.stringify(fresh, (k, v) => (k === key ? undefined : v)),
@@ -573,17 +374,6 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
       expect(dropped).not.toEqual(fresh);
       expect(dropped).not.toEqual(bench);
     }
-    // · a lost `target` falls through the `=== "opponentActive"` test into the BENCH
-    //   branch, so an Active-scoped sentence would counter the whole Bench and leave the
-    //   Active alone — a plausible-looking board, D425's own detectability failure;
-    // · a lost `source` files a `COUNTERS_PLACED` whose label matches no arm of
-    //   `log.ts`'s switch — a row that simply does not render;
-    // · 🛑 **a lost `remainingHp` is neither.** `undefined <= 0` is FALSE, so the zero
-    //   guard passes; `max - damage - undefined` is **NaN**; `NaN <= 0` is FALSE, so the
-    //   floor passes too; and the body's `damage` becomes NaN. `isLethallyDamaged` then
-    //   answers `NaN >= hp` → **false**, so that body can never be Knocked Out again and
-    //   the board looks entirely normal. That is D435's silent-corruption shape arriving
-    //   at a new op, and it is DRIVEN below rather than reasoned about.
     const board = fielded(37, { theirs: ["fix-bigbody"] });
     const events: GameEvent[] = [];
     const mutilated = JSON.parse(
@@ -611,11 +401,7 @@ describe("§4 — the maximum is the CONTINUOUS one and a Tool moves it", () => 
     expect(BIG_HP - (theirActive(state)?.damage ?? 0)).toBe(50);
   });
 
-  it("🛑 a BRAVERY CHARM raises the destination it is filled to — 150 becomes 200", () => {
-    // `effectiveMaxHp` = printed 200 + the Tool's 50 = 250, so *"until its remaining HP
-    // is 50"* means 200 HP of counters and not 150. A build reading `hpOf` places 150
-    // and leaves the body at 100 remaining, which is a plausible board and the whole
-    // reason this rung exists. Both numbers are asserted, not just the new one.
+  it("a BRAVERY CHARM raises the destination it is filled to — 150 becomes 200", () => {
     let state = fielded(41);
     state = attachToolFromDeck(state, "p2", "active", "sv02-173");
     const run = attack(state, IDX.deep);
@@ -675,14 +461,6 @@ describe("§4 — the maximum is the CONTINUOUS one and a Tool moves it", () => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — `its` binds PER BODY, and a shared amount is a killed build", () => {
-  /** THE BOARD THE POSSESSIVE NEEDS: three Benched bodies whose remaining HP is three
-      different numbers, so no single amount is right for more than one of them.
-        · bench 0 — fix-bigbody, 200 HP, undamaged   → remaining 200, takes 100
-        · bench 1 — fix-bigbody, 200 HP, 30 damage   → remaining 170, takes  70
-        · bench 2 — fix-lightning-weak, 130 HP, 40   → remaining  90, takes   0
-      A build that computed ONE figure above the walk places the first body's number on
-      all three; a build that clamped to the SMALLEST places 0 everywhere. Both are
-      distinguishable here and neither is on any board where the bench agrees. */
   function benched(seed: number): GameState {
     let state = fielded(seed, { theirs: ["fix-bigbody", "fix-bigbody", "fix-lightning-weak"] });
     state = setBenchDamage(state, "p2", 1, 30);
@@ -690,7 +468,7 @@ describe("§5 — `its` binds PER BODY, and a shared amount is a killed build", 
     return state;
   }
 
-  it("🛑 fills each Benched body to 100 SEPARATELY — two amounts and a zero on one board", () => {
+  it("fills each Benched body to 100 SEPARATELY — two amounts and a zero on one board", () => {
     const { state, events } = attack(benched(50), IDX.bench);
     const rows = placements(events);
     expect(rows.map((r) => r.amount)).toEqual([100, 70]);
@@ -738,10 +516,7 @@ describe("§5 — `its` binds PER BODY, and a shared amount is a killed build", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 — a body already at or below the destination takes nothing", () => {
-  it("🛑 places ZERO and files NO event on a body EXACTLY at the destination", () => {
-    // 200 HP at 150 damage is remaining 50, which is index 1's printed destination
-    // exactly. `placed` is 0, so the guard is `<= 0` and not `< 0` — the boundary case,
-    // and the one a `< 0` build passes while filing a 0-amount `COUNTERS_PLACED` row.
+  it("places ZERO and files NO event on a body EXACTLY at the destination", () => {
     const { state, events } = attack(setDamage(fielded(60), "p2", BIG_HP - 50), IDX.deep);
     expect(placements(events)).toHaveLength(0);
     expect(theirActive(state)?.damage).toBe(BIG_HP - 50);
@@ -756,13 +531,7 @@ describe("§6 — a body already at or below the destination takes nothing", () 
     expect(theirActive(state)?.damage).toBeGreaterThanOrEqual(0);
   });
 
-  it("🛑 the floor is PER BODY, which is `healEachAll`'s shape and not `counterEachAll`'s", () => {
-    // The two whole-op guards in this family (`counterEachAll`'s and `damageActive`'s
-    // `amount <= 0`) sit ABOVE the walk, because their amount is a constant [🆕🆕🆕 D609 (D539): not
-    // under `counterEachAll.perDamageCounterOnTarget`, which also guards per body]. A guard
-    // placed there here would refuse the WHOLE fold the moment ONE body was already
-    // under the destination — which is the defect this board catches: bench 2 is under
-    // it and benches 0 and 1 still fill.
+  it("the floor is PER BODY, which is `healEachAll`'s shape and not `counterEachAll`'s", () => {
     const state = setBenchDamage(
       setBenchDamage(
         fielded(62, { theirs: ["fix-lightning-weak", "fix-bigbody", "fix-bigbody"] }),
@@ -782,10 +551,6 @@ describe("§6 — a body already at or below the destination takes nothing", () 
   });
 
   it("an undamaged body at exactly the destination's HP takes nothing — no damage is required", () => {
-    // `remainingHpWithin`'s "UNDAMAGED IS NOT EXCLUDED" rule, arriving on the other side
-    // of the comparison: a 130 HP body under a 100 destination takes 30 whether or not
-    // it carries damage, and a body whose whole maximum is under the destination takes
-    // nothing at all even at full health.
     const run = attack(fielded(63, { theirs: ["fix-lightning-weak"] }), IDX.bench);
     expect(placements(run.events)[0]?.amount).toBe(WEAK_HP - 100);
     expect(run.state.players.p2.bench[0]?.damage).toBe(30);
@@ -797,7 +562,7 @@ describe("§6 — a body already at or below the destination takes nothing", () 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — the no-Knock-Out property, and the guard that owns it", () => {
-  it("🛑 the ARITHMETIC guarantees it: a filled body lands at `max − remainingHp`, strictly under `max`", () => {
+  it("the ARITHMETIC guarantees it: a filled body lands at `max − remainingHp`, strictly under `max`", () => {
     // The whole proof, written as a total check over the two things that vary — the
     // starting damage and the printed destination. It is not a claim about the three
     // printed rows: it is a claim about every `remainingHp >= 1` this op admits.
@@ -839,12 +604,7 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
     expect(state.players.p2.active).not.toBeNull();
   });
 
-  it("🛑 the INTERPRETER refuses `remainingHp <= 0` whole, so the property belongs to the FUNCTION", () => {
-    // The deriver refuses a printed 0 (§2) and this is the other half of that pair. It
-    // is UNREACHABLE from any printed sentence and written anyway, for D324's reason
-    // verbatim: the alternative is an invariant stated in three doc blocks and asserted
-    // by no line of code. A future *"until its remaining HP is 0"* deletes this line and
-    // owes a Knock Out, a Prize and a `koByEffect` marker in the same slice.
+  it("the INTERPRETER refuses `remainingHp <= 0` whole, so the property belongs to the FUNCTION", () => {
     for (const remainingHp of [0, -10]) {
       const board = fielded(72);
       const events: GameEvent[] = [];
@@ -892,9 +652,6 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
 
 describe("§8 — the prevention gate, per body", () => {
   it("a printed EFFECT block on the Active refuses the placement and files ONE row", () => {
-    // `fix-unaware` prints *"Prevent all effects of attacks used by your opponent's
-    // Pokémon done to this Pokémon. (Damage is not an effect.)"*. A PLACED counter is an
-    // effect (D138/D139/D142), so it is refused whole on a one-body target.
     const { state, events } = attack(fielded(80, { defender: "fix-unaware" }), IDX.deep);
     expect(placements(events)).toHaveLength(0);
     expect(theirActive(state)?.damage).toBe(0);
@@ -902,28 +659,18 @@ describe("§8 — the prevention gate, per body", () => {
     expect(row?.seat).toBe("p2");
   });
 
-  it("🛑 a shielded BENCH body silences exactly itself — the rest of the walk still fills", () => {
-    // Refusing the op WHOLE would let one body protect a Bench, a rule no printing
-    // states. `fix-unaware`'s block is a passive on the BODY, so it travels to the Bench.
-    // ⚠️ THE TWO SURVIVORS TAKE DIFFERENT AMOUNTS ON PURPOSE (100 and 30): a board whose
-    // unshielded bodies agreed would leave "the shield removed the RIGHT one" unasserted.
+  it("a shielded BENCH body silences exactly itself — the rest of the walk still fills", () => {
     const state = fielded(81, { theirs: ["fix-bigbody", "fix-unaware", "fix-lightning-weak"] });
     const run = attack(state, IDX.bench);
     expect(placements(run.events).map((r) => r.amount)).toEqual([BIG_HP - 100, WEAK_HP - 100]);
     expect(run.state.players.p2.bench[0]?.damage).toBe(BIG_HP - 100);
     expect(run.state.players.p2.bench[1]?.damage).toBe(0);
     expect(run.state.players.p2.bench[2]?.damage).toBe(WEAK_HP - 100);
-    // ONE prevention row for ONE shielded body, and it names that body.
     const rows = run.events.filter((e) => e.type === "ATTACK_EFFECT_PREVENTED");
     expect(rows).toHaveLength(1);
   });
 
-  it("🛑 a body that would take ZERO is never asked, so it files no prevention row (D433)", () => {
-    // The gate is consulted AFTER the amount, so a body the sentence did not reach files
-    // nothing. `fix-unaware` is 220 HP; at 130 damage its remaining is 90, under the
-    // printed 100 — so it takes zero for ARITHMETIC reasons and the shield never speaks.
-    // The difference between this board and the one above is one call to `setBenchDamage`,
-    // which is what makes the ordering observable at all.
+  it("a body that would take ZERO is never asked, so it files no prevention row (D433)", () => {
     const state = setBenchDamage(
       fielded(82, { theirs: ["fix-unaware", "fix-bigbody"] }),
       "p2",
@@ -937,11 +684,6 @@ describe("§8 — the prevention gate, per body", () => {
   });
 
   it("the NARROW damage block does NOT stop it, which is the other printed spelling", () => {
-    // Bellibolt `sv03-078` prevents all DAMAGE from a {L} attacker and says nothing about
-    // effects; a placed counter is not damage (the catalog prints the rule on Bronzong
-    // `sv03-145`). So the placement lands in full — and index 3's printed 20, which IS
-    // damage, is stopped on the same board. Without that control neither direction is
-    // readable (D450's `fix-counterfold` index 3, reused for its stated reason).
     const placed = attack(fielded(83, { defender: "sv03-078" }), IDX.deep);
     expect(placements(placed.events)).toHaveLength(1);
     expect(theirActive(placed.state)?.damage).toBeGreaterThan(0);
@@ -950,12 +692,8 @@ describe("§8 — the prevention gate, per body", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §9 — flatness, the log row, and the arithmetic that is not a multiple of ten.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§9 — a PLACED counter is flat, and the row says which mechanism placed it", () => {
-  it("🛑 a ×2 Weakness does NOT double the placement", () => {
+  it("a ×2 Weakness does NOT double the placement", () => {
     // `fix-lightning-weak` is ×2 Lightning and the attacker is {L}. If this went through
     // §8.5 the 80 would become 160 and the body would be Knocked Out at 130 HP — so the
     // board is not merely a different number, it is a different outcome.
@@ -966,13 +704,7 @@ describe("§9 — a PLACED counter is flat, and the row says which mechanism pla
     expect(find(events, "KNOCKED_OUT")).toBeUndefined();
   });
 
-  it("🛑 the amount need NOT be a multiple of ten, and the destination is hit on the nose", () => {
-    // §12 makes a counter 10 HP, but `damage` is not guaranteed to be a multiple of ten
-    // (a halved hit leaves 5) and neither is `effectiveMaxHp` once a Tool is on the
-    // board. The printed word is *"until"*, so the EXACT difference is placed:
-    // rounding up to whole counters would overshoot past the destination, and on a body
-    // whose maximum is not a multiple of ten it could reach `max` — the one thing this
-    // op must never do (§7).
+  it("the amount need NOT be a multiple of ten, and the destination is hit on the nose", () => {
     const { state, events } = attack(setDamage(fielded(91), "p2", 5), IDX.deep);
     expect(placements(events)[0]?.amount).toBe(BIG_HP - 5 - 50);
     expect((placements(events)[0]?.amount ?? 0) % 10).not.toBe(0);
@@ -981,9 +713,6 @@ describe("§9 — a PLACED counter is flat, and the row says which mechanism pla
   });
 
   it("an attack's placement renders in the PRINTED verb and never the word Ability", () => {
-    // D136's finding 1, refused at the front for the fifth time on this axis. `source`
-    // is REQUIRED on this op from birth rather than after a hardcode was caught, which
-    // is the only thing new about this rung.
     const { state: after, events } = attack(fielded(92), IDX.deep);
     expect(placements(events).every((e) => e.source === "attack")).toBe(true);
     const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state: after, elapsed: "+00:07" };
@@ -1000,10 +729,6 @@ describe("§9 — a PLACED counter is flat, and the row says which mechanism pla
   });
 });
 
-// A reference to `applyAction` so the import earns its place: every board above goes
-// through `mustApply`, which wraps it — this is the one direct call, and it pins that a
-// second attack in the same turn is refused, i.e. that the boards above really did end
-// their turn on the attack rather than leaving one open (§8's one-attack rule [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]).
 describe("§10 — the attack really is the turn's last action", () => {
   it("refuses a second attack after the placement resolves", () => {
     const { state } = attack(fielded(95), IDX.deep);

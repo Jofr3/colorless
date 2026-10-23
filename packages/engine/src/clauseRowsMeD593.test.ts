@@ -24,18 +24,8 @@ import {
   setActiveFromDeck,
   specialEnergy,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D593 — WP07: MORE `me` CLAUSE ROWS AND THE "FADE OUT" OBJECTS ──
-//
-// 9 printed attack texts / 15 `me` printings. Seven clause rows on shipped members (five bonus,
-// two "does nothing") plus Facade on the ONE new member `yourActiveBurnedOrPoisoned`; Cutting
-// Riposte as the eighth `ATTACK_GATE_CLAUSES` row (`alternateCostIf` at {D}); and Lillie's
-// Comfey's "Fade Out" op keyed on Drifblim, Meowth ex ×3 and Emolga under their printed attack
-// names. Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`),
-// 2026-10-08, `legal_standard = 1`; no id was referenced in the tree before this slice except
-// as D582's NOT-aliased "Fade Out" rows. No `me` row is a fixture, so the printed bytes are
-// carried HERE and §1 pins each against the committed `me` corpus.
 
 const MASTERS_PUNCH =
   "If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage.";
@@ -53,7 +43,6 @@ const SPIKY_ROLLING =
 const BRAIN_CRUSH = "If your opponent's Active Pokémon isn't Confused, this attack does nothing.";
 const FADE_OUT = "Put this Pokémon and all attached cards into your hand.";
 
-/** [text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [MASTERS_PUNCH, ["me02.5-140"]],
   [HORRIFYING_REVENGE, ["me02.5-096", "me02.5-237"]],
@@ -92,7 +81,6 @@ describe("D593 §1 — the texts: 9 attack sentences / 15 printings", () => {
     }
     expect(resolvedByAnyReader(CUTTING_RIPOSTE)).toBe(false);
     expect(splitAttackGateClause(CUTTING_RIPOSTE)).toEqual({ clause: CUTTING_RIPOSTE, body: "" });
-    // "Fade Out" stays a registry-only sentence: the five printings are keyed by id (§8).
     expect(resolvedByAnyReader(FADE_OUT)).toBe(false);
   });
 
@@ -163,7 +151,6 @@ describe("D593 §2 — the readings: shipped members at the printed parameters",
       80,
       { kind: "yourActiveUsedAttackLastTurn", attack: "Spiky Rolling" },
     ]);
-    // The U+2019 spelling of Hop's possessive reads the same (D136/D137).
     expect(deriveAttackDamageBonus(HORRIFYING_REVENGE.replace("Hop's", "Hop’s"))).toEqual(
       deriveAttackDamageBonus(HORRIFYING_REVENGE),
     );
@@ -198,8 +185,6 @@ describe("D593 §2 — the readings: shipped members at the printed parameters",
     );
   });
 });
-
-// ── ON A BOARD: each row against a control on the other side of it ──
 
 const FILLER = "d593-filler";
 const PANCHAM = "d593-pancham";
@@ -403,7 +388,6 @@ const LOCAL: Record<string, Card> = {
     },
     { cost: ["Lightning"], name: "Sky Return", damage: 30, effect: FADE_OUT },
   ]),
-  // The catalog face exactly as tcgdex hands it (D583): a Special Energy tagged "Normal".
   [VOLTAIC]: {
     ...specialEnergy(
       VOLTAIC,
@@ -459,11 +443,6 @@ const DECK = deckOf({
   [M]: 4,
   "fix-energy": 6,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
@@ -692,8 +671,7 @@ describe("D593 §7 — Spiky Rolling: +80 when this Pokémon used Spiky Rolling 
 });
 
 describe("D593 §8 — Giga Railgun: does nothing without a Voltaic Lightning Energy attached", () => {
-  it('with Voltaic Lightning Energy attached: 260 (🆕🆕🆕 D604 (D539): "260" is WITHDRAWN as the dealt figure — the Voltaic is a built Energy since D604, +20 on its {L} holder\'s attacks to the Active: 280)', () => {
-    // 🆕🆕🆕 D604 — Vikavolt is {L}, so its Voltaic adds 20 before W/R (typedSpecialEnergyMeD604.test.ts).
+  it('with Voltaic Lightning Energy attached: 260 ( D604 (D539): "260" is WITHDRAWN as the dealt figure — the Voltaic is a built Energy since D604, +20 on its {L} holder\'s attacks to the Active: 280)', () => {
     expect(
       dealt(
         table("me05-026", [
@@ -761,10 +739,9 @@ describe("D593 §10 — Cutting Riposte: payable for {D} while this Pokémon has
 describe('D593 §11 — "Fade Out" under three printed names', () => {
   const BOUNCE = [{ op: "returnSelf", dest: "hand" }];
 
-  it('three NEW attack-only objects, each at its printed index; the other index keeps deriving (🆕🆕🆕 D628 (D539): "attack-only" WITHDRAWN for `TUCK_TAIL` — it carries Meowth ex\'s "Last-Ditch Catch" trigger too)', () => {
+  it('three NEW attack-only objects, each at its printed index; the other index keeps deriving ( D628 (D539): "attack-only" WITHDRAWN for `TUCK_TAIL` — it carries Meowth ex\'s "Last-Ditch Catch" trigger too)', () => {
     expect(programFor("mep-006")).toEqual({ attack: { 1: BOUNCE } });
     expect(programFor("me04-030")).toEqual({ attack: { 1: BOUNCE } });
-    // 🆕🆕🆕 D628 — the attack key is unchanged; the `triggered` row is pinned in onBenchMoveMeD628.test.ts §1.
     expect(programFor("me03-062")?.attack).toEqual({ 0: BOUNCE });
     expect(programFor("me03-062")?.triggered?.map((t) => t.name)).toEqual(["Last-Ditch Catch"]);
     expect(programFor("me03-107")).toBe(programFor("me03-062"));
@@ -785,7 +762,6 @@ describe('D593 §11 — "Fade Out" under three printed names', () => {
         "Search your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
       ),
     ).not.toBeNull();
-    // No "you may": compulsory, so no `optional` wrapper (the D313 Comfey reading).
     expect(FADE_OUT.includes("may")).toBe(false);
     // Meowth ex's Ability is NOT built by this key.
     expect(programFor("me03-062")?.abilities).toBeUndefined();

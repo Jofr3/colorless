@@ -14,27 +14,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.37.0 → 0.38.0 — the flat benched-snipe RIDER family.
-//
-// "This attack ALSO does N damage to M of your opponent's Benched Pokémon. (Don't
-// apply Weakness and Resistance for Benched Pokémon.)" is a SECONDARY snipe AFTER
-// the main damage (which rides the attack's own `damage` field). It is the SAME
-// `deals` `damageChosen` op as D57's Covetous Ivy, only WITHOUT `perTakenPrize` (a
-// fixed N, not Prize-scaled) — so it is a new derive over the existing op, no new
-// interpreter code. Miraidon sv01-080 "Lightning Laser" (90 + 30) and Tadbulb
-// sv03-076 "Shake and Discharge" (20 + 10) are the representatives; ~15 catalog
-// prints share the shape (Pawmot, Bellibolt, Decidueye ex, Palafin, …).
-//
-// 🆕🆕 0.303.0 → 0.304.0 — **D399: `M` IS A CAPTURE, NOT THE LITERAL `1`.** This file
-// asserted from 0.38.0 to D398 that *"2 of"* was a REFUSED near-miss, on the ground
-// that the anchor pinned the count. It was a real claim about the anchor and a wrong
-// one about the catalog: the legal attack column prints this rider at 2 on FOUR
-// printings (`130 damage to 2 of` ×3 and `30 damage to 2 of` ×1), and the pick that
-// consumes it has read `op.count` since M4 — two REGISTRY rows already spell 2. So
-// the near-miss below is now a POSITIVE, and it is asserted from the corpus's own
-// bytes rather than retyped. **A REFUSAL WHOSE ONLY REASON IS A LITERAL EXPIRES THE
-// MOMENT SOMEBODY MEASURES THE COLUMN** (D398's lesson, one file over).
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -125,38 +104,15 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
 
   it("REFUSES the near-misses — Flamigo's gate, 'YOUR', a 0 amount and a 0 count", () => {
     for (const text of [
-      // Flamigo's "Synchronized Feathers" — a leading board-condition gate whose
-      // clause `CONDITIONAL_DAMAGE_CLAUSES` does not carry. 🆕🆕 D399 — the gated
-      // SKELETON is read now (`CONDITIONAL_BENCH_SNIPE`), so what refuses this
-      // sentence is the CLAUSE and no longer the shape. It is the sharper refusal of
-      // the two and `conditionalBenchSnipe.test.ts` §4 owns the discrimination.
       "If Flamigo is on your Bench, this attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      // "1 of YOUR Benched" — a self-target, not the opponent's.
-      // 🆕🆕🆕 **D447 RE-POINTED THIS RUNG RATHER THAN DELETING IT (D444), BECAUSE THE
-      // SLICE REMOVED ITS PREMISE.** The own-side spelling is READ now — the shared body
-      // takes the possessive as group 3 and arm 6c returns `target: "yourBench"` — so
-      // asserting null here would pin a refusal the engine no longer makes. The sentence
-      // moved DOWN into the admissions rung below, where it is driven with the SIDE
-      // asserted; what stays here is what this anchor still genuinely refuses.
-      // A printed 0-rider adds nothing — left on the loud path.
       "This attack also does 0 damage to 1 of your opponent's Benched Pokémon.",
-      // 🆕🆕 D399 — and a printed 0-COUNT is not a real card either: the second
-      // capture carries the same `>= 1` guard the first one always has, so a
-      // widening cannot smuggle in a snipe that chooses nobody.
       "This attack also does 20 damage to 0 of your opponent's Benched Pokémon.",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
   });
 
-  it("🆕🆕🆕 D447 — the two spellings this anchor STOPPED refusing, with the SIDE asserted", () => {
-    // ⚠️ **THE ADMISSION THE RUNG ABOVE POINTS AT (D424: every refusal owes a
-    // neighbouring admission on the same axis).** Both sentences below were `null`
-    // at D446's head and both are read now; the sentence that stayed refused beside
-    // each is in the loop above, one token away on the SAME axis.
-    //
-    // · the POSSESSIVE axis — "1 of YOUR Benched" is a `yourBench` snipe, and the
-    //   opponent-side twin beside it is byte-identical apart from the owner;
+  it("D447 — the two spellings this anchor STOPPED refusing, with the SIDE asserted", () => {
     expect(
       deriveAttackEffect(
         "This attack also does 20 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -194,10 +150,6 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
         "This attack also does 20 damage to 1 of your opponent's Benched Pokémon.",
       ),
     );
-    // 🛑 …AND THE SEPARATOR THAT KEPT COVETOUS IVY OFF THIS PATH IS STILL THE `\.`,
-    // NOT THE WORD. Dropping "also" must NOT let the Prize-scaled sentence through this
-    // arm — it continues past the noun, so the body's literal `\.` refuses it here and
-    // `BENCHED_SNIPE_TAKEN_PRIZES` (arm 6b, which runs FIRST) owns it instead.
     expect(
       deriveAttackEffect(
         "This attack does 40 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
@@ -215,11 +167,7 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
     ]);
   });
 
-  it("🆕🆕 D399 — '2 of' is a COUNT-2 snipe now, and both printings come off the corpus", () => {
-    // 🛑 THE TWO SENTENCES ARE TAKEN FROM THE COMMITTED CORPUS RATHER THAN RETYPED,
-    // so this case cannot pass against a paraphrase the catalog never printed (D183).
-    // They are also the whole count-2 population of this anchor, which is what makes
-    // "+4 printings" a measurement instead of a claim.
+  it("D399 — '2 of' is a COUNT-2 snipe now, and both printings come off the corpus", () => {
     const twos = legalAttackCorpus().filter(([, s]) =>
       /^This attack also does \d+ damage to 2 of your opponent's Benched Pokémon\./.test(s),
     );
@@ -239,9 +187,6 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
         },
       ]);
     }
-    // …and the count is READ rather than defaulted: the fifteen-printing `1 of`
-    // spelling still answers 1 in the same run, so a build that pinned either number
-    // fails one half of this pair.
     expect(
       deriveAttackEffect(
         "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -259,11 +204,6 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
   });
 
   it("hands the 'each of' also-rider to the SPREAD op, not this single-target snipe", () => {
-    // "each of" (all benched) is a different op than "1 of" (one chosen). As of
-    // engine 0.45.0 SPREAD_EACH_BENCH accepts the "also" wording (Cetoddle
-    // sv02-053 "Avalanche"), so this text now DERIVES to `spreadDamage` — it is
-    // no longer a refused near-miss, but it must still never be read as this
-    // reader's `damageChosen` count-1 snipe.
     expect(
       deriveAttackEffect(
         "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
@@ -272,8 +212,6 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
   });
 
   it("does not COLLIDE with Covetous Ivy's Prize-scaled clause — that keeps its perTakenPrize", () => {
-    // The D57 reader owns "does N … for each Prize card your opponent has taken." (no
-    // "also"); this flat reader must not steal it, so it stays a DIFFERENT op.
     expect(
       deriveAttackEffect(
         "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",

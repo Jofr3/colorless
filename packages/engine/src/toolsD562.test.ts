@@ -25,35 +25,10 @@ import {
   setActiveFromDeck,
   setDamage,
   trainerCard,
+  must,
 } from "./testFixtures";
 import { damagedByAttackAbility, damagedToolTriggersOf } from "./triggers";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D562 — THE CONSUMABLE TOOLS AND THE TWO DAMAGED-REACTING TOOLS ──
-//
-//   Haban Berry     sv08.5-111  Tool  60 less from an opposing {N} attacker (after W/R), then discard
-//   Occa Berry      sv07-140    Tool  … {R} …
-//   Payapa Berry    sv07-141    Tool  … {P} …
-//   Babiri Berry    sv08-163    Tool  … {M} …
-//   Colbur Berry    sv08-168    Tool  … {D} …
-//   Passho Berry    sv08-184    Tool  … {W} …
-//   Survival Brace  sv06-164    Tool  (ACE SPEC) full HP, KO'd by an OPPONENT's attack: not KO'd, 10 HP left, then discard
-//   Deluxe Bomb     sv07-134    Tool  (ACE SPEC) Active, damaged: 12 counters on the attacker, then discard
-//   Lucky Helmet    sv06-158    Tool  Active, damaged: draw 2
-//   Handheld Fan    sv06-150    Tool  Active, damaged: an Energy from the attacker to its Bench
-//
-// Every consumable is driven at every §8.5 site that can reach it (attack.ts's main hit,
-// interpreter.ts `spreadDamage`, `placeSnipe`'s `deals` arm and `snipeActive`): the Berry BOTH
-// WAYS at all four (spent; and kept when a prevention wins, when the hit stopped at damage
-// step 2, and — at the three sites that have the flag — when suppression / `ignoreWR` drops
-// it; the prevention rungs at `placeSnipe` / `snipeActive` were added in review); the Brace
-// answering at all four, under Feint too (R-BF), and refusing at the main hit (not full HP,
-// not lethal, Jamming Tower) and on the own-side spread; the Bomb detonating at both recoil
-// sites and refusing at the main hit (prevented, Jamming Tower) and on a benched holder. On
-// the REAL ids, on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270). Texts,
-// subtypes and legality off tcgdex (the audit's card JSON), 2026-09-27. Jamming Tower and
-// Festival Grounds are `stadiumsD562.test.ts`. Readings R-BE, R-BR, R-BF, R-DB, R-LH, R-HF:
-// docs/decisions.md D562.
 
 const HABAN = "sv08.5-111";
 const OCCA = "sv07-140";
@@ -105,14 +80,14 @@ const BLAST = 0; // main hit, 120
 const SHOCKWAVE = 1; // spreadDamage into the opponent's Bench, 120 each
 const PINPOINT = 2; // placeSnipe `deals` arm, 120 to one chosen benched
 const ARROW = 3; // opponentAny — snipeActive when the pick is the Active
-const SELFSPLASH = 4; // spreadDamage into the attacker's OWN Bench (D425)
+const SELFSPLASH = 4;
 const FEINT = 5; // main hit that ignores effects on the opponent's Active (suppressTargetEffects)
 const FEINT_SNIPE = 6; // opponentAny ignoreWR (placeSnipe / snipeActive)
 const POKE = 7; // main hit, 30
 const TAP = 8; // main hit, 120, NO cost
 const DOUBLE = 9; // main hit 30, THEN an opponentAny snipe (the Active hit twice by one attack)
 const KICK = 10; // main hit 30, then switch the opponent's Active out
-const RETREAT_KICK = 11; // main hit 30, then switch the ATTACKER out (the R-HF approximation)
+const RETREAT_KICK = 11;
 
 const BENCH_TAIL = " (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const ATTACKS = [
@@ -217,10 +192,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
-// ⚠️ THREE ACE SPECs (2 Braces + 1 Bomb) where a real deck may hold ONE: this is a FIXTURE
-// deck, not a decklist (aceSpecBar.test.ts's precedent) — `createGame` does not police the
-// ACE SPEC deck rule, and the second Brace keeps the pulls from running dry.
 const DECK = deckOf({
   [HABAN]: 1,
   [OCCA]: 3,
@@ -252,11 +223,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -478,7 +444,7 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
     });
   });
 
-  it("🛑 `passivesOf` folds NONE of the three consumable keys — its key set and every pin on it stand still", () => {
+  it("`passivesOf` folds NONE of the three consumable keys — its key set and every pin on it stand still", () => {
     const state = table({
       defender: { id: WALL, tool: OCCA },
       bench: [
@@ -528,7 +494,7 @@ describe("D562 tools §1 — the prints, and the registry rows that map them", (
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §2 — the Berry at the MAIN HIT (attack.ts), R-BE", () => {
-  it("🛑 Occa vs an opposing {R} attacker: 60 less AFTER W/R, then the Berry is discarded — after the row", () => {
+  it("Occa vs an opposing {R} attacker: 60 less AFTER W/R, then the Berry is discarded — after the row", () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: OCCA } }), BLAST);
     const row = all(events, "DAMAGE_DEALT")[0];
     expect(row).toMatchObject({ seat: "p2", dealt: 60, reduction: 60 });
@@ -559,14 +525,14 @@ describe("D562 tools §2 — the Berry at the MAIN HIT (attack.ts), R-BE", () =>
     }
   });
 
-  it("🛑 a MISMATCHED type: no reduction and the Berry stays (Passho {W} vs a {R} attacker)", () => {
+  it("a MISMATCHED type: no reduction and the Berry stays (Passho {W} vs a {R} attacker)", () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: PASSHO } }), BLAST);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 120 });
     expect(toolIds(state, state.players.p2.active)).toEqual([PASSHO]);
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 R-BE — a hit the Berry takes to 0 is NOT prevented, and the Berry IS spent", () => {
+  it("R-BE — a hit the Berry takes to 0 is NOT prevented, and the Berry IS spent", () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: OCCA } }), POKE);
     const row = all(events, "DAMAGE_DEALT")[0];
     expect(row).toMatchObject({ dealt: 0, reduction: 60 });
@@ -574,28 +540,28 @@ describe("D562 tools §2 — the Berry at the MAIN HIT (attack.ts), R-BE", () =>
     expect(discardIds(state, "p2")).toContain(OCCA);
   });
 
-  it("🛑 R-BE — a full PREVENTION wins first and the Berry is NOT spent (Dachsbun vs {R})", () => {
+  it("R-BE — a full PREVENTION wins first and the Berry is NOT spent (Dachsbun vs {R})", () => {
     const { state, events } = swing(table({ defender: { id: DACHSBUN, tool: OCCA } }), BLAST);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 0, prevented: true });
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 R-BE — `suppressTargetEffects` drops the Berry and does NOT spend it (Feint)", () => {
+  it("R-BE — `suppressTargetEffects` drops the Berry and does NOT spend it (Feint)", () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: OCCA } }), FEINT);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 120 });
     expect(all(events, "DAMAGE_DEALT")[0]?.reduction).toBeUndefined();
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
   });
 
-  it("🛑 a hit STOPPED at damage step 2 (pre-W/R 0) never reaches the Berry — nothing spent", () => {
+  it("a hit STOPPED at damage step 2 (pre-W/R 0) never reaches the Berry — nothing spent", () => {
     const { state, events } = swing(debuffed(table({ defender: { id: WALL, tool: OCCA } })), BLAST);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 0 });
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 Jamming Tower: the Berry has no effect — 120 lands and the Berry stays", () => {
+  it("Jamming Tower: the Berry has no effect — 120 lands and the Berry stays", () => {
     const { state, events } = swing(
       stadium(table({ defender: { id: WALL, tool: OCCA } }), JAMMING),
       BLAST,
@@ -607,7 +573,7 @@ describe("D562 tools §2 — the Berry at the MAIN HIT (attack.ts), R-BE", () =>
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §3 — the Berry at the three interpreter sites (no Active clause)", () => {
-  it("🛑 spreadDamage: the Berry's holder takes 60, its neighbour 120, and the Berry goes to p2's pile", () => {
+  it("spreadDamage: the Berry's holder takes 60, its neighbour 120, and the Berry goes to p2's pile", () => {
     const board = table({ bench: [{ id: WALL, tool: OCCA }, { id: WALL }] });
     const { state, events } = swing(board, SHOCKWAVE);
     expect(state.players.p2.bench.map((b) => b.damage)).toEqual([60, 120]);
@@ -616,26 +582,26 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
     expect(consumed(events)).toHaveLength(1);
   });
 
-  it("🛑 spreadDamage PREVENTED (a benched Dachsbun vs {R}): the Berry is not spent", () => {
+  it("spreadDamage PREVENTED (a benched Dachsbun vs {R}): the Berry is not spent", () => {
     const { state, events } = swing(table({ bench: [{ id: DACHSBUN, tool: OCCA }] }), SHOCKWAVE);
     expect(state.players.p2.bench[0]?.damage).toBe(0);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([OCCA]);
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 spreadDamage stopped at step 2 (the debuff eats the splash): the Berry is not spent", () => {
+  it("spreadDamage stopped at step 2 (the debuff eats the splash): the Berry is not spent", () => {
     const { state } = swing(debuffed(table({ bench: [{ id: WALL, tool: OCCA }] })), SHOCKWAVE);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([OCCA]);
   });
 
-  it('🛑 the OWN-SIDE spread (D425): "your opponent\'s" — no reduction, the Berry stays', () => {
+  it('the OWN-SIDE spread (D425): "your opponent\'s" — no reduction, the Berry stays', () => {
     const { state, events } = swing(table({ ownBench: [{ id: WALL, tool: OCCA }] }), SELFSPLASH);
     expect(state.players.p1.bench[0]?.damage).toBe(120);
     expect(toolIds(state, state.players.p1.bench[0])).toEqual([OCCA]);
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 placeSnipe `deals`: the picked Berry holder takes 60 and the Berry is spent", () => {
+  it("placeSnipe `deals`: the picked Berry holder takes 60 and the Berry is spent", () => {
     const board = table({ bench: [{ id: WALL, tool: OCCA }, { id: WALL }] });
     const { state, events } = snipe(board, PINPOINT, BENCH0);
     expect(state.players.p2.bench[0]?.damage).toBe(60);
@@ -643,7 +609,7 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
     expect(consumed(events)).toHaveLength(1);
   });
 
-  it("🛑 placeSnipe PREVENTED (a benched Dachsbun vs {R}): the Berry is not spent", () => {
+  it("placeSnipe PREVENTED (a benched Dachsbun vs {R}): the Berry is not spent", () => {
     const board = table({ bench: [{ id: DACHSBUN, tool: OCCA }, { id: WALL }] });
     const { state, events } = snipe(board, PINPOINT, BENCH0);
     const shielded = all(events, "DAMAGE_DEALT").filter(
@@ -655,20 +621,20 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 placeSnipe under `ignoreWR` (Feint Snipe): the Berry is nulled and NOT spent", () => {
+  it("placeSnipe under `ignoreWR` (Feint Snipe): the Berry is nulled and NOT spent", () => {
     const board = table({ bench: [{ id: WALL, tool: OCCA }, { id: WALL }] });
     const { state } = snipe(board, FEINT_SNIPE, BENCH0);
     expect(state.players.p2.bench[0]?.damage).toBe(120);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([OCCA]);
   });
 
-  it("🛑 placeSnipe stopped at step 2: the Berry is not spent", () => {
+  it("placeSnipe stopped at step 2: the Berry is not spent", () => {
     const board = debuffed(table({ bench: [{ id: WALL, tool: OCCA }, { id: WALL }] }));
     const { state } = snipe(board, PINPOINT, BENCH0);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([OCCA]);
   });
 
-  it("🛑 snipeActive: the picked Active takes 60 and the Berry is spent", () => {
+  it("snipeActive: the picked Active takes 60 and the Berry is spent", () => {
     const board = table({ defender: { id: WALL, tool: OCCA }, bench: [{ id: WALL }] });
     const { state, events } = snipe(board, ARROW, ACTIVE);
     expect(state.players.p2.active?.damage).toBe(60);
@@ -677,7 +643,7 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
     expect(consumed(events)).toHaveLength(1);
   });
 
-  it("🛑 snipeActive PREVENTED (an Active Dachsbun vs {R}): the Berry is not spent", () => {
+  it("snipeActive PREVENTED (an Active Dachsbun vs {R}): the Berry is not spent", () => {
     const board = table({ defender: { id: DACHSBUN, tool: OCCA }, bench: [{ id: WALL }] });
     const { state, events } = snipe(board, ARROW, ACTIVE);
     const shielded = all(events, "DAMAGE_DEALT").filter(
@@ -689,14 +655,14 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 snipeActive under `ignoreWR`: nulled, NOT spent", () => {
+  it("snipeActive under `ignoreWR`: nulled, NOT spent", () => {
     const board = table({ defender: { id: WALL, tool: OCCA }, bench: [{ id: WALL }] });
     const { state } = snipe(board, FEINT_SNIPE, ACTIVE);
     expect(state.players.p2.active?.damage).toBe(120);
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
   });
 
-  it("🛑 snipeActive stopped at step 2: not spent", () => {
+  it("snipeActive stopped at step 2: not spent", () => {
     const board = debuffed(table({ defender: { id: WALL, tool: OCCA }, bench: [{ id: WALL }] }));
     const { state } = snipe(board, ARROW, ACTIVE);
     expect(toolIds(state, state.players.p2.active)).toEqual([OCCA]);
@@ -715,7 +681,7 @@ describe("D562 tools §3 — the Berry at the three interpreter sites (no Active
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §4 — Survival Brace, R-BR", () => {
-  it("🛑 full HP, exactly lethal from an OPPONENT: survives at 10 HP, then the Brace is discarded", () => {
+  it("full HP, exactly lethal from an OPPONENT: survives at 10 HP, then the Brace is discarded", () => {
     const board = table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] });
     const { state, events } = swing(board, BLAST);
     const row = all(events, "DAMAGE_DEALT")[0];
@@ -729,7 +695,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(events.indexOf(row as GameEvent)).toBeLessThan(events.indexOf(spent[0] as GameEvent));
   });
 
-  it("🛑 NOT full HP: the Brace does nothing and the body is Knocked Out", () => {
+  it("NOT full HP: the Brace does nothing and the body is Knocked Out", () => {
     const board = setDamage(
       table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }),
       "p2",
@@ -740,13 +706,13 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 not lethal: the Brace stays", () => {
+  it("not lethal: the Brace stays", () => {
     const { state, events } = swing(table({ defender: { id: BRACED, tool: BRACE } }), POKE);
     expect(toolIds(state, state.players.p2.active)).toEqual([BRACE]);
     expect(consumed(events)).toEqual([]);
   });
 
-  it("🛑 spread, placeSnipe and snipeActive all reach it (no Active clause)", () => {
+  it("spread, placeSnipe and snipeActive all reach it (no Active clause)", () => {
     const spread = swing(table({ bench: [{ id: BRACED, tool: BRACE }] }), SHOCKWAVE);
     expect(spread.state.players.p2.bench[0]?.damage).toBe(110);
     expect(discardIds(spread.state, "p2")).toContain(BRACE);
@@ -768,7 +734,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(discardIds(active.state, "p2")).toContain(BRACE);
   });
 
-  it("🛑 \"from your OPPONENT's Pokémon\" — an own-side spread Knocks the Brace holder Out (Sturdy's own twin survives it)", () => {
+  it("\"from your OPPONENT's Pokémon\" — an own-side spread Knocks the Brace holder Out (Sturdy's own twin survives it)", () => {
     const board = table({ ownBench: [{ id: BRACED, tool: BRACE }, { id: "fix-sturdy" }] });
     const { state, events } = swing(board, SELFSPLASH);
     const koed = all(events, "KNOCKED_OUT").map((e) => idOf(state, e.uid));
@@ -783,7 +749,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     });
   });
 
-  it("🛑 R-BR — Sturdy AND a Brace on one body: the clamp fires ONCE (110) and the Brace IS discarded", () => {
+  it("R-BR — Sturdy AND a Brace on one body: the clamp fires ONCE (110) and the Brace IS discarded", () => {
     const board = table({ defender: { id: "fix-sturdy", tool: BRACE }, bench: [{ id: WALL }] });
     const { state, events } = swing(board, BLAST);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ damage: 110, survived: true });
@@ -791,7 +757,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(consumed(events)).toHaveLength(1);
   });
 
-  it("🛑 R-BF — Feint's \"any effects on your opponent's Active Pokémon\" does NOT reach the Brace: 120 lands in full, the body survives at 10 and the Brace is spent", () => {
+  it("R-BF — Feint's \"any effects on your opponent's Active Pokémon\" does NOT reach the Brace: 120 lands in full, the body survives at 10 and the Brace is spent", () => {
     const board = table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] });
     const { state, events } = swing(board, FEINT);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({
@@ -802,8 +768,6 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(all(events, "KNOCKED_OUT")).toEqual([]);
     expect(discardIds(state, "p2")).toContain(BRACE);
     expect(consumed(events)).toHaveLength(1);
-    // …which is how the Ability twin has read since D208 (the clamp was never gated on
-    // `suppressTargetEffects`): Sturdy under Feint survives at 10 too.
     const sturdy = swing(table({ defender: { id: "fix-sturdy" }, bench: [{ id: WALL }] }), FEINT);
     expect(all(sturdy.events, "DAMAGE_DEALT")[0]).toMatchObject({
       dealt: 120,
@@ -813,7 +777,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(all(sturdy.events, "KNOCKED_OUT")).toEqual([]);
   });
 
-  it("🛑 R-BF at both snipe arms (Feint Snipe's `ignoreWR`): the Brace answers on the Bench and in the Active Spot", () => {
+  it("R-BF at both snipe arms (Feint Snipe's `ignoreWR`): the Brace answers on the Bench and in the Active Spot", () => {
     const picked = snipe(
       table({ bench: [{ id: BRACED, tool: BRACE }, { id: WALL }] }),
       FEINT_SNIPE,
@@ -833,7 +797,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(all(active.events, "KNOCKED_OUT")).toEqual([]);
   });
 
-  it("🛑 a Tool is not an Ability: under Klefki's lock (Sturdy silenced) the Brace still answers", () => {
+  it("a Tool is not an Ability: under Klefki's lock (Sturdy silenced) the Brace still answers", () => {
     // Klefki Active on p2 locks every Basic; the spread reaches both benched bodies.
     const board = table({
       defender: { id: KLEFKI },
@@ -845,7 +809,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
     expect(all(events, "KNOCKED_OUT").map((e) => idOf(state, e.uid))).toEqual(["fix-sturdy"]);
   });
 
-  it("🛑 Jamming Tower: the Brace has no effect — the body is Knocked Out", () => {
+  it("Jamming Tower: the Brace has no effect — the body is Knocked Out", () => {
     const board = stadium(
       table({ defender: { id: BRACED, tool: BRACE }, bench: [{ id: WALL }] }),
       JAMMING,
@@ -858,7 +822,7 @@ describe("D562 tools §4 — Survival Brace, R-BR", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
-  it("🛑 an Active holder damaged by the opponent: 120 on the attacker (its OWN row), then the Bomb is discarded", () => {
+  it("an Active holder damaged by the opponent: 120 on the attacker (its OWN row), then the Bomb is discarded", () => {
     const { state, events } = swing(table({ defender: { id: WALL, tool: BOMB } }), BLAST);
     const rows = all(events, "COUNTERS_PLACED").filter((e) => e.source === "counterattack");
     expect(rows.map((e) => [e.seat, e.amount])).toEqual([["p1", 120]]);
@@ -871,7 +835,7 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
     );
   });
 
-  it('🛑 "even if this Pokémon is Knocked Out" — a lethal hit still detonates it', () => {
+  it('"even if this Pokémon is Knocked Out" — a lethal hit still detonates it', () => {
     const { state, events } = swing(
       table({ defender: { id: BRACED, tool: BOMB }, bench: [{ id: WALL }] }),
       BLAST,
@@ -880,26 +844,26 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
     expect(state.players.p1.active?.damage).toBe(120);
   });
 
-  it("🛑 NOT damaged (a prevented hit): no counters, the Bomb stays", () => {
+  it("NOT damaged (a prevented hit): no counters, the Bomb stays", () => {
     const { state, events } = swing(table({ defender: { id: DACHSBUN, tool: BOMB } }), BLAST);
     expect(all(events, "COUNTERS_PLACED")).toEqual([]);
     expect(toolIds(state, state.players.p2.active)).toEqual([BOMB]);
   });
 
-  it('🛑 "in the Active Spot" — a benched Bomb holder hit by a spread detonates nothing', () => {
+  it('"in the Active Spot" — a benched Bomb holder hit by a spread detonates nothing', () => {
     const { state, events } = swing(table({ bench: [{ id: WALL, tool: BOMB }] }), SHOCKWAVE);
     expect(all(events, "COUNTERS_PLACED")).toEqual([]);
     expect(toolIds(state, state.players.p2.bench[0])).toEqual([BOMB]);
   });
 
-  it("🛑 the re-homed Active hit (snipeActive → reactToAttackDamage) detonates it too", () => {
+  it("the re-homed Active hit (snipeActive → reactToAttackDamage) detonates it too", () => {
     const board = table({ defender: { id: WALL, tool: BOMB }, bench: [{ id: WALL }] });
     const { state } = snipe(board, ARROW, ACTIVE);
     expect(state.players.p1.active?.damage).toBe(120);
     expect(discardIds(state, "p2")).toContain(BOMB);
   });
 
-  it("🛑 Jamming Tower: no counters, the Bomb stays", () => {
+  it("Jamming Tower: no counters, the Bomb stays", () => {
     const { state, events } = swing(
       stadium(table({ defender: { id: WALL, tool: BOMB } }), JAMMING),
       BLAST,
@@ -926,13 +890,13 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool source, R-LH", () => {
-  it("🛑 damaged in the Active Spot: the holder's controller draws 2, with NO ABILITY_TRIGGERED row", () => {
+  it("damaged in the Active Spot: the holder's controller draws 2, with NO ABILITY_TRIGGERED row", () => {
     const { events } = swing(table({ defender: { id: WALL, tool: HELMET } }), BLAST);
     expect(effectDraws(events, "p2").map((e) => e.uids.length)).toEqual([2]);
     expect(all(events, "ABILITY_TRIGGERED")).toEqual([]);
   });
 
-  it('🛑 "even if this Pokémon is Knocked Out"', () => {
+  it('"even if this Pokémon is Knocked Out"', () => {
     const { events } = swing(
       table({ defender: { id: BRACED, tool: HELMET }, bench: [{ id: WALL }] }),
       BLAST,
@@ -941,7 +905,7 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
     expect(effectDraws(events, "p2").map((e) => e.uids.length)).toEqual([2]);
   });
 
-  it("🛑 not damaged (prevented), not Active (a spread), or silenced (Jamming Tower): no draw", () => {
+  it("not damaged (prevented), not Active (a spread), or silenced (Jamming Tower): no draw", () => {
     expect(
       effectDraws(swing(table({ defender: { id: DACHSBUN, tool: HELMET } }), BLAST).events, "p2"),
     ).toEqual([]);
@@ -952,14 +916,14 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
     expect(effectDraws(swing(jammed, BLAST).events, "p2")).toEqual([]);
   });
 
-  it('🛑 switched out by the attack\'s own effect before the stage runs: "in the Active Spot" fails, no draw', () => {
+  it('switched out by the attack\'s own effect before the stage runs: "in the Active Spot" fails, no draw', () => {
     const board = table({ defender: { id: WALL, tool: HELMET }, bench: [{ id: WALL }] });
     const { events } = swing(board, KICK);
     expect(all(events, "DAMAGE_DEALT")[0]).toMatchObject({ dealt: 30 });
     expect(effectDraws(events, "p2")).toEqual([]);
   });
 
-  it("🛑 the re-homed Active hit (snipeActive) seeds the Tool's stage too — AHEAD of the turn's end", () => {
+  it("the re-homed Active hit (snipeActive) seeds the Tool's stage too — AHEAD of the turn's end", () => {
     const board = table({ defender: { id: WALL, tool: HELMET }, bench: [{ id: WALL }] });
     const { events } = snipe(board, ARROW, ACTIVE);
     const drawn = effectDraws(events, "p2");
@@ -969,7 +933,7 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
     expect(events.indexOf(drawn[0] as GameEvent)).toBeLessThan(turnStart);
   });
 
-  it("🛑 the Active damaged TWICE by one attack (main hit, then a snipe) queues the Tool's stage ONCE", () => {
+  it("the Active damaged TWICE by one attack (main hit, then a snipe) queues the Tool's stage ONCE", () => {
     const board = table({ defender: { id: WALL, tool: HELMET }, bench: [{ id: WALL }] });
     const { events: first } = swing(board, DOUBLE);
     expect(all(first, "DAMAGE_DEALT").map((e) => e.dealt)).toEqual([30]);
@@ -978,7 +942,7 @@ describe("D562 tools §6 — Lucky Helmet: one `damagedTrigger` stage per Tool s
     expect(effectDraws(events, "p2").map((e) => e.uids.length)).toEqual([2]);
   });
 
-  it("🛑 R-LH — a PARKING Ability (Klawf ex) runs FIRST and does not strand the Tool's stage behind it", () => {
+  it("R-LH — a PARKING Ability (Klawf ex) runs FIRST and does not strand the Tool's stage behind it", () => {
     let board = table({ defender: { id: KLAWF, tool: HELMET } });
     board = attachFromDeck(board, "p1", "fix-water-energy", 1);
     const { state: parked, events: first } = swing(board, POKE);
@@ -1034,7 +998,7 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     return prompt;
   }
 
-  it("🛑 the DAMAGED seat moves an Energy off the ATTACKER onto the attacker's Bench", () => {
+  it("the DAMAGED seat moves an Energy off the ATTACKER onto the attacker's Bench", () => {
     const { state: parked } = swing(fanBoard(), BLAST);
     const prompt = fanPrompt(parked);
     const energy = parked.players.p1.active?.energy[0] as string;
@@ -1053,7 +1017,7 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     expect(state.players.p1.active?.energy).not.toContain(energy);
   });
 
-  it('⚠️ R-HF — the printed "move" is mandatory, the family\'s `max: 1` park carries its standing decline', () => {
+  it('R-HF — the printed "move" is mandatory, the family\'s `max: 1` park carries its standing decline', () => {
     const { state: parked } = swing(fanBoard(), BLAST);
     expect(fanPrompt(parked).min ?? 0).toBe(0);
     const { state } = mustApply(parked, {
@@ -1064,7 +1028,7 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     expect(state.players.p1.bench[0]?.energy).toEqual([]);
   });
 
-  it("🛑 R-HF — the §11 shield does NOT refuse it: a Tool's move is not an effect of an ATTACK", () => {
+  it("R-HF — the §11 shield does NOT refuse it: a Tool's move is not an effect of an ATTACK", () => {
     let board = fanBoard();
     board = attachFromDeck(board, "p1", "fix-mist-energy", 1);
     const { state: parked, events } = swing(board, BLAST);
@@ -1072,7 +1036,7 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     expect(fanPrompt(parked).movable).toHaveLength(2);
   });
 
-  it("🛑 whiffs: an attacker with NO Energy, or with NO Bench — no park, the turn ends", () => {
+  it("whiffs: an attacker with NO Energy, or with NO Bench — no park, the turn ends", () => {
     const bare = swing(fanBoard({ bare: true }), TAP);
     expect(bare.state.phase.kind).not.toBe("effect:choose");
     expect(all(bare.events, "ENERGY_MOVED")).toEqual([]);
@@ -1081,12 +1045,7 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
     expect(lonely.state.players.p1.active?.energy).toHaveLength(1);
   });
 
-  it('⚠️ R-HF, INHERITED APPROXIMATION — the stage reads the opponent\'s CURRENT Active, not "the Attacking Pokémon"', () => {
-    // Klawf ex's since D101: `side: "opponent"` resolves the source when the stage RUNS,
-    // after the attack's own program. An attack that damages and then switches its user
-    // out hands the Fan the NEW Active, while the Attacking Pokémon, now benched, still
-    // holds the {C} the print would have moved. Reversal: record the attacker's uid on the
-    // stage (a `PendingStage` SHAPE change, so an MRV decision).
+  it('R-HF, INHERITED APPROXIMATION — the stage reads the opponent\'s CURRENT Active, not "the Attacking Pokémon"', () => {
     function kickedOut(state: GameState): { state: GameState; events: GameEvent[] } {
       const swung = swing(state, RETREAT_KICK);
       if (swung.state.phase.kind !== "effect:choose" || swung.state.phase.seat !== "p1")
@@ -1146,7 +1105,7 @@ describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);
   });
 
-  it("⚠️ ROLLBACK — a 0.445 runner resolves a stage through `damagedByAttackAbility` ALONE, which finds no card for a Tool uid: a silent whiff", () => {
+  it("ROLLBACK — a 0.445 runner resolves a stage through `damagedByAttackAbility` ALONE, which finds no card for a Tool uid: a silent whiff", () => {
     const board = table({ defender: { id: WALL, tool: HELMET } });
     const helmetUid = board.players.p2.active?.tools[0] as string;
     const activeUid = board.players.p2.active?.stack.at(-1) as string;
@@ -1156,7 +1115,7 @@ describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445
     ]);
   });
 
-  it("⚠️ ROLLBACK — the consumable keys are catalog data a 0.445 fold never reads: stripped, the Tools are inert", () => {
+  it("ROLLBACK — the consumable keys are catalog data a 0.445 fold never reads: stripped, the Tools are inert", () => {
     const board = table({
       defender: { id: WALL, tool: OCCA },
       bench: [

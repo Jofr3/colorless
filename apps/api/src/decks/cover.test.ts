@@ -57,8 +57,6 @@ describe("pickCoverCardId", () => {
     ).toBe("sneasel");
   });
 
-  // 🆕 D581 — a Trainer can carry a printed HP since D581 (Snorlax Doll sv04-175 at
-  // 120, the Antique Fossils at 60); the category check, not a null HP, keeps it out.
   it("never fronts a deck with a Trainer that prints an HP (D581)", () => {
     expect(
       pickCoverCardId([
@@ -107,8 +105,6 @@ describe("effectiveCoverCardId (P5-6 — the owner's pick)", () => {
   });
 
   it("falls back when the pinned card is no longer in the deck", () => {
-    // PATCH drops a pin whose card it removes, so this is the row edited by
-    // some other path — a deck must never front a card it doesn't run.
     expect(effectiveCoverCardId("charizard-ex", library)).toBe("skeledirge");
   });
 

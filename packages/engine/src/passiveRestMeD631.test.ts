@@ -31,19 +31,8 @@ import {
   specialEnergy,
   trainerCard,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D631 — P1, THE REST OF THE PASSIVE MODIFIERS ──
-//
-// 6 printed Ability texts / 9 printings (`me` + `30th`), each on a NEW registry object: Bastiodon ×3 "Ancient
-// Bulwark" (a side shield from a benched holder, gated on the attacker's Energy count), Decidueye ex ×2 "Sniper's
-// Eye" (every {C} ignored while the opponent holds exactly 4 cards), Kingambit "Supreme Overlord" (+30 before W/R
-// per Prize the opponent has taken), Garbodor "Gloomy Garbage" (−20 before W/R off a Tool-carrying opposing
-// Active), Yveltal "Life-Locked" (the opponent's Active can't be healed, at every heal site) and Snorlax "Good
-// Sleep" (a Checkup heal while still Asleep, on the NEW `BoardCondition` `yourActiveAsleep`). Every id and text off
-// the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. Before this slice the
-// ids appeared only in D610's unkeyed pins (Snorlax nowhere). Driven on a LOCAL `cardPool` (D275) in the suite's
-// OWN 60-card deck (D270).
 
 const BULWARK_TEXT =
   "As long as this Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your opponent's Pokémon that have 2 or less Energy attached.";
@@ -70,7 +59,7 @@ const FLUTTER = "sv05-078";
 const SEISMITOAD = "sv03-052";
 const JAMMING = "sv06-153";
 const PICNIC = "sv01-184"; // Picnic Basket — `healEachAll`
-const MAGEARNA = "sv09-107"; // Magearna "Auto Heal" — `healSubject` (a REAL id: the registry row must resolve)
+const MAGEARNA = "sv09-107";
 const TR_ENERGY = "sv10-182"; // Team Rocket's Energy — ONE card, TWO units
 
 const ATK = "d631-attacker";
@@ -81,7 +70,6 @@ const TOOL = "d631-tool";
 const G = "d631-grass";
 const M = "d631-metal";
 
-// The attacker's attacks, one per §8.5 site (D619's set): every cost is ONE {C}.
 const BLAST = 0; // main hit, 120
 const SHOCKWAVE = 1; // spreadDamage into the opponent's Bench, 120 each
 const PINPOINT = 2; // placeSnipe `deals` arm, 120 to one chosen benched
@@ -89,7 +77,7 @@ const ARROW = 3; // opponentAny — snipeActive when the pick is the Active
 const SELFSPLASH = 4; // spreadDamage into the attacker's OWN Bench
 const FEINT_SNIPE = 5; // opponentAny ignoreWR
 const MEND = 6; // "Heal 30 damage from this Pokémon." — healSelf
-const EDGE = 7; // main hit, 120, the D192 sentence (`suppressTargetEffects`)
+const EDGE = 7;
 
 const BENCH_TAIL = " (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const ATTACKS = [
@@ -288,7 +276,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [BASTIODON[0]]: 2,
   [DECIDUEYE[0]]: 1,
@@ -314,11 +301,6 @@ const DECK = deckOf({
   [M]: 3,
   "fix-energy": 16,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's turn 2 after p2 passed, both hands back into the decks. */
 function opened(): GameState {
@@ -711,8 +693,6 @@ describe("D631 §4 — Supreme Overlord: +30 before W/R per Prize the opponent h
     const body = board.players.p1.active;
     if (body === null) throw new Error("no Active");
     expect(selfPreWRBonusPerOpponentPrize(board, body)).toBe(90);
-    // Flutter Mane (90 HP, its Midnight Fluttering silencing the Active Kingambit) is Knocked Out, so the
-    // DAMAGE_DEALT row's `bonus` is the witness, against the same row on a Wall.
     const locked = setPrizes(
       table({ attacker: { id: KINGAMBIT }, defender: { id: FLUTTER }, energy: [[M, 2]] }),
       "p2",

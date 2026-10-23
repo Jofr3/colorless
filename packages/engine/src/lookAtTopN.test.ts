@@ -13,14 +13,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: lookAtTopN (§15.E) — the top-of-deck twin of searchDeck. Two real
-// cards land on it, verified end to end:
-//   • Great Ball (sv02-183) — look at the top 7, reveal a Pokémon → hand;
-//   • Pokégear 3.0 (sv01-186) — look at the top 7, reveal a Supporter → hand.
-// The candidates are ONLY the top-N matches (not the whole deck), then the
-// trailing shuffleDeck op scrambles the looked-at cards back. Like searchDeck it
-// is "up to" (declinable) and parks on the same chooseCards prompt.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -161,19 +153,6 @@ describe("M5 op-slice — lookAtTopN", () => {
     );
   });
 
-  // 🛑🛑 D241 — THE TWO CASES BELOW FLIPPED, AND THE FLIP IS THE SLICE'S POINT.
-  // Both used to assert `not.toContain("DECK_TOP_REVEALED")` on the reasoning
-  // that "nothing moved", and that reasoning is the fidelity defect
-  // `coverage-backlog-legal.md` filed against this op: the WHIFF and the DECLINE
-  // are exactly the two paths where a player reads the top of a deck and the
-  // opponent is told nothing at all. A look transfers INFORMATION; the move is
-  // only its consequence. The event now fires with `uids: []` on both, and
-  // `log.ts` renders it "looked at the top of their deck — took nothing".
-  //
-  // ⚠️ WHAT WOULD TURN THESE RED (conventions.md): reverting `revealFromTop`'s
-  // early `return state` or `stepOp`'s empty-window push. Both are installed as
-  // mutants, and so is the OTHER READING of the question — a build that fires the
-  // row only when cards actually move, which is what shipped before this slice.
   it("a top 7 with no matching card parks nowhere but STILL announces the look and shuffles", () => {
     let state = board(4);
     state = handFromDeck(state, "p1", "sv02-183", 1);
@@ -183,12 +162,9 @@ describe("M5 op-slice — lookAtTopN", () => {
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
     expect(after.phase.kind).toBe("turn:action");
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    // THE LOOK HAPPENED. Great Ball read seven cards its controller now knows;
-    // the row is what tells the other seat so, and it names nothing.
     const looked = find(events, "DECK_TOP_REVEALED");
     expect(looked).toMatchObject({ seat: "p1", uids: [] });
-    expect(looked?.dest).toBeUndefined(); // absent = the hand (D135), never `"hand"`
-    // The looked-at cards are shuffled back regardless (the trailing shuffleDeck).
+    expect(looked?.dest).toBeUndefined();
     expect(types(events)).toContain("SHUFFLE");
   });
 
@@ -217,8 +193,6 @@ describe("M5 op-slice — lookAtTopN", () => {
       choice: { kind: "cards", uids: [] }, // …but the player declines
     });
     expect(done.phase.kind).toBe("turn:action");
-    // D241 — the DECLINE is announced too: the player saw the top 7 and chose to
-    // leave it, which the opponent has to be able to read off the log.
     expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1", uids: [] });
     expect(types(events)).toContain("SHUFFLE"); // the trailing shuffleDeck still fires
     expect(done.players.p1.deck).toContain(topA); // the candidate stays in the deck

@@ -84,10 +84,6 @@ it("carries legal evolution hosts identically on local and online own-hand cards
   );
 });
 
-/** setup:place with p1 fully placed (active + one bench) AND ready, p2 not
-    yet placed — exactly the hot-seat handoff moment the setup redaction
-    protects: the board is about to flip to p2 with p1's placements still
-    face-down on the table. */
 function placedNotRevealed(): GameState {
   let state = mustCreate(SEED, DECKS).state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -161,9 +157,6 @@ function wonGame(): GameState {
   return mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
 }
 
-// 🆕🆕🆕 D551 — CRESCENT PURGE, DRIVEN (not constructed): the real Cresselia `sv06.5-021` turns
-// one of p1's face-down prizes face up (D270's file-local 60-card deck, D425's declared
-// battlers).
 const CRESSELIA = "sv06.5-021";
 const PURGE = 1;
 const PURGE_POOL: Record<string, Card> = {
@@ -217,16 +210,10 @@ const purgeYes = (state: GameState) =>
 const purgePick = (state: GameState, index: number) =>
   mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "prize", index } }).state;
 
-/** A paid Purge on the 400-HP wall turns p1's prize row index 2 face up; nothing is Knocked
-    Out, so p2 is left in turn:action — a park whose prompt round-trips. Six prizes remain. */
 function purgedWall(): GameState {
   return purgePick(purgeYes(purgeReady("d548-wall")), 2);
 }
 
-/** 🛑 THE FLIP-VISIBLE BOARD (remaining < 6 on the face-up side). A paid Purge (160) turns row
-    index 3 face up and Knocks Out the 150-HP frail; p1 then takes the FACE-DOWN prize at row
-    index 0, the row compacts, and the face-up card sits at row index 2 of FIVE. p2's wall is
-    promoted and p2 is left in turn:action. */
 function purgedTaken(): GameState {
   const parked = purgePick(purgeYes(purgeReady("d548-frail")), 3);
   if (parked.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
@@ -248,15 +235,10 @@ function withImages(state: GameState): GameState {
   return { ...state, cardPool };
 }
 
-/** Whole-value JSON sweep against a pre-stringified projection: does any
-    *exact* string equal to `value` appear anywhere? (JSON.stringify quotes
-    the probe, so "p1#1" never matches "p1#12".) The projection is
-    stringified ONCE per viewer — this sweep probes dozens of uids. */
 function sweepContains(projectionJson: string, value: string): boolean {
   return projectionJson.includes(JSON.stringify(value));
 }
 
-/** The battle row every pristine in-play fixture Pokémon projects. */
 function pristineBattle(hp: number) {
   return {
     damage: 0,
@@ -358,13 +340,6 @@ describe("projectGameState — zones", () => {
 
 describe("projectGameState — hidden information", () => {
   it("leaks no opponent-hand or prize uid anywhere in the projection", () => {
-    // Swept across the phases that populate every projection field: mid-
-    // setup (face-down placements), plain turn play, a parked KO interrupt
-    // (pendingDecision) and a finished game (outcome) — pendingDecision/
-    // outcome/battle must stay as clean as the board.
-    //
-    // 🆕🆕🆕 D551 — plus two PURGED boards (`purgedWall`, `purgedTaken`): one prize of p1's is
-    // FACE UP and public, so it must appear — and ONLY inside `board.<side>.faceUpPrizes`.
     const purged = [purgedWall(), purgedTaken()];
     for (const state of purged) expect(state.players.p1.faceUpPrizes).toHaveLength(1);
     for (const state of [
@@ -381,11 +356,6 @@ describe("projectGameState — hidden information", () => {
         for (const uid of state.players[opponent].hand) {
           expect(sweepContains(json, uid)).toBe(false);
         }
-        // Prizes are face-down for BOTH players — the viewer's own included.
-        // (🆕🆕🆕 D548: FACE-DOWN prizes only — no Purge runs here, so every prize is.)
-        // (🆕🆕🆕 D551 — RE-SCOPED: *"no Purge runs here"* is WITHDRAWN; the two purged boards
-        // above run one. The rule is now split: every FACE-DOWN prize uid stays absent for
-        // both viewers; a FACE-UP one is present, and only in `faceUpPrizes`.)
         for (const seat of ["p1", "p2"] as const) {
           const side = state.players[seat];
           for (const uid of side.prizes) {
@@ -407,7 +377,6 @@ describe("projectGameState — hidden information", () => {
         }
       }
     }
-    // ...and the face-up card is in the list, by LIVE row index, for BOTH viewers.
     for (const state of purged) {
       const [uid] = state.players.p1.faceUpPrizes;
       const index = state.players.p1.prizes.indexOf(uid as string);
@@ -439,10 +408,6 @@ describe("projectGameState — setup redaction", () => {
     const state = withImages(placedNotRevealed());
     const projection = projectGameState(state, "p2");
 
-    // p1's active and bench are on the table but STILL FACE-DOWN (§3 — the
-    // engine emits SETUP_REVEALED only when both players ready): identity-
-    // free backs whose full model equality also pins "no imageUrl, no
-    // attached, no uid".
     expect(projection.board.opponent.active).toEqual({
       id: "opponent-active-hidden",
       cardId: HIDDEN_CARD_ID,
@@ -457,9 +422,6 @@ describe("projectGameState — setup redaction", () => {
         type: "trainer",
       },
     ]);
-
-    // The full-model equalities above also pin that the backs carry NO
-    // `battle` — a row would leak the printed HP of a face-down placement.
 
     // And no in-play uid of p1's escapes anywhere: board, battle or piles.
     const json = JSON.stringify(projection);
@@ -656,10 +618,6 @@ describe("projectGameState — phase-derived fields", () => {
   });
 
   it("keeps an on-KO effect:choose park (resumeTail) owned by the turn owner, not the KO'd player", () => {
-    // P1 (second player, turn 2) attacks P2's fix-onko Active (30 HP) with Bite
-    // 30 → KO. The fix-onko's on-KO Ability parks AFTER P1 takes the prize —
-    // during P1's turn, on P2's (the KO'd, NON-turn player's) decision. The
-    // projection must read the turn owner via koParkActiveSeat, not phase.seat.
     let state = driveSetup(9, { p1: ONKO_DECK, p2: ONKO_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
     state = setActiveFromDeck(state, "p1", "fix-attacker");
@@ -683,10 +641,6 @@ describe("projectGameState — phase-derived fields", () => {
   });
 
   it("keeps an ATTACK effect:choose park (resumeTail) owned by the attacker", () => {
-    // The other resumeTail origin (M5): Paldean Tauros' Blaze Dash parks on
-    // "Discard an Energy from this Pokémon" with only the attackEpilogue stage
-    // queued — the turn tail is not seeded yet, so koParkActiveSeat has to count
-    // attackEpilogue as in-turn or the board would show NO owner mid-attack.
     let state = driveSetup(3, { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
     state = setActiveFromDeck(state, "p1", "sv02-028");
@@ -698,18 +652,12 @@ describe("projectGameState — phase-derived fields", () => {
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(state.phase.seat).toBe("p1");
     expect(state.phase.resumeTail).toBe(true);
-    // D189 — the stage carries the ATTACKER's uid as well as its seat. Nothing in
-    // this projection reads it (`koParkActiveSeat` keys on `kind` + `seat`), which
-    // is exactly why it is asserted here: the shape moved under the web layer and
-    // this is the one web case that pins the whole stage.
     const attacker = state.players.p1.active;
     expect(state.pending).toEqual([
       {
         kind: "attackEpilogue",
         seat: "p1",
         uid: attacker === null ? undefined : topUid(attacker),
-        // 🆕 D394 — and the printed ATTACK name, which rides the stage for the same
-        // reason the uid does: `finishAttack` cannot re-derive it after a park.
         attack: "Blaze Dash",
       },
     ]);
@@ -726,13 +674,6 @@ describe("projectGameState — phase-derived fields", () => {
   });
 
   it("routes an `answerer` park to the OTHER seat without moving the turn (M5 — Ortega)", () => {
-    // The THIRD way the deciding seat and the turn owner come apart, and the
-    // only one where they differ mid-play with no KO involved: the printed
-    // "your opponent may draw a card" parks on the non-controller while the
-    // controller's turn runs on. Unlike the two resumeTail cases above,
-    // activeSeat must keep reading phase.seat — the turn did not move, and a
-    // board that handed P2 the turn glow for answering a question would be
-    // lying about whose turn it is.
     let state = driveSetup(
       20260722,
       { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
@@ -770,12 +711,6 @@ describe("projectGameState — phase-derived fields", () => {
     expect(theirs.pendingDecision.prompt.kind).toBe("mayDraw");
   });
 
-  /** A CHECKUP-origin park: p2's Active is lethally poisoned when p1 ends
-      turn 3, so the KO fires from the Pokémon Checkup — parking BETWEEN
-      turns (endTurn and checkup already drained; pending holds only the ko
-      stages + startTurn), unlike parkedOnPrizes' attack-KO park, where the
-      whole turn tail is still queued. Two benched defenders keep the later
-      promotion a real (parking) choice. */
   function parkedAtCheckup(): GameState {
     let state = matchup("fix-weak", 2);
     state = setDamage(state, "p2", 50); // fix-weak prints 60 HP...
@@ -803,12 +738,6 @@ describe("projectGameState — phase-derived fields", () => {
   });
 
   it("keeps a MID-TURN KO park owned by the actor whose turn will resume", () => {
-    // A mid-turn KO (evolve-below-HP; engine-tested in stadiumTool.test.ts)
-    // parks ko:takePrizes for the OPPONENT with a resumeTurn stage queued
-    // behind it — the actor's turn is still in progress. koParkActiveSeat must
-    // treat resumeTurn as in-turn (unlike the between-turns checkup park) so
-    // the board still shows an owner. Crafted like the tie test below; a real
-    // evolve produces this exact pending shape.
     const base = turnOneState(); // turn 1 = p1's (firstPlayer), a real board
     const state: GameState = {
       ...base,
@@ -1022,22 +951,8 @@ describe("projectGameState — the persistent zones (M4 slice 3)", () => {
   });
 });
 
-// The whole point of the P4 split: the server-side engine redactor (redactGame)
-// + this client adapter (projectionFromRedacted) must reconstruct EXACTLY the
-// board the local projectGameState produces. This equivalence is the guard
-// against the two redactors drifting: the round-trip is byte-for-byte the local
-// projection — same card models, image URLs, battle rows, hidden backs, piles
-// and phase-derived fields — INCLUDING a `mayDraw` effect:choose park now that
-// its redacted prompt crosses the wire answerer-only (2b-iii-a). The prompt
-// kinds without an online dialog yet (chooseCards/attachCards/…) are still
-// stripped to null, so a round-trip over one of THOSE parks would differ (the
-// local projection keeps the full prompt) — this block stays scoped to states
-// whose prompt round-trips.
 describe("projectionFromRedacted — the wire round-trip equals the local projection", () => {
-  it("🛑 (D551) reconstructs a PURGED board identically — the face-up prize crosses the wire intact", () => {
-    // Two parks that round-trip: the Purge on the wall (six remaining, row index 2 face up)
-    // and the Purge-KO-take board (five remaining, the face-up card compacted to index 2).
-    // Both leave p2 in turn:action.
+  it("(D551) reconstructs a PURGED board identically — the face-up prize crosses the wire intact", () => {
     for (const state of [purgedWall(), purgedTaken()]) {
       expect(state.phase.kind).toBe("turn:action");
       expect(state.players.p1.faceUpPrizes).toHaveLength(1);
@@ -1050,7 +965,7 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     }
   });
 
-  it("🛑 (D551) a SPECTATOR's board carries the same face-up prizes as the seated p1 projection, both sides", () => {
+  it("(D551) a SPECTATOR's board carries the same face-up prizes as the seated p1 projection, both sides", () => {
     for (const state of [purgedWall(), purgedTaken()]) {
       const seated = projectGameState(state, "p1").board;
       const watching = projectionFromRedacted(redactGame(state, "p1", true)).board;
@@ -1080,10 +995,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
   });
 
   it("ignores the 3b ability/trainer lists — a populated turn:action still equals", () => {
-    // Chien-Pao ex (Shivery Chill) as p1's Active makes the wire turn:action carry
-    // a non-empty ability list; like attacks/retreat (2b-i/ii) it never enters the
-    // playmat projection, so the round-trip still equals the local one for both
-    // viewers (the guard against those action lists leaking into the board).
     let state = driveSetup(3, { p1: ABILITY_DECK, p2: ABILITY_DECK }, { first: "p2" });
     state = setActiveFromDeck(state, "p1", "sv02-061");
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → p1's turn 2
@@ -1098,10 +1009,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
   });
 
   it("ignores the 3b-ii Rare Candy pairings — a populated turn:action still equals", () => {
-    // A Rare Candy + a matching Stage 2 in p1's hand on their turn 3 makes the wire
-    // turn:action carry a non-empty pairing list. Like the ability/trainer lists it
-    // feeds a HUD dialog, never the playmat, so the round-trip must still equal the
-    // local projection for both viewers.
     let state = driveSetup(
       4,
       { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK },
@@ -1124,10 +1031,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
   });
 
   it("reconstructs a mayDraw effect:choose park identically, for both viewers", () => {
-    // Drive Ortega to its "your opponent may draw a card" park — the one effect
-    // prompt now on the wire (2b-iii-a). The answerer is p2 (the non-controller),
-    // so the round-trip must reproduce both phaseViewOf's decision for p2 AND its
-    // withheld null for p1, plus the whole board.
     let state = driveSetup(
       20260722,
       { p1: REVEAL_BOTTOM_DECK, p2: REVEAL_BOTTOM_DECK },
@@ -1159,13 +1062,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
   });
 
   it("reconstructs the public-ref effect prompts for the ANSWERER's view (2b-iii-b)", () => {
-    // choosePokemon / choosePokemonMulti / moveEnergy / discardEnergy are
-    // CONTROLLER-answered, so redactedPromptOf is STRICTER than phaseViewOf (which
-    // keeps the prompt for both viewers): the wire delivers it to the controller
-    // (p1) alone. So the round-trip holds for the ANSWERER's view — synthesized
-    // over a real board like redact.test.ts's effect-prompt cases, since driving
-    // four real cards adds nothing the reconstruction pin needs. The opponent's
-    // view is DELIBERATELY not equal (its prompt is withheld on the wire).
     const CONT: EffectContinuation = {
       pendingOp: { op: "opponentMayDraw", count: 1 },
       rest: [],
@@ -1179,28 +1075,12 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         candidates: [active("p1"), active("p2")],
         note: "Choose a Pokémon.",
       },
-      // 🆕🆕 D359 — **THE SAME KIND CARRYING `upTo`, AND IT IS HERE BECAUSE THIS
-      // FILE IS THE SITE D358's PRICE DID NOT NAME.** That slice bought the
-      // decline and counted the engine and the wire; `projection.ts` rebuilds this
-      // prompt field by field on the way BACK and would have silently rebuilt a
-      // park with a printed ceiling as a MANDATORY one — the dialog on the far
-      // side offering neither the decline nor any middle quantity. Both shapes are
-      // here on purpose, exactly as the `moveEnergy` pair below: the arm above
-      // pins that a prompt WITHOUT the field round-trips to a byte-identical
-      // object (no `upTo: undefined` on either side), and this one pins that a
-      // prompt WITH it does not lose it. `toEqual` is what makes both directions
-      // load-bearing.
       {
         kind: "choosePokemon",
         candidates: [active("p1"), active("p2")],
         upTo: 2,
         note: "Attach up to 2 Energy to which of your Pokémon?",
       },
-      // 🆕🆕🆕 D572 — the SAME kind carrying `takeVerb` (Munkidori "Adrena-Brain"'s
-      // "move up to 3 damage counters"). Here for D359's reason above, verbatim: the
-      // verb is OPTIONAL, so the arm above pins that a prompt WITHOUT it rebuilds
-      // byte-identically and this one pins that a prompt WITH it does not lose it —
-      // which would caption a counter move "attach N" on the far side of the wire.
       {
         kind: "choosePokemon",
         candidates: [active("p2")],
@@ -1223,13 +1103,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         max: 1,
         note: "Move an Energy.",
       },
-      // D226 — the SAME kind carrying `anySource` (N's Plan's printed plural).
-      // Both shapes are here on purpose: the rider is OPTIONAL, so the arm above
-      // pins that a prompt WITHOUT it still round-trips to a byte-identical object
-      // (no `anySource: undefined` appearing on either side), and this one pins
-      // that a prompt WITH it does not silently lose it — which would re-impose
-      // the single-source coupling on the client while the server allowed the
-      // wider answer. `toEqual` below is what makes both directions load-bearing.
       {
         kind: "moveEnergy",
         movable: [
@@ -1241,11 +1114,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         anySource: true,
         note: "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.",
       },
-      // 🆕 D441 — the SAME kind carrying `min` (Castform's printed "Move ALL
-      // Energy"). Here for the rider's reason above, verbatim: the floor is
-      // OPTIONAL, so the first arm pins that a prompt without it rebuilds
-      // byte-identically and this one pins that a prompt with it does not lose it —
-      // which would re-grant the client a decline the print refuses.
       {
         kind: "moveEnergy",
         movable: [
@@ -1257,13 +1125,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         min: 2,
         note: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
       },
-      // 🆕🆕 D442 — the SAME kind carrying `anyDest` (Kilowattrel's printed "in any
-      // way you like"). Here for the two riders' reason above, verbatim: it is
-      // OPTIONAL, so the first arm pins that a prompt without it rebuilds
-      // byte-identically and this one pins that a prompt with it does not lose it —
-      // which would re-impose the single-DESTINATION coupling on the client and
-      // render the coupled wizard for a spread the server accepts. Two benched
-      // destinations, because a spread over one is not a spread.
       {
         kind: "moveEnergy",
         movable: [
@@ -1282,15 +1143,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         scope: { kind: "total", count: 1 },
         note: "Discard an Energy.",
       },
-      // D157 — `chooseAttack` joins this family and not the hidden-candidate one,
-      // because its candidates are the printed attacks of a FACE-UP Active: public
-      // to both players, so the redactor resolves nothing out of a private zone
-      // and the answerer gate is a convenience rather than the barrier it is for a
-      // deck search. It is nonetheless the ONE arm here that carries a
-      // server-resolved LABEL, and that is a gap in the wire rather than a reveal:
-      // an attack INDEX resolves against nothing the client holds (`RedactedCard`
-      // has no attack rows, and `RedactedAttack[]` is the viewer's OWN Active
-      // only). The round trip is therefore a rebuild, not a recovery.
       {
         kind: "chooseAttack",
         candidates: [
@@ -1317,12 +1169,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
   });
 
   it("reconstructs the hidden-candidate effect prompts for the ANSWERER's view (2b-iii-c)", () => {
-    // chooseCards / attachCards carry a RedactedCard per candidate (the revealed
-    // deck cards). The reconstruction recovers the engine uids from `c.id`, so the
-    // answerer (controller) round-trip still equals the local projection exactly,
-    // even though the wire shape (RedactedCard[]) differs from the engine's
-    // (string[]). The searched deck uids are real p1 deck uids so the identities
-    // resolve; the opponent view stays withheld (its prompt is null).
     const CONT: EffectContinuation = {
       pendingOp: { op: "opponentMayDraw", count: 1 },
       rest: [],
@@ -1350,10 +1196,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         max: 2,
         note: "Attach anywhere.",
       },
-      // 🆕 D457 — the THIRD shape: `oneTarget` present, `maxPerTarget` absent. The
-      // two keys are spread independently on both sides of the wire, so a mirror
-      // that carried one and dropped the other round-trips for every prompt above
-      // and fails here — which is the only place that difference is observable.
       {
         kind: "attachCards",
         candidates: deckUids,
@@ -1376,24 +1218,7 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     }
   });
 
-  it("🆕🆕 D426 — an OPPONENT-ANSWERED hidden-candidate park round-trips for BOTH viewers", () => {
-    // 🛑 **THE FIRST PROMPT IN THIS FILE THAT IS BOTH `answerer`-ROUTED AND
-    // HIDDEN-CANDIDATE, AND THAT COMBINATION IS THE WHOLE CASE.** Every other
-    // `chooseCards` park is CONTROLLER-answered, so `phaseViewOf` keeps the
-    // decision for BOTH local viewers while the wire withholds it from one — the
-    // asymmetry the two cases above assert on purpose. Here `phase.answerer` is
-    // set, so the LOCAL projection withholds it too, and the wire round-trip is an
-    // identity on BOTH sides for the first time.
-    //
-    // ⚠️ **WHAT WOULD BREAK IT IS A CONSUMER THAT DERIVES "WHOSE PROMPT IS THIS"
-    // FROM THE ACTIVE SEAT** rather than reading `answerer` — D425's finding, one
-    // field over. `projectionFromRedacted` never sees the phase's seats at all
-    // (`waitingOn` arrives viewer-relative off `phaseViewOf`, server-side), and
-    // this equality is what says so: an implementation that recomputed it from
-    // `activePlayer` would hand the ATTACKER the dialog and disagree here.
-    //
-    // The candidates are P2's REAL hand uids, so a build that leaked them would
-    // resolve real identities into P1's snapshot rather than failing to resolve.
+  it("D426 — an OPPONENT-ANSWERED hidden-candidate park round-trips for BOTH viewers", () => {
     const CONT: EffectContinuation = {
       pendingOp: { op: "opponentDiscardsFromHand", count: 2 },
       rest: [],
@@ -1434,7 +1259,7 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     for (const uid of oppHand) expect(wire, uid).not.toContain(`"${uid}"`);
   });
 
-  it("🆕🆕🆕 (D557) reconstructs a LABELLED confirm — Kieran's two button captions survive the round-trip", () => {
+  it("(D557) reconstructs a LABELLED confirm — Kieran's two button captions survive the round-trip", () => {
     // `effectDecisionFromPrompt`'s confirm arm now spreads `labels`; dropped there, the
     // rebuilt local decision would render Yes / No over a printed "Choose 1:" while the
     // local projection carried the labels, and this equality would say so.

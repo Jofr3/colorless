@@ -28,95 +28,21 @@ import {
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
-// 🆕🆕 D433 — §10, THE FIRST DEVOLUTION IN THIS ENGINE.
-//
-//   "Devolve each of your opponent's evolved Pokémon by shuffling the highest
-//    Stage Evolution card on it into your opponent's deck."
-//
-// **1 sentence / 3 legal printings** — `censusAttackCorpus.ts` row 88. ONE anchor
-// (`DEVOLVE_EACH_TO_DECK`), ONE arm in `deriveAttackEffect` (41-bis), ONE
-// field-free `EffectOp` (`devolveEach`; 🆕🆕🆕 D615: no longer field-free — the optional `toHand`, Miraculous
-// Shine's hand destination; row 88 still sets none), ONE `stepOp` case, ONE interpreter
-// sweep, ONE new event (`POKEMON_DEVOLVED`) with ONE log row, ONE new
-// `STATUS_CLEARED` reason (`"devolved"`) with ONE log row, and ONE function MOVED
-// (`isLethallyDamaged`, flow.ts → continuous.ts, re-exported).
-//
-// 🛑 **HAZARD ONE — DEVOLVING CAN KNOCK A POKÉMON OUT, AND NO PRODUCER IN THIS
-// ENGINE HAD EVER REACHED THE KO SWEEP THIS WAY.** Every existing route to a
-// lethal body either DEALT damage or WROTE damage (`doomBodyAt`). This op writes
-// neither: it shortens the evolution stack, `effectiveMaxHp` resolves the new top
-// live, and `damage >= maximum` becomes true with the damage total untouched. §8.1
-// catches it with no new mechanism (§5 drives the Prize AND the promotion) — but
-// the *CAUSE* is not free, and §6 is the whole of that: the printed clause is
-// *"Knocked Out **by damage** from an attack"*, read by four built sentences / six
-// printings and by Vengeful Punch `sv03-197`. `collectKnockOuts`' own comment
-// already rules that a Knock Out caused by *"the maximum MOVING"* is not the
-// attack's damage, so a body this op makes lethal carries D414's
-// `koByEffect:<turn>` stamp — and, crucially, a body that was ALREADY lethal when
-// the op reached it does NOT (§6's `wasLethal` pair).
-//
-// 🛑 **HAZARD TWO — DEVOLVING REMOVES SPECIAL CONDITIONS, AND THAT IS ONE OF
-// FOURTEEN CARRY-OVER DECISIONS.** §7 pins every field of `InPlayPokemon` one by
-// one: the eleven §10/§11 bars CLEARED (`switchInto`'s and `clearOnLeavingActive`'s
-// exact set), damage / Energy / Tools KEPT, `turnPlayed` and `markers` KEPT, and
-// `evolvedTurn` NULLED. The three `evolveOnto` also writes are decided separately
-// and the reasons are at the op.
-//
-// 🛑 **THE LITERAL-VS-TEMPLATE CALL.** The devolve family is TWO rows — the
-// pattern is the loosest possible stem, `/[Dd]evolv/`, over all 640 corpus
-// sentences, and BOTH hits were read (§1 asserts the count off the live corpus so
-// the claim cannot rot). Row 87 varies from row 88 on TWO axes at once —
-// cardinality (a PARKED single choice vs a sweep) and destination (hand vs
-// deck-plus-shuffle) — so a parameterised op would carry a pool of ONE on both
-// fields, which is D121's warrant unmet twice over.
-//
-// 🆕🆕🆕 **D540 — THE FIRST HALF OF THAT PARAGRAPH IS THE WARRANT FOR THE SLICE THAT
-// EXPIRED THE SECOND.** What it refused is a PARAMETERISED op, and that refusal stands
-// exactly as written. (🆕🆕🆕 D615 (D539): ~~"stands exactly as written"~~ WITHDRAWN — a second
-// SWEEP printing varying only the destination (Espeon "Miraculous Shine", hand) met D121's warrant, and
-// `devolveEach` now carries the optional `toHand`; `devolveChosen` stays its own op.) What it did NOT refuse is a SECOND FIELD-FREE op, which is the
-// door it left open and named (*"the two ops share … in interpreter.ts rather than one
-// widening into the other"*). 🛑 **The sentence that read *"Row 87 is left unbuilt and
-// used as this suite's loud-path witness (§10)"* HAS EXPIRED**: row 87 is BUILT as
-// `devolveChosen` (`devolveChosen.test.ts`), the `/[Dd]evolv/` family is CLOSED at 2
-// sentences / 4 printings with zero unresolved rows, and §10's loud-path witness is now
-// corpus row 346 — see `WITNESS` below for which row and why that one. (🆕🆕🆕 D575 (D539): row 346
-// is BUILT at D575; the witness moved to Walking Wake `sv06-063` — see `WITNESS`.)
-
 const SENTENCE =
   "Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on it into your opponent's deck.";
-/** Corpus row 87 — the family's OTHER member, 1 legal printing. 🆕🆕🆕 **D540: BUILT,
-    as `devolveChosen`.** The two sentences that stood here — *"deliberately unbuilt"*
-    and *"the loud-path witness (§10)"* — have EXPIRED; what has NOT changed is that it
-    is not a refusal near-miss (it differs from row 88 on two axes) and that it is the
-    literal-vs-template evidence (§1). Its own suite is `devolveChosen.test.ts`. */
 const SIBLING =
   "Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.";
 
-/** 🆕🆕🆕 D540 — the REPLACEMENT loud-path witness for §10, corpus row 346: **1 legal
-    printing**, classified `OPAQUE` at BOTH `SUBMAX=4` and `SUBMAX=12`, and a family of
-    ONE (`/win this game/` over the whole 640-sentence corpus returns exactly it). §10
-    asserts it is unresolved off the live census predicate, so the day it is built this
-    suite reddens instead of lying (D422's executable falsifier).
-    🆕🆕🆕 D575 — IT REDDENED, AS DESIGNED, AND IS RE-POINTED (never deleted, D418): D575 BUILDS row
-    346 (N's Sigilyph "Victory Symbol", `winGame`). The witness now holds Walking Wake `sv06-063`
-    "Undulating Slice" — a residue sentence D575 leaves unbuilt, VERIFIED before choosing
-    (`readersClaiming` is []; 1 printing). The §10 title's "row 346" is kept as the record.
-    (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.) */
 const WITNESS =
   "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
 const CALL = 0; // {C}, NO damage, the sentence — the pure "maximum moved" board
 const BLOW = 1; // {C}, 130 damage, the sentence — the already-lethal board (§6)
 const PLAIN = 2; // {C}, NO damage, NO effect — the one-axis control
-const HAND = 3; // {C}, NO damage, corpus row 87 — 🆕 D540: BUILT, so no longer a skip
+const HAND = 3;
 const TOLL = 4; // {C}, a PARKING sibling, so §11 has a persisted `cont.rest` to load
-const WIN = 5; // 🆕 D540 — {C}, corpus row 346, the replacement loud-path witness (§10) (🆕🆕🆕 D575: row 346 is BUILT; the slot carries Walking Wake now — see `WITNESS`)
+const WIN = 5;
 
-/** The chain this suite devolves down: 60 / 90 / 140 HP, three distinct numbers so
-    no assertion can be satisfied by the wrong body. The ids are `fix-*` keys with
-    no catalog row behind them — the three cards that PRINT row 88 are unresolvable
-    in this checkout (no D1) and are stated unresolved rather than invented (D425). */
 const LOCAL_CARDS: Record<string, Card> = {
   "fix-devolver": battler("fix-devolver", {
     types: ["Colorless"],
@@ -154,28 +80,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270's rule, and D412's warning about widening a shared one):
-    4+8+6+6+4+4+4+8+16 = 60, counted before the first run.
-      • `fix-devolver` — the demonstrator, five indices;
-      • `fix-dev-basic` / `-s1` / `-s2` — the 60/90/140 chain, evolved by REAL
-        `evolve` actions rather than by stack surgery, so `turnPlayed` and
-        `evolvedTurn` arrive the way the engine writes them;
-      • `sv03-197` Vengeful Punch — the recoil §6 is about, reused rather than
-        re-fixtured so this suite and `knockOutDefender.test.ts` argue about one card;
-      • `fix-mist-energy` — Mist Energy `sv05-161`'s §11 effects-only shield, the
-        cheapest live `preventAttackEffects` in the pool (§13);
-      • `fix-titan` (340 HP) / `fix-bigbody` (200 HP) — bench filler nothing here can
-        Knock Out, a promote target, and the mulligan-free starter;
-      • `fix-energy` — Colorless Basic: every printed cost in this deck is {C};
-      • `fix-neo-upper-energy` — Neo Upper Energy `sv05-162` (the alias key for the
-        same program), and §14 is the reason: its `promoteOnHolderStage` is the ONE
-        shipped mechanism whose doc block already names devolution, and until this
-        slice that sentence could not be driven;
-      • `fix-fire-energy` — a Basic TYPED Energy, and it is here for exactly one
-        reason: §11 needs a PARKED program, and `discardEnergy`'s park only offers a
-        decision when the candidates differ as CARDS ("which copy is taken is not a
-        decision the game contains"). Three Colorless auto-resolve; two Colorless
-        plus a Fire ask. It pays a {C} cost like anything else. */
 const DEVOLVE_DECK = deckOf({
   "fix-devolver": 4,
   "fix-dev-basic": 8,
@@ -208,20 +112,12 @@ function count(events: GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
 }
 
-/** The rows the ATTACK itself produced, cut at the turn boundary. An attack that
-    does NOT Knock Out runs straight on into `TURN_ENDED` / the Checkup /
-    `TURN_STARTED` / the victim's draw, and none of that is this slice's business —
-    while an attack that DOES Knock Out parks before any of it, which is why the
-    exact-zone pins in §5 and §9 live on the parked boards. */
 function boardEvents(events: GameEvent[]): string[] {
   const names = types(events);
   const tail = names.indexOf("TURN_ENDED");
   return tail === -1 ? names : names.slice(0, tail);
 }
 
-/** Where a uid sits on `seat`'s side. The victim DRAWS at the top of its own turn,
-    so a card shuffled into a deck can legitimately be in hand one row later — the
-    two library zones are asked about together wherever the board is not parked. */
 function library(state: GameState, seat: Seat): string[] {
   return [...state.players[seat].deck, ...state.players[seat].hand];
 }
@@ -307,11 +203,6 @@ interface BoardOpts {
   attackerEvolves?: boolean;
 }
 
-/** ONE board, built by real actions: the ATTACKER opens and passes, the VICTIM
-    evolves on each of its own turns, and the attacker declares on the turn after
-    the last evolution. The victim always fields TWO further benched bodies past
-    anything in this deck, so a Knock Out here queues a real PROMPT rather than a
-    forced auto-promotion. */
 function armed(seed: number, opts: BoardOpts): GameState {
   const attacker = opts.attacker ?? "p1";
   const victim = attacker === "p1" ? "p2" : "p1";
@@ -328,10 +219,6 @@ function armed(seed: number, opts: BoardOpts): GameState {
   state = benchFromDeck(state, victim, "fix-titan");
   state = benchFromDeck(state, victim, "fix-bigbody");
 
-  // Turn 1 is the ATTACKER's (§4 forbids its attack anyway) and turn 2 is the
-  // VICTIM's OWN first turn, on which §4/§10 forbids evolving — so both are
-  // passed before any evolution, and each evolution then costs a full round. The
-  // board ends on the attacker's turn either way.
   state = pass(state, attacker);
   state = pass(state, victim);
   const rounds = Math.max(
@@ -398,43 +285,20 @@ function idOf(state: GameState, uid: string): string | undefined {
   return state.cardIdByUid[uid];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE DERIVATION, and the two-row family the LITERAL call rests on.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("§1 — the sentence derives to ONE field-free op", () => {
   it("the printed sentence derives to exactly `[{ op: 'devolveEach' }]`", () => {
     expect(deriveAttackEffect(SENTENCE)).toEqual([{ op: "devolveEach" }]);
   });
 
   it("the corpus row is the byte-for-byte string this suite asserts against", () => {
-    // D183 — author and assert against the PRINTED bytes, never a paraphrase. The
-    // row is looked up in the live corpus rather than quoted from memory, so a
-    // re-ingest that curls an apostrophe reddens HERE rather than silently
-    // un-building three printings.
     const rows = legalAttackCorpus().filter(([, text]) => /[Dd]evolv/.test(text));
-    // 🛑 THE POPULATION CLAIM THE LITERAL-VS-TEMPLATE CALL RESTS ON, asserted off
-    // the corpus rather than written in prose: the loosest plausible pattern for
-    // this family is the bare stem, and it returns TWO rows. If a third devolve
-    // sentence ever enters the legal column this rung goes RED and the template
-    // question is re-opened by construction (D422's rule: a refusal that names its
-    // own falsifier).
     expect(rows).toHaveLength(2);
     expect(rows.map(([, text]) => text).sort()).toEqual([SENTENCE, SIBLING].sort());
-    // …and the printing counts, read off the corpus. 🆕🆕🆕 **D540 — the clause that
-    // read *"the printing counts that make row 88 worth an op and row 87 not"* HAS
-    // EXPIRED**: row 87 is built at ONE printing, and the argument for it was the
-    // FAMILY CLOSURE and the in-tree prescription, never the yield. The figures
-    // themselves are unchanged and are still read rather than recalled.
     expect(rows.find(([, text]) => text === SENTENCE)?.[0]).toBe(3);
     expect(rows.find(([, text]) => text === SIBLING)?.[0]).toBe(1);
   });
 
-  it("🆕 BOTH family members are claimed by a READER — the family is CLOSED", () => {
-    // 🆕🆕🆕 **D540 INVERTED THE SECOND LINE.** It read
-    // `expect(resolvedByAnyReader(SIBLING)).toBe(false)` from D433 until D540 built row
-    // 87 as `devolveChosen`. The rung is KEPT rather than deleted, because what it now
-    // measures is the CLOSURE this suite's own population claim is about: `/[Dd]evolv/`
-    // returns exactly two rows (above) and neither is unresolved.
+  it("BOTH family members are claimed by a READER — the family is CLOSED", () => {
     expect(resolvedByAnyReader(SENTENCE)).toBe(true);
     expect(resolvedByAnyReader(SIBLING)).toBe(true);
     // …and the loud-path witness §10 now uses is NOT resolved, which is what makes that
@@ -443,16 +307,10 @@ describe("§1 — the sentence derives to ONE field-free op", () => {
   });
 
   it("the op reaches a real attack program through `programFor`'s fallback", () => {
-    // The seam is TEXT-keyed: no registry row is authored for the three printings,
-    // so the program comes off `deriveAttackEffect` at declaration time.
     expect(programFor("fix-devolver")?.attack).toBeUndefined();
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — REFUSALS, each differing from the anchor on EXACTLY ONE axis (D427), and
-//      the ADMISSION control each one owes (D424).
-// ─────────────────────────────────────────────────────────────────────────────
 describe("§2 — the anchor refuses on one axis at a time, and still says yes", () => {
   const NEAR_MISSES: [string, string][] = [
     ["the OWN side", SENTENCE.replace("each of your opponent's evolved", "each of your evolved")],
@@ -477,9 +335,7 @@ describe("§2 — the anchor refuses on one axis at a time, and still says yes",
     });
   }
 
-  it("🛑 THE ADMISSION CONTROL — the reader still says YES to the real sentence", () => {
-    // Without this every rung above passes against a reader that refuses
-    // everything (D424).
+  it("THE ADMISSION CONTROL — the reader still says YES to the real sentence", () => {
     expect(deriveAttackEffect(SENTENCE)).toEqual([{ op: "devolveEach" }]);
   });
 
@@ -522,7 +378,7 @@ describe("§3 — a Stage 1 devolves to its Basic", () => {
     expect(row).toEqual({
       type: "POKEMON_DEVOLVED",
       seat: "p2", // the OWNER
-      actor: "p1", // the player whose card did it — CARRIED, not derived (D425)
+      actor: "p1",
       from: stack[1],
       to: stack[0],
     });
@@ -556,8 +412,6 @@ describe("§4 — a Stage 2 devolves to its Stage 1, NOT to its Basic", () => {
 
     const { state } = strike(before, "p1", CALL);
     const after = body(state.players.p2.active);
-    // 🛑 THE DEFECT NO CENSUS CAN SEE: a build that devolved the WHOLE stack leaves
-    // ONE card here and passes every "the Pokémon devolved" assertion in §3.
     expect(after.stack).toHaveLength(2);
     expect(after.stack.map((uid) => idOf(state, uid))).toEqual(["fix-dev-basic", "fix-dev-s1"]);
     // …and only the top card left the board for a library zone.
@@ -577,25 +431,15 @@ describe("§4 — a Stage 2 devolves to its Stage 1, NOT to its Basic", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §5 🛑 HAZARD ONE — THE KNOCK OUT BY THE MAXIMUM MOVING, with its Prize and its
-//      promotion, and the control that does NOT Knock Out.
-// ─────────────────────────────────────────────────────────────────────────────
-describe("🛑 §5 — devolving Knocks Out with NO damage dealt", () => {
+describe("§5 — devolving Knocks Out with NO damage dealt", () => {
   it("a 100-damage Stage 2 dropping to a 90 HP Stage 1 is Knocked Out", () => {
     const before = armed(5, { stages: 2, damage: 100 });
     expect(before.players.p2.active?.damage).toBe(100);
     const { state, events } = strike(before, "p1", CALL);
 
-    // 🛑 NO DAMAGE WAS DEALT ANYWHERE — the attack prints none and the op places
-    // none. The Knock Out is the maximum moving and nothing else.
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(find(events, "KNOCKED_OUT")).toBeDefined();
-    // …and the ORDER: the devolution, its shuffle, then §8.1's collection. The
-    // PROMOTION prompt is not here and is not missing — §8.1 queues prizes first
-    // and `advance` only reaches the promote stage once the Prize is taken, which
-    // the next case drives.
     expect(boardEvents(events)).toEqual([
       "ATTACK_DECLARED",
       "POKEMON_DEVOLVED",
@@ -633,7 +477,7 @@ describe("🛑 §5 — devolving Knocks Out with NO damage dealt", () => {
     expect(state.players.p2.discard).not.toContain(stack[2]);
   });
 
-  it("🛑 THE CONTROL — 80 damage on the same board does NOT Knock Out", () => {
+  it("THE CONTROL — 80 damage on the same board does NOT Knock Out", () => {
     // Without this the case above is satisfied by an op that Knocks Out everything
     // it touches. Same seed, same board, same attack: only the damage total moves.
     const { state, events } = strike(armed(5, { stages: 2, damage: 80 }), "p1", CALL);
@@ -664,17 +508,10 @@ describe("🛑 §5 — devolving Knocks Out with NO damage dealt", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §6 🛑 THE CAUSE — "Knocked Out BY DAMAGE from an attack", both directions.
-// ─────────────────────────────────────────────────────────────────────────────
 const PUNCH_HP = programFor("sv03-197")?.passive?.damageAttackerOnKo?.amount ?? 0;
 
-describe("🛑 §6 — a devolve Knock Out is NOT 'by damage', and an already-lethal one IS", () => {
+describe("§6 — a devolve Knock Out is NOT 'by damage', and an already-lethal one IS", () => {
   it("the devolved body carries D414's `koByEffect` marker before §8.1 collects it", () => {
-    // The stamp is written by the op and read by `flow.ts`; the body is gone by the
-    // time the epilogue ends, so the marker is observed through the FACTS it
-    // decides (the two rungs below) rather than off the board. What IS observable
-    // on the board is the non-KO case: a devolved survivor is never marked.
     const { state } = strike(armed(8, { stages: 2, damage: 80 }), "p1", CALL);
     expect(body(state.players.p2.active).markers).toEqual([]);
   });
@@ -687,11 +524,7 @@ describe("🛑 §6 — a devolve Knock Out is NOT 'by damage', and an already-le
     expect(state.lastKoTurn.p2).toBe(state.turn);
   });
 
-  it("🛑 THE CONTROL — the SAME board Knocked Out BY DAMAGE reads `byAttack: true`", () => {
-    // Index 1 prints 130 damage AND the sentence. 20 damage on the 140 HP Stage 2
-    // makes the hit lethal BEFORE the op runs, so this Knock Out really is "by
-    // damage from an attack" and must not be stamped. Without this rung the case
-    // above is satisfied by an op that marks unconditionally.
+  it("THE CONTROL — the SAME board Knocked Out BY DAMAGE reads `byAttack: true`", () => {
     const { state } = strike(armed(9, { stages: 2, damage: 20 }), "p1", BLOW);
     const marks = state.lastKoMarks.p2;
     expect(marks).toHaveLength(1);
@@ -708,9 +541,6 @@ describe("🛑 §6 — a devolve Knock Out is NOT 'by damage', and an already-le
   });
 
   it("…and still pays its 40 when the SAME holder dies to the attack's damage", () => {
-    // 🛑 THE `wasLethal` CONJUNCT, driven. Same Tool, same holder, same op running
-    // in the same program: the only difference is that the 130 had already made the
-    // body lethal, so the stamp is withheld and the recoil is owed.
     const before = armed(11, { stages: 2, damage: 20, tool: "sv03-197" });
     const { state, events } = strike(before, "p1", BLOW);
     expect(find(events, "KNOCKED_OUT")).toBeDefined();
@@ -726,9 +556,6 @@ describe("🛑 §6 — a devolve Knock Out is NOT 'by damage', and an already-le
   });
 
   it("the marker carries THIS turn, so a stale one does not suppress the recoil", () => {
-    // `lethalByEffect` reads `koByEffectMarker(state.turn)`. A body carrying LAST
-    // turn's string is not marked for this one — the arithmetic expiry, driven at
-    // the site this slice newly writes it from.
     const before = armed(12, { stages: 2, damage: 20, tool: "sv03-197" });
     const stale = koByEffectMarker(before.turn - 1);
     const active = body(before.players.p2.active);
@@ -744,14 +571,6 @@ describe("🛑 §6 — a devolve Knock Out is NOT 'by damage', and an already-le
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §7 🛑 HAZARD TWO — every carry-over decision, one field at a time.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** A board whose victim Active carries EVERY §10/§11 bar plus a Special Condition,
-    a Tool, Energy and damage — placed by surgery because no legal sequence can put
-    all twelve on one body at once (eleven before D434), which is exactly `evolveOnto`'s own reason for
-    pinning its unreachable clears by surgery. */
 function loaded(seed: number): { before: GameState; turn: number } {
   const base = armed(seed, { stages: 1, damage: 40, tool: "sv03-197" });
   const withEnergy = attachFromDeck(base, "p2", "fix-energy", 2);
@@ -770,19 +589,10 @@ function loaded(seed: number): { before: GameState; turn: number } {
           retreatLockedTurn: turn + 2,
           attackBlock: { turn: turn + 1, effects: true },
           attackLockedTurn: turn + 1,
-          // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp, set LIVE by surgery like the
-          // hard lock one line up (a devolve arrives on the installer's turn, so no
-          // legal sequence reaches this literal with it live).
           attackFlipLockTurn: turn + 1,
           damageReduction: { turn: turn + 1, amount: 30 },
-          // 🆕🆕🆕 D547 — …and the NEXT-TURN VULNERABILITY record, likewise by surgery.
           damageVulnerability: { turn: turn + 2, amount: 50 },
           noWeaknessTurn: turn + 1,
-          // 🆕🆕 D434 — the SCHEDULED counter placement, added when the field joined
-          // the durated set. It is UNREACHABLE on this literal by any legal sequence
-          // (the schedule's window is the holder's own turn and a devolve arrives on
-          // the opponent's), so it is pinned by surgery for the reason the paragraph
-          // above already gives about the other ten.
           scheduledEffect: { turn: turn + 1, kind: "counters", amount: 90 },
           attackDamageDebuff: { turn: turn + 1, amount: 20 },
           installedRecoil: { turn: turn + 1, amount: 40 },
@@ -796,10 +606,7 @@ function loaded(seed: number): { before: GameState; turn: number } {
   return { before, turn };
 }
 
-describe("🛑 §7 — the carry-over set, decided field by field", () => {
-  // 🆕🆕🆕 D547 — TWELVE → FOURTEEN, MEASURED: both new fields are §10-cleared on this
-  // literal (`devolvedBodyOf`) exactly as on the other four, so both count — the
-  // conditions object plus thirteen durated fields below.
+describe("§7 — the carry-over set, decided field by field", () => {
   it("the FOURTEEN §10/§11 bars are all cleared — the set `switchInto` clears", () => {
     const { before } = loaded(13);
     const { state } = strike(before, "p1", CALL);
@@ -814,11 +621,11 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
     expect(after.retreatLockedTurn).toBeNull();
     expect(after.attackBlock).toBeNull();
     expect(after.attackLockedTurn).toBeNull();
-    expect(after.attackFlipLockTurn).toBeNull(); // 🆕🆕🆕 D547 — twelve became thirteen…
+    expect(after.attackFlipLockTurn).toBeNull();
     expect(after.damageReduction).toBeNull();
-    expect(after.damageVulnerability).toBeNull(); // 🆕🆕🆕 D547 — …and fourteen
+    expect(after.damageVulnerability).toBeNull();
     expect(after.noWeaknessTurn).toBeNull();
-    expect(after.scheduledEffect).toBeNull(); // 🆕🆕 D434 — eleven bars became twelve
+    expect(after.scheduledEffect).toBeNull();
     expect(after.attackDamageDebuff).toBeNull();
     expect(after.installedRecoil).toBeNull();
     expect(after.lockedAttacks).toEqual([]);
@@ -835,7 +642,6 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
       uid: body(state.players.p2.active).stack[0],
     });
     expect(cleared?.statuses.sort()).toEqual(["asleep", "burned", "poisoned"]);
-    // …and it FOLLOWS the movement row, exactly as the evolution pair does.
     const order = types(events);
     expect(order.indexOf("STATUS_CLEARED")).toBeGreaterThan(order.indexOf("POKEMON_DEVOLVED"));
   });
@@ -882,21 +688,12 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
   });
 
   it("`markers` are KEPT — the divergence from `evolveOnto` that would be a defect", () => {
-    // `evolveOnto` writes `markers: []`; `switchInto` and `clearOnLeavingActive`
-    // keep them. Devolve follows the two that keep, because the only marker in the
-    // engine records how a body became LETHAL and clearing it would restore the
-    // "by damage" reading for a body §8.1 is about to collect.
     const { before } = loaded(13);
     const { state } = strike(before, "p1", CALL);
     expect(body(state.players.p2.active).markers).toEqual(["d433-probe"]);
   });
 
   it("`evolvedTurn` is NULLED — the fact belonged to the card that left", () => {
-    // The body really did carry a stamp (a real `evolve` action wrote it), and it
-    // is gone afterwards. Unreachable as a BEHAVIOUR difference in this catalog —
-    // devolution only happens on the opponent's turn, so `=== state.turn` is
-    // already false — so it is pinned on the FIELD, exactly as `evolveOnto` pins
-    // its own unreachable clears.
     const { before } = loaded(13);
     expect(body(before.players.p2.active).evolvedTurn).not.toBeNull();
     const { state } = strike(before, "p1", CALL);
@@ -904,8 +701,6 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
   });
 
   it("`promotedTurn`, `healedTurn` and `usedAttack` are untouched", () => {
-    // The three fields `evolveOnto` also leaves alone, asserted so the clear set is
-    // pinned as a WHOLE rather than field by field on one side only (D432's rule).
     const { before } = loaded(13);
     const beforeActive = body(before.players.p2.active);
     const { state } = strike(before, "p1", CALL);
@@ -938,14 +733,11 @@ describe("§8 — 'each of your opponent's evolved Pokémon'", () => {
     expect(count(events, "SHUFFLE")).toBe(1);
   });
 
-  it("🛑 an entirely UNEVOLVED board is a silent no-op", () => {
+  it("an entirely UNEVOLVED board is a silent no-op", () => {
     const before = armed(15, { stages: 0 });
     const { state, events } = strike(before, "p1", CALL);
     expect(boardEvents(events)).toEqual(["ATTACK_DECLARED"]);
     expect(count(events, "POKEMON_DEVOLVED")).toBe(0);
-    // 🛑 NOT EVEN A SHUFFLE. A build that shuffled unconditionally would scramble a
-    // deck the printed sentence never touches, and no board assertion above would
-    // see it — the deck order is not otherwise pinned anywhere.
     expect(count(events, "SHUFFLE")).toBe(0);
     // …and NOTHING moved: the board and the RNG are where they were. (The victim's
     // own turn-start draw is the only deck movement, hence `library`.)
@@ -955,11 +747,7 @@ describe("§8 — 'each of your opponent's evolved Pokémon'", () => {
     expect(state.rngState).toBe(before.rngState);
   });
 
-  it("🛑 it never touches the ATTACKER's OWN evolved bodies", () => {
-    // "your opponent's" is the whole of the side reading, and a build that swept
-    // BOTH boards passes every rung above — the sweep would still devolve the
-    // victim, still file its rows, still Knock nothing else out. The attacker
-    // fields its own real Stage 1, evolved by a real action on its own turn.
+  it("it never touches the ATTACKER's OWN evolved bodies", () => {
     const before = armed(16, { stages: 1, attackerEvolves: true });
     const own = body(before.players.p1.bench[0]);
     expect(own.stack).toHaveLength(2);
@@ -994,10 +782,6 @@ describe("§8 — 'each of your opponent's evolved Pokémon'", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the card goes into the OWNER's deck and the deck is shuffled", () => {
   it("the deck grows by exactly one and the RNG advances", () => {
-    // ⚠️ A **PARKED** BOARD, DELIBERATELY: the Knock Out stops the reduction at
-    // `ko:takePrizes`, before the turn tail hands the victim its own draw. On any
-    // board that runs to the tail the deck's length is +1 −1 and the pin would be
-    // vacuous — the same reason §4's zone claims ask `library` instead.
     const before = armed(18, { stages: 2, damage: 100 });
     const stack = body(before.players.p2.active).stack;
     const deckBefore = before.players.p2.deck.length;
@@ -1015,9 +799,6 @@ describe("§9 — the card goes into the OWNER's deck and the deck is shuffled",
   });
 
   it("the card is NOT discarded and NOT put in hand", () => {
-    // The two destinations the family's OTHER row (the hand) and this one's
-    // near-misses name. Parked again, so the hand claim is about the op rather than
-    // about a draw.
     const before = armed(18, { stages: 2, damage: 100 });
     const stack = body(before.players.p2.active).stack;
     const { state } = strike(before, "p1", CALL);
@@ -1035,42 +816,19 @@ describe("§9 — the card goes into the OWNER's deck and the deck is shuffled",
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §10 — THE COVERAGE CHANNEL: no skip for the built sentence, a LOUD skip for the
-//       family's other row.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — `ATTACK_EFFECT_SKIPPED`, both directions", () => {
   it("the built sentence emits NO skip", () => {
     const { events } = strike(armed(20, { stages: 1 }), "p1", CALL);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🆕 corpus row 87 — the family's OTHER sentence — is NO LONGER loud", () => {
-    // 🆕🆕🆕 **D540 INVERTED THIS RUNG.** It asserted that row 87 emitted
-    // `ATTACK_EFFECT_SKIPPED`; row 87 is now BUILT, so the same board on the same index
-    // emits a DEVOLUTION instead. Kept rather than deleted: the inversion is the
-    // evidence that the sentence moved off the loud path, and the replacement witness
-    // is the rung below.
+  it("corpus row 87 — the family's OTHER sentence — is NO LONGER loud", () => {
     const { events } = strike(armed(20, { stages: 1 }), "p1", HAND);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(find(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
   });
 
-  it("🛑 THE REPLACEMENT LOUD-PATH WITNESS — corpus row 346 is still LOUD (🆕🆕🆕 D575: row 346 is BUILT; the witness is Walking Wake `sv06-063` now)", () => {
-    // The witness that "built" means something. Same card, same board, same turn: only
-    // the index moves. ⚠️ **WHICH ROW, AND WHY THIS ONE.** `WITNESS` is corpus row 346,
-    // *"If you use this attack when you have exactly 1 Prize card remaining, you win
-    // this game."* — 1 legal printing, classified `OPAQUE` at BOTH `SUBMAX=4` and
-    // `SUBMAX=12`, and a family of ONE (`/win this game/` over the 640-sentence corpus
-    // returns exactly it). Corpus row 394 (*"Look at 1 of your opponent's face-down
-    // Prize cards."*) was the obvious alternative and was DECLINED: it sits in the
-    // 2-row `/face-down Prize/` family a live pricing report names as a candidate
-    // closure, and a witness inside a family under active pricing is a rung scheduled
-    // to expire — which is the exact rot this slice spent its time cleaning up.
-    // (🆕🆕🆕 D575 (D539): ~~"`WITNESS` is corpus row 346"~~ WITHDRAWN, the paragraph kept as the
-    // record (D418) — row 346 is BUILT at D575 (and so is row 394, Team Rocket's Blipbug
-    // "Searching Eyes", which this paragraph's decline predicted). `WITNESS` is Walking Wake
-    // `sv06-063` "Undulating Slice" now — see its doc comment.)
+  it("THE REPLACEMENT LOUD-PATH WITNESS — corpus row 346 is still LOUD ( D575: row 346 is BUILT; the witness is Walking Wake `sv06-063` now)", () => {
     const { events } = strike(armed(20, { stages: 1 }), "p1", WIN);
     const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(WITNESS);
@@ -1087,17 +845,13 @@ describe("§10 — `ATTACK_EFFECT_SKIPPED`, both directions", () => {
 // §11 — `MATCH_RECORD_VERSION` STAYS 27, driven BOTH directions.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§11 — the version prediction is DRIVEN, not asserted", () => {
-  /** An attack PARKED mid-program on index 4's singular Energy discard, JSON
-      round-tripped — the persisted `phase.cont` a v27 deploy would have written.
-      This slice's own program never parks, so this sibling attack is the only route
-      to the persisted-`EffectOp` question at all. */
   function parkedMidAttack(seed: number): GameState {
     const parked = strike(armed(seed, { stages: 1, energy: 2, fire: 1 }), "p1", TOLL).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     return JSON.parse(JSON.stringify(parked)) as GameState;
   }
 
-  it("🛑 DIRECTION 1 — a v27 `cont.rest` WITHOUT the op still drains", () => {
+  it("DIRECTION 1 — a v27 `cont.rest` WITHOUT the op still drains", () => {
     const legacy = parkedMidAttack(21);
     const phase = legacy.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -1112,7 +866,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
     expect(body(drained.state.players.p2.active).stack).toHaveLength(2);
   });
 
-  it("🛑 DIRECTION 2 — a `cont.rest` CARRYING the new inhabitant devolves on drain", () => {
+  it("DIRECTION 2 — a `cont.rest` CARRYING the new inhabitant devolves on drain", () => {
     // The half that proves the op survives serialisation rather than that the old
     // bytes were merely ignored.
     const carrying = parkedMidAttack(21);
@@ -1132,10 +886,6 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("nothing this slice adds is a REQUIRED field on a persisted structure", () => {
-    // `stack` has ridden `InPlayPokemon` since M4; `POKEMON_DEVOLVED` is a
-    // `GameEvent`, and `GameEvent` is not persisted at all (`MatchRecord` stores the
-    // RENDERED `SeatLogEntry[]`). A body from BEFORE this slice — every field this
-    // op reads or writes already present — devolves identically.
     const before = armed(22, { stages: 1 });
     const active = body(before.players.p2.active);
     expect(Object.keys(active)).toContain("stack");
@@ -1161,7 +911,7 @@ describe("§12 — the op is a pure reduction", () => {
     expect(state.players.p2.active).toBeNull(); // it Knocked Out, on a frozen input
   });
 
-  it("🛑 THE PAIR — the ORIGINAL board is byte-identical afterwards", () => {
+  it("THE PAIR — the ORIGINAL board is byte-identical afterwards", () => {
     // Without this the case above passes on an op that mutates a board nobody
     // froze deeply enough.
     const before = armed(23, { stages: 2, damage: 100, benchStages: 1 });
@@ -1171,9 +921,6 @@ describe("§12 — the op is a pure reduction", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §13 — §11 AS A FILTER (D259): one shielded body, not one shielded board.
-// ─────────────────────────────────────────────────────────────────────────────
 describe("§13 — a Mist Energy holder is skipped, and the rest still devolve", () => {
   it("the shielded BENCHED body keeps its evolution and files one refusal row", () => {
     const before = armed(24, { stages: 1, benchStages: 1, shieldBench: true });
@@ -1188,14 +935,7 @@ describe("§13 — a Mist Energy holder is skipped, and the rest still devolve",
     expect(body(state.players.p2.bench[0]).stack).toHaveLength(2); // untouched
   });
 
-  it("🛑 a shielded body that is NOT EVOLVED files no refusal at all", () => {
-    // The candidate set is narrowed to EVOLVED bodies BEFORE §11 is asked, which is
-    // what every other caller of `unshieldedRefs` does (`gustTargets`,
-    // `knockOutChosenTargets`, `discardableEnergies` all hand it a printed set).
-    // Asking the shield over the whole board first files an `ATTACK_EFFECT_PREVENTED`
-    // row for a body this op was never going to touch — a refusal announcing an
-    // effect that does not exist, which is a FALSE log row and not a conservative
-    // one. The mutant `D433-shield-asked-before-the-filter` is exactly that build.
+  it("a shielded body that is NOT EVOLVED files no refusal at all", () => {
     const before = armed(26, { stages: 1, benchStages: 0, shieldBench: true });
     const shielded = body(before.players.p2.bench[0]);
     expect(shielded.energy).toHaveLength(1); // the shield really is attached…
@@ -1206,9 +946,7 @@ describe("§13 — a Mist Energy holder is skipped, and the rest still devolve",
     expect(count(events, "POKEMON_DEVOLVED")).toBe(1);
   });
 
-  it("🛑 THE ADMISSION CONTROL — the UNSHIELDED Active on the same board devolves", () => {
-    // One shielded Fraxure must not protect the whole board (D259): the refusal is
-    // a filter over the candidate set, not a guard over the op.
+  it("THE ADMISSION CONTROL — the UNSHIELDED Active on the same board devolves", () => {
     const before = armed(24, { stages: 1, benchStages: 1, shieldBench: true });
     const { state, events } = strike(before, "p1", CALL);
     expect(count(events, "POKEMON_DEVOLVED")).toBe(1);
@@ -1217,23 +955,8 @@ describe("§13 — a Mist Energy holder is skipped, and the rest still devolve",
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §14 🛑 D414's RULE — the shipped code that already reasoned about devolution.
-// ─────────────────────────────────────────────────────────────────────────────
-describe("🛑 §14 — the one shipped mechanism whose doc block already named devolving", () => {
+describe("§14 — the one shipped mechanism whose doc block already named devolving", () => {
   it("Neo Upper Energy DEMOTES when its holder stops being a Stage 2", () => {
-    // 🛑 THE INVARIANT THIS SLICE BREAKS, NAMED IN ONE SENTENCE AND THEN GREPPED
-    // FOR (D414): *"an in-play Pokémon's evolution stack only ever GROWS."* The
-    // audit over every non-test reader of `stack` found FOUR positional sites —
-    // `cards.ts topUid`, `interpreter.ts`'s `stack[length - 2]` (the card evolved
-    // FROM), and this op's own two — and every one of them resolves LIVE, so none
-    // needed a change. **A clean audit is a finding** (D431), and it has one
-    // consequence that was already written down and could not be driven:
-    // `registry.ts`'s Neo Upper Energy row says *"evolving a Stage 1 into a Stage 2
-    // with this card ALREADY attached upgrades it on the spot — and devolving would
-    // demote it"*, then adds that a STAMPED implementation "would pass every static
-    // board in this suite and be silently wrong". Nothing could devolve until now,
-    // so the second half of that sentence had no board. It has one here.
     const before = armed(25, { stages: 2, neo: true });
     const holder = body(before.players.p2.active);
     expect(holder.stack).toHaveLength(3);
@@ -1249,7 +972,7 @@ describe("🛑 §14 — the one shipped mechanism whose doc block already named 
     expect(providedEnergy(state, demoted)).toEqual(["Colorless"]);
   });
 
-  it("🛑 THE CONTROL — the SAME attachment on a body nothing devolves keeps its promotion", () => {
+  it("THE CONTROL — the SAME attachment on a body nothing devolves keeps its promotion", () => {
     // Without this the case above is satisfied by a build where the provision is
     // always Colorless, or where the attack strips Energy.
     const before = armed(25, { stages: 2, neo: true });

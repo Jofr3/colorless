@@ -13,15 +13,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 op-slice: discardPileRetrieval (§7.1 recovery Items) — the discard-pile
-// mirror of searchDeck. Three real cards land on it, verified end to end:
-//   • Energy Retrieval (sv01-171) — up to 2 Basic Energy from discard → hand;
-//   • Pal Pad (sv01-182) — up to 2 Supporters from discard → deck (then shuffle);
-//   • Super Rod (sv02-188) — up to 3 Pokémon/Basic Energy from discard → deck.
-// Like searchDeck it is "up to" (declinable) and parks on the SAME chooseCards
-// prompt; a standalone retrieval to hand needs a match to be played, while
-// retrieval programs with a trailing shuffleDeck can still shuffle without one.
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,

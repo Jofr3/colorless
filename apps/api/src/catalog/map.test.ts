@@ -1,8 +1,3 @@
-// Row → domain mapping, against hand-built rows that mirror the REAL
-// ingested shapes (sv06.5-001 Joltik, sve-002 Fire Energy, the sv06.5 set,
-// the sv serie — checked against the local D1). Every mapped value is also
-// parsed through its domain schema, pinning the row → schema contract.
-
 import { cardBriefSchema, cardSchema, serieSchema, setSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
@@ -81,11 +76,6 @@ const fireEnergyRow: CardRow = {
   updated: "2025-01-04T15:52:24+01:00",
 };
 
-// mfb-33 Potion, copied VERBATIM from the production catalog — the row that
-// spells absence as the literal string "None" in BOTH rarity and
-// regulation_mark (D194; its 33 siblings in the `mfb` set do it in rarity
-// alone). The read path must hand these back as null, because 34 such rows
-// are already in the database and only a re-ingest can rewrite them.
 const potionSentinelRow: CardRow = {
   id: "mfb-33",
   setId: "mfb",
@@ -208,8 +198,7 @@ describe("mapCardBriefRow", () => {
     });
   });
 
-  it("🆕 D628 (finding 0b): a 'Normal'-tagged Energy that prints rules text is a Special Energy (the engine's test)", () => {
-    // Prism Energy `me02.5-216` as the LOCAL D1 stores it (2026-10-10): tagged "Normal", printing its rules text.
+  it("D628 (finding 0b): a 'Normal'-tagged Energy that prints rules text is a Special Energy (the engine's test)", () => {
     const prism = {
       ...fireEnergyRow,
       id: "me02.5-216",
@@ -221,11 +210,9 @@ describe("mapCardBriefRow", () => {
         "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time.",
     };
     expect(cardBriefSchema.parse(mapCardBriefRow(prism)).energyType).toBe("Special");
-    // A Basic Energy (no rules text) keeps "Normal"; a non-Energy row's text never reclassifies it.
     expect(mapCardBriefRow({ ...fireEnergyRow, effect: null }).energyType).toBe("Normal");
     expect(mapCardBriefRow({ ...fireEnergyRow, effect: "  " }).energyType).toBe("Normal");
     expect(mapCardBriefRow(potionSentinelRow).energyType).toBeNull();
-    // The full row is not rewritten: the engine reads the face's text itself.
     expect(mapCardRow(prism).energyType).toBe("Normal");
   });
 
@@ -233,8 +220,6 @@ describe("mapCardBriefRow", () => {
     const brief = cardBriefSchema.parse(mapCardBriefRow(potionSentinelRow));
     expect(brief.rarity).toBeNull();
     expect(brief.regulationMark).toBeNull();
-    // The guard touches ONLY the sentinel columns — the row's real values,
-    // including a genuinely absent one, come through unchanged.
     expect(brief).toMatchObject({
       name: "Potion",
       category: "Trainer",

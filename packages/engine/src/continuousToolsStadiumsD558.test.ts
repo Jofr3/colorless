@@ -32,27 +32,8 @@ import {
   setDamage,
   setPrizes,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D558 — THE FIRST TOOLS AND STADIUMS ON THE FOUR EXISTING MODIFIER SEAMS ──
-//
-//   Counter Gain       sv08-169 / -249                Tool     {C} less while you have more Prizes remaining
-//   Hop's Choice Band  sv09-148                       Tool     Hop's Pokémon: {C} less and +30 (before W/R)
-//   Brave Bangle       sv10.5w-080                    Tool     no Rule Box holder: +30 to an ex (before W/R)
-//   Air Balloon        sv10.5b-079                    Tool     Retreat Cost {C}{C} less
-//   Rescue Board       sv05-159 / sv06-225 / sv08.5-126  Tool  {C} less; no Retreat Cost at 30 HP or less
-//   Gravity Gemstone   sv07-137                       Tool     while Active: both Actives' Retreat Cost {C} more
-//   Full Metal Lab     sv05-148                       Stadium  {M} Pokémon take 30 less (after W/R)
-//   Granite Cave       sv10-166                       Stadium  Steven's Pokémon take 30 less (after W/R)
-//   Postwick           sv09-154                       Stadium  Hop's Pokémon do 30 more (before W/R)
-//   N's Castle         sv09-152                       Stadium  N's Pokémon have no Retreat Cost
-//   Paradise Resort    svp-150 / svp-224              Stadium  each Psyduck's Retreat Cost {C} less
-//
-// Every fold is driven BOTH WAYS on a real id, on a LOCAL `cardPool` (D275) in the suite's
-// OWN 60-card deck (D270), and every fold gets a rung showing that a §9 Ability lock (Ting-Lu
-// ex "Cursed Land") cannot reach it — a Tool and a Stadium are not Abilities (R-T1, R-ST2).
-// Readings R-T1..R-T3, R-RB, R-GG, R-ST, R-ST2, R-NC: docs/decisions.md D558. Salvatore is
-// `salvatoreD558.test.ts`.
 
 const COUNTER_GAIN = ["sv08-169", "sv08-249"] as const;
 const HOPS_BAND = "sv09-148";
@@ -213,7 +194,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [COUNTER_GAIN[0]]: 2,
   [COUNTER_GAIN[1]]: 1,
@@ -252,11 +232,6 @@ const DECK = deckOf({
   [BIG]: 1,
   "fix-energy": 10,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -382,9 +357,6 @@ function dealt(state: GameState): Extract<GameEvent, { type: "DAMAGE_DEALT" }> {
   return row;
 }
 
-/** 🛑 R-ST3's four drivers — one printed sentence each, run as p1's attack. The own-side
-    spread is Centiskorch `sv08-028` "Billowing Heat Wave"'s wording, the own-side snipe
-    Manectric `sv10-076`'s; each opponent-side twin changes only the possessive. */
 function runAttackProgram(state: GameState, text: string): GameState {
   const program = deriveAttackEffect(text);
   if (program === null) throw new Error(`does not derive: ${text}`);
@@ -607,12 +579,12 @@ describe("D558 §2 — Counter Gain: {C} less while YOU have more Prizes remaini
     expect(dealt(tool(two, "p1", "active", COUNTER_GAIN[0])).dealt).toBe(60);
   });
 
-  it("🛑 R-T1 — a §9 lock over the holder leaves the Tool's {C} standing", () => {
+  it("R-T1 — a §9 lock over the holder leaves the Tool's {C} standing", () => {
     const state = lockP1(tool(p1Ahead(table()), "p1", "active", COUNTER_GAIN[0]));
     expect(cost(state)).toEqual(["Colorless", "Colorless"]);
   });
 
-  it("🛑 R-T1 — and silences the HOLDER's own printed discount beside it (Radiant Charizard)", () => {
+  it("R-T1 — and silences the HOLDER's own printed discount beside it (Radiant Charizard)", () => {
     // p2 has taken 2 (4 remaining), p1 has 6 remaining: Excited Heart −2, Counter Gain −1.
     const FIRE = ["Fire", "Colorless", "Colorless", "Colorless", "Colorless"];
     let state = setPrizes(table(RADIANT_CHARIZARD), "p2", 4);
@@ -667,7 +639,7 @@ describe("D558 §3 — Hop's Choice Band: {C} less on the HOLDER, +30 on YOUR AC
     expect(cost(state)).toEqual([...CCC]);
   });
 
-  it("🛑 R-T1 — under a §9 lock both halves stand", () => {
+  it("R-T1 — under a §9 lock both halves stand", () => {
     const state = lockP1(tool(table(HOP), "p1", "active", HOPS_BAND));
     expect(cost(state)).toEqual(["Colorless", "Colorless"]);
     expect(attackerPreWRBonus(state, body(state, "p1"), "p1", cardOf(TING_LU))).toBe(30);
@@ -697,7 +669,7 @@ describe("D558 §4 — Brave Bangle: +30 to an ex, only on a holder with no Rule
     );
   });
 
-  it("🛑 R-T1 — a §9 lock over the holder leaves the +30 standing", () => {
+  it("R-T1 — a §9 lock over the holder leaves the +30 standing", () => {
     const state = lockP1(tool(table(PLAIN, [], WALL_EX), "p1", "active", BANGLE));
     expect(attackerPreWRBonus(state, body(state, "p1"), "p1", cardOf(WALL_EX))).toBe(30);
   });
@@ -718,7 +690,7 @@ describe("D558 §5 — Air Balloon: {C}{C} less, inside the one floored sum", ()
     expect(retreat(state)).toBe(1);
   });
 
-  it("🛑 R-T1 — a §9 lock over the holder leaves it standing", () => {
+  it("R-T1 — a §9 lock over the holder leaves it standing", () => {
     expect(retreat(lockP1(tool(table(PLAIN), "p1", "active", BALLOON)))).toBe(1);
   });
 });
@@ -750,7 +722,7 @@ describe("D558 §6 — Rescue Board: {C} less, and FREE at 30 remaining HP or le
     expect(retreat(setDamage(board(170), "p1", 100))).toBe(2);
   });
 
-  it("🛑 R-T1 — a §9 lock leaves both halves standing", () => {
+  it("R-T1 — a §9 lock leaves both halves standing", () => {
     expect(retreat(lockP1(board(0)))).toBe(2);
     expect(retreat(lockP1(board(160)))).toBe(0);
   });
@@ -780,7 +752,7 @@ describe("D558 §7 — Gravity Gemstone: BOTH Actives {C} more, per Gemstone, on
     expect(retreat(state, "p2")).toBe(4);
   });
 
-  it("🛑 not §9-gated — a locked holder still taxes both", () => {
+  it("not §9-gated — a locked holder still taxes both", () => {
     const state = tool(table(PLAIN), "p1", "active", GEMSTONE);
     const locked = lockP1(state);
     expect(retreat(locked)).toBe(4);
@@ -803,25 +775,21 @@ describe("D558 §8 — Full Metal Lab: {M} Pokémon take 30 less, both sides, bo
   it("BOTH sides — p1's own {M} Active is shielded too, whoever owns the Stadium", () => {
     const state = stadium(table(METAL), FML, "p2");
     expect(seatDamageReduction(state, body(state, "p1"), "all", "p2")).toBe(30);
-    // 🛑 R-ST3 — …from an attack by the body's OPPONENT only: the same body, hit by its
-    // own side, is paid nothing ("from attacks from the opponent's Pokémon").
     expect(seatDamageReduction(state, body(state, "p1"), "all", "p1")).toBe(0);
   });
 
-  it("🛑 R-ST — Feint Attack's `othersOnly` KEEPS it (a Stadium is no effect on that Pokémon)", () => {
+  it("R-ST — Feint Attack's `othersOnly` KEEPS it (a Stadium is no effect on that Pokémon)", () => {
     const state = stadium(table(PLAIN, [], METAL), FML);
     expect(seatDamageReduction(state, body(state, "p2"), "othersOnly", "p1")).toBe(30);
     expect(seatDamageReduction(state, body(state, "p2"), "all", "p1")).toBe(30);
   });
 
-  it("🛑 R-ST2 — a §9 lock over the damaged body does not reach it", () => {
+  it("R-ST2 — a §9 lock over the damaged body does not reach it", () => {
     const state = lockP1(stadium(table(METAL), FML));
     expect(seatDamageReduction(state, body(state, "p1"), "all", "p2")).toBe(30);
   });
 
-  it("🆕 a SPREAD onto a benched {M} is reduced too — which makes Ting-Lu's spread-THEN-discard order observable", () => {
-    // Ting-Lu `sv06-110`'s printed "…also does 30 damage to each of your opponent's Benched
-    // Pokémon, and discard that Stadium." (effects.ts's D558 correction to its order note).
+  it("a SPREAD onto a benched {M} is reduced too — which makes Ting-Lu's spread-THEN-discard order observable", () => {
     const program = deriveAttackEffect(
       "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     );
@@ -842,12 +810,7 @@ describe("D558 §8 — Full Metal Lab: {M} Pokémon take 30 less, both sides, bo
     expect(swapped.players.p2.bench.map((b) => b.damage)).toEqual([30, 30]);
   });
 
-  // 🛑🛑 R-ST3 — *"take 30 less damage from attacks from THE OPPONENT'S Pokémon"*. D425's
-  // `spreadDamage` `"yourBench"` arm and D447's `placeSnipe` own-bench arm both reach
-  // `seatDamageReduction` for the ATTACKER's own bodies; the Stadium pays them nothing.
-  // Each rung is driven BOTH WAYS on one printed sentence: the opponent-side twin is
-  // reduced, the own-side hit is not, and the no-Stadium control fixes the baseline.
-  it("🛑 R-ST3 — p1's OWN bench-wide spread onto its benched {M} is NOT reduced (both ways)", () => {
+  it("R-ST3 — p1's OWN bench-wide spread onto its benched {M} is NOT reduced (both ways)", () => {
     const own = stadium(table(PLAIN, [METAL, WALL]), FML);
     expect(ownSpread(own).players.p1.bench.map((b) => b.damage)).toEqual([30, 30]);
     expect(ownSpread(table(PLAIN, [METAL, WALL])).players.p1.bench.map((b) => b.damage)).toEqual([
@@ -858,7 +821,7 @@ describe("D558 §8 — Full Metal Lab: {M} Pokémon take 30 less, both sides, bo
     expect(oppSpread(across).players.p2.bench.map((b) => b.damage)).toEqual([0, 30]);
   });
 
-  it("🛑 R-ST3 — p1's OWN single-target bench hit (`placeSnipe`'s own arm) is NOT reduced (both ways)", () => {
+  it("R-ST3 — p1's OWN single-target bench hit (`placeSnipe`'s own arm) is NOT reduced (both ways)", () => {
     const own = stadium(table(PLAIN, [METAL]), FML);
     expect(ownSnipe(own).players.p1.bench.map((b) => b.damage)).toEqual([40]);
     const across = stadium(table(PLAIN, [], WALL, [METAL]), FML);
@@ -880,7 +843,7 @@ describe("D558 §9 — Granite Cave: Steven's Pokémon take 30 less", () => {
     expect(seatDamageReduction(locked, body(locked, "p1"), "othersOnly", "p2")).toBe(30);
   });
 
-  it("🛑 R-ST3 — p1's OWN spread onto its benched Steven's Pokémon is NOT reduced", () => {
+  it("R-ST3 — p1's OWN spread onto its benched Steven's Pokémon is NOT reduced", () => {
     const board = stadium(table(PLAIN, [STEVEN, WALL]), GRANITE);
     expect(ownSpread(board).players.p1.bench.map((b) => b.damage)).toEqual([30, 30]);
     expect(seatDamageReduction(board, body(board, "p1", 0), "all", "p1")).toBe(0);
@@ -912,7 +875,7 @@ describe("D558 §10 — Postwick: Hop's Pokémon do 30 more, matched on the ATTA
     expect(dealt(state).bonus).toBe(90);
   });
 
-  it("🛑 R-ST2 — a §9 lock over the attacker leaves the Stadium's +30", () => {
+  it("R-ST2 — a §9 lock over the attacker leaves the Stadium's +30", () => {
     const state = lockP1(stadium(table(HOP), POSTWICK));
     expect(attackerPreWRBonus(state, body(state, "p1"), "p1", cardOf(TING_LU))).toBe(30);
   });
@@ -936,7 +899,7 @@ describe("D558 §11 — N's Castle: N's Pokémon have no Retreat Cost, at ANY st
     expect(retreat(state)).toBe(4);
   });
 
-  it("🛑 not §9-gated — a locked N's Active still retreats free", () => {
+  it("not §9-gated — a locked N's Active still retreats free", () => {
     expect(retreat(lockP1(stadium(table(N_BASIC), NS_CASTLE)))).toBe(0);
   });
 });
@@ -951,7 +914,7 @@ describe("D558 §12 — Paradise Resort: each Psyduck's Retreat Cost {C} less", 
     expect(retreat(state, "p1", 1)).toBe(3);
   });
 
-  it("🛑 not §9-gated", () => {
+  it("not §9-gated", () => {
     expect(retreat(lockP1(stadium(table(PSYDUCK), PARADISE[0])))).toBe(1);
   });
 });

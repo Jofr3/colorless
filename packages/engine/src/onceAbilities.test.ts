@@ -20,31 +20,8 @@ import {
   trimDeckTo,
   typedEnergy,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, PART A: DRAW, HEAL, ENERGY ──
-//
-// Four of the slice's seven printed texts, 7 of its 12 legal printings (the three
-// deck searches are `onceAbilitySearch.test.ts`):
-//
-//   Rapidash  sv10-030 / sv10-189     "Hurried Gait"    — draw a card
-//   Chandelure sv06-038               "Alluring Light"  — each player draws a card
-//   Blissey ex sv06-134 / sv06-201    "Happy Switch"    — move a Basic Energy, own → own
-//   Swadloon  sv10.5w-002 / -088      "Healing Leaves"  — heal 20 from your Active
-//
-// ZERO new vocabulary: every op, field and member these rows spell already existed,
-// so the whole slice is seven registry objects plus one caption article
-// (`retrieveNoun`'s byName arm, part B). Texts, stages and attacks off tcgdex (the
-// ingest's own upstream), 2026-09-25.
-//
-// 🛑 **THE REAL IDS ARE DRIVEN ON A LOCAL `cardPool` (D275's idiom) AND NO `fix-*`
-// DEMONSTRATOR IS OWED.** The generated manifest holds none of these sets, so the
-// bodies cannot join `FIXTURE_POOL`; a Pokémon body is put into play by SURGERY off a
-// local deck, which is all an Ability needs. ⚠️ **SAID OUT LOUD (D243): every body
-// below keeps its PRINTED stage (Stage 1 / Stage 2) on the fixture, and is SEATED as
-// a Basic would be** — `setActiveFromDeck` / `benchFromDeck` put a one-card stack into
-// play with no pre-evolution beneath it. No rung here reads the stack's depth, and the
-// printed stage is what keeps these bodies out of the setup's Basic pick.
 
 const HURRIED_GAIT_TEXT = "Once during your turn, you may draw a card.";
 const ALLURING_LIGHT_TEXT = "Once during your turn, you may have each player draw a card.";
@@ -86,8 +63,6 @@ function body(
   });
 }
 
-/** The LOCAL pool. Each printed sentence is carried VERBATIM on every printing
-    (D183), so §1 can assert the bytes the registry row was read off. */
 const LOCAL_CARDS: Record<string, Card> = {
   [RAPIDASH]: body(
     RAPIDASH,
@@ -165,8 +140,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Three copies of every body, so a seeded opening hand or Prize row never holds
-    the only copy a board wants. */
 const DECK = deckOf({
   [RAPIDASH]: 3,
   [RAPIDASH_2]: 3,
@@ -179,11 +152,6 @@ const DECK = deckOf({
   [ENERGY]: 18,
   [SPECIAL]: 4,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with `first` going first, then that seat ends its turn — so the OTHER seat
     is on its own (unrestricted) turn. */
@@ -285,7 +253,6 @@ describe("D553 A §1 — the print, and the registry rows that map it", () => {
       expect(first).toEqual({
         abilities: [{ name, oncePerTurn: true, activeOnly: false, program }],
       });
-      // The card's attack still reaches the deriver: the row authors NO attack key.
       expect(Object.keys(first ?? {})).toEqual(["abilities"]);
       for (const id of ids) expect(programFor(id)).toBe(first); // identity: reprints share ONE object
     });
@@ -367,15 +334,10 @@ describe("D553 A §3 — Hurried Gait: draw a card", () => {
     expect(drawn[0]?.seat).toBe("p1");
     expect(drawn[0]?.uids).toEqual([top]);
     expect(types(events)[0]).toBe("ABILITY_USED");
-    // The opponent's hand is untouched — the key that separates this row from Alluring Light.
     expect(after.players.p2.hand).toEqual(before.players.p2.hand);
   });
 
-  it("🛑 UNRULED (D553 R1): on an EMPTY deck it is still USABLE and draws nothing, silently", () => {
-    // Shipped doctrine, not a choice this slice makes: `programPlayable` treats a draw
-    // as always "playable enough" (cardplay.ts), and §14.3's deck-out is a turn-START
-    // rule. Reverses on an official ruling that an Ability which would do nothing
-    // cannot be used.
+  it("UNRULED (D553 R1): on an EMPTY deck it is still USABLE and draws nothing, silently", () => {
     const before = trimDeckTo(benched("p1", [RAPIDASH]), "p1", 0);
     expect(before.players.p1.deck).toEqual([]);
     const { state: after, events } = mustApply(before, use("p1", "Hurried Gait"));
@@ -404,7 +366,7 @@ describe("D553 A §4 — Alluring Light: each player draws a card, controller fi
     expect(after.phase).toEqual({ kind: "turn:action", seat: "p1" });
   });
 
-  it("🛑 UNRULED (D553 R2): controller-first is the CONTROLLER, not the absolute seat — from p2's chair, p2 draws first", () => {
+  it("UNRULED (D553 R2): controller-first is the CONTROLLER, not the absolute seat — from p2's chair, p2 draws first", () => {
     const before = benched("p2", [CHANDELURE]);
     const { events } = mustApply(before, use("p2", "Alluring Light"));
     expect(all(events, "CARDS_DRAWN").map((e) => e.seat)).toEqual(["p2", "p1"]);
@@ -469,7 +431,7 @@ describe("D553 A §5 — Happy Switch: move a Basic Energy, own → own", () => 
     expect(done.players.p1.active?.energy).toContain(energy);
   });
 
-  it("🛑 MEASURED AND PINNED, NOT CHANGED: a DECLINE is legal, moves nothing — and SPENDS the once-per-turn", () => {
+  it("MEASURED AND PINNED, NOT CHANGED: a DECLINE is legal, moves nothing — and SPENDS the once-per-turn", () => {
     // `useAbility` writes the lock BEFORE the program runs (cardplay.ts), so the park
     // is already a use. This pins the shipped behaviour; it is not a ruling.
     const before = attachFromDeck(benched("p1", [BLISSEY]), "p1", ENERGY, 1);
@@ -572,7 +534,7 @@ describe("D553 A §6 — Healing Leaves: heal 20 from YOUR ACTIVE Pokémon", () 
     expect(all(events, "HEALED").map((e) => e.amount)).toEqual([10]);
   });
 
-  it("🛑 UNRULED (D553 R1): on an UNDAMAGED Active it is USABLE, files no HEALED row, and is spent", () => {
+  it("UNRULED (D553 R1): on an UNDAMAGED Active it is USABLE, files no HEALED row, and is spent", () => {
     // A design call recorded as UNRULED, not a fact: `programPlayable` treats heal as
     // always "playable enough". Reversal condition: an official ruling that an Ability
     // which would do nothing cannot be used.

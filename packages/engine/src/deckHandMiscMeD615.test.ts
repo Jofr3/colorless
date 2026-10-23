@@ -22,26 +22,8 @@ import {
   setDamage,
   toDeckTop,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D615 — WP31a: THE FIRST PART OF THE `me` DECK / HAND / DISCARD / ENERGY MISC ────────────────
-//
-// 8 attack sentences / 13 `me` printings newly reader-built, each onto a SHIPPED op's program with no new
-// op, prompt or event; the one new field is `devolveEach.toHand`. Every other text on the 13 cards was
-// already built (Frosmoth's Ability since D591), so all 13 are finished. Every id and text off the LOCAL
-// D1, 2026-10-09, `legal_standard = 1`; no id was in the tree before this slice except Frosmoth
-// `me02.5-053` (D591's Alluring Wings key).
-//
-//   Trick Portal       — `lookAtTopN` → Bench, `max: "any"` (`ATTACK_LOOK_TOP_BENCH`'s program, comma join).
-//   Fruity Aroma       — `lookAtTopN` → hand, `max: "any"`, `reveal` (Roto-Stick's shape over Pokémon).
-//   Pika-Pika Parade ×3 — Precious Trolley's `searchDeck` (Basic → Bench, `max: "any"`).
-//   Gentle Light ×3    — Picnic Basket's `healEachAll` (R-GLT1: a §11 shield does not refuse the heal).
-//   Nitpick ×2         — `handRefresh` `who: "opponent"`, a fixed draw of 4.
-//   Flames of Revival  — `discardPileRetrieval` of Basic Pokémon onto the Bench.
-//   Miraculous Shine   — `devolveEach` with the NEW `toHand` (`devolveChosen`'s writer per body).
-//   Cold Cyclone       — `moveEnergy` `selfToBench` with a typed (`providesEnergy`) noun.
-//
-// WP31's other 17 texts / 22 printings stay for WP31b / WP31c, named in §1.
 
 const TRICK_PORTAL =
   "Look at the top 9 cards of your deck, and you may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.";
@@ -56,7 +38,6 @@ const MIRACULOUS_SHINE =
   "Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.";
 const COLD_CYCLONE = "Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [TRICK_PORTAL, ["me05-008"]],
   [FRUITY_AROMA, ["me05-001"]],
@@ -131,7 +112,6 @@ const WP31_REST: readonly (readonly [string, readonly string[]])[] = [
   ],
 ];
 
-/** 🆕🆕🆕 D616 — the first printing of each WP31_REST text WP31b builds. */
 const BUILT_AT_D616: ReadonlySet<string> = new Set([
   "me02.5-048",
   "mep-026",
@@ -144,7 +124,6 @@ const BUILT_AT_D616: ReadonlySet<string> = new Set([
   "30th-116",
 ]);
 
-/** 🆕🆕🆕 D624 — the first printing of each WP31_REST text WP31c builds. */
 const BUILT_AT_D624: ReadonlySet<string> = new Set([
   "me03-029",
   "me03-067",
@@ -152,11 +131,8 @@ const BUILT_AT_D624: ReadonlySet<string> = new Set([
   "me03-003",
   "me03-066",
 ]);
-/** 🆕🆕🆕 D633 (D539) — O1 reads Elemental Blast (`attackOddsMeD633.test.ts`). */
 const BUILT_AT_D633: ReadonlySet<string> = new Set(["30th-121"]);
-/** 🆕🆕🆕 D638 (D539) — X1 reads Skill Thief (`copyBorrowedMeD638.test.ts`). */
 const BUILT_AT_D638: ReadonlySet<string> = new Set(["me05-054"]);
-/** 🆕🆕🆕 D641 (D539) — W1 reads Pleasing Present (two `attachFromHand { max }`, the opponent's first). */
 const BUILT_AT_D641: ReadonlySet<string> = new Set(["me04-018"]);
 
 describe("D615 §1 — the texts", () => {
@@ -172,15 +148,10 @@ describe("D615 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(13);
   });
 
-  it("WP31's rest stays unbuilt: 17 texts / 22 printings, named (🆕🆕🆕 D616: 9 of them / 11 printings are built — WP31b; 8 / 11 stay; 🆕🆕🆕 D624: 5 more / 7 — WP31c; 3 / 4 stay; 🆕🆕🆕 D633: Elemental Blast too — O1; 2 / 3 stay; 🆕🆕🆕 D638: Skill Thief ×2 too — X1; 1 / 1 stays)", () => {
+  it("WP31's rest stays unbuilt: 17 texts / 22 printings, named ( D616: 9 of them / 11 printings are built — WP31b; 8 / 11 stay; D624: 5 more / 7 — WP31c; 3 / 4 stay; D633: Elemental Blast too — O1; 2 / 3 stay; D638: Skill Thief ×2 too — X1; 1 / 1 stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      // 🆕🆕🆕 D616 (D539): WP31b reads nine of these (`deckHandMiscMeD616.test.ts`); the rest stay unbuilt.
-      // 🆕🆕🆕 D624 (D539): and WP31c reads five more (`deckHandMiscMeD624.test.ts`).
-      // 🆕🆕🆕 D633 (D539): and O1 reads Elemental Blast.
-      // 🆕🆕🆕 D638 (D539): and X1 reads Skill Thief.
-      // 🆕🆕🆕 D641 (D539): and W1 reads Pleasing Present — none of WP31's rest stays unbuilt.
       expect(resolvedByAnyReader(text), text).toBe(
         BUILT_AT_D616.has(ids[0] ?? "") ||
           BUILT_AT_D624.has(ids[0] ?? "") ||
@@ -425,11 +396,6 @@ const DECK = deckOf({
 });
 const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), "fix-unaware"]);
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
   const created = createGame({ seed: 6152, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -603,8 +569,6 @@ describe("D615 §5 — Gentle Light: 30 from every body on both sides", () => {
     ]);
   });
 
-  // R-GLT1 is UNRULED (progress.md NEXT): this pins the reading as built, `healEachAll` asking no shield.
-  // Picnic Basket is a Trainer and never meets an attack shield, so it is no precedent for this.
   it("R-GLT1: an effects shield on the opponent's body does not refuse the heal", () => {
     const state = setDamage(table("me04-035", [[P, 1]], "fix-unaware"), "p2", 40);
     const result = mustApply(state, attack(0));
@@ -720,9 +684,6 @@ describe("D615 §8 — Miraculous Shine: every evolved opponent body, the card i
     ).toEqual([["p2", BASIC]]);
   });
 
-  // 🛑 D615 review B1 — the KO cause is asked against the STARTING board, after the whole sweep, as in
-  // `devolveEach`: the Ludicolo's devolve takes Vibrant Dance's +40 off the Stage 1 in EITHER order.
-  /** TEST SURGERY — one `fix-energy` uid in `seat`'s deck re-bound to `card`, its face added to the pool. */
   const relabel = (state: GameState, seat: Seat, card: Card): GameState => {
     const uid = state.players[seat].deck.find((u) => state.cardIdByUid[u] === "fix-energy");
     if (uid === undefined) throw new Error(`${seat} deck has no fix-energy`);
@@ -788,8 +749,6 @@ describe("D615 §9 — Cold Cyclone: a {W} Energy from this Pokémon to a Benche
       ),
     ).toEqual([W]);
     expect(prompt.max).toBe(1);
-    // D615 review M1 — the family's recorded approximation (D443, `moveFloor`): the printed "Move a {W}
-    // Energy" is offered DECLINABLE — no `min` — like every non-"all" `moveEnergy` max.
     expect(prompt.min).toBeUndefined();
     const pick = prompt.movable[0]?.uid as string;
     const result = mustApply(parked, {

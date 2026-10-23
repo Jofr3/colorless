@@ -20,34 +20,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.50.0 → 0.51.0 — the `disableAbilities` continuous Ability-lock AURA (P3-M5,
-// D100). Three real cards, verbatim off the live D1:
-//   • Klefki sv01-096 "Mischievous Lock" — "As long as this Pokémon is in the
-//     Active Spot, Basic Pokémon in play (both yours and your opponent's) have no
-//     Abilities, except for Mischievous Lock."
-//   • Spiritomb sv02-089 "Fettered in Misfortune" — "Basic Pokémon V in play (both
-//     yours and your opponent's) have no Abilities." (no Active-Spot clause)
-//   • Ting-Lu ex sv02-127 (+ -243/-263/-275) "Cursed Land" — "As long as this
-//     Pokémon is in the Active Spot, your opponent's Pokémon in play that have any
-//     damage counters on them have no Abilities, except for Pokémon ex."
-//
-// The WIDEST blast radius on the backlog: it is the first `PassiveEffects` field
-// that does not modify its HOLDER, so continuous.ts reads it through a dedicated
-// both-boards scan (`disabledAbilityUids`) rather than the per-Pokémon
-// `passivesOf` aggregation, and FOUR read sites consult that Set by top uid —
-// activated (cardplay.ts useAbility), passive (continuous.ts passivesOf),
-// triggered (triggers.ts triggersOf) and the HUD (redact.ts). Each site gets a
-// lock-ON / lock-OFF pair below, because the only honest proof that a lock did
-// something is the same board doing the other thing without it.
-
-/** Index 0 on BOTH attackers this file fields, and deliberately the same action
-    object for both — but NOT the same printed attack, and since D173 not the same
-    printed damage either. On fix-attacker it is "Bite" ({C}, 30); on Klefki
-    sv01-096 it is the card's own printed "Joust" ({C}, 10, whose Tool-discard
-    rider no deriver reads). Until D173 the Klefki fixture SUBSTITUTED Bite so the
-    two arms of each pair could quote one number; the substitution is gone, so the
-    pairs below prove a lock by the DELTA the defender's passive costs each
-    attacker rather than by a shared literal. */
 const attack0 = { type: "attack", seat: "p1", index: 0 } as const;
 
 function find<T extends GameEvent["type"]>(
@@ -57,12 +29,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-/** Setup then open P1's turn (P2 went first and passed). ASSERTS both seats
-    opened on fix-bigbody: ABILITY_LOCK_DECK holds three aura sources and two
-    Pokémon V, so a seed whose opening Active is one of those would smuggle a live
-    aura (or a lock target) onto every board this file builds and quietly poison
-    the `disabledAbilityUids` set assertions. Every seed used here was picked
-    against this gate. */
 function board(seed: number): GameState {
   const state = driveSetup(seed, { p1: ABILITY_LOCK_DECK, p2: ABILITY_LOCK_DECK }, { first: "p2" });
   for (const seat of ["p1", "p2"] as const) {
@@ -98,20 +64,6 @@ describe("disableAbilities — the registry row", () => {
     // Two Spiritomb exist in the pool: sv01-129 (Taunt / Doom Decree) has no
     // Ability at all and must NOT carry the lock.
     expect(programFor("sv01-129")?.passive?.disableAbilities).toBeUndefined();
-    // 🆕🆕🆕 D559 — "(and nobody else)" was a TITLE until now: nothing asserted it. The two
-    // new rows (the only legal locks the registry builds — the six above have rotated;
-    // Iron Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt,
-    // tripwired by id in `abilityBundleD559.test.ts` §7 — 🆕🆕🆕 D566 (D539): the Watchtower
-    // is BUILT, as a STADIUM lock that carries no `passive`, so it is not one of the keys
-    // counted below) are pinned in
-    // `abilityBundleD559.test.ts` §1, and the title's claim is now measured over the
-    // WHOLE registry: exactly these ten keys carry a lock.
-    // 🆕🆕🆕 D571 (D539) — ~~"Iron Thorns ex "Initialization" … legal and unbuilt"~~ and "ten
-    // keys" are WITHDRAWN: Initialization is BUILT (`INITIALIZATION`, three keys), so THIRTEEN
-    // keys carry a lock, and three legal Pokémon locks are built (Flutter Mane, Gastrodon,
-    // Iron Thorns ex), plus the Watchtower's Stadium lock.
-    // 🆕🆕🆕 D632 (D539) — "thirteen keys" is WITHDRAWN: Damp is BUILT (five keys, two objects,
-    // `dampD632.test.ts`), so EIGHTEEN keys carry a lock, and Damp joins the three legal Pokémon locks above.
     expect(
       registryCardIds()
         .filter((id) => programFor(id)?.passive?.disableAbilities !== undefined)
@@ -124,14 +76,14 @@ describe("disableAbilities — the registry row", () => {
         "sv02-243",
         "sv02-263",
         "sv02-275",
-        "sv05-078", // 🆕🆕🆕 D559 — Flutter Mane "Midnight Fluttering"
+        "sv05-078",
         "sv08.5-043",
         "svp-097",
-        "sv08-107", // 🆕🆕🆕 D559 — Gastrodon "Sticky Bind"
-        "sv06-077", // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization"
+        "sv08-107",
+        "sv06-077",
         "sv06-196",
         "sv08.5-032",
-        "me02.5-039", // 🆕🆕🆕 D632 — Psyduck / Golduck "Damp"
+        "me02.5-039",
         "me02.5-040",
         "me02.5-226",
         "mep-007",
@@ -236,16 +188,7 @@ describe("disabledAbilityUids — the aura scan", () => {
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
 
-  it("🆕🆕🆕 D571 — a locked lock STOPS locking (the stratified pass, R-LK2): Klefki silences Ting-Lu ex, so Cursed Land is OFF", () => {
-    // Klefki Active vs Ting-Lu ex Active. Klefki's lock reaches Ting-Lu (a Basic;
-    // Mischievous Lock carries no ex exemption), so BY THE PRINTED RULES Cursed
-    // Land is off and P1's damaged Stage 1 — which only Ting-Lu could reach, Klefki
-    // being Basic-only — keeps its Abilities. 🆕🆕🆕 D571 (D539): this test was titled
-    // "KNOWN LIMITATION: a locked lock keeps locking (no aura-vs-aura fixpoint)" and
-    // pinned the OPPOSITE (the ungated one-pass read kept Cursed Land on). The fixpoint
-    // landed with Initialization (continuous.ts `disabledAbilityUids`, R-LK2 ⚠️ UNRULED):
-    // Klefki is undamaged, so Ting-Lu does not reach it — one-way — and Klefki's lock is
-    // ON, Cursed Land OFF. The last assertion is FLIPPED, as the old comment said to.
+  it("D571 — a locked lock STOPS locking (the stratified pass, R-LK2): Klefki silences Ting-Lu ex, so Cursed Land is OFF", () => {
     let state = setActiveFromDeck(board(38), "p1", "sv01-096"); // P1 bench: [fix-bigbody]
     state = benchFromDeck(state, "p1", "fix-stage1"); // …[fix-bigbody, a Stage 1]
     state = setBenchDamage(state, "p1", 1, 10);
@@ -254,16 +197,10 @@ describe("disabledAbilityUids — the aura scan", () => {
     const locked = disabledAbilityUids(state);
 
     expect(locked.has(activeUid(state, "p2"))).toBe(true); // Klefki DOES lock Ting-Lu ex
-    expect(locked.has(benchTopUid(state, "p1", 1))).toBe(false); // …so Cursed Land is OFF (D571)
+    expect(locked.has(benchTopUid(state, "p1", 1))).toBe(false);
   });
 
-  it("🆕🆕🆕 D571 — the DAMAGED-Klefki board is a MUTUAL cycle (R-LK2): Ting-Lu ex and Klefki silence each other, and BOTH locks stay ON", () => {
-    // The example the old KNOWN LIMITATION prose named ("an Active Ting-Lu ex opposite a
-    // damaged Klefki, which by the rules should switch Mischievous Lock off"). Klefki reaches
-    // Ting-Lu ex (a Basic) AND, damaged and not an ex, Cursed Land reaches Klefki: a cycle,
-    // which the stratified pass keeps BOTH ON (R-LK2 ⚠️ UNRULED). So that sentence's "should
-    // switch Mischievous Lock off" is CONTRADICTED by D571, not paid (continuous.ts,
-    // registry.ts and index.ts annotate it so).
+  it("D571 — the DAMAGED-Klefki board is a MUTUAL cycle (R-LK2): Ting-Lu ex and Klefki silence each other, and BOTH locks stay ON", () => {
     let state = setActiveFromDeck(board(38), "p1", "sv01-096"); // P1 bench: [fix-bigbody]
     state = benchFromDeck(state, "p1", "fix-stage1"); // …[fix-bigbody, a Stage 1]
     state = setBenchDamage(state, "p1", 1, 10);
@@ -323,12 +260,6 @@ describe("the ACTIVATED read site (§9 useAbility)", () => {
   });
 
   it("Cursed Land locks the opponent's Ability the instant it takes a counter", () => {
-    // Tinkaton is a STAGE 2, so this pair is Cursed Land's alone — neither
-    // Basic-only lock can reach it, and the only variable is the damage counter.
-    // (🆕🆕🆕 D559 CORRECTION (D539): "Cursed Land's alone" is WITHDRAWN as a population claim —
-    // an opposing Active Flutter Mane `sv05-078` silences an Active Tinkaton, and a
-    // benched Gastrodon `sv08-107` a benched one; both are driven in
-    // `abilityBundleD559.test.ts`. Among THIS board's three locks it still holds.)
     let state = setActiveFromDeck(board(51), "p1", "sv02-105"); // P1's Active Tinkaton
     state = setActiveFromDeck(state, "p2", "sv02-127"); // Ting-Lu ex across the table
     const use = {
@@ -347,13 +278,6 @@ describe("the ACTIVATED read site (§9 useAbility)", () => {
 });
 
 describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
-  // ⚠️ THE PAIR IS A DELTA SINCE D173, NOT A SHARED LITERAL. Klefki carries its own
-  // printed "Joust" ({C}, 10) rather than a borrowed Bite ({C}, 30), so the two
-  // arms no longer quote one number — and each arm therefore carries its OWN
-  // no-passive baseline against fix-bigbody. What is asserted is what Bouffer
-  // COSTS each attacker: 0 while the lock is live, 20 while it is not. That is the
-  // claim the shared literal was standing in for, and it is the one a swapped
-  // attacker or a defender-side change cannot quietly satisfy.
   it("suppresses the defender's Bouffer — the whole printed 10 lands", () => {
     let state = setActiveFromDeck(board(35), "p1", "sv01-096"); // Klefki attacks…
     state = attachFromDeck(state, "p1", "fix-energy", 1);
@@ -378,7 +302,6 @@ describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
 
     const { events } = mustApply(state, attack0);
 
-    // 30 − 20: the reduction the arm above measured at ZERO.
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
 
     let plain = setActiveFromDeck(board(35), "p1", "fix-attacker");
@@ -420,10 +343,6 @@ describe("the TRIGGERED read site (triggers.ts triggersOf)", () => {
 
     const { state: done, events } = mustApply(state, attack0);
 
-    // The damage still lands (Scorching Armor is what is off, not the attack) —
-    // Joust's printed 10 here, Bite's 30 in the control below. Armarouge carries
-    // no reduction, so unlike the Bouffer pair the NUMBER is incidental to this
-    // claim and only the trigger is being compared.
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
     // …and the reaction never fires.
     expect(types(events)).not.toContain("ABILITY_TRIGGERED");

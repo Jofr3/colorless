@@ -3,21 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { battler, completeSetup, deckOf, typedEnergy } from "./testFixtures";
+import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── CARD REVISION, BATCH B47 (Attacks) ──
-//
-// The verified finding from the per-unit audit (docs/reference/card-revision.md "B47"), driven on a
-// real board through `applyAction` and asserted against the PRINTED text (local D1 `cards.attacks_json`,
-// byte for byte below):
-//   §1 Mega Skarmory ex "Sonic Ripper" (`me03-055` / `me03-106`) — *"Shuffle all Energy attached to
-//      this Pokémon into your deck, …"*. The board was right (every Energy goes to the deck, none to
-//      the discard pile), but the op's `ENERGY_DISCARDED { to: "deck" }` rendered as "discarded … from
-//      P1's Mega Skarmory ex", the discard-pile row. log.ts only gave `to: "hand"` its own wording.
-//      The same row serves Wellspring Mask Ogerpon ex "Torrential Pump" (`sv06-064` and reprints), the
-//      other `discardEnergy { to: "deck" }` printing, which is pinned here too.
-//   §2 the control: an Energy discard to the PILE still says "discarded … from …".
 
 const SONIC_RIPPER =
   "Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -129,13 +116,6 @@ function table(attacker: string, energy: readonly string[], oppBench = 0): GameS
     };
   }
   return state;
-}
-
-function must(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code} ${result.error.message}`);
-  return { state: result.state, events: result.events };
 }
 const ofType = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);

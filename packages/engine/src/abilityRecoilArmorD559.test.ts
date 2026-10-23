@@ -15,25 +15,14 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D559 — THE ABILITY BUNDLE, PART 2: THE RECOIL AND THE REDUCTIONS ──
-//
-//   Orthworm ex  sv07-110 / -162        "Pummeling Payback"  damageAttacker × {M} count
-//   Maractus     sv09-008 / -160        "Exploding Needles"  damageAttackerOnKo, activeOnly
-//   Klinklang    sv10.5b-063 / -141     "Gear Coating"       seatDamageReductionAfterWR, {M} holders
-//   Regirock     sv09-082               "Rock Armor"         damageReductionAfterWR while any Energy
-//
-// Part 1 (the registry rows, Fairy Zone and the two locks, incl. Gastrodon's reach over a
-// benched Klinklang) is `abilityBundleD559.test.ts`. A LOCAL `cardPool` (D275) in the
-// suite's OWN 60-card deck (D270). Readings R-O1 (⚠️ a reachable DEVIATION), R-M1, R-GC
-// (D558 ⑶-bis inherited) and R-RA: docs/decisions.md D559.
 
 const ORTHWORM = ["sv07-110", "sv07-162"] as const;
 const MARACTUS = ["sv09-008", "sv09-160"] as const;
 const KLINKLANG = ["sv10.5b-063", "sv10.5b-141"] as const;
 const REGIROCK = "sv09-082";
-const LUMINOUS = "sv02-191"; // Luminous Energy — provides every type while alone (D118 provision)
+const LUMINOUS = "sv02-191";
 const METAL = "fix-metal-energy";
 const PLAIN_ENERGY = "fix-energy";
 
@@ -187,7 +176,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [ORTHWORM[0]]: 1,
   [ORTHWORM[1]]: 1,
@@ -202,11 +190,6 @@ const DECK = deckOf({
   [METAL]: 14,
   [PLAIN_ENERGY]: 30,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -349,7 +332,7 @@ const topOf = (b: InPlayPokemon) => b.stack[b.stack.length - 1] as string;
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D559 §1 — Pummeling Payback: 2 counters on the attacker per {M} Energy (the main hit)", () => {
-  it("🛑 two {M} Energy → 40 on the Attacking Pokémon, labelled `counterattack`", () => {
+  it("two {M} Energy → 40 on the Attacking Pokémon, labelled `counterattack`", () => {
     const state = energize(table([], ORTHWORM[0]), "p2", "active", METAL, 2);
     const { state: after, events } = swing(state, STRIKE);
     expect(recoilTotal(events)).toBe(40);
@@ -364,18 +347,18 @@ describe("D559 §1 — Pummeling Payback: 2 counters on the attacker per {M} Ene
       recoilTotal(swing(energize(table([], ORTHWORM[1]), "p2", "active", METAL, 2), STRIKE).events),
     ).toBe(40);
   });
-  it("🛑 0 {M} Energy pays 0 — two Colorless-only Energy attached, no row at all", () => {
+  it("0 {M} Energy pays 0 — two Colorless-only Energy attached, no row at all", () => {
     const state = energize(table([], ORTHWORM[0]), "p2", "active", PLAIN_ENERGY, 2);
     const { state: after, events } = swing(state, STRIKE);
     expect(recoils(events)).toEqual([]);
     expect(body(after, "p1").damage).toBe(0);
   });
-  it("🛑 counted by PROVISION (D118): a Luminous Energy providing {M} counts → 1 {M} + Luminous = 40", () => {
+  it("counted by PROVISION (D118): a Luminous Energy providing {M} counts → 1 {M} + Luminous = 40", () => {
     let state = energize(table([], ORTHWORM[0]), "p2", "active", METAL, 1);
     state = energize(state, "p2", "active", LUMINOUS, 1);
     expect(recoilTotal(swing(state, STRIKE).events)).toBe(40);
   });
-  it('🛑 "even if this Pokémon is Knocked Out": a lethal hit still pays 40 (read before the §8.1 sweep)', () => {
+  it('"even if this Pokémon is Knocked Out": a lethal hit still pays 40 (read before the §8.1 sweep)', () => {
     let state = energize(table([], ORTHWORM[0], [WALL]), "p2", "active", METAL, 2);
     state = setDamage(state, "p2", 200); // 220 HP: the 50 is lethal
     const { state: after, events } = swing(state, STRIKE);
@@ -389,15 +372,15 @@ describe("D559 §1 — Pummeling Payback: 2 counters on the attacker per {M} Ene
   });
 });
 
-describe("D559 §2 — ⚠️ R-O1, a reachable DEVIATION: a BENCHED Orthworm ex does not retaliate", () => {
-  it("🛑 a benched Orthworm ex with two {M} hit by a Bench SPREAD: no recoil (the print says it should)", () => {
+describe("D559 §2 — R-O1, a reachable DEVIATION: a BENCHED Orthworm ex does not retaliate", () => {
+  it("a benched Orthworm ex with two {M} hit by a Bench SPREAD: no recoil (the print says it should)", () => {
     const state = energize(table([], WALL, [ORTHWORM[0]]), "p2", 0, METAL, 2);
     const { state: after, events } = swing(state, SWEEP);
     expect(dealtTo(events, "p2", topOf(body(state, "p2", 0)))).toBe(30); // it WAS damaged by an attack
-    expect(recoils(events)).toEqual([]); // R-O1: the recoil read is Active-only
+    expect(recoils(events)).toEqual([]);
     expect(body(after, "p1").damage).toBe(0);
   });
-  it("🛑 …and by a Bench SNIPE: no recoil either", () => {
+  it("…and by a Bench SNIPE: no recoil either", () => {
     const state = energize(table([], WALL, [ORTHWORM[0]]), "p2", 0, METAL, 2);
     const { state: after, events } = swing(state, NEEDLE);
     expect(dealtTo(events, "p2", topOf(body(state, "p2", 0)))).toBe(40);
@@ -408,7 +391,7 @@ describe("D559 §2 — ⚠️ R-O1, a reachable DEVIATION: a BENCHED Orthworm ex
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D559 §3 — Exploding Needles: 6 counters, ONLY when Knocked Out in the Active Spot (R-M1)", () => {
-  it("🛑 an Active Maractus Knocked Out by an attack → 60 on the Attacking Pokémon", () => {
+  it("an Active Maractus Knocked Out by an attack → 60 on the Attacking Pokémon", () => {
     const state = table([], MARACTUS[0], [WALL]);
     const { state: after, events } = swing(state, HEAVE);
     expect(events.some((e) => e.type === "KNOCKED_OUT")).toBe(true);
@@ -418,12 +401,12 @@ describe("D559 §3 — Exploding Needles: 6 counters, ONLY when Knocked Out in t
   it("the reprint `sv09-160` pays the same 60", () => {
     expect(recoilTotal(swing(table([], MARACTUS[1], [WALL]), HEAVE).events)).toBe(60);
   });
-  it("🛑 an Active Maractus merely DAMAGED pays 0 (the Knock Out is the antecedent)", () => {
+  it("an Active Maractus merely DAMAGED pays 0 (the Knock Out is the antecedent)", () => {
     const { state: after, events } = swing(table([], MARACTUS[0], [WALL]), STRIKE);
     expect(recoils(events)).toEqual([]);
     expect(body(after, "p1").damage).toBe(0);
   });
-  it("🛑 a BENCHED Maractus Knocked Out by a spread pays 0 (`activeOnly`, read while it is still seated)", () => {
+  it("a BENCHED Maractus Knocked Out by a spread pays 0 (`activeOnly`, read while it is still seated)", () => {
     let state = table([], WALL, [MARACTUS[0]]);
     state = setBenchDamage(state, "p2", 0, 90); // 110 HP: the spread's 30 is lethal
     const { state: after, events } = swing(state, SWEEP);
@@ -441,15 +424,15 @@ describe("D559 §3 — Exploding Needles: 6 counters, ONLY when Knocked Out in t
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D559 §4 — Gear Coating: {M}-Energy bodies take 20 less (after W/R), summed (R-GC)", () => {
-  it("🛑 a defender with {M} attached, Klinklang benched → 50 − 20 = 30", () => {
+  it("a defender with {M} attached, Klinklang benched → 50 − 20 = 30", () => {
     const state = energize(table([], WALL, [KLINKLANG[0]]), "p2", "active", METAL, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(30);
   });
-  it("🛑 no {M} Energy on the damaged body → 50 (the beneficiary clause)", () => {
+  it("no {M} Energy on the damaged body → 50 (the beneficiary clause)", () => {
     const state = energize(table([], WALL, [KLINKLANG[0]]), "p2", "active", PLAIN_ENERGY, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(50);
   });
-  it('🛑 TWO Klinklang STACK (no "doesn\'t stack" printed) → 50 − 40 = 10', () => {
+  it('TWO Klinklang STACK (no "doesn\'t stack" printed) → 50 − 40 = 10', () => {
     const state = energize(table([], WALL, [KLINKLANG[0], KLINKLANG[1]]), "p2", "active", METAL, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(10);
     expect(seatDamageReduction(state, body(state, "p2"), "all", "p1")).toBe(40);
@@ -470,9 +453,7 @@ describe("D559 §4 — Gear Coating: {M}-Energy bodies take 20 less (after W/R),
     expect(dealtTo(events, "p2", topOf(body(state, "p2", 1)))).toBe(10);
     expect(dealtTo(events, "p2", topOf(body(state, "p2", 2)))).toBe(30);
   });
-  it("🆕 B19 (was ⚠️ D558 ⑶-bis INHERITED): an OWN-side spread onto a benched {M} body is NOT reduced → 30", () => {
-    // *"…take 20 less damage from attacks from your opponent's Pokémon"*: the holder's own spread
-    // is not one. Card revision B19 paid D558's debt in `seatDamageReduction`.
+  it("B19 (was D558 ⑶-bis INHERITED): an OWN-side spread onto a benched {M} body is NOT reduced → 30", () => {
     let state = table([KLINKLANG[0], WALL], WALL);
     state = energize(state, "p1", 1, METAL, 1);
     const { events } = swing(state, BACKFIRE);
@@ -482,11 +463,11 @@ describe("D559 §4 — Gear Coating: {M}-Energy bodies take 20 less (after W/R),
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D559 §5 — Rock Armor: 30 less (after W/R) while ANY Energy is attached (R-RA)", () => {
-  it("🛑 one Energy attached → 50 − 30 = 20", () => {
+  it("one Energy attached → 50 − 30 = 20", () => {
     const state = energize(table([], REGIROCK), "p2", "active", PLAIN_ENERGY, 1);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(20);
   });
-  it("🛑 no Energy attached → 50", () => {
+  it("no Energy attached → 50", () => {
     const state = table([], REGIROCK);
     expect(dealtTo(swing(state, STRIKE).events, "p2", topOf(body(state, "p2")))).toBe(50);
   });
@@ -498,7 +479,7 @@ describe("D559 §5 — Rock Armor: 30 less (after W/R) while ANY Energy is attac
     const state = energize(table([], WALL, [REGIROCK]), "p2", 0, PLAIN_ENERGY, 1);
     expect(dealtTo(swing(state, SWEEP).events, "p2", topOf(body(state, "p2", 0)))).toBe(0);
   });
-  it('🛑 R-RA: "from attacks" (no "opponent\'s") — an OWN-side spread is reduced too → 0; without Energy → 30', () => {
+  it('R-RA: "from attacks" (no "opponent\'s") — an OWN-side spread is reduced too → 0; without Energy → 30', () => {
     const armed = energize(table([REGIROCK], WALL), "p1", 0, PLAIN_ENERGY, 1);
     expect(dealtTo(swing(armed, BACKFIRE).events, "p1", topOf(body(armed, "p1", 0)))).toBe(0);
     const bare = table([REGIROCK], WALL);

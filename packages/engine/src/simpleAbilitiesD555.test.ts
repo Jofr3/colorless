@@ -17,24 +17,8 @@ import {
   trainerCard,
   typedEnergy,
   types,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D555 B — THE ZERO-VOCABULARY ABILITIES, 11 PRINTINGS / 7 TEXTS / 7 OBJECTS ──
-//
-//   Volcarona               sv10.5b-016 / -100   "Torrid Scales"        discard a Basic {R}: Burn
-//   Archeops                sv10.5w-051 / -132   "Ancient Wing"         Active only: devolve 1 to hand
-//   Meowstic                sv08-085             "Beckoning Tail"       discard a Chill Teaser Toy: gust
-//   Samurott                sv10.5w-023 / -107   "Torrential Whirlpool" switch; if you do, switch out
-//   Team Rocket's Tyranitar sv10-096             "Sand Stream"          Checkup, Active: 2 counters each Basic
-//   Chien-Pao               sv08-056, svp-152    "Snow Sink"            bench from hand: may discard a Stadium
-//   Ambipom                 sv06-138             "Wicked Tail"          on evolve: 2 coins, random card → deck
-//
-// ZERO new vocabulary: four activated rows (`abilities`) and three triggered rows
-// (`triggered`), every op, filter, timing and flag already shipped. Real ids on a
-// LOCAL `cardPool` (D275), no `fix-*` demonstrator. ⚠️ SAID OUT LOUD (D243): every body
-// keeps its PRINTED stage on the fixture and is SEATED by surgery as a one-card stack,
-// except Ambipom, which is EVOLVED by a real `evolve` action (the trigger is the
-// point). Texts off tcgdex, 2026-09-25.
 
 const TORRID_TEXT =
   "You must discard a Basic {R} Energy card from your hand in order to use this Ability. Once during your turn, you may make your opponent's Active Pokémon Burned.";
@@ -64,7 +48,7 @@ const STAGE1 = "d555b-stage1";
 const AIPOM = "d555b-aipom";
 const FIRE = "d555b-fire";
 const WATER = "d555b-water";
-const TOY = "sv08-166"; // Chill Teaser Toy — the REAL id, its own registry program (D295)
+const TOY = "sv08-166";
 const NEST_BALL = "sv01-181";
 const BEACH_COURT = "sv01-167";
 
@@ -157,7 +141,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** 60 cards, two or more of every body so a Prize row never holds the only copy. */
 const DECK = deckOf({
   [VOLCARONA[0]]: 2,
   [VOLCARONA[1]]: 1,
@@ -179,11 +162,6 @@ const DECK = deckOf({
   [NEST_BALL]: 3,
   [BEACH_COURT]: 4,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with `first` going first; returns the board at the start of turn 1. */
 function opened(first: Seat, seed: number): GameState {
@@ -576,7 +554,7 @@ describe("D555 B §3 — Ancient Wing: Active only, devolve 1 of the opponent's 
     expect(done.players.p2.active?.stack).toHaveLength(2);
   });
 
-  it("🛑 UNRULED (D555 R4, D553 R1): with no evolved target it is USED, whiffs, and SPENDS the use", () => {
+  it("UNRULED (D555 R4, D553 R1): with no evolved target it is USED, whiffs, and SPENDS the use", () => {
     const before = table(ARCHEOPS[0]);
     const { state, events } = mustApply(before, use("Ancient Wing"));
     expect(types(events)).toEqual(["ABILITY_USED"]);

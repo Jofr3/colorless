@@ -25,23 +25,8 @@ import {
   setBenchDamage,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D608 — WP30: THE `me` SNIPE / SPREAD WORDING ───────────────────────────────────────────────
-//
-// 7 attack sentences / 13 `me` printings newly reader-built, plus 5 `30th` printings keyed by id
-// (tcgdex's `<em>` markup, WP06) — 18 attack printings, 15 printings finished. Every id and text off the
-// LOCAL D1, 2026-10-08, `legal_standard = 1`; no id was referenced in the tree before this slice.
-//
-//   "each of 2"  — `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET` read it as the shipped arity
-//                  (Mega Eelektross ex "Split Bomb" ×3, Ambipom "Dual Tail" ×2).
-//   Disaster Shock ×3 — the fourth optional-cost skeleton, payoff `defenderStatus` (an inner confirm).
-//   Sonic Ripper ×2, Phantasmal Barrage — two literal cost-then-snipe compounds.
-//   Bone Sniper — the new `damageChosen.specialEnergyOnly` board narrowing.
-//   Stealthy Slash ×3 — `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" is `opponentAny`; the two
-//                  `30th` faces are keyed (`STEALTHY_SLASH`). [🆕🆕🆕 D612: the key is RETIRED — WP06's
-//                  normaliser strips the `<em>`, so the `30th` faces read `mep-099`'s sentence.]
-//   Photon Bullets ×3 — the ex-only spread, keyed (`PHOTON_BULLETS`): D492's op without `ignoreWR`.
 
 const SPLIT_BOMB =
   "This attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -62,7 +47,6 @@ const STEALTHY_SLASH_EM =
 const PHOTON_BULLETS =
   "This attack does 50 damage to each of your opponent's Pokémon <em>ex</em>. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>";
 
-/** [attack text, the `me` printing ids that print it] — the seven reader-built sentences. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [SPLIT_BOMB, ["me02.5-061", "me02.5-266", "me02.5-278"]],
   [DISASTER_SHOCK, ["me02.5-061", "me02.5-266", "me02.5-278"]],
@@ -73,19 +57,12 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [PHANTASMAL_BARRAGE, ["me02.5-098"]],
 ];
 
-/** [markup text, the keyed `30th` ids, the registry object's attack index 0].
-    🆕🆕🆕 D612 — the RAW tcgdex texts: the corpus now holds their normalised forms (WP06), and a
-    persisted pre-D612 face still carries these (§7 drives them through `cardOfUid`). */
 const KEYED: readonly (readonly [string, readonly string[]])[] = [
   [PHOTON_BULLETS, ["30th-064", "30th-151", "30th-157"]],
   [STEALTHY_SLASH_EM, ["30th-021", "30th-148"]],
 ];
 
-/** WP30's rest, named: each needs vocabulary beyond this slice (8 texts / 8 printings).
-    [🆕🆕🆕 D629 (D539): seven BUILT at D629 (S1); Psyspear `me04-032` stays unbuilt.] [🆕🆕🆕 D645 (D539): Psyspear BUILT at D645.] */
 const WP30_REST: readonly (readonly [string, string])[] = [
-  // tcgdex markup (WP06) AND a typed self-discard in front of the any-target hit.
-  // 🆕🆕🆕 D612 — the normalised text (WP06): the markup is gone; the typed self-discard stays unread.
   [
     "Discard all {L} Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     "30th-051",
@@ -109,8 +86,6 @@ const WP30_REST: readonly (readonly [string, string])[] = [
     "This attack does 30 damage to 1 of your opponent's Pokémon for each {W} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     "me05-014",
   ],
-  // a clause AFTER the parenthetical (the trailing splitter cuts at the first period).
-  // [🆕🆕🆕 D629 (D539): WITHDRAWN — `COMPOUND_CLAUSE_BREAK` breaks after `.)` too; both compose since D629.]
   [
     "This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep.",
     "me01-043",
@@ -119,8 +94,6 @@ const WP30_REST: readonly (readonly [string, string])[] = [
     "This attack does 50 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) This Pokémon also does 130 damage to itself.",
     "30th-104",
   ],
-  // an extra-Energy gate (~~a count source, not a `BoardCondition`~~) on a bench snipe. [🆕🆕🆕 D645 (D539): WITHDRAWN —
-  // read at D645 as the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at declaration, never in the shared table.]
   [
     "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     "me04-032",
@@ -132,7 +105,6 @@ describe("D608 §1 — the texts", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, ids] of SENTENCES) {
-      // 🆕🆕🆕 D612 — Stealthy Slash's row is 3: the two `30th` faces normalise into it (WP06).
       expect([text, me.get(text)]).toEqual([
         text,
         text === STEALTHY_SLASH ? ids.length + 2 : ids.length,
@@ -144,10 +116,9 @@ describe("D608 §1 — the texts", () => {
     expect(new Set(SENTENCES.flatMap(([, ids]) => ids)).size).toBe(10);
   });
 
-  it("the two markup sentences: unread, keyed by id at attack index 0, 5 printings (🆕🆕🆕 D612: normalised — Photon Bullets ×3 still unread and keyed; Stealthy Slash ×2 read, its key retired)", () => {
+  it("the two markup sentences: unread, keyed by id at attack index 0, 5 printings ( D612: normalised — Photon Bullets ×3 still unread and keyed; Stealthy Slash ×2 read, its key retired)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of KEYED) {
-      // 🆕🆕🆕 D612 — the raw text is gone from the corpus; its normalised form is the row.
       expect(me.has(text), text).toBe(false);
       const clean = normalizeCardText(text);
       expect([clean, me.get(clean)]).toEqual([
@@ -166,12 +137,10 @@ describe("D608 §1 — the texts", () => {
     }
   });
 
-  it('WP30\'s rest ~~stays unbuilt~~: 8 texts / 8 printings, named (🆕🆕🆕 D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` "Psyspear"; `snipeSpreadRestMeD629.test.ts`) (🆕🆕🆕 D645 (D539): and Psyspear is built at D645)', () => {
+  it('WP30\'s rest ~~stays unbuilt~~: 8 texts / 8 printings, named ( D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` "Psyspear"; `snipeSpreadRestMeD629.test.ts`) ( D645 (D539): and Psyspear is built at D645)', () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, id] of WP30_REST) {
       expect([id, me.get(text)]).toEqual([id, 1]);
-      // 🆕🆕🆕 D629 — seven are built (two by composition); ~~Psyspear alone stays unread~~ [🆕🆕🆕 D645 (D539):
-      // WITHDRAWN — Psyspear is reader-built at D645; all eight are built].
       expect([id, resolvedByAnyReader(text) || splitAttackTrailingClause(text) !== null]).toEqual([
         id,
         true,
@@ -281,7 +250,7 @@ describe("D608 §2 — the readings", () => {
     expect(deriveAttackEffect(PHANTASMAL_BARRAGE.replace("12", "0"))).toBeNull();
   });
 
-  it("Stealthy Slash is `opponentAny`; the Benched sentence keeps `opponentBench`; the keyed program is the reader's (🆕🆕🆕 D612: the key is retired — the raw `30th` text normalises to the reader's sentence)", () => {
+  it("Stealthy Slash is `opponentAny`; the Benched sentence keeps `opponentBench`; the keyed program is the reader's ( D612: the key is retired — the raw `30th` text normalises to the reader's sentence)", () => {
     const anyTarget = deriveAttackEffect(STEALTHY_SLASH);
     expect(anyTarget).toEqual([
       {
@@ -309,16 +278,14 @@ describe("D608 §2 — the readings", () => {
         perDamageCounterOnTarget: true,
       },
     ]);
-    // 🆕🆕🆕 D612 — no key: the `30th` text, normalised, IS the reader's sentence.
     for (const id of ["30th-021", "30th-148"]) expect(programFor(id), id).toBeUndefined();
     expect(deriveAttackEffect(normalizeCardText(STEALTHY_SLASH_EM))).toEqual(anyTarget);
   });
 
-  it("Photon Bullets is D492's filtered spread WITHOUT `ignoreWR` (🆕🆕🆕 D622: or `wrOnly`)", () => {
+  it("Photon Bullets is D492's filtered spread WITHOUT `ignoreWR` ( D622: or `wrOnly`)", () => {
     const shipped = deriveAttackEffect(
       "This attack does 50 damage to each of your opponent's Pokémon ex. This attack's damage isn't affected by Weakness or Resistance.",
     );
-    // 🆕🆕🆕 D622 — the bare tail's `wrOnly` goes with `ignoreWR`: Photon Bullets prints no W/R tail.
     const {
       ignoreWR: _dropped,
       wrOnly: _bare,
@@ -465,11 +432,6 @@ const DECK = deckOf({
   "fix-energy": 18,
 });
 const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), "fix-blend"]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
@@ -688,8 +650,6 @@ describe("D608 §6 — Bone Sniper: only a body with a Special Energy attached",
 });
 
 describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
-  // 🆕🆕🆕 D612 — `30th-021`'s face here is the RAW `<em>` text (a persisted pre-D612 pool face): it
-  // plays through cards.ts `cardOfUid`'s normaliser on the reader's program, with no registry key.
   for (const id of ["mep-099", "30th-021"]) {
     it(`${id}: 30 per counter on the CHOSEN body — the Active with Weakness, a Benched body flat`, () => {
       let state = table(id, [[W, 1]], TARGET_W, [FILLER]);

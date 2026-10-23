@@ -251,10 +251,6 @@ describe("resetAfterFailedStart", () => {
   });
 
   it("CANNOT end a running match — recomputePhase never leaves in-game", () => {
-    // The trap `endMatch` exists for: this helper is for a lobby still in
-    // COUNTDOWN. Pointed at an in-game one it un-readies the seats but leaves the
-    // phase alone (recomputePhase returns an in-game snapshot untouched), so a
-    // caller that used it to tear down a live match would wedge the lobby in-game.
     const running: LobbySnapshot = { ...countdownLobby(), phase: "in-game" };
     expect(resetAfterFailedStart(running).phase).toBe("in-game");
   });
@@ -346,10 +342,6 @@ describe("applyBye — a graceful leave (3c-iv)", () => {
   });
 
   it("KEEPS an in-game seat, so the match record and the winner's board survive", () => {
-    // The bug this closes: freeing the seat mid-match took the lobby out of
-    // in-game, which drops the persisted match (abandonsMatch → commit) and blanks
-    // the opponent's board — the DO has just conceded for the leaver, so that
-    // would erase the result a frame after announcing it.
     for (const slot of ["host", "guest"] as const) {
       const next = applyBye(running(), slot);
       expect(next.phase).toBe("in-game");
@@ -425,10 +417,6 @@ describe("socketIsSilent — the half-open connection (3c-viii)", () => {
   });
 
   it("treats a socket that has NEVER auto-answered as alive", () => {
-    // Every connection looks like this for its first ping, and nothing here can
-    // tell "just opened" from "opened long ago and never pinged" — so the only
-    // safe reading is to leave it be. Closing a healthy one-second-old socket
-    // would be the worse mistake.
     expect(socketIsSilent(null, 1_000_000)).toBe(false);
   });
 

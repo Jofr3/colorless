@@ -16,16 +16,6 @@ import {
   types,
 } from "./testFixtures";
 
-// M5 coverage pass #1 — the SV01-03 cards whose printed text maps EXACTLY onto
-// the EXISTING op vocabulary (authored from a classify→verify Workflow fan-out;
-// the 5 authorable of 140, the other 113 tracked in the new-op backlog). Each is
-// verified here end to end, exercising the registry rows the fan-out produced:
-//   • Poké Ball (sv01-185) — coin-gated search a Pokémon → hand;
-//   • Pokémon Catcher (sv01-187) — coin-gated gust;
-//   • Nemona (sv01-180) — draw 3 (Supporter);
-//   • Copperajah ex (sv02-150) — passive Bronze Body (−30 after W/R);
-//   • Stonjourner (sv01-121) — passive Exoskeleton (−20 after W/R).
-
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -118,11 +108,6 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
   });
 
   it("Pokémon Catcher into an EMPTY opponent Bench is rejected, but Poké Ball is not", () => {
-    // Both are `coinFlipGate → [...]`, and `programPlayable` descends into the
-    // heads branch (a coin gate has no `otherwise`, so a whiff-only branch is a
-    // whiff-only card; §7 / Compendium 906 — the flip is procedure, not effect).
-    // They diverge on what the GAME STATE establishes: an empty opponent Bench is
-    // public, so Catcher provably does nothing…
     let state = covBoard(1);
     expect(state.players.p2.bench).toHaveLength(0);
     state = handFromDeck(state, "p1", "sv01-187", 1);

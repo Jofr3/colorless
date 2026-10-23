@@ -35,70 +35,10 @@ import {
   setActiveFromDeck,
   typedEnergy,
   walkProgram,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
 
-// ── D316 — "YOU MAY DO {N} MORE DAMAGE. IF YOU DO, …" — A PLAYER DECISION IN
-//    FRONT OF §8.5, AND THE TWO FIELDS IT COST. ────────────────────────────────
-//
-// THE POPULATION, queried against remote Cloudflare D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, WHOLE
-// COLUMN read (D306's rule) and at TWO widths across all three text columns —
-// `instr(…,'more damage. If you do')` and the shorter, paraphrase-proof
-// `instr(…,'may do ')`, both returning the same five rows and NO
-// `legal_standard = 0` row anywhere:
-//
-//   sv06-043    Poliwrath    idx 1 "Jumping Uppercut"  "120+"  bonus 120
-//               "…shuffle this Pokémon and all attached cards into your deck."
-//   sv06-104    Gurdurr      idx 1 "Superpower"        "50+"   bonus  30
-//               "…this Pokémon also does 30 damage to itself."
-//   sv10-066    Dondozo ex   idx 1 "Dynamic Dive"      "120+"  bonus 120
-//   sv10-211    Dondozo ex   idx 1 (the same sentence, a second printing)
-//               "…this Pokémon also does 50 damage to itself."
-//   sv06.5-042  Copperajah   idx 0 "Nasal Lariat"      "130+"  bonus 100
-//               "…during your next turn, this Pokémon can't attack."
-//
-// **FIVE legal printings on FOUR distinct sentences, ONE shared antecedent, and
-// THREE consequents that were ALL already built** (`returnSelf` D311–D313,
-// `damageSelf` since 0.x, `preventAttack` D142/D143). So what this slice bought
-// is not a behaviour — it is a NUMBER: which of two amounts the single §8.5 hit
-// uses, and who decides.
-//
-// ── 🛑 THE TWO PRICINGS THIS ROW HAS HAD, AND WHY BOTH WERE WRONG ────────────
-//
-// D314: *"a decision feeding a conditional damage boost, and no arm spends a
-// `recordGate` slot on the damage step"* — as if a §9.2 slot were the cost.
-// D315 refuted that by measurement and then over-corrected: *"closing it is a
-// change to the damage pipeline."* **The premise both share is TRUE and the
-// conclusion does not follow.** `attack.ts` really does fold the printed damage
-// before step 4 runs the program, so nothing inside a program can ADD to a hit
-// that has landed — but since Chien-Pao ex it has DROPPED the printed base
-// whenever the program OWNS the hit (`programDamage`), and `damageDefender`
-// re-enters the whole §8.5 pipeline from inside the interpreter. The hit MOVES
-// INTO the gate; the pipeline is untouched. §5 below is the board that proves it.
-//
-// ── 🛑 AND WHY THE **WHOLE** HIT MOVES, NOT THE BONUS ALONE ──────────────────
-//
-// §8.5 is applied ONCE PER DAMAGE OP. Landing the base pre-program and the bonus
-// from inside it is two hits, and the pipeline does not distribute over them:
-// Weakness does (2×120 + 2×120 = 2×240 — §5's CONTROL, which cannot tell the two
-// readings apart), but Resistance and the defender's reduction are SUBTRACTIONS
-// paid once per hit, so a −30 Resistance would be paid TWICE. §5's discriminator
-// board is exactly that: 240 − 30 = **210** on one hit versus (120−30) + (120−30)
-// = 180 on two. The §8.1 survival clamp and the `DAMAGE_DEALT` row count answer
-// the same question a second and third way.
-//
-// ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
-//
-// ONE new reader (`deriveAttackOptionalBoost`, the EIGHTH), ONE optional field on
-// `optional` (`otherwise`, the arm the three other gates have always had) and ONE
-// flat `amount` arm on `damageDefender`. **NO new op, prompt kind, choice kind,
-// event, error code, `GameState` field, `CardFilter` member or registry row**;
-// `packages/schema` takes ZERO and `MATCH_RECORD_VERSION` stays 18 — both
-// additions are OPTIONAL fields, so both are widenings a v18 deploy cannot
-// author. §9 drives that premise rather than asserting the conclusion.
-
-/** The four printed sentences, transcribed off the D1 rows (D306: transcribe,
-    never interpolate). */
 const POLIWRATH_TEXT =
   "You may do 120 more damage. If you do, shuffle this Pokémon and all attached cards into your deck.";
 const GURDURR_TEXT =
@@ -127,8 +67,6 @@ const METAL = "fix-d316-metal";
 const UNREAD = "fix-d316-unread";
 const UNREAD_TEXT = "You may do 30 more damage. If you do, hum a little tune.";
 
-/** The LOCAL pool (D275's idiom) — the three real ids live HERE and not in
-    `FIXTURE_POOL`, so no `fix-*` demonstrator and no manifest row is owed. */
 const LOCAL_CARDS: Record<string, Card> = {
   [POLIWRATH]: battler(POLIWRATH, {
     name: "Poliwrath",
@@ -249,27 +187,12 @@ const DECK = deckOf({
   [METAL]: 10,
 });
 
-/** Two seeds — nothing below rests on one shuffle (D270). */
 const SEEDS = [4021, 4099] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 function apply(state: GameState, action: Parameters<typeof applyAction>[1]) {
   const result = applyAction(state, action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return result;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -363,23 +286,11 @@ const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageMultiplier,
   deriveAttackCoinFlip,
   deriveAttackRequirement,
-  // 🆕🆕 D419 — the readers this COMPLEMENT never named (D317, D381, D403, D417), written
-  // in NAME order rather than in landing order because the guard in §2 diffs a
-  // SORTED list against the module surface.
-  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
-  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
-  // `];`, and appending moves that anchor without a character of it changing —
-  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
-  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-  // array's LAST entries plus its closing bracket, and appending moves that anchor
-  // without a character of it changing.
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackDamageSuppression,
 ];
@@ -396,7 +307,7 @@ describe("D316 §1 — the print, and the reading each of the four sentences get
     expect(POOL[COPPERAJAH]?.attacks?.[0]?.damage).toBe("130+");
   });
 
-  it("🛑 each sentence reads into its BONUS and the ops its acceptance buys", () => {
+  it("each sentence reads into its BONUS and the ops its acceptance buys", () => {
     expect(deriveAttackOptionalBoost(POLIWRATH_TEXT)).toEqual({
       bonus: 120,
       ops: [{ op: "returnSelf", dest: "deck" }],
@@ -415,11 +326,7 @@ describe("D316 §1 — the print, and the reading each of the four sentences get
     });
   });
 
-  it("⚠️ the ops are BYTE-IDENTICAL to the ones the BARE sentences derive", () => {
-    // The whole claim of the slice: three consequents already built, so this
-    // reader authors no behaviour at all. Each pair is the gated reading beside
-    // the bare anchor's own output — `FLIP_TAILS_SELF_DAMAGE`'s shape, one family
-    // over, and the reason the recoil amount is CAPTURED rather than pinned.
+  it("the ops are BYTE-IDENTICAL to the ones the BARE sentences derive", () => {
     expect(deriveAttackOptionalBoost(GURDURR_TEXT)?.ops).toEqual(
       deriveAttackEffect("This Pokémon also does 30 damage to itself."),
     );
@@ -429,28 +336,19 @@ describe("D316 §1 — the print, and the reading each of the four sentences get
     expect(deriveAttackOptionalBoost(COPPERAJAH_TEXT)?.ops).toEqual(
       deriveAttackEffect("During your next turn, this Pokémon can't attack."),
     );
-    // `returnSelf`'s bare printing is a REGISTRY row rather than a deriver arm
-    // (D312, Gholdengo "Surf Back"), so its control is that row's inner op.
     expect(deriveAttackOptionalBoost(POLIWRATH_TEXT)?.ops).toEqual([
       { op: "returnSelf", dest: "deck" },
     ]);
   });
 
-  it("🛑 NO registry ATTACK row is authored for any of the five printings — an ARM serves them all", () => {
-    // An arm transfers across sets and a row does not: ONE reader serves four
-    // sentences, both Dondozo ex printings and every future reprint of any of
-    // them. ⚠️ **AND COPPERAJAH IS THE CASE THAT MAKES THIS AN `attack` TEST AND
-    // NOT A `programFor` ONE** — `sv06.5-042` carries a registry row already, for
-    // its ABILITY ("Massive Body", a Stadium-play passive). The claim is about the
-    // ATTACK half, and a bare `toBeUndefined()` here would have been asserting the
-    // wrong thing on a card the slice actually touches.
+  it("NO registry ATTACK row is authored for any of the five printings — an ARM serves them all", () => {
     for (const id of [POLIWRATH, GURDURR, COPPERAJAH, "sv10-066", "sv10-211"]) {
       expect(programFor(id)?.attack, id).toBeUndefined();
     }
     expect(programFor(COPPERAJAH)?.passive).toBeDefined();
   });
 
-  it("⚠️ INDEX PRECISION — Poliwrath's other attack is read by a DIFFERENT reader", () => {
+  it("INDEX PRECISION — Poliwrath's other attack is read by a DIFFERENT reader", () => {
     // The sentence at index 0 is `deriveAttackEffect`'s since 0.x and must not
     // inherit anything from index 1's reading. The two readers are disjoint on
     // both strings, in both directions.
@@ -462,29 +360,15 @@ describe("D316 §1 — the print, and the reading each of the four sentences get
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud", () => {
-  it("🆕🆕 D419 — OTHER_READERS plus the reader under test IS the module's surface", () => {
-    // 🛑 THE GUARD THIS COMPLEMENT NEVER HAD, AND A COMPLEMENT IS WHERE A STALE LIST
-    // DOES ITS WORST WORK. The rung below asserts that all the OTHER readers refuse
-    // all four of this slice's sentences — a claim whose entire force is the word ALL. A list that has fallen
-    // behind `effects.ts` does not make that claim FALSE, it makes it NARROWER, and
-    // narrower is invisible: the missing reader is simply never asked and the rung
-    // stays green. This list ran short of the module until this slice, so the
-    // refusal below was quantified over a strict subset of the surface.
+  it("D419 — OTHER_READERS plus the reader under test IS the module's surface", () => {
     expect([...OTHER_READERS.map((read) => read.name), "deriveAttackOptionalBoost"].sort()).toEqual(
       attackReaderSurface(),
     );
-    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
-    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
-    // module and from this list in the SAME commit, and the refusals would quietly
-    // narrow again with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 all ELEVEN other readers refuse all four sentences", () => {
+  it("all ELEVEN other readers refuse all four sentences", () => {
     for (const text of [POLIWRATH_TEXT, GURDURR_TEXT, DONDOZO_TEXT, COPPERAJAH_TEXT]) {
-      // 🆕🆕 D419 — THE POSITIVE HALF, TAKEN OFF THE MODULE. "Exactly one reader
-      // claims this" is two facts and the loop only ever carried the second;
-      // `resolvedByAnyReader` walks whatever `effects.ts` exports today.
       expect(resolvedByAnyReader(text), text).toBe(true);
       for (const read of OTHER_READERS) expect(read(text), text).toBeNull();
       expect(deriveAttackOptionalBoost(text), text).not.toBeNull();
@@ -492,13 +376,11 @@ describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud
   });
 
   it("the ATTRIBUTION CONTROL — a sentence this reader must NOT claim", () => {
-    // D214's rule: without it, "every sentence resolves" would pass just as
-    // happily on a broken import.
     expect(deriveAttackOptionalBoost("Draw a card.")).toBeNull();
     expect(deriveAttackEffect("Draw a card.")).not.toBeNull();
   });
 
-  it("🛑 an UNRECOGNISED consequent refuses the WHOLE sentence — never a prefix match", () => {
+  it("an UNRECOGNISED consequent refuses the WHOLE sentence — never a prefix match", () => {
     // The family's safety property. A reader that swallowed the antecedent and
     // dropped the consequent would ship an attack whose drawback silently
     // vanished, which is strictly worse than not reading it at all.
@@ -515,11 +397,7 @@ describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud
     }
   });
 
-  it("⚠️ the consequent's verb is LOWERCASE, and a CAPITAL one is refused", () => {
-    // D246's rule: the case is spelled at the anchor, never folded into a `[Tt]`
-    // class — the capital is exactly what keeps a whole-sentence reader off a
-    // mid-sentence clause, and a class here would give that up in both
-    // directions at once.
+  it("the consequent's verb is LOWERCASE, and a CAPITAL one is refused", () => {
     expect(
       deriveAttackOptionalBoost(
         "You may do 60 more damage. If you do, This Pokémon also does 30 damage to itself.",
@@ -532,7 +410,7 @@ describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud
     ).toBeNull();
   });
 
-  it("⚠️ the CURLY apostrophe resolves EQUALLY — the class is on the anchor (D136/D137)", () => {
+  it("the CURLY apostrophe resolves EQUALLY — the class is on the anchor (D136/D137)", () => {
     const curly = COPPERAJAH_TEXT.replace("can't", "can’t");
     expect(curly).not.toBe(COPPERAJAH_TEXT);
     expect(deriveAttackOptionalBoost(curly)).toEqual(deriveAttackOptionalBoost(COPPERAJAH_TEXT));
@@ -559,7 +437,7 @@ describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud
     expect(deriveAttackOptionalBoost(`${GURDURR_TEXT} Draw a card.`)).toBeNull();
   });
 
-  it("⚠️ the REACH is wider than the census, and it is the arm's own parameterisation", () => {
+  it("the REACH is wider than the census, and it is the arm's own parameterisation", () => {
     // An arm transfers across sets. The catalog prints four of these sentences
     // today; the anchor reads any bonus and any recoil amount, which is what a
     // reprint at a different number costs (nothing).
@@ -579,9 +457,6 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
         board({ attacker: POLIWRATH, energy: WATER, count: 2, seed }),
         UPPERCUT,
       );
-      // 🛑 THE BASE IS DROPPED. `scaledBase` is 0 because the reader claimed the
-      // printed number, so the pre-program pipeline deals nothing at all and the
-      // whole hit is still owed by the program.
       expect(parked.players.p2.active?.damage).toBe(0);
       expect(count(events, "DAMAGE_DEALT")).toBe(0);
       expect(parked.phase.kind).toBe("effect:choose");
@@ -591,7 +466,7 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
     });
   }
 
-  it("🛑 a YES deals base + bonus in ONE hit and then runs the consequent", () => {
+  it("a YES deals base + bonus in ONE hit and then runs the consequent", () => {
     const parked = must(
       applyAction(board({ attacker: POLIWRATH, energy: WATER, count: 2 }), UPPERCUT),
     );
@@ -603,10 +478,7 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
     expect(find(events, "POKEMON_RETURNED")).toMatchObject({ seat: "p1", dest: "deck" });
   });
 
-  it("🛑 a NO deals the printed BASE — the arm that did not exist before D316", () => {
-    // ⚠️ THIS IS THE WHOLE FIELD. Before `otherwise`, a decline spliced NOTHING,
-    // and with the base suppressed that would have dealt ZERO on a sentence whose
-    // printed no still hits for 120.
+  it("a NO deals the printed BASE — the arm that did not exist before D316", () => {
     const parked = must(
       applyAction(board({ attacker: POLIWRATH, energy: WATER, count: 2 }), UPPERCUT),
     );
@@ -638,10 +510,7 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D316 §4 — the LOUD path closed: the sentence and its '+' are both simulated", () => {
-  it("🛑 no ATTACK_EFFECT_SKIPPED on any of the three real boards", () => {
-    // Two terms, and BOTH were needed: without `effectSimulated` the sentence is
-    // flagged, without `modifierSimulated` the printed "+" is — and every one of
-    // the five printings carries one.
+  it("no ATTACK_EFFECT_SKIPPED on any of the three real boards", () => {
     const runs = [
       [board({ attacker: POLIWRATH, energy: WATER, count: 2 }), UPPERCUT],
       [board({ attacker: GURDURR, energy: FIGHT, count: 3 }), SUPERPOWER],
@@ -653,11 +522,7 @@ describe("D316 §4 — the LOUD path closed: the sentence and its '+' are both s
     }
   });
 
-  it("🛑 the ATTRIBUTION CONTROL — the SAME antecedent with an unread consequent IS flagged", () => {
-    // Without this the assertion above would pass on a board where nothing is
-    // ever flagged, which is the vacuous shape D214 was written about — and the
-    // control shares the antecedent deliberately, so what it isolates is the
-    // DISPATCH and not the anchor.
+  it("the ATTRIBUTION CONTROL — the SAME antecedent with an unread consequent IS flagged", () => {
     expect(deriveAttackOptionalBoost(UNREAD_TEXT)).toBeNull();
     const { events } = apply(board({ attacker: UNREAD, energy: WATER, count: 1 }), {
       type: "attack",
@@ -674,8 +539,8 @@ describe("D316 §4 — the LOUD path closed: the sentence and its '+' are both s
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D316 §5 — 🛑 §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD DIFFER", () => {
-  it("🛑 a −30 RESISTANCE is paid ONCE: 240 − 30 = 210, not (120−30) + (120−30)", () => {
+describe("D316 §5 — §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD DIFFER", () => {
+  it("a −30 RESISTANCE is paid ONCE: 240 − 30 = 210, not (120−30) + (120−30)", () => {
     // THE DISCRIMINATOR, and the reason the WHOLE hit moves inside the gate
     // rather than the bonus alone. Two damage ops would each re-enter §8.5 and
     // each subtract the printed 30, landing on 180. One op lands on 210.
@@ -706,7 +571,7 @@ describe("D316 §5 — 🛑 §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD 
     expect(done.players.p2.active?.damage).toBe(90);
   });
 
-  it("⚠️ the WEAKNESS CONTROL cannot tell the two readings apart, and that is why it is a control", () => {
+  it("the WEAKNESS CONTROL cannot tell the two readings apart, and that is why it is a control", () => {
     // ×2 DISTRIBUTES over the split (2×120 + 2×120 = 2×240), so a Weakness board
     // is green under both readings. Kept because a suite that only ever drove
     // this board would have proved nothing about the split at all.
@@ -743,7 +608,7 @@ describe("D316 §6 — the other two consequents, on their own real boards", () 
     expect(no.state.players.p1.active?.damage).toBe(0);
   });
 
-  it("🛑 Gurdurr's recoil can KNOCK ITSELF OUT — the two-seat epilogue, reached through a confirm", () => {
+  it("Gurdurr's recoil can KNOCK ITSELF OUT — the two-seat epilogue, reached through a confirm", () => {
     // 100 HP and 30 recoil is not lethal on its own, so the board is built with
     // the attacker already damaged: the self-KO the epilogue sweeps is a real
     // ending of this sentence and not a hypothetical.
@@ -761,11 +626,6 @@ describe("D316 §6 — the other two consequents, on their own real boards", () 
     // confirm answer rather than through a registry program.
     expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p2", count: 1 });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
-    // ⚠️ AND THE ROW SHAPES ARE THE TWO MODELS SIDE BY SIDE, which is worth
-    // reading off this one board: the DEFENDER's hit is `DAMAGE_DEALT` (the full
-    // §8.5 pipeline, from inside the gate) and the recoil is `COUNTERS_PLACED`
-    // (the flat put-counter model `damageSelf` has always used). One sentence,
-    // two damage models, and the slice changed neither.
     expect(events.map((e) => e.type)).toEqual([
       "DAMAGE_DEALT",
       "COUNTERS_PLACED",
@@ -790,7 +650,7 @@ describe("D316 §6 — the other two consequents, on their own real boards", () 
     expect(no.state.players.p1.active?.attackLockedTurn).toBeNull();
   });
 
-  it("🛑 the DECLINED Copperajah can attack again next turn, and the ACCEPTED one cannot", () => {
+  it("the DECLINED Copperajah can attack again next turn, and the ACCEPTED one cannot", () => {
     // The lock is a real board fact and not a flag nobody reads: drive it to the
     // §8 gate that enforces it, on both answers, off the same board.
     for (const [answer, blocked] of [
@@ -809,17 +669,7 @@ describe("D316 §6 — the other two consequents, on their own real boards", () 
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSERTED", () => {
-  // 🆕🆕🆕 **D557 — THE RUNG IS INVERTED, AND ITS OLD TITLE IS WITHDRAWN (D539).** It read
-  // ~~"`optional.otherwise` has EXACTLY ONE producer in the whole build, and it is not the
-  // registry"~~ from D316 to D556, and both halves stopped being true when Kieran's
-  // printed "Choose 1:" was authored as `optional { then: [switch], otherwise: [+30] }`
-  // on FIVE registry keys. The measurement below is the same walk; what it now pins is the
-  // registry producer set BY ID. The version claim it served is UNCHANGED and is re-argued
-  // rather than inherited: `otherwise` is an OPTIONAL key every reader since v18 knows
-  // (D316's widening), so a v35 record holding one is a record every v35 deploy reads —
-  // `MATCH_RECORD_VERSION` stays 35 (Kieran's `labels` are the same kind of key; the
-  // stripped-revival rung is `chooseOneTrainersD557.test.ts` §5).
+describe("D316 §7 — THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSERTED", () => {
   it("`optional.otherwise` — the attack assembler AND, since D557, the registry (Kieran ×5, and since D560 Cradily's two nested picks, by id)", () => {
     // `MATCH_RECORD_VERSION` stays 18 because a v18 deploy cannot AUTHOR this
     // field, so no v18 record can hold one. That is a claim about the producers,
@@ -848,12 +698,6 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
     // empty population.
     expect(programsWalked).toBeGreaterThan(50);
     expect(optionalsSeen).toBeGreaterThan(0);
-    // 🆕🆕🆕 D557 — WAS `toEqual([])`. Kieran's five printings, in registry order.
-    // 🆕🆕🆕 D560 — AND CRADILY `sv07-006` "Selective Slime", TWICE: its three-way pick is two
-    // nested labelled `optional`s (R-CR), each carrying an `otherwise`. (Indeedee's
-    // `recoverOneStatus` writes the same shape at RUNTIME, never in the registry, so this
-    // authored-producer walk does not see it — the stripped-revival rung for that chain is
-    // `abilityTriggersD560.test.ts`.) `MATCH_RECORD_VERSION` stays 35 for D557's reason.
     expect(authored).toEqual([
       "sv06-154",
       "sv06-206",
@@ -862,15 +706,10 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
       "sv08.5-174",
       "sv07-006",
       "sv07-006",
-      // 🆕🆕🆕 D641 — Lt. Surge's Bargain ×3: the opponent-answered confirm (`askOpponent`), `otherwise` = draw 4.
       "me01-120",
       "me01-170",
       "me01-185",
     ]);
-    // …and the ATTACK producer is this reader's assembly site — `optionalBoostProgram`,
-    // which lived inside attack.ts until D318 MOVED it into effects.ts so a sweep
-    // could build it (see §8). It is still reached from a board only through
-    // attack.ts, and the park below is that producer, observed.
     const parked = must(
       applyAction(board({ attacker: POLIWRATH, energy: WATER, count: 2 }), UPPERCUT),
     );
@@ -889,10 +728,7 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
     expect(both).toBeDefined();
   });
 
-  it("⚠️ every EXISTING `optional` producer still omits `otherwise` and reads identically", () => {
-    // The widening's other half: absent, the field is the empty list, so the
-    // splice expression is byte-equivalent to the old one for every producer that
-    // predates D316. Gholdengo's row is the shipped witness.
+  it("every EXISTING `optional` producer still omits `otherwise` and reads identically", () => {
     expect(programFor("sv08-131")?.attack?.[1]).toEqual([
       {
         op: "optional",
@@ -904,41 +740,8 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
   });
 });
 
-// ── D318 — THE ASSEMBLY MOVED OUT OF ITS CALL SITE, AND WHY THAT IS A REPAIR
-//    RATHER THAN A TIDY-UP. ────────────────────────────────────────────────────
-//
-// §7 above proves `optional.otherwise` has exactly one producer and that it is
-// reachable only through a board. That was true and it was also the DEFECT:
-// (🆕🆕🆕 D557 NOTE (D539): "exactly one producer" was true through D556 and is
-// WITHDRAWN at D557 — Kieran ×5 is a REGISTRY producer; §7 now pins that set by id.
-// The rest of this paragraph is about the ATTACK producer's reachability and stands.)
-// `programWalk.test.ts` builds its corpus from `deriveAttackEffect` over
-// `FIXTURE_POOL` + the registry + the readings fed to it, so a program assembled
-// INSIDE `attack.ts` is invisible to it — and its carrier pin read
-// `["optional", ["then"]]` for the two slices in which this field was live,
-// shipped and running on five printed cards.
-//
-// 🛑 THE REPAIR IS NOT A BETTER TEST. It is moving the assembly:
-// `optionalBoostProgram(reading, base, note)` now lives in `effects.ts` and
-// `attack.ts` calls it, so the shape the engine runs is the shape an auditor can
-// build. D317 did this for `bonusConsequentProgram` on the very next sentence and
-// its `coinFlipGate.otherwise` became that pin's first producer in 48 slices;
-// this is the same repair applied backwards, and D150's `programPerHeads.ops`
-// lesson at its fourth site.
-//
-// ⚠️ AND THE EXPORT ALONE WOULD HAVE BEEN GREEN AND DEAD. `FIXTURE_POOL` printed
-// this sentence ZERO times — measured at D317's HEAD, `grep -c "You may do"` on
-// `testFixtures.ts` — so the sweep would have had nothing to call the assembler
-// on and the pin would not have moved by one character. `fix-optionalboost`
-// (Gurdurr `sv06-104`'s whole printed card, transcribed off the remote D1) is the
-// other half, and the two cases below drive each half separately.
-
 describe("D318 §8 — the exported assembler, and the pool that can now reach it", () => {
   it("builds the SAME program the board parks — the export is the code, not a second copy", () => {
-    // 🛑 THE ATTRIBUTION CONTROL D214 asks for. A test that only called the new
-    // export would pass on a build where `attack.ts` kept a divergent inline copy
-    // — which is the exact failure the move exists to prevent. So the assembled
-    // program is compared against the one a REAL BOARD parks, byte for byte.
     const reading = deriveAttackOptionalBoost(POLIWRATH_TEXT);
     expect(reading).not.toBeNull();
     const built = optionalBoostProgram(reading as never, 120, POLIWRATH_TEXT);
@@ -995,7 +798,7 @@ describe("D318 §8 — the exported assembler, and the pool that can now reach i
     }
   });
 
-  it("🛑 `FIXTURE_POOL` can now REACH the shape — the half an exported assembler does not buy", () => {
+  it("`FIXTURE_POOL` can now REACH the shape — the half an exported assembler does not buy", () => {
     // The pool-reachability claim, asserted here rather than only in
     // `programWalk.test.ts`, because that file's pin is a list of op/key pairs and
     // this is the sentence that puts a producer under it.
@@ -1004,16 +807,10 @@ describe("D318 §8 — the exported assembler, and the pool that can now reach i
         .map((attack, index) => ({ id, index, text: attack.effect ?? "" }))
         .filter((row) => deriveAttackOptionalBoost(row.text) !== null),
     );
-    // EXACTLY ONE, and named. A second demonstrator is a finding (two fixtures
-    // printing the same family is how a pool grows a silent duplicate), not a
-    // shrug — and ZERO is the state D318 found, in which every line of the
-    // exported assembler is covered and no sweep answer changes.
     expect(pooled.map((r) => `${r.id}#${r.index}`)).toEqual(["fix-optionalboost#1"]);
     const card = FIXTURE_POOL["fix-optionalboost"];
     const attack = (card?.attacks ?? [])[1];
     expect(attack?.name).toBe("Superpower");
-    // The printed "+" is real: the assembler takes the base from the `damage`
-    // field, so a fixture printing a FLAT number exercises the wrong half.
     expect(attack?.damage).toBe("50+");
     expect(attack?.effect).toBe(GURDURR_TEXT);
     const gate = optionalBoostProgram(

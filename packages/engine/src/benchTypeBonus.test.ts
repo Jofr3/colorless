@@ -31,48 +31,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 🆕🆕 D370 — THE BENCH-SCOPED TYPE CLAUSE, AND THE VOCABULARY CHECK RUN BEFORE
-// ANYTHING WAS SPELLED.
-//
-// D369 handed over *"you have any {M} Pokémon on your Bench"* — 2 legal printings,
-// the cheapest of the EIGHT clauses its own §1 left pinned in the residue's
-// 2-printing band — with two instructions ahead of the build: run the VOCABULARY
-// question first (*"is the captured token a real `Card.types` value?"*, the
-// question that killed three candidates at D368), and RE-DERIVE the `needs` column
-// against the union rather than inheriting "one new member" (D199's rule, which
-// D207 paid for).
-//
-// ✅ **VOCABULARY: THE TOKEN PASSES AND ITS NEIGHBOUR FAILS** (§2).
-// `POKEMON_TYPE_BY_CODE["M"]` is `"Metal"`; `Tera` is not a `Card.types` value at
-// all (D207: every occurrence of that banner is DEMAND, the SUPPLY side absent) —
-// and *"you have any Tera Pokémon on your Bench"* is the IDENTICAL sentence one
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
-// token over, at 1 legal printing. **THE SAME TEMPLATE THAT BUYS THE ONE MUST
-// REFUSE THE OTHER**, so the refusal is a rung and not a comment.
-//
-// ✅ **`needs` RE-DERIVED, AND BOTH WIDENINGS DECLINED ON BOARDS** (§1, §5). Two
-// members come close and neither can be widened into this one: `opponentActiveHasType`
-// reads the same FIELD on the wrong body (widening it is a RENAME, and its second
-// axis turns a lookup into a quantifier), and `yourBenchHasNamed` reads the same
-// ZONE on the wrong FIELD (one vocabulary OPEN, one CLOSED).
-//
-// 🛑 **AND THE NARROW ZONE IS LOAD-BEARING IN A WAY IT IS NOT FOR THE BENCH COUNT.**
-// Both printings are on METAL attackers, so an "in play" reading would satisfy the
-// clause off the attacker's own type and make the +80 unconditional on every board.
-// It is D279's Falinks refutation with a TYPE where that one had a NAME, and §5
-// refutes it on a board — which is why `fix-benchtype` is deliberately `Metal`.
-//
-// WHAT SHIPS: 1 new `BoardCondition` member (`yourBenchHasType { type }`), its 2
-// reader arms and 1 new anchored PATTERN reusing `CLAUSE_POKEMON_TYPES` whole.
-// ZERO new vocabulary, zero new maps and zero new clause-table rows.
-//
-// ⚠️ **AND ONE THING FOUND ON THE WAY PAST, RECORDED MEASURED RATHER THAN GUESSED**
-// (§6): *"If your opponent's Active Pokémon is a {N} Pokémon, it is now
-// Paralyzed."* — **2 legal printings** — carries an antecedent this family ALREADY
-// reads and a CONSEQUENT no skeleton spells. It surfaced because a figure in §3 was
-// written at 3 and MEASURED at 5, which is the second guessed number in this file
-// to go red before it was trusted.
-
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
@@ -81,8 +39,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 
-/** The nine live readers, run as one — the same set `censusAtHead.test.ts` and
-    `opponentToolBonus.test.ts` use. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -92,36 +48,17 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
-  // 🆕🆕 D419 — the THREE readers this list never had (D381, D403, D417), written
-  // in NAME order rather than in landing order because the guard below diffs a
-  // SORTED list against the module surface.
-  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
-  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
-  // `];`, and appending moves that anchor without a character of it changing —
-  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
   deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
-  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
-  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
-  // array's LAST entries plus its closing bracket, and appending moves that anchor
-  // without a character of it changing.
   deriveAttackPreDamage,
-  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
   deriveAttackCopy,
   deriveAttackBonusConsequent,
 ];
 
-/** THE SENTENCE THIS SLICE BUYS, and the clause inside it. */
 const TAKEN = "If you have any {M} Pokémon on your Bench, this attack does 80 more damage.";
 const TAKEN_CLAUSE = "you have any {M} Pokémon on your Bench";
 
-/** THE TRAP — the identical sentence one TOKEN over, in the corpus at 1 printing,
-    and refused because `Tera` is not a type. (🆕🆕🆕 D568 — ~~refused~~: `Tera` is STILL not a
-    type, and the template still misses it — but the sentence now RESOLVES through its own
-    LITERAL row, `yourBannerPokemonOnBench { banner: "Tera" }`, because the banner has a
-    writer at last (`banners.ts`). Ho-Oh `sv08-019` "Shining Blaze". The constant keeps its
-    name: it is still the sentence one token over, and §3/§4 below now pin it RESOLVED.) */
 const TRAP = "If you have any Tera Pokémon on your Bench, this attack does 100 more damage.";
 const TRAP_CLAUSE = "you have any Tera Pokémon on your Bench";
 
@@ -140,10 +77,6 @@ function other(seat: Seat): Seat {
   return seat === "p1" ? "p2" : "p1";
 }
 
-/** `fix-benchtype` in `seat`'s Active Spot with the `{C}` paid, a 200 HP body
-    across the table, and BOTH benches EMPTY — each case then benches exactly the
-    bodies it is about. `board` opens P1's turn, so a P2 case passes once more: a
-    p1-only suite cannot tell "reads YOUR Bench" apart from "reads p1's". */
 function ready(seed: number, seat: Seat = "p1", attacker = "fix-benchtype"): GameState {
   let state = board(seed);
   if (seat === "p2") state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
@@ -168,12 +101,6 @@ function damageDealt(state: GameState, seat: Seat = "p1"): number {
   return dealt?.damage ?? 0;
 }
 
-/** TEST SURGERY, local to this file: push a card from `seat`'s deck onto the TOP
-    of bench[index]'s stack, so the benched body's IDENTITY (§1.2) is the pushed
-    card while the card underneath is unchanged. Every uid stays in exactly one
-    zone. It exists to drive the `topCardOf` read directly — a real evolution
-    needs an `evolvesFrom` chain these synthetic bodies do not carry, and the
-    reader's claim is about the stack TOP rather than about how it got there. */
 function pushOnBench(state: GameState, seat: Seat, index: number, cardId: string): GameState {
   const side = state.players[seat];
   const uid = side.deck.find((u) => state.cardIdByUid[u] === cardId);
@@ -194,177 +121,44 @@ function pushOnBench(state: GameState, seat: Seat, index: number, cardId: string
 }
 
 describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not the handoff's words", () => {
-  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
-    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
-    // it could sit short of the module indefinitely — which is precisely the state
-    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
-    // D418. A guard in another file guards that file's copy alone.
-    //
-    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
-    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
-    // off the MODULE surface, so no edit here can move a census number again. What
-    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
-    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
-    // module and from this list in the SAME commit, and the figures would then move
-    // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(attackReaderSurface()).toHaveLength(14);
   });
 
-  it("🛑 the residue steps by exactly this sentence, and the 2-printing band by exactly one", () => {
-    // D369 left the residue at 32 / 42 and pinned EIGHT clauses at 2 printings. Both
-    // figures are re-derived here off the same instrument — the nine live readers
-    // over `legalAttackCorpus()` — rather than quoted.
+  it("the residue steps by exactly this sentence, and the 2-printing band by exactly one", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 31 / 40 could not tell "the template landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    // 🆕🆕 D372 — 30 / 38 -> **28 / 36**: D372 took the CROSS-BOARD EQUAL-ENERGY
-    // clause this file's own band named among the six (`sameEnergyBonus.test.ts`),
-    // and it is printed under TWO sentences at 1 printing each — so this head falls
-    // by 2 in BOTH terms where the three slices before it fell by 1 and 2. Each
-    // earlier figure still comes back off the live head rather than being frozen.
-    // 🆕🆕 D373 — 28 / 36 -> 27 / 34: the UNIVERSAL-OVER-THE-BENCH clause left the
-    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
-    // 🆕🆕 D374 — 27 / 34 -> 26 / 32: the NAMED-ENERGY clause left the residue
-    // (1 sentence / 2 printings), re-derived live rather than decremented.
-    // 🆕🆕 D375 — 26 / 32 -> 25 / 30: the CROSS-BOARD TYPE INTERSECTION left it,
-    // the same 1:2 step, re-derived live rather than decremented.
-    // 🆕🆕 D376 — 25 / 30 -> 24 / 28: the FILTERED DISCARD-PILE THRESHOLD left the
-    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
-    // 🆕🆕 D377 — 24 / 28 -> 22 / 26: the CROSS-BOARD STATUS PAIR left this residue —
-    // TWO sentences at ONE printing each (*"…is Burned"* +40, *"…is Confused"* +90) —
-    // so the step is 2:2 rather than the 1:2 the six slices before it took. Re-derived
-    // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
-    // NUMBER: the same board fact is printed once more under the "does nothing"
-    // consequent, which is a different skeleton and a different residue.
-    // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
-    // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
-    // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
-    // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
-    // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
-    // different residue — and there it is the BIGGER half.
-    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
-    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
-    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
-    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
-    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
-    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
-    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
-    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
-    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
-    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
-    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90) —
-    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
-    // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
-    // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
-    // the emptied band (D379).
-    // 🆕🆕 D388 — 18 / 21 -> **17 / 20**: the RETREAT-COST THRESHOLD left this residue
-    // — ONE sentence at ONE printing (Talonflame `sv07-123` "Aero Chase", +110) —
-    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
-    // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
-    // still aimed at the WHOLE distribution (D379).
-    // 🆕🆕 D389 — 17 / 20 -> **16 / 19**: the OPPONENT-SEAT BENCH COUNT left this
-    // residue — ONE sentence at ONE printing (Iron Crown `sv08-132` "Deleting Slash",
-    // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
-    // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
-    // band rung is still aimed at the WHOLE distribution (D379).
-    // 🆕🆕 D390 — 16 / 19 -> **15 / 18**: the OPPONENT-SEAT TYPE READ left this
-    // residue — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit
-    // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
-    // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
-    // so every band rung is still aimed at the WHOLE distribution (D379).
-    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
-    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
-    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
-    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
-    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
-    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
-    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
-    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
-    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
-    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
-    // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) (🆕🆕🆕 **D569 −2 sentences / −2 printings — THE TWO FUTURE CLAUSES** left the bonus residue — Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher", one printing each, two literal rows over `banners.ts`; the ONE banner clause left is the Ancient "Unrelenting Onslaught", Koraidon `sv08-116`, a seat-level record — deferred.) 🆕🆕🆕 D568 -2 sentences (THE TWO TERA CLAUSES — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel Breaker", one printing each, two literal rows over `banners.ts`). // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
-    expect(units(refused)).toBe(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) (🆕🆕🆕 **D569 −2 sentences / −2 printings — THE TWO FUTURE CLAUSES** left the bonus residue — Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher", one printing each, two literal rows over `banners.ts`; the ONE banner clause left is the Ancient "Unrelenting Onslaught", Koraidon `sv08-116`, a seat-level record — deferred.) 🆕🆕🆕 D568 -2 printings (the two Tera clauses, one printing each). // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
-    // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
-    // add the sentences back rather than freezing the pair that measured them.
-    // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
-    // 2 printings (the UNIVERSAL-OVER-THE-BENCH clause).
-    // 🆕🆕 D374 — one more term on each chain, and the step is 1 sentence /
-    // 2 printings (the NAMED-ENERGY clause).
-    // 🆕🆕 D375 — one more term again, same 1:2 step (the TYPE INTERSECTION).
-    // 🆕🆕 D376 — one more term on every chain below, same 1:2 step (the FILTERED
-    // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
-    // by one sentence and two printings while the expected values stayed put — which
-    // is the point of writing them as offsets off the live head at all.
-    // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    // 🆕🆕🆕 D568 — the OFFSET gains TWO on each axis: the head moved by the two Tera clauses (Ho-Oh, Regigigas, one printing each), this one's did not.
-    // 🆕🆕🆕 D569 — every OFFSET below gains TWO on each axis: the head moved by the two Future clauses (Iron Valiant `sv05-080`, Slither Wing `sv06.5-026`, one printing each, literal rows over `banners.ts`); the earlier heads did not.
-    expect(refused.length + 23).toBe(23); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE CENSUS CLOSE-OUT** leaves the raw residue: Koraidon `sv08-116`, claimed WHOLE by a reader; Walking Wake `sv06-063` (a registry row) STAYS raw — measured 40/69.)
-    // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    // 🆕🆕🆕 D568 — the OFFSET gains TWO: the head moved by the two Tera clauses (one printing each), this one's did not.
-    expect(units(refused) + 27).toBe(27); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE CENSUS CLOSE-OUT** leaves the raw residue: Koraidon `sv08-116`, claimed WHOLE by a reader; Walking Wake `sv06-063` (a registry row) STAYS raw — measured 40/69.)
-    // 🆕🆕🆕 D568 — every EARLIER head below is re-derived from this one, so each OFFSET gains TWO (the two Tera clauses left the residue).
-    expect(refused.length + 24).toBe(24); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE CENSUS CLOSE-OUT** leaves the raw residue: Koraidon `sv08-116`, claimed WHOLE by a reader; Walking Wake `sv06-063` (a registry row) STAYS raw — measured 40/69.)
-    expect(units(refused) + 29).toBe(29); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE CENSUS CLOSE-OUT** leaves the raw residue: Koraidon `sv08-116`, claimed WHOLE by a reader; Walking Wake `sv06-063` (a registry row) STAYS raw — measured 40/69.)
-    expect(refused.length + 25).toBe(25); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE CENSUS CLOSE-OUT** leaves the raw residue: Koraidon `sv08-116`, claimed WHOLE by a reader; Walking Wake `sv06-063` (a registry row) STAYS raw — measured 40/69.)
-    expect(units(refused) + 32).toBe(32); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(refused.length + 27).toBe(27); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(units(refused) + 34).toBe(34); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(refused.length + 28).toBe(28); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(units(refused) + 36).toBe(36); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(refused.length + 30).toBe(30); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(units(refused) + 38).toBe(38); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(refused.length + 31).toBe(31); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(units(refused) + 40).toBe(40); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(refused.length + 32).toBe(32); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
-    expect(units(refused) + 42).toBe(42); // 🆕🆕🆕 D579 — the OFFSET gains ONE on each axis: the head moved by Koraidon `sv08-116` (one printing), this one did not.
+    expect(refused.length).toBe(0);
+    expect(units(refused)).toBe(0);
+    expect(refused.length + 23).toBe(23);
+    expect(units(refused) + 27).toBe(27);
+    expect(refused.length + 24).toBe(24);
+    expect(units(refused) + 29).toBe(29);
+    expect(refused.length + 25).toBe(25);
+    expect(units(refused) + 32).toBe(32);
+    expect(refused.length + 27).toBe(27);
+    expect(units(refused) + 34).toBe(34);
+    expect(refused.length + 28).toBe(28);
+    expect(units(refused) + 36).toBe(36);
+    expect(refused.length + 30).toBe(30);
+    expect(units(refused) + 38).toBe(38);
+    expect(refused.length + 31).toBe(31);
+    expect(units(refused) + 40).toBe(40);
+    expect(refused.length + 32).toBe(32);
+    expect(units(refused) + 42).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
       byClause.set(clause, (byClause.get(clause) ?? 0) + n);
     }
-    // 🆕🆕 D372 — FIVE at 2 printings now: this file left SIX and D372 bought the
-    // CROSS-BOARD EQUAL-ENERGY one out of them. The list is spelled out so a
-    // successor inherits the tie-break MEASURED. Every one of them is a different
-    // mechanism.
-    // 🆕🆕 D374 — FOUR -> THREE: D374 bought the NAMED-ENERGY clause out of the band,
-    // and the list is re-derived live rather than edited down.
-    // 🆕🆕 D375 — THREE -> TWO: the CROSS-BOARD TYPE INTERSECTION was bought out of
-    // it, and this file's §5 is where its dual-type refutation lives.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
-    // 🆕🆕 D376 — TWO -> ONE: the FILTERED DISCARD-PILE THRESHOLD was bought out of
-    // the band (`basicEnergyDiscard.test.ts`), and the ONE survivor is the expensive
-    // one D374's handoff already priced — *"this Pokémon was healed during this turn"*
-    // needs a per-turn HEALED flag on the state, which is a persisted-shape change and
-    // therefore a `MATCH_RECORD_VERSION` bump on top of the engine bump.
-    // 🆕🆕 D386 — ONE -> ZERO: the healed-this-turn clause was bought out of the band
-    // (`healedThisTurn.test.ts`), and THE 2-PRINTING BAND IS NOW EMPTY. 🛑 D379's
-    // SATURATION SHAPE — an emptied population cannot go red for the reason that
-    // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
-    // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
-    // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]); // 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
-    // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
-    // the ONLY band that moved. The 2-printing band was already empty and stays empty,
-    // and the refusal is still driven from OUTSIDE it.
-    // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
-    // which is the ONLY band that moved. The 2-printing band was already empty and stays
-    // empty, and the refusal is still driven from OUTSIDE it.
-    // 🆕🆕 D389 — 16 -> **15**: the OPPONENT-SEAT BENCH COUNT left the 1-printing band.
-    // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left it too, and the
-    // 1-printing band is again the ONLY band that moved. The 2-printing band was
-    // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
-    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(0); // (🆕🆕🆕 **D579 −1 sentence / −1 printing — THE BONUS RESIDUE IS EMPTY**: its last clause, Koraidon `sv08-116` "Unrelenting Onslaught", is a literal `CONDITIONAL_DAMAGE_CLAUSES` row over the new seat-level `GameState.recentAttackers` — an honest 0, asserted, never a vacuous loop.) 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred). // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);
+    expect(byClause.size).toBe(0);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);
@@ -372,37 +166,15 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     expect(band.length + 6).toBe(6);
     expect(band.length + 7).toBe(7);
     expect(band.length + 8).toBe(8);
-    // The 5-printing declaration clause D368 disqualified on SHAPE is still the
-    // largest thing in the residue and still refused, so nothing here re-priced it.
-    // 🆕🆕 **D436 — 5 → 1: THE DECLARATION CLAUSE LEFT AND THE RESIDUE IS FLAT.** The
-    // paragraph above is right about the SHAPE and D436 does not contradict it: no
-    // `BoardCondition` answers *"in addition to this attack's cost"*, and none does
-    // now. The sentence is claimed by a `DamageCountSource` instead, whose fold runs
-    // inside `attack()` where the declared cost is a local. ⚠️ **A REFUSAL SCOPED TO
-    // ONE VOCABULARY IS NOT A REFUSAL OF THE SENTENCE.** The rung is kept and inverted
-    // rather than deleted (D418): a FLAT maximum reddens the moment any clause returns
-    // above one printing, which is the direction that still matters.
-    // 🆕🆕🆕 D579 — the BAND IS EMPTY now (Koraidon `sv08-116`, its last clause, is a literal row): `Math.max()` over no values is `-Infinity`, so the flat-maximum claim is restated as the emptiness it now is — asserted, never a vacuous pass (D480/D419); a clause returning at ANY printing count reddens it.
     expect([...byClause.values()]).toEqual([]);
   });
 
   it("the taken sentence is 2 legal printings, and that is ALL of them", () => {
     expect(units(corpus().filter(([, s]) => s === TAKEN))).toBe(2);
-    // ONE record, because the corpus is a `GROUP BY` over distinct sentences.
     expect(corpus().filter(([, s]) => s === TAKEN)).toHaveLength(1);
-    // ⚠️ THE IDS BEHIND THOSE TWO PRINTINGS ARE NOT RECORDED, DELIBERATELY — D369's
-    // finding, unchanged: this container has no D1 credentials (`bunx wrangler d1
-    // execute` returns `CLOUDFLARE_API_TOKEN` unset), so they could not be read and
-    // are NOT guessed. Nothing on this path needs them: a TEMPLATE is keyed on the
-    // printed shape, so it serves every printing of it in every set — and the other
-    // ten types the day one is printed.
   });
 
-  it("🛑 the `needs` column: NO existing member answers this, and the two near ones DISAGREE", () => {
-    // D199's rule, driven rather than listed. ONE board — a Metal body on your
-    // Bench, a Colorless body across the table — and the three members that read
-    // either the FIELD or the ZONE this one needs. Each answers a different
-    // question, and the answers separate on this board.
+  it("the `needs` column: NO existing member answers this, and the two near ones DISAGREE", () => {
     const state = benched(ready(6300), "p1", "fix-metalbody");
     expect(conditionHolds(state, "p1", METAL)).toBe(true);
     // Same FIELD, wrong body: the opponent's Active is `fix-bigbody`, Colorless.
@@ -422,10 +194,7 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
 });
 
 describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neighbour fails", () => {
-  it("🛑 `{M}` resolves to a real `Card.types` value and `Tera` resolves to nothing", () => {
-    // The question D369 ordered ahead of the build, answered in the one line it
-    // takes. `POKEMON_TYPE_BY_CODE` is the map D234 built and D367 spread into
-    // `CLAUSE_POKEMON_TYPES`, so this is the SAME vocabulary the template consults.
+  it("`{M}` resolves to a real `Card.types` value and `Tera` resolves to nothing", () => {
     expect(POKEMON_TYPE_BY_CODE.M).toBe("Metal");
     expect((POKEMON_TYPES as readonly string[]).includes("Metal")).toBe(true);
     // …and the banner sitting one token away is not in it, in EITHER notation.
@@ -433,9 +202,7 @@ describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neig
     expect(Object.values(POKEMON_TYPE_BY_CODE)).not.toContain("Tera");
   });
 
-  it("🛑 both sentences are REAL and in the corpus — the trap is printed, not invented", () => {
-    // The refusal below is worth something only because the catalog prints the
-    // sentence it refuses. Both are here, one at 2 printings and one at 1.
+  it("both sentences are REAL and in the corpus — the trap is printed, not invented", () => {
     expect(units(corpus().filter(([, s]) => s === TAKEN))).toBe(2);
     expect(units(corpus().filter(([, s]) => s === TRAP))).toBe(1);
     // And they are the WHOLE population of this clause shape: the template's
@@ -446,15 +213,7 @@ describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neig
     expect(shaped.map(([, s]) => s).sort()).toEqual([TRAP, TAKEN].sort());
   });
 
-  it("🛑 D568 FLIPPED THE TRAP: the MAP still refuses `Tera` as a TYPE, and a LITERAL row now reads the sentence", () => {
-    // THE DISTINCTION THAT MAKES THIS A RUNG. The template MATCHES the trap
-    // sentence — it is the same shape — and the capture then misses the vocabulary.
-    // ~~So the sentence falls through to null and stays on the loud
-    // ATTACK_EFFECT_SKIPPED path, rather than deriving a bonus that can never pay.~~
-    // 🆕🆕🆕 D568 (D539) — WITHDRAWN for Tera: the bonus CAN pay now — `banners.ts` is the
-    // writer the refusal said was missing — so the clause resolves through its own literal
-    // `CONDITIONAL_DAMAGE_CLAUSES` row (pass ONE, ahead of this template). What stays true
-    // is the part below: `Tera` is not a TYPE, and `CLAUSE_POKEMON_TYPES` still misses it.
+  it("D568 FLIPPED THE TRAP: the MAP still refuses `Tera` as a TYPE, and a LITERAL row now reads the sentence", () => {
     expect(BONUS.test(TRAP)).toBe(true);
     expect(deriveAttackDamageBonus(TRAP)).toEqual({
       per: 100,
@@ -463,10 +222,6 @@ describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neig
     expect(resolvedByAnyReader(TRAP)).toBe(true);
     // …while the taken sentence, one token over, resolves.
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
-    // A `(Grass|Fire|…)` alternation in the pattern would give the same answer here
-    // TODAY and rot the day a type is added to the schema. That the refusal is the
-    // MAP's is what this asserts: every one of the eleven types resolves, in BOTH
-    // notations, off the same pattern that just refused `Tera`.
     for (const type of POKEMON_TYPES) {
       expect(
         deriveAttackDamageBonus(
@@ -513,16 +268,9 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
     ).toBeNull();
   });
 
-  it("🛑 `conditionNote` is NOT the clause key — and re-derives to the member anyway", () => {
-    // D118's rule: the note spells the prose NAME, because a reject pill and a HUD
-    // tooltip are read off the board by a person and `{M}` is a card-face glyph. So
-    // this note does NOT round-trip to the printed bytes…
+  it("`conditionNote` is NOT the clause key — and re-derives to the member anyway", () => {
     expect(conditionNote(METAL)).toBe("you have any Metal Pokémon on your Bench");
     expect(conditionNote(METAL)).not.toBe(TAKEN_CLAUSE);
-    // …and it DOES round-trip to the same MEMBER, through the map's spelled-out
-    // half. **THIS PROPERTY DID NOT EXIST BEFORE D367**, which taught
-    // `CLAUSE_POKEMON_TYPES` the brace notation: before it, the note's re-derivation
-    // would have missed and the sentence gone LOUD.
     expect(
       deriveAttackDamageBonus(`If ${conditionNote(METAL)}, this attack does 80 more damage.`)
         ?.count,
@@ -539,19 +287,10 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
     }
   });
 
-  it("🛑 the SIBLING template's note was found NOT round-tripping to the bytes either", () => {
-    // The stale comment this slice corrected, asserted rather than described.
-    // `conditionNote`'s `opponentActiveHasType` arm claimed the note "round-trips to
-    // the printed clause … the type word is the same token the sentence carried in".
-    // D367 falsified that by teaching the map brace codes, and the catalog prints
-    // THREE legal printings that show it.
+  it("the SIBLING template's note was found NOT round-tripping to the bytes either", () => {
     const bracePrinted = corpus().filter(([, s]) =>
       /^If your opponent's Active Pokémon is a \{[A-Z]\} Pokémon, /.test(s),
     );
-    // FIVE printings carry the brace-coded antecedent, and only THREE of them are
-    // under this consequent — a figure this rung was written at 3 and MEASURED at 5,
-    // which is the second time in this file a guessed number went red before it was
-    // trusted. The other two are §6's finding.
     expect(units(bracePrinted)).toBe(5);
     const braceBonus = bracePrinted.filter(([, s]) => BONUS.test(s.trim()));
     expect(units(braceBonus)).toBe(3);
@@ -581,9 +320,6 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
     // The braces are the catalog's notation and are NOT regex syntax here — the
     // capture is `(.+)` and the map holds the literal `{M}`.
     expect(TAKEN_CLAUSE).toContain("{M}");
-    // NO apostrophe anywhere in this sentence, which is why `literalClauseRow`'s
-    // fold is not on this path at all: the template is handed the RAW clause and
-    // carries no `['’]` slot because there is nothing to class (D137's separation).
     expect(TAKEN).not.toContain("'");
     expect(TAKEN).not.toContain("’");
   });
@@ -591,8 +327,6 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
 
 describe("§4 — the near-misses stay LOUD, and the siblings are untouched", () => {
   it("refuses CONSTRUCTED rewrites of the clause — the shape is char-for-char", () => {
-    // 🆕🆕🆕 D568 — the TRAP left this list (it resolves through its literal row now, §3);
-    // the TYPE reading of it is still refused, which §3's `POKEMON_TYPES` rungs pin.
     expect(TRAP_CLAUSE).toBe("you have any Tera Pokémon on your Bench");
     for (const clause of [
       // Not a type at all, and each of these is a real printed word elsewhere.
@@ -613,7 +347,6 @@ describe("§4 — the near-misses stay LOUD, and the siblings are untouched", ()
       "you have any {M} Pokemon on your Bench",
       // The brace stripped — `M` alone is not a key in either half of the map.
       "you have any M Pokémon on your Bench",
-      // An ENERGY notation borrowed onto a body: D118's clause reads "Energy".
       "you have any {M} Energy on your Bench",
     ]) {
       expect(
@@ -640,10 +373,7 @@ describe("§4 — the near-misses stay LOUD, and the siblings are untouched", ()
     }
   });
 
-  it("🛑 the two SIBLING templates still answer their own sentences — nothing was re-pointed", () => {
-    // The clause pattern was appended LAST, and the three patterns are mutually
-    // exclusive at their anchors. Both siblings are driven here so "appended last"
-    // is a measured fact rather than a claim about ordering.
+  it("the two SIBLING templates still answer their own sentences — nothing was re-pointed", () => {
     expect(
       deriveAttackDamageBonus(
         "If this Pokémon has any {R} Energy attached, this attack does 90 more damage.",
@@ -666,8 +396,6 @@ describe("§4 — the near-misses stay LOUD, and the siblings are untouched", ()
         cond: { kind: "opponentActiveHasType", type: "Dragon" },
       },
     });
-    // …and the LITERAL table still wins first: the Bench clause keyed by NAME is a
-    // row, and this template's anchor cannot reach it.
     expect(
       deriveAttackDamageBonus("If Durant is on your Bench, this attack does 20 more damage."),
     ).toEqual({
@@ -690,11 +418,7 @@ describe("§5 — driven on boards: the Bench decides it, and the ACTIVE SPOT ne
     expect(damageDealt(state)).toBe(10);
   });
 
-  it("🛑 THE ATTACKER IS ITSELF {M} AND ARMS NOTHING — 'Bench' is not 'in play'", () => {
-    // THE BOARD THIS WHOLE FIXTURE EXISTS FOR, and D279's Falinks refutation with a
-    // TYPE instead of a NAME. `fix-benchtype` is Metal and is in the ACTIVE SPOT
-    // with an EMPTY Bench: an `[side.active, ...side.bench]` reading would be TRUE
-    // and the +80 would be unconditional on every board this card ever sees.
+  it("THE ATTACKER IS ITSELF {M} AND ARMS NOTHING — 'Bench' is not 'in play'", () => {
     const alone = ready(6312);
     const topUid = alone.players.p1.active?.stack.at(-1) ?? "";
     expect(alone.cardIdByUid[topUid]).toBe("fix-benchtype");
@@ -708,10 +432,7 @@ describe("§5 — driven on boards: the Bench decides it, and the ACTIVE SPOT ne
     expect(damageDealt(paired)).toBe(90);
   });
 
-  it("🛑 a DUAL-TYPED body arms it — `.includes`, never `types[0] ===`", () => {
-    // `fix-dualbody` is `["Water", "Metal"]`, so an equality on the first element
-    // answers Water and misses. Dual types are a real printing and the union member
-    // says so; nothing but this board can tell the two readings apart.
+  it("a DUAL-TYPED body arms it — `.includes`, never `types[0] ===`", () => {
     const state = benched(ready(6314), "p1", "fix-dualbody");
     expect(state.players.p1.bench[0]).toBeDefined();
     expect(conditionHolds(state, "p1", METAL)).toBe(true);
@@ -743,7 +464,7 @@ describe("§5 — driven on boards: the Bench decides it, and the ACTIVE SPOT ne
     expect(damageDealt(state)).toBe(90);
   });
 
-  it("🛑 the identity is the STACK TOP (§1.2) — an evolved body stops arming it", () => {
+  it("the identity is the STACK TOP (§1.2) — an evolved body stops arming it", () => {
     // `yourBenchHasNamed`'s rule, on the type field. A Metal body with a Fairy card
     // pushed on top is a FAIRY Pokémon; reading `stack[0]` would still answer Metal.
     let state = benched(ready(6318), "p1", "fix-metalbody");
@@ -755,7 +476,7 @@ describe("§5 — driven on boards: the Bench decides it, and the ACTIVE SPOT ne
     expect(damageDealt(state)).toBe(10);
   });
 
-  it("🛑 it reads the OPPONENT's Bench as FALSE — the seat is half the member", () => {
+  it("it reads the OPPONENT's Bench as FALSE — the seat is half the member", () => {
     // A Metal body on the OTHER side of the table arms nothing. Without this the
     // predicate could be reading "either Bench" and every case above would pass.
     const state = benched(ready(6319), "p2", "fix-metalbody");
@@ -786,40 +507,12 @@ describe("§5 — driven on boards: the Bench decides it, and the ACTIVE SPOT ne
 });
 
 describe("§6 — the census, and a 2-printing sentence this slice found on the way past", () => {
-  it("🛑 the corpus totals STAND STILL — this slice adds no catalog row", () => {
-    // The population is a committed transcription and this slice does not touch it.
-    // Asserted here because every figure in §1 is a fraction of it: a corpus that
-    // moved would make the residue step look like a reader change.
+  it("the corpus totals STAND STILL — this slice adds no catalog row", () => {
     expect(corpus().length).toBe(640);
     expect(units(corpus())).toBe(1732);
   });
 
-  it("🛑 THE ANTECEDENT THIS FAMILY ALREADY READS IS PRINTED UNDER A CONSEQUENT D472 BUILT", () => {
-    // Found by widening §3's regex past the bonus skeleton, and it is the kind of
-    // thing a successor should inherit MEASURED. *"If your opponent's Active Pokémon
-    // is a {N} Pokémon, it is now Paralyzed."* — **2 legal printings** — carries the
-    // SAME antecedent `OPPONENT_ACTIVE_TYPE_CLAUSE` has read since D120 and `{N}` is
-    // a vocabulary entry `POKEMON_TYPE_BY_CODE` has held since D234 (`N` → Dragon).
-    // What it lacked was a CONSEQUENT: no skeleton in this family spelled
-    // *"…, it is now <Special Condition>."*, so all thirteen readers refused it.
-    //
-    // 🆕🆕 **D472 BUILT IT, AND THIS RUNG IS RE-POINTED RATHER THAN DELETED OR
-    // FLIPPED TO A BOOLEAN (D418/D438/D444/D447).** The old rung was
-    // `resolvedByAnyReader(…) === false` — a THIRTEEN-WAY refusal that reddens if any
-    // one of thirteen readers is ever widened onto this string. Re-pointing it to
-    // `=== true` would have discarded all thirteen at once, because that claim is
-    // satisfied by a mistaken widening and by the real build alike: **that is exactly
-    // how D436 disarmed D368's tripwire and produced this run's only GAP.** So the
-    // replacement is D438's: name the OWNER by name AND keep the other twelve
-    // refusing, which is strictly stronger in both directions than either boolean.
-    //
-    // ⚠️ **THE PRICE PARAGRAPH THAT STOOD HERE WAS RIGHT AND IS KEPT AS THE RECORD OF
-    // A PREDICTION (D466).** It said *"a status consequent is a different reader with
-    // its own anchor"* — it is one anchor and one arm on `deriveAttackEffect`, so the
-    // reader was named correctly and the surface still stands still at 13 — and it
-    // said the ANTECEDENT half costs zero new vocabulary, which is what made the row
-    // cheap: `boardConditionForClause` resolves the whole clause and D472 adds no map
-    // row, no `BoardCondition` member and no type token.
+  it("THE ANTECEDENT THIS FAMILY ALREADY READS IS PRINTED UNDER A CONSEQUENT D472 BUILT", () => {
     const statusFamily = corpus().filter(([, s]) =>
       /^If your opponent's Active Pokémon is a .+ Pokémon, it is now /.test(s),
     );
@@ -839,9 +532,6 @@ describe("§6 — the census, and a 2-printing sentence this slice found on the 
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
-    // …AND THE TWELVE REFUSALS THE OLD BOOLEAN CARRIED, KEPT. Every reader other than
-    // the one named above still returns null on it, so a second reader widening onto
-    // this string reddens here exactly as it would have before D472.
     for (const read of READERS) {
       if (read === deriveAttackEffect) continue;
       expect(read(printed)).toBeNull();

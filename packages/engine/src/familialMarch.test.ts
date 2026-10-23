@@ -12,126 +12,9 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// ── D339 — MAUSHOLD `sv08-158` "FAMILIAL MARCH", THE SIXTH AND LAST PRINTING OF
-//    *"search … in any combination of"*. THIS ROW CLOSES THE GRAMMAR. ──────────
-//
-// ── THE PRINTED SENTENCE ────────────────────────────────────────────────────
-//   "Search your deck for **up to 2 in any combination of Maushold and Maushold
-//    ex** and put them onto your Bench. Then, shuffle your deck."
-//   ATTACK index 0, cost {C}, no printed damage. **1 Standard-legal printing.**
-//
-// ── THE CENSUS, RE-RUN AT THIS HEAD OVER ALL THREE TEXT COLUMNS ─────────────
-// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
-// `legal_standard`) on 2026-08-15 rather than inherited from the work order, at
-// two widths and two word orders, and every per-column split re-added against its
-// own total.
-//
-//   (a) THE JOINER — `instr(<col>,'in any combination of') > 0`:
-//         `effect`         15 rows / 10 legal
-//         `attacks_json`    4 rows /  3 legal
-//         `abilities_json`  0 rows /  0 legal
-//       TOTAL 19 printings / 13 legal.  15 + 4 + 0 = 19 ✅  10 + 3 + 0 = 13 ✅
-//
-//   (b) THE GRAMMAR — the joiner UNDER THIS VERB, which is the population that
-//       matters: `instr(<col>,'Search your deck for up to') > 0 AND
-//       instr(<col>,'any combination') > 0`:
-//         `effect`          3 rows / 3 legal — Ethan's Adventure ×3 (BUILT, D337)
-//         `attacks_json`    3 rows / 3 legal — Heatmor ×2 (BUILT, D338),
-//                                              Maushold ×1 (**THIS ROW**)
-//         `abilities_json`  0 rows / 0 legal
-//       TOTAL 6 printings / 6 legal.  3 + 3 + 0 = 6 ✅
-//
-// 🛑 **(a) MINUS (b) IS THE FINDING, AND IT IS WHY THE WIDE NET IS NOT THE
-//    GRAMMAR.** Twelve of the `effect` column's fifteen carry the joiner under a
-//    DIFFERENT VERB — `Put up to 4 …` (Roxanne-shaped discard retrieval), `Shuffle
-//    up to 3 …`, `Look at the top 7 …`, and `sv10-182`'s *"it provides 2 in any
-//    combination of {P} Energy and {D} Energy"*, which is not a retrieval at all.
-//    And `attacks_json`'s fourth row is `sv03-098` *"Put up to 2 in any combination
-//    of Item cards and Pokémon Tool cards **from your discard pile**"*, which is
-//    both a different verb and `legal_standard = 0`. **THE VERB IS THE GRAMMAR;
-//    THE JOINER IS NOT.** A census keyed on the joiner alone would have reported
-//    13 legal printings for a family with 6.
-//
-// ✅ **SO THE GRAMMAR CLOSES AT 6 OF 6 WITH THIS ROW.** 3 built at D337 + 2 built
-//    at D338 + 1 here = 6, and (b) says there is no seventh legal printing in any
-//    of the three text columns. **After this row the family has no unbuilt legal
-//    printing left**, which is asserted as arithmetic in §7 rather than claimed.
-//
-//   (c) THE ATTACKER, measured rather than assumed — `sv08-158` carries
-//       `legal_standard = 1`, `category = 'Pokemon'`, `stage = 'Stage1'`,
-//       `evolve_from = 'Tandemaus'`, `types_json = ["Colorless"]`,
-//       `abilities_json IS NULL`, `effect IS NULL`, `length(attacks_json) = 324`.
-//       So no ability reader, no trainer reader and no Energy reader can see this
-//       sentence at all, and `BUILT.ability` (249), `BUILT.trainer` (105) and
-//       `BUILT.specialEnergy` (8) stand still as a MEASUREMENT and not a guess.
-//
-// ── 🛑 THE SUMMAND THIS ROW MOVES, AND WHAT IT IS KEYED ON ──────────────────
-// `BUILT.attack` = **1,164 raw + 15 registry + 13 split = 1,192** at head, and all
-// three summands were RE-DERIVED by opening their authorities rather than taken
-// from the work order (D338 was handed a raw summand twelve decisions stale, so
-// this is now the standing cost of entry). This handoff's three were ACCURATE.
-//
-// THIS ROW MOVES THE **REGISTRY** SUMMAND, **KEYED ON THE REGISTRY**: 15 → **16**,
-// so `BUILT.attack` 1,192 → **1,193**.
-//   * the RAW summand CANNOT move — `rawUnitsAtHead()` runs the `deriveAttack*`
-//     readers LIVE over the committed legal corpus with `programFor` nowhere in
-//     the addition (D307/D315), so an authored row buys it no printings at all;
-//   * the SPLIT summand CANNOT move — this sentence carries no gate clause, so
-//     `splitAttackGateClause` returns null and it never enters that loop.
-//   `1,164 + 16 + 13 = 1,193` ✅, re-added from the parts rather than incremented.
-//
-// ⚠️ **AND THE DERIVER STILL REFUSES THE SENTENCE, WHICH IS THE MECHANISM AND NOT
-// A CONTRADICTION.** `derivedBenchSearch.test.ts`'s `DEFERRED` names this very id
-// and asserts `deriveAttackEffect(text) === null`, never `programFor(id) ===
-// undefined`. D314's distinction: *"refused by the deriver"* and *"unbuilt"* have
-// never been the same claim, and the refusal is exactly what keeps the registry
-// summand disjoint from the raw one. §7 asserts BOTH halves on this id.
-//
-// ── 🛑 IT LANDS IN `NOT_REVEALING`, NOT `REVEALING` ─────────────────────────
-// The print puts the cards onto the BENCH and carries NO reveal clause — a bench
-// move is public by the move itself, which is that table's stated rule. So
-// `revealClause.test.ts` moves its OTHER table for the first time in this run of
-// slices: `NOT_REVEALING` 10 → **11**, `REVEALING` stands still at **28**, and
-// `classified.size` 38 → **39** off the union (`28 + 11 = 39` ✅).
-// ⚠️ **THE HANDOFF SAID `classified.size` WAS "28 → 29" AND IT IS 38 → 39** — 28
-// is `REVEALING.length`, and the union of a 28-row table with an 11-row one cannot
-// be 29. Caught by opening `revealClause.test.ts:563` instead of trusting the
-// number. §2 drives the absence of `reveal` on the op so the table placement is a
-// DRIVEN fact rather than a filing decision.
-//
-// ── 🛑 WHY THIS FILE DRIVES A **LOCAL** POOL, AND WHY IT HAD NO CHOICE ──────
-// The handoff flagged that **`Maushold ex` has no Standard-legal printing**
-// (`sv04-155`/`sv04-233`, both `legal_standard = 0`). ✅ Confirmed — and querying
-// all eight Maushold-family printings found it understated:
-//   `Maushold`    `sv01-161`, `sv02-168`, `sv02-226`, `sv04.5-074`, `sv04.5-210`
-//                 — ALL `legal_standard = 0`
-//   `Maushold`    `sv08-158` — `legal_standard = 1`  ← **the attacker itself**
-//   `Maushold ex` `sv04-155`, `sv04-233` — BOTH `legal_standard = 0`
-// **`sv08-158` IS THE ONLY STANDARD-LEGAL `Maushold` IN THE CATALOG, SO NEITHER
-// MEMBER OF THE UNION HAS A LEGAL BODY OTHER THAN THE ATTACKING CARD.** The filter
-// is authored because the card prints it; the cast is LOCAL (D275's idiom) because
-// there is nothing legal to reach for. **That is a census decision, not a tidiness
-// one**: `sv08` is not among `catalogManifest`'s six sets, so a shared-pool body
-// would owe a `fix-*` demonstrator key AND redden `revealClause`'s `swept.size`.
-// Nothing enters `FIXTURE_POOL`, so `swept.size` stands still at **27** and
-// `raw.length` steps by the ONE catalog id alone (668 → **669**).
-// 🛑 **D343 — THE `swept.size` HALF OF THAT SENTENCE NO LONGER FOLLOWS.** The
-// sweep's population was `FIXTURE_POOL` and is now `registryCardIds()` ∪ the
-// pool; `swept.size` is **103**. Maushold `sv08-158` IS a registry id, so this
-// suite's row is swept today whether or not it seats a shared body — staying out
-// of the pool stopped being the thing that keeps that number still. The
-// `raw.length` half and the `catalogManifest` half are untouched.
-//
-// ── THE CAST, AND THE PAIR OF CASES THAT IS THE WHOLE ROW ───────────────────
-// 🛑 **"Maushold ex" CONTAINS "Maushold" AS A PREFIX.** That is the sharpest fact
-// in this file and the reason the disjunction is printed at all: if `byName` were
-// a prefix or substring match, `byName{Maushold}` would ALREADY take every
-// `Maushold ex`, the second member would be dead weight, and a build that dropped
-// it would be INVISIBLE on every board. §4 drives exactness in BOTH directions —
-// `byName{Maushold}` must refuse "Maushold ex", and `byName{Maushold ex}` must
-// refuse "Maushold" — so neither member can be deleted without a red line.
 
 const MAUSHOLD = "sv08-158";
 const PRINTED =
@@ -172,13 +55,6 @@ const LOCAL_CARDS: Record<string, Card> = {
     stage: "Stage1",
     evolveFrom: "Tandemaus",
   }),
-  /** 🛑 THE SECOND MEMBER, and the card with no Standard-legal printing anywhere
-      in the catalog (`sv04-155`/`sv04-233` are both `legal_standard = 0`), which
-      is exactly why it is driven from a LOCAL body. **ADMITTED** by the second
-      member and **REFUSED** by the first — its name is a strict extension of
-      "Maushold", so it is the card that proves `byName` is exact and not a prefix
-      match. Delete the second member from the program and this body stops being
-      reachable; make `byName` a prefix match and it becomes reachable TWICE. */
   [MAUSHOLD_EX]: battler(MAUSHOLD_EX, {
     name: "Maushold ex",
     hp: 260,
@@ -187,22 +63,12 @@ const LOCAL_CARDS: Record<string, Card> = {
     stage: "Stage1",
     evolveFrom: "Tandemaus",
   }),
-  /** The PRE-EVOLUTION, and the near miss a "search the family" build would take.
-      **REFUSED** — the card names two cards, not an evolution line, and
-      `evolveFrom: "Tandemaus"` on both members is a property of the TARGETS rather
-      than of the filter. Without this body, "the names were read" and "the family
-      was read" are the same board. */
   [TANDEMAUS]: battler(TANDEMAUS, {
     name: "Tandemaus",
     hp: 60,
     retreat: 1,
     types: ["Colorless"],
   }),
-  /** 🛑 THE OTHER DIRECTION OF THE EXACTNESS CLAIM. A name that strictly CONTAINS
-      "Maushold" as a prefix but is neither printed name. **REFUSED by both
-      members.** `MAUSHOLD_EX` catches a prefix match that admits too much on the
-      first member; this catches one that admits too much on EITHER, including a
-      `startsWith` that someone "fixed" by special-casing the " ex" suffix. */
   [MAUSHOLDER]: battler(MAUSHOLDER, {
     name: "Mausholder",
     hp: 90,
@@ -242,25 +108,11 @@ const DECK = deckOf({
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
 function find<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
   type: T,
 ): Extract<GameEvent, { type: T }> | undefined {
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -368,13 +220,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     expect(programFor(MAUSHOLD)).toBeDefined();
   });
 
-  it("🛑 the program is `anyOf` of TWO `byName`s under a FLAT cap — exact, `toEqual`", () => {
-    // 🛑 THE WHOLE ROW IN ONE ASSERTION, AND IT IS EXACT ON PURPOSE. `toEqual`
-    // means an added `also` (one cap PER noun — D336), an added `reveal`, an added
-    // `stage` rider or a swapped `dest` goes red HERE rather than four cases down
-    // in some subtle answer. The two members are `byName` and NEITHER carries
-    // `cardNoun`: both name POKÉMON and print bare, which is Flamigo's rule (D200)
-    // — `cardNoun: true` is for the Item-shaped nouns (Arven's Sandwich).
+  it("the program is `anyOf` of TWO `byName`s under a FLAT cap — exact, `toEqual`", () => {
     expect(programFor(MAUSHOLD)?.attack?.[0]).toEqual([
       {
         op: "searchDeck",
@@ -393,31 +239,15 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
   });
 
   it("INDEX-PRECISE — index 1 'Incessant Incisors' is unclaimed", () => {
-    // Eldegoss's rule at D314, Heatmor's at D338. Index 1 is a coin-scaled body
-    // ("Flip 4 coins. This attack does 30 damage for each heads.", `damage: "30×"`)
-    // and contributes zero attack units; claiming the whole id instead of one index
-    // inflated an intermediate result by 1 at D187 before it was caught.
     expect(programFor(MAUSHOLD)?.attack?.[0]).toBeDefined();
     expect(programFor(MAUSHOLD)?.attack?.[1]).toBeUndefined();
   });
 
   it("the row authors an ATTACK and NOTHING else — the key set, not six slices of habit", () => {
-    // 🛑 THIS IS WHAT KEEPS THE ROW OUT OF `nonAttackRegistryIds()` (525, unmoved).
-    // `censusAtHead`'s `some(key !== "attack")` filter drops it into
-    // `attackRegistryIds()` alone. D332-D337's six trainer slices all moved the
-    // non-attack pool; this one and D338's do not, and the reason is the KEY SET.
     expect(Object.keys(programFor(MAUSHOLD) ?? {})).toEqual(["attack"]);
   });
 
-  // ── §2 🛑 NO `reveal` — THE CLAIM THAT PUTS IT IN `NOT_REVEALING` ──────────
-
-  it("🛑 the op carries NO `reveal` key at all — DRIVEN, not filed", () => {
-    // The print says "put them onto your Bench" and prints no reveal clause: a
-    // bench move is public by the move itself. `revealClause.test.ts` files this id
-    // in `NOT_REVEALING` (10 → 11) and NOT in `REVEALING` (28, unmoved), and this
-    // is the assertion that makes that placement a DRIVEN fact rather than a
-    // filing decision. `toHaveProperty` is the sharp form: `reveal: false` would
-    // pass a truthiness check and fail this one.
+  it("the op carries NO `reveal` key at all — DRIVEN, not filed", () => {
     const op = programFor(MAUSHOLD)?.attack?.[0]?.[0];
     expect(op).not.toHaveProperty("reveal");
   });
@@ -436,14 +266,11 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
   });
 
   it("the prompt's destination is the BENCH, not the hand", () => {
-    // D337's and D338's sentences both end "into your hand"; this one ends "onto
-    // your Bench", and `chooseCards.dest` has carried "bench" since the search
-    // family. A `dest` typo would be invisible until a card actually moved.
     const { prompt } = attack(board(3));
     expect(prompt.dest).toBe("bench");
   });
 
-  it("🛑 takes TWO `Maushold` and nothing else — one extreme of the combination", () => {
+  it("takes TWO `Maushold` and nothing else — one extreme of the combination", () => {
     const state = board(4);
     const { parked } = attack(state);
     const picks = deckUids(parked, MAUSHOLD_BODY).slice(0, 2);
@@ -452,7 +279,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     expect(benchIds(after, "p1")).toEqual([FILLER, MAUSHOLD_BODY, MAUSHOLD_BODY]);
   });
 
-  it("🛑 takes TWO `Maushold ex` and nothing else — the union's other extreme", () => {
+  it("takes TWO `Maushold ex` and nothing else — the union's other extreme", () => {
     const state = board(5);
     const { parked } = attack(state);
     const picks = deckUids(parked, MAUSHOLD_EX).slice(0, 2);
@@ -461,11 +288,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     expect(benchIds(after, "p1")).toEqual([FILLER, MAUSHOLD_EX, MAUSHOLD_EX]);
   });
 
-  it("🛑 takes a MIXTURE — one of each, the printed 'combination'", () => {
-    // 🛑 THE ANSWER THAT IS THE ROW. One cap PER NOUN (`also`, D336) would still
-    // admit this take, but the two 2/0 takes above would be refused; a flat cap
-    // over a union admits all three. This case plus the two above is what separates
-    // the two spellings, which is why none of them can be dropped.
+  it("takes a MIXTURE — one of each, the printed 'combination'", () => {
     const state = board(6);
     const { parked } = attack(state);
     const picks = [deckUids(parked, MAUSHOLD_BODY)[0], deckUids(parked, MAUSHOLD_EX)[0]].filter(
@@ -505,23 +328,14 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     expect(result.ok).toBe(false);
   });
 
-  // ── §4 🛑 EXACTNESS IN BOTH DIRECTIONS — THE PAIR THAT IS THE WHOLE ROW ────
-
-  it("🛑 `byName{Maushold}` REFUSES 'Maushold ex' — exact, not a prefix match", () => {
-    // 🛑 THE CARD IS PRINTED AS A DISJUNCTION *BECAUSE* THIS IS TRUE IN PAPER TOO:
-    // "Maushold ex" is a different card name from "Maushold", and the card says so
-    // in so many words. If `byName` matched by prefix, the FIRST member would
-    // already take every `Maushold ex`, the second member would be dead weight, and
-    // deleting it would be invisible on every board. The offer is the instrument:
-    // both names are in the candidate list, and §4's next case proves the second
-    // member is what puts the `ex` there.
+  it("`byName{Maushold}` REFUSES 'Maushold ex' — exact, not a prefix match", () => {
     const { parked, prompt } = attack(board(20));
     const offered = new Set(prompt.candidates.map((u) => parked.cardIdByUid[u]));
     expect(offered.has(MAUSHOLD_BODY)).toBe(true);
     expect(offered.has(MAUSHOLD_EX)).toBe(true);
   });
 
-  it("🛑 NEITHER member takes 'Mausholder' — a strict extension of one printed name", () => {
+  it("NEITHER member takes 'Mausholder' — a strict extension of one printed name", () => {
     // The other direction of the exactness claim, and the case a `startsWith`
     // "fixed" by special-casing the " ex" suffix would still fail. `Mausholder`
     // contains "Maushold" as a prefix and is neither printed name.
@@ -530,11 +344,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     expect(offered.has(MAUSHOLDER)).toBe(false);
   });
 
-  it("🛑 the PRE-EVOLUTION 'Tandemaus' is REFUSED — two names, not an evolution line", () => {
-    // Both printed members carry `evolveFrom: "Tandemaus"`, so a build that read
-    // the FAMILY instead of the two NAMES would take this body and look right on a
-    // casual board. It is the near miss that separates "the names were read" from
-    // "the family was read".
+  it("the PRE-EVOLUTION 'Tandemaus' is REFUSED — two names, not an evolution line", () => {
     const { parked, prompt } = attack(board(22));
     const offered = new Set(prompt.candidates.map((u) => parked.cardIdByUid[u]));
     expect(offered.has(TANDEMAUS)).toBe(false);
@@ -557,16 +367,12 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
 
   // ── §5 THE BENCH CLAMP — `Math.min(op.max, benchSpace(...))` ───────────────
 
-  it("🛑 the cap CLAMPS to bench space — 4 benched leaves room for ONE", () => {
-    // The interpreter clamps BEFORE anything leaves the deck
-    // (`Math.min(op.max, benchSpace(state, ctx.seat))`), which is why the
-    // bench-space question `effects.ts` documents needs zero code at the op level.
-    // BENCH_MAX is 5, so four filler bodies leave exactly one slot.
+  it("the cap CLAMPS to bench space — 4 benched leaves room for ONE", () => {
     const { prompt } = attack(board(30, { benched: 4 }));
     expect(prompt.max).toBe(1);
   });
 
-  it("🛑 a FULL bench takes the op off the board entirely — no park, no prompt", () => {
+  it("a FULL bench takes the op off the board entirely — no park, no prompt", () => {
     // `retrieveMax <= 0` returns `{ done: state }` rather than parking an
     // unanswerable dialog. The attack still resolves; it simply searches nothing.
     const state = board(31, { benched: 5 });
@@ -605,10 +411,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     }
   });
 
-  it("🛑 the cards go to the BENCH and NOT to the hand — the `dest` proved on a board", () => {
-    // The sibling sentences (D337, D338) end "into your hand"; this one ends "onto
-    // your Bench". A `dest: "hand"` typo would pass every count-shaped assertion in
-    // this file and fail exactly here.
+  it("the cards go to the BENCH and NOT to the hand — the `dest` proved on a board", () => {
     const state = board(42);
     const { parked } = attack(state);
     const handBefore = parked.players.p1.hand.length;
@@ -632,20 +435,6 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
   });
 
   it("the OPPONENT's board is untouched — the SEARCH draws only from p1's deck", () => {
-    // ⚠️ **THE FIRST DRAFT OF THIS CASE ASSERTED THE WRONG THING AND WAS NARROWED,
-    // NOT RELAXED (D328).** It read
-    // `expect(after.players.p2.deck).toHaveLength(state.players.p2.deck.length)`
-    // and went red 45 vs 44 — because RESOLVING the search completes the attack,
-    // which ENDS THE TURN, and p2 then legitimately draws for their own turn. The
-    // missing card was p2's DRAW STEP, not a card this op reached across the board
-    // for. A length equality across a turn boundary is not a claim about this op at
-    // all, and "widen the board" would not have fixed it because the board was
-    // never too narrow — the ASSERTION was false.
-    // The claim actually worth making is CONTAINMENT plus PROVENANCE: nothing is
-    // ADDED to p2's deck, p2's bench does not move, and every card that reached
-    // p1's bench came out of P1's deck. That is strictly sharper than the length
-    // check it replaces — a build that benched an opponent's card would pass a
-    // length equality on p1's side and fail here.
     const state = board(44);
     const before = benchIds(state, "p2");
     const { parked } = attack(state);
@@ -674,26 +463,12 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     expect(after.players.p2.active?.damage ?? 0).toBe(wallHp);
   });
 
-  // ── §7 🛑 THE CENSUS CLAIMS, ASSERTED RATHER THAN WRITTEN DOWN ────────────
-
-  it("🛑 the sentence is REFUSED by the deriver AND BUILT by the registry — D314", () => {
-    // The two halves that keep the REGISTRY summand disjoint from the RAW one. If
-    // a reader ever resolves this text, `rawUnitsAtHead()` rises and this printing
-    // is counted TWICE — which is exactly what `censusAtHead`'s
-    // `resolvedByAnyReader(text) === false` rung exists to catch. Asserted here as
-    // well, on the id rather than on the table, so the claim is local to the row.
+  it("the sentence is REFUSED by the deriver AND BUILT by the registry — D314", () => {
     expect(programFor(MAUSHOLD)).toBeDefined();
     expect(deriveAttackEffect(PRINTED)).toBeNull();
   });
 
-  it("🛑 THE GRAMMAR CLOSES AT 6 OF 6 — stated as arithmetic, not as prose", () => {
-    // Re-queried against remote D1 `colorless` on 2026-08-15 at two widths and two
-    // word orders (see the header census). The population of *"Search your deck for
-    // up to … in any combination of …"* is SIX legal printings across all three
-    // text columns, and after this row every one of them is built:
-    //   effect        3 legal — Ethan's Adventure sv10-165/-221/-236  (D337)
-    //   attacks_json  3 legal — Heatmor sv10.5w-019/-104 (D338) + sv08-158 (HERE)
-    //   abilities_json 0
+  it("THE GRAMMAR CLOSES AT 6 OF 6 — stated as arithmetic, not as prose", () => {
     const effectPrintings = 3;
     const attackPrintings = 3;
     const abilityPrintings = 0;
@@ -708,13 +483,9 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     );
   });
 
-  it("🛑 the REGISTRY summand is the one that moves — 1,164 + 16 + 13 = 1,193", () => {
-    // The addition stated where the row is, so a successor reading this file sees
-    // WHICH summand moved and WHAT IT IS KEYED ON without opening three others.
-    // `censusAtHead.test.ts` derives all three LIVE and ties them; this is the
-    // narrative copy, and it is arithmetic so it cannot drift silently.
+  it("the REGISTRY summand is the one that moves — 1,164 + 16 + 13 = 1,193", () => {
     const rawReaderKeyed = 1164; // unmoved — `programFor` is nowhere in that addition
-    const registryKeyed = 16; // 15 → 16, THIS ROW
+    const registryKeyed = 16;
     const splitReaderKeyed = 13; // unmoved — this sentence carries no gate clause
     expect(rawReaderKeyed + registryKeyed + splitReaderKeyed).toBe(1193);
   });

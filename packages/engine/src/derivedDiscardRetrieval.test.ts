@@ -15,87 +15,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.153.0 → 0.154.0 — D238, THE PRINTED **BRACE CODE**: the last blocker on
-// backlog row 13, and the only one on the page that was ONE MECHANISM SERVING
-// THREE ANCHORS (this family, `derivedHandSearch` and `derivedBenchSearch`).
-// D237 read 10 of this row's 16 legal printings and pinned 4 more on the brace
-// code; this slice takes those 4 and leaves 2.
-//
-// ✅ THE COUNT, RE-DERIVED A SECOND TIME BY A SECOND SLICE and unchanged — the
-// FIFTH row running. The brace sweep's own figures (remote D1 `colorless`, 3,786
-// rows / 20 sets, 2,021 legal, 2026-08-06, `json_each` + `GLOB`, grouped BY
-// SENTENCE, all three text columns):
-//
-//   WHERE t GLOB '*{[GRWLPFDMYNC]} Pok*'
-//   -- attack 32 / 16 · ability 28 / 12 · effect 25 / 15
-//
-// 🛑 AND **6 OF THOSE 32 ARE CARD PREDICATES** — the rest are BOARD targets and
-// damage scalers that `targetType` and three other readers own. The ceiling is
-// not the yield, and the resume point that said so is confirmed rather than
-// assumed. Full arithmetic on the constants in effects.ts.
-//
-// 🛑 THE PREDICTION, GRADED — **PART WRONG, FOURTH SLICE RUNNING.** It read:
-// *"ONE `CardFilter` member and ONE capture group per anchor (three anchors), NO
-// third table column, and all 8 legal printings plus the 1 rotated one."*
-//   • ✅ ONE `CardFilter` member — correct, and the Energy half needed NONE
-//     (`basicEnergy.energyType` has existed since Chien-Pao; only the anchor was
-//     ever in the way, which the prediction did not say).
-//   • ✅ NO third table column — correct, and for the reason the prediction named
-//     as its own risk: the caption contract genuinely cannot hold for a brace
-//     code, so the answer is a SECOND, DISJOINT resolution path.
-//   • 🛑 "ONE capture group per anchor" LOSES, and by a factor of three. This
-//     anchor gained ZERO groups (its noun ALTERNATION widened); `derivedHandSearch`
-//     gained ZERO (its `[^,.]+?` capture already admitted a brace phrase and the
-//     TABLE's silence was the whole refusal); only `derivedBenchSearch` gained one.
-//   • 🛑 "the 1 rotated one" LOSES: there are **FOUR** rotated printings, three of
-//     them on THIS anchor, and two of those sentences were named by no page in
-//     this repo. A residue table is a census of what its slice measured.
-//
-// ✅ THE COUNT. Re-measured against the remote D1 `colorless` on 2026-08-06 —
-// `json_each` + `GLOB` (never `LIKE`), grouped BY SENTENCE, over ALL THREE text
-// columns, `legal_standard = 1`:
-//
-//   WHERE t GLOB '*[Pp]ut*from your discard pile*'
-//   -- attack 16 printings / 8 sentences · ability 4 / 2 · effect 8 / 5
-//
-// The row says **16 (8 sentences) · 4 · 3**: the attack half exact on BOTH
-// figures, the ability half raw, and the Trainer half the 8 above minus the 5
-// already authored. **23 = 23.**
-//
-// 🛑 AND ITS *PREDICTION* WAS GRADED **PART WRONG**, WHICH IS THE THIRD TIME AND
-// THE REASON ONE IS WRITTEN DOWN EVERY SLICE. The resume point predicted, in
-// writing, that "printed grammar is a property of the ZONE", so this row's
-// residue should look like row 9's: **≥ 12 of the 16 read, and every blocker a
-// NOUN the table cannot name**.
-//   • 🛑 The ≥ 12 clause LOSES — this arm reads **10**, and no arm could have
-//     reached 12: 2 of the 16 are a leading "Flip 3 coins." owned by
-//     `deriveAttackCoinFlip`, a different reader, and 4 more are the printed
-//     BRACE CODE.
-//   • ✅ The "blockers are NOUNS" clause holds for 4 of the 6, and better than it
-//     reads: the {W} Pokémon (3) and the Basic {G} Energy (1) are ONE blocker
-//     wearing two nouns, and it is the SAME blocker `derivedHandSearch.test.ts`
-//     already names in its own residue.
-//   • 🛑 The underlying claim is FALSE AS D236 STATED IT. D236 wrote that the
-//     leading-clause category is one "the discard side does not print even once".
-//     The discard side prints it TWICE, in both verbs — here, and in D234's own
-//     residue table one verb over. **The leading clause is a property of neither
-//     the zone nor the verb; it is a property of the per-heads FOLD**, which is
-//     the unanswered `attack.ts` question D234 named and did not answer.
-//
-// ⚠️ WHAT THIS FILE IS FOR, AND IT IS NOT "did a card come back". `discardPileRetrieval`
-// has run since M5 with six registry rows behind it and `discardRetrieval.test.ts`
-// owns the op's own behaviour. What is NEW is (a) a TEXT PARSER that picks the
-// FILTER and the DESTINATION out of printed bytes, (b) a `CardFilter` member that
-// is a strict SUPERSET of four existing ones, and (c) a third `dest` on the op.
-// The risks are therefore: a noun resolving to a filter one notch too wide, a
-// Bench destination carrying a noun the Bench cannot hold, and a log row that
-// says "shuffled into their deck" about a Pokémon entering play.
-
-/** One printed sentence, its program, and the printings measured for it. Both
-    figures per row: `printings` over the whole remote catalog (3,786 rows / 20
-    sets), `legalPrintings` over the Standard pool (2,021 rows) — a count without
-    a POPULATION and a LEGALITY is not a fact. `note` is the `chooseCards` caption
-    the park raises, asserted rather than described. */
 interface Clause {
   readonly text: string;
   readonly program: readonly EffectOp[];
@@ -104,11 +23,6 @@ interface Clause {
   readonly note: string;
 }
 
-/** ⚠️ NAMED CONSTANTS RATHER THAN INDICES INTO `CLAUSES`, which is a divergence
-    from the nine sibling suites and a deliberate one: `noUncheckedIndexedAccess`
-    makes every `CLAUSES[i]` optional unless the array is an `as const` TUPLE, and
-    a tuple would make each `program` deeply readonly and therefore no longer an
-    `EffectOp`. Naming them keeps both the type and the readability. */
 const SUPPORTER: Clause = {
   text: "Put a Supporter card from your discard pile into your hand.",
   program: [{ op: "discardPileRetrieval", filter: { kind: "supporter" }, dest: "hand", max: 1 }],
@@ -148,16 +62,10 @@ const TRAINER: Clause = {
   text: "Put a Trainer card from your discard pile into your hand.",
   program: [{ op: "discardPileRetrieval", filter: { kind: "trainerCard" }, dest: "hand", max: 1 }],
   printings: 1,
-  legalPrintings: 1, // sv08-087 Wailord — the new filter's only legal printing
+  legalPrintings: 1,
   note: "Put a Trainer card from your discard pile into your hand.",
 };
 
-/** ⚠️⚠️ D238 — THE BRACE CODE, and the sentence D237 fielded UNREAD at fixture
-    index 53 on purpose. It is the family's largest single sentence (3 legal) and
-    the ONLY one whose filter the deriver builds out of a printed CODE rather than
-    off a table row. Note the CAPTION: the card prints `{W}` and the dialog says
-    "Water", which is the whole reason these phrases are not rows in the shared
-    noun table. */
 const TIDAL: Clause = {
   text: "Put up to 3 {W} Pokémon from your discard pile onto your Bench.",
   program: [
@@ -172,9 +80,6 @@ const TIDAL: Clause = {
   legalPrintings: 3, // svp-131, sv06.5-012, sv06.5-080
   note: "Put up to 3 Water Pokémon from your discard pile onto your Bench.",
 };
-/** D238 — the SAME blocker wearing the other noun, and it resolves to a filter
-    that has existed since Chien-Pao: only the ANCHOR was ever in the way. The
-    pair with `TIDAL` is what makes "one mechanism, two nouns" a driven fact. */
 const GRASS_ENERGY: Clause = {
   text: "Put a Basic {G} Energy card from your discard pile into your hand.",
   program: [
@@ -200,11 +105,6 @@ const CLAUSES: readonly Clause[] = [
   GRASS_ENERGY,
 ];
 
-/** The nine CATALOG sentences this arm also reads, none of them Standard-legal,
-    each differing from a row above only in a NOUN or a printed count. They are
-    what makes 14 legal into **33 catalog**, and they are listed rather than
-    counted because "an arm transfers across sets and a registry row does not"
-    (D180/D187) is a claim that has to name its beneficiaries. */
 const CATALOG_ONLY: readonly (readonly [string, number, EffectOp])[] = [
   [
     "Put an Item card from your discard pile into your hand.",
@@ -241,13 +141,6 @@ const CATALOG_ONLY: readonly (readonly [string, number, EffectOp])[] = [
     1,
     { op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "hand", max: 3 },
   ],
-  // ⚠️⚠️ D238 — TWO SENTENCES NO PAGE IN THIS REPO HAD NAMED, and they are the
-  // slice's sharpest finding about residue tables. Three suites between them
-  // listed ONE rotated brace-coded printing; a catalog-wide sweep on the SAME
-  // anchors returns FOUR, of which these are three printings on two sentences.
-  // A residue table is a census of what its own slice measured, never of what an
-  // arm will serve — which is exactly why "an arm transfers" is re-measured here
-  // rather than inherited from the row that named the legal half.
   [
     "Put up to 3 Basic {W} Energy cards from your discard pile into your hand.",
     2,
@@ -270,26 +163,6 @@ const CATALOG_ONLY: readonly (readonly [string, number, EffectOp])[] = [
   ],
 ] as const;
 
-/** 🛑 THE TWO LEGAL PRINTINGS THIS FAMILY STILL DOES **NOT** READ, with the legal
-    count and the reason. Pinned derived-to-null so the residue is a fact about
-    the code rather than a note in a doc.
-
-    🆕🆕🆕 **D525 — RE-SCOPED, NOT DELETED: THIS FAMILY (`deriveAttackEffect`) STILL DOES
-    NOT READ IT, AND THAT IS STILL TRUE; THE COIN READER OWNS IT SINCE D525.** The row is
-    BUILT as `AttackCoinFlip.retrievalUpToHeads` (anchor `ATTACK_COIN_RETRIEVAL_UP_TO_HEADS`,
-    `upToHeadsRetrieval.test.ts`), spent at `attack.ts`'s fold as ONE `discardPileRetrieval
-    {anyCard, hand, max: heads}` — the SAME op this family emits, with the count written at
-    the flip site. The `deriveAttackEffect` null below is KEPT (one reader owns the sentence)
-    and `deriveAttackCoinFlip` is asserted non-null beside it. ⚠️ The paragraph below said the
-    `attack.ts` fold question was "unanswered" — it was answered at D130 (`programPerHeads`
-    appends to `program`), and D525 spent the answer.
-
-    ⚠️ **ONE BLOCKER, ONE SENTENCE — THE SMALLEST RESIDUE ON THE WHOLE BACKLOG
-    PAGE**, and it is not a noun at all: D237 left two blockers here and D238's
-    brace code took the larger of them, which is the entire reason that slice
-    existed. What is left belongs to a DIFFERENT READER (`deriveAttackCoinFlip`)
-    and to `attack.ts`'s unanswered per-heads FOLD question, so no amount of work
-    on this anchor can reach it. */
 const UNREAD: readonly (readonly [string, number, string])[] = [
   [
     "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
@@ -298,9 +171,6 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
   ],
 ] as const;
 
-/** Constructed near misses, kept apart from `UNREAD` because they have no
-    printing at all and would otherwise inflate its arithmetic. Each is a program
-    a plausible build would emit and this one must refuse. */
 const NEAR_MISSES: readonly (readonly [string, string])[] = [
   [
     "Put a Supporter card from your discard pile onto your Bench.",
@@ -322,12 +192,6 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
     "Put up to 0 Pokémon from your discard pile into your hand.",
     "a printed 0 — the ingested-text floor, which would otherwise derive a silent no-op",
   ],
-  // ⚠️⚠️ D238 — THE RE-HOMED CONTROL. This slot used to hold "Put up to 2 {D}
-  // Pokémon from your discard pile into your hand.", on the grounds that the
-  // brace code was unspellable; D238 spells it, so that half of the claim EXPIRED
-  // on schedule. RE-HOMED, NEVER DELETED (D237's own rule, paid back one slice
-  // later): the claim was that an unresolvable NOUN is a refusal rather than an
-  // approximation, and it is now made on a brace code whose LETTER no map spells.
   [
     "Put up to 2 {Q} Pokémon from your discard pile into your hand.",
     "a brace code that is not a printed type — `POKEMON_TYPE_BY_CODE` has no `Q`, so the pattern matches and the MAP refuses, which is the layer that has to say no",
@@ -346,7 +210,6 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
   ],
 ];
 
-// ── The board. Indices 48-53 on `fix-trainerops`, appended by D237. ──
 const VOLT_RECOVERY = 48;
 const RESCUE_CALL = 49;
 const TRAINER_RECALL = 50;
@@ -397,12 +260,6 @@ const FULL_PILE = {
   "fix-stadium": 1,
   "fix-duskull": 3,
   "fix-charjabug": 1,
-  // ⚠️ D238 — the five lines the brace code needs, and every one of them is a
-  // DISCRIMINATOR rather than a candidate. Two {W} bodies (one of them dual-type)
-  // sit beside the four COLORLESS Pokémon above, so `typedPokemon` and
-  // `anyPokemon` offer different sets on the same pile; a Grass Basic Energy sits
-  // beside a Water one and a Colorless one, so `basicEnergy.energyType` is
-  // falsifiable at two distances rather than one.
   "fix-water-basic": 2,
   "fix-dual-basic": 1,
   "fix-grass-energy": 1,
@@ -433,7 +290,6 @@ function pileUids(state: GameState, id: string): string[] {
   return state.players.p1.discard.filter((uid) => state.cardIdByUid[uid] === id);
 }
 
-/** D238's filter at the type the family's biggest sentence prints. */
 const WATER: CardFilter = { kind: "typedPokemon", pokemonType: "Water" };
 
 const attack = (state: GameState, index: number) =>
@@ -454,31 +310,18 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
   });
 
   it("adds up: 14 of the row's 16 legal printings, across 7 of its 8 sentences", () => {
-    // The arithmetic stated rather than described — a slice that quietly dropped
-    // one noun row would still pass every accept case above.
     expect(CLAUSES).toHaveLength(7);
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(14);
-    // …and the residue, which is the other half of the same census: 2 more legal
-    // printings over 1 sentence, pinned derived-to-null.
     expect(UNREAD).toHaveLength(1);
     expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 🆕🆕🆕 D525 — and the coin reader DOES read it now (the same op, the count at the fold).
     for (const [text] of UNREAD)
       expect(deriveAttackCoinFlip(text)?.kind, text).toBe("retrievalUpToHeads");
-    // 14 + 2 = 16, which is still exactly what the backlog row measured. D237
-    // read 10 of the 16 and D238 takes the 4 it had pinned on the brace code —
-    // the SAME total, re-derived a second time by a second slice.
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 2).toBe(16);
     expect(CLAUSES.length + UNREAD.length).toBe(8);
   });
 
   it("reads 33 of the family's 39 CATALOG printings too — an arm transfers", () => {
-    // The wider population, because a row that counts only the legal pool
-    // under-states what an arm buys: the same GLOB over all 3,786 rows returns 39
-    // printings on 18 sentences, and this arm now reads 33 on 16 (D237 read 26 on
-    // 12; D238's brace code adds 4 legal and 3 ROTATED-ONLY printings, and two of
-    // those three sentences were named by no page in this repo).
     const legalSide = CLAUSES.reduce((sum, c) => sum + c.printings, 0);
     const catalogOnly = CATALOG_ONLY.reduce((sum, [, n]) => sum + n, 0);
     expect(legalSide).toBe(14);
@@ -492,11 +335,7 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     }
   });
 
-  it("🛑 the NOUN and the DESTINATION are INDEPENDENT axes, which is why it is one arm", () => {
-    // ⚠️ THE ROW'S PREDICTION, DRIVEN. If the five sentences were five arms,
-    // changing the noun would be free to change something other than `filter`,
-    // and changing the destination free to change something other than `dest`.
-    // Both are asserted as "differs in exactly one key".
+  it("the NOUN and the DESTINATION are INDEPENDENT axes, which is why it is one arm", () => {
     const [hand] = deriveAttackEffect(ONE_POKEMON.text) ?? [];
     const [bench] =
       deriveAttackEffect("Put a Pokémon from your discard pile onto your Bench.") ?? [];
@@ -513,12 +352,7 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     ]);
   });
 
-  it("🛑 the article and the count are WELDED, and the missing group IS max 1", () => {
-    // "a Pokémon" and "up to N Pokémon" are the same row of the table read on two
-    // branches, and `max` is REQUIRED on this op — so unlike the attach family's
-    // `count` there is no "absent means 1" to leave off: a singular printing emits
-    // `max: 1` outright. Both halves are printed and legal, so neither branch is
-    // an unreachable arm nobody can kill a mutant on.
+  it("the article and the count are WELDED, and the missing group IS max 1", () => {
     const [one] = deriveAttackEffect(ONE_POKEMON.text) ?? [];
     const [two] = deriveAttackEffect(TWO_POKEMON.text) ?? [];
     expect(one).toEqual({ ...two, max: 1 });
@@ -535,7 +369,7 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     }
   });
 
-  it("🛑 an unresolvable NOUN or DESTINATION is a REFUSAL, never an approximation", () => {
+  it("an unresolvable NOUN or DESTINATION is a REFUSAL, never an approximation", () => {
     // The whole design of the two closed tables. A build that fell back to
     // `anyCard` on an unknown noun, or to `hand` on an unknown destination, would
     // derive a program for every one of these.
@@ -550,23 +384,7 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     }
   });
 
-  it("🛑 the printed DECK destination is OFF the `Put` table (the control), and the `Shuffle` verb reads it — 🆕🆕🆕 D523 INVERTED the second half (D418/D436)", () => {
-    // The op carries `dest: "deck"` (Pal Pad, Super Rod), and this rung said no attack
-    // sentence in the catalog spells it: those printings say "**Shuffle** … into your
-    // deck", a different verb and therefore a different family (D232's rule). The table
-    // is authored off the bytes, so the phrase is refused rather than admitted on the
-    // strength of the union.
-    //
-    // 🆕🆕🆕 **D523 — THE PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN, AND THE RULE WAS
-    // RIGHT.** `censusAttackCorpus.ts` FILE LINE 485 — *"Shuffle up to 3 Basic {W} Energy
-    // cards from your discard pile into your deck."*, 1 sentence / 1 legal printing — spells
-    // the deck destination ONCE, with the Shuffle verb, and D523 built it as its OWN family
-    // (`ATTACK_DISCARD_SHUFFLE_BACK`, directly under `ATTACK_DISCARD_RETRIEVAL`): Pal Pad's
-    // registry program byte for byte, the retrieval to deck THEN the REQUIRED `shuffleDeck`
-    // (`retrieveMove`'s deck arm APPENDS). The `Put` table keeps its two rows, so the first
-    // control STAYS null and is kept as the control; the second is INVERTED, not deleted —
-    // the old claim ("no reader takes it") could go red only on the mutant this rung now
-    // catches the other way round (the arm reading `"hand"`, or dropping the shuffle).
+  it("the printed DECK destination is OFF the `Put` table (the control), and the `Shuffle` verb reads it — D523 INVERTED the second half (D418/D436)", () => {
     expect(
       deriveAttackEffect("Put up to 2 Supporter cards from your discard pile into your deck."),
     ).toBeNull();
@@ -592,10 +410,6 @@ describe("`trainerCard` — the CATEGORY, not a disjunction of four subtypes", (
   ];
 
   it("admits every one of the four printed subtypes, where each subtype admits one", () => {
-    // ⚠️ THE FALSIFIABILITY TEST (D231) on a filter whose whole content is a
-    // widening: on the SAME four cards, the new member says yes four times and
-    // each old member says yes once. A build that spelled it as any three of the
-    // four would be green on a pool missing the fourth.
     for (const [id] of SUBTYPES) {
       const card = FIXTURE_POOL[id];
       expect(card, id).toBeDefined();
@@ -610,35 +424,20 @@ describe("`trainerCard` — the CATEGORY, not a disjunction of four subtypes", (
     for (const id of ["fix-basic-1", "fix-duskull", "fix-energy", "fix-water-energy"]) {
       expect(matchesFilter(FIXTURE_POOL[id], { kind: "trainerCard" }), id).toBe(false);
     }
-    // …and an absent card is false at the guard, not at this arm (D231's rule for
-    // `anyCard`, which this member sits beside).
     expect(matchesFilter(undefined, { kind: "trainerCard" })).toBe(false);
   });
 
   it("its printed noun phrase is `retrieveNoun`'s output, driven through the prompt", () => {
-    // 🛑 THE ROUND TRIP THE SHARED TABLE EXISTS FOR. `HAND_SEARCH_NOUNS` and
-    // `retrieveNoun` live in different files (effects.ts cannot import
-    // interpreter.ts), so the contract that its two strings ARE that function's
-    // output is a TEST rather than a shared constant — and it goes red from
-    // either side. Here it is driven end to end: the printed sentence goes in and
-    // the dialog caption comes back out.
     const state = attack(ready(3, { discard: FULL_PILE }), TRAINER_RECALL).state;
     expect(cardsPrompt(state).note).toBe(TRAINER.note);
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2b. `typedPokemon` — D238's new filter, and the ARRAY it reads
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("`typedPokemon` — a printed TYPE, read off an ARRAY", () => {
   it("admits the typed body and refuses the untyped ones", () => {
     for (const id of ["fix-water-basic", "fix-dual-basic"]) {
       expect(matchesFilter(FIXTURE_POOL[id], WATER), id).toBe(true);
     }
-    // ⚠️ THE REFUSALS ARE THE MEASUREMENT. `fix-duskull`, `fix-charjabug` and
-    // `fix-basic-1` are all Pokémon and all Colorless, so a build that emitted
-    // `anyPokemon` for a typed sentence passes every accept above and fails here.
     for (const id of ["fix-duskull", "fix-charjabug", "fix-basic-1"]) {
       expect(matchesFilter(FIXTURE_POOL[id], WATER), id).toBe(false);
     }
@@ -650,13 +449,7 @@ describe("`typedPokemon` — a printed TYPE, read off an ARRAY", () => {
     expect(matchesFilter(undefined, WATER)).toBe(false);
   });
 
-  it("🛑 a DUAL-TYPE body matches on EITHER type — `includes`, not `types[0]`", () => {
-    // ⚠️ THE ONE ASSERTION NO OTHER CARD IN THE POOL CAN MAKE. `fix-dual-basic` is
-    // printed ["Fire", "Water"], so a predicate written `card.types[0] === type`
-    // — the obvious wrong read of a column that is an ARRAY, and one the catalog
-    // punishes because dual-type Pokémon are really printed — admits it for {R}
-    // and REFUSES it for {W}. Both halves are asserted, because the wrong build
-    // passes the {R} half.
+  it("a DUAL-TYPE body matches on EITHER type — `includes`, not `types[0]`", () => {
     const dual = FIXTURE_POOL["fix-dual-basic"];
     expect(dual?.types).toEqual(["Fire", "Water"]);
     expect(matchesFilter(dual, { kind: "typedPokemon", pokemonType: "Fire" })).toBe(true);
@@ -664,7 +457,7 @@ describe("`typedPokemon` — a printed TYPE, read off an ARRAY", () => {
     expect(matchesFilter(dual, { kind: "typedPokemon", pokemonType: "Grass" })).toBe(false);
   });
 
-  it("🛑 the `stage` rider narrows, and its ABSENCE admits both stages", () => {
+  it("the `stage` rider narrows, and its ABSENCE admits both stages", () => {
     // The falsifiability pair for a field whose only printed witness is a
     // 0-legal sentence one family over ("Search your deck for a Basic {G}
     // Pokémon…"). A build that ignored the rider offers the Stage 1 to both.
@@ -679,12 +472,6 @@ describe("`typedPokemon` — a printed TYPE, read off an ARRAY", () => {
   });
 
   it("its noun phrase writes the type OUT IN FULL, driven through the prompt", () => {
-    // 🛑 THE DECISION THIS SLICE OWED, ASSERTED END TO END. The card prints `{W}`
-    // and the dialog caption says "Water Pokémon" — so the printed phrase and the
-    // caption phrase DIFFER, which is precisely why these nouns are not rows in
-    // `HAND_SEARCH_NOUNS` (whose contract is that its strings ARE `retrieveNoun`'s
-    // output). A build that captioned the code back at the player passes every
-    // filter assertion above and fails only here.
     const state = attack(ready(3, { discard: FULL_PILE }), TIDAL_RECALL).state;
     expect(cardsPrompt(state).note).toBe(TIDAL.note);
     expect(cardsPrompt(state).note).not.toContain("{W}");
@@ -702,8 +489,6 @@ describe("`typedPokemon` — a printed TYPE, read off an ARRAY", () => {
 
 describe("the derived program on a real board", () => {
   it("`a Trainer card` offers all four subtypes; `a Supporter card` offers one", () => {
-    // ⚠️ THE PAIR IS THE POINT: the same board, the same pile, two sentences that
-    // differ only in the noun. A crossed build passes either assertion alone.
     const wide = attack(ready(3, { discard: FULL_PILE }), TRAINER_RECALL).state;
     expect(offered(wide)).toEqual(["fix-gatedsup", "fix-item", "fix-stadium", "fix-tool"]);
     const narrow = attack(ready(3, { discard: FULL_PILE }), VOLT_RECOVERY).state;
@@ -729,33 +514,20 @@ describe("the derived program on a real board", () => {
     expect(prompt.note).toBe(TWO_POKEMON.note);
   });
 
-  it("🛑 `up to 3 Duskull` offers the NAMED body alone — not the other Pokémon", () => {
-    // The `byName` arm's falsifiability pair, on one board: `fix-charjabug` is a
-    // Pokémon in the same pile and must NOT be offered. A build that emitted
-    // `anyPokemon` for a named sentence offers it (and every `fix-basic-1`); a
-    // build that matched on stage rather than on name offers the wrong one.
+  it("`up to 3 Duskull` offers the NAMED body alone — not the other Pokémon", () => {
     const state = attack(ready(3, { discard: FULL_PILE }), GHOSTLY_GATHERING).state;
     expect(offered(state)).toEqual(["fix-duskull", "fix-duskull", "fix-duskull"]);
     expect(cardsPrompt(state).dest).toBe("bench");
     expect(cardsPrompt(state).note).toBe(DUSKULL.note);
   });
 
-  it("🆕 D238 — `up to 3 {W} Pokémon` offers the TYPED bodies and benches them", () => {
-    // ⚠️ THE PAIR WITH `up to 2 Pokémon` ABOVE IS THE POINT: same board, same
-    // pile, and the typed sentence offers THREE of the seven Pokémon the untyped
-    // one offers. A build that resolved the brace code to `anyPokemon` — the
-    // "wrong-but-plausible program" this page keeps warning about — passes every
-    // derive assertion and offers Duskull here.
+  it("D238 — `up to 3 {W} Pokémon` offers the TYPED bodies and benches them", () => {
     const parked = attack(ready(3, { discard: FULL_PILE }), TIDAL_RECALL).state;
     expect(offered(parked)).toEqual(["fix-dual-basic", "fix-water-basic", "fix-water-basic"]);
     const prompt = cardsPrompt(parked);
     expect(prompt.max).toBe(3);
     expect(prompt.min).toBe(0);
     expect(prompt.dest).toBe("bench");
-    // 🛑 AND IT REALLY BENCHES, which is `BENCHABLE_RETRIEVAL_KINDS` gaining the
-    // new kind: forgetting that one line refuses this sentence at the guard and
-    // sends 3 legal printings to the skipped path looking exactly like an unread
-    // sentence — green derive tests, silent loss.
     const benchBefore = parked.players.p1.bench.length;
     const uids = prompt.candidates.slice(0, 2);
     const { state, events } = resolve(parked, [...uids]);
@@ -765,7 +537,7 @@ describe("the derived program on a real board", () => {
     ]);
   });
 
-  it("🆕 D238 — `a Basic {G} Energy card` offers the GRASS one, not the other two", () => {
+  it("D238 — `a Basic {G} Energy card` offers the GRASS one, not the other two", () => {
     // The other noun, and the pile holds three Basic Energy cards: Grass, Water
     // and the Colorless `fix-energy`. A build that dropped `energyType` offers all
     // three; a build that read the code off the wrong map offers the wrong one.
@@ -788,11 +560,7 @@ describe("the derived program on a real board", () => {
     ]);
   });
 
-  it("🛑 puts the picked cards onto the BENCH, in play and stamped this turn", () => {
-    // The whole reason `dest: "bench"` is a new op member rather than a caption:
-    // the cards LEAVE the discard pile and BECOME Pokémon in play. A build that
-    // routed the Bench destination through the hand arm passes the "left the pile"
-    // half and nothing else.
+  it("puts the picked cards onto the BENCH, in play and stamped this turn", () => {
     const before = ready(3, { discard: FULL_PILE });
     const benchBefore = before.players.p1.bench.length;
     const parked = attack(before, GHOSTLY_GATHERING).state;
@@ -805,10 +573,7 @@ describe("the derived program on a real board", () => {
       expect(state.players.p1.hand).not.toContain(uid);
       const spot = state.players.p1.bench.find((p) => p.stack.includes(uid));
       expect(spot, uid).toBeDefined();
-      expect(spot?.stack).toEqual([uid]); // a fresh body, not evolved onto anything
-      // Stamped with the turn the ATTACK ran on, not the turn the state ends on
-      // — resolving the last op ends the turn, so `state.turn` has already moved.
-      // The stamp is what §9's "you played this Pokémon this turn" rules read.
+      expect(spot?.stack).toEqual([uid]);
       expect(spot?.turnPlayed).toBe(parked.turn);
       expect(spot?.damage).toBe(0);
     }
@@ -817,20 +582,7 @@ describe("the derived program on a real board", () => {
     ]);
   });
 
-  it("🛑 the MOVE clamps too, on a Bench that filled AFTER the park was raised", () => {
-    // ⚠️⚠️ THIS CASE EXISTS BECAUSE A MUTANT SURVIVED. Dropping the clamp inside
-    // `retrieveMove` was invisible to every assertion above, because the PARK's
-    // clamp had already narrowed `max` — so the two clamps looked like belt and
-    // braces and only one of them was under test. **A survivor is a suite gap
-    // until proven otherwise, and this one was a gap.**
-    //
-    // The board that tells them apart is the one the park cannot narrow: a park
-    // is serialized into a `MatchRecord` and answered LATER, so the Bench can
-    // fill in between. Surgery rather than a printed card, and said so — no
-    // sentence in the pool benches a body between an attack's park and its
-    // answer, which is exactly why the second clamp is written from the RULE
-    // (the set removed from the pile must equal the set that lands) rather than
-    // from a fixture.
+  it("the MOVE clamps too, on a Bench that filled AFTER the park was raised", () => {
     const parked = attack(ready(3, { discard: FULL_PILE }), GHOSTLY_GATHERING).state;
     const uids = pileUids(parked, "fix-duskull");
     expect(cardsPrompt(parked).max).toBe(3);
@@ -846,11 +598,7 @@ describe("the derived program on a real board", () => {
     expect(events.filter((e) => e.type === "DISCARD_RETRIEVED")).toEqual([]);
   });
 
-  it("🛑 the BENCH destination clamps to the space left, BEFORE anything moves", () => {
-    // `searchDeck`'s own rule, re-read on this op: the prompt is narrowed to the
-    // free slots so the set removed from the pile is exactly the set that lands.
-    // A build that clamped AFTER the move strands the excess in neither zone —
-    // the card-destruction shape the M1 review called out.
+  it("the BENCH destination clamps to the space left, BEFORE anything moves", () => {
     const state = attack(
       ready(3, {
         bench: ["fix-basic-1", "fix-basic-1", "fix-basic-1", "fix-basic-1"],
@@ -859,16 +607,11 @@ describe("the derived program on a real board", () => {
       GHOSTLY_GATHERING,
     ).state;
     expect(state.players.p1.bench).toHaveLength(4);
-    expect(cardsPrompt(state).max).toBe(1); // BENCH_MAX 5 − 4 seated
-    // …and the caption says the CLAMPED number rather than the printed one, so
-    // the dialog cannot promise a pick the validator would reject. At max 1 it
-    // reads `retrieveNoun`'s SINGULAR, which for `byName` is the bare name — the
-    // one row in that table that carries no article, because a card name is not
-    // a noun phrase (D230's reading, re-read here rather than special-cased).
+    expect(cardsPrompt(state).max).toBe(1);
     expect(cardsPrompt(state).note).toBe("Put Duskull from your discard pile onto your Bench.");
   });
 
-  it("🛑 a FULL Bench makes the whole op a silent no-op, not a park", () => {
+  it("a FULL Bench makes the whole op a silent no-op, not a park", () => {
     const state = attack(
       ready(3, {
         bench: ["fix-basic-1", "fix-basic-1", "fix-basic-1", "fix-basic-1", "fix-basic-1"],
@@ -885,7 +628,6 @@ describe("the derived program on a real board", () => {
     // is the same silent ending `searchDeck` has always had.
     const whiff = attack(ready(3, { discard: { "fix-item": 2 } }), VOLT_RECOVERY).state;
     expect(whiff.phase.kind).not.toBe("effect:choose");
-    // …and a park answered with the empty set is a legal answer that files no row.
     const parked = attack(ready(3, { discard: FULL_PILE }), VOLT_RECOVERY).state;
     const { state, events } = resolve(parked, []);
     expect(events.filter((e) => e.type === "DISCARD_RETRIEVED")).toEqual([]);
@@ -913,40 +655,10 @@ describe("the fixture prints what the catalog prints", () => {
       expect(attacks[index]?.name, `${index}`).toBe(name);
       expect(attacks[index]?.effect, name).toBe(text);
     }
-    // ⚠️ APPENDED, NEVER INSERTED: ten sibling suites address 0-47 by constant.
-    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
-    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
-    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
-    // inserts.
-    // 🆕🆕 **63 AT D426**, which appended **61-62** — the opponent-chooses hand
-    // discard (*"Your opponent discards 2 cards from their hand."* / *"…a card…"*).
-    // `opponentHandDiscard.test.ts` owns them, and the append-never-insert
-    // discipline this whole paragraph exists for holds again: 0-60 are addressed by
-    // constant in a dozen sibling suites and every one of them still means what it
-    // meant. ⚠️ NO ORDINAL IS CLAIMED (*"the Nth slice"*) — the running count above
-    // was last written at D241 and was already one append behind by D246, which is
-    // exactly how a count in a comment rots. The LENGTH is the executable half and
-    // it is the line below.
-    // 🆕🆕 **68 AT D443**, which appended **66-67** — the OPPONENT-BOARD pair
-    // (`derivedOpponentEnergyMove.test.ts` owns them). TWELVE sibling suites carry
-    // this pin and all twelve were stepped in one pass, as D442 stepped eleven.
-    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
-    // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
-    // same length pin and ALL of them were stepped in one pass (D431): a green run
-    // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
-    // (🆕🆕🆕 D569 (D539): "DATA-BLOCKED rather than merely unbuilt" is WITHDRAWN — the real printings (Miraidon `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written REGISTRY attack over `banners.ts`; the DERIVERS still refuse the sentence, so index 71 stays an unread control and this pin is unchanged)
+    expect(attacks).toHaveLength(73);
   });
 
-  it("🆕 D238 — `Tidal Recall` was fielded UNREAD by D237 and READS on this commit", () => {
-    // 🛑 THIS IS WHAT A DEFERRAL FIXTURE IS FOR, and the assertion is inverted
-    // rather than deleted (D181's `Strafe` precedent, collected one slice later).
-    // D237 fielded index 53 knowing it would derive to null, so the refusal had a
-    // live subject sitting on the attacker beside five readable siblings; the day
-    // the brace code was spelled the subject went green without anybody having to
-    // remember it existed. **The claim it was pinning — that an unresolvable noun
-    // is a refusal — did not expire with it**: it is re-homed onto `{Q}` and
-    // `Basic {N}` in `NEAR_MISSES`, where no map spells the code.
+  it("D238 — `Tidal Recall` was fielded UNREAD by D237 and READS on this commit", () => {
     const text = FIXTURE_POOL["fix-trainerops"]?.attacks?.[TIDAL_RECALL]?.effect as string;
     expect(text).toBe(TIDAL.text);
     expect(deriveAttackEffect(text)).toEqual(TIDAL.program);
@@ -955,9 +667,6 @@ describe("the fixture prints what the catalog prints", () => {
   });
 
   it("`fix-duskull` is a BASIC named Duskull, and `fix-charjabug` is not", () => {
-    // Both halves are load-bearing (D230's rule, one family over): the NAME is
-    // what `byName` matches, and the STAGE is what tells the two named bodies
-    // apart for a build that matched on the wrong field.
     const duskull = FIXTURE_POOL["fix-duskull"];
     expect(duskull?.name).toBe("Duskull");
     expect(duskull?.stage).toBe("Basic");
@@ -1000,12 +709,7 @@ describe("the read sites this slice actually pays", () => {
       entry.kind === "turn" ? `— turn ${entry.turn} —` : entry.segments.map((s) => s.text).join(""),
     );
 
-  it("🛑 `log.ts` gained a THIRD arm, and the BENCH row would otherwise have LIED", () => {
-    // ⚠️ THIS IS THE ONE READ SITE THIS SLICE PAID THAT WAS NOT ZERO, and the
-    // failure it would have shipped is not a gap but a CONTRADICTION: the row was
-    // a binary ternary on `dest === "hand"`, so three Duskull entering play would
-    // have been announced as "shuffled 3 cards from their discard pile into their
-    // deck" while the board showed them on the Bench.
+  it("`log.ts` gained a THIRD arm, and the BENCH row would otherwise have LIED", () => {
     const parked = attack(ready(3, { discard: FULL_PILE }), GHOSTLY_GATHERING).state;
     const uids = pileUids(parked, "fix-duskull");
     const { state, events } = resolve(parked, uids);
@@ -1013,8 +717,6 @@ describe("the read sites this slice actually pays", () => {
   });
 
   it("the HAND and DECK rows are unmoved by the widening", () => {
-    // The other two arms, driven on the same commit — a refactor that reworded an
-    // existing row while adding one is the shape this assertion exists to catch.
     const parked = attack(ready(3, { discard: FULL_PILE }), SALVAGE_CALL).state;
     const uid = pileUids(parked, "fix-duskull")[0] as string;
     const { state, events } = resolve(parked, [uid]);
@@ -1026,18 +728,7 @@ describe("the read sites this slice actually pays", () => {
     ).toEqual(["shuffled 1 card from their discard pile into their deck"]);
   });
 
-  it("🛑 the shared noun table carries no REGEX METACHARACTER — the anchor is built from it", () => {
-    // The anchor interpolates every phrase in `HAND_SEARCH_NOUNS` into an
-    // alternation, so a row containing `(`, `|`, `.` or `?` would silently change
-    // what this reader matches rather than fail to compile. Asserted from the
-    // OUTSIDE, because effects.ts does not export the table.
-    //
-    // ⚠️⚠️ D238 SPLITS THIS ASSERTION IN TWO, AND THE SPLIT **IS** THE SLICE'S
-    // DESIGN DECISION MADE OBSERVABLE. Every phrase resolved through the TABLE is
-    // still letters, spaces and "é"; every phrase resolved through the BRACE
-    // PATTERN contains `{` and `}`, which are metacharacters — so the two could
-    // never have shared a table, whatever the caption contract said. That is why
-    // the answer to "third column or capture group?" was NEITHER.
+  it("the shared noun table carries no REGEX METACHARACTER — the anchor is built from it", () => {
     const nounOf = (text: string) =>
       text.replace(/^Put (?:up to \d+ )?/, "").replace(/ from your discard pile.*$/, "");
     const braced: string[] = [];

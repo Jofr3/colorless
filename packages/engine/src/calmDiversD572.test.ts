@@ -20,23 +20,10 @@ import {
   setActiveFromDeck,
   trainerCard,
   typedEnergy,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
-
-// ── 🆕🆕🆕 D572 — "CALM DIVERS": SIX PRINTINGS, FOUR TEXTS ──
-//
-//   Munkidori  sv06-095 / sv06.5-072 / sv08.5-044  "Adrena-Brain"        — with any {D} attached: move up to 3
-//                                                                          damage counters own → opponent
-//   Milotic    sv06-050                            "Mentally Calm"       — the opponent's in-play cards can't
-//                                                                          be put into the opponent's hand
-//   Huntail    sv10-055                            "Diver's Catch"       — a {W} body KO'd by an opposing attack
-//                                                                          keeps its Basic {W} Energy in hand
-//   Klinklang  sv07-101                            "Emergency Rotation"  — from the HAND to the Bench, once per
-//                                                                          turn, vs an opposing Stage 2
-//
-// Every card is driven on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). Texts,
-// stats and legality off tcgdex (the audit's card JSON), 2026-10-03. Readings R-DC2, R-DC3a/b, R-MC1..3,
-// R-KR1..2 (all ⚠️ UNRULED) and the D27 auto-fire: docs/decisions.md D572.
 
 const MUNKIDORI = ["sv06-095", "sv06.5-072", "sv08.5-044"] as const;
 const MILOTIC = "sv06-050";
@@ -193,8 +180,6 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
-  // 🆕🆕🆕 the R-KR2 witness (a review-round finding): Sticky Bind is the one live lock that reaches
-  // the very zone and stage an Emergency Rotation lands in — a BENCHED Stage 2.
   [GASTRODON]: battler(GASTRODON, {
     name: "Gastrodon",
     stage: "Stage1",
@@ -407,7 +392,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [MUNKIDORI[0]]: 1,
   [MUNKIDORI[1]]: 1,
@@ -434,8 +418,6 @@ const DECK = deckOf({
   [RECOILER]: 2,
   [WATER_MON]: 2,
   [FILLER]: 14,
-  // 🆕🆕🆕 the R-KR2 witness, in the 15th Filler's SLOT (directly after the Fillers, so the seeded
-  // shuffle of the same 60 positions leaves every other card where it was).
   [GASTRODON]: 1,
   [DARK]: 3,
   [GRASS]: 3,
@@ -446,18 +428,6 @@ const DECK = deckOf({
 });
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function refused(state: GameState, action: GameAction): { code: string; message: string } {
   const result = applyAction(state, action);
@@ -672,7 +642,6 @@ function brainBoard(
   );
 }
 
-/** The owed Prize count for p1 after a Knock Out: the parked pick, the PRIZES_OWED row, or the row delta. */
 function owed(before: GameState, after: GameState, events: GameEvent[]): number {
   if (after.phase.kind === "ko:takePrizes") return after.phase.count;
   const row = all(events, "PRIZES_OWED")[0];
@@ -729,7 +698,7 @@ describe("§1 — the prints and the registry rows", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)', () => {
-  it("🛑 the {D} BODY GATE: no {D} attached → refused with the printed clause, and both HUD mirrors grey the row with it", () => {
+  it("the {D} BODY GATE: no {D} attached → refused with the printed clause, and both HUD mirrors grey the row with it", () => {
     const bare = damaged(table(MUNKIDORI[0]), "p1", "active", 30);
     const no = refused(bare, use("Adrena-Brain", ACTIVE));
     expect(no.code).toBe("ABILITY_CONDITION_NOT_MET");
@@ -750,7 +719,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     expect(lit.abilities.find((a) => a.abilityName === "Adrena-Brain")?.disabled).toBe(false);
   });
 
-  it('🛑 Q1 FORCED (one damaged own body), Q2 ALWAYS PARKED even over a LONE opponent body — `upTo: 3`, `takeVerb: "move"`', () => {
+  it('Q1 FORCED (one damaged own body), Q2 ALWAYS PARKED even over a LONE opponent body — `upTo: 3`, `takeVerb: "move"`', () => {
     const { state } = run(brainBoard(), use("Adrena-Brain", ACTIVE));
     const p = prompt(state);
     expect(p).toEqual({
@@ -760,17 +729,14 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
       takeVerb: "move",
       note: "Move up to 3 damage counters onto which of your opponent's Pokémon?",
     });
-    // The wire carries the verb (D135 conditional spread) — and the ceiling unclamped.
     const wire = redactGame(state, "p1").phase;
     if (wire.kind !== "effect:choose" || !("prompt" in wire))
       throw new Error("expected the answerer's prompt");
     expect(wire.prompt).toMatchObject({ kind: "choosePokemon", upTo: 3, takeVerb: "move" });
-    // …and the WIRE SCHEMA keeps it (zod strips an undeclared key, so a schema without the field
-    // would silently turn every Adrena-Brain row back into "attach").
     expect(redactedEffectPromptSchema.parse(wire.prompt)).toMatchObject({ takeVerb: "move" });
   });
 
-  it("🛑 an answer's `take` is the count: 2 of 3 moves 20", () => {
+  it("an answer's `take` is the count: 2 of 3 moves 20", () => {
     const start = brainBoard(50);
     const parked = run(start, use("Adrena-Brain", ACTIVE)).state;
     const { state, events } = run(parked, pick({ seat: "p2", spot: { spot: "active" } }, 2));
@@ -788,7 +754,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     ]);
   });
 
-  it("🛑 an ABSENT `take` is the printed 3 — and it is CLAMPED to what the source carries (2 counters moves 2)", () => {
+  it("an ABSENT `take` is the printed 3 — and it is CLAMPED to what the source carries (2 counters moves 2)", () => {
     const full = run(
       run(brainBoard(50), use("Adrena-Brain", ACTIVE)).state,
       pick({ seat: "p2", spot: { spot: "active" } }),
@@ -803,7 +769,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     expect(bodyAt(short, "p2", "active").damage).toBe(20);
   });
 
-  it("🛑 the DECLINE (no ref) moves none — and the once-per-turn use is still SPENT", () => {
+  it("the DECLINE (no ref) moves none — and the once-per-turn use is still SPENT", () => {
     const start = brainBoard(30);
     const parked = run(start, use("Adrena-Brain", ACTIVE)).state;
     const { state, events } = run(parked, decline);
@@ -820,7 +786,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     expect(refused(state, use("Adrena-Brain", ACTIVE)).code).toBe("ABILITY_ALREADY_USED");
   });
 
-  it("🛑 Q1 PARKS over two damaged own bodies (the Munkidori and a benched one); its answer buys Q2 over the opponent's WHOLE board", () => {
+  it("Q1 PARKS over two damaged own bodies (the Munkidori and a benched one); its answer buys Q2 over the opponent's WHOLE board", () => {
     let start = damaged(
       attach(table(MUNKIDORI[1], [FILLER], FILLER, [WATER_MON]), "p1", "active", DARK),
       "p1",
@@ -858,7 +824,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     );
   });
 
-  it("🛑 a LETHAL move is swept mid-turn and is NOT \"by an attack\": the Prize is p1's, but Oh No You Don't does not reduce it", () => {
+  it("a LETHAL move is swept mid-turn and is NOT \"by an attack\": the Prize is p1's, but Oh No You Don't does not reduce it", () => {
     let start = brainBoard(30, MUNKIDORI_EX, [PECHARUNT_EX]);
     start = damaged(start, "p2", "active", 190);
     const victim = top(bodyAt(start, "p2", "active"));
@@ -870,7 +836,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     expect(owed(start, state, events)).toBe(2);
   });
 
-  it("🛑 Amulet of Hope and Huntail do NOT fire on an Adrena-Brain Knock Out", () => {
+  it("Amulet of Hope and Huntail do NOT fire on an Adrena-Brain Knock Out", () => {
     let start = brainBoard(30, WATER_MON, [HUNTAIL]);
     start = attach(attach(start, "p2", "active", WATER, 2), "p2", "active", AMULET, 1, "tools");
     start = damaged(start, "p2", "active", 70);
@@ -886,7 +852,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     expect(state.phase.kind === "effect:choose" && state.phase.seat === "p2").toBe(false);
   });
 
-  it("🛑 a PARKED Adrena-Brain round-trips through JSON (pendingOp + the engine-written `from`) and resumes", () => {
+  it("a PARKED Adrena-Brain round-trips through JSON (pendingOp + the engine-written `from`) and resumes", () => {
     const parked = run(brainBoard(30), use("Adrena-Brain", ACTIVE)).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(revived).toEqual(parked);
@@ -918,7 +884,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
-  it("🛑 THE DIRECTION: p2's Milotic locks p1's cards and never p2's own", () => {
+  it("THE DIRECTION: p2's Milotic locks p1's cards and never p2's own", () => {
     const state = table(FILLER, [], MILOTIC);
     expect(inPlayToHandBlocked(state, "p1")).toBe(true);
     expect(inPlayToHandBlocked(state, "p2")).toBe(false);
@@ -928,7 +894,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     expect(inPlayToHandBlocked(table(FILLER), "p1")).toBe(false);
   });
 
-  it("🛑 a §9-LOCKED Milotic locks nothing (Flutter Mane opposite silences the Active Milotic)", () => {
+  it("a §9-LOCKED Milotic locks nothing (Flutter Mane opposite silences the Active Milotic)", () => {
     const state = table(FLUTTER_MANE, [], MILOTIC);
     expect(inPlayToHandBlocked(state, "p1")).toBe(false);
     expect(conditionHolds(state, "p1", { kind: "yourInPlayToHandAllowed" })).toBe(true);
@@ -937,7 +903,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     ).toBe(false);
   });
 
-  it("🛑 returnBenched (bench): Swoobat's Happy Return WHIFFS — the body stays on the Bench", () => {
+  it("returnBenched (bench): Swoobat's Happy Return WHIFFS — the body stays on the Bench", () => {
     const start = attach(
       attach(table(SWOOBAT, [WATER_MON], MILOTIC), "p1", "active", COLORLESS),
       "p1",
@@ -959,7 +925,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     expect(ok.players.p1.hand.map((u) => idOf(ok, u)).sort()).toEqual([WATER, WATER_MON].sort());
   });
 
-  it("🛑 returnBenched (Active arm, Scoop Up Cyclone's writer): the Active stays", () => {
+  it("returnBenched (Active arm, Scoop Up Cyclone's writer): the Active stays", () => {
     const start = table(FILLER, [WATER_MON], MILOTIC);
     const events: GameEvent[] = [];
     const program: EffectOp[] = [
@@ -979,7 +945,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     expect(free.state.players.p1.active).toBeNull();
   });
 
-  it("🛑 R-MC2: Scoop Up Cyclone with every own body locked is REFUSED (no afford-then-reject), and Chill Teaser Toy by the Milotic OWNER is unplayable", () => {
+  it("R-MC2: Scoop Up Cyclone with every own body locked is REFUSED (no afford-then-reject), and Chill Teaser Toy by the Milotic OWNER is unplayable", () => {
     const locked = setHand(table(FILLER, [WATER_MON], MILOTIC), "p1", [SCOOP_UP]);
     const uid = locked.players.p1.hand[0] as string;
     expect(refused(locked, { type: "playTrainer", seat: "p1", uid } as GameAction).code).toBe(
@@ -987,14 +953,13 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     );
     const free = setHand(table(FILLER, [WATER_MON]), "p1", [SCOOP_UP]);
     expect(programPlayable(free, programFor(SCOOP_UP)?.trainer ?? [], "p1")).toBe(true);
-    // R-MC1 + R-MC2 — p1 OWNS Milotic: the Toy would put p2's Energy into p2's hand, which p1's own lock stops.
     const toy = programFor(CHILL_TOY)?.trainer ?? [];
     const own = attach(table(MILOTIC), "p2", "active", WATER);
     expect(programPlayable(own, toy, "p1")).toBe(false);
     expect(programPlayable(attach(table(FILLER), "p2", "active", WATER), toy, "p1")).toBe(true);
   });
 
-  it("🛑 returnSelf: Lillie's Comfey's Fade Out WHIFFS — Comfey and its Energy stay Active", () => {
+  it("returnSelf: Lillie's Comfey's Fade Out WHIFFS — Comfey and its Energy stay Active", () => {
     const start = attach(table(COMFEY, [], MILOTIC), "p1", "active", PSYCHIC);
     const { state, events } = run(start, attack(1));
     expect(bodyAt(state, "p1", "active").energy).toHaveLength(1);
@@ -1002,7 +967,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     expect(bodyAt(state, "p2", "active").damage).toBe(30);
   });
 
-  it("🛑 devolveBodyToHand (R-MC1/R-MC3): p1's OWN Milotic stops p1's Espathra devolving p2's body — the devolve fails WHOLE", () => {
+  it("devolveBodyToHand (R-MC1/R-MC3): p1's OWN Milotic stops p1's Espathra devolving p2's body — the devolve fails WHOLE", () => {
     let start = underneath(table(ESPATHRA, [MILOTIC], STAGE1), "p2", "active", FILLER);
     start = attach(start, "p1", "active", COLORLESS);
     const { state, events } = run(start, attack(0));
@@ -1014,7 +979,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     expect(bodyAt(run(free, attack(0)).state, "p2", "active").stack).toHaveLength(1);
   });
 
-  it('🛑 discardEnergy `to: "hand"`: Shiftry\'s Energy Loop keeps its Energy attached under the lock (the 140 still lands)', () => {
+  it('discardEnergy `to: "hand"`: Shiftry\'s Energy Loop keeps its Energy attached under the lock (the 140 still lands)', () => {
     const start = attach(table(SHIFTRY, [], MILOTIC), "p1", "active", COLORLESS, 2);
     const { state, events } = run(start, attack(1));
     expect(bodyAt(state, "p1", "active").energy).toHaveLength(2);
@@ -1023,7 +988,7 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     expect(bodyAt(free, "p1", "active").energy).toHaveLength(1);
   });
 
-  it('🛑 D385 — Zarude\'s Jungle Whip does NOT offer its cost under the lock (a "yes" would buy +80 for a whiff): the base 80 lands with no prompt', () => {
+  it('D385 — Zarude\'s Jungle Whip does NOT offer its cost under the lock (a "yes" would buy +80 for a whiff): the base 80 lands with no prompt', () => {
     const locked = attach(
       attach(table(ZARUDE, [], MILOTIC), "p1", "active", GRASS, 2),
       "p1",
@@ -1059,7 +1024,7 @@ describe('§4 — Huntail "Diver\'s Catch" (the Knock Out rescue, auto-fired per
     return attach(state, "p2", "active", SPECIAL, 1);
   }
 
-  it("🛑 the rescue: a {W} body KO'd by the opponent's attack puts its Basic {W} Energy into the HAND — {C} Basic and Special to the discard", () => {
+  it("the rescue: a {W} body KO'd by the opponent's attack puts its Basic {W} Energy into the HAND — {C} Basic and Special to the discard", () => {
     const start = catchBoard();
     const body = bodyAt(start, "p2", "active");
     const waters = body.energy.filter((u) => idOf(start, u) === WATER);
@@ -1076,7 +1041,7 @@ describe('§4 — Huntail "Diver\'s Catch" (the Knock Out rescue, auto-fired per
     );
   });
 
-  it("🛑 a NON-{W} body is not rescued (R-DC3a: the printed type)", () => {
+  it("a NON-{W} body is not rescued (R-DC3a: the printed type)", () => {
     const { state, events } = run(catchBoard(PECHARUNT_EX), attack(0));
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(state.players.p2.hand).toEqual([]);
@@ -1095,18 +1060,18 @@ describe('§4 — Huntail "Diver\'s Catch" (the Knock Out rescue, auto-fired per
     expect(koEnergyRescueUids(live, "p2", bodyAt(live, "p2", "active"))).toHaveLength(2);
   });
 
-  it("🛑 R-DC3b: a Milotic on the ATTACKER's side locks the rescue — the {W} Energy goes to the discard", () => {
+  it("R-DC3b: a Milotic on the ATTACKER's side locks the rescue — the {W} Energy goes to the discard", () => {
     const { state, events } = run(catchBoard(WATER_MON, [HUNTAIL], [MILOTIC]), attack(0));
     expect(state.players.p2.hand).toEqual([]);
     expect(all(events, "KNOCKED_OUT")[0]?.toHand).toBeUndefined();
   });
 
-  it("🛑 Milotic and Huntail on the SAME board: a Milotic never locks its own side — the rescue holds", () => {
+  it("Milotic and Huntail on the SAME board: a Milotic never locks its own side — the rescue holds", () => {
     const { state } = run(catchBoard(WATER_MON, [HUNTAIL, MILOTIC]), attack(0));
     expect(state.players.p2.hand.map((u) => idOf(state, u))).toEqual([WATER, WATER]);
   });
 
-  it("🛑 R-DC2: a Huntail KO'd in the SAME batch still counts (the PRE-batch board) — Huntail Active and a benched {W} body both fall", () => {
+  it("R-DC2: a Huntail KO'd in the SAME batch still counts (the PRE-batch board) — Huntail Active and a benched {W} body both fall", () => {
     let start = table(SPREADER, [], HUNTAIL, [WATER_MON]);
     start = damaged(damaged(start, "p2", "active", 80), "p2", 0, 70);
     start = attach(attach(start, "p2", "active", WATER, 1), "p2", 0, WATER, 1);
@@ -1117,7 +1082,7 @@ describe('§4 — Huntail "Diver\'s Catch" (the Knock Out rescue, auto-fired per
     expect([...state.players.p2.hand].sort()).toEqual([...benchWater, ...ownWater].sort());
   });
 
-  it('🛑 a CHECKUP Knock Out (Poison) is not "by an attack" — no rescue', () => {
+  it('a CHECKUP Knock Out (Poison) is not "by an attack" — no rescue', () => {
     let start = catchBoard();
     start = withBody(damaged(start, "p2", "active", 90), "p2", "active", (p) => ({
       ...p,
@@ -1130,7 +1095,7 @@ describe('§4 — Huntail "Diver\'s Catch" (the Knock Out rescue, auto-fired per
     expect(state.players.p2.hand.filter((u) => idOf(state, u) === WATER)).toEqual([]);
   });
 
-  it("🛑 a RECOIL Knock Out of the attacker's own {W} body is not \"from your OPPONENT's Pokémon\" — no rescue", () => {
+  it("a RECOIL Knock Out of the attacker's own {W} body is not \"from your OPPONENT's Pokémon\" — no rescue", () => {
     let start = table(RECOILER, [HUNTAIL]);
     start = attach(start, "p1", "active", WATER, 2);
     const waters = bodyAt(start, "p1", "active").energy;
@@ -1154,7 +1119,7 @@ describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', (
       uid: state.players.p1.hand[0] as string,
     }) as GameAction;
 
-  it("🛑 refused without an opposing Stage 2, with the printed clause", () => {
+  it("refused without an opposing Stage 2, with the printed clause", () => {
     const state = setHand(table(FILLER), "p1", [KLINKLANG]);
     const no = refused(state, benchIt(state));
     expect(no.code).toBe("ABILITY_CONDITION_NOT_MET");
@@ -1163,7 +1128,7 @@ describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', (
     );
   });
 
-  it("🛑 an opposing Stage 2 (Active OR Bench) admits it: benched, ABILITY_USED filed, the allowance spent", () => {
+  it("an opposing Stage 2 (Active OR Bench) admits it: benched, ABILITY_USED filed, the allowance spent", () => {
     for (const board of [table(FILLER, [], STAGE2), table(FILLER, [], FILLER, [STAGE2])]) {
       const state = setHand(board, "p1", [KLINKLANG]);
       const uid = state.players.p1.hand[0] as string;
@@ -1179,7 +1144,7 @@ describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', (
     }
   });
 
-  it("🛑 ONCE PER TURN: scooped back to the hand the same turn, the same card is refused", () => {
+  it("ONCE PER TURN: scooped back to the hand the same turn, the same card is refused", () => {
     let state = setHand(table(FILLER, [], STAGE2), "p1", [KLINKLANG, SCOOP_UP]);
     const klink = state.players.p1.hand[0] as string;
     const scoop = state.players.p1.hand[1] as string;
@@ -1193,21 +1158,16 @@ describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', (
     ).toBe("ABILITY_ALREADY_USED");
   });
 
-  it("🛑 R-KR1: Potent Glare (a Pokémon-PLAY bar) refuses it", () => {
+  it("R-KR1: Potent Glare (a Pokémon-PLAY bar) refuses it", () => {
     const glare = setHand(table(FILLER, [], ARBOK, [STAGE2]), "p1", [KLINKLANG]);
     expect(refused(glare, benchIt(glare)).code).toBe("HAND_PLAY_BLOCKED");
   });
 
-  it("🛑 R-KR2: an in-play Ability lock that WOULD silence the landed Klinklang does not reach it in the hand", () => {
-    // 🆕🆕🆕 the review round's rewrite. The old rung put Flutter Mane as p1's Active — a lock that reaches
-    // p2's Active and nothing of p1's, and `disabledAbilityUids` never holds a hand uid — so a lock-aware
-    // `benchFromHandRotation` passed it. Gastrodon "Sticky Bind" on p1's OWN Bench silences BENCHED Stage 2
-    // Pokémon on BOTH sides: the exact zone and stage the Rotation lands in. Three facts, in order:
+  it("R-KR2: an in-play Ability lock that WOULD silence the landed Klinklang does not reach it in the hand", () => {
     const board = setHand(table(FILLER, [GASTRODON, SHIFTRY], STAGE2), "p1", [KLINKLANG]);
     const klinklang = board.players.p1.hand[0] as string;
     // (a) the lock is LIVE on p1's own side — p1's benched Stage 2 Shiftry has no Abilities;
     expect(disabledAbilityUids(board).has(top(bodyAt(board, "p1", 1)))).toBe(true);
-    // (b) the in-hand Klinklang still uses Emergency Rotation (R-KR2: the lock reaches in-play bodies only);
     const { state: after, events } = run(board, benchIt(board));
     expect(after.players.p1.bench.map(top)).toEqual([
       ...board.players.p1.bench.map(top),

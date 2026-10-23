@@ -17,16 +17,8 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D646 — BACKTRACK BADGE, THE LAST UNBUILT LEGAL `me` PRINTING ──
-//
-// Backtrack Badge `me05-074` (Pokémon Tool), text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`),
-// 2026-10-11, `legal_standard = 1`. The NEW `PassiveEffects.reflipAttackCoins` (continuous.ts `coinRedoToolOf` /
-// `spendCoinRedo`), offered after the attacker's own coins at attack.ts's printed coin flip (the parked op
-// `reflipAttackCoins`, `resolveCoinRedo`) and at interpreter.ts's `coinFlipGate` and per-coin `damageChosen` (the
-// scheduled op `reflipCoins`). R-BTB1 … R-BTB4 ⚠️ UNRULED. Driven on a LOCAL `cardPool` (D275) in the suite's OWN
-// 60-card deck (D270).
 
 const BADGE_TEXT =
   "Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again.";
@@ -143,11 +135,6 @@ const DECK = deckOf({
   [FILLER]: 19,
   "fix-energy": 26,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup (P2 first), then P1's turn 4 with both hands back in the decks, every Prize a Filler or an Energy. */
 function p1Turn(): GameState {

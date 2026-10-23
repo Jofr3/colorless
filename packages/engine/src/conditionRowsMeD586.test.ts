@@ -24,16 +24,8 @@ import {
   setActiveFromDeck,
   setPrizes,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D586 — WP03: ROWS ON EXISTING CONDITION MEMBERS ──
-//
-// 9 printed texts / 19 `me` units (17 printings): eight attack sentences claimed by shipped
-// readers through one new anchor and seven clause-table rows, plus Carbink's "Double Type" on
-// a {F}{P} copy of Scovillain ex's `typesInPlay` program. Every id and text measured on the
-// LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07, `legal_standard = 1`; no
-// id was referenced anywhere in the tree before this slice. No `me` row is a fixture, so the
-// printed bytes are carried HERE and §1 pins each against the committed `me` corpus.
 
 const ABYSS_EYE =
   "If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out.";
@@ -49,7 +41,6 @@ const INFERNAL_SLASH =
   "Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing.";
 const DOUBLE_TYPE_TEXT = "As long as this Pokémon is in play, it is {F} and {P} type.";
 
-/** [text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [ABYSS_EYE, ["mep-090", "me05-048", "me05-101", "me05-116", "me05-120"]],
   [LIMIT_BREAK, ["mep-015", "me02-045", "me02-100"]],
@@ -78,11 +69,10 @@ describe("D586 §1 — the texts: 8 attack sentences / 17 printings, plus Carbin
     for (const [text] of SENTENCES) expect(resolvedByAnyReader(text), text).toBe(true);
   });
 
-  it("the near miss ~~stays unbuilt~~: Abyss Eye's clause with a damage-counter consequent ~~is not claimed~~ (🆕🆕🆕 D629 (D539): WITHDRAWN — Mismagius \"Assassin's Magic\" is built at D629, `CLAUSE_GATED_BENCH_COUNTERS`)", () => {
+  it("the near miss ~~stays unbuilt~~: Abyss Eye's clause with a damage-counter consequent ~~is not claimed~~ ( D629 (D539): WITHDRAWN — Mismagius \"Assassin's Magic\" is built at D629, `CLAUSE_GATED_BENCH_COUNTERS`)", () => {
     const near =
       "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
     expect(meAttackCorpus().some(([, text]) => text === near)).toBe(true);
-    // 🆕🆕🆕 D629 — claimed now: the clause table's row gates the shipped Benched placement.
     expect(resolvedByAnyReader(near)).toBe(true);
   });
 });
@@ -97,7 +87,6 @@ describe("D586 §2 — the readings: shipped members at the printed parameters",
         then: [{ op: "knockOutDefender" }],
       },
     ]);
-    // The U+2019 spelling of the possessive reads the same (D136/D137).
     expect(deriveAttackEffect(ABYSS_EYE.replace("'", "’"))).toEqual(deriveAttackEffect(ABYSS_EYE));
   });
 
@@ -186,8 +175,6 @@ describe("D586 §2 — the readings: shipped members at the printed parameters",
     expect(scovillain.replace("{G} and {R}", "{F} and {P}")).toBe(DOUBLE_TYPE_TEXT);
   });
 });
-
-// ── ON A BOARD: each row against a control on the other side of its threshold ──
 
 const FILLER = "d586-filler";
 const PSY_WEAK = "d586-psy-weak";
@@ -308,11 +295,6 @@ const DECK = deckOf({
   [P]: 2,
   "fix-energy": 6,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {

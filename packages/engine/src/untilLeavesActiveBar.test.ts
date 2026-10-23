@@ -21,60 +21,6 @@ import {
   types,
 } from "./testFixtures";
 
-// 0.322.0 → 0.323.0 — 🆕🆕 D421: THE UNTIL-IT-LEAVES-ACTIVE BAR, and the first
-// entry in `InPlayPokemon.lockedAttacks` whose duration is a BOARD EVENT rather
-// than a number.
-//
-//   "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot."
-//
-// **5 legal printings, ONE distinct sentence** — `censusAttackCorpus.ts` holds a
-// single row at count 5, so the five printings are byte-identical BY THE ROW
-// rather than by inspection, and the string occurs in no other row, so it is
-// STANDALONE and never a compound tail. Both halves are swept in §1 rather than
-// described.
-//
-// ⚠️ **THE PRINTINGS ARE ALL ONE CARD IN FIVE RARITIES, AND THE IDS ARE KNOWN.**
-// Gouging Fire ex `sv05-038` (Double rare), `sv05-188` (Ultra rare), `sv05-204`
-// (Special illustration rare), `sv05-214` (Hyper rare) and `svp-144` (Promo),
-// re-verified CARD BY CARD against tcgdex — the ingest's own upstream — on
-// 2026-08-26: all five `legal.standard = true`, regulation mark H, 230 HP, Basic,
-// {R}, retreat 2, ×2 Water, no Resistance and no Ability, with "Heat Blast"
-// ({R}{C}, 60, no effect) at index 0 and "Blaze Blitz" ({R}{R}{C}, 260 + this
-// sentence) at **index 1** on every one of them.
-//
-// 🛑 **AND THE FIXTURE IS STILL A `fix-*` KEY, WHICH IS A DIFFERENT SITUATION
-// FROM D408's AND IS WORTH THE SENTENCE.** That slice used synthetic ids because
-// the printings were UNKNOWN to this container; here they are known and the ROW is
-// what is missing — the local D1 holds six sets and neither `sv05` nor `svp`, and
-// `catalogManifest.test.ts` (c) asserts `CATALOG_MANIFEST.absent` is EMPTY, so a
-// real-id fixture would REDDEN that guard rather than strengthen this suite. What
-// this buys instead of an id is that every SCALAR on the fixture is transcribed
-// rather than chosen (`testFixtures.ts`), and §8 pins the transcription.
-//
-// FOUR THINGS THE SLICE TURNS ON:
-//
-//   • **A LITERAL ROW, NOT A CAPTURE.** D121's criterion: the varying axis holds
-//     ONE name, so a `([A-Z].+?)` template would parameterise over a pool of one.
-//     §2 proves the row is LITERAL by near-miss rather than by asserting the
-//     regex — every rewrite one token away is refused;
-//   • **AN OPTIONAL RIDER, NOT A NEW FIELD OR A NEW OP.** `until: "leavesActive"`
-//     is the same key with the same value on the op (effects.ts), the record
-//     (types.ts) and the log row (events.ts). D131's widen-don't-add test PASSES
-//     here where D154 ran it and it failed: strip `until` and what is left is
-//     `preventAttackUse`'s previous inhabitant, meaning exactly what it meant;
-//   • **NO NEW CLEAR SITE, WHICH IS D408's CRITERION EVALUATED.** *"until it
-//     leaves the Active Spot"* is machinery `lockedAttacks` already owns: all
-//     THREE §10 literals shed the list unconditionally. Three is not "more than
-//     three", so this is a SENTENCE slice and not a state slice. §5 drives all
-//     three through the REAL action;
-//   • **`MATCH_RECORD_VERSION` STAYS 26**, and it is DRIVEN IN BOTH DIRECTIONS in
-//     §9 rather than argued: a v26 record whose entry OMITS the key replays as an
-//     ordinary next-turn lock, and one that carries it replays as the bar.
-//
-// SEED-FREE: the sentence flips nothing, so a seed table would describe a shuffle
-// rather than a rule. §3 pins that with an unchanged `rngState`.
-
-/** The printed sentence, byte for byte off `legalAttackCorpus()`. */
 const BLAZE_BLITZ_BAR = "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot.";
 
 /** The two indices of the barrer, and the whole point of the pair: the bar names
@@ -121,11 +67,6 @@ function other(seat: Seat): Seat {
   return seat === "p1" ? "p2" : "p1";
 }
 
-/** The barrer on `seat`'s Active with the {R}{R}{C} its named attack costs, on
-    `seat`'s own turn 2. The OTHER seat opens and passes, so this turn carries no
-    §4 first-turn attack restriction, and it fields `fix-titan` (340 HP, NO
-    attacks) so that no case here ever reaches `ko:takePrizes` — 260 + 60 is 320
-    and the body survives both. */
 function ready(seat: Seat = "p1"): GameState {
   const opener = other(seat);
   let state = must(
@@ -171,10 +112,6 @@ function laterTurns(state: GameState, seat: Seat, count: number): GameState {
   return next;
 }
 
-/** TEST SURGERY: write the list straight onto a seat's Active, for the cases the
-    merge rule reaches and no line of play does (a re-install landing on a live
-    unbounded bar, and a v26 record's entry with the rider ABSENT). Said so rather
-    than skipped, per the family's standing rule. */
 function setLocks(state: GameState, seat: Seat, locks: InPlayPokemon["lockedAttacks"]): GameState {
   const side = state.players[seat];
   const active = must0(side.active);
@@ -184,47 +121,23 @@ function setLocks(state: GameState, seat: Seat, locks: InPlayPokemon["lockedAtta
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// §1 — THE DATUM: the corpus row, byte for byte, and what it says about SHAPE.
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe("§1 — the printed sentence, and the two claims the corpus row makes", () => {
   it("is on the corpus EXACTLY ONCE, at 5 printings — so all five are byte-identical", () => {
-    // The row is `<legal printings> <sentence>`, one line per DISTINCT sentence,
-    // so a single row at count 5 is a claim about SPELLING and not only about
-    // size: five printings that differed by one byte would be two rows.
     const rows = legalAttackCorpus().filter(([, sentence]) => sentence === BLAZE_BLITZ_BAR);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.[0]).toBe(5);
   });
 
   it("is STANDALONE — the words appear in no other corpus sentence, so it is never a tail", () => {
-    // 🛑 THE CLAIM THAT DECIDES THE ARM'S SHAPE. D410's and D412's anchors exist
-    // ONLY to be reached through `splitAttackTrailingClause`, because the pool
-    // never prints their clause alone; this one is the opposite and the sweep is
-    // what says so, over all 640 sentences rather than over the ones remembered.
     const carrying = legalAttackCorpus().filter(([, sentence]) =>
       sentence.includes("until it leaves the Active Spot"),
     );
     expect(carrying.map(([, sentence]) => sentence)).toEqual([BLAZE_BLITZ_BAR]);
-    // …and the whole row IS the whole sentence: nothing precedes it and nothing
-    // follows, which is what makes a `^…$` anchor the right instrument.
     expect(carrying[0]?.[1].startsWith("This Pokémon")).toBe(true);
     expect(carrying[0]?.[1].endsWith("Active Spot.")).toBe(true);
   });
 
-  it("🛑 THE BYTE GUARD: the apostrophe is U+0027, NOT the curly U+2019", () => {
-    // ⚠️ THIS CASE EXISTS BECAUSE THE SLICE WAS HANDED THE OPPOSITE CLAIM. The
-    // brief said the sentence carries U+2019 in "can't" and asked for it to be
-    // checked byte for byte — and the check says otherwise: the corpus row, and
-    // all five tcgdex rows it was ingested from, spell the STRAIGHT apostrophe.
-    // `CATALOG_MANIFEST.curlyApostropheAnywhere` has been 0 for the whole catalog
-    // since D156, and this sentence is not the exception.
-    //
-    // So the `['’]` class in the anchor is the family's STANDING INSURANCE against
-    // a punctuation-normalising re-ingest (D136/D137), not a transcription of
-    // today's bytes — which is exactly what `clauseApostrophe.test.ts` exists to
-    // keep true, and is asserted in the other direction two cases down.
+  it("THE BYTE GUARD: the apostrophe is U+0027, NOT the curly U+2019", () => {
     const codePoints = [...BLAZE_BLITZ_BAR].map((c) => c.codePointAt(0) ?? 0);
     expect(BLAZE_BLITZ_BAR).toContain("can't");
     expect(BLAZE_BLITZ_BAR).not.toContain("’");
@@ -236,10 +149,6 @@ describe("§1 — the printed sentence, and the two claims the corpus row makes"
   });
 
   it("the fixture carries the row — every field, including the ones it does not have", () => {
-    // D151's rule: the ABSENCES are asserted too, because they are what a later
-    // completion would move. Every scalar here is TRANSCRIBED from tcgdex
-    // (2026-08-26); only the key and the name are synthetic, and the name keeps
-    // the printed " ex" because that is the engine's only channel for a rule box.
     const card = FIXTURE_POOL["fix-gougingfire"];
     expect(card?.name).toBe("fix-gougingfire ex");
     expect(card?.hp).toBe(230);
@@ -250,9 +159,6 @@ describe("§1 — the printed sentence, and the two claims the corpus row makes"
     expect(card?.resistances ?? null).toBeNull();
     expect(card?.abilities ?? null).toBeNull();
     expect(card?.evolveFrom ?? null).toBeNull();
-    // 🛑 THE INDEX IS THE DATUM THE INSTALL RESOLVES THE PRINTED NOUN TO, and it
-    // is 1 on all five printings — asserted rather than assumed, because a fixture
-    // that dropped index 0 would renumber the very thing this slice addresses.
     expect(card?.attacks).toHaveLength(2);
     expect(card?.attacks?.[HEAT_BLAST]).toEqual({
       cost: ["Fire", "Colorless"],
@@ -265,15 +171,9 @@ describe("§1 — the printed sentence, and the two claims the corpus row makes"
       damage: 260,
       effect: BLAZE_BLITZ_BAR,
     });
-    // …and the program arrives by TEXT DERIVATION, not from a registry row that
-    // would silently take over the seam every board below drives.
     expect(programFor("fix-gougingfire")).toBeUndefined();
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §2 — THE DERIVATION, and the LITERAL-ROW proof.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 — one arm, one op, and the row is LITERAL", () => {
   it("derives `preventAttackUse` with the SPELLED noun and the `until` rider", () => {
@@ -282,15 +182,8 @@ describe("§2 — one arm, one op, and the row is LITERAL", () => {
     ]);
   });
 
-  it("🛑 THE LITERAL-ROW PROOF: every near-miss rewrite is REFUSED", () => {
-    // ⚠️ A LITERAL ROW IS ONLY A LITERAL ROW IF IT REFUSES THE NEIGHBOURHOOD, and
-    // the way to say that is not to assert the regex — it is to hand the reader
-    // the sentences a `(.+?)` capture would have swallowed and watch it decline.
-    // D121's criterion is a claim about the CATALOG (one name on the varying
-    // axis); these are the claims about the READER that follow from taking it.
+  it("THE LITERAL-ROW PROOF: every near-miss rewrite is REFUSED", () => {
     for (const text of [
-      // …the same shape with ANOTHER attack name. A capture would take it; the
-      // literal row does not, and no card prints it.
       "This Pokémon can't use Heat Blast again until it leaves the Active Spot.",
       // …the name of the sibling family's attack, which IS printed in this pool —
       // one word of the sentence away from a real reading, and still refused.
@@ -300,11 +193,7 @@ describe("§2 — one arm, one op, and the row is LITERAL", () => {
       "This Pokémon can't use Blaze Blitz until it leaves the Active Spot.",
       // …the trailing period dropped, which is what an anchor without `$` admits.
       "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot",
-      // …a leading clause, which is what an anchor without `^` admits: this is the
-      // shape a compound would arrive in, and the corpus prints none.
       "Discard an Energy from this Pokémon. This Pokémon can't use Blaze Blitz again until it leaves the Active Spot.",
-      // …the OTHER Pokémon: "that Pokémon" is the pronoun spelling D410's family
-      // uses across the table, and it must not reach a SELF-side install.
       "That Pokémon can't use Blaze Blitz again until it leaves the Active Spot.",
       // …lowercased "Active Spot", the drift a paraphrase produces. No /i, so the
       // capital is load-bearing.
@@ -318,21 +207,12 @@ describe("§2 — one arm, one op, and the row is LITERAL", () => {
   });
 
   it("…and the CURLY spelling is admitted, which is the standing insurance", () => {
-    // The class in the anchor exists against a punctuation-normalising re-ingest,
-    // not against today's bytes (§1's byte guard measured that). D137's contract
-    // is that the two spellings produce the SAME VALUE and never merely a non-null
-    // one, so the assertion is an equality with the straight reading rather than a
-    // `not.toBeNull()`.
     expect(deriveAttackEffect(BLAZE_BLITZ_BAR.replace("can't", "can’t"))).toEqual(
       deriveAttackEffect(BLAZE_BLITZ_BAR),
     );
   });
 
   it("the four neighbouring anchors keep their own sentences, and none takes this one", () => {
-    // ⚠️ ASSERTED AS DIFFERENT PROGRAMS RATHER THAN AS NULLS, which is the sharper
-    // claim on a family whose members share an op and a record: a reader that
-    // drifted between two of these would produce a board carrying the right fact
-    // with the wrong duration, and no `toBeNull` anywhere could see it.
     expect(
       deriveAttackEffect("During your next turn, this Pokémon can't use Blaze Blitz."),
     ).toEqual([{ op: "preventAttackUse", attack: "Blaze Blitz" }]);
@@ -347,11 +227,6 @@ describe("§2 — one arm, one op, and the row is LITERAL", () => {
         "During your next turn, this Pokémon's Blaze Blitz attack does 100 more damage (before applying Weakness and Resistance).",
       ),
     ).toEqual([{ op: "boostAttack", attack: "Blaze Blitz", amount: 100 }]);
-    // 🛑 AND THE PAIR THAT MATTERS MOST, SPELLED AS ONE ASSERTION: D154's arm and
-    // this one produce the SAME op with the SAME noun and differ ONLY in the
-    // rider. That is the whole of "a widening rather than a sixth op" — and it is
-    // also the one difference no board can see if a reader drifts, because both
-    // programs resolve, both install, and both grey exactly one row.
     const next = deriveAttackEffect("During your next turn, this Pokémon can't use Blaze Blitz.");
     const bar = deriveAttackEffect(BLAZE_BLITZ_BAR);
     expect(bar?.[0]).not.toEqual(next?.[0]);
@@ -361,10 +236,6 @@ describe("§2 — one arm, one op, and the row is LITERAL", () => {
     });
   });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §3 — THE INSTALL: the record, the row, and the stamp that is provenance.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — the install writes an entry with NO window", () => {
   it("stamps the INSTALL turn, the resolved index and the rider, and names the attack", () => {
@@ -382,12 +253,6 @@ describe("§3 — the install writes an entry with NO window", () => {
       attack: "Blaze Blitz",
       until: "leavesActive",
     });
-    // 🛑 THE TURN IS 2 — THE INSTALLING TURN — AND NOT 4. Declaring ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]
-    // (§5.3), so a `2` here names a turn its holder has already spent: the number
-    // is PROVENANCE and no reader compares it (types.ts). Stamping `+ 2` would
-    // have made a build that dropped the rider degrade silently into D154's
-    // next-turn lock; stamping the install turn makes it produce a bar that never
-    // bites once, which §4 can see on the very next turn.
     expect(before.turn).toBe(2);
     expect(state.players.p1.active?.lockedAttacks).toEqual([
       { turn: 2, attackIndex: BLAZE_BLITZ, until: "leavesActive" },
@@ -407,10 +272,6 @@ describe("§3 — the install writes an entry with NO window", () => {
   });
 
   it("no ATTACK_EFFECT_SKIPPED — in either direction", () => {
-    // The LOUD path is what an unclaimed sentence takes, so its absence on the
-    // barred attack is the claim "this reader took it". The CONTROL is index 0,
-    // which prints no effect at all: a build that emitted the loud row for every
-    // declaration would satisfy the first assertion's negation and not this one.
     const { events } = barred();
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     const sibling = mustApply(ready(), { type: "attack", seat: "p1", index: HEAT_BLAST });
@@ -428,15 +289,6 @@ describe("§3 — the install writes an entry with NO window", () => {
   });
 
   it("installs NOTHING when the printed name matches no attack on the holder", () => {
-    // ~~Unreachable off all five printings — every one names its own attack — so it
-    // is CONSTRUCTED and said so.~~ 🆕🆕🆕 D573 (D539): WITHDRAWN — a COPY reaches it:
-    // Foul Play or Metronome copying Gouging Fire ex's Blaze Blitz holds no attack of
-    // that name, so no bar installs and the copy repeats every turn (R-CP9 ⚠️ UNRULED,
-    // decisions.md D573; driven in `copyAttackD573.test.ts` §3c). This stays the
-    // constructed pin. The op is fed through the real deriver so only
-    // the HOLDER is substituted, and the contract is D154's unchanged: a bar on an
-    // attack the card does not have is inert, and the honest shape of inert is
-    // absence.
     const before = ready();
     const program = deriveAttackEffect(BLAZE_BLITZ_BAR);
     expect(program).not.toBeNull();
@@ -493,10 +345,6 @@ describe("§4 — there is no window, and that is driven across real turn bounda
   });
 
   it("BOTH SEATS — P2 installs it on its own body and is refused on its own turn", () => {
-    // `seat` owns the BARRED Pokémon, and here that seat is the one that went
-    // SECOND in the setup rather than first. Driven end to end because a rider
-    // read off the wrong side of the table is exactly the failure D410's own
-    // mutant row describes, one duration over.
     const { state, row } = barred("p2");
     expect(row).toMatchObject({ seat: "p2", attack: "Blaze Blitz", until: "leavesActive" });
     expect(state.players.p2.active?.lockedAttacks).toEqual([
@@ -516,9 +364,6 @@ describe("§4 — there is no window, and that is driven across real turn bounda
 
 describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing else", () => {
   it("RETREATING lifts it — the holder's own route, and the printed one", () => {
-    // The sentence names this line explicitly, which makes it the one route this
-    // slice cannot leave to the swept clear-set: retreat the barred body, promote
-    // something else, and the bar is gone with it.
     const window = laterTurns(barred().state, "p1", 1);
     const active = must0(window.players.p1.active);
     expect(lockedAttackIndexes(window, active)).toEqual([BLAZE_BLITZ]);
@@ -534,10 +379,6 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
   });
 
   it("…and a body brought BACK is free to use it again — the whole printed reading", () => {
-    // 🛑 THE ASSERTION THE SENTENCE IS ACTUALLY ABOUT, and the one a clear-set
-    // sweep cannot make: "until it leaves the Active Spot" is not a synonym for
-    // "forever", and the only way to say so is to leave and come back. Retreat on
-    // the window turn, Switch back on the next one, and declare.
     const window = laterTurns(barred().state, "p1", 1);
     const active = must0(window.players.p1.active);
     let state = mustApply(window, {
@@ -600,30 +441,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
     expect(benched?.lockedAttacks ?? []).toEqual([]);
   });
 
-  it("🛑 EVOLVING lifts it too — the DISCREPANCY, DECIDED and pinned rather than met", () => {
-    // ⚠️ THE PRINTED SENTENCE DOES NOT SAY THIS, AND THE ENGINE DOES IT ANYWAY.
-    // "until it leaves the Active Spot" names ONE event, and evolving is not that
-    // event: the body never leaves the spot. `evolveOnto` sheds `lockedAttacks`
-    // unconditionally, so an evolution inside the bar frees the barred index.
-    //
-    // 🛑 THE CALL: KEEP IT, and the ground is the RULEBOOK rather than the
-    // sentence. §10 removes the effects of ATTACKS when a Pokémon evolves, and
-    // this bar IS an effect of an attack — so the general rule governs and the
-    // printed clause names the OTHER way out rather than the only one. That is the
-    // same reading every field on this body already takes (D142's block, D143's
-    // lock, D147's reduction, D154's per-attack bar), and taking it differently
-    // here would make ONE entry in ONE list behave unlike its eight neighbours on
-    // three hand-written literals that nothing makes agree.
-    //
-    // 🛑 AND IT IS PINNED BECAUSE THE ALTERNATIVE IS AN ACCIDENT. If a later slice
-    // decides the printed clause is exhaustive, this case is what goes red and
-    // tells them a decision was made rather than a site forgotten — which is the
-    // whole difference between the two, and the reason D414's rule says to write
-    // the correction as a guard and not as a paragraph.
-    //
-    // ⚠️ AND THE EVOLVED BODY HAS ONE ATTACK, so a clear that failed would leave
-    // an index pointing at NOTHING: the failure this rules out is not "still
-    // barred", it is "barred somewhere else".
+  it("EVOLVING lifts it too — the DISCREPANCY, DECIDED and pinned rather than met", () => {
     const window = laterTurns(barred().state, "p1", 1);
     expect(must0(window.players.p1.active).lockedAttacks).toHaveLength(1);
     const held = handFromDeck(window, "p1", "fix-gouging-stage1", 1);
@@ -642,14 +460,6 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
   });
 
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
-    // D149's rule, and the reason this slice adds no clear site: the three §10
-    // literals are hand-kept and nothing makes them agree, so the new fact is read
-    // off ONE body that has been through one of them beside the NINE that were
-    // already there.
-    // 🆕🆕 D432 — the NO-WEAKNESS bar joins the swept set. It is read STRUCTURALLY
-    // here for the reason its own suite states: §8.5 applies Weakness only to the
-    // ACTIVE, so once a body has been through a §10 clear there is no number left
-    // that could witness the bar's absence. The field is the only witness there is.
     const window = laterTurns(barred().state, "p1", 1);
     const held = handFromDeck(window, "p1", "fix-gouging-stage1", 1);
     const { state: evolved } = mustApply(held, {
@@ -658,10 +468,6 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       uid: handUid(held, "p1", "fix-gouging-stage1"),
       target: { spot: "active" },
     });
-    // 🆕🆕 D434 — the SCHEDULED counter placement joins the swept set, and it is read
-    // STRUCTURALLY for a reason of its own: the record's whole effect is in the
-    // future, so after a §10 clear there is no number that could witness its absence
-    // until a Checkup that will never place anything. The field IS the witness.
     const body = must0(evolved.players.p1.active);
     expect({
       attackBlock: body.attackBlock,
@@ -697,18 +503,6 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
 
 describe("§6 — `addLockedAttack` keeps an unbounded bar, and adds it only once", () => {
   it("IDEMPOTENT on the index alone — a re-install on a LATER turn adds nothing", () => {
-    // ⚠️ CONSTRUCTED, AND SAID SO. A second install of THIS op cannot land on a
-    // live record of THIS op in play: installing means declaring "Blaze Blitz",
-    // and the bar forbids exactly that until the body leaves — at which point §10
-    // has emptied the list. The surgery says which of the two idempotence keys
-    // `addLockedAttack` implements.
-    //
-    // 🛑 AND THE TURN IS DELIBERATELY DIFFERENT FROM THE EXISTING ENTRY'S. The
-    // turn-stamped key is the PAIR (turn, index); with the rider the key is the
-    // INDEX and the rider alone, because an unbounded bar re-installed later is
-    // the same fact and not a new one. Comparing the turn here appends a duplicate
-    // — a repeated index in both payability projections and a second log row about
-    // a bar the player already has.
     const state = setLocks(ready(), "p1", [
       { turn: 1, attackIndex: BLAZE_BLITZ, until: "leavesActive" },
     ]);
@@ -741,17 +535,7 @@ describe("§6 — `addLockedAttack` keeps an unbounded bar, and adds it only onc
     expect(types(second)).toEqual(["ATTACK_LOCKED"]);
   });
 
-  it("🛑 THE PRUNE DOES NOT COLLECT IT — a later write leaves the unbounded bar alone", () => {
-    // ⚠️ THIS IS THE HALF THAT WOULD HAVE SHIPPED SILENTLY. The garbage rule drops
-    // entries whose `turn` is strictly behind `now`, which is sound for a stamp
-    // and fatal for provenance: the bar's `turn` is the INSTALL turn and is behind
-    // `now` from the following turn onwards, so an unbranched prune deletes a live,
-    // unbounded bar on the next write — D165's own defect a third time, this time
-    // inside the rule that exists to bound the list.
-    //
-    // Driven as a PLAYED LINE: the body is barred on turn 2, and on turn 4 it
-    // declares the SIBLING, whose own printing installs nothing — so the write that
-    // exercises the prune is the surgery-free one below.
+  it("THE PRUNE DOES NOT COLLECT IT — a later write leaves the unbounded bar alone", () => {
     const window = laterTurns(barred().state, "p1", 1);
     expect(window.turn).toBe(4);
     // A stale turn-stamped entry beside the bar, so the prune is proved to be
@@ -772,8 +556,6 @@ describe("§6 — `addLockedAttack` keeps an unbounded bar, and adds it only onc
       { turn: 2, attackIndex: BLAZE_BLITZ, until: "leavesActive" },
       { turn: 6, attackIndex: HEAT_BLAST },
     ]);
-    // …and the bar is still the thing the reader answers with, on the write's own
-    // turn, which is what every prune mutant throws away.
     expect(lockedAttackIndexes(result.state, must0(result.state.players.p1.active))).toEqual([
       BLAZE_BLITZ,
     ]);
@@ -814,10 +596,6 @@ describe("§7 — the row says how long, and it says it under either seat", () =
   });
 
   it("…and the two OLDER phrasings are unmoved — the discriminator, in three cells", () => {
-    // ⚠️ D412's RULE: a guard for a newly-split fact needs the halves that were
-    // already correct as CONTROLS. Driving only the new branch proves the new code
-    // runs; driving only the old ones stays green through the entire defect. Three
-    // rows off ONE renderer, on one body, differing only in the event's riders.
     const { state, row } = barred();
     const uid = activeUid(state, "p1");
     expect(render([{ type: "ATTACK_LOCKED", seat: "p1", uid }], state)).toEqual([
@@ -833,14 +611,8 @@ describe("§7 — the row says how long, and it says it under either seat", () =
   });
 
   it("reads identically with the seat NAMES swapped — the seat rule is untouched", () => {
-    // The wording carries no player name and no "next turn" at all, so unlike the
-    // two branches above it cannot even be false under the other seat. Driven
-    // rather than argued, because this family has got a mirrored render wrong once
-    // already (D148's bare wording).
     const { state, row } = barred();
     expect(render([row], state, { p1: "Tide", p2: "Ember" })).toEqual(render([row], state));
-    // …and the same row rendered from the OTHER seat's install files under p2,
-    // which is the voice rule (`seat` owns the BARRED Pokémon) on a second board.
     const mirror = barred("p2");
     expect(render([mirror.row], mirror.state)[0]?.who).toBe("p2");
   });
@@ -852,12 +624,6 @@ describe("§7 — the row says how long, and it says it under either seat", () =
 
 describe("§8 — the panel greys exactly the barred row, on every turn", () => {
   it("greys index 1 and OFFERS index 0 — and agrees with the §8 gate on both", () => {
-    // ⚠️ `redactedAttacksOf` and `GameHud` both read `lockedAttackIndexes` and take
-    // the set WHOLE, so neither needed a branch for this rider — VERIFIED by
-    // reading them (`redact.ts`, `GameHud.tsx`) and DRIVEN here on the server side,
-    // which is D412's rule in the order it asks for. What is new is that the set
-    // is non-empty on turns no stamp names, so a build that kept the turn
-    // comparison renders a completely normal panel that rejects one press.
     const window = laterTurns(barred().state, "p1", 2);
     const view = redactGame(window, "p1").phase;
     if (view.kind !== "turn:action") throw new Error(`expected turn:action, got ${view.kind}`);
@@ -905,28 +671,15 @@ describe("§8 — the panel greys exactly the barred row, on every turn", () => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — a v26 record still means what it meant, and this one is readable too", () => {
-  it("🛑 A v26 ENTRY WITH THE KEY ABSENT REPLAYS AS AN ORDINARY NEXT-TURN LOCK", () => {
-    // ⚠️ `MATCH_RECORD_VERSION` IS NOT EXPORTED FROM THIS PACKAGE (it lives in
-    // `apps/api/src/lobby/match.ts`), so the claim is DRIVEN rather than asserted
-    // against the constant. The bump trigger is a MISSING REQUIRED FIELD on a
-    // persisted structure (D386/D393/D412 at this exact address); this slice adds
-    // an OPTIONAL key to `LockedAttack`, so the question is whether a record
-    // written by the PREVIOUS deploy still reads as what that deploy meant.
-    //
-    // The v26 shape is BUILT rather than imagined — the entry is written with the
-    // key genuinely ABSENT and the whole board JSON round-tripped, which is what
-    // persistence actually does to it — and then REPLAYED through `applyAction`.
+  it("A v26 ENTRY WITH THE KEY ABSENT REPLAYS AS AN ORDINARY NEXT-TURN LOCK", () => {
     const window = laterTurns(barred().state, "p1", 1);
     expect(window.turn).toBe(4);
     const legacy = JSON.parse(
       JSON.stringify(setLocks(window, "p1", [{ turn: 4, attackIndex: BLAZE_BLITZ }])),
     ) as GameState;
     const entry = must0(legacy.players.p1.active).lockedAttacks[0];
-    // ABSENT, not `undefined` — the distinction D124 refuses to blur, and the one
-    // a `toEqual` would hide.
     expect(entry).toBeDefined();
     expect("until" in (entry ?? {})).toBe(false);
-    // IT READS AS D154's LOCK: live on the turn it names…
     expect(lockedAttackIndexes(legacy, must0(legacy.players.p1.active))).toEqual([BLAZE_BLITZ]);
     expect(refusal(legacy, "p1", BLAZE_BLITZ)).toBe("ATTACK_PREVENTED");
     // …and DEAD two turns on, with nothing having cleared it, which is the half a
@@ -935,11 +688,6 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
     expect(later.turn).toBe(6);
     expect(lockedAttackIndexes(later, must0(later.players.p1.active))).toEqual([]);
     expect(refusal(later, "p1", BLAZE_BLITZ)).toBeNull();
-    // …and it is NOT RETIRED: the version gate refuses a record that is missing a
-    // key this deploy's type says is always there, and this deploy's in-play
-    // Pokémon carry exactly the keys the previous one wrote. Asserted as a LITERAL
-    // key-set comparison in both directions, because a diff between two boards
-    // from ONE build is blind to a key that grew on both (D279).
     const live = must0(laterTurns(barred().state, "p1", 1).players.p1.active);
     expect(Object.keys(must0(legacy.players.p1.active)).sort()).toEqual(Object.keys(live).sort());
   });

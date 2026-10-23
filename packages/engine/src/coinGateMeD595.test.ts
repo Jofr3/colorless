@@ -20,21 +20,8 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D595 — WP13: COIN-GATE COMPOSITIONS ──
-//
-// 8 printed attack texts / 11 `me` printings, each a coin over a consequent the engine already runs:
-// five `deriveAttackEffect` gates (arm 46b — `COIN_GATE_HEAD` over the closed `COIN_GATED_CONSEQUENTS`
-// table, D355's `coins` for the two- and three-coin heads) and three `deriveAttackCoinFlip`
-// `programPerHeads` arms (Smeargle's untyped attach, the until-tails singular mill, the until-tails
-// random hand shuffle). Every id and text measured on the LOCAL D1, 2026-10-08, `legal_standard = 1`;
-// no id was referenced in the tree before this slice. No `me` row is a fixture, so the printed faces
-// used on a board are carried HERE. Dropped and named (each needs vocabulary beyond WP13's brief):
-// Bombirdier `me05-071`, Bewear `me01-112`, Gholdengo `me01-099`, Pikachu `30th-042`, Snorlax
-// `me03-063`, Shiftry `me01-015`, Octillery `me04-017` — §2 keeps them null. [🆕🆕🆕 D634 (D539): all but
-// Octillery are BUILT at D634 (C1, `coinRestMeD634.test.ts`); §2 now pins the six built and Octillery null.]
-// [🆕🆕🆕 D636 (D539): Octillery is BUILT at D636 (L1, `nextTurnLocksD636.test.ts`); §2 pins all seven built.]
 
 const T = {
   bellyful: "Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.",
@@ -51,7 +38,6 @@ const T = {
   bite: "Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck.",
 } as const;
 
-/** [text, legal `me` printings, the ids]. */
 const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
   [T.bellyful, 1, ["me01-106"]],
   [T.triKinesis, 1, ["me02.5-078"]],
@@ -63,8 +49,6 @@ const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
   [T.bite, 2, ["me01-066", "me01-145"]],
 ];
 
-/** The seven WP13 texts this slice drops, each on vocabulary the brief does not allow. [🆕🆕🆕 D634 (D539): six
-    are BUILT at D634; only Octillery's stays unbuilt.] [🆕🆕🆕 D636 (D539): and Octillery's at D636 (L1).] */
 const DROPPED: Record<string, string> = {
   "Bombirdier — the bench search reads 'a Pokémon' as a card NAME; by the standing rule only a Basic goes onto the Bench, which needs a bench-search arm outside the coin reader":
     "Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck.",
@@ -91,8 +75,6 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
       expect(ids).toHaveLength(n);
-      // 🆕🆕🆕 D610 (D539): "none registry-keyed" now means no ATTACK key — Tyrantrum `mep-066` /
-      // `me03-045` carry D610's "Tyrannically Gutsy" passive; Wreak Havoc still derives.
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
       for (const id of ids)
         expect(Object.keys(programFor(id) ?? {}), id).toEqual(
@@ -126,7 +108,6 @@ describe("D595 §1 — the eight sentences and their programs", () => {
         "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
       ),
     );
-    // Tri Kinesis: D416's chosen Knock Out over the whole opposing board, no counter window.
     expect(deriveAttackEffect(T.triKinesis)).toEqual([
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "coinFlipGate", coins: 3, then: [{ op: "knockOutChosen", target: "opponentAny" }] },
@@ -210,10 +191,6 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
   });
 
   it("arm 46b is head × consequent: all 15 crossings build, exactly 5 are printed (D131, not D451)", () => {
-    // 🆕🆕🆕 D605 (D539): these are D595's five rows; the table has six now (Miraculous Paint) —
-    // `coinRestMeD605.test.ts` §2 pins the 18 crossings and 6 printed.
-    // 🆕🆕🆕 D634 (D539): eight rows now (Challenging Delivery, Reversing Gust) —
-    // `coinRestMeD634.test.ts` §2 pins the 24 crossings and 8 printed.
     const heads = [
       "Flip a coin. If heads, ",
       "Flip 2 coins. If both of them are heads, ",
@@ -232,14 +209,10 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
     );
   });
 
-  it("the seven dropped texts are unbuilt (🆕🆕🆕 D634: six are built at D634; Octillery stays unbuilt) (🆕🆕🆕 D636 (D539): WITHDRAWN — Octillery is built at D636; all seven are built)", () => {
+  it("the seven dropped texts are unbuilt ( D634: six are built at D634; Octillery stays unbuilt) ( D636 (D539): WITHDRAWN — Octillery is built at D636; all seven are built)", () => {
     const me = new Set(meAttackCorpus().map(([, text]) => text));
     for (const [why, text] of Object.entries(DROPPED)) {
-      // 🆕🆕🆕 D634 (D539): every text but Octillery's is reader-built at D634 (C1).
-      // 🆕🆕🆕 D636 (D539): and Octillery's too (D636, L1 — `flipLockAttack` with `coins: 2`).
       expect(resolvedByAnyReader(text), why).toBe(true);
-      // Pikachu's D1 row prints the {L} as markup, so its corpus line is not this string. [🆕🆕🆕 D634
-      // (D539): WITHDRAWN — since D612's re-ingest the corpus line IS this string.]
       expect(me.has(text), why).toBe(true);
     }
   });
@@ -309,12 +282,6 @@ const DECK = deckOf({
   "fix-energy": 20,
 });
 
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-/** Setup (P2 first), then P1's turn 4 with both hands back in the decks (D592's idiom). */
 function p1Turn(): GameState {
   const created = createGame({ seed: 5951, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -538,8 +505,6 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     const first = attack(state);
     expect(promptOf(first.state)).toMatchObject({ kind: "choosePokemon" });
     const targeted = pickBody(first.state, { seat: "p1", spot: { spot: "bench", index: 0 } });
-    // 🆕 Card revision B01 — {R} and {W} are not interchangeable, so the card is asked (the Special
-    // is never offered); the {R} is picked, and the second heads' pile is the {W} alone.
     const ask = promptOf(targeted.state);
     expect(ask).toMatchObject({ kind: "chooseCards", min: 1, max: 1, dest: "attach" });
     const offered = (ask as { candidates: string[] }).candidates;
@@ -556,7 +521,6 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     expect(bench.flat().sort()).toEqual([FIRE, WATER]);
     expect(idsOf(done.state, done.state.players.p1.discard)).toEqual([SPECIAL]);
 
-    // Each park is declinable (D358): a decline attaches nothing, and the second heads still asks.
     const declined = mustApply(first.state, {
       type: "resolveEffect",
       seat: "p1",
@@ -567,10 +531,6 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
   });
 
   it("~~KNOWN LIMITATION (inherited from the five `sv` discard-attach sentences): the ENERGY is not chosen~~ (card revision B01: RETIRED — the ENERGY is chosen)", () => {
-    // ~~`attachEnergyFrom` with no type takes the first Basic Energy in pile order (interpreter.ts
-    // `attachableEnergies`, "fungible"); the only park is the target. The print lets the player pick.~~
-    // 🆕 Card revision B01: the target answer now buys the card question (`pickOnto`), and the
-    // player's pick — here the SECOND card in pile order — is the one that lands.
     let state = table(SMEARGLE, [H, X, X], 0, 1);
     state = discardFromDeck(state, "p1", FIRE, 1);
     state = discardFromDeck(state, "p1", WATER, 1);

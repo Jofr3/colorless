@@ -20,19 +20,8 @@ import {
   mustApply,
   setActiveFromDeck,
   trainerCard,
+  must,
 } from "./testFixtures";
-
-// ── 🆕🆕🆕 D635 — F1, THE ANTIQUE ARCHETYPE (ITS UNPERSISTED HALF): 2 TEXTS / 2 PRINTINGS ──
-//
-// Fossil Quarry `me05-076` (Stadium) on the NEW `CardFilter` member `itemNameContaining` and Relicanth
-// `me05-017` "Fossil Beatdown" on a NEW `IN_PLAY_BODY_NOUNS` key. Every id and text off the LOCAL D1
-// (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. Before this slice the two ids
-// appeared only in D606's / D618's drop lists and their census pins. Dropped and named: Antique Jaw / Sail /
-// Skull Fossil `me03-068` / `me03-069` / `me05-073` (a new fossil id in a stack is read by a 0.517 rollback as
-// an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45 [🆕🆕🆕 D636 (D539): not taken at 44 → 45; now 45 → 46]) and Antique Armor Fossil
-// `me05-072` (that, plus a source-Active rider no shipped field has) [🆕🆕🆕 D637 (D539): all four BUILT at D637 on
-// MRV 45 → 46 — antiqueFossilsMeD637.test.ts]. Driven on a LOCAL `cardPool` (D275) in
-// the suite's OWN 60-card deck (D270).
 
 const QUARRY_TEXT =
   'Once during each player\'s turn, that player may search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench. Then, that player shuffles their deck.';
@@ -46,7 +35,7 @@ const RELICANTH = "me05-017";
 const COVER = "sv07-129";
 const ROOT = "sv07-130";
 const PLUME = "sv10.5w-079";
-const JAW = "me03-068"; // unbuilt (dropped): never offered [🆕🆕🆕 D637 (D539): BUILT at D637 — now offered]
+const JAW = "me03-068";
 const LILEEP = "sv07-005";
 const TYRANITAR = "sv09-095"; // "Daunting Gaze" — the opponent can't play Item cards from their hand
 const NEST_BALL = "sv01-181";
@@ -55,7 +44,6 @@ const FILLER = "d635-filler";
 const WALL = "d635-wall";
 const ENERGY = "fix-energy";
 
-/** A fossil exactly as the catalog row arrives (D581: its printed `hp` and `abilities`). */
 function fossilRow(id: string, name: string): Card {
   const face = CATALOG_MANIFEST.trainerFaces[id];
   if (face === undefined) throw new Error(`no catalog face for ${id}`);
@@ -107,7 +95,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** Its OWN deck (D270), 60 by construction. */
 const DECK = deckOf({
   [QUARRY]: 1,
   [RELICANTH]: 2,
@@ -123,11 +110,6 @@ const DECK = deckOf({
   [WALL]: 4,
   [ENERGY]: 14,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
@@ -248,7 +230,7 @@ describe("D635 §1 — the prints and the programs", () => {
     expect(deriveAttackDamageBonus(BEATDOWN_TEXT.replace("Antique", "Fossil"))).toBeNull();
   });
 
-  it("the dropped fossils stay unbuilt: no program, no in-play face (🆕🆕🆕 D637 (D539): WITHDRAWN — all four are built at D637: a program and an in-play face each)", () => {
+  it("the dropped fossils stay unbuilt: no program, no in-play face ( D637 (D539): WITHDRAWN — all four are built at D637: a program and an in-play face each)", () => {
     for (const id of [JAW, "me03-069", "me05-072", "me05-073"]) {
       expect(programFor(id)?.playAsPokemon, id).toBe(true);
       expect(FOSSIL_IDS.has(id), id).toBe(true);
@@ -271,8 +253,7 @@ describe("D635 §2 — `itemNameContaining` and the Bench gate", () => {
 
   it("a Trainer goes onto the Bench only with an in-play Pokémon face; Pokémon are read as before", () => {
     expect(benchMatches(POOL[COVER], ANTIQUE)).toBe(true);
-    expect(benchMatches(POOL[JAW], ANTIQUE)).toBe(true); // 🆕🆕🆕 D637 (D539): was `false` — the Jaw has a face now
-    // 🆕🆕🆕 D637 (D539): a face-less Antique Item — NAMED "Antique …" so it passes the filter and reaches the Trainer arm.
+    expect(benchMatches(POOL[JAW], ANTIQUE)).toBe(true);
     const faceLess: Card = {
       ...trainerCard("d635-face-less", "Item", "An Antique test Item."),
       name: "Antique Test Item",
@@ -292,7 +273,6 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
     expect(of(opened, "STADIUM_ABILITY_ACTIVATED")).toHaveLength(1);
     const p = prompt(parked);
     expect(p.max).toBe(2);
-    // 🆕🆕🆕 D637 (D539): the Jaw ×2 is offered too — built at D637 (was `[COVER, ROOT, PLUME]`, 6 candidates).
     expect(new Set(ids(parked, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME, JAW]));
     expect(p.candidates).toHaveLength(8);
     expect(JSON.stringify(p)).toContain('Item cards that have \\"Antique\\" in their name');
@@ -344,7 +324,7 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
     const { state: theirs } = use(p2Turn, "p2");
     const p = prompt(theirs);
     for (const uid of p.candidates) expect(theirs.players.p2.deck).toContain(uid);
-    expect(new Set(ids(theirs, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME, JAW])); // 🆕🆕🆕 D637 — the Jaw too
+    expect(new Set(ids(theirs, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME, JAW]));
   });
 
   it("a parked Fossil Quarry round-trips through JSON", () => {

@@ -22,35 +22,10 @@ import {
   trainerCard,
   typedEnergy,
   walkProgram,
+  must,
+  mustApply as run,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
-
-// ── 🆕🆕🆕 D580 — MR. MIME `sv05-063` "LOOK-ALIKE SHOW" — THE LAST ATTACK ──
-//
-// {C}, no damage, attack index 0 (1 legal printing): *"Your opponent reveals their hand. You may use
-// the effect of a Supporter card you find there as the effect of this attack."* A REGISTRY row
-// (`MR_MIME_LOOK_ALIKE_SHOW`): the shipped `revealOpponentHand`, then the NEW
-// `useOpponentSupporterEffect` — which offers the opponent's Supporters (one per card id) filtered by
-// their PRINTED play conditions for the attacker, parks `chooseCards { min 0, max 1, dest "use" }`,
-// and on a pick splices the Supporter's registry `trainer` program into THIS ATTACK's context.
-// "Eerie Wave" (index 1) keeps deriving. It RETIRES D445's recorded refusal.
-//
-// Rulings (decisions.md D580):
-//   R-LA1 (by text) — effect only: the card stays in the opponent's hand, no Supporter allowance is
-//         spent or required, `supporterPlayedUid` is not written, and "you" is the ATTACKER.
-//   R-LA2 (UNRULED) — the offer is filtered by the PRINTED play conditions only (`trainerPlayableIf`,
-//         `handCostUnmet` for the attacker); NOT `programPlayable`. Reversal: add it, or drop both.
-//   R-LA2a (UNRULED) — a HAND-RELATIVE printed condition is read as if the copied card were played
-//         from the attacker's hand, so it EXCLUDES the card itself (cardplay.ts checks it while the
-//         card is still in hand): Cassiopeia's "only when it is the last card in your hand"
-//         (`yourHandExactly 1`) is offered on an EMPTY attacker hand, never on a 1-card one.
-//         Reversal: refuse Cassiopeia (the copied card is never "in your hand").
-//   R-LA3 (measured, vacuous) — no Supporter program contains a copy op.
-//   R-LA4 (UNRULED) — it is an ATTACK effect: attack-effect shields apply; Supporter shields do not.
-//   R-LA5 (by text) — zero eligible Supporters, or a decline, is the reveal only.
-//   R-LA6 (measured, vacuous) — card-level keys are NOT carried (`supporterKoPrizeBonus`,
-//         `trainerFirstTurnExempt`): Mr. Mime deals no damage, is not Tera, and the attack ends the turn.
-// Pinned: Caretaker's `shufflePlayedCardIntoDeck` whiffs (no `playedUid` in an attack context).
 
 const MR_MIME = "sv05-063";
 const LOOK_ALIKE =
@@ -70,11 +45,8 @@ const COMMUNITY_CENTER = "sv06-146";
 const UNAWARE = "fix-unaware";
 const NEST_BALL = "sv01-181"; // a REGISTERED Item (FIXTURE_POOL) — a trainer program that is not a Supporter
 const UNNERVE = "fix-unnerve";
-const EMMA = "me04-077"; // 🆕🆕🆕 D599 — an `me` Supporter with a registry `trainer` program (§8)
+const EMMA = "me04-077";
 
-/** EVERY Standard-legal Supporter NAME, one representative printing each — 51 names over 140 legal
-    printings, measured off the 2026-09-25 audit card JSON (tcgdex) at 7eed24e8, where every printing
-    of one name carries the SAME registry object (measured). A committed snapshot (D275's rule). */
 const SUPPORTERS: readonly (readonly [string, string])[] = [
   ["sv08.5-093", "Amarys"],
   ["sv05-142", "Bianca's Devotion"],
@@ -200,18 +172,6 @@ const DECK = deckOf({
   [FILLER]: 26,
   "fix-energy": 10,
 });
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function run(state: GameState, action: GameAction): { state: GameState; events: GameEvent[] } {
-  const result = applyAction(state, action);
-  if (!result.ok)
-    throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
-  return { state: result.state, events: result.events };
-}
 
 function opened(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -495,8 +455,6 @@ describe("D580 Look-Alike Show §1 — the offer (R-LA2) and its collapse", () =
 
   it("trainerPlayableIf is evaluated for the ATTACKER: Cassiopeia (the last card in your hand) and Hassel (KO last turn)", () => {
     expect(opponentSupporterOffer(board([sup("Cassiopeia")]), { seat: "p1" })).toEqual([]);
-    // R-LA2a: the copied Cassiopeia is in the OTHER hand, so "the last card in your hand" is an
-    // EMPTY attacker hand — a 1-card hand is "Cassiopeia and one other card", which is refused.
     const one = board([sup("Cassiopeia")], { p1Hand: [FILLER] });
     expect(opponentSupporterOffer(one, { seat: "p1" })).toEqual([]);
     const empty = board([sup("Cassiopeia")], { p1Hand: [] });
@@ -519,7 +477,7 @@ describe("D580 Look-Alike Show §1 — the offer (R-LA2) and its collapse", () =
     expect(opponentSupporterOffer(two, { seat: "p1" })).toEqual(two.players.p2.hand);
   });
 
-  it("🛑 NOT `programPlayable`: a Supporter that could only whiff (Bianca's Devotion, nothing at ≤30 HP left) is still offered", () => {
+  it("NOT `programPlayable`: a Supporter that could only whiff (Bianca's Devotion, nothing at ≤30 HP left) is still offered", () => {
     const state = board([sup("Bianca's Devotion")]);
     expect(opponentSupporterOffer(state, { seat: "p1" })).toEqual(state.players.p2.hand);
   });
@@ -581,7 +539,7 @@ describe("D580 Look-Alike Show §2 — a pick: the effect runs for the ATTACKER,
     expect(paid.players.p1.hand.length).toBe(6);
   });
 
-  it("🛑 Caretaker's `shufflePlayedCardIntoDeck` WHIFFS (no `playedUid` in an attack): Community Center in play, nothing shuffled", () => {
+  it("Caretaker's `shufflePlayedCardIntoDeck` WHIFFS (no `playedUid` in an attack): Community Center in play, nothing shuffled", () => {
     let state = board([sup("Caretaker")]);
     const cc = mint(state, COMMUNITY_CENTER);
     state = { ...cc.state, stadium: { uid: cc.uid, owner: "p2" } };
@@ -653,9 +611,6 @@ describe("D580 Look-Alike Show §5 — the population pins (R-LA3, R-LA6)", () =
   });
 
   it("R-LA6: the card-level keys live on Briar / Carmine / Team Rocket's Proton only, and the copy hands over only `ops` + `playableIf`", () => {
-    // 🆕🆕🆕 D599 (D539): "only" is over THESE 51 `sv` names (the 2026-09-25 snapshot). The `me`
-    // Supporter Anthea & Concordia `me02.5-182` also carries `supporterKoPrizeBonus` now; R-LA6
-    // holds for it the same way (the copy hands over `ops` + `playableIf`, its `ops` empty).
     const carriers = SUPPORTERS.filter(([id]) => {
       const p = programFor(id);
       return p?.supporterKoPrizeBonus !== undefined || p?.trainerFirstTurnExempt !== undefined;
@@ -696,7 +651,6 @@ function unlocked(name: string, state: GameState): GameState {
     case "Briar":
       return withSide(state, "p2", { prizes: state.players.p2.prizes.slice(0, 2) });
     case "Cassiopeia":
-      // R-LA2a — "the last card in your hand", the card itself excluded: an EMPTY attacker hand.
       return withSide(state, "p1", { hand: [] });
     case "Hassel":
       return { ...state, lastKoTurn: { ...state.lastKoTurn, p1: state.turn - 1 } };
@@ -756,13 +710,11 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
         types(all).filter((t) => t === "TRAINER_PLAYED"),
         name,
       ).toEqual([]);
-      // The COPY never moves the card (R-LA1); only an effect that itself moves p2's hand may.
       if (!MOVES_P2_HAND.has(name)) {
         expect(done.state.players.p2.hand, name).toContain(card);
         expect(done.state.players.p2.discard, name).not.toContain(card);
       }
     }
-    // The four printed conditions the base board does not meet (R-LA2), and nothing else.
     expect(refusedOnBase.sort()).toEqual(["Briar", "Cassiopeia", "Hassel", "Team Rocket's Archer"]);
   });
 
@@ -838,8 +790,6 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
       expect.objectContaining({ type: "HAND_DISCARDED", seat: "p1" }),
     );
     expect(amarys.state.players.p1.hand).toEqual([]);
-    // Jasmine's Gaze: the attacker's side takes 30 less during the opponent's next turn.
-    // 🆕🆕🆕 D630 (D539): `not.toBeNull()` is vacuous on the D630 LIST — asked as one live entry instead.
     expect(through("Jasmine's Gaze").state.players.p1.sideDamageReduction).toHaveLength(1);
   });
 });
@@ -870,7 +820,7 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
     expect(JSON.stringify(run(revived, pick).state)).toBe(JSON.stringify(run(parked, pick).state));
   });
 
-  it("🛑 under a 0.463 rollback (an op name it does not know) a PICK is an inert whiff — the decline's board exactly", () => {
+  it("under a 0.463 rollback (an op name it does not know) a PICK is an inert whiff — the decline's board exactly", () => {
     const parked = parkedState();
     const phase = parked.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -895,7 +845,7 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
   });
 });
 
-describe("D580 Look-Alike Show §8 — 🆕🆕🆕 D599: an `me` Supporter through the copy (Emma `me04-077`)", () => {
+describe("D580 Look-Alike Show §8 — D599: an `me` Supporter through the copy (Emma `me04-077`)", () => {
   it("Emma is offered and used for the ATTACKER: p2 reveals again and p1 draws one card per Pokémon in p2's hand", () => {
     // p2's hand: Emma (a Trainer), 2 Pokémon, an Item → 2. p1's own hand holds 3 Pokémon, so a
     // count of the attacker's hand would draw 3.

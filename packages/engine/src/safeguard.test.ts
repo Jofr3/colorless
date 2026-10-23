@@ -11,28 +11,6 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.57.0 → 0.58.0 — Mimikyu sv02-097 (P3-M5 long tail, D107): "Prevent all damage
-// done to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V."
-//
-// The defender-side twin of `damageReductionAfterWR` (Bouffer) — a FULL null
-// instead of a flat subtraction — but the prevention is GATED on the ATTACKER's
-// rule-box class (`isExOrV`: ex or V, NOT VMAX/VSTAR/GX), which is known only at
-// the damage read sites. It rides `passivesOf` like the reduction and is honored
-// at all four attack-damage sites (main hit + spread + both snipe arms), because
-// Safeguard has no "in the Active Spot" clause. sv02-097 is the only ex/V-gated
-// total-prevention print in the sv01–03 pool.
-//
-// ⚠️ D159 — THE "SEPARATE FAMILY" THIS BLOCK USED TO POINT AT HAS LANDED, and the
-// claim is re-pointed rather than deleted: the type-gated Dachsbun sv01-099 /
-// Bellibolt sv03-078/-201 "prevent all damage from {R}/{L}" are now
-// `PassiveEffects.preventDamageFromType`, a SIBLING field of the flag this suite
-// drives rather than a widening of it (`attackerFilter.test.ts` says why, and the
-// two are read side by side on the same `||` at all four sites). What stays true
-// here is the SCOPE of this file's own claim — sv02-097 is the only printing whose
-// gate is the RULE BOX — and the counting note worth carrying: §D146's census puts
-// six always-on printings in this neighbourhood and THIS ONE IS THE SIXTH, which is
-// why every remainder list's "6 printings" priced five cards' worth of work.
-
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const exSpread = { type: "attack", seat: "p1", index: 1 } as const; // fix-attacker-ex Spread Shot
 const sniperSpread = { type: "attack", seat: "p1", index: 0 } as const; // fix-sniper Spread Shot
@@ -54,10 +32,6 @@ function fightMain(seed: number, attackerId: string): GameState {
   return attachFromDeck(state, "p1", "fix-energy", 1);
 }
 
-/** The spread path: P2's Active is a plain 200 HP body, the Mimikyu sits on the
-    BENCH (where Safeguard still protects it — no Active-Spot clause). Setup also
-    auto-benches the dominant fix-bigbody, so Mimikyu is not necessarily bench[0]:
-    find it by card id. */
 function fightSpread(seed: number, attackerId: string): GameState {
   let state = driveSetup(seed, { p1: SAFEGUARD_DECK, p2: SAFEGUARD_DECK }, { first: "p2" });
   state = setActiveFromDeck(state, "p2", "fix-bigbody");

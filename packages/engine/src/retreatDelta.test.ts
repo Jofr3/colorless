@@ -9,7 +9,7 @@ import {
   hasFreeRetreatSelf,
   programFor,
 } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, InPlayPokemon } from "./index";
 import {
   FIXTURE_POOL,
   battler,
@@ -17,102 +17,13 @@ import {
   clearBench,
   deckOf,
   setActiveFromDeck,
+  must,
+  firstBasicInHand,
 } from "./testFixtures";
-
-// D322 — THE RETREAT-COST DELTA'S THREE UNBUILT SENTENCES, AND THE FIRST
-// NEGATIVE TERM IN `effectiveRetreatCost` THAT IS NOT A STADIUM.
-//
-// ─────────────────────────────────────────────────────────────────────────────
-// WHAT THE HANDOFF ORDERED, AND WHY THE ROW IS BIGGER THAN ITS PRICE.
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// The handoff ordered TWO printings — Toedscruel `sv09-089` and Ariados
-// `sv06-005` — priced off `instr(abilities_json,'Retreat Cost is') > 0`, which
-// returns 5 rows / **2 legal** and RE-DERIVES exactly. The price is not wrong;
-// it is INCOMPLETE, and the literal it was measured with is why.
-//
-// 🛑 **THE WIDER `instr(abilities_json,'Retreat Cost') > 0` RETURNS 24 / 9
-// LEGAL ON SIX SENTENCES**, of which Metal Bridge ×3 (`sv07-107`/`sv07-155`/
-// `sv08.5-070`) and Skyliner ×3 (`sv08-076`/`-220`/`-239`) are BUILT — verified
-// by grepping `registry.ts` for each id, D321's rule, before any of this was
-// written. The sixth sentence is **Ethan's Magcargo `sv10-036` "Melt Away"**,
-// and the narrow literal CANNOT SEE IT: the print reads *"it HAS NO Retreat
-// Cost"* and carries no "is". **A price measured with a literal inherits that
-// literal's blind spot, and the blind spot is invisible from inside the price.**
-//
-// ✅ **AND THE POPULATION IS CLOSED, WHICH THE NARROW LITERAL COULD NOT SAY.**
-// `instr(abilities_json,'Retreat') > 0` returns the SAME 24 rows / 9 legal, and
-// the difference set — `'Retreat'` AND NOT `'Retreat Cost'` — is **EMPTY**. So
-// these nine ARE every retreat-modifying Ability in Standard at any width.
-// `'etreat cost'` (casing), `'Retreat Cost of'` and `'Retreat Costs'` (word
-// order) and `'RetreatCost'` all return ZERO. Each of the three new ids appears
-// EXACTLY ONCE in all 3,786 rows: three sentences, three printings, no reprint.
-//
-// ─────────────────────────────────────────────────────────────────────────────
-// THE SENTENCES, transcribed off the remote D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows) on 2026-08-10 rather than
-// copied out of a census bullet (D306).
-// ─────────────────────────────────────────────────────────────────────────────
-//
-//   "As long as this Pokémon is on your Bench, your Active Pokémon's Retreat
-//    Cost is {C}{C} less."
-//        — Toedscruel `sv09-089` "Secret Forest Path", Stage 1 ← Toedscool,
-//          {F}, 130 HP, printed retreat 2.
-//
-//   "Your opponent's Active Evolution Pokémon's Retreat Cost is {C} more."
-//        — Ariados `sv06-005` "Big Net", Stage 1 ← Spinarak, {G}, 90 HP,
-//          printed retreat 1.
-//
-//   "If this Pokémon has no Energy attached, it has no Retreat Cost."
-//        — Ethan's Magcargo `sv10-036` "Melt Away", Stage 1 ← Ethan's Slugma,
-//          {R}, 130 HP, printed retreat 3.
-//
-// ── THE FUNNEL, GREPPED BEFORE IT WAS BELIEVED (the handoff's 🛑) ───────────
-//
-// D320's whole loss was a scan site that *looked* sole: it predicted "one scan
-// site in `switchInto`" and **`retreat` did not route through it**, so the
-// sentence's commonest trigger would have shipped dead. Retreat is the SUBJECT
-// here, so every route in was enumerated first:
-//
-//   `git grep effectiveRetreatCost` — FOUR non-test readers, and **all four
-//   consume a NUMBER and take no diff from a new term**:
-//     • `turn.ts:694`   — the `retreat` action's cost check. ✅ **THE COMMONEST
-//       TRIGGER *DOES* ROUTE THROUGH THE FUNNEL**, which is the half D320's
-//       `switchInto` did not, and it is asserted below on a real action rather
-//       than inferred from the grep.
-//     • `redact.ts:504` — the P4 client's view of its own cost.
-//     • `attack.ts:182` — the defender-cost damage bonus (`bonus.per`).
-//     • `src/features/game/GameHud.tsx:731` — the local HUD.
-//   `retreatCostOf` is called exactly ONCE outside `cards.ts` — `continuous.ts`,
-//   inside the funnel — so there is no second, printed-only path either.
-//
-// ── THE THREE SHAPES, AND WHY THEY ARE THREE FIELDS AND NOT ONE ────────────
-//
-//   1. `ownActiveRetreatDiscount` (NEW) — Toedscruel. The sign-flipped, OWN-SIDE
-//      mirror of `opponentActiveRetreatSurcharge`: same derived-seat trick, same
-//      Active TARGET clause, same §9 gate, same SUM over sources, and then it
-//      reads the side it found rather than the other one. 🛑 **IT IS A DELTA AND
-//      NOT A SET-TO-ZERO**, so it is a fourth TERM inside the funnel's single
-//      `Math.max(0, …)` — a lone Toedscruel leaves a {C}{C}{C} Active at {C},
-//      which is the assertion that separates it from `noRetreatCostAura`.
-//   2. `opponentActiveRetreatSurcharge.target` (WIDENED) — Ariados. The bare
-//      `number` becomes `{ amount, target? }`, and the rider is
-//      **`seatDamageBonusBeforeWR.target`'s field name, type and filter member
-//      REUSED WHOLE** (D245, Carracosta `sv07-038`, the same printed "your
-//      opponent's Active Evolution Pokémon" on the damage seam).
-//   3. `noRetreatCostSelf.requiresNoEnergyAttached` (NEW RIDER) — Melt Away.
-//      Punk Out's antecedent-twin: same consequent, same scan, a gate that reads
-//      the HOLDER instead of across the table.
-//
-// `MATCH_RECORD_VERSION` does not move: all three are catalog facts re-derived
-// from the board on every read and persisted nowhere.
 
 const ARIADOS = "sv06-005";
 const TOEDSCRUEL = "sv09-089";
 const MAGCARGO = "sv10-036";
-/** Spidops ex "Trap Territory" — the UNMARKED print of the widened field, and
-    this suite's control at the `target` rider: same sentence, no adjective.
-    `legal_standard = 0` (rotated), so it moves no census row. */
 const SPIDOPS = "sv01-019";
 
 /** A printed-{C}{C}{C} BASIC — the body every discount assertion is read on,
@@ -126,13 +37,6 @@ const HEAVY_EVO = "fix-d322-heavy-evo";
 /** A printed-{C} body, for the floor. */
 const LIGHT_BASIC = "fix-d322-light";
 
-/** The three real printings plus the two-body ladder they are read on. Local
-    rather than in `FIXTURE_POOL` for D275's reason — these are Pokémon BODIES
-    driven on a LOCAL `cardPool`, not Trainers played against the shared pool —
-    and `catalogManifest.test.ts` diffs `FIXTURE_POOL` alone and reaches none of
-    `sv06`/`sv09`/`sv10`, so a real id here would have no guard behind it either
-    way. The printed Ability text is carried verbatim so a `FIXTURE_POOL`-shaped
-    sentence sweep finds it; nothing reads it (the programs are keyed by id). */
 const LOCAL_CARDS: Record<string, Card> = {
   [ARIADOS]: battler(ARIADOS, {
     name: "Ariados",
@@ -208,7 +112,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** This suite's own seeded deck (D270's rule). */
 const RETREAT_DECK = deckOf({
   [ARIADOS]: 3,
   [TOEDSCRUEL]: 6,
@@ -222,22 +125,7 @@ const RETREAT_DECK = deckOf({
   "fix-energy": 18,
 });
 
-/** Three seeds, so nothing below rests on one shuffle (D270). */
 const SEEDS = [8221, 8231, 8237] as const;
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
-
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
 
 function localSetup(seed: number): GameState {
   const created = createGame({
@@ -307,11 +195,6 @@ describe("D322 §1 — the three registry rows", () => {
     expect(programFor(TOEDSCRUEL)?.passive).toEqual({
       ownActiveRetreatDiscount: { amount: 2, sourceOnBench: true },
     });
-    // 🛑 NOT `noRetreatCostAura`, the field two screens up that SETS the cost to
-    // zero for every teammate matching a per-target clause. A build that reached
-    // for it would free the whole board off one benched Toedscruel, and would be
-    // GREEN on every board where the Active's printed cost is {C}{C} or less —
-    // which is most of them. The negative is asserted, not assumed.
     expect(programFor(TOEDSCRUEL)?.passive?.noRetreatCostAura).toBeUndefined();
     expect(programFor(TOEDSCRUEL)?.passive?.noRetreatCostSelf).toBeUndefined();
     // …and NOT the cross-board field it mirrors, which is the other way to get
@@ -325,12 +208,6 @@ describe("D322 §1 — the three registry rows", () => {
     expect(programFor(ARIADOS)?.passive).toEqual({
       opponentActiveRetreatSurcharge: { amount: 1, target: { kind: "evolutionPokemon" } },
     });
-    // 🛑 THE RIDER IS NOT A BESPOKE BOOLEAN, AND THIS IS THE LINE THAT SAYS SO.
-    // `seatDamageBonusBeforeWR.target` has stored this exact printed noun phrase
-    // ("your opponent's Active **Evolution** Pokémon") as a `CardFilter` since
-    // D245, matched against the DEFENDER's TOP CARD — an in-play body — so the
-    // objection that `matchesFilter` is "a card read for deck/hand/discard" is
-    // false on its face. Same member, same shape, one seam over.
     expect(programFor("sv07-038")?.passive?.seatDamageBonusBeforeWR?.target).toEqual({
       kind: "evolutionPokemon",
     });
@@ -342,7 +219,6 @@ describe("D322 §1 — the three registry rows", () => {
       expect(programFor(id)?.passive).toEqual({ opponentActiveRetreatSurcharge: { amount: 1 } });
       expect(programFor(id)?.passive?.opponentActiveRetreatSurcharge?.target).toBeUndefined();
     }
-    // All three printings share ONE program object — D190b's exact-map rule.
     expect(programFor(SPIDOPS)).toBe(programFor("sv01-223"));
   });
 
@@ -356,9 +232,6 @@ describe("D322 §1 — the three registry rows", () => {
     expect(
       programFor(MAGCARGO)?.passive?.noRetreatCostSelf?.requiresOpponentSuffixInPlay,
     ).toBeUndefined();
-    // 🛑 AND IT IS NOT THE AURA. `noRetreatCostSelf` frees its HOLDER; a build on
-    // `noRetreatCostAura` would free every teammate off a Magcargo with nothing
-    // attached, which is the board this card is actually played on.
     expect(programFor(MAGCARGO)?.passive?.noRetreatCostAura).toBeUndefined();
     expect(programFor(MAGCARGO)?.passive?.ownActiveRetreatDiscount).toBeUndefined();
   });
@@ -374,9 +247,6 @@ describe("D322 §2 — Secret Forest Path, the own-side discount", () => {
       const bare = board(seed, HEAVY_BASIC);
       expect(cost(bare)).toBe(3);
       const state = board(seed, HEAVY_BASIC, [TOEDSCRUEL]);
-      // 🛑 THE ASSERTION THAT SEPARATES A DELTA FROM A SET-TO-ZERO. A printed
-      // {C}{C}{C} body under ONE Toedscruel retreats for {C}, not for free —
-      // and this is why the fixture is printed at 3 rather than at 2.
       expect(cost(state)).toBe(1);
       expect(alliedRetreatDiscount(state, p1Active(state))).toBe(2);
     }
@@ -391,10 +261,6 @@ describe("D322 §2 — Secret Forest Path, the own-side discount", () => {
   });
 
   it("SOURCE-ZONE GATE: an ACTIVE Toedscruel discounts nothing (`sourceOnBench`)", () => {
-    // The printed "As long as this Pokémon is on your Bench". The source and the
-    // beneficiary are on DISJOINT zones by construction here — the source must be
-    // benched and the target is the Active — so promoting the Toedscruel ends the
-    // discount for the body it displaces, and it can never be its own beneficiary.
     const state = board(SEEDS[1], TOEDSCRUEL, [HEAVY_BASIC]);
     expect(state.players.p1.active?.stack).toHaveLength(1);
     expect(cost(state)).toBe(2); // its own printed cost, undiscounted
@@ -402,9 +268,6 @@ describe("D322 §2 — Secret Forest Path, the own-side discount", () => {
   });
 
   it("the SAME board minus the gate would have paid — the gate's live control", () => {
-    // Reaching is necessary but not sufficient (D318): this pair is what proves
-    // the `sourceOnBench` conjunct is LOAD-BEARING and not decorative. Same
-    // Toedscruel, same Active body, one zone apart, two different answers.
     const benched = board(SEEDS[1], HEAVY_BASIC, [TOEDSCRUEL]);
     const promoted = board(SEEDS[1], TOEDSCRUEL, [HEAVY_BASIC]);
     expect(alliedRetreatDiscount(benched, p1Active(benched))).toBe(2);
@@ -422,20 +285,7 @@ describe("D322 §2 — Secret Forest Path, the own-side discount", () => {
     expect(alliedRetreatDiscount(state, benched)).toBe(0);
   });
 
-  it("🛑 is gated through disabledAbilityUids (§9) — DRIVEN, not asserted negative", () => {
-    // ⚠️ **THIS BOARD EXISTS BECAUSE THE `--decision D322` PROBE FOUND THE GAP.**
-    // The §9 conjunct was written into the scan and shipped UNOBSERVED: the
-    // mutant that deletes it SURVIVED the first probe, because every board above
-    // has no lock in play at all. A survivor is two hypotheses (the suite has a
-    // gap, or the row is aimed at the wrong thing) and this one was the first.
-    //
-    // `trapTerritory.test.ts` could only assert the NEGATIVE here — Klefki's
-    // "Mischievous Lock" narrows to BASIC Pokémon and Spidops ex is a Stage 1, so
-    // no lock in the sv01–03 pool could reach that source. Toedscruel is a Stage 1
-    // too, but **Ting-Lu ex `sv02-127` "Cursed Land" has no stage clause at all**:
-    // it silences the opponent's DAMAGED, non-`ex` Pokémon while it is Active. A
-    // benched, damaged Toedscruel is squarely inside that set, so the gate is
-    // observable on this seam where it was not on the last one.
+  it("is gated through disabledAbilityUids (§9) — DRIVEN, not asserted negative", () => {
     const lit = board(SEEDS[0], HEAVY_BASIC, [TOEDSCRUEL]);
     expect(alliedRetreatDiscount(lit, p1Active(lit))).toBe(2);
     expect(cost(lit)).toBe(1);
@@ -468,8 +318,6 @@ describe("D322 §3 — Big Net, the TARGET-narrowed surcharge", () => {
     for (const seed of SEEDS) {
       const basic = board(seed, HEAVY_BASIC, [], [ARIADOS]);
       const evolution = board(seed, HEAVY_EVO, [], [ARIADOS]);
-      // 🛑 THE TWO BODIES DIFFER IN `evolveFrom` AND IN NOTHING ELSE — same
-      // printed retreat, same HP, same type — so the delta IS the adjective.
       expect(cost(basic)).toBe(3);
       expect(opposingRetreatSurcharge(basic, p1Active(basic))).toBe(0);
       expect(cost(evolution)).toBe(4);
@@ -477,12 +325,7 @@ describe("D322 §3 — Big Net, the TARGET-narrowed surcharge", () => {
     }
   });
 
-  it("🛑 the rider is read off the TARGET and not off the SOURCE — the D320 trap", () => {
-    // Ariados is ITSELF a Stage 1, so a build that matched the filter against the
-    // SOURCE's card would be green on every board where this surcharge is imposed
-    // at all, and would part from the printed reading only when the TARGET is a
-    // Basic — which is exactly the board above. This test pins the direction by
-    // asserting the source's own stage is the one that does NOT decide it.
+  it("the rider is read off the TARGET and not off the SOURCE — the D320 trap", () => {
     const sourceCard = POOL[ARIADOS];
     expect(sourceCard?.evolveFrom).toBe("Spinarak"); // the source IS an Evolution
     const basicTarget = board(SEEDS[0], HEAVY_BASIC, [], [ARIADOS]);
@@ -526,25 +369,14 @@ describe("D322 §3 — Big Net, the TARGET-narrowed surcharge", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D322 §4 — the fold in effectiveRetreatCost", () => {
-  it("🛑 a discount and a surcharge MEET, and only the SUM knows the answer", () => {
-    // The composition that makes `alliedRetreatDiscount` a TERM rather than a
-    // tier. A {C}{C}{C} Active under one Toedscruel (−2) facing one Spidops ex
-    // (+1) is {C}{C}: a tiered engine that applied the discount first and floored
-    // it would read 1 + 1 = 2 by luck, so the case below is chosen where a
-    // per-term floor and a summed floor actually disagree.
+  it("a discount and a surcharge MEET, and only the SUM knows the answer", () => {
     const state = board(SEEDS[0], HEAVY_BASIC, [TOEDSCRUEL], [SPIDOPS]);
     expect(alliedRetreatDiscount(state, p1Active(state))).toBe(2);
     expect(opposingRetreatSurcharge(state, p1Active(state))).toBe(1);
     expect(cost(state)).toBe(2); // 3 − 2 + 1
   });
 
-  it("🛑 THE FLOOR IS APPLIED ONCE TO THE SUM, not per term", () => {
-    // TWO Toedscruel (−4) against a printed {C} Active (+0 surcharge) is −3
-    // before the floor. Add a Spidops ex (+1): a PER-TERM floor would clamp the
-    // negative to 0 and then charge the surcharge, reading 1. The honest fold
-    // reads 0 — the surcharge is absorbed by a discount that has already gone
-    // past zero. **This is the only assertion in the suite that distinguishes
-    // the two flooring strategies, and it is why the floor lives on the sum.**
+  it("THE FLOOR IS APPLIED ONCE TO THE SUM, not per term", () => {
     const state = board(SEEDS[1], LIGHT_BASIC, [TOEDSCRUEL, TOEDSCRUEL], [SPIDOPS]);
     expect(alliedRetreatDiscount(state, p1Active(state))).toBe(4);
     expect(opposingRetreatSurcharge(state, p1Active(state))).toBe(1);
@@ -576,7 +408,7 @@ describe("D322 §5 — Melt Away, the HOLDER-side antecedent", () => {
     }
   });
 
-  it("🛑 THE GATE IS LIVE: one attached Energy takes the freedom away", () => {
+  it("THE GATE IS LIVE: one attached Energy takes the freedom away", () => {
     // The condition is read off the board on every call, not latched at the start
     // of a turn — which is the sharpest control this rider has, because a board
     // that never moves an Energy cannot tell it from an unconditional print.
@@ -589,13 +421,6 @@ describe("D322 §5 — Melt Away, the HOLDER-side antecedent", () => {
   });
 
   it("counts ATTACHED CARDS, on the boundary of exactly one", () => {
-    // The print says "no Energy attached", so the read is `energy.length`.
-    // ⚠️ **AND THE MUTANT THAT SWAPS IT FOR `providedEnergy` IS DECLARED
-    // EQUIVALENT, WHICH THE PROBE IS WHAT ESTABLISHED.** Every arm of `unitsOf`
-    // returns a NON-EMPTY array, so at a `> 0` existence check the two readings
-    // are the same predicate on every board this engine can build — the
-    // distinction is real for a COUNT and vacuous here. This test therefore pins
-    // the BOUNDARY (zero vs one attached card) and claims nothing it cannot see.
     const state = attachOne(board(SEEDS[1], MAGCARGO));
     expect(state.players.p1.active?.energy).toHaveLength(1);
     expect(hasFreeRetreatSelf(state, p1Active(state))).toBe(false);
@@ -640,12 +465,7 @@ function attachOne(state: GameState): GameState {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D322 §6 — the retreat action pays the delta", () => {
-  it("🛑 `retreat` ROUTES THROUGH THE FUNNEL — the half D320's slice did not", () => {
-    // The grep says `turn.ts:694` calls `effectiveRetreatCost`. This drives it:
-    // the printed cost is {C}{C}{C} and under one benched Toedscruel the action
-    // REFUSES three Energy and ACCEPTS one. D320's whole loss was a sentence
-    // whose commonest trigger did not route through the site it was built on, so
-    // the routing is asserted on a real action rather than inferred.
+  it("`retreat` ROUTES THROUGH THE FUNNEL — the half D320's slice did not", () => {
     let state = board(SEEDS[0], HEAVY_BASIC, [TOEDSCRUEL]);
     state = attachN(state, 3);
     const paid = state.players.p1.active?.energy ?? [];
@@ -695,10 +515,6 @@ describe("D322 §6 — the retreat action pays the delta", () => {
   });
 });
 
-/** Put a damage counter on P1's benched body at `index` — the antecedent Cursed
-    Land reads ("your opponent's Pokémon in play that have any damage counters on
-    them have no Abilities"). A direct state edit rather than an attack, so the
-    §9 board says nothing about the damage pipeline. */
 function damageBench(state: GameState, index: number): GameState {
   const side = state.players.p1;
   const target = side.bench[index];

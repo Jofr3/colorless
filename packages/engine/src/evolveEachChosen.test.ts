@@ -19,103 +19,19 @@ import {
   typedEnergy,
 } from "./testFixtures";
 
-// ── D315 — "CHOOSE UP TO 2 OF YOUR {D} POKÉMON. FOR EACH OF THOSE POKÉMON,
-//    SEARCH YOUR DECK FOR A CARD THAT EVOLVES FROM THAT POKÉMON AND PUT IT ONTO
-//    THAT POKÉMON TO EVOLVE IT. THEN, SHUFFLE YOUR DECK." THE FAMILY'S LAST
-//    SENTENCE, AND THE ROW IT CLOSES. ──
-//
-// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `colorless`
-// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, with the
-// WHOLE COLUMN read on every row (D306's rule) and ALL THREE text columns swept
-// (`conventions.md`'s rule), on the part of the sentence a paraphrase cannot
-// change:
-//
-//   SELECT id, name, legal_standard, category, trainer_type,
-//          attacks_json, abilities_json, effect
-//     FROM cards
-//    WHERE instr(attacks_json,'For each of those')   > 0
-//       OR instr(abilities_json,'For each of those') > 0
-//       OR instr(effect,'For each of those')         > 0;
-//
-// **NINE rows, FIVE of them legal, and only ONE of the five is this sentence**:
-//
-//   • **1 — THIS SLICE.** Team Rocket's Nidorina `sv10-115` "Dark Awakening"
-//     ({D}, no damage; second attack "Scratch" {D}{D} `damage: 50`). Stage 1 off
-//     Team Rocket's Nidoran♀, `types_json = ["Darkness"]`, `legal_standard = 1`.
-//   • **4 — JANINE'S SECRET ART** `sv06.5-059`/`-088`/`sv08.5-112`/`-173`
-//     (Supporter, `legal_standard = 1`), which prints the IDENTICAL antecedent
-//     *"Choose up to 2 of your {D} Pokémon. For each of those Pokémon, …"* and a
-//     DIFFERENT consequent (*"…search your deck for a Basic {D} Energy card and
-//     attach it to that Pokémon."*). 🛑 **IT IS ALREADY BUILT AND IT DOES NOT USE
-//     THIS OP** — see §1's own rung.
-//   • **4 — Chi-Yu ex** `sv02-061`-family "Flame Surge", `legal_standard = 0`:
-//     *"Choose up to 3 of your Benched Pokémon. For each of those Pokémon, …"*,
-//     again the ATTACH consequent. Rotated, and a different noun besides.
-//
-// ⚠️ **SO THE ARM'S REACH IS 1 AND ITS CENSUS VALUE IS 1** — the first sentence in
-// this family with no rotated twin behind it (D307 had none either; D309 had
-// Indeedee). Sized off the LEGAL printings and not off the sentence (D302, D309).
-//
-// ── THE HANDOFF PRICED THIS AS A REGISTRY ROW AND IT IS AN ARM ──────────────
-//
-// 🛑 D314's resume point derived the slice in full and got ONE part wrong, in the
-// direction that would have moved the wrong number: *"1 registry row"*. The three
-// siblings (D307/D308/D309) are all **deriver arms**, and `BUILT.attack`'s raw
-// summand is keyed on the READER over the whole legal corpus with `programFor`
-// nowhere in the addition (`censusAtHead.test.ts`'s D274 block) — so an authored
-// row for Nidorina would have bought **ZERO** printings while leaving the raw
-// remainder untouched. `conventions.md`'s *an arm transfers across sets; a
-// registry row does not* points the same way. **ZERO registry rows are authored**
-// and §6 asserts that against the live registry.
-//
-// 🛑 AND ONE PART WRONG IN THE OTHER DIRECTION: *"`healEach.pokemonType` is the
-// only typed own-board read in the op set and it is a FOLD, not a candidate
-// builder."* `attachEnergyTargets`' `targetType` rider (Gardevoir's *"your {P}
-// Pokémon"*) and `switchBenchNarrowing`'s (Pecharunt's *"Benched {D} Pokémon"*)
-// are both typed own-board CANDIDATE BUILDERS, and both read the TOP card exactly
-// as this one does. The type half cost one conjunct.
-//
-// ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
-//
-// ONE new `EffectOp` (`evolveFromDeckEachChosen`) with **two required fields**,
-// ONE anchored regex with **two captures** (the family's first with any), ONE
-// deriver arm, ONE `stepOp` arm, ONE do-nothing `applyChoice` arm, ONE
-// `continuationOps` member — its **FOURTH**, and the **FIRST whose answer buys N
-// ops rather than one**, and the **FIRST to answer a `pokemonMulti`** — and ONE
-// shared candidate builder factored out of D309's arm. **NO new prompt kind, NO
-// new choice kind, NO new event, NO new error code, NO new `GameState` field, NO
-// new `CardFilter` member, NO new `chooseCards.dest` member and NO REGISTRY ROW.**
-// `packages/schema`, `redact.ts`, `log.ts`, `cardplay.ts` and `src/` take ZERO.
-
-/** The sentence this slice builds — Team Rocket's Nidorina `sv10-115`. */
 const EACH_CHOSEN =
   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
-/** D307's PRONOUN sentence. */
 const BARE =
   "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.";
-/** D308's ITERATED sentence — the one this slice's consequent very nearly is. */
 const EACH_BENCHED =
   "For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
-/** D309's BODY-CHOICE sentence. */
 const BODY_CHOICE =
   "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
-/** 🛑 **JANINE'S SECRET ART, TRANSCRIBED AND NOT INTERPOLATED** (D306). The four
-    legal printings that share this slice's ANTECEDENT byte for byte and are
-    already built on a different op — the reason §1 asserts the separation. */
 const JANINE =
   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a Basic {D} Energy card and attach it to that Pokémon. Then, shuffle your deck. If you attached Energy to your Active Pokémon in this way, it is now Poisoned.";
-/** ⚠️ **THE SHARED HEAD, TYPED OUT RATHER THAN SLICED OFF EITHER CONSTANT** —
-    D306's rule and D308's re-learning of it, so §1's claim is about the printed
-    bytes and not about its own arithmetic. */
 const SHARED_HEAD = "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your ";
-/** …and the tail this slice shares with all THREE siblings. */
 const SHARED_TAIL = " and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
 
-/** Team Rocket's Nidorina `sv10-115`, BOTH attacks — D306's lesson as a fixture.
-    A file that transcribed only the matching arm would build a one-attack
-    Nidorina and make every per-index claim about it vacuous. (Printed a Stage 1
-    off Team Rocket's Nidoran♀; it is placed as the Active by surgery here, so the
-    chain datum is not exercised.) */
 function nidorina(id: string): Card {
   return battler(id, {
     name: "Team Rocket's Nidorina",
@@ -146,18 +62,9 @@ const LOCAL_CARDS: Record<string, Card> = {
   /** Bench 1 — {D}, ONE evolution in the deck. */
   "ec-dark-b": basic("ec-dark-b", ["Darkness"]),
   "ec-evo-b": stage1From("ec-evo-b", "ec-dark-b", ["Darkness"]),
-  /** 🛑 THE TYPE NARROWING'S SUBJECT. Bench 2 — a {R} body WITH an evolution in
-      the deck. It fails ONLY the type conjunct, so a build that dropped the type
-      offers it and a build that dropped the deck read still would not. The two
-      refusals are therefore told apart by construction rather than by hope. */
   "ec-fire-c": basic("ec-fire-c", ["Fire"]),
   "ec-evo-c": stage1From("ec-evo-c", "ec-fire-c", ["Fire"]),
-  /** 🛑 THE DECK NARROWING'S SUBJECT. Bench 3 — a {D} body with NOTHING in the
-      pool that evolves from it. It fails ONLY the deck conjunct. */
   "ec-dark-d": basic("ec-dark-d", ["Darkness"]),
-  /** 🛑 THE DUAL-TYPE CONTROL. Bench 4 — `["Water","Darkness"]`, which the printed
-      `{D}` noun MUST admit: the catalog column is an array and dual types are
-      printed, so a membership test written as equality would drop this body. */
   "ec-dual-e": basic("ec-dual-e", ["Water", "Darkness"]),
   "ec-evo-e": stage1From("ec-evo-e", "ec-dual-e", ["Water", "Darkness"]),
   /** The ATTACKER's own evolution — Nidoqueen in print. Nidorina is {D} and is
@@ -171,7 +78,6 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-/** The SEVENTEENTH seeded deck (D270's rule: a seeded suite gets its OWN deck). */
 const CHOSEN_DECK = deckOf({
   "sv10-115": 4,
   "ec-dark-a": 4,
@@ -326,23 +232,13 @@ const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "be
 
 describe("D315 §1 — the reader: ONE anchor, TWO captures, and the head it must NOT swallow", () => {
   it("the multi-body sentence derives to the two-op program, with both captures threaded", () => {
-    // The D230 shape: the asker plus the printed "Then, shuffle your deck." as a
-    // real op. Asserted as the WHOLE array so an extra op reddens, and with both
-    // field values spelled — the captures are the family's first and a hard-coded
-    // `max: 2` / `pokemonType: "Darkness"` would pass a shape assertion silently.
     expect(deriveAttackEffect(EACH_CHOSEN)).toEqual([
       { op: "evolveFromDeckEachChosen", max: 2, pokemonType: "Darkness" },
       { op: "shuffleDeck" },
     ]);
   });
 
-  it("🛑 the captures are READ, not hard-coded — a re-typed, re-counted variant follows them", () => {
-    // ⚠️ THE RUNG THAT SEPARATES A PARAMETERISED ANCHOR FROM A LITERAL ONE. The
-    // catalog prints exactly one of these sentences today, so every assertion in
-    // this file about `max: 2` / `"Darkness"` is equally true of an arm that
-    // ignores its own capture groups. These two synthetic strings are not printed
-    // by any card and are not claimed to be — they exist to make the threading
-    // observable, which is the only way this claim can go red.
+  it("the captures are READ, not hard-coded — a re-typed, re-counted variant follows them", () => {
     expect(deriveAttackEffect(EACH_CHOSEN.replace("up to 2", "up to 3"))).toEqual([
       { op: "evolveFromDeckEachChosen", max: 3, pokemonType: "Darkness" },
       { op: "shuffleDeck" },
@@ -353,23 +249,14 @@ describe("D315 §1 — the reader: ONE anchor, TWO captures, and the head it mus
     ]);
   });
 
-  it("🛑 an UNKNOWN brace code falls to the LOUD path — no default type is invented", () => {
-    // `POKEMON_TYPE_BY_CODE` is the schema-derived vocabulary every brace-coded
-    // noun in this reader asks, and a code outside it must return null rather than
-    // resolve to a program whose candidate set is a type no card can print. The
-    // failure the guard prevents is silent: a `?? "Colorless"` would derive a
-    // program that offers the wrong bodies forever.
+  it("an UNKNOWN brace code falls to the LOUD path — no default type is invented", () => {
     expect(deriveAttackEffect(EACH_CHOSEN.replace("{D}", "{Q}"))).toBeNull();
     // …and the "up to 0" nobody prints stays loud too, rather than deriving a
     // program that chooses nothing and shuffles anyway.
     expect(deriveAttackEffect(EACH_CHOSEN.replace("up to 2", "up to 0"))).toBeNull();
   });
 
-  it("🛑 the THREE sibling sentences keep their own arms — nothing was swallowed", () => {
-    // The family is now FOUR built arms and no refusal, and each is told apart by
-    // its HEAD. A widened anchor that swallowed a sibling would show up here as an
-    // op set that is not that sibling's — the wrong-row failure D207 named —
-    // rather than as a null.
+  it("the THREE sibling sentences keep their own arms — nothing was swallowed", () => {
     expect(deriveAttackEffect(BARE)).toEqual([{ op: "evolveFromDeck" }, { op: "shuffleDeck" }]);
     expect(deriveAttackEffect(EACH_BENCHED)).toEqual([
       { op: "evolveFromDeckEachBenched" },
@@ -381,43 +268,25 @@ describe("D315 §1 — the reader: ONE anchor, TWO captures, and the head it mus
     ]);
   });
 
-  it("🛑 JANINE'S SECRET ART shares this ANTECEDENT byte for byte and must stay elsewhere", () => {
-    // ⚠️ THE FINDING THIS FILE EXISTS TO PIN, AND IT IS ABOUT A CARD THAT WAS
-    // ALREADY BUILT. Four legal Supporter printings spell this slice's whole
-    // leading clause and then ATTACH instead of evolving. They are authored as
-    // `attachFromDeck { maxPerTarget: 1 }`, where the body pick COLLAPSED into the
-    // `attachCards` map because Energy of one type are fungible — evolution cards
-    // are not, so this sentence cannot collapse the same way and the two readings
-    // must never meet.
+  it("JANINE'S SECRET ART shares this ANTECEDENT byte for byte and must stay elsewhere", () => {
     expect(
       JANINE.startsWith("Choose up to 2 of your {D} Pokémon. For each of those Pokémon, "),
     ).toBe(true);
     expect(EACH_CHOSEN.startsWith(SHARED_HEAD)).toBe(true);
     expect(JANINE.startsWith(SHARED_HEAD)).toBe(true);
-    // 🛑 THE CONSEQUENT IS WHAT SEPARATES THEM, AND IT IS INSIDE THE ANCHOR — so no
-    // widening of the head can reach Janine. Driven in both directions: the attack
-    // reader refuses Janine's text outright, and Janine's programs are real.
     expect(deriveAttackEffect(JANINE)).toBeNull();
     for (const id of ["sv06.5-059", "sv06.5-088", "sv08.5-112", "sv08.5-173"]) {
       const program = programFor(id)?.trainer;
       expect(program, id).toBeDefined();
       expect(JSON.stringify(program), id).toContain("attachFromDeck");
-      // …and NOT this slice's op, which is the claim that would break if a later
-      // author "unified" the two on their shared head.
       expect(JSON.stringify(program), id).not.toContain("evolveFromDeckEachChosen");
     }
   });
 
-  it("🛑 the anchor is load-bearing at BOTH ends — the tail is shared with all three siblings", () => {
-    // This sentence CONTAINS D308's consequent almost whole ("For each of THOSE
-    // Pokémon" against "For each of YOUR BENCHED Pokémon"), and shares the tail
-    // with every arm in the family, so `^` and `$` each do work the other cannot.
+  it("the anchor is load-bearing at BOTH ends — the tail is shared with all three siblings", () => {
     expect(EACH_CHOSEN.endsWith(SHARED_TAIL)).toBe(true);
     expect(EACH_BENCHED.endsWith(SHARED_TAIL)).toBe(true);
     expect(BODY_CHOICE.endsWith(SHARED_TAIL)).toBe(true);
-    // Neither sentence contains the other, in either direction — asserted rather
-    // than assumed, because "obviously not" is how D308's containment claim came
-    // out backwards.
     expect(EACH_CHOSEN.includes(EACH_BENCHED)).toBe(false);
     expect(EACH_BENCHED.includes(EACH_CHOSEN)).toBe(false);
     // …and the ONE substring they really do share, named.
@@ -426,20 +295,13 @@ describe("D315 §1 — the reader: ONE anchor, TWO captures, and the head it mus
   });
 
   it("the corpus says 1, and the family's remainder goes 1 → 0: the row is CLOSED", () => {
-    // 🛑 THE POPULATION MEASURED FROM THE COMMITTED CORPUS, NOT QUOTED FROM THE D1
-    // QUERY IN THE HEADER — the second independent route, and it agrees to the row.
     const units = (text: string) => legalAttackCorpus().find(([, t]) => t === text)?.[0];
     expect(units(EACH_CHOSEN)).toBe(1);
     const family = legalAttackCorpus().filter(([, t]) =>
       t.includes("deck for a card that evolves"),
     );
-    // FIVE distinct sentences carrying THIRTEEN legal printings.
     expect(family.length).toBe(5);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(13);
-    // ⚠️ EXEGGCUTE'S LICENSED RECORD IS IN THIS LIST AND IS BUILT THROUGH D282's
-    // SPLIT, so a bare `deriveAttackEffect` refusal is expected on it and on
-    // NOTHING ELSE — which is exactly the shape D307/D308/D309 each left behind
-    // and the shape this slice finally empties.
     const refused = family.filter(([, t]) => deriveAttackEffect(t) === null);
     expect(refused.map(([, t]) => t)).not.toContain(EACH_CHOSEN);
     expect(refused.map(([, t]) => t)).toEqual([
@@ -449,10 +311,7 @@ describe("D315 §1 — the reader: ONE anchor, TWO captures, and the head it mus
 });
 
 describe("D315 §2 — the MULTI park: three predicates at once, and only the type half is new", () => {
-  it("🛑 the park is a choosePokemonMulti at min 0, and the ACTIVE is on the offer", () => {
-    // ⚠️ THE RUNG THE WHOLE SLICE TURNS ON. *"your {D} Pokémon"* is the own board
-    // and the printed word is not "Benched", so the attacker itself is a candidate
-    // — Nidorina is {D} and Nidoqueen is in the deck.
+  it("the park is a choosePokemonMulti at min 0, and the ACTIVE is on the offer", () => {
     const prompt = multiPrompt(declare(board(41)));
     expect(prompt.candidates).toContainEqual(ACTIVE_REF);
     expect(prompt.min).toBe(0);
@@ -467,7 +326,7 @@ describe("D315 §2 — the MULTI park: three predicates at once, and only the ty
     expect(prompt.note).toContain("You will then choose a card for each");
   });
 
-  it("🛑 the candidate set is TYPED and DECK-NARROWED — the two refusals, told apart", () => {
+  it("the candidate set is TYPED and DECK-NARROWED — the two refusals, told apart", () => {
     // The default board benches five bodies and only THREE of them plus the Active
     // are eligible. Each rejected body fails exactly ONE conjunct, so a build that
     // dropped either narrowing offers a different set and this rung names which.
@@ -478,15 +337,11 @@ describe("D315 §2 — the MULTI park: three predicates at once, and only the ty
       benchRef(1), // ec-dark-b, {D}, one evolution in deck
       benchRef(4), // ec-dual-e, ["Water","Darkness"] — the dual-type control
     ]);
-    // 🛑 THE FIRE BODY HAS AN EVOLUTION IN THE DECK AND IS STILL REFUSED — the type
-    // conjunct alone. Dropping it admits bench 2.
     expect(prompt.candidates).not.toContainEqual(benchRef(2));
-    // 🛑 THE FOURTH DARK BODY HAS NOTHING THAT EVOLVES FROM IT AND IS REFUSED — the
-    // deck conjunct alone (D309's real work, inherited). Dropping it admits bench 3.
     expect(prompt.candidates).not.toContainEqual(benchRef(3));
   });
 
-  it("🛑 the DUAL-TYPE body is admitted — the {D} noun is membership, not equality", () => {
+  it("the DUAL-TYPE body is admitted — the {D} noun is membership, not equality", () => {
     // The catalog column is an ARRAY and dual-type Pokémon are printed. A
     // comparison written as `types[0] === pokemonType` or as equality on the whole
     // array passes every other rung in this file and fails only here.
@@ -495,13 +350,7 @@ describe("D315 §2 — the MULTI park: three predicates at once, and only the ty
     expect(POOL["ec-dual-e"]?.types).toEqual(["Water", "Darkness"]);
   });
 
-  it("🛑 NO FORCED-SINGLE: one eligible body still PARKS, because 'up to' keeps a decision", () => {
-    // ⚠️ WHERE THIS OP PARTS FROM `evolveFromDeckChosen`, AND THE REASON IS THE
-    // PRINTED ARTICLE RATHER THAN THE CANDIDATE COUNT. D309 forces a board of one
-    // because *"1 of your Pokémon"* is MANDATORY — with one eligible body there is
-    // no decision left to take. *"Choose UP TO 2"* keeps one on every board, since
-    // taking fewer (including none) is a printed answer. A build that copied D309's
-    // forcing would silently delete the decline, and this is the board that says so.
+  it("NO FORCED-SINGLE: one eligible body still PARKS, because 'up to' keeps a decision", () => {
     const one = board(41, ["ec-dark-b", "ec-fire-c", "ec-dark-d"]);
     const parked = declare(stripDeck(one, ["ec-evo-active"]));
     const prompt = multiPrompt(parked);
@@ -532,11 +381,7 @@ describe("D315 §2 — the MULTI park: three predicates at once, and only the ty
 });
 
 describe("D315 §3 — the answer buys N ops: two bodies, two card parks, ONE shuffle", () => {
-  it("🛑 picking TWO bodies parks twice, in the order named, each about its OWN body", () => {
-    // THE FOURTH `continuationOps` MEMBER, AND THE FIRST WHOSE ANSWER BUYS MORE
-    // THAN ONE OP. `resumeProgram` splices the scheduled ops AHEAD of `cont.rest`,
-    // so both parks land in front of the trailing shuffle and each re-derives its
-    // own offer off the `onto` the answer wrote.
+  it("picking TWO bodies parks twice, in the order named, each about its OWN body", () => {
     const first = declare(board(41));
     const parked = answerBodies(first, [benchRef(0), benchRef(1)]).state;
     const promptA = cardsPrompt(parked);
@@ -544,8 +389,6 @@ describe("D315 §3 — the answer buys N ops: two bodies, two card parks, ONE sh
     expect(promptA.dest).toBe("evolve");
     expect(promptA.max).toBe(1);
     expect(promptA.note).toContain("ec-dark-a");
-    // 🛑 AND IT IS NOT ABOUT THE ATTACKER. A note naming the wrong body is the
-    // failure a redirected op makes that an unredirected one cannot.
     expect(promptA.note).not.toContain("Nidorina");
 
     const second = answerCard(parked, [offered(parked, promptA.candidates, "ec-evo-a2")]).state;
@@ -561,12 +404,7 @@ describe("D315 §3 — the answer buys N ops: two bodies, two card parks, ONE sh
     expect(done.phase.kind).not.toBe("effect:choose");
   });
 
-  it("🛑 ONE printed shuffle stays ONE shuffle across BOTH placements", () => {
-    // ⚠️ D308's ARGUMENT AT ITS SECOND SITE, DRIVEN RATHER THAN INHERITED. The
-    // trailing `shuffleDeck` is the DERIVER's second op, so it sits BEHIND
-    // everything the continuation unshifts; a build that scheduled the shuffle per
-    // body — the obvious mistake, since the printed sentence follows an iteration —
-    // would emit two.
+  it("ONE printed shuffle stays ONE shuffle across BOTH placements", () => {
     const declared = declareWith(board(41));
     const bodies = answerBodies(declared.state, [benchRef(0), benchRef(1)]);
     const cardA = answerCard(bodies.state, [
@@ -579,8 +417,6 @@ describe("D315 §3 — the answer buys N ops: two bodies, two card parks, ONE sh
   });
 
   it("picking the ACTIVE evolves the ATTACKER — the carried answer is a TARGET", () => {
-    // D309's widening (`ontoBench` → `onto`) is what makes this reachable, and this
-    // slice is its second consumer: a bench INDEX could not have carried it.
     const declared = declareWith(board(41));
     const bodies = answerBodies(declared.state, [ACTIVE_REF]);
     const prompt = cardsPrompt(bodies.state);
@@ -592,7 +428,7 @@ describe("D315 §3 — the answer buys N ops: two bodies, two card parks, ONE sh
     expect(shuffles(declared.events, bodies.events, card.events)).toBe(1);
   });
 
-  it("🛑 the EMPTY pick is the printed decline: nothing evolves, the shuffle still fires", () => {
+  it("the EMPTY pick is the printed decline: nothing evolves, the shuffle still fires", () => {
     // *"Choose UP TO 2"* legalises taking none, and an answer that buys nothing
     // splices nothing — the same ending `optional`'s "no" takes. The board must be
     // untouched and the program must still finish.
@@ -633,10 +469,6 @@ describe("D315 §3 — the answer buys N ops: two bodies, two card parks, ONE sh
 
 describe("D315 §4 — the wire: the validator is the prompt, and no second copy of the rule", () => {
   it("a body the NARROWING excluded is rejected off the prompt, not by a duplicated predicate", () => {
-    // `validateChoice` (cardplay.ts) matches a wire answer against
-    // `prompt.candidates`, so a body this op's builder excluded is unreachable from
-    // a crafted frame BY CONSTRUCTION rather than by a second copy of the rule —
-    // which is why `evolvableOwnRefs` needs no validation arm of its own.
     const parked = declare(board(41));
     for (const ref of [benchRef(2), benchRef(3)]) {
       const rejected = applyAction(parked, {
@@ -668,10 +500,6 @@ describe("D315 §4 — the wire: the validator is the prompt, and no second copy
   });
 
   it("the WRONG choice kind buys nothing rather than throwing", () => {
-    // `continuationOps`' arm reads `choice.kind === "pokemonMulti"`; every other
-    // shape falls out to the empty list. The wire cannot get here (the validator
-    // has already matched the shape against the prompt), so this is the same
-    // by-construction guard the other three members carry.
     const parked = declare(board(41));
     const wrong = applyAction(parked, {
       type: "resolveEffect",
@@ -685,9 +513,6 @@ describe("D315 §4 — the wire: the validator is the prompt, and no second copy
 
 describe("D315 §5 — index precision, and the SECOND attack that must stay unsimulated", () => {
   it("index 1 is 'Scratch' — damage only, no program, and it must not inherit this one", () => {
-    // D187's inflated intermediate result, at this family's fourth site: marking a
-    // whole CARD built instead of one index is the mistake, and the fixture carries
-    // both printed attacks precisely so the claim can be made in both directions.
     const nid = POOL["sv10-115"];
     expect(nid?.attacks?.[1]?.name).toBe("Scratch");
     expect(nid?.attacks?.[1]?.effect).toBeUndefined();
@@ -699,27 +524,14 @@ describe("D315 §5 — index precision, and the SECOND attack that must stay uns
 });
 
 describe("D315 §6 — the ABSENCES, asserted against the live build rather than left as prose", () => {
-  it("🛑 NO REGISTRY ROW is authored for Nidorina, and that is the priced decision", () => {
-    // ⚠️ THE HANDOFF ASKED FOR ONE. `BUILT.attack`'s raw summand is keyed on the
-    // READER over the whole legal corpus with `programFor` nowhere in the addition,
-    // so a row here would buy ZERO printings — and `conventions.md`'s *an arm
-    // transfers across sets; a registry row does not* points the same way. An
-    // absence nobody asks about is the one a later author "fixes".
+  it("NO REGISTRY ROW is authored for Nidorina, and that is the priced decision", () => {
     expect(programFor("sv10-115")).toBeUndefined();
     // …while the reader really does resolve it, which is the half that makes the
     // absence a decision rather than a gap.
     expect(deriveAttackEffect(EACH_CHOSEN)).not.toBeNull();
   });
 
-  it("🛑 the op has EXACTLY ONE producer in the whole build — the version SKIP's premise", () => {
-    // ⚠️ CLASSIFY BEFORE COPYING EITHER PARAGRAPH (D309's rule). D309 bumped
-    // `MATCH_RECORD_VERSION` 17 → 18 for a RENAME, the one shape that is not a
-    // widening, because an older record could hold the OLD spelling. This slice
-    // adds a new union MEMBER, and the SKIP rests on a premise this rung drives
-    // rather than asserts in prose: **a v18 deploy cannot author this op**, so no
-    // v18 record can hold one and this deploy reads every v18 record unchanged.
-    // The premise is checkable HERE — the op has exactly one producer, this
-    // slice's arm, and nothing in the registry can write it into a `pendingOp`.
+  it("the op has EXACTLY ONE producer in the whole build — the version SKIP's premise", () => {
     const fromCorpus = legalAttackCorpus().filter(([, t]) =>
       JSON.stringify(deriveAttackEffect(t) ?? []).includes("evolveFromDeckEachChosen"),
     );
@@ -730,9 +542,6 @@ describe("D315 §6 — the ABSENCES, asserted against the live build rather than
   });
 
   it("the op carries TWO fields and no third — the printed count and the printed noun", () => {
-    // D104's minimal shape, asserted rather than described: both fields are
-    // REQUIRED because the pool prints exactly one sentence and it carries both, so
-    // an absent field would be a state no card can author (D222's closed world).
     const derived = deriveAttackEffect(EACH_CHOSEN);
     expect(derived).not.toBeNull();
     expect(Object.keys(derived?.[0] ?? {}).sort()).toEqual(["max", "op", "pokemonType"]);

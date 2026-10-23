@@ -19,25 +19,9 @@ import {
   setBenchDamage,
   setDamage,
   typedEnergy,
+  must,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
-
-// ── 🆕🆕🆕 D639 — K3 + R1: THE KO-BY-THIS-ATTACK CONSEQUENTS AND THE KO SWEEP ─────────────────────────────────────
-//
-// 3 attack sentences / 6 printings newly reader-built; every other text on the 6 cards was already built, so all 6
-// are finished. Every id and text off the LOCAL D1, 2026-10-10, `legal_standard = 1`; before this slice only
-// `koCountersMeD609.test.ts` (Soul Destroyer, Unown) and the playmat mock (Yveltal ex `me03-053`) named any of them.
-//
-//   Shadowy Side Kick ×2 / Critical Slash — `conditionGate` on the NEW `opponentKnockedOutByDamage` → the shipped
-//                                            `preventDamage { effects }` (R-SSK1).
-//   Mysterious Signal                     — the NEW `bountyThisAttack`: a THIS-turn `koBounty` (R-MSG1).
-//   Soul Destroyer ×2                     — the NEW `knockOutEach { remainingHpAtMost }` (R-SDS1).
-//
-// DROPPED AND NAMED: Gholdengo `30th-108` / `-142` "Celebration" — `takePrize` queues a `takePrizes` stage behind the
-// program, so "If you do, shuffle your hand into your deck" would run before the Prizes reach the hand; ordering it
-// after the stage needs a new post-Prize `PendingStage` (persisted state), which this slice does not add.
-// [🆕🆕🆕 D640 (D539): BUILT at D640 — `takePrize { count: 2, thenShuffleHand }` and the NEW `shuffleHandIntoDeck`
-// stage on 46 → 47; the pin below is inverted.]
 
 const SIDE_KICK =
   "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.";
@@ -48,7 +32,6 @@ const SOUL_DESTROYER =
 const CELEBRATION =
   "If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.";
 
-/** [attack text, the `me` printing ids that print it]. */
 const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [SIDE_KICK, ["me01-080", "me01-146", "me04-026"]],
   [SIGNAL, ["30th-072"]],
@@ -68,9 +51,9 @@ describe("D639 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(6);
   });
 
-  it("Celebration ×2 stays dropped: read by no reader (🆕🆕🆕 D640 (D539): read since D640, still no key)", () => {
+  it("Celebration ×2 stays dropped: read by no reader ( D640 (D539): read since D640, still no key)", () => {
     expect(meAttackCorpus().find(([, text]) => text === CELEBRATION)?.[0]).toBe(2);
-    expect(resolvedByAnyReader(CELEBRATION)).toBe(true); // 🆕🆕🆕 D640 — inverted: built
+    expect(resolvedByAnyReader(CELEBRATION)).toBe(true);
     for (const id of ["30th-108", "30th-142"]) expect(programFor(id), id).toBeUndefined();
   });
 });
@@ -199,11 +182,6 @@ const DECK = deckOf({
   "fix-energy": 24,
 });
 const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), "fix-unaware"]);
-
-function must(result: ReturnType<typeof applyAction>): GameState {
-  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
-  return result.state;
-}
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
@@ -431,7 +409,6 @@ describe("D639 §6 — Soul Destroyer: each opponent body at 50 HP or less remai
       ["p2", FILLER],
     ]);
     expect(result.state.players.p1.bench.map((b) => b.damage)).toEqual([30]);
-    // An effect's Knock Out, not damage's (D414's marker): the KO record says so.
     expect(result.state.lastKoMarks.p2.map((m) => m.byAttack)).toEqual([false, false]);
   });
 
