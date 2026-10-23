@@ -490,7 +490,6 @@ describe("D575 §1 — the six printed sentences, measured", () => {
       {
         op: "conditionGate",
         cond: { kind: "yourPrizesRemaining", counts: [1] },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "winGame" }],
       },
     ]);

@@ -633,13 +633,11 @@ describe("D574 §1 — the readers: two resolve-time copy anchors, two counter-m
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic's Machinations" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [
           { op: "gust", recordAs: "moved" },
           {
             op: "recordGate",
             slot: "moved",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [{ op: "damageNewActive", amount: 120 }],
           },
         ],

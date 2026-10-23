@@ -413,12 +413,10 @@ describe("§4 — the program: ONE gate, ONE confirm, and NO decline arm on eith
       {
         op: "conditionGate",
         cond: { kind: "yourActiveEnergyAtLeast", count: 3 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "optional",
             note: TORRENTIAL,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [
               {
                 op: "discardEnergy",

@@ -355,7 +355,6 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
               then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
             },
           ],
@@ -416,7 +415,6 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamaged" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "damageDefender", amount: 30 }],
         otherwise: [{ op: "damageDefender", amount: 260 }],
       },

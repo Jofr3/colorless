@@ -730,7 +730,6 @@ describe("D316 §7 — THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSERTED"
       {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnSelf", dest: "deck" }],
       },
     ]);
@@ -746,7 +745,6 @@ describe("D318 §8 — the exported assembler, and the pool that can now reach i
       {
         op: "optional",
         note: POLIWRATH_TEXT,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "damageDefender", amount: 240 },
           { op: "returnSelf", dest: "deck" },

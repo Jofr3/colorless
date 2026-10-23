@@ -262,7 +262,6 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamaged" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "damageChosen",

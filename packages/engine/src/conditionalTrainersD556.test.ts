@@ -304,7 +304,6 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourPokemonAllOwner", owner: "Team Rocket" },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [{ op: "drawUntilHandSize", size: 8 }],
             otherwise: [{ op: "drawUntilHandSize", size: 5 }],
           },
@@ -319,7 +318,6 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
       program: {
         trainer: [
           { op: "drawCards", count: 2 },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           {
             op: "conditionGate",
             cond: { kind: "yourHandAtLeast", count: 10 },
@@ -338,7 +336,6 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourActiveHasType", type: "Dragon" },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [{ op: "heal", target: "self", amount: 60 }],
           },
         ],
@@ -353,7 +350,6 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
         trainer: [
           {
             op: "coinFlipGate",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [
               {
                 op: "searchDeck",
@@ -388,12 +384,10 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "recordGate",
             slot: "moved",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [
               {
                 op: "conditionGate",
                 cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
-                // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                 then: [{ op: "shufflePlayedCardIntoDeck" }],
               },
             ],
@@ -429,7 +423,6 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
             {
               op: "conditionGate",
               cond: { kind: "opponentActivePoisoned" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
               then: [{ op: "damageActive", amount: 50, source: "ability" }],
             },
           ],

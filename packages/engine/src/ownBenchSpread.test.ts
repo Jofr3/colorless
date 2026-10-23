@@ -253,7 +253,6 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
           {
             op: "conditionGate",
             cond: { kind: "opponentActiveDamaged" },
-            // biome-ignore lint/suspicious/noThenProperty: gated-step list, not a thenable.
             then: [{ op: "damageDefender", amount: 50 }],
           },
           { op: "spreadDamage", target: "yourBench", amount: 50, damagedOnly: true },

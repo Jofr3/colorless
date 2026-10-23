@@ -113,7 +113,6 @@ describe("D611 §1 — the programs: nine objects over 17 printings", () => {
     expect(abilityOf(DUSTOX[0])?.program).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [
           {
             op: "discardEnergy",
@@ -129,7 +128,6 @@ describe("D611 §1 — the programs: nine objects over 17 printings", () => {
       programFor("me01-097")?.triggered?.[0]?.program,
     );
     expect(abilityOf(TALONFLAME[0])?.program).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "discard" }] },
     ]);
     expect(abilityOf(VIVILLON)?.program).toEqual([

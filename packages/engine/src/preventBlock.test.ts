@@ -77,7 +77,6 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     expect(deriveAttackEffect(WIDE_TEXT)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "preventDamage", effects: true }],
       },
     ]);
@@ -89,7 +88,6 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     expect(derived).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "preventDamage" }],
       },
     ]);
@@ -134,7 +132,6 @@ describe("the gated PREVENT clause — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentKnockedOutByDamage" },
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [{ op: "preventDamage", effects: true }],
       },
     ]);
@@ -771,7 +768,6 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
             {
               op: "conditionGate",
               cond: { kind: "opponentActiveIsBasic" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [{ op: "preventAttack", target: "defender" }],
               otherwise: [{ op: "preventRetreat" }],
             },
@@ -1076,7 +1072,6 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       // A procedure: the evidence it ran is that the COIN WAS TAKEN. Its body is
       // classified on its own line, which is what makes this the right witness
       // rather than a weaker one about the branch.
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       op: { op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 10 }] },
       landed: (r) => types(r.events).includes("ATTACK_EFFECT_COIN_FLIP"),
     },
@@ -1086,14 +1081,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       op: {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "heal", target: "self", amount: 10 }],
         otherwise: [{ op: "heal", target: "self", amount: 10 }],
       },
       landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
     },
     optional: {
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       op: { op: "optional", note: "You may draw a card.", then: [{ op: "drawCards", count: 1 }] },
       landed: (r) => r.parked,
     },
@@ -1101,7 +1094,6 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       op: {
         op: "recordGate",
         slot: "discarded",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "heal", target: "self", amount: 10 }],
       },
       landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),

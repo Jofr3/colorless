@@ -306,7 +306,6 @@ describe("D645 §1 — the prints and the registry rows", () => {
       {
         op: "conditionGate",
         cond: { kind: "extraEnergyBeyondAttackCost", extra: 2 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list.
         then: [
           {
             op: "damageChosen",

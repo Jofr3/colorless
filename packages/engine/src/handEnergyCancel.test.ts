@@ -575,7 +575,6 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     expect(
       handCostIsSlotGated([
         { op: "payFromHand", count: 1, to: "discard" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
       ]),
     ).toBe(false);
@@ -584,14 +583,12 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     expect(
       handCostIsSlotGated([
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 2 }] },
       ]),
     ).toBe(false);
     expect(
       handCostIsSlotGated([
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
         { op: "knockOutDefender" },
       ]),
@@ -604,7 +601,6 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
         {
           op: "recordGate",
           slot: "paid",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [pay(6), { op: "knockOutDefender" }],
         },
       ]),
@@ -619,7 +615,6 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
       {
         op: "conditionGate",
         cond: need(2),
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [pay(2)],
       },
     ];

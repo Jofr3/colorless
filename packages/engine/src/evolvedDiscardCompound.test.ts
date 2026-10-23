@@ -64,7 +64,6 @@ const PROGRAM: readonly EffectOp[] = [
   {
     op: "conditionGate",
     cond: SALANDIT,
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "opponentDiscardsFromHand", count: 2 }],
   },
 ];
@@ -73,7 +72,6 @@ const SIBLING: readonly EffectOp[] = [
   {
     op: "conditionGate",
     cond: SALANDIT,
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "opponentDiscardsFromHand", count: 3 }],
     otherwise: [{ op: "opponentDiscardsFromHand", count: 1 }],
   },
@@ -379,7 +377,6 @@ describe("§3 — the derived program, and what the arm refuses", () => {
       ),
     ).toEqual([
       { op: "opponentDiscardsFromHand", count: 1 },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "conditionGate", cond: SALANDIT, then: [{ op: "opponentDiscardsFromHand", count: 4 }] },
     ]);
   });
@@ -466,14 +463,12 @@ const CANDIDATES: readonly (readonly [string, readonly EffectOp[]])[] = [
   ],
   [
     "the HEAD dropped — the gated half alone",
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     [{ op: "conditionGate", cond: SALANDIT, then: [{ op: "opponentDiscardsFromHand", count: 2 }] }],
   ],
   [
     '"2 more" read as the TOTAL — one, then three',
     [
       { op: "opponentDiscardsFromHand", count: 1 },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "conditionGate", cond: SALANDIT, then: [{ op: "opponentDiscardsFromHand", count: 3 }] },
     ],
   ],
@@ -484,7 +479,6 @@ const CANDIDATES: readonly (readonly [string, readonly EffectOp[]])[] = [
       {
         op: "conditionGate",
         cond: SALANDIT,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [],
         otherwise: [{ op: "opponentDiscardsFromHand", count: 2 }],
       },
@@ -683,7 +677,6 @@ describe("§8 — what this program can put into a persisted `phase.cont`", () =
       {
         op: "conditionGate",
         cond: SALANDIT,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "opponentDiscardsFromHand", count: 2 }],
       },
     ]);

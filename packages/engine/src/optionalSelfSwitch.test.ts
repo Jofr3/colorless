@@ -161,7 +161,6 @@ describe("§2 — the arm COMPOSES: two shipped ops, zero new vocabulary", () =>
       {
         op: "optional",
         note: SENTENCE,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "switchActive" }],
       },
     ]);

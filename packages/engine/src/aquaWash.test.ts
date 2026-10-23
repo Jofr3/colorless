@@ -56,7 +56,6 @@ const CLAUSES = [
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsStage2" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-op list, not a thenable (arrays are not callable).
         then: wrapped(TWO_STAGE2, [put(2)]),
       },
     ] as EffectOp[],

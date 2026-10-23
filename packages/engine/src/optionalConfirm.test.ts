@@ -35,7 +35,6 @@ const DRAW_UNTIL_6: EffectOp = { op: "drawUntilHandSize", size: 6 };
 const DRAW_1: EffectOp = { op: "drawCards", count: 1 };
 
 function wrapped(note: string, ops: EffectOp[]): EffectOp[] {
-  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-op list, not a thenable (arrays are not callable).
   return [{ op: "optional", note, then: ops }];
 }
 
@@ -72,7 +71,6 @@ describe("the `optional` op parks a `confirm`", () => {
     const events: GameEvent[] = [];
     const result = runProgram(
       full,
-      // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
       [{ op: "optional", note: SENTENCE, then: [{ op: "drawUntilHandSize", size: 0 }] }],
       CTX,
       events,
@@ -142,7 +140,6 @@ describe("composition — the gate nests like the other three", () => {
     }
     const parked = runProgram(
       bench,
-      // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
       [{ op: "optional", note: "You may switch.", then: [{ op: "switchActive" }] }],
       CTX,
       events,
@@ -172,7 +169,6 @@ describe("composition — the gate nests like the other three", () => {
         [
           {
             op: "coinFlipGate",
-            // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
             then: [{ op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] }],
           },
         ],
@@ -202,9 +198,7 @@ describe("what this op deliberately does NOT touch", () => {
     const result = runProgram(
       board(),
       [
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
         { op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] },
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
         { op: "recordGate", slot: "moved", then: [DRAW_1] },
       ],
       CTX,
@@ -219,9 +213,7 @@ describe("what this op deliberately does NOT touch", () => {
     const result = runProgram(
       board(),
       [
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
         { op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] },
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
         { op: "recordGate", slot: "moved", then: [DRAW_1] },
       ],
       CTX,

@@ -355,17 +355,14 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
         {
           op: "recordGate",
           slot: "turnedPrize",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             {
               op: "recordGate",
               slot: "revealed",
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [
                 {
                   op: "optional",
                   note: "You may have your opponent switch the revealed card with the Prize card you turned face up.",
-                  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
                   then: [{ op: "swapTurnedPrizeWithRevealed" }],
                 },
               ],

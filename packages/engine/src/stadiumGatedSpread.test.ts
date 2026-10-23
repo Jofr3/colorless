@@ -62,7 +62,6 @@ const program = (amount: number): EffectOp[] => [
   {
     op: "conditionGate",
     cond: { kind: "stadiumInPlay" },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
   },
 ];

@@ -494,7 +494,6 @@ describe("the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the
       deriveAttackEffect(
         "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
       ),
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     ).toEqual([{ op: "coinFlipGate", then: [{ op: "switchActive" }] }]);
     expect(inTrainers.has("switchActive")).toBe(true);
     expect(programFor("sv01-194")?.trainer).toEqual([{ op: "switchActive" }]);

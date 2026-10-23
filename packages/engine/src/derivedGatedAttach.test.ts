@@ -36,7 +36,6 @@ const PROGRAMS: Record<string, EffectOp[]> = {
     {
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       then: [
         { op: "attachEnergyFrom", source: "hand", energyType: "Lightning", toSelf: true, count: 2 },
       ],
@@ -167,7 +166,6 @@ describe("the anchors — three printed sentences, ONE new arm", () => {
     expect(gated?.[1]).toMatchObject({
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       then: deriveAttackEffect(consequent) ?? [],
     });
   });

@@ -46,7 +46,6 @@ const FAMILY = [
       {
         op: "conditionGate",
         cond: { kind: "yourActiveEvolvedFromThisTurn", name: "Salandit" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "opponentDiscardsFromHand", count: 2 }],
       },
     ],
@@ -594,7 +593,6 @@ describe("§8b — the gate caption names the DECK, driven from a hand-built pro
       board,
       [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "paid", then: [...inner] },
       ],
       { seat: "p1" },

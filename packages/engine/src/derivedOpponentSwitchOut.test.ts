@@ -32,7 +32,6 @@ const CLAUSES = [
       {
         op: "optional",
         note: "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "opponentSwitchOut" }],
       },
     ] as EffectOp[],
@@ -43,7 +42,6 @@ const CLAUSES = [
     text: "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
     program: [
       { op: "switchActive", recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
     ] as EffectOp[],
     printings: 8,

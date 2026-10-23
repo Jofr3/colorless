@@ -127,7 +127,6 @@ describe("D592 §1 — the synonym table: each `me` sentence reads as its `sv` w
     expect(programs).toEqual([
       [{ op: "bottomFromOpponentHand", dest: "discard" }],
       [{ op: "damageSelf", amount: 30 }],
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       [{ op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] }],
       [{ op: "randomFromOpponentHand", to: "deck" }],
       [{ op: "damageActive", amount: 30, source: "attack" }],

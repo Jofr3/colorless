@@ -604,7 +604,6 @@ describe("programPlayable — the gate and the op read the SAME endpoints", () =
   it("NO NEW `programPlayable` ARM WAS OWED, and that is a MEASURED result ( D587: true of Samurott; Repel `me01-126` then owed the top-level arm)", () => {
     const samurott: EffectOp[] = [
       { op: "switchActive", recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
     ];
     // An empty own Bench: the antecedent cannot happen, so the Ability is refused

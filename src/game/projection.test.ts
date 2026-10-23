@@ -1274,7 +1274,6 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         op: "optional",
         note: "Choose 1: …",
         labels,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-op list, not a thenable.
         then: [{ op: "switchActive" }],
         otherwise: [{ op: "drawCards", count: 1 }],
       },

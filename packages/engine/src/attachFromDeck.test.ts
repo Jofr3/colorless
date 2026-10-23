@@ -507,7 +507,6 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
       op: "recordGate",
       slot: "moved",
       contains: "yourActive",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     },
   ];
@@ -788,7 +787,6 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
       max: 1,
       recordAs: "moved",
     },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
   ];
 
@@ -835,7 +833,6 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         op: "recordGate",
         slot: "moved",
         contains: "yourActive",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ];
@@ -874,7 +871,6 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         max: 1,
         recordAs: "moved",
       },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
     ];
     const first = runProgram(janineBoard(SEED, 1), twoWriters, { seat: "p1" }, []);
@@ -909,7 +905,6 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         op: "recordGate",
         slot: "moved",
         contains: "yourActive",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 1 }],
       },
     ];
@@ -975,7 +970,6 @@ describe("the prompt note — the branches no shipped card reaches", () => {
           op: "recordGate",
           slot: "moved",
           contains: "yourActive",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "applyStatus", target: "self", status: "burned" }],
         },
       ]),
@@ -992,7 +986,6 @@ describe("the prompt note — the branches no shipped card reaches", () => {
           op: "recordGate",
           slot: "moved",
           contains: "yourActive",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
         },
       ]),
@@ -1057,7 +1050,6 @@ describe('§9.2 `contains: "yourActive"` resolves on the LATER truth', () => {
     op: "recordGate",
     slot: "moved",
     contains: "yourActive",
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
   };
 

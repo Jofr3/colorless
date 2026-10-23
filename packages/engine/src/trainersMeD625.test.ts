@@ -112,14 +112,12 @@ describe("D625 §1 — the faces: 13 `me` printings / 7 texts, one object per te
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveHasType", type: "Darkness" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [],
           otherwise: [{ op: "applyStatus", target: "defender", status: "confused" }],
         },
         {
           op: "conditionGate",
           cond: { kind: "yourActiveHasType", type: "Darkness" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [],
           otherwise: [{ op: "applyStatus", target: "self", status: "confused" }],
         },

@@ -84,7 +84,6 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
       [KADABRA, PSYCHIC_DRAW_2, 2],
     ] as const) {
       expect(triggerOf(id)?.program).toEqual([
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         { op: "optional", note: text, then: [{ op: "drawCards", count }] },
       ]);
       expect(deriveAttackEffect(consequent(text))).toEqual([{ op: "drawCards", count }]);
@@ -96,7 +95,6 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
       {
         op: "optional",
         note: PRISON_PANIC,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "applyStatus", target: "defender", status: "confused" }],
       },
     ]);
@@ -142,7 +140,6 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     expect(triggerOf(TINKATUFF)?.program).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);

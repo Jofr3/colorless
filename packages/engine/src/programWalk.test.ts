@@ -88,7 +88,6 @@ describe("walkProgram — the structural predicate", () => {
   it("yields the op itself, in pre-order, before its branches", () => {
     const program: EffectOp[] = [
       { op: "drawCards", count: 1 },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "coinFlipGate", then: [{ op: "gust" }] },
     ];
     expect(walkProgram(program).map((op) => op.op)).toEqual(["drawCards", "coinFlipGate", "gust"]);
@@ -101,17 +100,14 @@ describe("walkProgram — the structural predicate", () => {
     const program: EffectOp[] = [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "gust" }],
         otherwise: [{ op: "drawCards", count: 2 }],
       },
       {
         op: "optional",
         note: "You may.",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "switchActive" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           { op: "recordGate", slot: "moved", then: [{ op: "shuffleDeck" }] },
         ],
       },
@@ -143,7 +139,6 @@ describe("walkProgram — the structural predicate", () => {
     // trap. It matters for `programBranchCarriers`: an empty `otherwise` would
     // otherwise be reported as a carrier the pool does not actually exercise.
     const program = [
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "conditionGate", cond: { kind: "isActive" }, then: [], otherwise: [] },
     ] as unknown as EffectOp[];
     expect(walkProgram(program).map((op) => op.op)).toEqual(["conditionGate"]);

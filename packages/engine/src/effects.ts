@@ -4881,7 +4881,6 @@ function chooseSpecialConditionProgram(): EffectOp[] {
       {
         op: "optional",
         note: "Choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: apply(word),
         otherwise: last ? apply(rest[0] as StatusWord) : ask(index + 1),
         labels: {
@@ -5596,7 +5595,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: statusOf(match[1]) }],
       },
     ];
@@ -5632,7 +5630,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       : [
           {
             op: "coinFlipGate",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: heads,
             otherwise: [{ op: "applyStatus", target: "defender", status: statusOf(match[3]) }],
           },
@@ -5651,7 +5648,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "applyStatus", target: "defender", status: statusOf(match[1]) },
           { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
@@ -5669,7 +5665,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: gate,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],
         },
       ];
@@ -5784,7 +5779,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ];
@@ -5797,7 +5791,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ];
@@ -5810,7 +5803,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasSpecialCondition" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ];
@@ -5823,7 +5815,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "yourPrizesRemaining", counts: [1] },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ];
@@ -5846,7 +5837,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "damageSelf", amount },
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "knockOutDefender" }],
         },
       ];
@@ -5860,12 +5850,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "conditionGate",
             cond: { kind: "opponentActiveIsBasic" },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [{ op: "knockOutDefender" }],
           },
         ],
@@ -5891,7 +5879,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "knockOutDefender" }],
         },
       ];
@@ -5905,7 +5892,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentKnockedOutByDamage" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventDamage", effects: true }],
       },
     ];
@@ -5925,7 +5911,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
       },
     ];
@@ -6116,7 +6101,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "optional",
         note: effect,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "searchDeck",
@@ -6177,7 +6161,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: millGate,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "discardDeckTop", whose: "opponent", count: milled }],
         },
       ];
@@ -6193,7 +6176,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: foldGate,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             {
               op: "counterEachAll",
@@ -6216,7 +6198,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: quadrupleGate,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             {
               op: "damageChosen",
@@ -6241,7 +6222,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: benchCounterGate,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             {
               op: "damageChosen",
@@ -6463,7 +6443,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveDamaged" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "damageDefender", amount }],
         },
         { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },
@@ -6674,7 +6653,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           {
             op: "conditionGate",
             cond,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [
               {
                 op: "damageChosen",
@@ -6693,7 +6671,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: damagedOnly
             ? [
                 {
@@ -7251,7 +7228,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "optional",
           note: effect,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             { op: "damageSelf", amount },
             { op: "applyStatus", target: "defender", status: "paralyzed" },
@@ -7287,7 +7263,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsEx" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ];
@@ -7333,7 +7308,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ];
@@ -7362,7 +7336,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         ...(count === undefined ? {} : { count }),
       };
       // `note` is the whole matched sentence, so the prompt shows the printed text.
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       const ask: EffectOp = { op: "optional", note: effect, then: [put] };
       // The Stage 2 gate is the outer op so no Yes/No is asked on a board where it would do
       // nothing.
@@ -7372,7 +7345,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             {
               op: "conditionGate",
               cond: { kind: "opponentActiveIsStage2" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [ask],
             },
           ];
@@ -7472,7 +7444,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "heal", target: "self", amount }],
         },
       ];
@@ -7484,7 +7455,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
       },
     ];
@@ -7495,7 +7465,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventDamage", effects: true }],
       },
     ];
@@ -7505,7 +7474,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventDamage" }],
       },
     ];
@@ -7547,7 +7515,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentStadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
       },
     ];
@@ -7575,7 +7542,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: atOnePrize,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "winGame" }],
       },
     ];
@@ -7640,7 +7606,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "yourHandExactly", count: 30 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],
       },
     ];
@@ -8129,7 +8094,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         op: "coinFlipGate",
         // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventAttack" }],
       },
     ];
@@ -8162,7 +8126,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // BYTE-IDENTICAL to the second op of the arm above, which is the family's
         // checkable claim on this pair: there is ONE action here, printed two ways,
         // and the gate is a condition in front of it.
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ];
@@ -8173,7 +8136,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ];
@@ -8194,7 +8156,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
         ],
@@ -8211,7 +8172,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "coinFlipGate",
           onTails: true,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "damageSelf", amount }],
         },
       ];
@@ -8228,7 +8188,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           op: "coinFlipGate",
           coins: 2,
           onTails: true,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "damageSelf", amount }],
         },
       ];
@@ -8280,7 +8239,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const count = Number(match[1]);
     if (count >= 1) {
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       return [{ op: "optional", note: effect, then: [{ op: "drawCards", count }] }];
     }
   }
@@ -8288,7 +8246,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const size = Number(match[1]);
     if (size >= 1) {
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       return [{ op: "optional", note: effect, then: [{ op: "drawUntilHandSize", size }] }];
     }
   }
@@ -8302,7 +8259,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "gust" }],
       },
     ];
@@ -8324,7 +8280,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "switchActive" }],
       },
     ];
@@ -8333,10 +8288,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // yes. With an empty Bench the player is still asked and yes does nothing, matching the
   // opponent-switch mirror.
   if (ATTACK_MAY_SELF_SWITCH.test(effect)) {
-    return [
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      { op: "optional", note: effect, then: [{ op: "switchActive" }] },
-    ];
+    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];
   }
   // Moves the defender's Active like `gust`, but the defender chooses the replacement.
   if (ATTACK_OPPONENT_SWITCH_OUT.test(effect)) {
@@ -8348,10 +8300,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // consents, then the opponent chooses. Both parks are `resumeTail` parks behind
   // the same `attackEpilogue`, which is what makes the sequence work at all.
   if (ATTACK_MAY_OPPONENT_SWITCH_OUT.test(effect)) {
-    return [
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      { op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] },
-    ];
+    return [{ op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] }];
   }
   // Iron Bundle — Interjet: self-switch, then the §9.2 gate, then the opponent chooses their new
   // Active. The gate matters: with an empty Bench the attacker cannot switch, nothing is recorded,
@@ -8359,7 +8308,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT.test(effect)) {
     return [
       { op: "switchActive", recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
     ];
   }
@@ -8377,7 +8325,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageNewActive", amount: Number(match[1]) }],
       },
     ];
@@ -8506,7 +8453,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "moveEnergy",
@@ -8650,7 +8596,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: gate,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "opponentDiscardsFromHand", count: more }],
         },
       ];
@@ -8787,7 +8732,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (program !== null) {
       return [
         { op: "switchActive", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "moved", then: program },
       ];
     }
@@ -8865,7 +8809,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             {
               op: "recordGate",
               slot: "moved",
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
             },
           ];
@@ -9093,7 +9036,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [shuffleAway],
         },
       ];
@@ -9116,14 +9058,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // would give a choice with no effect.
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "optional",
             // The WHOLE printed sentence, the op's own contract: it is what the
             // confirm dialog shows, and "you may" is the only thing being asked.
             note: effect,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [{ op: "discardStadium" }],
           },
         ],
@@ -9141,7 +9081,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "conditionGate",
           cond: { kind: "stadiumInPlay" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
         },
       ];
@@ -9184,7 +9123,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (drawn >= 1) {
       return [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
       ];
     }
@@ -9195,7 +9133,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {
     return [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
     ];
   }
@@ -9211,7 +9148,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         filter: { kind: "byName", name: "Team Rocket's Energy" },
         recordAs: "discarded",
       },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },
     ];
   }
@@ -9231,7 +9167,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const gated = literalClauseRow(COIN_GATED_CONSEQUENTS, coinGate[2] ?? "");
     if (gated !== undefined) {
       const coins = COIN_GATE_COINS[coinGate[1] ?? ""];
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), then: [...gated] }];
     }
   }
@@ -10078,9 +10013,6 @@ export function deriveAttackBonusConsequent(text: string): AttackBonusConsequent
  * can build the same program attack.ts runs.
  */
 export function bonusConsequentProgram(reading: AttackBonusConsequent, base: number): EffectOp[] {
-  // ⚠️ THE `biome-ignore lint/suspicious/noThenProperty` LINE EVERY OTHER GATE
-  // No `noThenProperty` suppression is needed: both literals below use the `then` shorthand, which
-  // the rule does not flag.
   const [boosted, otherwise] = boostedArms(base, reading.bonus, reading.ops);
   const then: EffectOp[] =
     reading.baseOverride === undefined
@@ -10406,12 +10338,10 @@ export function optionalCostBoostProgram(
       { op: "applyStatus", target: "defender", status: reading.payoff.status },
     ];
     const offer: EffectOp = { op: "optional", note, then };
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     return [{ op: "conditionGate", cond: reading.cond, then: [offer] }];
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
   const then = [...reading.ops, ...boosted];
-  // Named locals let both arms splice by shorthand, avoiding a `noThenProperty` suppression.
   const ask: EffectOp = {
     op: "optional",
     // The WHOLE printed sentence, the op's own contract — it is what the confirm
@@ -10429,7 +10359,6 @@ export function optionalCostBoostProgram(
     {
       op: "conditionGate",
       cond: reading.cond,
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [ask],
       // The empty board's arm, and it is the printed base rather than nothing: the
       // gate refuses the QUESTION, never the attack.
@@ -10463,7 +10392,6 @@ function costSnipeProgram(
       // collects the whole printed snipe ("do as much as you can" is the op's rule
       // for a MANDATORY discard, and this one is a purchase).
       cond: reading.cond,
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [offer],
     },
   ];

@@ -191,12 +191,10 @@ describe("D608 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: reading.cond,
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [
           {
             op: "optional",
             note: DISASTER_SHOCK,
-            // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
             then: [...reading.ops, { op: "applyStatus", target: "defender", status: "paralyzed" }],
           },
         ],

@@ -368,12 +368,10 @@ describe("D524 §2 — the gate asks only on a non-empty Active, the confirm hol
       {
         op: "conditionGate",
         cond: GATE,
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list, not a thenable.
         then: [
           {
             op: "optional",
             note: PRINTED,
-            // biome-ignore lint/suspicious/noThenProperty: the effect contract's accepted-arm list, not a thenable.
             then: [DISCARD_ALL_TO_HAND, { op: "damageDefender", amount: BASE + BONUS }],
             otherwise: [{ op: "damageDefender", amount: BASE }],
           },

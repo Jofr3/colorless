@@ -61,7 +61,6 @@ describe("D641 §1 — the texts", () => {
         op: "optional",
         note: "Your opponent played Lt. Surge's Bargain: may each player take a Prize card? If you say no, they draw 4 cards.",
         askOpponent: true,
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [{ op: "eachPlayerTakesPrize" }],
         otherwise: [{ op: "drawCards", count: 4 }],
         labels: { yes: "Yes: each player takes a Prize card", no: "No: they draw 4 cards" },
@@ -75,7 +74,6 @@ describe("D641 §2 — the readings", () => {
     expect(deriveAttackEffect(TRANSFORM)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
       },
     ]);

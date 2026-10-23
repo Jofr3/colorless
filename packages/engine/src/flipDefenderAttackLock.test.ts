@@ -149,7 +149,6 @@ describe("§1 — the datum and the anchor", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
@@ -193,10 +192,7 @@ describe("§1 — the datum and the anchor", () => {
       deriveAttackEffect(
         "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
       ),
-    ).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
-      { op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] },
-    ]);
+    ).toEqual([{ op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] }]);
     // A prefix, a suffix and a truncation are all refused — the `^`, the `$` and the
     // terminator each doing their own job.
     expect(deriveAttackEffect(`Then, ${PRINTED}`)).toBeNull();

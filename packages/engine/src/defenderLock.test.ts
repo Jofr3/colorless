@@ -148,7 +148,6 @@ describe("the opponent-side lock — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);

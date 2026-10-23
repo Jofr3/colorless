@@ -298,7 +298,6 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(deriveAttackEffect(FLIP_CONFUSE_POISON)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "applyStatus", target: "defender", status: "confused" },
           { op: "applyStatus", target: "defender", status: "poisoned" },
@@ -308,7 +307,6 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(deriveAttackEffect(FLIP_PARALYZE_POISON)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "applyStatus", target: "defender", status: "poisoned" },
@@ -389,7 +387,6 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     ).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);

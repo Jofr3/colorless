@@ -51,7 +51,6 @@ const CLAUSES = [
   },
   {
     text: "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     program: [{ op: "coinFlipGate", then: [{ op: "gust" }] }] as EffectOp[],
     printings: 1,
     legalPrintings: null,
@@ -64,7 +63,6 @@ const CLAUSES = [
   },
   {
     text: "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     program: [{ op: "coinFlipGate", then: [{ op: "switchActive" }] }] as EffectOp[],
     printings: 1,
     legalPrintings: 0,
@@ -88,7 +86,6 @@ const YOU_MAY_SELF_SWITCH_PROGRAM: EffectOp[] = [
   {
     op: "optional",
     note: YOU_MAY_SELF_SWITCH,
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
     then: [{ op: "switchActive" }],
   },
 ];

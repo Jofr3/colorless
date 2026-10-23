@@ -249,7 +249,6 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [
           {
             op: "attachEnergyFrom",

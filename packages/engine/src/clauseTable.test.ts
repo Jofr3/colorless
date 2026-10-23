@@ -312,7 +312,6 @@ describe("the two derivers stay disjoint, and stay INDEX-KEYED", () => {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ]);

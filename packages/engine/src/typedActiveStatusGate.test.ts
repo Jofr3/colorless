@@ -70,7 +70,6 @@ const GATED_PROGRAM = [
   {
     op: "conditionGate",
     cond: { kind: "opponentActiveHasType", type: "Dragon" },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
   },
 ];
@@ -381,7 +380,6 @@ describe("§2 — the reader, named rather than counted", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasType", type: "Psychic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "burned" }],
       },
     ]);
@@ -395,7 +393,6 @@ describe("§2 — the reader, named rather than counted", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsStage1" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "asleep" }],
       },
     ]);
@@ -526,7 +523,6 @@ describe("§4 — the anchor's edges, driven synthetically because no near miss 
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ]);
@@ -695,7 +691,6 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveHasType", type: "Dragon" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
         },
       ]),

@@ -249,7 +249,6 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
               {
                 op: "optional",
                 note: CONFIRM_NOTE,
-                // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                 then: [
                   {
                     op: "searchDeck",

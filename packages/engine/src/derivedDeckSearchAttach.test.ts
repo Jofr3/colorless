@@ -156,7 +156,6 @@ const CLAUSES = [
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ] as EffectOp[],
@@ -517,7 +516,6 @@ describe("the anchor — fifteen printed sentences, ONE arm and TWO optional gro
     expect(gated[2]).toEqual({
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     });
     // `recordAs` rides the gate and NOTHING else — an unread filing is a field

@@ -289,7 +289,6 @@ describe("D561 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "recordGate",
             slot: "paid",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [
               {
                 op: "searchDeck",
@@ -378,7 +377,6 @@ describe("D561 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "recordGate",
             slot: "moved",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [
               {
                 op: "moveEnergy",

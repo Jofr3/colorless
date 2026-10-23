@@ -111,7 +111,6 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
         ],
@@ -121,7 +120,6 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageSelf", amount: 60 }],
       },
     ]);
@@ -138,7 +136,6 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     ] as const) {
       const gated = deriveAttackEffect(gatedText) as EffectOp[];
       expect(gated, gatedText).toHaveLength(1);
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       expect(gated[0], gatedText).toMatchObject({ then: deriveAttackEffect(bareText) });
       // …and the two anchors are NOT the same reading. A build where either
       // claimed the other's string would return the inner op UNWRAPPED (or wrap a
@@ -159,7 +156,6 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageSelf", amount: 10 }],
       },
     ]);

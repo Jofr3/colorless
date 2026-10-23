@@ -78,7 +78,6 @@ describe("D609 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamageCountersExactly", count: 6 },
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [{ op: "knockOutDefender" }],
       },
     ]);

@@ -651,7 +651,6 @@ describe("D618 §5b — the new `per` member off a board", () => {
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [
           per === undefined
             ? { op: "drawUntilHandSize", size: 3 }

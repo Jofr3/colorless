@@ -323,7 +323,6 @@ describe("Surfer sv08-187/-235 — `switchActive.recordAs` + §9.2, and nothing 
     for (const id of ["sv08-187", "sv08-235"]) {
       expect(programFor(id)?.trainer, `${id}`).toEqual([
         { op: "switchActive", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         { op: "recordGate", slot: "moved", then: [{ op: "drawUntilHandSize", size: 5 }] },
       ]);
     }
@@ -480,7 +479,6 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     for (const id of ["sv10-174", "sv10-225", "sv10-238"]) {
       expect(programFor(id)?.trainer, `${id}`).toEqual([
         { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
       ]);
     }
@@ -591,7 +589,6 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
     for (const id of ["sv05-157", "sv08.5-119"]) {
       expect(programFor(id)?.trainer, `${id}`).toEqual([
         { op: "gust", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         { op: "recordGate", slot: "moved", then: [{ op: "switchActive" }] },
       ]);
     }
@@ -836,7 +833,6 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [
           {
             op: "attachEnergyFrom",
@@ -851,13 +847,11 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     expect(deriveAttackEffect(RETURN_CHARGE)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
     expect(deriveAttackEffect(INTERJET)).toEqual([
       { op: "switchActive", recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
     ]);
     expect(deriveAttackEffect(INTERJET)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
     expect(deriveAttackEffect(GOAD_N_GRAB)).toEqual([
       { op: "opponentSwitchOut", recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: 160 }] },
     ]);
     expect(deriveAttackEffect(GOAD_N_GRAB)).not.toEqual([{ op: "opponentSwitchOut" }]);
@@ -876,7 +870,6 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     expect(goldenFlame).not.toHaveProperty("toSelf");
     expect(deriveAttackEffect(RETURN_CHARGE)?.[1]).toMatchObject({
       op: "recordGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       then: [{ op: "attachEnergyFrom", toSelf: true }],
     });
     expect(programFor("sv02-172")?.trainer).toEqual([{ op: "gust" }]);

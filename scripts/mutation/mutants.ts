@@ -254,14 +254,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D207",
     what: 'Lacey\'s "3 or fewer" enumeration loses its top member — [0,1,2] instead of [0,1,2,3], the off-by-one at the boundary the printed word names',
     file: "packages/engine/src/registry.ts",
-    find:
-      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n' +
-      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
-      '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],',
+    find: 'cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],',
     replace:
-      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },\n' +
-      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
-      '      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],',
+      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },\n      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],',
     expectKilledBy: ["packages/engine/src/opponentPrizeGate.test.ts"],
   },
   {
@@ -269,14 +264,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D207",
     what: "the SAME off-by-one on Emcee's Hype — the byte-identical `cond` line one card over, which is exactly the row D207's unanchored first draft mutated by mistake",
     file: "packages/engine/src/registry.ts",
-    find:
-      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n' +
-      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
-      '      then: [{ op: "drawCards", count: 2 }],',
+    find: 'cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },\n      then: [{ op: "drawCards", count: 2 }],',
     replace:
-      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },\n' +
-      "      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
-      '      then: [{ op: "drawCards", count: 2 }],',
+      '      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },\n      then: [{ op: "drawCards", count: 2 }],',
     expectKilledBy: ["packages/engine/src/opponentPrizeGate.test.ts"],
   },
   {
@@ -505,10 +495,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D221",
     what: 'the printed "If you attached Energy … in this way" is dropped and the draw becomes unconditional — killed by the DECLARATION snapshot only; no reachable board distinguishes it',
     file: "packages/engine/src/registry.ts",
-    find:
-      '        {\n          op: "recordGate",\n          slot: "moved",\n' +
-      "          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
-      '          then: [{ op: "drawCards", count: 1 }],\n        },',
+    find: '{\n          op: "recordGate",\n          slot: "moved",\n          then: [{ op: "drawCards", count: 1 }],\n        },',
     replace: '        { op: "drawCards", count: 1 },',
     expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
   },
@@ -907,8 +894,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D227",
     what: "the compound's antecedent drops `recordAs` — D189's bare self-switch op copied in, so the §9.2 gate reads an empty slot and Iron Bundle's consequent NEVER runs on any board",
     file: "packages/engine/src/effects.ts",
-    find: '      { op: "switchActive", recordAs: "moved" },\n      // biome-ignore lint/suspicious/noThenProperty',
-    replace: '      { op: "switchActive" },\n      // biome-ignore lint/suspicious/noThenProperty',
+    find: '      { op: "switchActive", recordAs: "moved" },\n      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },',
+    replace:
+      '      { op: "switchActive" },\n      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },',
     expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
   },
   {
@@ -955,7 +943,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D228",
     what: "the gated arm drops the `recordGate` and runs the ops in sequence — the ungated arm's real shape, right on every board with a Bench and dealing 160 to a body the card never promoted on an empty one",
     file: "packages/engine/src/effects.ts",
-    find: '      { op: "opponentSwitchOut", recordAs: "moved" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "damageNewActive", amount: Number(match[1]) }],\n      },',
+    find: '{ op: "opponentSwitchOut", recordAs: "moved" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        then: [{ op: "damageNewActive", amount: Number(match[1]) }],\n      },',
     replace:
       '      { op: "opponentSwitchOut" },\n      { op: "damageNewActive", amount: Number(match[1]) },',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
@@ -2382,7 +2370,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D246",
     what: "🛑 THE MUTANT THIS SLICE EXISTS TO KILL. The gated arm splices the attach in beside the switch instead of behind the §9.2 gate, so an attacker with an EMPTY BENCH switches nothing and accelerates anyway — the printed 'If you do' becomes decoration. It attaches the right cards of the right type onto the right body on every board where the switch works, which is every board the two backlog cells imagined",
     file: "packages/engine/src/effects.ts",
-    find: '      return [\n        { op: "switchActive", recordAs: "moved" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: program },\n      ];',
+    find: 'return [\n        { op: "switchActive", recordAs: "moved" },\n        { op: "recordGate", slot: "moved", then: program },\n      ];',
     replace: '      return [{ op: "switchActive", recordAs: "moved" }, ...program];',
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
@@ -2391,9 +2379,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D246",
     what: "the other direction: the antecedent stops FILING, so `recordGateHolds` reads an empty slot on every board and the attach never runs at all. The card switches and gives nothing, ever — and the whole-program equality in `switchSeam.test.ts` is the only other place that can see it",
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "switchActive", recordAs: "moved" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: program },',
+    find: '{ op: "switchActive", recordAs: "moved" },\n        { op: "recordGate", slot: "moved", then: program },',
     replace:
-      '        { op: "switchActive" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: program },',
+      '        { op: "switchActive" },\n        { op: "recordGate", slot: "moved", then: program },',
     expectKilledBy: [
       "packages/engine/src/derivedGatedAttach.test.ts",
       "packages/engine/src/switchSeam.test.ts",
@@ -4120,7 +4108,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D273",
     what: "🛑 'IF YOU DO' STOPS GATING: the poison is applied unconditionally, so a use whose switch never happened still Poisons whatever is sitting in the Active Spot — Pecharunt itself. The §9.2 seam is the whole difference between the printed consequent and a second independent clause",
     file: "packages/engine/src/registry.ts",
-    find: '          op: "recordGate",\n          slot: "moved",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "self", status: "poisoned" }],',
+    find: 'op: "recordGate",\n          slot: "moved",\n          then: [{ op: "applyStatus", target: "self", status: "poisoned" }],',
     replace:
       '          op: "applyStatus",\n          target: "self",\n          status: "poisoned",',
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
@@ -12607,9 +12595,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D380",
     what: '\u{1F6D1} C4 — **THE GATE DROPPED, AND IT IS THE EDIT A REVIEWER WOULD ASK FOR.** The `conditionGate` reads like scaffolding around a `You may` that already offers a decline, so the program becomes the bare `optional` — and on every board where the Stadium zone is OCCUPIED the two are byte-for-byte identical. What it costs is the EMPTY board: `optional` parks unconditionally, so the attacker is handed a confirm dialog whose "yes" and "no" leave the same state, which is exactly the decision-with-no-stake D186\'s op doc refuses. §5\'s empty-zone rung asserts the ABSENCE of a park and is the only observation that can move',
     file: "packages/engine/src/effects.ts",
-    find: '        op: "conditionGate",\n        cond: { kind: "stadiumInPlay" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: "optional",',
+    find: 'op: "conditionGate",\n        cond: { kind: "stadiumInPlay" },\n        then: [\n          {\n            op: "optional",',
     replace:
-      '        op: "optional",\n        note: effect,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: "discardStadium",',
+      '        op: "optional",\n        note: effect,\n        then: [\n          {\n            op: "discardStadium",',
     expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
   },
   {
@@ -12617,7 +12605,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D380",
     what: '\u{1F6D1} C5 — THE PRINTED *"You may"* DELETED: the gate keeps its condition and its body becomes the bare op, so Wooloo and Dubwool discard the Stadium whether the player wants to or not. **THE CENSUS CANNOT SEE IT** — the sentence still resolves, `BUILT.attack` is unmoved and every residue figure stands still — because a census asks whether a reader answered, never what it answered. §5 requires the park, the `EFFECT_PENDING` row and a NO that leaves the zone untouched',
     file: "packages/engine/src/effects.ts",
-    find: '            op: "optional",\n            // The WHOLE printed sentence, the op\'s own contract: it is what the\n            // confirm dialog shows, and "you may" is the only thing being asked.\n            note: effect,\n            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n            then: [{ op: "discardStadium" }],\n          },\n        ],',
+    find: 'op: "optional",\n            // The WHOLE printed sentence, the op\'s own contract: it is what the\n            // confirm dialog shows, and "you may" is the only thing being asked.\n            note: effect,\n            then: [{ op: "discardStadium" }],\n          },\n        ],',
     replace: '            op: "discardStadium",\n          },\n        ],',
     expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
   },
@@ -12665,7 +12653,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D381",
     what: '\u{1F6D1} C2 — **THE GATE DROPPED, AND IT IS STRICTLY WORSE HERE THAN AT D380 BECAUSE THE PAYOFF IS DAMAGE.** The program becomes the bare confirm, and on every board where the Stadium zone is OCCUPIED the two are byte-for-byte identical. What it costs is the EMPTY board: `optional` parks unconditionally, so the attacker is offered a "yes" that discards NOTHING and still pays the printed +140 — **a free 140**. §5\'s empty-zone rung asserts the ABSENCE of a park AND requires the dealt damage to be 140 rather than 280, which is the pair of observations a missing gate moves',
     file: "packages/engine/src/effects.ts",
-    find: '      op: "conditionGate",\n      cond: reading.cond,\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      then: [ask],',
+    find: 'op: "conditionGate",\n      cond: reading.cond,\n      then: [ask],',
     replace: "      ...ask,",
     expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
   },
@@ -13910,7 +13898,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D399",
     what: "\u{1F6D1} C3 — **THE `conditionGate` IS REMOVED AND THE SNIPE IS RETURNED BARE**, i.e. the arm becomes a byte-identical copy of the FLAT rider four lines up and the printed antecedent is decoration. **THE CENSUS STILL RISES BY THE SAME 5** — the sentence resolves either way — and the clause-resolution refusals of §4 stay green, because an UNMAPPED clause still returns null at the `cond` test. What moves is only DAMAGE, and only on the board a suite that just wants to see the snipe fire would never build: a FULL deck, where the gate is false and 240 lands anyway. §3's first case is that board, and it asserts every benched body at 0",
     file: "packages/engine/src/effects.ts",
-    find: '      return [\n        {\n          op: "conditionGate",\n          cond,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: damagedOnly\n            ? [\n                {\n                  op: "damageChosen",\n                  target: gatedSide,\n                  amount,\n                  count,\n                  source: "attack",\n                  deals: true,\n                  damagedOnly: true,\n                },\n              ]\n            : [\n                {\n                  op: "damageChosen",\n                  target: gatedSide,\n                  amount,\n                  count,\n                  source: "attack",\n                  deals: true,\n                },\n              ],\n        },\n      ];',
+    find: 'return [\n        {\n          op: "conditionGate",\n          cond,\n          then: damagedOnly\n            ? [\n                {\n                  op: "damageChosen",\n                  target: gatedSide,\n                  amount,\n                  count,\n                  source: "attack",\n                  deals: true,\n                  damagedOnly: true,\n                },\n              ]\n            : [\n                {\n                  op: "damageChosen",\n                  target: gatedSide,\n                  amount,\n                  count,\n                  source: "attack",\n                  deals: true,\n                },\n              ],\n        },\n      ];',
     replace:
       '      return damagedOnly\n        ? [\n            {\n              op: "damageChosen",\n              target: gatedSide,\n              amount,\n              count,\n              source: "attack",\n              deals: true,\n              damagedOnly: true,\n            },\n          ]\n        : [\n            {\n              op: "damageChosen",\n              target: gatedSide,\n              amount,\n              count,\n              source: "attack",\n              deals: true,\n            },\n          ];',
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
@@ -13966,9 +13954,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D399",
     what: "⚠️ C8 — **THE GATE GAINS `otherwise: []`**, which is the shape every OTHER gate literal in this file carries and therefore the easiest wrong edit in the arm. **EVERY BOARD IS IDENTICAL AND EVERY CENSUS FIGURE IS UNMOVED** — an empty branch runs nothing — so nothing about behaviour can reach it. What it breaks is D135's rule as a CLAIM: an absent field says the NO arm buys nothing because the printed base is not re-homed, and an empty array says the NO arm buys nothing *this time*. §2 reads the field's ABSENCE rather than its emptiness, which is the only assertion that can tell the two apart",
     file: "packages/engine/src/effects.ts",
-    find: '          op: "conditionGate",\n          cond,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).',
+    find: '          op: "conditionGate",\n          cond,\n          then: damagedOnly',
     replace:
-      '          op: "conditionGate",\n          cond,\n          otherwise: [],\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).',
+      '          op: "conditionGate",\n          cond,\n          otherwise: [],\n          then: damagedOnly',
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
   {
@@ -15041,7 +15029,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D416",
     what: '🛑 THE HEADS ARM LOSES ITS `conditionGate`, so *"If heads, Knock Out your opponent\'s Active **Basic** Pokémon"* Knocks Out an evolved Active too. **AN AUTHOR MAKES THIS BECAUSE `knockOutDefender` ALREADY READS AS THE WHOLE SENTENCE** — arm 6c one arm up composes a coin with a BARE `knockOutDefender`, so the shape *"coin → knockOutDefender"* is already in the file and looks finished; the printed adjective reads as scenery, and the op\'s own contract (*"an Active exists"*) does nothing to contradict that. ⚠️ AND THE ARM\'S OWN COMMENT ADMITS THE NARROWING IS A RULES READING RATHER THAN AN ATTESTED FACT, which is precisely the kind of line a later editor deletes as over-thinking. ⚠️ WHAT STILL LOOKS RIGHT: on every board whose Active IS a Basic — the boards all four printings are played on — the program is behaviourally IDENTICAL: same coin, same Knock Out, same Prize, same D414 marker, same tails arm. Only a Stage 1 or Stage 2 Active separates them, and it must be built deliberately',
     file: "packages/engine/src/effects.ts",
-    find: '        then: [\n          {\n            op: "conditionGate",\n            cond: { kind: "opponentActiveIsBasic" },\n            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n            then: [{ op: "knockOutDefender" }],\n          },\n        ],\n        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],',
+    find: 'then: [\n          {\n            op: "conditionGate",\n            cond: { kind: "opponentActiveIsBasic" },\n            then: [{ op: "knockOutDefender" }],\n          },\n        ],\n        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],',
     replace:
       '        then: [{ op: "knockOutDefender" }],\n        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],',
     expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
@@ -15276,9 +15264,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D422",
     what: "🛑 C4 — THE WRAPPER IS FORGOTTEN AND THE ARM EMITS ITS NEIGHBOUR'S PROGRAM VERBATIM: `[{ op: \"switchActive\" }]`, which is `ATTACK_SELF_SWITCH`'s ENTIRE real body two arms up. **THE PRINTED \"You may\" IS SPENT AND NOTHING SAYS SO**: the sentence still resolves, `BUILT.attack` is byte-identical at 1,423, the switch still lands on a stocked Bench — and the player is never offered the choice the card prints, being forced off the Active Spot instead. This is D190b's rule exactly (a neighbouring arm's REAL code copied one line over) and it is the single most likely defect in the whole slice, which is why `derivedDrawAndGust.test.ts`'s `caseless` rung was RE-POINTED onto it rather than deleted when the sentence was built",
     file: "packages/engine/src/effects.ts",
-    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [{ op: "switchActive" }] },',
-    replace:
-      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "switchActive" },',
+    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];',
+    replace: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "switchActive" }];',
     expectKilledBy: [
       "packages/engine/src/optionalSelfSwitch.test.ts",
       "packages/engine/src/derivedDrawAndGust.test.ts",
@@ -15290,9 +15277,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D422",
     what: "🛑 C5 — THE INNER OP IS THE MIRROR'S, COPIED VERBATIM: `opponentSwitchOut` in place of `switchActive`, which is `ATTACK_MAY_OPPONENT_SWITCH_OUT`'s REAL `then` sixty lines down and the arm this one was written beside. **THE SENTENCE STILL RESOLVES, THE OFFER IS STILL ASKED OF THE RIGHT SEAT, AND THE CONFIRM'S NOTE IS STILL THE PRINTED STRING** — every census figure and every §1/§2 anchor rung is unmoved — while the YES moves the OPPONENT'S Active and hands the OPPONENT the pick. A card that says *switch this Pokémon* gusts instead. ⚠️ **ONLY A BOARD CAN SEE IT**, and specifically one that asserts the candidates' SEAT and the second park's `answerer`, which is why §3 and §6 both name it",
     file: "packages/engine/src/effects.ts",
-    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [{ op: "switchActive" }] },',
+    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];',
     replace:
-      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] },',
+      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] }];',
     expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts"],
   },
   {
@@ -15300,9 +15287,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D422",
     what: "🛑 C6 — THE `then` IS EMPTIED, SO THE OFFER BUYS NOTHING. The question is still asked, the note is still the printed sentence, `BUILT.attack` still counts the sentence as built and NO event changes — **and both answers now reach the same board on EVERY board, not just an empty one**. ⚠️ **THIS ROW IS HERE BECAUSE OF WHAT IT PINS RATHER THAN WHAT IT BREAKS**: §5's empty-Bench decision is asserted as `yes === no`, which is a state EQUALITY and therefore satisfied by a build whose `then` never runs at all. The control that keeps it honest is the STOCKED-Bench pair asserting `yes !== no`, and this mutant is the one that kills that control. It is the closest reachable proxy for the empty-Bench decision, which cannot itself be mutated because both rejected alternatives are ADDITIONS (see the block above)",
     file: "packages/engine/src/effects.ts",
-    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [{ op: "switchActive" }] },',
+    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];',
     replace:
-      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [] },',
+      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [] }];',
     expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts"],
   },
   {
@@ -15310,9 +15297,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D422",
     what: '🛑 C7 — `then` AND `otherwise` ARE SWAPPED, so the DECLINE switches and the ACCEPT does nothing. D316 gave `optional` an `otherwise` arm for *"You may do 120 more damage"* — whose decline really does buy ops — so an author reaching for that member here is reaching for a real neighbouring shape. **THE SENTENCE RESOLVES, THE QUESTION IS ASKED, THE NOTE IS RIGHT AND THE SWITCH STILL HAPPENS**; only the ANSWER that triggers it is inverted, which is the sharpest possible statement of what a printed "you may" means. ⚠️ It also breaks the absent-key claim §2 makes (`otherwise` is ABSENT on this program because the sentence prints no alternative), so the row is killed by a shape rung and a board alike',
     file: "packages/engine/src/effects.ts",
-    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [{ op: "switchActive" }] },',
+    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];',
     replace:
-      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [], otherwise: [{ op: "switchActive" }] },',
+      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [], otherwise: [{ op: "switchActive" }] }];',
     expectKilledBy: [
       "packages/engine/src/optionalSelfSwitch.test.ts",
       "packages/engine/src/optionalDraw.test.ts",
@@ -15323,9 +15310,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D422",
     what: '🛑 C8 — THE NOTE IS REBUILT FROM THE BARE SENTENCE INSTEAD OF CARRIED FROM `effect`. The `confirm` prompt\'s note is the ONLY prose either dialog renders for this offer, so it is what the player reads before answering — and here it would read *"Switch this Pokémon with 1 of your Benched Pokémon."*, an imperative, on a card that prints an OFFER. **NOTHING ELSE MOVES AT ALL**: same op, same branch, same board on both answers, every census figure identical. ⚠️ **A MUTANT THAT IS ONLY VISIBLE IN A STRING**, which is why §3 and the inverted `fix-trainerops` idx-7 board both assert BYTE EQUALITY with the catalog string rather than "a non-empty note" — the assertion D186\'s own draw rows had to make for the same reason',
     file: "packages/engine/src/effects.ts",
-    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: effect, then: [{ op: "switchActive" }] },',
+    find: '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];',
     replace:
-      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "optional", note: "Switch this Pokémon with 1 of your Benched Pokémon.", then: [{ op: "switchActive" }] },',
+      '  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [{ op: "optional", note: "Switch this Pokémon with 1 of your Benched Pokémon.", then: [{ op: "switchActive" }] }];',
     expectKilledBy: [
       "packages/engine/src/optionalSelfSwitch.test.ts",
       "packages/engine/src/derivedDrawAndGust.test.ts",
@@ -20203,9 +20190,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D464",
     what: "🛑 **HALF THE PRINTED SENTENCE, SILENTLY.** The gate keeps the `applyStatus` and loses the `discardEnergy`, so the card Paralyzes and takes nothing — which is EXACTLY what `FLIP_DEFENDER_NOW` did to this row before D464 built it, and exactly the defect D462's doc block feared while naming the wrong anchor for it. The program still resolves and the census still counts the sentence as read, so only a rung that asserts the WHOLE program can see it",
     file: "packages/engine/src/effects.ts",
-    find: '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+    find: '{\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     replace:
-      '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n        ],\n      },',
+      '      {\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n        ],\n      },',
     expectKilledBy: [
       "packages/engine/src/flipStatusEnergyDiscard.test.ts",
       "packages/engine/src/defenderStatusTriple.test.ts",
@@ -20216,9 +20203,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D464",
     what: "🛑 **THE OTHER HALF, AND IT IS THE HALF A DISCARD-SHAPED TEST WOULD MISS.** The gate keeps the `discardEnergy` and loses the `applyStatus`, so the Energy comes off and the defender is never Paralyzed. Two rows rather than one because the two consequents are independent in the PRINT (D442) and a suite can pass on either alone",
     file: "packages/engine/src/effects.ts",
-    find: '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+    find: '{\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     replace:
-      '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+      '      {\n        op: "coinFlipGate",\n        then: [\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
   },
   {
@@ -20226,9 +20213,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D464",
     what: "⚠ **THE TWO OPS OUT OF PRINTED ORDER.** Both still run and the board ENDS the same, so no end-state assertion can see it — but the discard parks and the paralysis lands only after the pick is answered, which is an observable PHASE difference: under this build the parked board is not yet Paralyzed. D424's `pair-ops-not-in-printed-order` one arm over, and the reason §4 asserts the condition ON the parked state rather than on the resolved one",
     file: "packages/engine/src/effects.ts",
-    find: '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+    find: '{\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     replace:
-      '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n        ],\n      },',
+      '      {\n        op: "coinFlipGate",\n        then: [\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n        ],\n      },',
     expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
   },
   {
@@ -20236,9 +20223,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D464",
     what: '🛡 **THE VICTIM IS THE WRONG PLAYER.** `opponentActive` becomes `yourActive`, so the printed *"that Pokémon"* — bound by the first clause to the DEFENDER — strips the attacker instead. The program still resolves, the census is unmoved, and the defender is still Paralyzed; only a rung that reads BOTH boards after the resume can tell',
     file: "packages/engine/src/effects.ts",
-    find: '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+    find: '{\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     replace:
-      '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+      '      {\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
   },
   {
@@ -20246,7 +20233,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D464",
     what: '🛑 **THE COIN IS GONE AND BOTH CONSEQUENTS BECOME UNCONDITIONAL.** The printed *"Flip a coin. If heads"* stops being a gate, so the card Paralyzes and discards on TAILS as well — a strictly stronger card than the one printed, with no coin flip event at all. D424\'s `flip-pair-drops-the-coin-gate` on the new arm',
     file: "packages/engine/src/effects.ts",
-    find: '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+    find: '{\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     replace:
       '      { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n      { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },',
     expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
@@ -20256,9 +20243,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D464",
     what: '⚠ **THE TEMPLATE COLLAPSES TO ITS ONE PRINTED VALUE.** `statusOf(match[1])` becomes the literal `"paralyzed"`, so every printed printing still derives correctly and NOTHING in the column moves — the slot has one printed value. It is the row that makes the template a claim rather than a habit: §2 drives all five status words through the anchor, and D460\'s two `statusOf` rows are the precedent for pinning a captured status this way',
     file: "packages/engine/src/effects.ts",
-    find: '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+    find: '{\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     replace:
-      '      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: "applyStatus", target: "defender", status: "paralyzed" },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
+      '      {\n        op: "coinFlipGate",\n        then: [\n          { op: "applyStatus", target: "defender", status: "paralyzed" },\n          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },\n        ],\n      },',
     expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
   },
   {
@@ -21151,7 +21138,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D472",
     what: "🛑 **THE CENTRAL ROW: THE GATE IS DELETED AND THE ARM BECOMES ARM 1 VERBATIM.** `conditionGate { cond, then: [applyStatus] }` becomes the bare `applyStatus { target: \"defender\", status }` that `DEFENDER_NOW` has returned since 0.x — a neighbour's REAL code copied from twelve lines up, not a straw. **THE SENTENCE STILL READS, `resolvedByAnyReader` IS STILL TRUE, RESIDUE STILL FALLS BY ONE AND `BUILT.attack` STILL STEPS BY TWO**, so every census suite in the repo stays GREEN while the printed *\"If your opponent's Active Pokémon is a {N} Pokémon\"* is thrown away and every Active in the game is Paralyzed. That is D469's convention — a census measures whether a sentence is CLAIMED, never whether it is claimed CORRECTLY — at a `conditionGate` instead of a `DamageCountSource`, and it is what §6's five-board signature exists to see: the correct build answers **17** and this one answers **31**, measured on the same five boards with the same op.",
     file: "packages/engine/src/effects.ts",
-    find: '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
+    find: 'const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
     replace: '    return [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }];',
     expectKilledBy: [
       "packages/engine/src/typedActiveStatusGate.test.ts",
@@ -21163,9 +21150,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D472",
     what: "🛑 **THE STATUS CROSSES THE TABLE THE WRONG WAY.** `target: \"defender\"` becomes `target: \"self\"`, which is arm 3's real code (`SELF_NOW`) one identifier away in the same file. The gate still evaluates the OPPONENT's Active correctly, so the condition fires on exactly the right boards — and then paralyses the ATTACKER. **The log still carries a `STATUS_APPLIED` row and the board still looks busy**, which is why §6 reports a PAIR of signatures rather than one: this build takes the defender's signature from 17 to **0** and the attacker's from 0 to **17**, and no single-seat rung can tell it from the wrong-type-constant build that also answers 0.",
     file: "packages/engine/src/effects.ts",
-    find: '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
+    find: 'const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
     replace:
-      '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "self", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
+      '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "self", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
     expectKilledBy: ["packages/engine/src/typedActiveStatusGate.test.ts"],
   },
   {
@@ -21173,9 +21160,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D472",
     what: '⚠️ **THE TEMPLATE\'S SECOND SLOT IS SPENT FOR A LITERAL.** `statusOf(match[2])` becomes `"asleep"` — arms 4 and 5 both spell `status: "asleep"` literally, so this is the neighbouring line rather than an invented one. The printed row still derives, still gates on the right board and still emits one `STATUS_APPLIED`; it simply applies the wrong Special Condition, and `rotation` is ONE FIELD so the board carries a plausible value rather than a broken one. Killed by §5\'s whole-record `toEqual`, which is written on the FIELDS and not on a status list for exactly this reason.',
     file: "packages/engine/src/effects.ts",
-    find: '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
+    find: 'const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
     replace:
-      '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "defender", status: "asleep" }],\n        },\n      ];\n    }',
+      '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "defender", status: "asleep" }],\n        },\n      ];\n    }',
     expectKilledBy: ["packages/engine/src/typedActiveStatusGate.test.ts"],
   },
   {
@@ -21183,9 +21170,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D472",
     what: '🛑 **THE MAP IS REPLACED BY THE ONE VALUE THE CATALOG PRINTS, WHICH IS THE DEFECT D440 REFUSED AND D462 NAMED.** `boardConditionForClause(match[1])` becomes the literal `{ kind: "opponentActiveHasType", type: "Dragon" }`. **Every printed board answers identically** — the one legal row spells `{N}`, so the census, the residue, the reader surface and all five of §6\'s boards are byte-for-byte unchanged. What dies is the VOCABULARY: `Tera` stops being refused at the map and derives a Dragon gate, the whole clause table stops being reachable from this anchor, and the sentence\'s data-blocked near miss becomes a card that counts the wrong body forever. Killed by §3 (the banner must be `null` and must reach `ATTACK_EFFECT_SKIPPED` on a board) and by §2\'s `Stage 1` and `{P}` constructed rungs. 🆕🆕🆕 D568 (D539): "data-blocked near miss" is WITHDRAWN FOR TERA — the Tera sentence derives a BANNER gate now (§3, flipped), and the mutant\'s Dragon gate still reddens it.',
     file: "packages/engine/src/effects.ts",
-    find: '    const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
+    find: 'const gate = boardConditionForClause(match[1] ?? "");\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
     replace:
-      '    const gate = { kind: "opponentActiveHasType", type: "Dragon" } as BoardCondition;\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
+      '    const gate = { kind: "opponentActiveHasType", type: "Dragon" } as BoardCondition;\n    if (gate !== null) {\n      return [\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],\n        },\n      ];\n    }',
     expectKilledBy: ["packages/engine/src/typedActiveStatusGate.test.ts"],
   },
   {
@@ -21263,7 +21250,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D473",
     what: "🛑🛑 **THE ROW THIS SLICE EXISTS TO WRITE, AND IT DIES IN A SUITE THAT IS NEITHER A CENSUS NOR THIS SLICE'S OWN (D469/D470/D472).** The §9.2 `recordGate` is deleted and the draw runs unconditionally — every op still present, each right in isolation, and the program wrong in exactly the direction D420's structural guard was built to forbid: `attack.ts` never calls `handCostUnmet`, so `payFromHand` on an EMPTY hand pays nothing and the attack then draws for free off a price the engine never collected. ⚠️ THE MUTATION IS INVISIBLE TO THE CENSUS AND TO EVERY NON-EMPTY BOARD — the sentence still reads, `resolvedByAnyReader` is still true, RESIDUE still falls 2/2, `BUILT.attack` still steps 2, and §3's four-card board answers the IDENTICAL zone triple under both builds. It is caught by `handEnergyCancel.test.ts` §4, whose widened `handCostIsSlotGated` exemption this row is the receipt for, and by `handCostDraw.test.ts` §4's empty-hand board, where the two builds answer 0 cards and 2.",
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },',
+    find: '{ op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },',
     replace:
       '        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n        { op: "drawCards", count: drawn },',
     expectKilledBy: [
@@ -21361,7 +21348,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D473",
     what: "🛑 **THE RE-POINTED REFUSAL, ARMED FROM THE OTHER SIDE (D418/D438/D444).** `optionalDraw.test.ts` carried this sentence in `NEAR_MISSES` — a `toBeNull` list — with a note that correctly named every feature of the mechanism and treated none of them as a blocker. D473 re-pointed it onto the SHAPE (a §9.2 gate, never an `optional` wrapper) rather than flipping it to `.not.toBeNull()`, which would have been true under a build that wrapped the sentence instead. This row installs that very build in the ARM — the wrapper an author reaching for `optional` would write — and it is killed by the replacement rung and by this slice's own §2. ⚠️ It is not cosmetic: an `optional` gate asks the CONTROLLER a question, so on an EMPTY hand it would still offer the draw, where the printed sentence gives nothing.",
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },',
+    find: '{ op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },',
     replace:
       '        { op: "optional", note: "Discard a card from your hand.", then: [\n          { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n          { op: "drawCards", count: drawn },\n        ] },',
     expectKilledBy: [
@@ -22598,7 +22585,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D483",
     what: "⚠️ **C10 — C9's TWIN AT THE THIRD CALLER, AND IT IS A ROW EVEN THOUGH NO CARD PRINTS THE COMPOSITION.** Arm 6c-bis stops reading the class inside its `conditionGate`, so a gated narrowed snipe would derive un-narrowed. **The catalog prints one gated bench snipe and it carries no class**, so this is the reading the deriver WOULD give rather than a claim that it is printed — which is why §7 drives it on a CONSTRUCTED sentence, labelled as such (D440). D437 and D447 each made this same call at this same arm; the row is what keeps the fragment's four callers from becoming three opinions.",
     file: "packages/engine/src/effects.ts",
-    find: '      if (gatedNarrowing !== undefined) {\n        return [\n          {\n            op: "conditionGate",\n            cond,\n            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n            then: [\n              {\n                op: "damageChosen",\n                target: gatedSide,\n                amount,\n                count,\n                source: "attack",\n                deals: true,\n                filter: gatedNarrowing,\n              },\n            ],\n          },\n        ];\n      }\n',
+    find: 'if (gatedNarrowing !== undefined) {\n        return [\n          {\n            op: "conditionGate",\n            cond,\n            then: [\n              {\n                op: "damageChosen",\n                target: gatedSide,\n                amount,\n                count,\n                source: "attack",\n                deals: true,\n                filter: gatedNarrowing,\n              },\n            ],\n          },\n        ];\n      }',
     replace: "",
     expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
   },
@@ -22815,7 +22802,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D486",
     what: '🛑 **C1 — THE CENTRAL ARM AT ITS NEAREST WRONG SIBLING: the gate is deleted and both discards run always.** The printed *"If this Pokémon evolved from Salandit during this turn"* stops being a condition, so every attacker on this card discards THREE from the opponent\'s hand whether it evolved or not. ⚠️ **SILENT IN EVERY CENSUS AND IN MOST BOARDS**: the sentence still resolves, `BUILT.attack` is 1597, the residue is 96/135, `ATTACK_EFFECT_SKIPPED` never fires, and **on the gate-TRUE board this mutant and the shipped arm are BYTE-IDENTICAL** — 3 cards, same pile, same two prompts. The pair is (3,3) against the correct (1,3)… read the other way round: correct is (3,1), this is (3,3). The only rung that can see it is one on the gate-FALSE board, which is exactly why §4 fields THREE of them, one axis apart each',
     file: "packages/engine/src/effects.ts",
-    find: '      return [\n        { op: "opponentDiscardsFromHand", count: 1 },\n        {\n          op: "conditionGate",\n          cond: gate,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "opponentDiscardsFromHand", count: more }],\n        },\n      ];',
+    find: 'return [\n        { op: "opponentDiscardsFromHand", count: 1 },\n        {\n          op: "conditionGate",\n          cond: gate,\n          then: [{ op: "opponentDiscardsFromHand", count: more }],\n        },\n      ];',
     replace:
       '      return [\n        { op: "opponentDiscardsFromHand", count: 1 },\n        { op: "opponentDiscardsFromHand", count: more },\n      ];',
     expectKilledBy: ["packages/engine/src/evolvedDiscardCompound.test.ts"],
@@ -23852,7 +23839,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "🛑 C1 — **THE COIN GOES AND THE LOCK LANDS ON EVERY SWING**: the arm returns the BARE program, so a card that gives a 50% chance of stopping turns stops them 100% of the time. This is the build a slice that read the bare arm and stopped looking actually ships — it is `DEFENDER_CANT_ATTACK_NEXT_TURN`'s own return statement, verbatim, one arm over (D190b: a mutant is a neighbouring arm's REAL code). ⚠️ **SILENT IN EVERY CENSUS FIGURE**: the sentence still resolves, `BUILT.attack` is unmoved, the residue is unmoved and `resolvedByAnyReader` is still true — only a BOARD on the losing face can see it, which is what §4 is",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
     replace:
       '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [{ op: "preventAttack", target: "defender" }];\n  }',
     expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
@@ -23862,9 +23849,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "🛑 C2 — **D143's OWN ARM COPIED INSIDE THE GATE**: `target` is dropped, so the printed *\"your opponent's next turn\"* installs on the INSTALLER's own body at `state.turn + 2`. D408 caught exactly this on the UNGATED anchor (`D408-defender-lock-loses-its-seat`); the gated arm is a fresh address for it. The coin still flips, an `ATTACK_LOCKED` row is still filed, and the victim plays freely through a turn it is printed to be barred from. ⚠️ SILENT IN EVERY CENSUS: the sentence resolves either way",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
+      '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     expectKilledBy: [
       "packages/engine/src/flipDefenderAttackLock.test.ts",
       "packages/engine/src/bareAttackLock.test.ts",
@@ -23875,9 +23862,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "🛑 C3 — **THE FACE IS INVERTED**: `onTails: true` is added, so the lock lands on the LOSING flip. D144's arm one screen up carries that exact field and this file has four heads-gated arms that must not, so copying the neighbour is the mistake an author makes here (`D317-coin-gate-reads-the-losing-face` and `D355-energycoin-gains-ontails` are the same defect at two other addresses). ⚠️ On a heads flip the board looks entirely normal — nothing installs and nothing is skipped — so only a PAIR of boards, one per face, separates it",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
+      '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        onTails: true,\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
@@ -23885,9 +23872,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C4 — the neighbouring arm's REAL op copied verbatim: `preventRetreat` where `preventAttack` belongs. Both are opponent-seat locks installed by a sentence carrying `during your opponent's next turn,`, and both write one field on one body, so nothing about the arm's SHAPE objects — only a board does. `D410-pronoun-lock-installs-the-attack-lock` is this same swap in the opposite direction, one family over",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack", target: "defender" }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventRetreat" }],\n      },\n    ];\n  }',
+      '  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventRetreat" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
@@ -24063,9 +24050,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "🛑 D1 — **THE FIELD THAT SPLITS THE TWO PRINTED READINGS IS DROPPED**, so the WIDE arm becomes its NARROW sibling six lines down, byte for byte (D190b: a mutant is a neighbouring arm's REAL code). 15 printings stop refusing Special Conditions, placed damage counters, Energy discards and the §11 retreat lock while still nulling damage — the board looks entirely normal and only the EFFECTS half of the block is gone. ⚠️ SILENT IN EVERY CENSUS: the sentence still resolves and `BUILT.attack` is unmoved. This is D131's widen-don't-add claim inverted, and the row that makes `preventBlock`'s *the two spellings differ in EXACTLY the `effects` field* mean something",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage" }],\n      },\n    ];\n  }',
+      '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventDamage" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
@@ -24073,9 +24060,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "🛑 D2 — **THE FACE IS INVERTED ON THE HEADS FAMILY**: `onTails: true` is added to the WIDE gate, copying D144's arm twelve hundred lines down verbatim, so 15 printings install the block on the LOSING flip. ⚠️ Its control is `D496-tails-arm-drops-the-ontails-field`, which removes the same field from the sentence that earns it — one row per direction, each the other's control (D443). Killed twice: preventBlock's face boards, and `tailsGatedOp`'s ABSENT-not-`false` producer sweep, whose `producers` set gains `sv03-004` — the first evidence on record that that sweep discriminates",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
     replace:
-      '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
+      '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        onTails: true,\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
     expectKilledBy: [
       "packages/engine/src/preventBlock.test.ts",
       "packages/engine/src/tailsGatedOp.test.ts",
@@ -24086,7 +24073,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "🛑 D3 — **THE COIN GOES AND THE BLOCK LANDS ON EVERY SWING**: the arm returns the bare `preventDamage`, so a card that gives a 50% chance of immunity gives it 100% of the time. This is the build a slice that read the UNGATED class-filtered arm one screen down and stopped looking actually ships (D146's arm 19c is exactly that shape and correctly carries no gate). ⚠️ SILENT IN EVERY CENSUS — the sentence still resolves — and silent on a HEADS board too; only the losing face separates it, which is what preventBlock's *TAILS installs nothing* case is for",
     file: "packages/engine/src/effects.ts",
-    find: '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventDamage", effects: true }],\n      },\n    ];\n  }',
     replace:
       '  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [{ op: "preventDamage", effects: true }];\n  }',
     expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
@@ -24121,7 +24108,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "🛑 F1 — **THE LOSING FACE STOPS LOSING**: `onTails` is dropped, so D144's drawback installs on HEADS and the printed 50%-of-the-time self-lock fires on exactly the declarations that did NOT earn it. D144's own file says this is the family's whole point — every other gated sentence in the pool pays out on heads, so *nothing happened* and *the coin missed* look identical from a board delta, and here they are INVERTED. Killed by `tailsGatedOp`'s paired face boards and by its ABSENT-not-`false` producer sweep, which loses a member",
     file: "packages/engine/src/effects.ts",
-    find: 'if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.\n        onTails: true,\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     replace:
       '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
@@ -24131,7 +24118,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D496",
     what: "⚠️ F2 — the neighbouring op copied verbatim: `preventRetreat` where `preventAttack` belongs. Both are durated one-field locks installed by a coin-gated sentence, both are named side by side in `preventBlock.test.ts`'s own refusal list, and nothing about the arm's SHAPE objects — only a board does. `D495-arm-emits-the-neighbours-op` is this same swap one sentence over, and `D410-pronoun-lock-installs-the-attack-lock` is it in the opposite direction",
     file: "packages/engine/src/effects.ts",
-    find: 'if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
+    find: 'if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        // Absent on heads-gated programs, never `false`, so they stay equal to registry rows.\n        onTails: true,\n        then: [{ op: "preventAttack" }],\n      },\n    ];\n  }',
     replace:
       '  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: "coinFlipGate",\n        onTails: true,\n        then: [{ op: "preventRetreat" }],\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
@@ -24693,7 +24680,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D502",
     what: "🛑 C7 — THE §9.2 GATE GOES AND THE MOVE IS HOISTED TO THE TOP LEVEL, AND NO BOARD RUNG REDDENS. Driven rather than asserted: with the row applied, SEVEN `it` blocks fail and every one of them is a PROGRAM-SHAPE or CAPTION claim (§2, §3, §6, §7 ×2, §8) — §4's five board rungs and §5's four are GREEN throughout. Every board this printing can reach is IDENTICAL under it: with the destination pinned, an unfiled record already empties `destinations` and the op whiffs, so the gate is behaviourally redundant on every board this printing can reach — measured, not assumed. So the op-list rungs are the cheap kill and the CAPTION is the only USER-VISIBLE one, which is the half worth naming: `withConsequence` looks DOWN THE QUEUE for a `recordGate` on the slot the parking op files, so without one the search's prompt describes a deck search and says nothing about the Energy the answer buys (D473: a reader can be correct while its describer quietly says less, and only the describer is user-visible).",
     file: "packages/engine/src/effects.ts",
-    find: 'if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      {\n        op: "searchDeck",\n        filter: { kind: "basicPokemon" },\n        dest: "bench",\n        max: 1,\n        recordAs: "moved",\n      },\n      { op: "shuffleDeck" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: "moveEnergy",\n            filter: { kind: "anyEnergy" },\n            max: 1,\n            route: "selfToBench",\n            destRecorded: "moved",\n          },\n        ],\n      },\n    ];\n  }',
+    find: 'if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      {\n        op: "searchDeck",\n        filter: { kind: "basicPokemon" },\n        dest: "bench",\n        max: 1,\n        recordAs: "moved",\n      },\n      { op: "shuffleDeck" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        then: [\n          {\n            op: "moveEnergy",\n            filter: { kind: "anyEnergy" },\n            max: 1,\n            route: "selfToBench",\n            destRecorded: "moved",\n          },\n        ],\n      },\n    ];\n  }',
     replace:
       '  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1, recordAs: "moved" },\n      { op: "shuffleDeck" },\n      {\n        op: "moveEnergy",\n        filter: { kind: "anyEnergy" },\n        max: 1,\n        route: "selfToBench",\n        destRecorded: "moved",\n      },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
@@ -24703,9 +24690,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D502",
     what: "⚠️ C8 — THE GATE READS `discarded` WHERE THE SEARCH WROTE `moved`. `EffectSlot` has three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `placed`) and D458 measured the board that punishes a hard-coded one, so naming the wrong end of the wire is the mistake an author actually makes. The gate reads an empty slot, answers NO, and the Energy never moves — and `withConsequence` finds no gate on the slot the op files either, so the caption loses its clause as well. Two surfaces, one slip.",
     file: "packages/engine/src/effects.ts",
-    find: '        slot: "moved",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: "moveEnergy",',
+    find: 'slot: "moved",\n        then: [\n          {\n            op: "moveEnergy",',
     replace:
-      '        slot: "discarded",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: "moveEnergy",',
+      '        slot: "discarded",\n        then: [\n          {\n            op: "moveEnergy",',
     expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
   },
   {
@@ -24749,7 +24736,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D502",
     what: "⚠️ C13 — THE PRINTED ORDER IS BROKEN: the shuffle moves BEHIND the §9.2 gate. The board is identical (the deck is shuffled either way and the move touches no deck), so nothing about the zones can see it — what can is the LOG, where *'shuffled their deck'* lands after *'moved 1 energy'* on a card that prints *'Then, shuffle your deck.'* as its SECOND sentence. ⚠️ This is the one row in the decision whose only observable is a ROW ORDER, and it is why §6 asserts the rendered sequence rather than the presence of each line.",
     file: "packages/engine/src/effects.ts",
-    find: 'if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      {\n        op: "searchDeck",\n        filter: { kind: "basicPokemon" },\n        dest: "bench",\n        max: 1,\n        recordAs: "moved",\n      },\n      { op: "shuffleDeck" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: "moveEnergy",\n            filter: { kind: "anyEnergy" },\n            max: 1,\n            route: "selfToBench",\n            destRecorded: "moved",\n          },\n        ],\n      },\n    ];\n  }',
+    find: 'if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      {\n        op: "searchDeck",\n        filter: { kind: "basicPokemon" },\n        dest: "bench",\n        max: 1,\n        recordAs: "moved",\n      },\n      { op: "shuffleDeck" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        then: [\n          {\n            op: "moveEnergy",\n            filter: { kind: "anyEnergy" },\n            max: 1,\n            route: "selfToBench",\n            destRecorded: "moved",\n          },\n        ],\n      },\n    ];\n  }',
     replace:
       '  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1, recordAs: "moved" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        then: [\n          {\n            op: "moveEnergy",\n            filter: { kind: "anyEnergy" },\n            max: 1,\n            route: "selfToBench",\n            destRecorded: "moved",\n          },\n        ],\n      },\n      { op: "shuffleDeck" },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
@@ -25613,7 +25600,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D515",
     what: "🛑 C1 — THE GATE DELETED, SO THE OPPONENT DISCARDS OFF A PAYMENT THAT NEVER HAPPENED. This is the mistake the printed order invites: the sentence reads as two steps, and `deriveAttackEffect`'s own OPPONENT-CHOOSES arm already emits `opponentDiscardsFromHand` flat — so appending it to the payment is a neighbouring arm's REAL code copied verbatim (D190b/D199). It is wrong only on the EMPTY HAND, where `payFromHand` pays what there is (attack.ts never calls `handCostUnmet`) and the discard runs anyway: an effect bought at a price the engine never collected, which is D420's whole hazard. Killed ONE FILE OVER, in `handEnergyCancel.test.ts`'s structural guard, which is where the claim lives — the program stops satisfying `handCostIsSlotGated` and lands in `offenders` by name.",
     file: "packages/engine/src/effects.ts",
-    find: '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
+    find: 'if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
     replace:
       '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      { op: "opponentDiscardsFromHand", count: 1 },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
@@ -25623,9 +25610,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D515",
     what: '🛑 C2 — THE GATE POINTED AT THE SLOT NEXT DOOR. `EffectSlot` has three members (🆕🆕🆕 D567: five — `turnedPrize` / `revealed` added, read by one op by name; 🆕🆕🆕 D579 (D539): six — `placed` added, filed by one op and read as a count) and `moved` is the one a §9.2 gate most often reads (`switchActive`, `bottomFromOpponentHand`, `searchDeck` all file under it), so a gate spelled `slot: "moved"` over a `recordAs: "paid"` payment is the copy an author actually makes. It compiles, it derives, and it fires off whatever some other op filed — which on this two-op program is nothing at all, so the opponent never discards on ANY board. The payment/gate identity is the single fact the sentence turns on. Killed by the program rung.',
     file: "packages/engine/src/effects.ts",
-    find: '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
+    find: 'if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
     replace:
-      '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "moved", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
+      '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      { op: "recordGate", slot: "moved", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/handCostOpponentDiscard.test.ts"],
   },
   {
@@ -25633,9 +25620,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D515",
     what: "🛑 C3 — THE CONSEQUENT'S COUNT TAKEN FROM THE OTHER PRINTING. The standalone family prints BOTH counts and the plural one carries FOUR legal printings to the singular's two, so `opponentDiscardsFromHand { count: 2 }` is the spelling an author has seen more of — and `effects.ts` names that exact value in a comment one screen up. The printed article here is *\"a card\"*. It is a silent doubling: the board is legal, the log is legal, and only the number is wrong. Killed by the program rung, and the caption rung would catch it too since the note reads the count.",
     file: "packages/engine/src/effects.ts",
-    find: '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
+    find: 'if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },\n    ];\n  }',
     replace:
-      '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 2 }] },\n    ];\n  }',
+      '  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },\n      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 2 }] },\n    ];\n  }',
     expectKilledBy: ["packages/engine/src/handCostOpponentDiscard.test.ts"],
   },
   {
@@ -26022,7 +26009,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D520",
     what: "🛑 C4 — **THE `conditionGate` WRAPPER DROPPED: an UNCONDITIONAL `damageDefender`, which is arm 6a-bis's real code one screen down copied verbatim (D190b's neighbour-copy shape).** The opponent's Active takes the hit whether or not it *\"has any damage counters on it\"* — the printed predicate deleted on ONE of the four zones while the other three keep it — and the program's top level now carries a `damageDefender`, so `attack.ts`'s `programDamage` flips to true as a side effect. Killed by §3's UNDAMAGED-defender board (no Active row, defender untouched) and by §2's exact program. ⚠️ **SILENT IN EVERY CENSUS** — the sentence still derives.",
     file: "packages/engine/src/effects.ts",
-    find: '      return [\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActiveDamaged" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "damageDefender", amount }],\n        },\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n      ];',
+    find: 'return [\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActiveDamaged" },\n          then: [{ op: "damageDefender", amount }],\n        },\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n      ];',
     replace:
       '      return [\n        { op: "damageDefender", amount },\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n      ];',
     expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
@@ -26050,9 +26037,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D520",
     what: "🛑 C7 — **THE GATE MOVED BEHIND THE TWO SPREADS**, so the benches are walked before the opponent's Active. 🛑 **THE ORDER IS OBSERVABLE TWICE OVER AND NEITHER IS COSMETIC**: every leg files `DAMAGE_DEALT` per body, so the log's seat sequence changes from `p2,p1,p2,p2` to `p1,p2,p2,p2`; and `spreadDamage` is a FOLD carrying `rngState` (D258), so the gate's evaluation would read a board the spreads had already moved through. D482's *\"Active first\"* composed with D507's controller-first walk. Killed by §5's log-order rung, its hand-built-sequence state equality, and its derived-order rung (which needs no board). ⚠️ **SILENT IN EVERY CENSUS.**",
     file: "packages/engine/src/effects.ts",
-    find: '      return [\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActiveDamaged" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "damageDefender", amount }],\n        },\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n      ];',
+    find: 'return [\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActiveDamaged" },\n          then: [{ op: "damageDefender", amount }],\n        },\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n      ];',
     replace:
-      '      return [\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActiveDamaged" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "damageDefender", amount }],\n        },\n      ];',
+      '      return [\n        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },\n        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActiveDamaged" },\n          then: [{ op: "damageDefender", amount }],\n        },\n      ];',
     expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
   },
   {
@@ -26135,9 +26122,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D521",
     what: "⚠️ C7 — **THE CAPTURED AMOUNT PINNED TO THE PRINTED 90.** The row's two legal printings both print 90, so every corpus rung stays green and the printed fixture recoils correctly; what breaks is the SHAPE claim — the derived `then` is no longer byte-identical to the bare anchor's output for every N (D316's precedent for capturing rather than pinning). Killed by the 50-amount fixture attack (recoils 50, the mutant recoils 90) and by §1's derivation of the 50-print. ⚠️ **SILENT IN EVERY CENSUS.**",
     file: "packages/engine/src/effects.ts",
-    find: '          coins: 2,\n          onTails: true,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "damageSelf", amount }],',
+    find: 'coins: 2,\n          onTails: true,\n          then: [{ op: "damageSelf", amount }],',
     replace:
-      '          coins: 2,\n          onTails: true,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "damageSelf", amount: 90 }],',
+      '          coins: 2,\n          onTails: true,\n          then: [{ op: "damageSelf", amount: 90 }],',
     expectKilledBy: ["packages/engine/src/twoCoinTailsRecoil.test.ts"],
   },
   {
@@ -26155,9 +26142,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D521",
     what: "🛑 C9 — **THE `then` REPLACED BY `FLIP_TAILS_SELF_DISCARD_ALL`'s CONSEQUENT, verbatim** — the neighbour arm two screens up (D190b's neighbour-copy shape): on a double tails the attacker's Energy is discarded instead of the recoil landing. The gate, its count and its face are all untouched, so every flip-row and rngState rung stays green; what moves is the BODY. Killed by the attacker-HP assertion on the [T,T] board (90 damage, not 0) and by the energy-count assertion (the attached Energy stays attached), and by §1's `then` byte-equality with the bare recoil anchor. ⚠️ **SILENT IN EVERY CENSUS.**",
     file: "packages/engine/src/effects.ts",
-    find: '          coins: 2,\n          onTails: true,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "damageSelf", amount }],',
+    find: 'coins: 2,\n          onTails: true,\n          then: [{ op: "damageSelf", amount }],',
     replace:
-      '          coins: 2,\n          onTails: true,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [\n            { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n          ],',
+      '          coins: 2,\n          onTails: true,\n          then: [\n            { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n          ],',
     expectKilledBy: ["packages/engine/src/twoCoinTailsRecoil.test.ts"],
   },
   {
@@ -26198,7 +26185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D522",
     what: "🛑 C4 — **THE GATE READS OWNERSHIP: `stadiumInPlay` → `yourStadiumInPlay`**, D378's other member, one line up in the union, so the mutant type-checks and derives — D380's C8 (`D380-may-discard-gate-reads-ownership`) arriving at the sibling arm. On a zone the ATTACKER filled the two are indistinguishable; on the board this family is printed for — the OPPONENT's Stadium — the gate answers NO and the card neither spreads nor discards. Killed by §2's P2-OWNED Beach Court boards: the Bench takes 30 and `STADIUM_DISCARDED` fires under P2's seat; the mutant leaves the Bench at 0 and the zone occupied.",
     file: "packages/engine/src/effects.ts",
-    find: 'cond: { kind: "stadiumInPlay" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "spreadDamage", target: "opponentBench", amount },',
+    find: 'cond: { kind: "stadiumInPlay" },\n          then: [{ op: "spreadDamage", target: "opponentBench", amount },',
     replace:
       '          cond: { kind: "yourStadiumInPlay" },\n          then: [\n            { op: "spreadDamage", target: "opponentBench", amount },',
     expectKilledBy: ["packages/engine/src/stadiumGatedSpread.test.ts"],
@@ -27648,7 +27635,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D536",
     what: "🛑 (f) **THE §9.2 GATE DROPPED, SO THE PRINTED *“If you do”* STOPS BEING READ** — the defender is discarded whether or not a Team Rocket's Energy was there to pay. This is the arm's load-bearing claim: `attack.ts` never calls `handCostUnmet` and there is no `energyCostUnmet`, so nothing else in the pipeline refuses an unpaid cost. Killed by §5's WHIFF rung on both seats.",
     file: "packages/engine/src/effects.ts",
-    find: '    return [\n      {\n        op: "discardEnergy",\n        from: "yourActive",\n        filter: { kind: "byName", name: "Team Rocket\'s Energy" },\n        recordAs: "discarded",\n      },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },\n    ];',
+    find: 'return [\n      {\n        op: "discardEnergy",\n        from: "yourActive",\n        filter: { kind: "byName", name: "Team Rocket\'s Energy" },\n        recordAs: "discarded",\n      },\n      { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },\n    ];',
     replace:
       '    return [\n      {\n        op: "discardEnergy",\n        from: "yourActive",\n        filter: { kind: "byName", name: "Team Rocket\'s Energy" },\n        recordAs: "discarded",\n      },\n      { op: "discardDefender" },\n    ];',
     expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
@@ -31200,7 +31187,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D555",
     what: 'Torrential Whirlpool\'s "If you do" is dropped: `opponentSwitchOut` runs unconditionally after the switch. No board separates it today (an empty own Bench is refused before the program runs), so it is killed by the program pin and the Interjet byte-for-byte rung — the spelling IS the claim.',
     file: "packages/engine/src/registry.ts",
-    find: '      name: "Torrential Whirlpool",\n      oncePerTurn: true,\n      activeOnly: false,\n      program: [\n        { op: "switchActive", recordAs: "moved" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },\n',
+    find: 'name: "Torrential Whirlpool",\n      oncePerTurn: true,\n      activeOnly: false,\n      program: [\n        { op: "switchActive", recordAs: "moved" },\n        { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },',
     replace:
       '      name: "Torrential Whirlpool",\n      oncePerTurn: true,\n      activeOnly: false,\n      program: [\n        { op: "switchActive", recordAs: "moved" },\n        { op: "opponentSwitchOut" },\n',
     expectKilledBy: ["packages/engine/src/simpleAbilitiesD555.test.ts"],
@@ -31260,7 +31247,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D555",
     what: "🛑 Snow Sink loses its inner `optional`: any Stadium in play is discarded with no question — the auto-firing `TriggeredAbility.optional` reading D555 R2 refuses. Killed by the asks and declining-keeps-the-Stadium rungs.",
     file: "packages/engine/src/registry.ts",
-    find: '          then: [\n            {\n              op: "optional",\n              note: "You may discard a Stadium in play.",\n              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n              then: [{ op: "discardStadium" }],\n            },\n          ],\n',
+    find: 'then: [\n            {\n              op: "optional",\n              note: "You may discard a Stadium in play.",\n              then: [{ op: "discardStadium" }],\n            },\n          ],',
     replace: '          then: [{ op: "discardStadium" }],\n',
     expectKilledBy: ["packages/engine/src/simpleAbilitiesD555.test.ts"],
   },
@@ -31269,9 +31256,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D555",
     what: "Wicked Tail flips ONE coin instead of two. Killed by the every-seed-flips-twice rung and the program pin.",
     file: "packages/engine/src/registry.ts",
-    find: '      name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n',
+    find: 'name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },',
     replace:
-      '      name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n',
+      '      name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n',
     expectKilledBy: ["packages/engine/src/simpleAbilitiesD555.test.ts"],
   },
   {
@@ -31279,9 +31266,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D555",
     what: "Wicked Tail's first heads sends the card to the opponent's DISCARD pile instead of shuffling it into their deck. Killed by the heads/heads rung (both takes `to: \"deck\"`, both uids in the deck, two SHUFFLE rows).",
     file: "packages/engine/src/registry.ts",
-    find: '      name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n',
+    find: 'name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },',
     replace:
-      '      name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "discard" }],\n        },\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n',
+      '      name: "Wicked Tail",\n      trigger: "onEvolve",\n      optional: true,\n      program: [\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "discard" }],\n        },\n        {\n          op: "coinFlipGate",\n          then: [{ op: "randomFromOpponentHand", to: "deck" }],\n        },\n',
     expectKilledBy: ["packages/engine/src/simpleAbilitiesD555.test.ts"],
   },
   {
@@ -31450,9 +31437,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "Billy & O'Nare's gated \"draw 2 more\" draws nothing. Killed by §4's 8-others rung (12 and two draw rows) and the pin.",
     file: "packages/engine/src/registry.ts",
-    find: '      cond: { kind: "yourHandAtLeast", count: 10 },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "drawCards", count: 2 }],',
-    replace:
-      '      cond: { kind: "yourHandAtLeast", count: 10 },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [],',
+    find: 'cond: { kind: "yourHandAtLeast", count: 10 },\n      then: [{ op: "drawCards", count: 2 }],',
+    replace: '      cond: { kind: "yourHandAtLeast", count: 10 },\n      then: [],',
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -31537,9 +31523,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "Toxic Subjugation gates on Burned instead of the printed Poisoned. Killed by the pin, §8's Poisoned rungs and its Burned control.",
     file: "packages/engine/src/registry.ts",
-    find: '          cond: { kind: "opponentActivePoisoned" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "damageActive", amount: 50, source: "ability" }],',
+    find: 'cond: { kind: "opponentActivePoisoned" },\n          then: [{ op: "damageActive", amount: 50, source: "ability" }],',
     replace:
-      '          cond: { kind: "opponentActiveBurned" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "damageActive", amount: 50, source: "ability" }],',
+      '          cond: { kind: "opponentActiveBurned" },\n          then: [{ op: "damageActive", amount: 50, source: "ability" }],',
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -31556,7 +31542,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "Toxic Subjugation loses its gate: 50 lands on EVERY opposing Active at every Checkup, Poisoned or not. Killed by the pin and §8's R6 rung (no counters on an unpoisoned Active).",
     file: "packages/engine/src/registry.ts",
-    find: '      program: [\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActivePoisoned" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "damageActive", amount: 50, source: "ability" }],\n        },\n      ],',
+    find: 'program: [\n        {\n          op: "conditionGate",\n          cond: { kind: "opponentActivePoisoned" },\n          then: [{ op: "damageActive", amount: 50, source: "ability" }],\n        },\n      ],',
     replace: '      program: [{ op: "damageActive", amount: 50, source: "ability" }],',
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
@@ -31594,9 +31580,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D557",
     what: 'Kieran\'s two bullets swap arms: the "Switch" button installs the +30 and the "+30" button switches. Every label still reads right, which is the defect. Killed by §3/§4 (yes = switch, no = +30) and §5\'s stripped revival.',
     file: "packages/engine/src/registry.ts",
-    find: '      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "switchActive" }],\n      otherwise: [\n        {\n          op: "boostSideAttacksThisTurn",\n          amount: 30,',
+    find: 'then: [{ op: "switchActive" }],\n      otherwise: [\n        {\n          op: "boostSideAttacksThisTurn",\n          amount: 30,',
     replace:
-      '      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      otherwise: [{ op: "switchActive" }],\n      then: [\n        {\n          op: "boostSideAttacksThisTurn",\n          amount: 30,',
+      '      otherwise: [{ op: "switchActive" }],\n      then: [\n        {\n          op: "boostSideAttacksThisTurn",\n          amount: 30,',
     expectKilledBy: ["packages/engine/src/chooseOneTrainersD557.test.ts"],
   },
   {
@@ -31706,9 +31692,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D557",
     what: "Arven's Sandwich's \"instead\" is read as \"also\": an Arven's Active heals 30 + 100 = 130. Killed by §5's 150 → 50 rung.",
     file: "packages/engine/src/registry.ts",
-    find: '      cond: { kind: "yourActiveOwner", owner: "Arven" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "heal", target: "self", amount: 100 }],',
+    find: 'cond: { kind: "yourActiveOwner", owner: "Arven" },\n      then: [{ op: "heal", target: "self", amount: 100 }],',
     replace:
-      '      cond: { kind: "yourActiveOwner", owner: "Arven" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "heal", target: "self", amount: 130 }],',
+      '      cond: { kind: "yourActiveOwner", owner: "Arven" },\n      then: [{ op: "heal", target: "self", amount: 130 }],',
     expectKilledBy: ["packages/engine/src/riderTrainersD557.test.ts"],
   },
   {
@@ -31716,9 +31702,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D557",
     what: "the gate's owner is stored WITH the possessive (\"Arven's\"), so the prefix rule tests \"Arven's's \" and never matches: every Active heals 30. Killed by §5.",
     file: "packages/engine/src/registry.ts",
-    find: '      cond: { kind: "yourActiveOwner", owner: "Arven" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "heal", target: "self", amount: 100 }],',
+    find: 'cond: { kind: "yourActiveOwner", owner: "Arven" },\n      then: [{ op: "heal", target: "self", amount: 100 }],',
     replace:
-      '      cond: { kind: "yourActiveOwner", owner: "Arven\'s" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "heal", target: "self", amount: 100 }],',
+      '      cond: { kind: "yourActiveOwner", owner: "Arven\'s" },\n      then: [{ op: "heal", target: "self", amount: 100 }],',
     expectKilledBy: ["packages/engine/src/riderTrainersD557.test.ts"],
   },
   {
@@ -32787,9 +32773,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D560",
     what: "Wafting Heal's damaged gate reads `yourActiveUndamaged`: the confirm is offered on the wrong boards. Killed by T §4.",
     file: "packages/engine/src/registry.ts",
-    find: '              cond: { kind: "yourActiveDamaged" },\n              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n              then: [',
-    replace:
-      '              cond: { kind: "yourActiveUndamaged" },\n              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n              then: [',
+    find: 'cond: { kind: "yourActiveDamaged" },\n              then: [',
+    replace: '              cond: { kind: "yourActiveUndamaged" },\n              then: [',
     expectKilledBy: ["packages/engine/src/abilityTriggersD560.test.ts"],
   },
   {
@@ -32826,9 +32811,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D560",
     what: "Selective Slime fires on TAILS. Killed by P §7's heads and tails rungs.",
     file: "packages/engine/src/registry.ts",
-    find: '          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [\n            {\n              op: "optional",\n              note: "Selective Slime:',
+    find: 'op: "coinFlipGate",\n          then: [\n            {\n              op: "optional",\n              note: "Selective Slime:',
     replace:
-      '          op: "coinFlipGate",\n          onTails: true,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [\n            {\n              op: "optional",\n              note: "Selective Slime:',
+      '          op: "coinFlipGate",\n          onTails: true,\n          then: [\n            {\n              op: "optional",\n              note: "Selective Slime:',
     expectKilledBy: ["packages/engine/src/abilityPassivesD560.test.ts"],
   },
   {
@@ -32972,9 +32957,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D561",
     what: "Scramble Switch files the PROMOTED body (D206's default), so the move's source is the new Active and it whiffs. Killed by §1, §8 and switchSeam's inverted rung.",
     file: "packages/engine/src/registry.ts",
-    find: '    { op: "switchActive", recordAs: "moved", recordDemoted: true },\n    {\n      op: "recordGate",\n      slot: "moved",\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [\n        {\n          op: "moveEnergy",',
+    find: '{ op: "switchActive", recordAs: "moved", recordDemoted: true },\n    {\n      op: "recordGate",\n      slot: "moved",\n      then: [\n        {\n          op: "moveEnergy",',
     replace:
-      '    { op: "switchActive", recordAs: "moved" },\n    {\n      op: "recordGate",\n      slot: "moved",\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [\n        {\n          op: "moveEnergy",',
+      '    { op: "switchActive", recordAs: "moved" },\n    {\n      op: "recordGate",\n      slot: "moved",\n      then: [\n        {\n          op: "moveEnergy",',
     expectKilledBy: [
       "packages/engine/src/trainersD561.test.ts",
       "packages/engine/src/switchSeam.test.ts",
@@ -34877,9 +34862,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "🛑 THE PRE-DRAW DECK CHECK, the other way (R-CT): the author drops the `recordGate` and gates on the Stadium alone — an EMPTY deck draws nothing and Caretaker still shuffles itself in. Killed by §6's empty-deck case.",
     file: "packages/engine/src/registry.ts",
-    find: 'const CARETAKER: CardProgram = {\n  trainer: [\n    { op: "drawCards", count: 2, recordAs: "moved" },\n    {\n      op: "recordGate",\n      slot: "moved",\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [\n        {\n          op: "conditionGate",\n          cond: { kind: "stadiumInPlayNamed", name: "Community Center" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "shufflePlayedCardIntoDeck" }],\n        },\n      ],\n    },\n  ],\n};',
+    find: 'const CARETAKER: CardProgram = {\n  trainer: [\n    { op: "drawCards", count: 2, recordAs: "moved" },\n    {\n      op: "recordGate",\n      slot: "moved",\n      then: [\n        {\n          op: "conditionGate",\n          cond: { kind: "stadiumInPlayNamed", name: "Community Center" },\n          then: [{ op: "shufflePlayedCardIntoDeck" }],\n        },\n      ],\n    },\n  ],\n};',
     replace:
-      'const CARETAKER: CardProgram = {\n  trainer: [\n    { op: "drawCards", count: 2 },\n    {\n      op: "conditionGate",\n      cond: { kind: "stadiumInPlayNamed", name: "Community Center" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [{ op: "shufflePlayedCardIntoDeck" }],\n    },\n  ],\n};',
+      'const CARETAKER: CardProgram = {\n  trainer: [\n    { op: "drawCards", count: 2 },\n    {\n      op: "conditionGate",\n      cond: { kind: "stadiumInPlayNamed", name: "Community Center" },\n      then: [{ op: "shufflePlayedCardIntoDeck" }],\n    },\n  ],\n};',
     expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
   },
 
@@ -35009,7 +34994,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D565",
     what: '"If you do" dropped — an EMPTY deck still sends the Psyduck to the deck (R-FL). Killed by §2\'s empty-deck rung.',
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "discardDeckBottom", count: 1, recordAs: "moved" },\n        {\n          op: "recordGate",\n          slot: "moved",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],\n        },',
+    find: '{ op: "discardDeckBottom", count: 1, recordAs: "moved" },\n        {\n          op: "recordGate",\n          slot: "moved",\n          then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],\n        },',
     replace:
       '        { op: "discardDeckBottom", count: 1, recordAs: "moved" },\n        { op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" },',
     expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts"],
@@ -38649,9 +38634,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D574",
     what: "R-MA1's gate inverted: Colluding Tentacles gusts and deals 120 WITHOUT Xerosic's Machinations and does nothing with it. Killed by §4's not-played and played rungs (and §2's / §4's copied-Malamar rungs).",
     file: "packages/engine/src/registry.ts",
-    find: '        cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic\'s Machinations" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n        then: [\n          { op: "gust", recordAs: "moved" },',
+    find: 'cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic\'s Machinations" },\n        then: [\n          { op: "gust", recordAs: "moved" },',
     replace:
-      '        cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic\'s Machinations" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n        then: [],\n        otherwise: [\n          { op: "gust", recordAs: "moved" },',
+      '        cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic\'s Machinations" },\n        then: [],\n        otherwise: [\n          { op: "gust", recordAs: "moved" },',
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
   {
@@ -41450,7 +41435,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D586",
     what: "Abyss Eye drops its gate: every defender is Knocked Out. Killed by conditionRowsMeD586 §2's program literal and §3's no-condition board.",
     file: "packages/engine/src/effects.ts",
-    find: 'match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);\n  if (match !== null) {\n    return [\n      {\n        op: "conditionGate",\n        cond: { kind: "opponentActiveHasSpecialCondition" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "knockOutDefender" }],\n      },\n    ];\n  }',
+    find: 'match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);\n  if (match !== null) {\n    return [\n      {\n        op: "conditionGate",\n        cond: { kind: "opponentActiveHasSpecialCondition" },\n        then: [{ op: "knockOutDefender" }],\n      },\n    ];\n  }',
     replace:
       'match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);\n  if (match !== null) {\n    return [{ op: "knockOutDefender" }];\n  }',
     expectKilledBy: ["packages/engine/src/conditionRowsMeD586.test.ts"],
@@ -42221,9 +42206,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Alakazam's Psychic Draw draws 2, not the printed 3. Killed by onEvolveMeD590 §1's program and §3's draw.",
     file: "packages/engine/src/registry.ts",
-    find: '          note: PSYCHIC_DRAW_3_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "drawCards", count: 3 }],',
+    find: 'note: PSYCHIC_DRAW_3_TEXT,\n          then: [{ op: "drawCards", count: 3 }],',
     replace:
-      '          note: PSYCHIC_DRAW_3_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "drawCards", count: 2 }],',
+      '          note: PSYCHIC_DRAW_3_TEXT,\n          then: [{ op: "drawCards", count: 2 }],',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -42231,9 +42216,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Kadabra's Psychic Draw draws 3, not the printed 2. Killed by onEvolveMeD590 §1's program and §3's draw.",
     file: "packages/engine/src/registry.ts",
-    find: '          note: PSYCHIC_DRAW_2_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "drawCards", count: 2 }],',
+    find: 'note: PSYCHIC_DRAW_2_TEXT,\n          then: [{ op: "drawCards", count: 2 }],',
     replace:
-      '          note: PSYCHIC_DRAW_2_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "drawCards", count: 3 }],',
+      '          note: PSYCHIC_DRAW_2_TEXT,\n          then: [{ op: "drawCards", count: 3 }],',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -42241,7 +42226,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Alakazam's draw loses its confirm and auto-fires (a forced draw can deck its owner out). Killed by onEvolveMeD590 §1's program and §3's prompt.",
     file: "packages/engine/src/registry.ts",
-    find: '        {\n          op: "optional",\n          note: PSYCHIC_DRAW_3_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "drawCards", count: 3 }],\n        },\n',
+    find: '{\n          op: "optional",\n          note: PSYCHIC_DRAW_3_TEXT,\n          then: [{ op: "drawCards", count: 3 }],\n        },',
     replace: '        { op: "drawCards", count: 3 },\n',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
@@ -42260,9 +42245,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Prison Panic makes the opponent's Active Asleep, not Confused. Killed by onEvolveMeD590 §1's program and §4's board.",
     file: "packages/engine/src/registry.ts",
-    find: '          note: PRISON_PANIC_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "applyStatus", target: "defender", status: "confused" }],',
+    find: 'note: PRISON_PANIC_TEXT,\n          then: [{ op: "applyStatus", target: "defender", status: "confused" }],',
     replace:
-      '          note: PRISON_PANIC_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "applyStatus", target: "defender", status: "asleep" }],',
+      '          note: PRISON_PANIC_TEXT,\n          then: [{ op: "applyStatus", target: "defender", status: "asleep" }],',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -42270,9 +42255,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Prison Panic Confuses its OWN controller's Active. Killed by onEvolveMeD590 §1's program and §4's board.",
     file: "packages/engine/src/registry.ts",
-    find: '          note: PRISON_PANIC_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "applyStatus", target: "defender", status: "confused" }],',
+    find: 'note: PRISON_PANIC_TEXT,\n          then: [{ op: "applyStatus", target: "defender", status: "confused" }],',
     replace:
-      '          note: PRISON_PANIC_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "applyStatus", target: "self", status: "confused" }],',
+      '          note: PRISON_PANIC_TEXT,\n          then: [{ op: "applyStatus", target: "self", status: "confused" }],',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -42280,7 +42265,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Prison Panic loses its confirm and auto-fires: an Asleep or Paralyzed Defending Pokémon is overwritten to Confused with no decline. Killed by onEvolveMeD590 §1's program and §4's prompt and decline.",
     file: "packages/engine/src/registry.ts",
-    find: '        {\n          op: "optional",\n          note: PRISON_PANIC_TEXT,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "applyStatus", target: "defender", status: "confused" }],\n        },\n',
+    find: '{\n          op: "optional",\n          note: PRISON_PANIC_TEXT,\n          then: [{ op: "applyStatus", target: "defender", status: "confused" }],\n        },',
     replace: '        { op: "applyStatus", target: "defender", status: "confused" },\n',
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
@@ -44944,7 +44929,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D602",
     what: "Guiding Dance loses its coin: the search always runs. Killed by activatedMeD602 §1's Poké Ball comparison and §4's tails board.",
     file: "packages/engine/src/registry.ts",
-    find: 'name: "Guiding Dance",\n      oncePerTurn: true,\n      activeOnly: false,\n      program: [\n        {\n          op: "coinFlipGate",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [\n            {\n              op: "searchDeck",\n              filter: { kind: "anyPokemon" },\n              dest: "hand",\n              max: 1,\n              reveal: true,\n            },\n            { op: "shuffleDeck" },\n          ],\n        },\n      ],',
+    find: 'name: "Guiding Dance",\n      oncePerTurn: true,\n      activeOnly: false,\n      program: [\n        {\n          op: "coinFlipGate",\n          then: [\n            {\n              op: "searchDeck",\n              filter: { kind: "anyPokemon" },\n              dest: "hand",\n              max: 1,\n              reveal: true,\n            },\n            { op: "shuffleDeck" },\n          ],\n        },\n      ],',
     replace:
       '      name: "Guiding Dance",\n      oncePerTurn: true,\n      activeOnly: false,\n      program: [\n            { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },\n            { op: "shuffleDeck" },\n      ],',
     expectKilledBy: ["packages/engine/src/activatedMeD602.test.ts"],
@@ -46474,9 +46459,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D609",
     what: "the consequent is `knockOutSelf`: Mega Absol ex Knocks ITSELF Out. Killed by koCountersMeD609 §2 and §3.",
     file: "packages/engine/src/effects.ts",
-    find: '          cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "knockOutDefender" }],',
+    find: 'cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },\n          then: [{ op: "knockOutDefender" }],',
     replace:
-      '          cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "knockOutSelf" }],',
+      '          cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },\n          then: [{ op: "knockOutSelf" }],',
     expectKilledBy: ["packages/engine/src/koCountersMeD609.test.ts"],
   },
   {
@@ -48414,9 +48399,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D617",
     what: "AZ's switch files the PROMOTED body (`recordDemoted` dropped): the heal reads the new Active. Killed by supportersMeD617 §2/§4.",
     file: "packages/engine/src/registry.ts",
-    find: '    { op: "switchActive", recordAs: "moved", recordDemoted: true, demotedAsMoved: true },\n    {\n      op: "recordGate",\n      slot: "moved",\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [\n        {\n          op: "healChosen",',
+    find: '{ op: "switchActive", recordAs: "moved", recordDemoted: true, demotedAsMoved: true },\n    {\n      op: "recordGate",\n      slot: "moved",\n      then: [\n        {\n          op: "healChosen",',
     replace:
-      '    { op: "switchActive", recordAs: "moved" },\n    {\n      op: "recordGate",\n      slot: "moved",\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [\n        {\n          op: "healChosen",',
+      '    { op: "switchActive", recordAs: "moved" },\n    {\n      op: "recordGate",\n      slot: "moved",\n      then: [\n        {\n          op: "healChosen",',
     expectKilledBy: ["packages/engine/src/supportersMeD617.test.ts"],
   },
   {
@@ -49300,9 +49285,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D620",
     what: "Team Rocket's Hypnotizer's holder gate becomes \"your Active is damaged\" (true on every reaction): any holder puts the attacker to sleep. Killed by prizesToolsMeD620 §1/§6.",
     file: "packages/engine/src/registry.ts",
-    find: '          cond: { kind: "yourActiveOwner", owner: "Team Rocket" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],',
+    find: 'cond: { kind: "yourActiveOwner", owner: "Team Rocket" },\n          then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],',
     replace:
-      '          cond: { kind: "yourActiveDamaged" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],',
+      '          cond: { kind: "yourActiveDamaged" },\n          then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],',
     expectKilledBy: ["packages/engine/src/prizesToolsMeD620.test.ts"],
   },
   {
@@ -50216,9 +50201,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D625",
     what: "the opponent's spared type is {P}, not {D}. Killed by trainersMeD625 §4 (an opposing {D} Active is spared).",
     file: "packages/engine/src/registry.ts",
-    find: '      cond: { kind: "opponentActiveHasType", type: "Darkness" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [],',
-    replace:
-      '      cond: { kind: "opponentActiveHasType", type: "Psychic" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n      then: [],',
+    find: 'cond: { kind: "opponentActiveHasType", type: "Darkness" },\n      then: [],',
+    replace: '      cond: { kind: "opponentActiveHasType", type: "Psychic" },\n      then: [],',
     expectKilledBy: ["packages/engine/src/trainersMeD625.test.ts"],
   },
   {
@@ -50445,9 +50429,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D626",
     what: "Adversity Policy draws 2. Killed by koTriggerRestMeD626 §1 and §6.",
     file: "packages/engine/src/registry.ts",
-    find: '          cond: { kind: "yourActiveWeakToOpponentActiveType" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "drawCards", count: 3 }],',
+    find: 'cond: { kind: "yourActiveWeakToOpponentActiveType" },\n          then: [{ op: "drawCards", count: 3 }],',
     replace:
-      '          cond: { kind: "yourActiveWeakToOpponentActiveType" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "drawCards", count: 2 }],',
+      '          cond: { kind: "yourActiveWeakToOpponentActiveType" },\n          then: [{ op: "drawCards", count: 2 }],',
     expectKilledBy: ["packages/engine/src/koTriggerRestMeD626.test.ts"],
   },
   {
@@ -51666,9 +51650,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D631",
     what: "Good Sleep heals 30, not all. Killed by passiveRestMeD631 §1 / §7 (100 → 70).",
     file: "packages/engine/src/registry.ts",
-    find: '          cond: { kind: "yourActiveAsleep" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "heal", target: "self", amount: "all" }],',
+    find: 'cond: { kind: "yourActiveAsleep" },\n          then: [{ op: "heal", target: "self", amount: "all" }],',
     replace:
-      '          cond: { kind: "yourActiveAsleep" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate\'s step list, not a thenable.\n          then: [{ op: "heal", target: "self", amount: 30 }],',
+      '          cond: { kind: "yourActiveAsleep" },\n          then: [{ op: "heal", target: "self", amount: 30 }],',
     expectKilledBy: ["packages/engine/src/passiveRestMeD631.test.ts"],
   },
   {
@@ -53481,9 +53465,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D639",
     what: "the gated shield drops `effects`: only damage is prevented. Killed by koSweepMeD639 §2 / §4.",
     file: "packages/engine/src/effects.ts",
-    find: '        cond: { kind: "opponentKnockedOutByDamage" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage", effects: true }],',
+    find: 'cond: { kind: "opponentKnockedOutByDamage" },\n        then: [{ op: "preventDamage", effects: true }],',
     replace:
-      '        cond: { kind: "opponentKnockedOutByDamage" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "preventDamage" }],',
+      '        cond: { kind: "opponentKnockedOutByDamage" },\n        then: [{ op: "preventDamage" }],',
     expectKilledBy: ["packages/engine/src/koSweepMeD639.test.ts"],
   },
   {
@@ -53706,9 +53690,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D640",
     what: "Celebration's gate reads 29 cards, not the printed 30. Killed by prizeOverwriteMeD640 §2 / §5.",
     file: "packages/engine/src/effects.ts",
-    find: '        cond: { kind: "yourHandExactly", count: 30 },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],',
+    find: 'cond: { kind: "yourHandExactly", count: 30 },\n        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],',
     replace:
-      '        cond: { kind: "yourHandExactly", count: 29 },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],',
+      '        cond: { kind: "yourHandExactly", count: 29 },\n        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],',
     expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
   },
   {

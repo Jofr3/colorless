@@ -323,12 +323,10 @@ describe("§4 — the program: D381's arm, and BOTH `otherwise`s carry the print
       {
         op: "conditionGate",
         cond: { kind: "yourHandNotEmpty" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "optional",
             note: PURGING,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [{ op: "discardHand" }, { op: "damageDefender", amount: 240 }],
             otherwise: [{ op: "damageDefender", amount: 120 }],
           },

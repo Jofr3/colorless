@@ -375,7 +375,6 @@ describe("D599 §7 — `describeBranch` is silent on the new member (a gate bran
     {
       op: "recordGate",
       slot: "paid",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "drawCards", count: 1, per }],
     },
   ];

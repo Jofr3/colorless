@@ -1166,7 +1166,6 @@ const SWITCH: CardProgram = { trainer: [{ op: "switchActive" }] };
 const SURFER: CardProgram = {
   trainer: [
     { op: "switchActive", recordAs: "moved" },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     { op: "recordGate", slot: "moved", then: [{ op: "drawUntilHandSize", size: 5 }] },
   ],
 };
@@ -1179,7 +1178,6 @@ const SURFER: CardProgram = {
 const PRIME_CATCHER: CardProgram = {
   trainer: [
     { op: "gust", recordAs: "moved" },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     { op: "recordGate", slot: "moved", then: [{ op: "switchActive" }] },
   ],
 };
@@ -1187,7 +1185,6 @@ const PRIME_CATCHER: CardProgram = {
 const TEAM_ROCKETS_GIOVANNI: CardProgram = {
   trainer: [
     { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
   ],
 };
@@ -1678,7 +1675,6 @@ const MESAGOZA: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "searchDeck",
@@ -2114,7 +2110,6 @@ const SUBJUGATING_CHAINS: CardProgram = {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
         },
       ],
@@ -2503,7 +2498,6 @@ const DENDRA: CardProgram = {
     {
       op: "recordGate",
       slot: "paid",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "drawUntilHandSize", size: 5 }],
     },
   ],
@@ -2620,7 +2614,6 @@ const POKE_BALL: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
         { op: "shuffleDeck" },
@@ -2632,7 +2625,6 @@ const POKE_BALL: CardProgram = {
 /** Pokémon Catcher — "Flip a coin. If heads, switch in 1 of your opponent's
     Benched Pokémon to the Active Spot." (Item — a coin-gated gust). */
 const POKEMON_CATCHER: CardProgram = {
-  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
   trainer: [{ op: "coinFlipGate", then: [{ op: "gust" }] }],
 };
 
@@ -3006,7 +2998,6 @@ const MIRIAM: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "drawCards", count: 3 }],
     },
   ],
@@ -3019,7 +3010,6 @@ const ORTEGA: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "opponentMayDraw", count: 1 }],
     },
   ],
@@ -3422,7 +3412,6 @@ const FALKNER: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourStadiumInPlay" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawCards", count: 2 }],
     },
   ],
@@ -3439,7 +3428,6 @@ const GRUSHA: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "noEnergyOnYourPokemon" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawUntilHandSize", size: 7 }],
       otherwise: [{ op: "drawUntilHandSize", size: 5 }],
     },
@@ -3456,7 +3444,6 @@ const FIX_CONDGATE: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "morePrizesThanOpponent" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "healChosen", amount: 30 }],
       otherwise: [{ op: "gust" }],
     },
@@ -3473,7 +3460,6 @@ const FIX_GATEORDER: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "noEnergyOnYourPokemon" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawCards", count: 3 }],
       otherwise: [
         { op: "drawCards", count: 1 },
@@ -3511,7 +3497,6 @@ const CRUSHING_HAMMER: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
     },
   ],
@@ -3595,7 +3580,6 @@ const JANINES_SECRET_ART: CardProgram = {
       op: "recordGate",
       slot: "moved",
       contains: "yourActive",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     },
   ],
@@ -3729,7 +3713,6 @@ const TEAM_ROCKETS_CROBAT_EX: CardProgram = {
       {
         op: "optional",
         note: "You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
       },
     ],
@@ -3899,13 +3882,11 @@ const RAPID_VERNIER: CardProgram = {
         {
           op: "optional",
           note: "You may switch this Pokémon with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             { op: "switchActive", fromSource: true, recordAs: "moved" },
             {
               op: "recordGate",
               slot: "moved",
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [
                 {
                   op: "moveEnergy",
@@ -4423,7 +4404,6 @@ const KOFU: CardProgram = {
     {
       op: "recordGate",
       slot: "paid",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [
         { op: "reorderTop", n: 2, from: "bottom" },
         { op: "drawCards", count: 4 },
@@ -4550,7 +4530,6 @@ const LT_SURGES_BARGAIN: CardProgram = {
       op: "optional",
       note: "Your opponent played Lt. Surge's Bargain: may each player take a Prize card? If you say no, they draw 4 cards.",
       askOpponent: true,
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "eachPlayerTakesPrize" }],
       otherwise: [{ op: "drawCards", count: 4 }],
       labels: { yes: "Yes: each player takes a Prize card", no: "No: they draw 4 cards" },
@@ -4995,7 +4974,6 @@ const LACEY: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
       otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 4 } }],
     },
@@ -5007,7 +4985,6 @@ const PICNICKER: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawCards", count: 4 }],
       otherwise: [{ op: "drawCards", count: 2 }],
     },
@@ -5022,7 +4999,6 @@ const DRASNA: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
       otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
     },
@@ -5037,7 +5013,6 @@ const HARLEQUIN: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
       otherwise: [
         { op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } },
@@ -5089,7 +5064,6 @@ const EMCEES_HYPE: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawCards", count: 2 }],
     },
   ],
@@ -5116,7 +5090,6 @@ const TEAL_DANCE: CardProgram = {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "drawCards", count: 1 }],
         },
       ],
@@ -5303,7 +5276,6 @@ const CAPTIVATING_INVITATION: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
         },
       ],
@@ -5475,7 +5447,6 @@ const RUN_AWAY_DRAW: CardProgram = {
       activeOnly: false,
       program: [
         { op: "drawCards", count: 3, recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
       ],
     },
@@ -5504,7 +5475,6 @@ const SURF_BACK: CardProgram = {
       {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnSelf", dest: "deck" }],
       },
     ],
@@ -5658,7 +5628,6 @@ const ENERGY_COIN: CardProgram = {
     {
       op: "coinFlipGate",
       coins: 2,
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
         { op: "shuffleDeck" },
@@ -5847,7 +5816,6 @@ const TORRENTIAL_WHIRLPOOL: CardProgram = {
       activeOnly: false,
       program: [
         { op: "switchActive", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
       ],
     },
@@ -5885,12 +5853,10 @@ const SNOW_SINK: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "stadiumInPlay" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "optional",
               note: "You may discard a Stadium in play.",
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
               then: [{ op: "discardStadium" }],
             },
           ],
@@ -5910,12 +5876,10 @@ const WICKED_TAIL: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "randomFromOpponentHand", to: "deck" }],
         },
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "randomFromOpponentHand", to: "deck" }],
         },
       ],
@@ -5938,7 +5902,6 @@ const TEAM_ROCKETS_ARIANA: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourPokemonAllOwner", owner: "Team Rocket" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawUntilHandSize", size: 8 }],
       otherwise: [{ op: "drawUntilHandSize", size: 5 }],
     },
@@ -5952,7 +5915,6 @@ const BILLY_AND_ONARE: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourHandAtLeast", count: 10 },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "drawCards", count: 2 }],
     },
   ],
@@ -5964,7 +5926,6 @@ const DRAGON_ELIXIR: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourActiveHasType", type: "Dragon" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "heal", target: "self", amount: 60 }],
     },
   ],
@@ -5977,7 +5938,6 @@ const TEAM_ROCKETS_GREAT_BALL: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         {
           op: "searchDeck",
@@ -6008,12 +5968,10 @@ const CARETAKER: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         {
           op: "conditionGate",
           cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "shufflePlayedCardIntoDeck" }],
         },
       ],
@@ -6086,7 +6044,6 @@ const TOXIC_SUBJUGATION: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "opponentActivePoisoned" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "damageActive", amount: 50, source: "ability" }],
         },
       ],
@@ -6101,7 +6058,6 @@ const KIERAN: CardProgram = {
       op: "optional",
       note: "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During this turn, attacks used by your Pokémon do 30 more damage to your opponent's Active Pokémon ex and Active Pokémon V (before applying Weakness and Resistance).",
       labels: { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "switchActive" }],
       otherwise: [
         {
@@ -6128,7 +6084,6 @@ const TEAM_ROCKETS_VENTURE_BOMB: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" },
       ],
@@ -6157,13 +6112,11 @@ const MALAMAR_COLLUDING_TENTACLES: CardProgram = {
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic's Machinations" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [
           { op: "gust", recordAs: "moved" },
           {
             op: "recordGate",
             slot: "moved",
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [{ op: "damageNewActive", amount: 120 }],
           },
         ],
@@ -6193,7 +6146,6 @@ const ARVENS_SANDWICH: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourActiveOwner", owner: "Arven" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "heal", target: "self", amount: 100 }],
       otherwise: [{ op: "heal", target: "self", amount: 30 }],
     },
@@ -6474,17 +6426,14 @@ const WAFTING_HEAL: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveHasType", type: "Grass" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "conditionGate",
               cond: { kind: "yourActiveDamaged" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
               then: [
                 {
                   op: "optional",
                   note: WAFTING_HEAL_TEXT,
-                  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                   then: [
                     { op: "heal", target: "self", amount: "all", discardEnergyFromHealed: true },
                   ],
@@ -6509,7 +6458,6 @@ const TIME_TO_CHOW_DOWN: CardProgram = {
         {
           op: "optional",
           note: "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may heal all damage from each of your Evolution Pokémon. If you healed any damage in this way, discard all Energy from those Pokémon.",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "healEach",
@@ -6546,20 +6494,17 @@ const SELECTIVE_SLIME: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "optional",
               note: "Selective Slime: choose Burned, Confused, or Poisoned. Your opponent's Active Pokémon is now affected by that Special Condition.",
               labels: { yes: "Burned", no: "Confused or Poisoned" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
               then: [{ op: "applyStatus", target: "defender", status: "burned" }],
               otherwise: [
                 {
                   op: "optional",
                   note: "Selective Slime: choose Confused or Poisoned. Your opponent's Active Pokémon is now affected by that Special Condition.",
                   labels: { yes: "Confused", no: "Poisoned" },
-                  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                   then: [{ op: "applyStatus", target: "defender", status: "confused" }],
                   otherwise: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
                 },
@@ -6586,7 +6531,6 @@ const PERRIN: CardProgram = {
     {
       op: "recordGate",
       slot: "paid",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         {
           op: "searchDeck",
@@ -6662,7 +6606,6 @@ const SCRAMBLE_SWITCH: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         {
           op: "moveEnergy",
@@ -6818,7 +6761,6 @@ const FLUSTERED_LEAP: CardProgram = {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
         },
       ],
@@ -6974,17 +6916,14 @@ const TEAM_ROCKETS_BOTHER_BOT: CardProgram = {
     {
       op: "recordGate",
       slot: "turnedPrize",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [
         {
           op: "recordGate",
           slot: "revealed",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             {
               op: "optional",
               note: "You may have your opponent switch the revealed card with the Prize card you turned face up.",
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [{ op: "swapTurnedPrizeWithRevealed" }],
             },
           ],
@@ -7075,7 +7014,6 @@ const JEWEL_SEEKER: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "searchDeck",
@@ -7140,7 +7078,6 @@ const LAND_COLLAPSE: CardProgram = {
       {
         op: "conditionGate",
         cond: { kind: "yourPlayedBannerSupporterThisTurn", banner: "Ancient" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
       },
     ],
@@ -7407,7 +7344,6 @@ const FLOAT_UP: CardProgram = {
       {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnSelf", dest: "deck" }],
       },
     ],
@@ -7700,7 +7636,6 @@ const LILLIES_DETERMINATION: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourPrizesRemaining", counts: [6] },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
       otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 6 } }],
     },
@@ -7825,7 +7760,6 @@ const AZS_TRANQUILITY: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
         {
           op: "healChosen",
@@ -7929,7 +7863,6 @@ const PSYCHIC_DRAW_3: CardProgram = {
         {
           op: "optional",
           note: PSYCHIC_DRAW_3_TEXT,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "drawCards", count: 3 }],
         },
       ],
@@ -7948,7 +7881,6 @@ const PSYCHIC_DRAW_2: CardProgram = {
         {
           op: "optional",
           note: PSYCHIC_DRAW_2_TEXT,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "drawCards", count: 2 }],
         },
       ],
@@ -7973,7 +7905,6 @@ const PRISON_PANIC: CardProgram = {
         {
           op: "optional",
           note: PRISON_PANIC_TEXT,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "applyStatus", target: "defender", status: "confused" }],
         },
       ],
@@ -8077,7 +8008,6 @@ const HAPHAZARD_HAMMER: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
         },
       ],
@@ -8248,7 +8178,6 @@ const TUCK_TAIL: CardProgram = {
         {
           op: "optional",
           note: "You may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
             { op: "shuffleDeck" },
@@ -8396,7 +8325,6 @@ const GUIDING_DANCE: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "searchDeck",
@@ -8856,7 +8784,6 @@ const TEAM_ROCKETS_HYPNOTIZER: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
         },
       ],
@@ -8988,14 +8915,12 @@ const DARK_BELL: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "opponentActiveHasType", type: "Darkness" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [],
       otherwise: [{ op: "applyStatus", target: "defender", status: "confused" }],
     },
     {
       op: "conditionGate",
       cond: { kind: "yourActiveHasType", type: "Darkness" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [],
       otherwise: [{ op: "applyStatus", target: "self", status: "confused" }],
     },
@@ -9091,7 +9016,6 @@ const SANDY_FLAPPING: CardProgram = {
         {
           op: "optional",
           note: SANDY_FLAPPING_TEXT,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
         },
       ],
@@ -9106,7 +9030,6 @@ const SANDY_FLAPPING: CardProgram = {
         {
           op: "optional",
           note: SANDY_FLAPPING_TEXT,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
         },
       ],
@@ -9154,7 +9077,6 @@ const ADVERSITY_POLICY: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveWeakToOpponentActiveType" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "drawCards", count: 3 }],
         },
       ],
@@ -9263,7 +9185,6 @@ const GOOD_SLEEP: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveAsleep" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "heal", target: "self", amount: "all" }],
         },
       ],
@@ -9513,7 +9434,6 @@ const BOISTEROUS_WIND: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "discardEnergy",
@@ -9541,7 +9461,6 @@ const DESTRUCTIVE_HEADBUTTING: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
         },
       ],
@@ -9574,7 +9493,6 @@ const SKY_HUNT: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "randomFromOpponentHand", to: "discard" }],
         },
       ],

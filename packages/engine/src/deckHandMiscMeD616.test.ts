@@ -237,7 +237,6 @@ describe("D616 §2 — the readings", () => {
       {
         op: "optional",
         note: ROTO_CALL,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "searchDeck",

@@ -320,7 +320,6 @@ describe("D557 §1 — Kieran: the print, and the registry row that maps it", ()
           op: "optional",
           note: KIERAN_TEXT,
           labels: LABELS,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [{ op: "switchActive" }],
           otherwise: [{ op: "boostSideAttacksThisTurn", amount: KIERAN_BONUS, target: EX_OR_V }],
         },
@@ -391,7 +390,6 @@ describe("D557 §2 — the park: a labelled `confirm`, answered by the controlle
   it("an UNLABELED `optional` parks the byte-identical two-field prompt (D135)", () => {
     const start = ready();
     const program: EffectOp[] = [
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       { op: "optional", note: "You may draw a card.", then: [{ op: "drawCards", count: 1 }] },
     ];
     const run = runProgram(start, program, { seat: "p1" }, []);
@@ -574,7 +572,6 @@ describe("D557 §7 — Venture Bomb: the print, and the registry row that maps i
       trainer: [
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" },
           ],

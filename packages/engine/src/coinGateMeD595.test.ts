@@ -109,7 +109,6 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       ),
     );
     expect(deriveAttackEffect(T.triKinesis)).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "coinFlipGate", coins: 3, then: [{ op: "knockOutChosen", target: "opponentAny" }] },
     ]);
     for (const text of [T.bellyful, T.triKinesis, T.clutch, T.strolls, T.pull]) {

@@ -278,7 +278,6 @@ describe("the record itself", () => {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 3 }],
         otherwise: [{ op: "drawCards", count: 1 }],
       },
@@ -300,13 +299,11 @@ describe("the record itself", () => {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 3 }],
       },
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 1 }],
       },
     ];
@@ -350,7 +347,6 @@ describe("the registry rows", () => {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: effect-contract step list, not a thenable.
         then: [{ op: "drawCards", count: 3 }],
       },
     ]);
@@ -391,7 +387,6 @@ describe("the record ACROSS a park — the claim the shipped cards never exercis
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 1 }],
       },
     ];
@@ -721,7 +716,6 @@ describe("the prompt states what the ANSWER buys", () => {
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 2 }],
       },
     ];
@@ -730,7 +724,6 @@ describe("the prompt states what the ANSWER buys", () => {
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 2 }, { op: "shuffleDeck" }],
       },
     ];
@@ -771,7 +764,6 @@ describe("a whiff overwrites the slot it would have written", () => {
       {
         op: "recordGate",
         slot: "moved",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "drawCards", count: 3 }],
       },
     ];

@@ -424,7 +424,6 @@ describe("D636 §1 — the readers and the registry row", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentStadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
       },
     ]);

@@ -145,7 +145,6 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
@@ -183,7 +182,6 @@ describe("§2 — the derivation, and the population it was measured on", () => 
       expect(deriveAttackEffect(PRINTED.replace("Paralyzed", word))).toEqual([
         {
           op: "coinFlipGate",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             { op: "applyStatus", target: "defender", status },
             { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
@@ -263,7 +261,6 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(BARE_FLIP_STATUS)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);

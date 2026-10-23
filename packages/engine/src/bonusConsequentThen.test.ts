@@ -301,7 +301,6 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "spreadDamage", target: "opponentBench", amount: 30 },
           { op: "discardStadium" },
@@ -400,7 +399,6 @@ describe("D382 §4 — the ASSEMBLER: both arms, and the PRINTED ORDER inside th
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageDefender", amount: 120 }, { op: "discardStadium" }],
         otherwise: [{ op: "damageDefender", amount: 60 }],
       },

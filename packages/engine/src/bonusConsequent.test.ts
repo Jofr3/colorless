@@ -296,7 +296,6 @@ describe("D317 §1 — the print, and the reading each of the two sentences gets
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveIsEvolution" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [
             { op: "damageDefender", amount: 280 },
             {
@@ -315,7 +314,6 @@ describe("D317 §1 — the print, and the reading each of the two sentences gets
     ).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "damageDefender", amount: 60 },
           { op: "heal", target: "self", amount: 30 },

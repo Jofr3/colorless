@@ -203,7 +203,6 @@ describe("D311 §1 — the print, the population, and the registry row that maps
     const program = programFor(DUDUNSPARCE)?.abilities?.[0]?.program ?? [];
     expect(program).toEqual([
       { op: "drawCards", count: 3, recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
     ]);
     // The gate has NO `otherwise`: the printed sentence says what happens if you

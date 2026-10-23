@@ -541,7 +541,6 @@ describe("D631 §1 — the prints and the registry rows", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourActiveAsleep" },
-              // biome-ignore lint/suspicious/noThenProperty: the effect gate's step list, not a thenable.
               then: [{ op: "heal", target: "self", amount: "all" }],
             },
           ],

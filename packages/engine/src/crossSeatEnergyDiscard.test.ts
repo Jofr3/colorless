@@ -115,7 +115,6 @@ describe("D361 §1 — the deriver: three printed sentences, one WIDENED anchor 
     ).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
@@ -450,7 +449,6 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
         {
           op: "conditionGate",
           cond: { kind: "opponentActiveIsEx" },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
         },
       ],

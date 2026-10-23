@@ -310,7 +310,6 @@ describe("D557 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourActiveOwner", owner: "Arven" },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [{ op: "heal", target: "self", amount: 100 }],
             otherwise: [{ op: "heal", target: "self", amount: 30 }],
           },

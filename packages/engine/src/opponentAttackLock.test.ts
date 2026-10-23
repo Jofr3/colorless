@@ -208,7 +208,6 @@ describe("the printed datum — both printings re-queried, field by field", () =
         "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
       ),
     ).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
       { op: "coinFlipGate", then: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
     ]);
     expect(deriveAttackEffect("During your next turn, this Pokémon can't use Peck.")).toEqual([

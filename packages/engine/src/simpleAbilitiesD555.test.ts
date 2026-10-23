@@ -365,7 +365,6 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
       false,
       [
         { op: "switchActive", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
       ],
     ],
@@ -391,7 +390,6 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
     expect(JSON.stringify(programFor(SAMUROTT[0])?.abilities?.[0]?.program)).toBe(
       JSON.stringify([
         { op: "switchActive", recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
       ]),
     );
@@ -426,12 +424,10 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
           {
             op: "conditionGate",
             cond: { kind: "stadiumInPlay" },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: [
               {
                 op: "optional",
                 note: "You may discard a Stadium in play.",
-                // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                 then: [{ op: "discardStadium" }],
               },
             ],
@@ -447,9 +443,7 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
         trigger: "onEvolve",
         optional: true,
         program: [
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
         ],
       },

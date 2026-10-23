@@ -68,7 +68,6 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
     has drifted from what this file means by it. */
 const program = (discarded: number): EffectOp[] => [
   { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
   { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: discarded }] },
 ];
 
@@ -494,12 +493,10 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
   it("the OTHER two members of the family are UNMOVED — this anchor claims neither", () => {
     expect(deriveAttackEffect(DRAW2)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
     ]);
     expect(deriveAttackEffect(DRAW3)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 3 }] },
     ]);
   });
@@ -538,7 +535,6 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
     const bare = [{ op: "payFromHand", count: 1, to: "discard", recordAs: "paid" }] as EffectOp[];
     const undescribed = [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "revealOpponentHand" }] },
     ] as EffectOp[];
     expect(noteOf(undescribed)).toBe(noteOf(bare));

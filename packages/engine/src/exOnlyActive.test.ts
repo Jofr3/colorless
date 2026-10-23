@@ -243,7 +243,6 @@ describe("§4 — the discard anchor is defended by TWO independent printed word
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsEx" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);

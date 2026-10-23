@@ -576,7 +576,6 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Tarragon" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
       },
     ]);

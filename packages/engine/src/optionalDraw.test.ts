@@ -41,7 +41,6 @@ const UNTIL = 0;
 const FIVE = 1;
 
 function wrapped(text: string, inner: EffectOp): EffectOp[] {
-  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-op list, not a thenable (arrays are not callable).
   return [{ op: "optional", note: text, then: [inner] }];
 }
 
@@ -207,7 +206,6 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
       const built = deriveAttackEffect(text);
       expect(built, text).toEqual([
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count }] },
       ]);
       const hasOptional = (value: unknown): boolean =>
@@ -630,7 +628,6 @@ describe("the wire and the seat gate, on the DERIVED park", () => {
     expect(thawed.phase.cont.pendingOp).toEqual({
       op: "optional",
       note: CLAUSES[UNTIL].text,
-      // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-op list.
       then: [{ op: "drawUntilHandSize", size: 6 }],
     });
     const { state: done } = mustApply(thawed, {

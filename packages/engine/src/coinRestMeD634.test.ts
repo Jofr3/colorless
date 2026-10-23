@@ -95,7 +95,6 @@ describe("D634 §1 — the seven sentences and their programs", () => {
       {
         op: "coinFlipGate",
         coins: 2,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 },
           { op: "shuffleDeck" },
@@ -105,7 +104,6 @@ describe("D634 §1 — the seven sentences and their programs", () => {
     expect(deriveAttackEffect(T.gust)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnBenched", whose: "opponent", dest: "deck", includeActive: true }],
       },
     ]);
@@ -147,7 +145,6 @@ describe("D634 §2 — near misses stay null; arm 46b's crossings", () => {
     expect(
       deriveAttackEffect(T.gust.replace("opponent's Pokémon", "opponent's Benched Pokémon")),
     ).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "coinFlipGate", then: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
     ]);
   });

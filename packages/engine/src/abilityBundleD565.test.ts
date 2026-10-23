@@ -464,7 +464,6 @@ describe("§1 — the prints and the registry rows", () => {
             {
               op: "recordGate",
               slot: "moved",
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
               then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
             },
           ],

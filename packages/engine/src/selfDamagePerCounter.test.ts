@@ -265,7 +265,6 @@ describe("§5 — the family, measured over the whole column rather than describ
         op: "coinFlipGate",
         coins: 2,
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageSelf", amount: 90 }],
       },
     ]);

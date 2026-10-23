@@ -337,12 +337,10 @@ describe("§3 — the program, pinned byte-for-byte: two gates, and BOTH carry a
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "optional",
             note: CETITAN,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [{ op: "discardStadium" }, { op: "damageDefender", amount: 280 }],
             otherwise: [{ op: "damageDefender", amount: 140 }],
           },

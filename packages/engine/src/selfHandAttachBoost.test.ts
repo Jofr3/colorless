@@ -576,7 +576,6 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
         toSelf: true,
         recordAs: "moved",
       },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
     ];
     const run = runProgram(

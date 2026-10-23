@@ -101,7 +101,6 @@ describe("the registry rows and the derived twin", () => {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "opponentMayDraw", count: 1 }],
         },
       ]);
@@ -350,7 +349,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "paid",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "opponentMayDraw", count: 1 }],
         },
       ],
@@ -525,7 +523,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "opponentMayDraw", count: 1 }],
         },
       ],
@@ -648,7 +645,6 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "drawCards", count: 1 }],
         },
       ],

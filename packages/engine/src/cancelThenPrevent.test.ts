@@ -124,7 +124,6 @@ describe("§2 — one reader owns the sentence, and the ops are the sibling's", 
     expect(sibling).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "preventDamage", effects: true }],
       },
     ]);

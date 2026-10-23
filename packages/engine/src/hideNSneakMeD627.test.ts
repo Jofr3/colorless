@@ -94,7 +94,6 @@ describe("D627 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: gate(6),
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [
           {
             op: "counterEachAll",
@@ -118,7 +117,6 @@ describe("D627 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: gate(13),
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [
           {
             op: "damageChosen",

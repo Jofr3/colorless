@@ -316,7 +316,6 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
@@ -360,7 +359,6 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
@@ -368,10 +366,7 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
       deriveAttackEffect(
         "Flip a coin. If tails, during your next turn, this Pokémon can't attack.",
       ),
-    ).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
-      { op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] },
-    ]);
+    ).toEqual([{ op: "coinFlipGate", onTails: true, then: [{ op: "preventAttack" }] }]);
     expect(
       deriveAttackEffect(
         "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",

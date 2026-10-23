@@ -174,10 +174,7 @@ describe("D299 §1 — the anchor reads exactly the four printed spellings", () 
     expect(deriveAttackEffect(CHIMECHO_TEXT)).toEqual([SELF_DECK]);
     expect(deriveAttackEffect(SWOOBAT_TEXT)).toEqual([SELF_HAND]);
     expect(deriveAttackEffect(ILLUMISE_BODY)).toEqual([FOE_DECK]);
-    expect(deriveAttackEffect(SYLVEON_TEXT)).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
-      { op: "coinFlipGate", then: [FOE_DECK] },
-    ]);
+    expect(deriveAttackEffect(SYLVEON_TEXT)).toEqual([{ op: "coinFlipGate", then: [FOE_DECK] }]);
   });
 
   it("the CURLY apostrophe reads the same as the ASCII one, on both possessives", () => {
@@ -185,7 +182,6 @@ describe("D299 §1 — the anchor reads exactly the four printed spellings", () 
     expect(curly).not.toBe(ILLUMISE_BODY);
     expect(deriveAttackEffect(curly)).toEqual([FOE_DECK]);
     const curlySylveon = SYLVEON_TEXT.replace("opponent's", `opponent${"’"}s`);
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
     expect(deriveAttackEffect(curlySylveon)).toEqual([{ op: "coinFlipGate", then: [FOE_DECK] }]);
   });
 

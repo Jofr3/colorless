@@ -96,7 +96,6 @@ describe("the tails gate — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "preventAttack" }],
       },
     ]);
@@ -109,7 +108,6 @@ describe("the tails gate — derived, not authored", () => {
   it("wraps D143's BARE program byte for byte — one action, printed three ways", () => {
     const gated = deriveAttackEffect(TAILS_TEXT) as EffectOp[];
     expect(gated).toHaveLength(1);
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     expect(gated[0]).toMatchObject({ then: deriveAttackEffect(BARE_TEXT) });
     // …and the two anchors are NOT the same reading: the bare one derives a naked
     // op, the gated one a gate. A reader that let either claim the other's string
@@ -484,10 +482,8 @@ describe("the tails gate — `programPlayable` is FACE-AGNOSTIC, asserted", () =
     for (const onTails of [undefined, true] as const) {
       const gated: EffectOp[] =
         onTails === undefined
-          ? // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-            [{ op: "coinFlipGate", then: gust }]
-          : // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-            [{ op: "coinFlipGate", onTails, then: gust }];
+          ? [{ op: "coinFlipGate", then: gust }]
+          : [{ op: "coinFlipGate", onTails, then: gust }];
       expect(programPlayable(emptyBench, gated, "p1"), `onTails=${String(onTails)}`).toBe(false);
       // …and PLAYABLE again the moment the branch has a target, on both faces —
       // so the refusal above is about the empty Bench and not about the gate.
@@ -533,7 +529,6 @@ describe("the tails gate — the census, asserted as a shape", () => {
         {
           op: "coinFlipGate",
           onTails: true,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: deriveAttackEffect(bare),
         },
       ]);

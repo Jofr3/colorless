@@ -1090,7 +1090,6 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       expect(ability?.activeOnly, `${id} is counted for a clause it does not print`).toBe(false);
       expect(ability?.program).toEqual([
         { op: "drawCards", count: 3, recordAs: "moved" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
       ]);
     }

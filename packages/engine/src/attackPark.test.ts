@@ -94,7 +94,6 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: deriveAttackEffect("Discard all Energy from this Pokémon."),
       },
     ]);

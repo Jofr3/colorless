@@ -240,7 +240,6 @@ describe("D313 §1 — the three prints, the three registry rows, and what diffe
       {
         op: "optional",
         note: CROBAT_PRINTED,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
       },
     ]);
@@ -552,7 +551,6 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
         ...parked.phase,
         cont: {
           ...cont,
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           pendingOp: { ...cont.pendingOp, then: [{ op: "returnSelf" }] },
         },
       },

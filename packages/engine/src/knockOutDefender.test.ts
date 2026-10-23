@@ -215,7 +215,6 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ]);
@@ -233,7 +232,6 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
       { op: "damageSelf", amount: 100 },
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ]);
@@ -292,7 +290,6 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
       { op: "damageSelf", amount: 60 },
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ]);
@@ -722,7 +719,6 @@ describe("§7.1 D415's deriver — arm 6a with the `cond` swapped and nothing el
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ]);
@@ -735,7 +731,6 @@ describe("§7.1 D415's deriver — arm 6a with the `cond` swapped and nothing el
       expect(program).toHaveLength(1);
       expect(program?.[0]).toMatchObject({
         op: "conditionGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       });
     }

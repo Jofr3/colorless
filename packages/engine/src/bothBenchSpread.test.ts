@@ -657,7 +657,6 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     {
       op: "conditionGate",
       cond: { kind: "opponentActiveDamaged" },
-      // biome-ignore lint/suspicious/noThenProperty: gated-step list, not a thenable.
       then: [{ op: "damageDefender", amount: 50 }],
     },
     { op: "spreadDamage", target: "yourBench", amount: 50, damagedOnly: true },

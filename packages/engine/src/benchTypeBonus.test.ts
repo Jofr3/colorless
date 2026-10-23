@@ -528,7 +528,6 @@ describe("§6 — the census, and a 2-printing sentence this slice found on the 
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasType", type: "Dragon" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);

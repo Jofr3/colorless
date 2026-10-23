@@ -642,7 +642,6 @@ describe("§7 — what the class group refuses, and what it must not have moved"
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "damageChosen",

@@ -156,7 +156,6 @@ describe("the anchor — 18 printings, 4 clauses, one sentence", () => {
     const gated = REAL_NEAR_MISSES[3];
     expect(gated.startsWith("Heal")).toBe(false);
     expect(deriveAttackEffect(gated)).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "coinFlipGate", then: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
     ]);
     // And the COIN reader still does not claim it: a gated heal is not an

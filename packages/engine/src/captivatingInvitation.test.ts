@@ -124,7 +124,6 @@ describe("D330 §1 — the two programs, and the clauses they each spell", () =>
     expect(ability?.program).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
       },
     ]);

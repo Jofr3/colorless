@@ -83,7 +83,6 @@ describe("D586 §2 — the readings: shipped members at the printed parameters",
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasSpecialCondition" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "knockOutDefender" }],
       },
     ]);

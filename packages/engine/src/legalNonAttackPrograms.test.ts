@@ -1161,7 +1161,6 @@ describe("D199 — the registry map", () => {
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "reorderTop", n: 2, from: "bottom" },
           { op: "drawCards", count: 4 },
@@ -2871,7 +2870,6 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(programFor("svp-114")?.trainer).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "drawCards", count: 4 }],
         otherwise: [{ op: "drawCards", count: 2 }],
       },
@@ -2879,7 +2877,6 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(programFor("sv08-173")?.trainer).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
         otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
       },
@@ -2975,7 +2972,6 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     const gate = (arm: EffectOp[], other?: EffectOp[]): EffectOp[] => [
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: arm,
         ...(other === undefined ? {} : { otherwise: other }),
       },
@@ -3018,7 +3014,6 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
     expect(programFor("sv10.5w-083")?.trainer).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
         otherwise: [
           { op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } },
@@ -3133,7 +3128,6 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
     expect(programFor("fix-drasna")?.trainer).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
         otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
       },

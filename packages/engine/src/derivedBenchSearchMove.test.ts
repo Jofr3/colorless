@@ -42,7 +42,6 @@ const PROGRAM: readonly EffectOp[] = [
   {
     op: "recordGate",
     slot: "moved",
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
     then: [
       {
         op: "moveEnergy",
@@ -809,7 +808,6 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
           pendingOp: v30Search as unknown as EffectOp,
           rest: [
             bytes.phase.cont.rest[0] as EffectOp,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
             { ...gate, then: [v30Move] } as unknown as EffectOp,
           ],
         },
@@ -873,7 +871,6 @@ describe("§8 — the census this row moves, and the summands it does not", () =
     const copy = JSON.parse(JSON.stringify(program)) as Record<string, unknown>[];
     const gate = copy[2] as { then: Record<string, unknown>[] };
     const { destRecorded: _pin, ...unpinnedMove } = (gate.then[0] ?? {}) as Record<string, unknown>;
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
     const unpinned = [copy[0], copy[1], { ...gate, then: [unpinnedMove] }];
     expect(unpinned).not.toEqual(program);
     expect(JSON.stringify(unpinned)).not.toContain("destRecorded");

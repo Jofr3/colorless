@@ -796,7 +796,6 @@ describe("deriveAttackEffect (effects.ts)", () => {
     ).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);

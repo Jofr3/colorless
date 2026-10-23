@@ -178,12 +178,10 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "optional",
             note: MAY,
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
             then: [{ op: "discardStadium" }],
           },
         ],
@@ -210,7 +208,6 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           { op: "spreadDamage", target: "opponentBench", amount: 30 },
           { op: "discardStadium" },

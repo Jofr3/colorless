@@ -347,7 +347,6 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },
     ]);

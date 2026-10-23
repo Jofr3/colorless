@@ -153,7 +153,6 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
 describe("§2 — the READING: one gate, one op, and the arity read off the sentence", () => {
   it("the printed sentence derives to a conditionGate over D398's member", () => {
     expect(deriveAttackEffect(TAKEN)).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "conditionGate", cond: { kind: "yourDeckAtMost", count: 3 }, then: [SNIPE] },
     ]);
   });
@@ -176,7 +175,6 @@ describe("§2 — the READING: one gate, one op, and the arity read off the sent
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ ...SNIPE, amount: 55, count: 3 }],
       },
     ]);
@@ -410,7 +408,6 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "damageChosen",
@@ -431,7 +428,6 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
       {
         op: "conditionGate",
         cond: { kind: "yourDeckAtMost", count: 3 },
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [
           {
             op: "damageChosen",

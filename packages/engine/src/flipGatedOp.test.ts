@@ -124,9 +124,7 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
   it("derives both clauses to a coinFlipGate over the BARE anchor's own program", () => {
     for (const { text, inner, bare } of CLAUSES) {
       const ops = deriveAttackEffect(text);
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       expect(ops).toEqual([{ op: "coinFlipGate", then: [inner] }]);
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       expect(deriveAttackEffect(text)?.[0]).toMatchObject({ then: deriveAttackEffect(bare) });
     }
     expect(CLAUSES).toHaveLength(2);
@@ -159,10 +157,9 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     ).toBeNull();
     // No CEILING, by contrast: the interpreter clamps the heal to the damage present,
     // so a malformed large amount heals to full and stops — a legal board state.
-    expect(
-      deriveAttackEffect("Flip a coin. If heads, heal 999 damage from this Pokémon."),
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-    ).toEqual([{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 999 }] }]);
+    expect(deriveAttackEffect("Flip a coin. If heads, heal 999 damage from this Pokémon.")).toEqual(
+      [{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 999 }] }],
+    );
   });
 
   it("refuses the THREE unmapped catalog rows that share its prefix", () => {
@@ -177,7 +174,6 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[1])).toBeNull();
     expect(deriveAttackCopy(REAL_NEAR_MISSES[1])).toEqual({ from: "opponentActive", flip: true });
     expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       {
         op: "coinFlipGate",
         then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
@@ -189,21 +185,18 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     expect(deriveAttackEffect(REAL_NEAR_MISSES[3])).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
     expect(deriveAttackEffect(REAL_NEAR_MISSES[4])).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
     expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "gust" }],
       },
     ]);
@@ -275,14 +268,10 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     // which drift is tolerated and which is not.
     expect(
       deriveAttackEffect("  Flip a coin. If heads, heal 30 damage from this Pokémon.\n"),
-    ).toEqual(
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      [{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 30 }] }],
-    );
+    ).toEqual([{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 30 }] }]);
     expect(
       deriveAttackEffect("\tFlip a coin. If heads, discard the top card of your opponent's deck. "),
     ).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "coinFlipGate", then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }] },
     ]);
   });
@@ -308,7 +297,6 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
     // the entire visible result of the declaration — and a tails moves nothing.
     expect(spacingOut?.damage).toBeUndefined();
     expect(deriveAttackEffect(spacingOut?.effect ?? "")).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: SPACING_OUT_HEAL }] },
     ]);
     expect(FIXTURE_POOL["sv02-035"]?.name).toBe("Fuecoco");
@@ -331,7 +319,6 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
     expect(deriveAttackEffect(digALittle?.effect ?? "")).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardDeckTop", whose: "opponent", count: DIG_A_LITTLE_MILL }],
       },
     ]);
@@ -613,13 +600,11 @@ describe("what the flip-gated family costs the rest of the engine — nothing", 
 
   it("emits the SAME ops the bare anchors do — one action, two printings, no mechanism", () => {
     expect(deriveAttackEffect(CLAUSES[0].text)).toEqual([
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "coinFlipGate", then: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
     ]);
     expect(deriveAttackEffect(CLAUSES[1].text)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: deriveAttackEffect("Discard the top card of your opponent's deck."),
       },
     ]);

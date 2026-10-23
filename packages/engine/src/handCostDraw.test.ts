@@ -68,7 +68,6 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
     has drifted from what this file means by it. */
 const program = (drawn: number): EffectOp[] => [
   { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
   { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
 ];
 
@@ -137,7 +136,6 @@ describe("D473 §1 — the two sentences, measured live over the legal column", 
     expect(resolvedByAnyReader(SIBLING_BUILT_AT_D515)).toBe(true);
     expect(deriveAttackEffect(SIBLING_BUILT_AT_D515)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
     ]);
   });
@@ -362,27 +360,23 @@ describe("D473 §3 — the discriminating board: EIGHT readings, EIGHT different
     // engine carries (Ultra Ball, SER and Kofu all pay 2).
     paysTwo: [
       { op: "payFromHand", count: 2, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
     ],
     // The DESTINATION crossed — Dendra's `deckBottom`, the sibling value on the very
     // field this arm sets, and the discard pile is what tells them apart.
     toDeckBottom: [
       { op: "payFromHand", count: 1, to: "deckBottom", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
     ],
     wholeHand: [{ op: "discardHand" }, { op: "drawCards", count: 2 }],
     // The gate reading ANOTHER slot: it compiles, it derives, and it never fires.
     wrongSlot: [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 2 }] },
     ],
     // The payment filing NOTHING: same shape, same gate, and the draw is dead.
     noRecordAs: [
       { op: "payFromHand", count: 1, to: "discard" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
     ],
   };

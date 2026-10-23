@@ -106,7 +106,6 @@ describe("D617 §2 — the registry programs, field for field", () => {
         {
           op: "recordGate",
           slot: "moved",
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
             {
               op: "healChosen",
@@ -640,7 +639,6 @@ describe("D617 §8 — the new pieces off a board", () => {
       {
         op: "recordGate",
         slot: "paid",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "drawCards", count: 1, per }],
       },
     ];

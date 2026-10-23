@@ -327,7 +327,6 @@ describe("D626 §1 — the texts and the registry rows", () => {
   it("Flygon ×3: two `Sandy Flapping` rows — `onEvolve`, and `onKnockOut` behind `activeOnly` + `byOpponentAttack` — each a confirm around the reader's mill", () => {
     const mill = deriveAttackEffect("Discard the top 2 cards of your opponent's deck.");
     expect(mill).toEqual([{ op: "discardDeckTop", whose: "opponent", count: 2 }]);
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
     const confirm = [{ op: "optional", note: SANDY_FLAPPING, then: mill }];
     for (const id of FLYGON) {
       expect(programFor(id), id).toEqual({
@@ -380,7 +379,6 @@ describe("D626 §1 — the texts and the registry rows", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourActiveWeakToOpponentActiveType" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
               then: [{ op: "drawCards", count: 3 }],
             },
           ],

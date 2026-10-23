@@ -895,7 +895,6 @@ describe("§3 — the rows, exactly as authored", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
-              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
               then: [
                 {
                   op: "searchDeck",

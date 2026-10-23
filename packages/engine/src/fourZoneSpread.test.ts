@@ -58,7 +58,6 @@ const program = (amount: number): EffectOp[] => [
   {
     op: "conditionGate",
     cond: { kind: "opponentActiveDamaged" },
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "damageDefender", amount }],
   },
   { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },
@@ -530,7 +529,6 @@ describe("D520 §5 — the order is Active → own Bench → opponent Bench, and
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamaged" },
-        // biome-ignore lint/suspicious/noThenProperty: gated-step list, not a thenable.
         then: [{ op: "damageDefender", amount: 50 }],
       },
       { op: "spreadDamage", target: "yourBench", amount: 50, damagedOnly: true },

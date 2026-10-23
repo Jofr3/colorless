@@ -1149,7 +1149,6 @@ function oneOfRecordedChoice(
       },
       cards: { yes: first.uid, ...(second === undefined ? {} : { no: second.uid }) },
       targets,
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: attach(first.type),
       ...(second === undefined ? {} : { otherwise: attach(second.type) }),
     },
@@ -1443,7 +1442,6 @@ function stepOp(
                 op: "optional",
                 note,
                 labels: { yes: word(second), no: word(third) },
-                // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                 then: clear(second),
                 otherwise: clear(third),
               },
@@ -1458,7 +1456,6 @@ function stepOp(
               yes: word(first),
               no: third === undefined ? word(second) : `${word(second)} or ${word(third)}`,
             },
-            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
             then: clear(first),
             otherwise: tail,
           },
@@ -10434,7 +10431,6 @@ function ownDevolveAnswered(
             yes: cards(k),
             no: k + 1 === n ? cards(n) : `${k + 1} to ${n} Evolution cards`,
           },
-          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [shedOp(k)],
           otherwise: [chain(k + 1)],
         };
@@ -10516,7 +10512,6 @@ function chooseOneChain(
       op: "optional",
       note,
       labels: { yes: first.label, no: rest.map((b) => b.label).join(" or ") },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [first.op],
       otherwise: chooseOneChain(note, rest),
     },

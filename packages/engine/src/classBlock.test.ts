@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  activeOf,
 } from "./testFixtures";
 
 const BASIC_TEXT =
@@ -144,7 +145,6 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentKnockedOutByDamage" },
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [{ op: "preventDamage", effects: true }],
       },
     ]);
@@ -500,9 +500,8 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
         ...state.players,
         p1: {
           ...state.players.p1,
-          // biome-ignore lint/style/noNonNullAssertion: the surgery above set it.
           active: {
-            ...state.players.p1.active!,
+            ...activeOf(state, "p1"),
             attackBlock: { turn: 99, effects: false, fromClass: BASIC_CLASS },
           },
         },

@@ -202,7 +202,6 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     expect(deriveAttackEffect(gated)).toEqual([
       {
         op: "coinFlipGate",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: deriveAttackEffect("Discard the top card of your opponent's deck."),
       },
     ]);

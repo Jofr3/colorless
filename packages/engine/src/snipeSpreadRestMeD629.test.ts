@@ -184,7 +184,6 @@ describe("D629 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasSpecialCondition" },
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [
           { op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack" },
         ],

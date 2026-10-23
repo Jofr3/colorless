@@ -249,7 +249,6 @@ describe("D355 §3 — absent `coins` is ONE coin, byte for byte", () => {
     expect(gate).toEqual({
       op: "coinFlipGate",
       coins: 2,
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable (arrays are not callable).
       then: [
         { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
         { op: "shuffleDeck" },

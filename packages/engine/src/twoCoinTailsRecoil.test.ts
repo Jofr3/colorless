@@ -60,7 +60,6 @@ const program = (amount: number): EffectOp[] => [
     op: "coinFlipGate",
     coins: 2,
     onTails: true,
-    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
     then: [{ op: "damageSelf", amount }],
   },
 ];
@@ -298,7 +297,6 @@ describe("D521 §1 — the printed row derives to EXACTLY the one-op program", (
       {
         op: "coinFlipGate",
         onTails: true,
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageSelf", amount: 90 }],
       },
     ]);

@@ -120,7 +120,6 @@ describe("D633 §2 — the readings", () => {
       {
         op: "optional",
         note: VOLTAIC_FIST,
-        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
         then: [
           { op: "damageSelf", amount: 60 },
           { op: "applyStatus", target: "defender", status: "paralyzed" },
