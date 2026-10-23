@@ -391,6 +391,9 @@ export function ok(state: GameState, events: GameEvent[]): ApplyResult {
   return { ok: true, state, events };
 }
 
-export function err(code: ErrorCode, message: string): ApplyResult {
+/** The failing arm of ApplyResult, for gates that either reject or let the action through. */
+export type Rejection = Extract<ApplyResult, { ok: false }>;
+
+export function err(code: ErrorCode, message: string): Rejection {
   return { ok: false, error: { code, message } };
 }

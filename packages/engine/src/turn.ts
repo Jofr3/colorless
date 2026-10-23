@@ -7,6 +7,7 @@ import type {
   GameAction,
   PlayBasicToBenchAction,
   RetreatAction,
+  Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
 import { abilityUsedKey } from "./cardplay";
@@ -101,7 +102,7 @@ export function isBenchIndex(value: unknown): value is number {
 export function turnGate(
   state: GameState,
   action: { type: GameAction["type"]; seat: Seat },
-): ApplyResult | null {
+): Rejection | null {
   const phase = state.phase;
   if (phase.kind !== "turn:action") {
     return err("BAD_PHASE", `${action.type} is not legal during ${phase.kind}`);
@@ -391,7 +392,7 @@ function benchFromHandRotation(
   state: GameState,
   seat: Seat,
   uid: string,
-): { reject: ApplyResult } | { usedKey: string; name: string } | null {
+): { reject: Rejection } | { usedKey: string; name: string } | null {
   if (!state.players[seat].hand.includes(uid)) return null;
   const card = cardOfUid(state, uid);
   const rotation =

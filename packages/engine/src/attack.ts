@@ -5,6 +5,7 @@ import type {
   GameAction,
   PromoteAction,
   TakePrizesAction,
+  Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
 import {
@@ -2355,9 +2356,7 @@ function interruptGate<K extends KoPhase["kind"]>(
   state: GameState,
   action: { type: GameAction["type"]; seat: Seat },
   kind: K,
-):
-  | { phase: KoPhase & { kind: K }; reject?: undefined }
-  | { phase?: undefined; reject: ApplyResult } {
+): { phase: KoPhase & { kind: K }; reject?: undefined } | { phase?: undefined; reject: Rejection } {
   const phase = state.phase;
   if (phase.kind !== kind) {
     return { reject: err("BAD_PHASE", `${action.type} is not legal during ${phase.kind}`) };

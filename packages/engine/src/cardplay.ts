@@ -7,6 +7,7 @@ import type {
   ResolveEffectAction,
   UseAbilityAction,
   UseStadiumAbilityAction,
+  Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
 import {
@@ -1228,7 +1229,7 @@ function resolveOwnPokemon(
   state: GameState,
   seat: Seat,
   target: PokemonTarget,
-): { pokemon: InPlayPokemon; uid: string; reject?: undefined } | { reject: ApplyResult } {
+): { pokemon: InPlayPokemon; uid: string; reject?: undefined } | { reject: Rejection } {
   const side = state.players[seat];
   let pokemon: InPlayPokemon;
   if (target.spot === "active") {
@@ -1251,7 +1252,7 @@ function resolveOwnPokemon(
 
 /** Wire-check a resolveEffect choice against the parked prompt (a P4 client
     controls it): the right kind, and every uid/ref among the legal options. */
-function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult | null {
+function validateChoice(prompt: EffectPrompt, choice: EffectChoice): Rejection | null {
   if (typeof choice !== "object" || choice === null) {
     return err("BAD_EFFECT_CHOICE", "choice must be an object");
   }

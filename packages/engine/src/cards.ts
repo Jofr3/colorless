@@ -1,6 +1,6 @@
 import { BASIC_ENERGY_TYPES } from "@colorless/schema";
 import type { Attack, Card } from "@colorless/schema";
-import type { ApplyResult } from "./actions";
+import type { Rejection } from "./actions";
 import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
 import { normalizedFace } from "./cardText";
@@ -667,7 +667,7 @@ export function activeTop(
  * The "a Basic Pokémon out of your own hand" check shared by the two setup placements and the
  * in-turn bench play (§3.6–§3.7, §5.2). Returns the rejection, or null when the play is legal.
  */
-export function basicFromHandError(state: GameState, seat: Seat, uid: string): ApplyResult | null {
+export function basicFromHandError(state: GameState, seat: Seat, uid: string): Rejection | null {
   if (!state.players[seat].hand.includes(uid)) {
     return err("CARD_NOT_IN_HAND", `${uid} is not in ${seat}'s hand`);
   }
