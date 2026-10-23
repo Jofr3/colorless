@@ -9,7 +9,7 @@ import {
   splitAttackTrailingClause,
   timingGateFromAttackText,
 } from "./effects";
-import { applyAction, attackGateOf, createGame } from "./index";
+import { applyAction, attackGateOf } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { shuffle } from "./rng";
@@ -21,8 +21,9 @@ import {
   deckOf,
   setActiveFromDeck,
   must,
-  firstBasicInHand,
   activeOf,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { stackUids } from "./types";
 
@@ -124,28 +125,7 @@ const DECK = deckOf({
 });
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
 }
 
 /** TEST SURGERY — attach one `cardId` off `seat`'s deck onto the benched body at
@@ -877,7 +857,7 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
   it("THE FIRST DOOR: `phase.cont.pendingOp` carries the op as a LITERAL byte string", () => {
     const { state } = attack(board(SEED, [B1, B2, B3]));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(JSON.parse(JSON.stringify(state.phase.cont.pendingOp))).toEqual(PROGRAM[0]);
+    expect(roundTrip(state.phase.cont.pendingOp)).toEqual(PROGRAM[0]);
     expect(JSON.stringify(state)).toContain('{"op":"returnBenchedChosen","count":2}');
   });
 

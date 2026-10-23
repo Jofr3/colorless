@@ -115,7 +115,6 @@ describe("D250 — the registry rows", () => {
         trigger: "onPlayToBench",
         // The printed "you may". AUTO-FIRES (the flag's own doc): attaching your
         // own Energy to your own body is pure upside with nothing to decline.
-        optional: true,
         program: [
           {
             op: "attachEnergyFrom",

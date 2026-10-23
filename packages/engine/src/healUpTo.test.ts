@@ -13,6 +13,7 @@ import {
   setBenchDamage,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -284,7 +285,7 @@ describe("healChosen 'up to' — purity and the JSON park", () => {
     state = setActiveDamage(state, "p1", 90);
     state = setBenchDamage(state, "p1", 0, 60);
     const { state: parked } = play(state, "sv02-187");
-    const rehydrated = JSON.parse(JSON.stringify(parked)) as GameState;
+    const rehydrated = roundTrip(parked);
     const a = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",

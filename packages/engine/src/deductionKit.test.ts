@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "@colorless/schema";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -15,8 +15,8 @@ import {
   trainerCard,
   typedEnergy,
   must,
-  firstBasicInHand,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const KIT = "sv08-171";
@@ -77,28 +77,7 @@ function apply(
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** TEST SURGERY — replace p1's deck outright. Every assertion in this file is

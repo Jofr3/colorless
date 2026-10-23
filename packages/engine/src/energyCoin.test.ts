@@ -1,17 +1,16 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
 import { registryCardIds } from "./registry";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   deckOf,
   specialEnergy,
   trainerCard,
   typedEnergy,
-  must,
+  driveSetup,
 } from "./testFixtures";
 
 const ENERGY_COIN = "sv10.5b-081";
@@ -55,15 +54,7 @@ const ACTIVE: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const BENCH_0: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 function board(seed: number, deck: readonly string[]): GameState {
@@ -325,13 +316,11 @@ describe("D355 §5 — a losing flip does not touch the deck", () => {
   });
 });
 
-describe("D355 §6 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("THE BATON WAS HANDED ON AT D356 — this is now a CONTIGUITY claim", () => {
+describe("D355 §6 — the pool and the registry keys", () => {
+  it("Energy Coin and Magearna are registry keys", () => {
     const raw = registryCardIds();
-    const at = raw.indexOf(ENERGY_COIN);
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect(at).toBeLessThan(raw.length - 1);
-    expect(at).toBeLessThan(raw.indexOf(MAGEARNA));
+    expect(raw).toContain(ENERGY_COIN);
+    expect(raw).toContain(MAGEARNA);
   });
 
   it("the +1 on `raw.length` is EXACTLY this one id — the ONLY real id here", () => {

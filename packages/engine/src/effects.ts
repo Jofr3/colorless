@@ -1,2328 +1,106 @@
-// The effect-op vocabulary and the conservative text-to-ops deriver. This module is pure data;
-// interpreter.ts owns every state transition. Registry-authored programs are hand-written op arrays
-// that take precedence over the deriver.
+// The conservative text-to-ops deriver. This module is pure data; interpreter.ts owns every state
+// transition. Registry-authored programs are hand-written op arrays that take precedence over the
+// deriver. The op contract itself lives in effectTypes.ts and is re-exported here.
 
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
+
 import type { StatusName } from "./events";
-import type { PokemonRef } from "./interpreter";
-// Type-only import, so no runtime cycle with registry.ts.
-import type { AttackTimingGate } from "./registry";
-// Type-only import; a value import would create a cycle with cards.ts.
-import type { PokemonSuffix } from "./cards";
-import type { Banner } from "./banners";
-import { BENCH_MAX, type PokemonTarget, type SpecialConditions } from "./types";
+import { TYPE_SYMBOL } from "./cardText";
+
+import { BENCH_MAX, HP_PER_COUNTER, type SpecialConditions } from "./types";
+
 import type { CoinFace } from "./rng";
-// Type-only import, so no runtime cycle with attack.ts.
-import type { AttackCopyOverride } from "./attack";
 
-/** A declarative card predicate for deck searches (§15.E). Deliberately tiny
-    — the representative cards need only "a Basic Pokémon", "any Pokémon", "a
-    Basic Energy [of a type]" and "a card named X"; the union grows one entry
-    per new shape. */
-export type CardFilter =
-  /**
-   * A Basic Pokémon. `noRuleBox` excludes Rule Box Pokémon; `maxHp` is the printed "with N HP or
-   * less" threshold on the card's HP, and a card with unknown HP does not match.
-   */
-  | { kind: "basicPokemon"; noRuleBox?: true; maxHp?: number }
-  /** Any Pokémon card. `noRuleBox` excludes Rule Box Pokémon at any stage (Lana's Aid). */
-  | { kind: "anyPokemon"; noRuleBox?: true }
-  /** An Evolution Pokémon — one that evolves from another Pokémon (Jacq's
-      "search your deck for up to 2 Evolution Pokémon"). The discriminant is
-      cards.ts `evolveFromOf(card) !== null`: a non-null `evolveFrom` marks a
-      Stage 1 / Stage 2 (or VMAX/VSTAR) card, and the helper already returns null
-      for non-Pokémon, so this is the exact complement of `basicPokemon` inside
-      `anyPokemon`. */
-  | { kind: "evolutionPokemon" }
-  /** A Stage 1 or Stage 2 Pokémon; unlike `evolutionPokemon`, VSTAR and VMAX match neither. */
-  | { kind: "stagePokemon"; stage: "Stage1" | "Stage2" }
-  /**
-   * A Pokémon of a printed type, by membership in `Card.types` so dual-type Pokémon match. `stage`
-   * and `maxHp` narrow it.
-   */
-  | {
-      kind: "typedPokemon";
-      pokemonType: PokemonType;
-      stage?: "basic" | "evolution";
-      maxHp?: number;
-    }
-  /**
-   * A union of filters: the printed "{G} Pokémon and {R} Pokémon" names a set, so a card matching
-   * any member matches.
-   */
-  | { kind: "anyOf"; filters: readonly CardFilter[] }
-  /**
-   * A Pokémon whose name starts with the owner prefix ("Cynthia's "). The Pokémon category check is
-   * needed because Team Rocket's Energy also carries the prefix.
-   */
-  | { kind: "ownerPokemon"; owner: string; stage?: "basic" | "evolution" }
-  /** A Pokémon with a printed Ability, even if an Ability lock currently silences it. */
-  | { kind: "abilityPokemon" }
-  /** A Pokémon with a printed attack of exactly this name ("that has the Round attack"). */
-  | { kind: "attackNamePokemon"; attack: string }
-  /**
-   * A Pokémon whose printed name contains `fragment` (case-sensitive). `suffix` additionally
-   * requires a rule-box suffix ("a Pokémon ex that has Ogerpon in its name").
-   */
-  | { kind: "pokemonNameContaining"; fragment: string; suffix?: PokemonSuffix }
-  /**
-   * A Pokémon with exactly this rule-box suffix; narrower than `hasRuleBox`, so "Pokémon ex" does
-   * not match Pokémon V.
-   */
-  | { kind: "suffixPokemon"; suffix: PokemonSuffix }
-  /** A Mega Evolution Pokémon ex; every one also matches `suffixPokemon` ex. */
-  | { kind: "megaEvolutionEx" }
-  /**
-   * A Pokémon printing a banner ("a Tera Pokémon"), looked up by card id because the banner is not
-   * in the catalog.
-   */
-  | { kind: "bannerPokemon"; banner: Banner }
-  /**
-   * A card of any category printing a banner ("each Ancient card"), since Trainers carry Paradox
-   * banners too.
-   */
-  | { kind: "bannerCard"; banner: Banner }
-  /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
-      catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
-  | { kind: "toolCard" }
-  /** A Basic Energy card; `energyType` narrows it to one type. */
-  | { kind: "basicEnergy"; energyType?: BasicEnergyType }
-  /**
-   * A card matched by exact name. `cardNoun` only changes the caption, adding "cards" after Trainer
-   * or Energy names.
-   */
-  | { kind: "byName"; name: string; cardNoun?: true }
-  /** A Supporter Trainer card (Pal Pad shuffles Supporters from the discard
-      pile back into the deck). */
-  | { kind: "supporter" }
-  /** A Supporter whose printed name contains `fragment` (case-sensitive). */
-  | { kind: "supporterNameContaining"; fragment: string }
-  /**
-   * A Pokémon Tool whose printed name contains `fragment` (TM Machine). Most Technical Machines are
-   * unbuilt, so attaching one may still be refused.
-   */
-  | { kind: "toolNameContaining"; fragment: string }
-  /** An Item whose printed name contains `fragment` (Fossil Quarry's "Antique"). */
-  | { kind: "itemNameContaining"; fragment: string }
-  /** An Item Trainer card; Pokémon Tools are not Items. */
-  | { kind: "item" }
-  /** A Stadium Trainer card. */
-  | { kind: "stadium" }
-  /** Any Trainer card, read from `category` so it covers every subtype. */
-  | { kind: "trainerCard" }
-  /** Any card. An unresolvable uid still does not match. */
-  | { kind: "anyCard" }
-  /** A Pokémon or a Basic Energy card (Super Rod); Special Energy is excluded. */
-  | { kind: "pokemonOrBasicEnergy" }
-  /** Any Energy card — Basic OR Special (Poppy "Move up to 2 Energy", which
-      unlike Energy Switch's "a Basic Energy" moves either kind). Distinct from
-      `basicEnergy` (basics only) and `pokemonOrBasicEnergy` (which excludes
-      Special Energy and admits Pokémon). */
-  | { kind: "anyEnergy" }
-  /** A Special Energy card (§6.1), the complement of `basicEnergy` within `anyEnergy`. */
-  | { kind: "specialEnergy" }
-  /**
-   * An Energy attached to a Pokémon that provides `energyType` (§6.3), matching what the cost
-   * matcher reads, so a Special Energy providing that type counts and a wildcard provider matches
-   * every type. Provision depends on the host, so this is evaluated per attached Energy and the
-   * card-only `matchesFilter` always answers false for it; use `basicEnergy` with an `energyType`
-   * for deck, hand or discard scans. Colorless is deliberately unrepresentable because it is the
-   * fallback provision of unauthored Special Energy.
-   */
-  | { kind: "providesEnergy"; energyType: BasicEnergyType }
-  /**
-   * A Pokémon that prints a Resistance to `type` (Fletchling — Chirp), read off `Card.resistances`
-   * rather than §8.5's `resistanceOf`, so it works on a deck card.
-   */
-  | { kind: "pokemonWithResistance"; type: PokemonType };
+import type {
+  AttackCopy,
+  AttackTimingGate,
+  AttackerClass,
+  BoardCondition,
+  CardFilter,
+  DamageCountSource,
+  DiscardPileSeat,
+  EffectOp,
+  EffectSlot,
+  EnergyClass,
+  InPlayAttackCopy,
+  OpOf,
+  OpponentEnergyZone,
+  PokemonType,
+  ResolvedAttackCopy,
+  StampedHandPlayClass,
+} from "./effectTypes";
+
+import { POKEMON_TYPES } from "./effectTypes";
+
+export type {
+  AttachTargetRiders,
+  AttackCopy,
+  AttackerClass,
+  BoardCondition,
+  CardFilter,
+  CountSeat,
+  DamageCountSource,
+  DiscardPileSeat,
+  EffectOp,
+  EffectSlot,
+  EnergyClass,
+  HandPlayClass,
+  HandRefreshDraw,
+  InPlayAttackCopy,
+  OpOf,
+  OpponentEnergyZone,
+  PokemonPlayAct,
+  PokemonType,
+  ResolvedAttackCopy,
+  StampedHandPlayClass,
+  StampedPlayLockKey,
+  StampedPokemonPlayAct,
+} from "./effectTypes";
+
+export { POKEMON_TYPES } from "./effectTypes";
 
 /**
- * Names under which an op records what it moved so a later op in the same program can read it ("in
- * this way", "if you do"). Slots are named rather than positional because a shuffle often sits
- * between the op and the sentence referring to it. `turnedPrize` and `revealed` feed
- * `swapTurnedPrizeWithRevealed`; `placed` holds one entry per damage counter placed (each the
- * attacker's top uid), so only its length is meaningful.
+ * A printed count, or null when it is below 1 (or not a number). A printed 0 would build an op that
+ * does nothing, or spend a flip to add nothing, so the sentence refuses instead.
  */
-export type EffectSlot = "paid" | "moved" | "discarded" | "turnedPrize" | "revealed" | "placed";
-
-/**
- * How many cards a `handRefresh` draws after the hand goes into the deck. Counts are measured per
- * affected player before their hand is shuffled in; `perSeat` uses controller-relative
- * `you`/`opponent`; `opponentHandSize` reads the controller's opponent's hand size, and since the
- * draw pass runs after every affected seat has moved, it only makes sense with `who: "you"`.
- */
-export type HandRefreshDraw =
-  | { kind: "fixed"; count: number }
-  | { kind: "handPlus"; delta: number }
-  | { kind: "prizeCount" }
-  | { kind: "perSeat"; you: number; opponent: number }
-  | { kind: "opponentHandSize" }
-  /**
-   * Each affected player flips their own coin and draws `heads` or `tails` cards (Lucian); flips
-   * are taken in seat order, controller first.
-   */
-  | { kind: "coinFlip"; heads: number; tails: number };
-
-/**
- * §6.1's full Pokémon type wheel as the catalog spells it in `Card.types`: the Basic Energy types
- * plus Dragon and Colorless. Keep it separate from the energy vocabulary, since a Pokémon can be
- * Dragon or Colorless but no Basic Energy provides those.
- */
-export const POKEMON_TYPES = [...BASIC_ENERGY_TYPES, "Dragon", "Colorless"] as const;
-export type PokemonType = (typeof POKEMON_TYPES)[number];
-
-/**
- * §7: the classes of hand card a seat can be barred from playing, spelled exactly as
- * `Card.trainerType` so the card's field compares directly.
- */
-export type HandPlayClass = "Item" | "Supporter" | "Tool" | "Stadium";
-
-/**
- * §7: the subset of `HandPlayClass` a printed attack can stamp for a turn via
- * `GameState.handPlayLockedTurn`. `Tool` is only ever barred by a passive.
- */
-export type StampedHandPlayClass = Extract<HandPlayClass, "Item" | "Supporter" | "Stadium">;
-
-/**
- * §7.5/§10: the acts by which a Pokémon card goes from hand to board, asked by `pokemonPlayBarred`.
- * Evolving and benching are separate because a bar on evolving does not stop a Basic being benched.
- * Rare Candy is not a play act; it is reached by the Item bar instead.
- */
-export type PokemonPlayAct = "evolve" | "bench";
-
-/**
- * The subset of `PokemonPlayAct` a printed attack can stamp for a turn; `bench` is only barred by a
- * passive.
- */
-export type StampedPokemonPlayAct = Extract<PokemonPlayAct, "evolve">;
-
-/**
- * The key set of `GameState.handPlayLockedTurn`: everything a resolved attack can stamp for a turn,
- * across both hand-play and Pokémon-play bars.
- */
-export type StampedPlayLockKey = StampedHandPlayClass | StampedPokemonPlayAct;
-
-export interface AttackerClass {
-  /**
-   * The printed class word after "by attacks from". `ex` means exactly the ex suffix, not any rule
-   * box; `ancient` is read by banner; `burned` reads the attacker's conditions at damage time.
-   */
-  readonly stage: "basic" | "ancient" | "ex" | "burned" | "evolution" | "hasAbility";
-  /** The printed *"non-{X}"* exclusion, resolved through `POKEMON_TYPE_BY_CODE`.
-      ABSENT = the sentence excluded nothing. */
-  readonly excludingType?: PokemonType;
+function positiveInt(digits: string | undefined): number | null {
+  const n = Number(digits);
+  return n >= 1 ? n : null;
 }
 
-/**
- * A board predicate read for one seat, used by play gates (`playableIf`) and `conditionGate`,
- * evaluated by `conditionHolds`. Members must read only public state: counts and sizes of hands and
- * decks are fine, but never their contents or order, since a gate emits no event.
- */
-export type BoardCondition =
-  /** §14 — you have strictly MORE Prize cards remaining than your opponent, i.e.
-      you are BEHIND on Prizes taken (Fighting Au Lait's play gate; Defiance
-      Band, Luxray and Reversal Energy read the same condition and layer later). */
-  | { kind: "morePrizesThanOpponent" }
-  /** §7.3 — the Stadium in the shared zone is YOURS (you played it). "If you
-      have a Stadium in play" is about OWNERSHIP, not mere presence: the
-      opponent's Stadium sitting in the zone does not satisfy Falkner. */
-  | { kind: "yourStadiumInPlay" }
-  /**
-   * §7.3: any Stadium is in play, owned by either player (unlike `yourStadiumInPlay`, which reads
-   * ownership).
-   */
-  | { kind: "stadiumInPlay" }
-  /** §7.3: the Stadium in play is your opponent's. */
-  | { kind: "opponentStadiumInPlay" }
-  /** None of your in-play Pokémon (Active or Benched) has ANY Energy attached —
-      Basic or Special (Grusha's "if none of your Pokémon have any Energy
-      attached"). Vacuously true with nothing in play. */
-  | { kind: "noEnergyOnYourPokemon" }
-  /**
-   * Read at attack declaration, before this attack's own damage lands, matching the printed
-   * "already".
-   */
-  | { kind: "opponentActiveDamaged" }
-  /**
-   * Your opponent's Active is an Evolution Pokémon (`evolveFromOf(topCard) !== null`). False with
-   * no Active.
-   */
-  | { kind: "opponentActiveIsEvolution" }
-  /**
-   * Your opponent's Active is a Basic Pokémon, read off the top card, so an evolved Basic no longer
-   * satisfies it. Named for the board fact rather than "Defending Pokémon" because play gates share
-   * this union.
-   */
-  | { kind: "opponentActiveIsBasic" }
-  /**
-   * Your opponent's Active is a Stage 1 Pokémon; a Stage 2 or VSTAR is not. False with no Active.
-   */
-  | { kind: "opponentActiveIsStage1" }
-  /** Your opponent's Active is a Stage 2 Pokémon. False with no Active. */
-  | { kind: "opponentActiveIsStage2" }
-  /**
-   * Your Active has any damage counters on it; printed "this Pokémon" resolves to the Active
-   * because an attack is declared by the Active. False with an empty Active Spot.
-   */
-  | { kind: "yourActiveDamaged" }
-  /** Your Active has no damage counters on it. */
-  | { kind: "yourActiveUndamaged" }
-  /** Any ONE of your BENCHED Pokémon has damage counters on it — Tyranitar ex
-      sv03-066/-211 "Lightning Rampage" (+100), printed in the plural ("If your
-      Benched Pokémon have any damage counters on them"). The plural is the
-      game's usual collective phrasing for "any of them", NOT a requirement that
-      every benched Pokémon be damaged; an EMPTY Bench is false. Deliberately
-      excludes the Active — the printed word is "Benched", and the sibling
-      `yourActiveDamaged` covers the other spot. */
-  | { kind: "yourBenchDamaged" }
-  /**
-   * Every one of your Benched Pokémon has at least 1 damage counter; deliberately false with an
-   * empty Bench.
-   */
-  | { kind: "yourBenchAllDamaged" }
-  /**
-   * Some Benched Pokémon of yours named `name` has damage counters; both tests apply to the same
-   * body.
-   */
-  | { kind: "yourBenchNamedDamaged"; name: string }
-  /** §12 — your opponent's Active Pokémon is Poisoned: Seviper sv01-128 and
-      Paldean Clodsire sv03-129, both printing "Venoshock" (+120). Poison is a
-      COUNTER amount on the model rather than a flag (`poisonDamage`, which
-      effects may raise), so "is Poisoned" is `> 0`. False with no Active. */
-  | { kind: "opponentActivePoisoned" }
-  /** §12 — your opponent's Active Pokémon is affected by ANY Special Condition:
-      Sableye sv02-136 "Unseen Claw" (+70), the pool's only printing of this
-      clause. Reuses `presentStatuses` verbatim — the same list the STATUS_CLEARED
-      events and the status chips are built from — so "affected" can never drift
-      from what the board shows. The rotation slot, Poison and Burn all count, and
-      any ONE of them suffices. False with no Active. */
-  | { kind: "opponentActiveHasSpecialCondition" }
-  /** §12: your Active is affected by any Special Condition. */
-  | { kind: "yourActiveHasSpecialCondition" }
-  /** §12: your Active is Poisoned (`poisonDamage > 0`). False with an empty Active Spot. */
-  | { kind: "yourActivePoisoned" }
-  /** §12: your Active is Burned or Poisoned. False with an empty Active Spot. */
-  | { kind: "yourActiveBurnedOrPoisoned" }
-  /** §12: your Active is Asleep. False with an empty Active Spot. */
-  | { kind: "yourActiveAsleep" }
-  /** §12: your opponent's Active is Burned. */
-  | { kind: "opponentActiveBurned" }
-  /**
-   * §12: your opponent's Active is Confused. Do not use `isImmobilized`, which excludes Confused.
-   */
-  | { kind: "opponentActiveConfused" }
-  /**
-   * Your opponent's Active is a Pokémon ex or V only, not VMAX/VSTAR/GX (`isExOrV`, derived from
-   * the name suffix). False with no Active.
-   */
-  | { kind: "opponentActiveIsExOrV" }
-  /** Your opponent's Active is a Pokémon ex and nothing else. */
-  | { kind: "opponentActiveIsEx" }
-  /** §6.3: your Active has at least one attached Energy of `energy`. */
-  | {
-      kind: "yourActiveHasEnergyAttached";
-      energy: BasicEnergyType | "special" | "basic";
-    }
-  /** Your opponent's Active has at least one attached Energy of `energy`. */
-  | { kind: "opponentActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
-  /** Your Active has at least one attached Energy whose printed name is `name`. */
-  | { kind: "yourActiveHasNamedEnergyAttached"; name: string }
-  /** Any of your Benched Pokémon has an Energy named `name` attached. False with an empty Bench. */
-  | { kind: "yourBenchHasNamedEnergyAttached"; name: string }
-  /**
-   * §3.8: your opponent's remaining Prize count is one of `counts`. This is set membership, not a
-   * range: `[2, 4]` is false at 3.
-   */
-  | { kind: "opponentPrizesRemaining"; counts: readonly number[] }
-  /** §3.8: your own remaining Prize count is one of `counts`. */
-  | { kind: "yourPrizesRemaining"; counts: readonly number[] }
-  /** Your opponent is holding at most `count` cards. */
-  | { kind: "opponentHandAtMost"; count: number }
-  /** Both players are holding the same number of cards. */
-  | { kind: "handSizesEqual" }
-  /** Your own hand holds exactly `count` cards. */
-  | { kind: "yourHandExactly"; count: number }
-  /** Your own hand holds at least one card. */
-  | { kind: "yourHandNotEmpty" }
-  /** Your own hand holds at least `count` cards. */
-  | { kind: "yourHandAtLeast"; count: number }
-  /**
-   * At least one of your Prizes is still face down. Not `prizes.length > 0`: every remaining Prize
-   * may already be face up.
-   */
-  | { kind: "yourFaceDownPrizeRemains" }
-  /** Your own deck holds at most `count` cards. */
-  | { kind: "yourDeckAtMost"; count: number }
-  /** Your deck holds at least one card. */
-  | { kind: "yourDeckNotEmpty" }
-  /**
-   * Both Active Pokémon have the same number of attached Energy cards (cards, not provided units).
-   */
-  | { kind: "activeEnergyCountsEqual" }
-  /** Your Active has strictly more attached Energy cards than your opponent's Active. */
-  | { kind: "moreActiveEnergyThanOpponent" }
-  /**
-   * Your Active has at least `count` attached Energy cards, optionally of `energy`. Used to gate an
-   * optional attack cost on its payability.
-   */
-  | { kind: "yourActiveEnergyAtLeast"; count: number; energy?: BasicEnergyType | "special" }
-  /** Your opponent's Active is a `type` Pokémon, read from `Card.types`. */
-  | { kind: "opponentActiveHasType"; type: PokemonType }
-  /** Your Active is a `type` Pokémon, read from `Card.types`. */
-  | { kind: "yourActiveHasType"; type: PokemonType }
-  /**
-   * Your opponent's Active prints a Resistance to `type`, regardless of the attacker; not §8.5's
-   * `resistanceOf`, which asks whether Resistance applies to a given attacker.
-   */
-  | { kind: "opponentActiveHasResistance"; type: PokemonType }
-  /**
-   * Your opponent's Active has an effective Retreat Cost of at least `count`, not the printed cost.
-   */
-  | { kind: "opponentActiveRetreatCostAtLeast"; count: number }
-  /** Your opponent's Active has no effective Retreat Cost. False with an empty Active Spot. */
-  | { kind: "opponentActiveNoRetreatCost" }
-  /**
-   * Your Active has effective Weakness to your opponent's Active's type (either type for a dual
-   * type); false with either Active Spot empty.
-   */
-  | { kind: "yourActiveWeakToOpponentActiveType" }
-  /** You have at least one Pokémon of type `type` on your Bench. */
-  | { kind: "yourBenchHasType"; type: PokemonType }
-  /**
-   * You have a Stage 2 Pokémon of type `type` on your Bench; both facts are read off the same body.
-   * False with an empty Bench.
-   */
-  | { kind: "yourBenchHasStage2OfType"; type: PokemonType }
-  /** Your opponent has at least one Pokémon of type `type` anywhere in play. */
-  | { kind: "opponentInPlayHasType"; type: PokemonType }
-  /** Some Pokémon of yours in play shares a type with some Pokémon of your opponent's in play. */
-  | { kind: "inPlayTypesIntersect" }
-  /** A Pokémon named `name` is on your Bench. */
-  | { kind: "yourBenchHasNamed"; name: string }
-  /** A Pokémon whose printed name contains `fragment` is on your Bench. */
-  | { kind: "yourBenchHasNameContaining"; fragment: string }
-  /** You have a Pokémon named `name` anywhere in play, Active Spot included. */
-  | { kind: "yourNamedPokemonInPlay"; name: string }
-  /** You have at least `count` Energy of `energy` attached across all your Pokémon in play. */
-  | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special" | null; count: number }
-  /** At least `count` Basic Energy cards of `energy` are in your discard pile. */
-  | { kind: "yourBasicEnergyInDiscardAtLeast"; energy: BasicEnergyType; count: number }
-  /**
-   * §6.5: your hand holds at least `count` Basic Energy cards of `energy`; gates a printed
-   * hand-discard cost.
-   */
-  | { kind: "yourBasicEnergyInHandAtLeast"; energy: BasicEnergyType; count: number }
-  /** §7.4: your Active has a Pokémon Tool attached. */
-  | { kind: "yourActiveHasToolAttached" }
-  /**
-   * "If your opponent's Active Pokémon has a Pokémon Tool attached." Tested as `tools.length > 0`,
-   * since some effects raise the one-Tool cap. False with an empty Active Spot.
-   */
-  | { kind: "opponentActiveHasToolAttached" }
-  /**
-   * You have played a Supporter card from your hand this turn (§7.2). `allowances` describes only
-   * the turn owner, so this first checks that `seat` owns the turn; it reads false for both seats
-   * between turns.
-   */
-  | { kind: "youPlayedSupporterThisTurn" }
-  /**
-   * "If this Pokémon moved from your Bench to the Active Spot this turn." Reads the `promotedTurn`
-   * stamp, which retreat, forced switches and promotion after a Knock Out all set; it survives
-   * evolution.
-   */
-  | { kind: "yourActivePromotedThisTurn" }
-  /**
-   * "If this Pokémon was healed during this turn." Reads the `healedTurn` stamp, written only when
-   * a heal actually removes damage.
-   */
-  | { kind: "yourActiveHealedThisTurn" }
-  /**
-   * "If this Pokémon evolved from `name` during this turn." Uses the `evolvedTurn` stamp and the
-   * card one below the top of the stack, not the card's `evolveFrom` field, because it asks what
-   * happened rather than what the card says.
-   */
-  | { kind: "yourActiveEvolvedFromThisTurn"; name: string }
-  /**
-   * "This Pokémon used `attack` during your last turn" (§ two turns ago: `stamp === state.turn -
-   * 2`). `attack` is an attack name, not a Pokémon name.
-   */
-  | { kind: "yourActiveUsedAttackLastTurn"; attack: string }
-  /**
-   * "1 of your Pokémon used `attack` during your last turn." Checks your Active and Bench, so a
-   * Pokémon that used the attack and then retreated still counts.
-   */
-  | { kind: "yourPokemonUsedAttackLastTurn"; attack: string }
-  /**
-   * "You have `count` or more `owner`'s Pokémon in play." Counts the top cards of your Active and
-   * Bench.
-   */
-  | { kind: "yourOwnerPokemonInPlayAtLeast"; owner: string; count: number }
-  /**
-   * All of your Pokémon in play (Active and Bench top cards) are `owner`'s Pokémon. An empty board
-   * is false, not vacuously true.
-   */
-  | { kind: "yourPokemonAllOwner"; owner: string }
-  /**
-   * Your Active Pokémon's top card is an `owner`'s Pokémon; `owner` has no possessive. False with
-   * an empty Active Spot.
-   */
-  | { kind: "yourActiveOwner"; owner: string }
-  /**
-   * "If any of your Pokémon were Knocked Out during your opponent's last turn" (§8.1), i.e. the
-   * previous turn. `owner` narrows to that owner's Pokémon and `byAttack` to Knock Outs by damage
-   * from an attack; absent means unnarrowed.
-   */
-  | { kind: "yourPokemonKoedOnOpponentsLastTurn"; owner?: string; byAttack?: true }
-  /**
-   * The turn in progress is your own first turn (§4), via `isFirstTurnOf`. It is the ordinal for
-   * this seat, not "turn 1 or 2"; false during setup.
-   */
-  | { kind: "yourFirstTurn" }
-  /** Complement of `yourFirstTurn`; true during setup. */
-  | { kind: "notYourFirstTurn" }
-  /**
-   * You go second, i.e. `state.firstPlayer` is your opponent. A fact about seat assignment that
-   * holds every turn, not only the first; false during setup while `firstPlayer` is null.
-   */
-  | { kind: "youGoSecond" }
-  /** You have at least `count` Benched Pokémon; the Active is not counted. */
-  | { kind: "yourBenchAtLeast"; count: number }
-  /** Your opponent has at least `count` Benched Pokémon; the Active is not counted. */
-  | { kind: "opponentBenchAtLeast"; count: number }
-  /**
-   * Your Active Pokémon's top card prints an Ability named `name`. A locked Ability still counts.
-   * False with an empty Active Spot.
-   */
-  | { kind: "yourActiveHasAbility"; name: string }
-  /** Your Active Pokémon's top card has exactly this name. False with an empty Active Spot. */
-  | { kind: "yourActiveNamed"; name: string }
-  /**
-   * Your opponent has a Pokémon ex or Pokémon V (not VMAX, VSTAR or GX) in their Active Spot or on
-   * their Bench.
-   */
-  | { kind: "opponentHasExOrVInPlay" }
-  /**
-   * Your Active Pokémon has at least `count` damage counters on it; `count` is in counters, not HP.
-   * False with an empty Active Spot.
-   */
-  | { kind: "yourActiveDamageCountersAtLeast"; count: number }
-  /** Your Active Pokémon's remaining HP is `hp` or less. False with an empty Active Spot. */
-  | { kind: "yourActiveRemainingHpAtMost"; hp: number }
-  /**
-   * Your opponent's Active Pokémon has exactly `count` damage counters on it. False with an empty
-   * Active Spot.
-   */
-  | { kind: "opponentActiveDamageCountersExactly"; count: number }
-  /**
-   * "If your opponent's Pokémon is Knocked Out by damage from this attack." Read after the damage
-   * and before the §8.1 sweep: some opponent Pokémon is lethally damaged and not already being
-   * Knocked Out by an effect. False outside an attack program.
-   */
-  | { kind: "opponentKnockedOutByDamage" }
-  /**
-   * Your opponent's Active Pokémon's top card prints an Ability; a locked Ability still counts.
-   * False with an empty Active Spot.
-   */
-  | { kind: "opponentActiveHasAbility" }
-  /**
-   * Your opponent's discard pile has a card of any kind whose name contains `fragment`
-   * (case-sensitive). Your own discard pile does not count.
-   */
-  | { kind: "opponentDiscardHasNameContaining"; fragment: string }
-  /** A card of any kind named `name` is in your discard pile. */
-  | { kind: "yourDiscardHasNamed"; name: string }
-  /**
-   * Your discard pile has at least `count` Pokémon cards that print an Ability named `ability`
-   * (apostrophes normalized). Trainer cards that print an Ability do not count.
-   */
-  | { kind: "yourDiscardPokemonWithAbilityNamedAtLeast"; ability: string; count: number }
-  /**
-   * You played a Supporter from your hand this turn whose name is `name` or contains
-   * `nameContains`; set exactly one. The played card is found in any zone, and like
-   * `youPlayedSupporterThisTurn` this is false for the seat that does not own the turn.
-   */
-  | { kind: "youPlayedSupporterNamedThisTurn"; name?: string; nameContains?: string }
-  /** The Stadium in play is named `name`, whoever played it (§7.3). */
-  | { kind: "stadiumInPlayNamed"; name: string }
-  /** Any of your Pokémon in play (Active or Bench top card) has `banner`. */
-  | { kind: "yourBannerPokemonInPlay"; banner: Banner }
-  /** Any of your Benched Pokémon has `banner`; the Active does not count. */
-  | { kind: "yourBannerPokemonOnBench"; banner: Banner }
-  /** Your opponent's Active Pokémon's top card has `banner`. */
-  | { kind: "opponentActiveIsBanner"; banner: Banner }
-  /** Any of your opponent's Pokémon in play has `banner`. */
-  | { kind: "opponentBannerPokemonInPlay"; banner: Banner }
-  /**
-   * "1 of your other `banner` Pokémon used an attack during your last turn." Read from
-   * `GameState.recentAttackers`, so a Pokémon that has since left play still counts; attacks by
-   * your current Active's stack do not.
-   */
-  | { kind: "yourOtherBannerPokemonAttackedLastTurn"; banner: Banner }
-  /**
-   * You played a Supporter with `banner` from your hand this turn. False for the seat that does not
-   * own the turn.
-   */
-  | { kind: "yourPlayedBannerSupporterThisTurn"; banner: Banner }
-  /** Your opponent has a Stage 2 Pokémon in their Active Spot or on their Bench. */
-  | { kind: "opponentStage2PokemonInPlay" }
-  /** You have a Mega Evolution Pokémon ex in play, of type `type` when set. */
-  | { kind: "yourMegaExInPlay"; type?: PokemonType }
-  /**
-   * Your in-play cards can currently be put into your hand (no `inPlayToHandBlocked` lock). Gates
-   * optional costs that would otherwise be paid for nothing under the lock.
-   */
-  | { kind: "yourInPlayToHandAllowed" }
-  /**
-   * "This Pokémon has at least `extra` extra Energy attached (in addition to this attack's cost)."
-   * Needs the declared attack's cost, so it is resolved at declaration by
-   * `resolveDeclarationGates`; `conditionHolds` returns false anywhere else.
-   */
-  | { kind: "extraEnergyBeyondAttackCost"; extra: number }
-  /**
-   * Every one of `conditions` holds. The tuple type requires at least two, since an empty or
-   * single-element `allOf` would be a degenerate second spelling.
-   */
-  | { kind: "allOf"; conditions: readonly [BoardCondition, BoardCondition, ...BoardCondition[]] };
-
-/**
- * Riders that narrow which of the controller's in-play Pokémon may receive an attach, shared by
- * `attachEnergyFrom` and `attachFromTop` through `attachEnergyTargets`. An absent rider is no
- * restriction.
- */
-export interface AttachTargetRiders {
-  /**
-   * Only Pokémon whose top card has this type. A list is a union: a Pokémon qualifies if it has any
-   * of the listed types.
-   */
-  targetType?: string | readonly string[];
-  /** Only BASIC Pokémon (Koraidon ex's "your Basic {F} Pokémon"). */
-  basicOnly?: true;
-  /** Only Stage 2 Pokémon, by the printed stage (a VSTAR is not Stage 2). */
-  stage2Only?: true;
-  /**
-   * Only Pokémon in the owner-prefixed subgroup, given as the bare owner name ("Iono"). Matched
-   * through `matchesFilter`'s `ownerPokemon` arm so deck and board agree.
-   */
-  ownerPokemon?: string;
-  /** Only Pokémon whose top card has this banner. */
-  targetBanner?: Banner;
-  /** Only BENCHED Pokémon — the Active is not a target (Electric Generator's
-      "your **Benched** {L} Pokémon", where the attach is the whole point of
-      putting Energy somewhere the turn's manual attach cannot reach). */
-  benchOnly?: true;
-  /** Only the Active Pokémon. */
-  activeOnly?: true;
-  /** Damage counters the attach itself places on the target (Gardevoir's 2). */
-  bonusCounters?: number;
-  /** Exclude any target `bonusCounters` would Knock Out ("you can't use this on
-      a Pokémon that would be Knocked Out"), so the placement is never lethal. */
-  notIfKO?: true;
-  /**
-   * Where the attached card comes from. An attach from hand cannot target a Pokémon barred by
-   * `HandAttachMark.barred`.
-   */
-  source?: "hand" | "discard";
-  /**
-   * Targets the opponent's Pokémon instead of the controller's own. `seat` stays the actor; the
-   * returned refs carry the owner's seat.
-   */
-  whose?: "opponent";
+// Gate-op builders. Each returns a fresh object with the fields in the order the hand-written
+// literals used, and leaves optional fields absent rather than undefined.
+function headsGate(then: EffectOp[], otherwise?: EffectOp[]): OpOf<"coinFlipGate"> {
+  return otherwise === undefined
+    ? { op: "coinFlipGate", then }
+    : { op: "coinFlipGate", then, otherwise };
 }
 
-/** One effect operation — the engine's instruction set (D8). Attack-derived
-    programs use the first three (targets are relative to the attacker: "self"
-    = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
-    Ability programs use the rest (targets relative to the controller — the
-    seat playing the card — resolved by the interpreter). The whole union is
-    JSON-safe so a parked program (interpreter.ts) serializes into the phase. */
-export type EffectOp =
-  // — Attack ops (M3), attacker-relative. —
-  | {
-      op: "applyStatus";
-      /**
-       * `attacker` targets the opponent's Active only while it is still the Pokémon
-       * `EffectContext.attackerUid` names; an attacker that has moved to the Bench is not affected.
-       */
-      target: "defender" | "self" | "attacker";
-      status: StatusName;
-      /** Only for "poisoned": HP placed per Checkup when raised above 10. */
-      poisonDamage?: number;
-      /**
-       * Only for "confused": HP placed on itself when the confusion flip fails, if higher than
-       * `DEFAULT_CONFUSION_DAMAGE`.
-       */
-      confusionDamage?: number;
-    }
-  /**
-   * The controller's Active recovers from all Special Conditions at once. A one-time effect, unlike
-   * the continuous `PassiveEffects.statusRecovery`.
-   */
-  | {
-      op: "clearStatus";
-      /** Clears only this condition; set only when the engine expands `recoverOneStatus`. */
-      only?: StatusName;
-    }
-  /**
-   * The controller's Active recovers from one Special Condition of the player's choice. With one
-   * condition it clears directly; with two or three the choice is a chain of binary `optional`
-   * prompts that each end in `clearStatus { only }`.
-   */
-  | { op: "recoverOneStatus" }
-  /**
-   * The Pokémon can't retreat during its controller's next turn (§11). Bare targets the Defending
-   * Pokémon; `target: "self"` targets the attacker. This is the opposite default from
-   * `preventAttack`, so don't copy the seat logic between them.
-   */
-  | { op: "preventRetreat"; target?: "self" }
-  /**
-   * The opponent can't play `bars` from their hand during their next turn. It targets the player,
-   * not a Pokémon, so §11 protection does not stop it and changes to their Active do not lift it.
-   */
-  | { op: "preventHandPlay"; bars: StampedPlayLockKey }
-  /**
-   * Prevent damage to the controller's Active from attacks during the opponent's next turn.
-   * `effects` also prevents effects of attacks; `fromClass` limits it to attacks from that attacker
-   * class (absent means every attacker).
-   */
-  | { op: "preventDamage"; effects?: true; fromClass?: AttackerClass; maxDamage?: number }
-  /**
-   * Prevent damage from attacks by `fromClass` Pokémon to each of the controller's `banner` Pokémon
-   * during the opponent's next turn; it ends if the source leaves the Active Spot. Stored on the
-   * side, and the set of protected Pokémon is evaluated when damage is dealt.
-   */
-  | { op: "installSideAttackBlock"; banner: Banner; fromClass: AttackerClass }
-  /**
-   * Mark the opponent's Active for their next turn. With `barred`, Energy can't be attached to it
-   * from their hand; with `endsTurn`, attaching Energy to it from their hand ends their turn.
-   */
-  | {
-      op: "markHandAttach";
-      barred?: true;
-      endsTurn?: true;
-      /**
-       * Damage counters placed on the marked Pokémon for each Energy card attached to it from the
-       * opponent's hand.
-       */
-      counters?: number;
-    }
-  /**
-   * During the opponent's next turn they flip a coin for each Trainer they try to play from their
-   * hand; on tails it is discarded instead. It targets the player, so §11 protection does not stop
-   * it.
-   */
-  | { op: "flipLockTrainerPlay" }
-  /**
-   * Look at 1 of the opponent's face-down Prize cards without revealing it. With two or more
-   * face-down Prize cards the attacker picks a slot without seeing them, and `index` is set when
-   * the op resumes; only the player looking learns the card.
-   */
-  | { op: "lookAtPrize"; side: "opponent"; index?: number }
-  /** The controller wins the game immediately (§14). */
-  | { op: "winGame" }
-  /**
-   * The controller's Active takes `amount` less damage from attacks, after Weakness and Resistance,
-   * during the opponent's next turn. Added to the same total as passive damage reductions;
-   * reinstalling keeps the larger amount.
-   */
-  | {
-      op: "reduceDamage";
-      amount: number;
-      /** Only reduces damage from attackers of this class; absent means every attacker. */
-      fromClass?: AttackerClass;
-    }
-  /**
-   * The controller's Active has no Weakness during the opponent's next turn. Named apart from
-   * `PassiveEffects.removeWeakness`, which is a different, seat-wide effect.
-   */
-  | { op: "installNoWeakness" }
-  /**
-   * The Defending Pokémon's attacks do `amount` less damage, before Weakness and Resistance, during
-   * its next turn. An effect of an attack on the Defending Pokémon, so §11 protection blocks it;
-   * reinstalling keeps the larger amount.
-   */
-  | { op: "weakenDefenderAttacks"; amount: number }
-  /**
-   * During the installer's next turn, the Defending Pokémon takes `amount` more damage from attacks
-   * after Weakness and Resistance. §11 protection blocks it; reinstalling keeps the larger amount.
-   */
-  | { op: "exposeDefender"; amount: number }
-  /**
-   * The controller's Active takes `amount` more damage from attacks after Weakness and Resistance
-   * during the opponent's next turn. Added to any existing vulnerability for the same turn.
-   */
-  | { op: "exposeSelf"; amount: number }
-  /**
-   * Until the end of the installer's next turn, the Defending Pokémon's Weakness type becomes
-   * `type` and keeps its amount. With `asTimesTwo`, its Weakness is replaced by a single `type` ×2.
-   * §11 protection blocks it.
-   */
-  | { op: "retypeDefenderWeakness"; type: string; asTimesTwo?: true }
-  /**
-   * During the opponent's next turn, the Defending Pokémon's attacks and Retreat Cost each cost {C}
-   * more. §11 protection blocks it.
-   */
-  | { op: "taxDefender" }
-  /**
-   * If the Defending Pokémon is Knocked Out during the installer's next turn, take `amount` more
-   * Prize cards. Does not apply to a Knock Out in the Checkup at the end of that turn. §11
-   * protection blocks it.
-   */
-  | { op: "bountyDefender"; amount: number }
-  /**
-   * If the opponent's Active is Knocked Out by damage from this attack, take `amount` more Prize
-   * cards. Added to any existing bounty; paid at the §8.1 sweep.
-   */
-  | { op: "bountyThisAttack"; amount: number }
-  /**
-   * At the end of the opponent's next turn, place `amount` damage (HP, not counters) on the
-   * Defending Pokémon (§13). §11 protection blocks it.
-   */
-  | { op: "scheduleCounters"; amount: number }
-  /**
-   * At the end of the opponent's next turn, discard the Defending Pokémon and all attached cards.
-   * Unlike `scheduleKnockOut`, no Prize cards are taken.
-   */
-  | { op: "scheduleDiscard" }
-  /**
-   * At the end of the opponent's next turn, the Defending Pokémon is Knocked Out, so Prize cards
-   * are taken through the §8.1 sweep. It places no damage.
-   */
-  | { op: "scheduleKnockOut" }
-  /**
-   * During the opponent's next turn, if the controller's Active is damaged by an attack, put damage
-   * on the Attacking Pokémon. `amount` is HP (counters × 10), or `"damageTaken"` for the damage
-   * this Pokémon took from that hit.
-   */
-  | { op: "installRecoil"; amount: number | "damageTaken" }
-  /**
-   * The Pokémon can't attack during its controller's next turn. Absent `target` means the attacker
-   * itself (`state.turn + 2`); `"defender"` means the Defending Pokémon (`state.turn + 1`).
-   */
-  | { op: "preventAttack"; target?: "defender" }
-  /**
-   * During the opponent's next turn, the Defending Pokémon's attacks happen only on heads. The
-   * attack can still be declared; the coin is flipped at resolution, before the Confusion flip. §11
-   * protection blocks it.
-   */
-  | {
-      op: "flipLockAttack";
-      /** Flip 2 coins instead, and the attack fails if either is tails. */
-      coins?: 2;
-    }
-  /**
-   * A whole side's Pokémon can't attack during that side's next turn, including Pokémon that come
-   * into play later. `maxEnergy` limits it to Pokémon with at most that many Energy cards attached,
-   * counted at declaration; null locks every Pokémon. It targets a side, not a Pokémon, so §11
-   * protection does not stop it.
-   */
-  | { op: "lockSideAttacks"; whose: "self" | "opponent"; maxEnergy: number | null }
-  /**
-   * The controller's Active can't use the attack named `attack` during its next turn. The name is
-   * resolved to an attack index at install; a name the Pokémon lacks installs nothing. `until:
-   * "leavesActive"` makes it last until the Pokémon leaves the Active Spot.
-   */
-  | { op: "preventAttackUse"; attack: string; until?: "leavesActive" }
-  /**
-   * The named attack on the controller's Active does `amount` more damage, before Weakness and
-   * Resistance, during its next turn. With `base`, `amount` replaces the attack's base damage
-   * instead. `attack: null` applies to every attack, and the installer rejects it together with
-   * `base`.
-   */
-  | {
-      op: "boostAttack";
-      attack: string | null;
-      amount: number;
-      base?: true;
-      /**
-       * Install on the program's source Pokémon, on the Bench or in the Active Spot, instead of the
-       * Active. If the source has left play, nothing is installed.
-       */
-      holder?: "source";
-      /** Apply during the current turn instead of the holder's next turn. */
-      thisTurn?: true;
-    }
-  /**
-   * This turn, attacks by your Pokémon do `amount` more damage, before Weakness and Resistance, to
-   * an opponent's Active matching `target`. `attacker` limits which attackers get it. It applies to
-   * the whole side, not one Pokémon, and as a Trainer effect Ability locks do not suppress it.
-   */
-  | { op: "boostSideAttacksThisTurn"; amount: number; target: CardFilter; attacker?: CardFilter }
-  /**
-   * "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that
-   * Pokémon can't use that attack." Parks on a `chooseAttack` prompt (no attacks is a no-op, one
-   * attack auto-resolves) and stamps the defender's `lockedAttack` for `state.turn + 1`. Idempotent
-   * and consumes no rng.
-   */
-  | { op: "preventChosenAttack" }
-  /**
-   * Heal `amount` from the controller's own Active Pokémon, clamped to its damage; a whiff emits no
-   * HEALED. `"dealt"` is the §8.5 damage this attack dealt (`EffectContext.dealt`); `"all"` heals
-   * all damage on the body. Never parks.
-   */
-  | {
-      op: "heal";
-      target: "self";
-      amount: number | "dealt" | "all";
-      /**
-       * "If you healed any damage in this way, discard all Energy from that Pokémon." Energy is
-       * discarded only when this heal actually healed something.
-       */
-      discardEnergyFromHealed?: true;
-    }
-  /**
-   * Heal `amount` from each of the controller's in-play Pokémon, Active and Bench, each clamped to
-   * its own damage. `pokemonType` gates on the body's in-play top-card types (absent is ungated,
-   * not `Colorless`). Never parks.
-   */
-  | {
-      op: "healEach";
-      /** `"all"` heals each body's own damage. */
-      amount: number | "all";
-      pokemonType?: PokemonType;
-      /**
-       * "each of your Basic Pokémon": only bodies whose top card is a Basic Pokémon; an
-       * unresolvable top card is skipped.
-       */
-      basicOnly?: true;
-      /**
-       * "each of your Benched Pokémon": excludes the Active. Absent includes the Active and the
-       * whole Bench.
-       */
-      benchOnly?: true;
-      /** "each of your Evolution Pokémon", Active and Bench, matched on the top card. */
-      evolutionOnly?: true;
-      /**
-       * "If you healed any damage in this way, discard all Energy from those Pokémon." Applied per
-       * body: a body that healed 0 keeps its Energy.
-       */
-      discardEnergyFromHealed?: true;
-      /**
-       * "each of your Tera Pokémon": only bodies whose top card prints the banner, Active and
-       * Bench.
-       */
-      banner?: Banner;
-    }
-  /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
-      "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
-      seat-blind twin of `healEach` — the whole table heals, not just the
-      controller's side. No target choice, so it never parks; one HEALED per
-      Pokémon that actually healed, tagged with that Pokémon's OWN seat. */
-  | { op: "healEachAll"; amount: number }
-  /**
-   * Put `amount` HP of damage counters on every in-play body on the sides `side` names that matches
-   * `filter`, except any named `exceptNamed` (e.g. Froslass "Freezing Shroud"). `amount` is HP, not
-   * counters. Never KOs; the caller's KO sweep resolves Knock Outs. `damagedOnly` limits it to
-   * bodies that already have damage counters.
-   */
-  | {
-      op: "counterEachAll";
-      amount: number;
-      filter: CardFilter;
-      side: "both" | "opponent";
-      source: "ability" | "attack";
-      exceptNamed?: string;
-      damagedOnly?: true;
-      /**
-       * "Double the number of damage counters on each of your opponent's Pokémon." Each body takes
-       * `amount` once per counter already on it, read before it changes.
-       */
-      perDamageCounterOnTarget?: true;
-    }
-  /**
-   * "Put damage counters on ... until its remaining HP is N." Places `effectiveMaxHp - damage -
-   * remainingHp` per body (in HP, no rounding), so it never knocks anything out; a null max places
-   * nothing and a body already at or below the target takes nothing.
-   */
-  | {
-      op: "counterUntilRemainingHp";
-      target: "opponentActive" | "opponentBench";
-      remainingHp: number;
-      source: "ability" | "attack";
-    }
-  /**
-   * Place `amount` HP of damage counters on the opponent's Active: no Weakness/Resistance (§8.5) or
-   * reduction passive. `amount` is HP, converted from printed counters (§12) by the producer. Can
-   * KO; the caller sweeps. `source` is the provenance the log row prints.
-   */
-  | {
-      op: "damageActive";
-      amount: number;
-      source: "ability" | "attack";
-      /** Alakazam "Powerful Hand": multiplies `amount` by the controller's hand size at resolve. */
-      per?: Extract<DamageCountSource, { kind: "cardsInYourHand" }>;
-    }
-  /**
-   * "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon."
-   * Undamaged bodies are offered and whiff silently. The moved counters are placed, not attack
-   * damage, so no Weakness/Resistance or reduction applies; the attack epilogue handles any Knock
-   * Out.
-   */
-  | {
-      op: "moveCountersToDefender";
-      /**
-       * Only Benched Pokémon with this owner prefix (e.g. `"Team Rocket"`) may be the source.
-       * Absent = any Benched Pokémon.
-       */
-      ownerPokemon?: string;
-      /**
-       * Restricts the source to Benched bodies whose top card matches this filter (e.g. Ancient).
-       */
-      filter?: CardFilter;
-    }
-  /**
-   * "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon." The
-   * destination is a second choice.
-   */
-  | {
-      op: "moveCountersChosen";
-      /**
-       * The Bench index the counters come off once the first choice is answered. Engine-written
-       * only.
-       */
-      fromBench?: number;
-    }
-  /**
-   * Team Rocket's Orbeetle "Rocket Brain": move 1 damage counter from 1 of your Team Rocket's
-   * Pokémon to another of your Pokémon.
-   */
-  | {
-      op: "moveCounterOwnChosen";
-      /** The printed owner subgroup of the SOURCE, the bare owner name. Required: the one
-          printing names one. */
-      ownerPokemon: string;
-      /** The SOURCE, once question 1 is answered. Engine-written only. */
-      from?: PokemonTarget;
-    }
-  /**
-   * Munkidori "Adrena-Brain": move up to N damage counters from 1 of your Pokémon to 1 of your
-   * opponent's Pokémon.
-   */
-  | {
-      op: "moveCountersToOpponentChosen";
-      /** The printed ceiling ("up to 3"). */
-      upTo: number;
-      /** The SOURCE, once question 1 is answered. Engine-written only. */
-      from?: PokemonTarget;
-    }
-  /**
-   * Put a chosen number (0..`upTo`) of damage counters on this Pokémon and record how many, for a
-   * following `damageDefender` to scale off (Walking Wake "Undulating Slice").
-   */
-  | {
-      op: "putCountersOnSelfChosen";
-      /** The printed ceiling ("up to 9"). */
-      upTo: number;
-    }
-  /**
-   * The copy-attack choice made at declaration time; only ever a parked `pendingOp`, never stepped.
-   */
-  | {
-      op: "useAttackAs";
-      from: AttackCopy["from"];
-      owner?: AttackCopy["owner"];
-      flip?: true;
-      /** The copier's declared attack index. Engine-written only. */
-      index: number;
-      /** The SOURCE body (own Bench), once known. Engine-written only. */
-      sourceRef?: PokemonTarget;
-    }
-  /**
-   * The copy-attack choice made mid-attack (after the reveal or mill); only ever a parked
-   * `pendingOp`, never stepped.
-   */
-  | { op: "reflipCoins"; toolUid: string; faces: CoinFace[]; retry: EffectOp }
-  /**
-   * Backtrack Badge offer at an attack's printed coin flip. Only ever a parked `pendingOp`,
-   * resolved by attack.ts `resolveCoinRedo`; `index` is the declared attack and `copied` the copy
-   * override, if any. Engine-written, never stepped.
-   */
-  | {
-      op: "reflipAttackCoins";
-      toolUid: string;
-      index: number;
-      faces: CoinFace[];
-      copied?: AttackCopyOverride;
-    }
-  | {
-      op: "useFoundAttackAs";
-      from: ResolvedAttackCopy["from"];
-      /** The copier's declared attack index. Engine-written only. */
-      index: number;
-      /** The eligible (card, attack) pairs found. Engine-written only. */
-      candidates: { uid: string; attackIndex: number; name: string }[];
-      /** Haughty Order's confirm, answered yes. Engine-written only. */
-      accepted?: true;
-    }
-  /**
-   * Mr. Mime "Look-Alike Show": use the effect of a Supporter in the opponent's revealed hand as
-   * this attack's effect.
-   */
-  | { op: "useOpponentSupporterEffect" }
-  /**
-   * Ninetales "Supernatural Shapeshifter": discard the top card of your deck and, if it is a
-   * Supporter whose play conditions are met, use its effect as this attack's effect. Never parks.
-   */
-  | { op: "useMilledSupporterEffect" }
-  /**
-   * Thievul "Skill Thief": the in-play copy choice, only ever a parked `pendingOp`, never stepped.
-   */
-  | {
-      op: "useInPlayAttackAs";
-      /** The copier's declared attack index. Engine-written only. */
-      index: number;
-      /** The eligible (body, attack) pairs. Engine-written only. */
-      candidates: { uid: string; attackIndex: number; name: string }[];
-    }
-  /**
-   * Move any number of damage counters between the opponent's own Pokémon, one at a time, under an
-   * engine-written budget (Sableye "Damage Collection", Alakazam "Strange Hacking").
-   */
-  | {
-      op: "moveCountersOpponentAnyWay";
-      /** The printed SOURCE zone: `"bench"` (→ their Active) or `"any"` (→ their other Pokémon). */
-      from: "bench" | "any";
-      /** The counters this op may still move. Engine-written only. */
-      budget?: number;
-      /** This round's SOURCE, once Q1 is answered. Engine-written only. */
-      source?: PokemonTarget;
-      /** This round's count, clamped. Engine-written only. */
-      take?: number;
-    }
-  /**
-   * Spread damage (§8.5): `amount` on each Benched Pokémon of the side `target` names, with no
-   * Weakness/Resistance. Only places damage; the attack epilogue runs the KO check.
-   */
-  | {
-      op: "spreadDamage";
-      target: "opponentBench" | "yourBench";
-      amount: number;
-      /**
-       * "for each Prize card your opponent has taken": multiplies `amount` by the opponent's taken
-       * Prizes at resolve.
-       */
-      perTakenPrize?: true;
-      /** Hits only Benched Pokémon that already have damage counters. */
-      damagedOnly?: true;
-    }
-  /**
-   * Put `amount` HP of damage counters on the Pokémon the watched action was just performed on
-   * (`EffectContext.subjectUid`).
-   */
-  | { op: "damageSubject"; amount: number }
-  /**
-   * Put `amount` HP of damage counters on the controller's Pokémon holding the card an earlier op
-   * recorded under `slot` ("place 2 damage counters on that Pokémon").
-   */
-  | { op: "countersOnRecordedBody"; slot: EffectSlot; amount: number }
-  /** Heal `amount` from the Pokémon the watched action was performed on (Magearna "Auto Heal"). */
-  | { op: "healSubject"; amount: number }
-  /**
-   * Recoil: place `amount` HP of damage on the attacker's own Active. Outside the §8.5 pipeline (no
-   * Weakness/Resistance or reduction), so it logs as COUNTERS_PLACED source "self".
-   */
-  | {
-      op: "damageSelf";
-      amount: number;
-      perDamageCounterOnSelf?: true;
-      /** Who placed the counters, for the log row. Absent = the attack's own recoil. */
-      source?: "trainer" | "ability";
-      /**
-       * `"source"` places on the program's source Pokémon (Active or Bench) instead of the Active;
-       * a source that has left play whiffs silently.
-       */
-      on?: "source";
-    }
-  /**
-   * Put `amount` HP of damage counters on `count` chosen Pokémon. Placed counters are not attack
-   * damage: no Weakness/Resistance and no reduction passive.
-   */
-  | {
-      op: "damageChosen";
-      /**
-       * Which Pokémon may be chosen. A target on the Active takes Weakness/Resistance (§8.5); a
-       * Benched one does not.
-       */
-      target: "opponentBench" | "opponentAny" | "yourBench" | "yourAny";
-      amount: number;
-      /**
-       * How many Pokémon the sentence names; `"all"` ("each of") hits every matching Pokémon
-       * without a choice.
-       */
-      count: number | "all";
-      /** The provenance the COUNTERS_PLACED row prints. Read only on the placement path. */
-      source: "ability" | "attack" | "trainer";
-      /** The printed "you may" of an auto-fired trigger: taking NONE is a legal
-          answer, but a partial pick still is not (Hawlucha). */
-      optional?: true;
-      /** Wo-Chien ex "Covetous Ivy": the hit is ATTACK DAMAGE, not a placed
-          counter — emit DAMAGE_DEALT and let a benched reduction passive apply
-          (spreadDamage's model), where the default put-counter snipe (Hawlucha /
-          Meowscarada, an Ability) emits COUNTERS_PLACED and is flat. Benched
-          Pokémon still take NO Weakness/Resistance either way (§8.5). */
-      deals?: true;
-      /** Wo-Chien ex "Covetous Ivy": the printed "for each Prize card your
-          opponent has taken" — the effective amount is `amount × the opponent's
-          TAKEN Prizes`, read from state at run time (0 taken → no damage, no pick).
-          The multiply "×" of the benched-snipe family, evaluated in the interpreter
-          rather than folded pre-W/R (the target is benched, never the defender). */
-      perTakenPrize?: true;
-      /**
-       * "for each Energy attached to this Pokémon": multiplies `amount` by the Energy cards on the
-       * attacker.
-       */
-      perEnergyOnSelf?: true;
-      /**
-       * "for each damage counter on that Pokémon": multiplies `amount` by the counters on the
-       * chosen target.
-       */
-      perDamageCounterOnTarget?: true;
-      /**
-       * "This attack's damage isn't affected by Weakness or Resistance, or by any effects on that
-       * Pokémon." Skips the target's Weakness/Resistance and its reduction passive; the attacker's
-       * own bonus still applies.
-       */
-      ignoreWR?: true;
-      /**
-       * The bare "isn't affected by Weakness or Resistance" form: nulls only Weakness/Resistance,
-       * so effects on the target still apply. Set together with `ignoreWR`.
-       */
-      wrOnly?: true;
-      /** "that has any damage counters on it": narrows the candidate set only. */
-      damagedOnly?: true;
-      /** Narrows candidates by card class (e.g. "Benched Pokémon ex"). */
-      filter?: CardFilter;
-      /**
-       * "for each Energy card you discarded in this way": multiplies `amount` by the number of uids
-       * recorded in this slot.
-       */
-      perRecorded?: EffectSlot;
-      /** Multiplies `amount` by the cards in the controller's discard pile matching this filter. */
-      perDiscardPileCard?: CardFilter;
-      /**
-       * Tauros "Target Together": after the pick, flip a coin per own Pokémon in play matching this
-       * filter; the hit is `amount` times heads.
-       */
-      perHeadsInPlay?: CardFilter;
-      /**
-       * Mega Zygarde ex "Nullifying Zero": one coin per candidate, all flipped before any damage;
-       * heads targets take `amount`. Only used with `count: "all"`.
-       */
-      flipEach?: true;
-      /**
-       * Engine-written: coin faces kept after a declined Backtrack Badge offer, used instead of new
-       * flips.
-       */
-      faces?: CoinFace[];
-      /**
-       * Engine-written: the chosen targets of a resumed pick, so the coins are flipped in `stepOp`
-       * where an offer can park.
-       */
-      hitRefs?: PokemonRef[];
-      /** "that has any Special Energy attached": narrows the candidate set. */
-      specialEnergyOnly?: true;
-      /**
-       * "for each {G} Energy attached to this Pokémon": multiplies `amount` by the attacker's
-       * Energy providing this type.
-       */
-      perTypedEnergyOnSelf?: BasicEnergyType;
-    }
-  /**
-   * Deal `per × N` attack damage to the defender, where N is the number of cards recorded under the
-   * `count` slot. Runs the full §8.5 pipeline.
-   */
-  | {
-      op: "damageDefender";
-      per: number;
-      count: EffectSlot;
-      /** Optional filter on which recorded cards count. Absent = every uid in the slot. */
-      countFilter?: CardFilter;
-      base?: number;
-      amount?: never;
-    }
-  /**
-   * The same hit with a flat amount, decided when the program is built ("You may do N more
-   * damage").
-   */
-  | { op: "damageDefender"; per?: never; count?: never; countFilter?: never; amount: number }
-  /**
-   * A §8.5 hit on whoever is the opponent's Active when this op runs ("This attack does N damage to
-   * the new Active Pokémon.").
-   */
-  | { op: "damageNewActive"; amount: number }
-  /**
-   * "Flip a coin. If heads, ...": `then` runs on the winning face only. `onTails` makes tails the
-   * winning face.
-   */
-  | {
-      op: "coinFlipGate";
-      then: EffectOp[];
-      otherwise?: EffectOp[];
-      onTails?: true;
-      coins?: number;
-      /**
-       * Engine-written: coin faces kept after a declined Backtrack Badge offer, used instead of new
-       * flips.
-       */
-      faces?: CoinFace[];
-    }
-  // Trainer and Ability ops, relative to the controller.
-  // Draw `count` from the controller's deck, short-drawing on a shallower deck (deck-out is checked
-  // only at turn start, §14.3). `recordAs` records the cards drawn.
-  | {
-      op: "drawCards";
-      count: number;
-      recordAs?: EffectSlot;
-      from?: "bottom";
-      who?: "eachPlayer";
-      per?:
-        | Extract<DamageCountSource, { kind: "opponentBenchCount" }>
-        /** "Draw a card for each of your Ancient Pokémon in play." */
-        | Extract<DamageCountSource, { kind: "pokemonInPlay" }>
-        /**
-         * "draw a card for each Pokémon you find there", counted after the opponent's hand is
-         * revealed.
-         */
-        | Extract<DamageCountSource, { kind: "cardsInOpponentHand" }>
-        /**
-         * Draw per card recorded under `slot` by an earlier op; a decline records nothing and draws
-         * 0.
-         */
-        | { kind: "recorded"; slot: EffectSlot };
-    }
-  /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
-      `size − hand.length`, i.e. nothing at all when the hand already holds
-      `size` or more (a bigger hand is never trimmed). Fully automatic like
-      drawCards, and short-draws the same way on a shallow deck (§14.3 deck-out
-      is a turn-START rule). Distinct from drawCards because the count is read
-      off the CURRENT hand: two of these in a row is not two draws. */
-  | {
-      op: "drawUntilHandSize";
-      size: number;
-      /**
-       * Mystery Garden: the target hand size is `size` times this count of Pokémon in play, read at
-       * resolve.
-       */
-      per?: Extract<DamageCountSource, { kind: "pokemonInPlay" }>;
-    }
-  /** Discard the controller's whole hand (Professor's Research precedes a draw). */
-  | { op: "discardHand" }
-  /**
-   * Amarys: "At the end of this turn, if you have 5 or more cards in your hand, discard your hand."
-   * Records the threshold for `endTurn` to apply. Never parks.
-   */
-  | { op: "scheduleEndOfTurnHandDiscard"; atLeast: number }
-  /**
-   * "During your opponent's next turn, all of your Pokémon take N less damage from attacks." Adds a
-   * side damage reduction stamped `state.turn + 1`, so Pokémon put into play later are covered too.
-   */
-  | {
-      op: "installSideDamageReductionNextTurn";
-      amount: number;
-      /** Limits the reduction to Pokémon of this type. Absent = every Pokémon on the side. */
-      pokemonType?: PokemonType;
-    }
-  /**
-   * Acerola's Mischief: parks a choice of the controller's Pokémon and shields it from damage and
-   * effects of attacks by `fromClass` Pokémon during the opponent's next turn.
-   */
-  | { op: "installChosenAttackShield"; fromClass: AttackerClass }
-  /**
-   * Roxie's Performance: "During your opponent's next turn, their Poisoned Pokémon can't retreat
-   * (including newly Poisoned Pokémon)." Stamps the opponent's side with a `sideRetreatLock` for
-   * the next turn. Never parks.
-   */
-  | { op: "lockSideRetreat"; status: "poisoned" }
-  /**
-   * Caretaker: "shuffle this Caretaker into your deck instead of discarding it." Moves the played
-   * card (`playedUid`, not `sourceUid`) from the discard pile into the deck and shuffles; a no-op
-   * when there is no played card or it has left the discard.
-   */
-  | { op: "shufflePlayedCardIntoDeck" }
-  /**
-   * Shuffle a deck (the tail of every search). Absent `whose` is the controller's own deck;
-   * `"opponent"` shuffles the other seat's deck (Inkay: "You may have your opponent shuffle their
-   * deck").
-   */
-  | { op: "shuffleDeck"; whose?: "opponent" }
-  /**
-   * Search the controller's deck for up to `max` cards matching `filter` and move them to `dest`.
-   * The player may take fewer or none, so this parks on a card choice unless the deck holds no
-   * candidate. `reveal` is the printed clause and is not implied by `dest`.
-   */
-  | {
-      op: "searchDeck";
-      filter: CardFilter;
-      /**
-       * `"deckTop"` puts the picks back on top of the deck in the order the answer names them
-       * ("shuffle your deck, then put those cards on top of it in any order").
-       */
-      dest: "bench" | "hand" | "deckTop" | "discard" | "attachToSelf";
-      /** `"any"` is the printed "any number of": no upper bound on the picks. */
-      max: number | "any" | "yourBenchCount";
-      /**
-       * The printed take with no "up to": the player must take exactly the count when the deck
-       * allows it. Absent, the search is declinable.
-       */
-      exact?: true;
-      /** The printed *"reveal it/them"* — the found cards are named in the log
-          (`DECK_SEARCHED`). Only meaningful with `dest: "hand"`; a bench search
-          is public without it, and no printed bench search carries the word. */
-      reveal?: true;
-      /**
-       * Multi-noun search ("a Pokémon, a Supporter card, and a Basic Energy card"): one pick per
-       * group, each with its own filter.
-       */
-      also?: readonly { filter: CardFilter; max: number }[];
-      /**
-       * The printed "up to 2 Basic Pokémon or 1 Evolution Pokémon": an alternative to the op's own
-       * `filter`/`max`. An answer must come wholly from one alternative and stay within its `max`.
-       */
-      orElse?: { filter: CardFilter; max: number };
-      /**
-       * The printed "of different types": a pairwise constraint among the picks rather than a
-       * narrowing of any one of them.
-       */
-      distinctEnergyTypes?: true;
-      /**
-       * "Pokémon that are the same type as any Basic Energy attached to this Pokémon": the filter
-       * is read from the board when the op runs.
-       */
-      typedAsAttachedBasicEnergy?: true;
-      /**
-       * Love Ball: "a Pokémon with the same name as 1 of your opponent's Pokémon in play." When the
-       * op runs, group 0 is narrowed to the names on the top cards of the opponent's Active and
-       * Bench.
-       */
-      sameNameAsOpponentInPlay?: true;
-      /**
-       * The printed "up to that many": group 0's ceiling is replaced by the length of what an
-       * earlier op filed under this slot (Perrin).
-       */
-      maxRecorded?: EffectSlot;
-      /**
-       * File the uids this search actually moved under `slot`, so a following `recordGate` can read
-       * "If you put any Pokémon onto your Bench in this way".
-       */
-      recordAs?: EffectSlot;
-    }
-  /**
-   * "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to
-   * evolve it. Then, shuffle your deck."
-   */
-  | {
-      op: "evolveFromDeck";
-      onto?: PokemonTarget;
-      names?: readonly string[];
-      /**
-       * Salvatore's "a card that has no Abilities": the offer keeps only deck cards with no
-       * abilities. Optional, so a record without it is unfiltered.
-       */
-      noAbilities?: true;
-      /**
-       * Grand Tree's chained step: when this op actually places a card, one more `evolveFromDeck`
-       * is queued onto the same spot (without this key, so the chain is exactly two long). A
-       * decline or empty offer queues nothing.
-       */
-      thenEvolveAgain?: true;
-      /**
-       * Source zone is the hand (Phantump "Spiteful Evolution"): mandatory, forced with one
-       * candidate, and refused before use when the hand holds none. No first-turn or same-turn
-       * evolution ban is applied.
-       */
-      fromHand?: true;
-      /**
-       * File the evolution card actually placed (`[]` on a whiff), for "place 2 damage counters on
-       * the Pokémon you evolved in this way". Read on the `fromHand` route only.
-       */
-      recordAs?: EffectSlot;
-    }
-  /**
-   * "For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon
-   * and put it onto that Pokémon to evolve it. Then, shuffle your deck."
-   */
-  | { op: "evolveFromDeckEachBenched" }
-  /**
-   * "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon
-   * to evolve it. Then, shuffle your deck."
-   */
-  | {
-      op: "evolveFromDeckChosen";
-      /**
-       * Salvatore: "a card that has no Abilities". Narrows the body candidates to those the deck
-       * can evolve with an Ability-free card, and carries onto the `evolveFromDeck` the answer
-       * queues.
-       */
-      noAbilities?: true;
-      /**
-       * Grand Tree: Stage 1 from a Basic, optionally followed by a Stage 2, with the printed timing
-       * bans.
-       */
-      bodyStage?: "Basic";
-      /**
-       * Grand Tree's printed parenthetical: a body is not offered on the controller's first turn or
-       * when it was played this turn. Other evolve-from-deck ops deliberately skip these bans,
-       * which apply to playing from the hand.
-       */
-      evolveTimingGates?: true;
-      /**
-       * The chained optional Stage 2 step, carried onto the `evolveFromDeck` the body answer
-       * queues.
-       */
-      thenEvolveAgain?: true;
-    }
-  /**
-   * "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card
-   * that evolves from that Pokémon and put it onto that Pokémon to evolve it."
-   */
-  | { op: "evolveFromDeckEachChosen"; max: number; pokemonType: PokemonType }
-  /**
-   * Switch the controller's Active with one of their Benched Pokémon. Parks on the bench choice
-   * unless exactly one is benched. The riders cover "Switch … . If you do, …".
-   */
-  | {
-      op: "switchActive";
-      ownerPokemon?: string;
-      /** Energy-type subgroup on the benched candidates ("1 of your Benched {D} Pokémon"). */
-      targetType?: PokemonType;
-      /**
-       * The printed exclusion by name ("except any Pecharunt ex"): an exact-case negated match on
-       * `Card.name`.
-       */
-      exceptNamed?: string;
-      /** The printed pronoun: the bench end is `ctx.sourceUid`'s body, not a
-          pick. Absent = the free switch every other printing spells. */
-      fromSource?: true;
-      recordAs?: EffectSlot;
-      /**
-       * When true, `recordAs` files the demoted body (`wasActive`) instead of the promoted one
-       * (Scramble Switch moves Energy from the Pokémon moved to the Bench).
-       */
-      recordDemoted?: true;
-      /**
-       * With `recordDemoted`, files the card the switch moved, not re-keyed through a later swap,
-       * since AZ's Tranquility asks which card was moved to the Bench.
-       */
-      demotedAsMoved?: true;
-    }
-  /**
-   * Gust: switch one of the opponent's Benched Pokémon into their Active spot. Parks on the
-   * opponent-bench choice unless forced.
-   */
-  | {
-      op: "gust";
-      recordAs?: EffectSlot;
-      basicOnly?: true;
-      remainingHpAtMost?: number;
-      optional?: true;
-    }
-  /**
-   * Opponent-chosen switch-out: "Switch out your opponent's Active Pokémon to the Bench. (Your
-   * opponent chooses the new Active Pokémon.)"
-   */
-  | { op: "opponentSwitchOut"; recordAs?: EffectSlot }
-  /**
-   * Take one Benched Pokémon off the board with everything attached and put the whole pile into its
-   * owner's `dest`. `whose` picks whose Bench the candidates come from.
-   */
-  | {
-      op: "returnBenched";
-      whose: "self" | "opponent";
-      dest: "deck" | "hand";
-      /**
-       * The printed "1 of your Pokémon": the Active joins the candidates. A returned Active leaves
-       * its spot empty for the normal promotion path.
-       */
-      includeActive?: true;
-    }
-  /**
-   * "Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched
-   * Pokémon that you didn't choose, and all attached cards, into their deck." The pick names the
-   * bodies that stay.
-   */
-  | { op: "returnBenchedRest"; keep: number }
-  /**
-   * "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into
-   * your opponent's deck", as one shuffle.
-   */
-  | { op: "returnBenchedChosen"; count: number }
-  /**
-   * Area Zero Underdepths trim: the controller discards Pokémon from their own Bench until they
-   * have 5. Produced only by flow.ts `runBenchTrim`, with the Bench owner as controller.
-   */
-  | { op: "trimBench" }
-  /**
-   * Tool trim: the controller discards Pokémon Tools from their first over-cap body until it
-   * carries what `toolCapOf` allows. Produced only by flow.ts `runToolTrim`; the excess is re-read
-   * when the op runs.
-   */
-  | { op: "trimTools" }
-  /**
-   * Tyme: the controller names a Pokémon in hand, the opponent guesses its HP, and whoever is right
-   * draws 4. With `uid` absent the controller picks the card; then the opponent answers.
-   */
-  | { op: "opponentGuessesHp"; draw: number; uid?: string }
-  /** Shuffle this Pokémon and all attached cards into its controller's deck. */
-  | { op: "returnSelf"; dest?: "deck" | "deckTop" | "hand" | "discard"; attachmentsTo?: "discard" }
-  /**
-   * Zero to Hero: swap this Pokémon in place with a Palafin ex from the deck; attached cards,
-   * damage, conditions and effects stay, and this card goes into the deck before the shuffle.
-   */
-  | { op: "switchWithDeckNamed"; name: string }
-  /**
-   * Ogre's Mask: swap an Ogerpon ex in play in place with an Ogerpon ex from the discard pile;
-   * everything attached stays on the new Pokémon.
-   */
-  | { op: "switchWithDiscardNamed"; filter: CardFilter; bodyUid?: string }
-  /**
-   * Ditto "Surprisingly Transform": swap this Pokémon in place with a chosen deck Pokémon passing
-   * `filter`; the old top card goes into the deck.
-   */
-  | { op: "switchWithDeckChosen"; filter: CardFilter }
-  /** Printed self-Knock Out cost: "If you use this Ability, this Pokémon is Knocked Out." */
-  | { op: "knockOutSelf" }
-  /**
-   * Knock Out the opponent's Active by effect (§8.1); "Both Active Pokémon are Knocked Out" is
-   * composed from this and the self Knock Out.
-   */
-  | { op: "knockOutDefender" }
-  /**
-   * Discard the opponent's Active and all attached cards (§8.6). It leaves play without being
-   * Knocked Out, so no Prize is taken.
-   */
-  | { op: "discardDefender" }
-  /** Knock Out 1 of the opponent's Pokémon chosen from a filtered candidate set (§8.1). */
-  | {
-      op: "knockOutChosen";
-      /**
-       * `opponentBench`: only the opponent's Bench. `opponentAny`: any of the opponent's Pokémon.
-       * `anyExceptSelf`: every Pokémon in play except the attacker.
-       */
-      target: "opponentBench" | "opponentAny" | "anyExceptSelf";
-      /** *"…Benched **Basic** Pokémon"*. `gust.basicOnly` verbatim, read through
-          `matchesFilter`'s `basicPokemon` arm so board-side "Basic" stays ONE
-          predicate. Absent = every body in scope. */
-      basicOnly?: true;
-      /** *"…that has **exactly 6** damage counters on it"*. The comparator is in
-          the NAME (see above); the number is read off the print rather than
-          hard-coded, so a second printing at a different count needs no arm.
-          Absent = no counter window at all. */
-      damageCountersExactly?: number;
-      /**
-       * "that has the least HP remaining": only bodies at the minimum remaining HP are offered; a
-       * tie parks. Computed over the printed scope before the §11 filter, so a shielded least-HP
-       * body is not replaced by the next one.
-       */
-      leastHpRemaining?: true;
-    }
-  /**
-   * Knock Out each of the opponent's Pokémon with `remainingHpAtMost` HP or less remaining
-   * (§8.1/§11). Shields are checked per body; it is an effect, not damage. Never parks.
-   */
-  | { op: "knockOutEach"; remainingHpAtMost: number }
-  /** Take a Prize card without a Knock Out (§8.1). */
-  | { op: "takePrize"; count?: number; thenShuffleHand?: true }
-  /**
-   * "Each player takes a Prize card" (§8.1): two `takePrizes` stages, the controller's first. If
-   * both Prize rows empty, it is a §14 tie. Never parks.
-   */
-  | { op: "eachPlayerTakesPrize" }
-  /**
-   * "Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage Evolution card
-   * on it into your opponent's deck." (§10)
-   */
-  | { op: "devolveEach"; toHand?: true }
-  /**
-   * "Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it
-   * into your opponent's hand."
-   */
-  | {
-      op: "devolveChosen";
-      defenderOnly?: true;
-      whose?: "self";
-      pokemonType?: PokemonType;
-      depth?: "any";
-      bodyUid?: string;
-      shed?: number;
-    }
-  /** "Discard a Stadium in play." (§7.3) */
-  | { op: "discardStadium" }
-  /**
-   * Heal the controller's own Pokémon: `amount` HP, or `"all"` its damage. Without `upTo` it heals
-   * one and parks on a choice unless only the Active is in play; `upTo` is the printed "up to N …
-   * each", which allows choosing none.
-   */
-  | {
-      op: "healChosen";
-      amount: number | "all";
-      zone?: "bench";
-      upTo?: number;
-      remainingHpAtMost?: number;
-      /**
-       * Super Potion: "If you healed any damage in this way, discard an Energy from that Pokémon."
-       * Both the forced and parked picks go through one helper.
-       */
-      discardEnergyFromHealed?: true;
-      /**
-       * Banner subgroup on the candidates ("1 of your Benched Ancient Pokémon"), matched on each
-       * candidate's top card.
-       */
-      filter?: CardFilter;
-      /**
-       * "and it recovers from all Special Conditions": a picked Active schedules `clearStatus`; a
-       * Benched pick needs nothing since Benched Pokémon carry no Special Conditions.
-       */
-      recoverHealed?: true;
-      /**
-       * Candidate pinned to a recorded body (AZ's Tranquility): only the controller's bodies
-       * holding a uid filed under this slot, narrowed by `filter`, so at most one candidate and
-       * never parked.
-       */
-      targetRecorded?: EffectSlot;
-      /**
-       * Wally's Compassion: "If you healed any damage in this way, put all Energy attached to that
-       * Pokémon into your hand." Only fires when the healed body had damage; an undamaged pick
-       * keeps its Energy.
-       */
-      energyToHandFromHealed?: true;
-    }
-  /**
-   * Attach Basic Energy from the controller's hand or discard pile to a chosen own in-play Pokémon
-   * (§6). Parks on a target pick unless exactly one Pokémon is in play; a source with no matching
-   * Energy is a no-op. "Up to N" is auto-maxed since attaching is pure upside.
-   */
-  | {
-      op: "attachEnergyFrom";
-      source: "hand" | "discard";
-      energyType?: string;
-      /**
-       * How many Energy this one decision attaches to the one chosen body ("attach up to 2 … to 1
-       * of your Benched Pokémon"). Separate ops are used instead for "in any way you like". Absent
-       * means 1; `min(count, available)` lands.
-       */
-      count?: number;
-      /**
-       * The printed "up to N" spread over N one-card ops: the player may decline this pick. Absent
-       * means the pick is mandatory.
-       */
-      declinable?: true;
-      /**
-       * Disjunction "a Basic {R} Energy card, a Basic {F} Energy card, or 1 of each": ops sharing a
-       * `recordAs` slot. An op becomes declinable only if an earlier op already attached or a later
-       * one still can, so the result is never empty.
-       */
-      atLeastOne?: true;
-      /**
-       * The printed "an Energy card": Special Energy is reachable too. Absent means only Basic
-       * Energy.
-       */
-      anyEnergy?: true;
-      /**
-       * Exact card name the attached Energy must have (e.g. "Spiky Energy"); the name subsumes the
-       * Basic/Special test. Not combined with `energyType`.
-       */
-      energyName?: string;
-      targetType?: string;
-      basicOnly?: true;
-      /** Only Stage 2 Pokémon may be the target. */
-      stage2Only?: true;
-      /** Owner-prefixed subgroup the attach may land on, e.g. "1 of your Iono's Pokémon". */
-      ownerPokemon?: string;
-      /** Only Benched Pokémon may be the target. */
-      benchOnly?: true;
-      bonusCounters?: number;
-      notIfKO?: true;
-      /**
-       * The printed "this Pokémon": the sole target is the effect's source, wherever it sits. Other
-       * target riders are ignored, and the op never parks.
-       */
-      toSelf?: true;
-      /**
-       * "Attach … to each of your Benched Pokémon": attaches to every eligible target without
-       * asking, re-finding Energy per body and stopping when the pile runs dry.
-       */
-      toEach?: true;
-      /**
-       * Crispin: "put 1 of them into your hand. Attach the other to 1 of your Pokémon." The Energy
-       * to attach is one of the cards filed under this slot, and the player chooses which type.
-       */
-      oneOfRecorded?: EffectSlot;
-      /**
-       * Files the Energy uids actually attached (§9.2) for a following `recordGate`; a whiff files
-       * nothing.
-       */
-      recordAs?: EffectSlot;
-      /**
-       * "If you do, heal all damage from that Pokémon": heals the body just attached to, once per
-       * op. `"all"` clears the damage; a number heals that much.
-       */
-      healTarget?: number | "all";
-      /**
-       * Engine-written, never authored: after the target is known and the pile holds more than one
-       * card identity, the op is rescheduled with the target and take so the player picks which
-       * Energy cards.
-       */
-      pickOnto?: { ref: PokemonRef; take: number };
-      /**
-       * "Attach … from your opponent's discard pile to their Pokémon": moves both the source pile
-       * and the target board to the opponent. Absent means the controller's own.
-       */
-      whose?: "opponent";
-    }
-  /**
-   * Retrieve up to `max` cards matching `filter` from the controller's discard pile into hand, deck
-   * or Bench (§7.1). Parks on a card pick unless no candidate exists; `max: "all"` resolves forced.
-   * `dest: "deck"` should be followed by `shuffleDeck`. `exclude` drops uids filed by an earlier op
-   * (cards discarded by this card's own cost). A Bench destination is clamped to bench space; the
-   * filter must name Pokémon, which is checked upstream.
-   */
-  | {
-      op: "discardPileRetrieval";
-      filter: CardFilter;
-      dest: "hand" | "deck" | "bench";
-      /** `"all"` is the printed "those": every matching card, moved without a prompt. */
-      max: number | "all";
-      /** File the uids actually moved under this slot (Miriam). */
-      recordAs?: EffectSlot;
-      /** Drop the uids filed under this slot from the candidates (SER). */
-      exclude?: EffectSlot;
-    }
-  /** Look at the top `n` cards of a deck and put up to `max` matching `filter` into the hand. */
-  | {
-      op: "lookAtTopN";
-      n: number;
-      filter: CardFilter;
-      /** `"any"` is the printed "any number of". */
-      max: number | "any";
-      /** Where the taken cards go. Absent means the hand. */
-      dest?: "bench" | "discard";
-      /** A second filter and cap over the same window ("a Pokémon and a Trainer card"). */
-      also?: { filter: CardFilter; max: number };
-      /** The printed "you may reveal": taken cards are named in the log. */
-      reveal?: true;
-      /** `max` is an exact number to take, not a ceiling ("put 2 of them into your hand"). */
-      exact?: true;
-      /** Where the cards not taken go. */
-      restTo?: "discard" | "bottom" | "shuffledBottom";
-      /** Which end of the deck is looked at. Absent means the top. */
-      from?: "bottom";
-      /**
-       * `"opponent"` reads the opponent's deck, and the window, candidates, Bench clamp and
-       * destination all move to the opponent's side together.
-       */
-      whose?: "opponent";
-    }
-  /** Look at the top `n` cards and put them back in any order. No card changes zone. */
-  | {
-      op: "reorderTop";
-      n: number;
-      side?: "opponent";
-      /** Which end of the deck the window sits at. Absent means the top. */
-      from?: "bottom";
-      /** The printed ", or …" alternative, run when the ordering answer is empty. */
-      otherwise?: EffectOp[];
-      /** The printed second arm's own words, rendered as the alternative's
-          button. REQUIRED-in-practice beside `otherwise` and optional in the
-          type for the reason `optional.note` is authored rather than derived: a
-          describer over the arm's ops would have to invent wording for every op
-          it might ever hold, and the sentence is already sitting in the registry
-          row. The pairing is asserted from outside rather than encoded here. */
-      otherwiseNote?: string;
-    }
-  /** Shuffle the top `n` cards and put them on the bottom of the deck, clamped to the deck size. */
-  | { op: "bottomDeckTop"; n: number }
-  /**
-   * Look at the top `n` cards of the controller's deck and attach Energy among them to the
-   * controller's own in-play Pokémon.
-   */
-  | {
-      op: "attachFromTop";
-      n: number;
-      filter: CardFilter;
-      max: number | "any";
-      targetType?: string;
-      benchOnly?: true;
-      /** Owner-prefixed subgroup the attach may land on. */
-      ownerPokemon?: string;
-      /** Where the cards not attached go. */
-      restTo?: "discard" | "shuffledBottom";
-    }
-  /**
-   * Mill: move the top `count` cards of `whose` deck into that player's discard pile in deck order
-   * (§2).
-   */
-  | {
-      op: "discardDeckTop";
-      whose: "self" | "opponent" | "eachPlayer";
-      count: number;
-      recordAs?: EffectSlot;
-    }
-  /**
-   * Discard the bottom `count` cards of the controller's deck, filing them under `recordAs`; an
-   * empty deck files an empty list.
-   */
-  | {
-      op: "discardDeckBottom";
-      count: number;
-      recordAs?: EffectSlot;
-    }
-  /**
-   * Reveal the top `n` cards of the controller's deck, discard those matching `filter` (filed under
-   * `recordAs`), and shuffle the rest back.
-   */
-  | {
-      op: "revealTopDiscardMatching";
-      n: number;
-      filter: CardFilter;
-      recordAs?: EffectSlot;
-    }
-  /**
-   * Reveal the bottom `n` cards of the controller's deck, file the matches under `recordAs`,
-   * discard the non-Pokémon, and shuffle the Pokémon back.
-   */
-  | {
-      op: "revealDeckBottomCount";
-      n: number;
-      filter: CardFilter;
-      recordAs: EffectSlot;
-    }
-  /**
-   * Search the controller's deck for up to `max` Energy matching `filter` and attach them to the
-   * controller's own in-play Pokémon.
-   */
-  | {
-      op: "attachFromDeck";
-      filter: CardFilter;
-      max: number;
-      /** A list allows a two-type target. */
-      targetType?: string | readonly string[];
-      benchOnly?: true;
-      /** Owner-prefixed subgroup the attach may land on. Ignored under `toSelf`. */
-      ownerPokemon?: string;
-      /** Only Pokémon with this banner (e.g. Tera) may be targets. */
-      targetBanner?: Banner;
-      /** The attached Energy must all be of different types. */
-      distinctEnergyTypes?: true;
-      /** At most this many of the attached cards may land on any ONE Pokémon —
-          the printed "for each of those Pokémon" (Janine's Secret Art). Absent =
-          "in any way you like", no per-target limit. */
-      maxPerTarget?: number;
-      /**
-       * The printed "attach them to 1 of your Pokémon": the whole batch lands on one body. Absent
-       * allows any split.
-       */
-      oneTarget?: true;
-      /** The printed "attach it to THIS Pokémon" (Pawmot "Electrogenesis"): the
-          sole target is the Pokémon whose effect this is (`ctx.sourceUid`). No
-          card prints it beside another target rule, and this member does not
-          referee a co-authored one — it IGNORES `targetType`/`benchOnly` (the
-          source ref is not filtered), while `maxPerTarget` would still cap the
-          count. Authoring it alone is the rule; this doc is the enforcement. */
-      toSelf?: true;
-      /**
-       * "For each of your Benched Pokémon, search … and attach it to that Pokémon": `max` is the
-       * per-body count. A short answer stands, since the deck is hidden.
-       */
-      each?: true;
-      recordAs?: EffectSlot;
-    }
-  /**
-   * Attach cards from the controller's discard pile to chosen own Pokémon through one compound
-   * pick; `maxPerTarget` caps cards per body.
-   */
-  | {
-      op: "attachFromDiscard";
-      filter: CardFilter;
-      /**
-       * Ceiling equal to the Energy attached to all of the opponent's Pokémon, resolved when the op
-       * parks.
-       */
-      max: number | "opponentEnergyInPlay";
-      maxPerTarget?: number;
-      targetType?: string;
-      benchOnly?: true;
-      /** Only Pokémon with this banner (e.g. Future) may be targets. */
-      targetBanner?: Banner;
-      /**
-       * "To each of your … Pokémon": mandatory, `max` per target. A short answer is topped up at
-       * apply time with the next matching cards.
-       */
-      each?: true;
-    }
-  /**
-   * Attach any number of Energy from the hand, each card choosing its own destination ("in any way
-   * you like").
-   */
-  | {
-      op: "attachFromHand";
-      filter: CardFilter;
-      /**
-       * The printed "to this Pokémon": the sole target is the effect's source. With no source in
-       * play the op files an empty record and does nothing.
-       */
-      toSelf?: true;
-      /** Files the uids actually attached (§9.2), or an empty list on every dead end. */
-      recordAs?: EffectSlot;
-      /**
-       * The printed singular "Attach an Energy card": exactly one card, mandatory; an empty answer
-       * is topped up with the first offered card onto the first offered target.
-       */
-      one?: true;
-      /** Only the Active Pokémon may be the target. */
-      activeOnly?: true;
-      /** Owner-prefixed subgroup the attach may land on. */
-      ownerPokemon?: string;
-      /** The printed "up to N": the cap is `min(max, candidates)`. Absent means any number. */
-      max?: number;
-      /**
-       * Uses the opponent's hand and board, and the opponent answers the pick. Absent means the
-       * controller's own.
-       */
-      whose?: "opponent";
-    }
-  /**
-   * Discard Energy attached to an in-play Pokémon (§15 removal, or a §8 self-discard cost).
-   * `filter` narrows which attached Energy may be taken; the card always goes to its owner's
-   * discard pile.
-   */
-  | {
-      op: "discardEnergy";
-      /** `yours` is the controller's whole board; `self` is the program's own Pokémon by uid. */
-      from:
-        | "opponentActive"
-        | "opponentChosen"
-        | "yourActive"
-        | "yours"
-        | "yourBench"
-        | "self"
-        | "attacker";
-      filter: CardFilter;
-      /**
-       * Engine-written only: the body `self` names when it is not the program's own card, e.g. the
-       * Pokémon a heal just targeted.
-       */
-      bodyUid?: string;
-      /**
-       * Where the Energy goes. Absent means the discard pile; `"hand"` is the victim's own hand.
-       */
-      to?: "hand" | "deck";
-      /** How many Energy the op takes in total: absent = one (the printed "an
-          Energy"), a number = exactly that many, `"all"` = every match — which
-          leaves no decision, so the op never parks under it — and `"any"` = the
-          declinable "you may discard ANY amount" (Chien-Pao ex "Hail Blade"): 0
-          up to every match, the player choosing HOW MANY as well as WHICH, so it
-          ALWAYS parks on a non-empty board (the one count-mode with a decline). */
-      count?: "all" | number | "any";
-      /** Files the discarded uids under this §9.2 slot so a later op can count them. */
-      recordAs?: EffectSlot;
-      /** Only meaningful with `count: "any"`: an upper BOUND on the declinable
-          up-to — the printed "up to N" (Mewtwo VSTAR "Psy Purge": discard up to
-          3). Absent = uncapped (0..every match, Chien-Pao ex "Hail Blade"). It
-          narrows ONLY the ceiling: the pick is still 0..min(cap, matches) and
-          still DECLINABLE, so a capped op parks identically to the uncapped one. */
-      cap?: number;
-      /**
-       * Types a later discard of the same sentence still needs. The offer prefers candidates whose
-       * removal keeps those types matchable, so a multi-type Energy cannot fill this slot and dodge
-       * a later one.
-       */
-      reserve?: BasicEnergyType[];
-    }
-  /** The `opponentEach` sweep, split out so a NUMERIC count cannot ride it: "one
-      from EACH" already fixes how many come off (one per Pokémon with a match),
-      and the field would be silently ignored. */
-  | {
-      op: "discardEnergy";
-      from: "opponentEach";
-      filter: CardFilter;
-      /**
-       * `"all"` discards every matching Energy from each opponent Pokémon; absent discards one from
-       * each.
-       */
-      count?: "all";
-      /** Not allowed here: no printed sweep returns Energy to a hand. */
-      to?: never;
-      recordAs?: never;
-    }
-  /** Discard up to `count` Pokémon Tools from the opponent's Pokémon. */
-  | { op: "discardTools"; count: number | "all"; sides?: "both"; bodyUid?: string }
-  /**
-   * Ruffian: one pick of an opponent body, then a Tool and a Special Energy are discarded from that
-   * body.
-   */
-  | { op: "discardToolAndSpecialEnergyChosen" }
-  /**
-   * Turn 1 of the actor's face-down Prize cards face up; it stays face up for the rest of the game.
-   */
-  | { op: "turnPrizeFaceUp"; side?: "opponent"; recordAs?: EffectSlot }
-  /**
-   * Shuffle the controller's Prize cards onto the bottom of the deck, then take that many from the
-   * top as new Prize cards. Never parks.
-   */
-  | { op: "cycleOwnPrizes" }
-  /**
-   * Swap the revealed hand card into the turned prize's slot and put that prize into the opponent's
-   * hand. Gated so it is never offered on a short board (§8.6).
-   */
-  | { op: "swapTurnedPrizeWithRevealed" }
-  /**
-   * Move up to `max` Energy from one in-play Pokémon to another on the same board (Energy Switch,
-   * Poppy). The source Energy and the destination are chosen together on one compound `moveEnergy`
-   * prompt and applied atomically, so a half-moved Energy is never a resting state. Declinable
-   * unless `max` is `"all"`; `route` fixes the endpoints, and `anySource`/`anyDest` let one answer
-   * draw from several sources or spread over several destinations.
-   */
-  | {
-      op: "moveEnergy";
-      filter: CardFilter;
-      /**
-       * `"any"` is the printed "any amount" and `"all"` the printed "all"; both clamp to the
-       * movable count, but `"all"` also sets the prompt's `min` so it cannot be declined.
-       */
-      max: number | "any" | "all";
-      route?: "benchToActive" | "koedActiveToToolHolder" | "selfToBench" | "othersToSelf";
-      /**
-       * Whose board the move happens on; absent is the controller's. With `"opponent"` both
-       * endpoints are on the other seat's board, and the uid-anchored routes find no body there and
-       * whiff.
-       */
-      side?: "opponent";
-      /** Let ONE answer take Energy off SEVERAL of the offered sources (N's Plan's
-          printed "from your Benched Pokémon", plural). Absent = the single-source
-          coupling every other printed member of this family carries. */
-      anySource?: true;
-      /**
-       * Lets one answer put its picks on several of the offered destinations (the printed "in any
-       * way you like"). Rides the prompt as well as the op, because the wire validator and dialogs
-       * read only the prompt.
-       */
-      anyDest?: true;
-      /**
-       * Narrows destinations to in-play bodies whose `stack` holds a uid filed under this slot ("to
-       * the new Benched Pokémon"). Applied at the `stepOp` caller because the play gate has no
-       * record to read.
-       */
-      destRecorded?: EffectSlot;
-      /**
-       * Narrows sources to in-play bodies whose `stack` holds a uid filed under this slot (Scramble
-       * Switch: "from the Pokémon you moved to your Bench").
-       */
-      sourceRecorded?: EffectSlot;
-    }
-  /**
-   * Put the affected players' hands back into their decks, then draw (Iono/Judge family). `draw` is
-   * measured per affected seat. By default the hand is shuffled into the deck; with `toBottom` the
-   * hand alone is shuffled and placed under the deck, keeping the deck's order. Never parks and is
-   * always playable; events are count-only so hidden hands stay hidden.
-   */
-  | {
-      op: "handRefresh";
-      /** Which seats' hands go back: the controller, both players, or the opponent alone. */
-      who: "you" | "both" | "opponent";
-      draw: HandRefreshDraw;
-      /** Shuffle the HAND alone and put it UNDER the deck, leaving the deck's own
-          order intact (Iono), instead of shuffling the hand into the deck. */
-      toBottom?: true;
-      /** Draw only if ≥1 affected player actually moved ≥1 card (Iono). */
-      onlyIfAnyMoved?: true;
-    }
-  /**
-   * Pay a printed hand cost: spend exactly `count` cards from the controller's hand before the rest
-   * of the program runs. Mandatory and exact; parks only on a genuine choice between
-   * non-interchangeable cards. The play gate (`handCostUnmet`) refuses an unpayable cost on play
-   * paths only; in an attack it pays what it can, so an attack-borne payment needs a printed cancel
-   * or a `recordGate` on its own slot.
-   */
-  | {
-      op: "payFromHand";
-      count: number;
-      /**
-       * Where the paid cards go. `"deckBottom"` keeps the picked order; `"deckTop"` is Academy at
-       * Night's top-of-deck payment.
-       */
-      to: "discard" | "deckBottom" | "deckTop";
-      /** A ceiling on an already exact count would be silently ignored. */
-      cap?: never;
-      filter?: CardFilter;
-      /** File the uids actually paid under this slot, for a later op to read —
-          Superior Energy Retrieval excludes them from its retrieval, Dendra
-          gates its draw on them ("if you do"). */
-      recordAs?: EffectSlot;
-      /**
-       * Gumshoos "Evidence Gathering": switch a card from hand with the top card of the deck. Only
-       * with `to: "deckTop"` and `count: 1`; the old top card goes to hand before the paid card
-       * goes on top. An empty deck refuses the use.
-       */
-      swapWithTop?: true;
-    }
-  /**
-   * The declinable hand discard ("Discard up to N ..."). The player picks 0..`cap` matching cards,
-   * so it is not a cost and needs no cancel. Interchangeable copies are not collapsed below `cap`
-   * because the count matters, and a non-empty offer always parks.
-   */
-  | {
-      op: "payFromHand";
-      /** The declinable quantifier — `discardEnergy.count`'s word for the same fact. */
-      count: "any";
-      /** The printed "up to N" ceiling, or `"any"` for "any number of cards". */
-      cap: number | "any";
-      /**
-       * `"deckBottom"` is Perrin's "put them into your deck"; the program's trailing shuffle hides
-       * the end.
-       */
-      to: "discard" | "deckBottom";
-      filter?: CardFilter;
-      recordAs?: EffectSlot;
-      /** The swap is an exact one-card payment. */
-      swapWithTop?: never;
-    }
-  /**
-   * Reveal any number of matching cards from your own hand; nothing moves (Doublade "Weaponized
-   * Swords"). The picked uids are shown to both players and filed under `recordAs` for a damage
-   * count to read.
-   */
-  | {
-      op: "revealFromHand";
-      filter: CardFilter;
-      note: string;
-      recordAs: EffectSlot;
-    }
-  /**
-   * Reveal the opponent's whole hand, then the controller picks one card matching `filter` and puts
-   * it on the bottom of the opponent's deck (Ortega, Greavard). The pick is mandatory; the offer
-   * collapses interchangeable copies, which is safe because the hand was just revealed.
-   */
-  | {
-      op: "bottomFromOpponentHand";
-      /** Which cards may be chosen — absent is Ortega's bare "a card" (any).
-          `supporter` is Greavard's printed narrowing. */
-      filter?: CardFilter;
-      /** File the uid actually moved under this slot for a later op to read —
-          Ortega's "If you put a card on the bottom of your opponent's deck in
-          this way" is a plain recordGate on it. */
-      recordAs?: EffectSlot;
-      /**
-       * Where the chosen card goes; absent is the bottom of the owner's deck. `"deck"` shuffles it
-       * into the owner's deck.
-       */
-      dest?: "bench" | "discard" | "deck";
-      /**
-       * The printed "up to N" (or `"any"` for "any number of"); absent means exactly one mandatory
-       * card. When set, the pick is declinable, a single candidate is still asked, and the offer
-       * keeps `upTo` copies per interchangeable class.
-       */
-      upTo?: number | "any";
-    }
-  /**
-   * "Your opponent reveals their hand." Never parks and moves nothing. The reveal is a log event
-   * only; the redacted state keeps the hand hidden because the reveal is instantaneous.
-   */
-  | { op: "revealOpponentHand" }
-  /**
-   * Take a card at random from the opponent's hand, drawn from `rngState` so replays are
-   * deterministic. `to` is where it goes: discard, shuffled into their deck, or `"reveal"` (stays
-   * in hand, only that card shown). An empty hand emits nothing and advances no rng.
-   */
-  | {
-      op: "randomFromOpponentHand";
-      to: "discard" | "deck" | "reveal";
-      recordAs?: EffectSlot;
-      /**
-       * Hand Trim: repeat the random discard until the hand has `untilHandSize` cards, each take
-       * its own rng draw. Used only with `to: "discard"`.
-       */
-      untilHandSize?: number;
-    }
-  /**
-   * The opponent discards `count` cards from their own hand and chooses which, so the park's
-   * decider is the opponent and the candidates are hidden from the controller. A hand of `count` or
-   * fewer is forced; an empty hand is a silent no-op. No collapse of interchangeable copies, since
-   * the answerer sees their own hand.
-   */
-  | {
-      op: "opponentDiscardsFromHand";
-      count: number;
-      /**
-       * Absent means the discard pile; `"deck"` puts the cards into the owner's deck, with the
-       * shuffle emitted as a separate op.
-       */
-      to?: "deck";
-      untilHandSize?: never;
-      whose?: never;
-    }
-  /**
-   * The opponent discards down to `untilHandSize` cards (Xerosic's Machinations), choosing which. A
-   * hand at or below the size is a silent no-op.
-   */
-  | {
-      op: "opponentDiscardsFromHand";
-      untilHandSize: number;
-      count?: never;
-      to?: never;
-      /**
-       * `"self"` applies to the controller's own hand (Hand Trimmer, authored after the opponent's
-       * op). The played Trainer has already left the hand, so it is never counted.
-       */
-      whose?: "self";
-    }
-  /**
-   * Discard every card in the opponent's hand matching `filter` ("Discard all Item cards and
-   * Pokémon Tool cards you find there"). No pick and no park; an empty match is a silent no-op.
-   */
-  | { op: "discardFromOpponentHand"; filter: CardFilter }
-  /**
-   * The controller's opponent may draw `count` cards (Ortega). The park's decider is the opponent,
-   * so only they can answer. An empty opponent deck resolves silently without asking.
-   */
-  | { op: "opponentMayDraw"; count: number }
-  /**
-   * Run `then` when `cond` holds for the controller, else `otherwise`. Ops inside a branch can
-   * still park. Emits no event, and `cond` is evaluated after every earlier op has applied.
-   */
-  | { op: "conditionGate"; cond: BoardCondition; then: EffectOp[]; otherwise?: EffectOp[] }
-  /**
-   * Run `then` when an earlier op in this program filed at least one card under `slot` (the printed
-   * "if you do" / "in this way"), else `otherwise`. `contains: "yourActive"` requires a filed card
-   * to be attached to the controller's Active now, which is a board read and can differ from
-   * history if an op in between moves it.
-   */
-  | {
-      op: "recordGate";
-      slot: EffectSlot;
-      contains?: "yourActive";
-      then: EffectOp[];
-      otherwise?: EffectOp[];
-    }
-  /**
-   * The printed "You may ...": a `confirm` prompt whose yes runs `then` and no runs `otherwise`.
-   * `note` is the whole printed sentence. Only needed when the inner op has no empty answer of its
-   * own. `labels` replace Yes/No with captions for a "Choose 1" card.
-   */
-  | {
-      op: "optional";
-      note: string;
-      then: EffectOp[];
-      otherwise?: EffectOp[];
-      labels?: { yes: string; no: string };
-      /** Optional card faces for a binary card choice; resolution still uses the branches. */
-      cards?: { yes: string; no?: string };
-      targets?: PokemonRef[];
-      /**
-       * The printed "Ask your opponent if ...": the opponent answers the confirm, but the branches
-       * still run for the controller.
-       */
-      askOpponent?: true;
-    }
-  /**
-   * The printed "Choose 1" over branches that may have nothing to do (Blowtorch). Only branches
-   * with a target on the board are offered: none is a no-op, one runs forced, two or more ask via a
-   * labelled `optional`. The play is refused when no branch is offered.
-   */
-  | {
-      op: "chooseOneOffered";
-      note: string;
-      branches: EffectOp[];
-      labels: string[];
-    };
+function tailsGate(then: EffectOp[], coins?: number): OpOf<"coinFlipGate"> {
+  return coins === undefined
+    ? { op: "coinFlipGate", onTails: true, then }
+    : { op: "coinFlipGate", coins, onTails: true, then };
+}
+
+function conditionGate(
+  cond: BoardCondition,
+  then: EffectOp[],
+  otherwise?: EffectOp[],
+): OpOf<"conditionGate"> {
+  return otherwise === undefined
+    ? { op: "conditionGate", cond, then }
+    : { op: "conditionGate", cond, then, otherwise };
+}
+
+function optionalStep(note: string, then: EffectOp[], otherwise?: EffectOp[]): OpOf<"optional"> {
+  return otherwise === undefined
+    ? { op: "optional", note, then }
+    : { op: "optional", note, then, otherwise };
+}
+
+function recordGate(slot: EffectSlot, then: EffectOp[]): OpOf<"recordGate"> {
+  return { op: "recordGate", slot, then };
+}
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 
@@ -2349,19 +127,6 @@ const STATUS_OF_WORD: Record<StatusWord, StatusName> = {
   Poisoned: "poisoned",
 };
 
-/**
- * Which `SpecialConditions` field each status word writes. Asleep, Paralyzed and Confused share one
- * field, so applying two of them would overwrite; `defenderStatusOps` uses this to refuse such
- * combinations.
- */
-const CONDITION_SLOT: Record<StatusName, keyof SpecialConditions> = {
-  asleep: "rotation",
-  paralyzed: "rotation",
-  confused: "rotation",
-  poisoned: "poisonDamage",
-  burned: "burned",
-};
-
 // The recognized sentence shapes, anchored end to end and compiled once
 // (no /g flag — exec is stateless, so module scope is safe). Catalog rows use
 // the straight apostrophe ("opponent's"); the character class also admits
@@ -2369,310 +134,15 @@ const CONDITION_SLOT: Record<StatusName, keyof SpecialConditions> = {
 // silently un-derive every status attack. {X} = the five status words;
 // {N} = a positive integer.
 const STATUS_WORDS = "Asleep|Burned|Confused|Paralyzed|Poisoned";
+
 // Self-inflicted statuses exclude Paralyzed: self-applied paralysis should survive the next Checkup
 // (§12), but the engine's Checkup clear is unconditional for the ended seat, so such text stays
 // unbuilt.
 const SELF_STATUS_WORDS = "Asleep|Burned|Confused|Poisoned";
-const DEFENDER_NOW = new RegExp(`^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`);
-const FLIP_DEFENDER_NOW = new RegExp(
-  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
-);
-// Two statuses on the defender, plus the coin-flipped form. Collisions between the two words are
-// refused by `defenderStatusOps`, not by the regex.
-const DEFENDER_STATUS_PAIR = new RegExp(
-  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\.$`,
-);
-const FLIP_DEFENDER_STATUS_PAIR = new RegExp(
-  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\.$`,
-);
-// "Flip a coin. If heads, ... is now X and Y. If tails, ... is now Z." The arms are exclusive, so
-// only the heads list is checked for slot collisions.
-const FLIP_DEFENDER_PAIR_OR_TAILS_STATUS = new RegExp(
-  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\. If tails, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
-);
-// Three statuses in an Oxford list. The slots stay open so `defenderStatusOps` can still refuse
-// colliding words.
-const DEFENDER_STATUS_TRIPLE = new RegExp(
-  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\.$`,
-);
-// Flip-gated status that also discards an Energy from the opponent's Active; "that Pokémon" is the
-// opponent's Active.
-const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(
-  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard an Energy from that Pokémon\\.$`,
-);
-// "If your opponent's Active Pokémon is a ... Pokémon, it is now X." The subject is spelled out
-// because "it" must refer to the opponent's Active for a defender status to be correct.
-const CLAUSE_GATED_DEFENDER_NOW = new RegExp(
-  `^If (your opponent['’]s Active Pokémon is a .+ Pokémon), it is now (${STATUS_WORDS})\\.$`,
-);
-const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
-const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
-// "Heal N damage from this Pokémon." No /i: the capital first word plus `^...$` keeps mid-sentence
-// heals off this path.
-const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
-// "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon."
-const SELF_HEAL_DEALT =
-  /^Heal from this Pokémon the same amount of damage you did to your opponent['’]s Active Pokémon\.$/;
-// "Heal N damage from each of your Pokémon." This includes the Active.
-const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
-// "Heal N damage from each of your <adjective> Pokémon." The adjective is read through
-// `OWN_BOARD_HEAL_NOUNS`, so an unknown one stays unbuilt rather than healing everything.
-// `(?!opponent)` keeps an opponent-side heal from being read as own-side.
-const OWN_BOARD_HEAL_NARROWED =
-  /^Heal (\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\.$/;
+
 /** The two riders the printed adjective can set, taken OFF the op with `Pick` rather
     than re-declared, so a field rename cannot leave this map behind still compiling. */
-type HealEachScope = Pick<Extract<EffectOp, { op: "healEach" }>, "basicOnly" | "benchOnly">;
-/**
- * Printed adjectives accepted by `OWN_BOARD_HEAL_NARROWED`. `Basic` narrows by card and `Benched`
- * by board position, so they set different fields.
- */
-const OWN_BOARD_HEAL_NOUNS: ReadonlyMap<string, HealEachScope> = new Map<string, HealEachScope>([
-  ["Basic", { basicOnly: true }],
-  ["Benched", { benchOnly: true }],
-]);
-// "Heal N (or all) damage from 1 of your [Benched] Pokémon."
-const CHOSEN_HEAL = /^Heal (\d+|all) damage from 1 of your (Benched )?Pokémon\.$/;
-// Flip-gated self-heal. Each flip-gated consequent gets its own literal regex because the
-// consequent is open-ended.
-const FLIP_SELF_HEAL = /^Flip a coin\. If heads, heal (\d+) damage from this Pokémon\.$/;
-// Only the singular, opponent-side mill is printed in gated form.
-const FLIP_DECK_TOP_MILL =
-  /^Flip a coin\. If heads, discard the top card of your opponent['’]s deck\.$/;
-// Flip-gated prevent. "From and effects of attacks" and "damage ... by attacks" are different
-// readings, carried by the op's `effects` field.
-const FLIP_PREVENT_DAMAGE_AND_EFFECTS =
-  /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
-const FLIP_PREVENT_DAMAGE =
-  /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\.$/;
-// "Prevent all damage ... by attacks from Basic [non-{X}] Pokémon." The optional excluded type is a
-// single code letter read through `POKEMON_TYPE_BY_CODE`; an unknown letter stays unbuilt.
-const PREVENT_DAMAGE_FROM_CLASS =
-  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic (?:non-\{([A-Z])\} )?Pokémon\.$/;
-// Iron Moth "Anachronism Repulsor".
-const PREVENT_DAMAGE_FROM_ANCIENT =
-  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon\.$/;
-// Miraidon "C.O.D.E.: Protect": a side-wide block over the controller's Future Pokémon.
-const PREVENT_DAMAGE_FUTURE_SIDE_FROM_EX =
-  /^During your opponent['’]s next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex\. If this Pokémon is no longer your Active Pokémon, this effect ends\.$/;
-// Glimmora "Corrosive Shards".
-const POISON_AND_BAR_HAND_ATTACH =
-  /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, Energy cards can['’]t be attached from your opponent['’]s hand to that Pokémon\.$/;
-// Hypno "Daydream".
-const HAND_ATTACH_ENDS_TURN =
-  /^During your opponent['’]s next turn, if they attach an Energy card from their hand to the Defending Pokémon, their turn ends\.$/;
-// Trevenant "Cursed Roots".
-const BAR_HAND_ATTACH_DEFENDER =
-  /^During your opponent['’]s next turn, Energy can['’]t be attached from your opponent['’]s hand to the Defending Pokémon\.$/;
-// Pachirisu "Electrified Incisors". The printed "place" is normalised to "put", so the anchor
-// spells "put".
-const HAND_ATTACH_COUNTERS =
-  /^During your opponent['’]s next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, put (\d+) damage counters on that Pokémon\.$/;
-// Octillery "Jet of Ink".
-const DEFENDER_TWO_COIN_ATTACK_LOCK =
-  /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins\. If either of them is tails, that attack doesn['’]t happen\.$/;
-const TRAINER_PLAY_FLIP_LOCK =
-  /^During your opponent['’]s next turn, whenever they try to use a Trainer card from their hand, they flip a coin\. If tails, your opponent discards that Trainer card instead of using it\.$/;
-const DISCARD_OPPONENT_STADIUM_AND_BAR =
-  /^If your opponent has a Stadium in play, discard it\. If you do, your opponent can['’]t play any Stadium cards from their hand during their next turn\.$/;
-const LOOK_AT_OPPONENT_PRIZE = /^Look at 1 of your opponent['’]s face-down Prize cards\.$/;
-const WIN_AT_ONE_PRIZE =
-  /^If you use this attack when you have exactly 1 Prize card remaining, you win this game\.$/;
-const PREVENT_DAMAGE_FROM_CLASS_D630 =
-  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from (Burned Pokémon|Evolution Pokémon|Pokémon that have an Ability)\.$/;
-//   • Bronzong `me05-064` "Metal Block" (index 1) — arm 19d's `reduceDamage` with the NEW optional
-//     `fromClass` (`DamageReduction.fromClass`); the class noun is a closed capture of one member.
-const SELF_DAMAGE_REDUCTION_FROM_EVOLUTION =
-  /^During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks from Evolution Pokémon \(after applying Weakness and Resistance\)\.$/;
-const SELF_VULNERABLE_NEXT_TURN =
-  /^During your opponent['’]s next turn, this Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
-/**
- * Maps the printed class noun to the `AttackerClass` it names. A noun missing from the map derives
- * nothing.
- */
-const ATTACKER_CLASS_BY_NOUN_D630: Readonly<Record<string, AttackerClass>> = {
-  "Burned Pokémon": { stage: "burned" },
-  "Evolution Pokémon": { stage: "evolution" },
-  "Pokémon that have an Ability": { stage: "hasAbility" },
-};
-// The comparator is captured so that the arm can refuse "or more", which is a different mechanism.
-const PREVENT_DAMAGE_UP_TO_CAP =
-  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks if that damage is (\d+) or (less|more)\.$/;
-// The parenthetical is part of the rule: the reduction applies after Weakness and Resistance (§8).
-// The "before" wording is a different mechanism, a debuff on the attacker.
-const SELF_DAMAGE_REDUCTION =
-  /^During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
-// The compound is anchored as one sentence so that the discard cost never derives without the
-// protection it pays for.
-const SELF_NO_WEAKNESS = /^During your opponent['’]s next turn, this Pokémon has no Weakness\.$/;
-const SELF_DISCARD_ALL_THEN_REDUCTION =
-  /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
-// "Before applying Weakness and Resistance" makes this a debuff on the Defending Pokémon's attacks,
-// not a reduction on this Pokémon.
-const DEFENDER_ATTACKS_WEAKENED =
-  /^During your opponent['’]s next turn, the Defending Pokémon['’]s attacks do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
-const ATTACKS_BY_DEFENDER_WEAKENED =
-  /^During your opponent['’]s next turn, attacks used by the Defending Pokémon do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
-const DEFENDER_VULNERABLE_NEXT_TURN =
-  /^During your next turn, the Defending Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
-// The reminder parenthetical is required because it states the amount-unchanged rule that the op
-// implements.
-const DEFENDER_WEAKNESS_RETYPED =
-  /^Until the end of your next turn, the Defending Pokémon['’]s Weakness is now \{C\}\. \(The amount of Weakness doesn['’]t change\.\)$/;
-const HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE =
-  /^If you have exactly 30 cards in your hand, take 2 Prize cards\. If you do, shuffle your hand into your deck\.$/;
-const DEFENDER_WEAKNESS_OVERWRITTEN =
-  /^The Defending Pokémon['’]s Weakness is now \{L\} until the end of your next turn\. \(Apply Weakness as ×2\.\)$/;
-const DEFENDER_KO_BOUNTY_NEXT_TURN =
-  /^During your next turn, if the Defending Pokémon is Knocked Out, take (\d+) more Prize cards\.$/;
-// The capture counts damage counters, and the arm converts it to HP (x10). The "even if Knocked
-// Out" parenthetical restates that recoil runs before the Knock Out sweep.
-const SELF_INSTALLED_RECOIL =
-  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if (?:it|this Pokémon) is Knocked Out\), put (\d+) damage counters on the Attacking Pokémon\.$/;
-// The amount is the damage done to this Pokémon, so there is no capture.
-const SELF_INSTALLED_RECOIL_TAKEN =
-  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if (?:it|this Pokémon) is Knocked Out\), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon\.$/;
-// The optional capture is an owner prefix such as "Team Rocket's". The `é` in "Pokémon" falls
-// outside `[A-Za-z]`, so the plain sentence never matches the group.
-const COUNTER_MOVE_TO_DEFENDER =
-  /^Move all damage counters from 1 of your Benched (?:([A-Z][A-Za-z ]*)['’]s )?Pokémon to your opponent['’]s Active Pokémon\.$/;
-const COUNTER_MOVE_TO_CHOSEN =
-  /^Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent['’]s Pokémon\.$/;
-// Both ends are on the opponent's board, so these derive `moveCountersOpponentAnyWay`, not
-// `moveCountersChosen`.
-const COUNTER_MOVE_OPPONENT_BENCH_TO_ACTIVE =
-  /^You may move any number of damage counters from your opponent['’]s Benched Pokémon to their Active Pokémon\.$/;
-const COUNTER_MOVE_OPPONENT_ANY_WAY =
-  /^You may move any number of damage counters from your opponent['’]s Pokémon to their other Pokémon in any way you like\.$/;
-const COUNTER_PUT_ON_DEFENDER =
-  /^Put (?:(\d+) damage counters|(1) damage counter) on your opponent['’]s Active Pokémon\.$/;
-const COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD =
-  /^Put (\d+) damage counters on your opponent['’]s Active Pokémon for each card in your hand\.$/;
-const COUNTER_PUT_ON_OPPONENT_BENCH =
-  /^Put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
-// N printed counters become N independent picks. This matches simultaneous placement because
-// targets are not HP-filtered and Knock Outs are swept only after the attack. Without "Benched",
-// any of the opponent's Pokémon can be picked.
-const COUNTER_SPREAD_ON_OPPONENT =
-  /^Put (\d+) damage counters on your opponent['’]s (Benched )?Pokémon in any way you like\.$/;
-// The `$` matters: this sentence is a strict prefix of the scaled and self-lock compound sentences.
-const COUNTER_PUT_ON_OPPONENT_ANY =
-  /^Put (?:(\d+) damage counters|(1) damage counter) on 1 of your opponent['’]s Pokémon\.$/;
-// Group 1 is how many Pokémon are chosen; group 2 is the number of counters placed on each.
-const COUNTER_PUT_ON_CHOSEN_OPPONENTS =
-  /^Choose (\d+) of your opponent['’]s Pokémon and put (\d+) damage counters on each of them\.$/;
-// One filter both counts the discard pile and selects the cards to shuffle back. The noun must
-// resolve to basic Energy because the tail says "those Energy cards".
-const COUNTER_PUT_SCALED_BY_PILE =
-  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\. Then, shuffle those Energy cards into your deck\.$/;
-// There is no pick: the board decides which Pokémon are hit (`counterEachAll`).
-const COUNTER_FOLD_ON_ABILITY_BODIES =
-  /^Put (\d+) damage counters on each Pokémon that has an Ability \(both yours and your opponent['’]s\)\.$/;
-const COUNTER_FOLD_ON_OPPONENT_ALL =
-  /^Put (\d+) damage counters on each of your opponent['’]s Pokémon\.$/;
-const COUNTER_FOLD_ON_OPPONENT_DAMAGED =
-  /^Put (\d+) damage counters on each of your opponent['’]s Pokémon that has any damage counters on it\.$/;
-// The captured number is HP as printed and is not multiplied by 10. These are two anchors because
-// the determiner and the zone word vary together.
-const COUNTER_UNTIL_REMAINING_HP_ACTIVE =
-  /^Put damage counters on your opponent['’]s Active Pokémon until its remaining HP is (\d+)\.$/;
-const COUNTER_UNTIL_REMAINING_HP_BENCH =
-  /^Put damage counters on each of your opponent['’]s Benched Pokémon until its remaining HP is (\d+)\.$/;
-const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['’]t attack\.$/;
-// The reminder parenthetical is required. It is why the lock is a side record that also covers
-// Pokémon entering play later.
-const SIDE_CANT_ATTACK_NEXT_TURN =
-  /^During your next turn, your Pokémon can['’]t attack\. \(This includes new Pokémon that come into play\.\)$/;
-const OPPONENT_LOW_ENERGY_CANT_ATTACK =
-  /^During your opponent['’]s next turn, Pokémon that have (\d+) or less Energy attached can['’]t attack\. \(This includes new Pokémon that come into play\.\)$/;
-// Both sentences are in one anchor so that the drawback can never be dropped.
-const COUNTER_PUT_ANY_THEN_SELF_LOCK =
-  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon\. During your next turn, this Pokémon can['’]t attack\.$/;
-const FLIP_TAILS_SELF_CANT_ATTACK =
-  /^Flip a coin\. If tails, during your next turn, this Pokémon can['’]t attack\.$/;
-// The name must start with a capital so that the plural "attacks" falls through to
-// `SELF_CANT_USE_ATTACKS`. The name is resolved against the holder's printed attacks at install,
-// and nothing is installed if it matches none.
-const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t use ([A-Z].+?)\.$/;
-const SELF_CANT_USE_ATTACKS = /^During your next turn, this Pokémon can['’]t use attacks\.$/;
-const SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE =
-  /^This Pokémon can['’]t use Blaze Blitz again until it leaves the Active Spot\.$/;
-// The name is resolved against the holder's printed attacks at install, and nothing is installed if
-// it matches none.
-const SELF_ATTACK_BOOST =
-  /^During your next turn, this Pokémon['’]s (.+?) attack does (\d+) more damage \(before applying Weakness and Resistance\)\.$/;
-// Replaces the attack's base damage rather than adding to it.
-const SELF_ATTACK_BASE_SET =
-  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\d+)\.$/;
-// The optional prefix derives Asleep on the defender first, then on this Pokémon.
-const SELF_EVERY_ATTACK_BOOST =
-  /^(Both Active Pokémon are now Asleep\. )?During your next turn, attacks used by this Pokémon do (\d+) more damage to your opponent['’]s Active Pokémon \(before applying Weakness and Resistance\)\.$/;
-// There is no capture because "that attack" is chosen by the player through a prompt.
-const OPPONENT_CHOSEN_ATTACK_LOCK =
-  /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks\. During your opponent['’]s next turn, that Pokémon can['’]t use that attack\.$/;
-const SELF_DISCARD_ONE_THEN_DEFENDER_LOCK =
-  /^Discard an Energy from this Pokémon\. During your opponent['’]s next turn, the Defending Pokémon can['’]t attack\.$/;
-const DEFENDER_BASIC_CANT_ATTACK =
-  /^If the Defending Pokémon is a Basic Pokémon, it can['’]t attack during your opponent['’]s next turn\.$/;
-const DEFENDER_CANT_ATTACK_NEXT_TURN =
-  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t (?:attack|use attacks)\.$/;
-const FLIP_HEADS_DEFENDER_CANT_ATTACK =
-  /^Flip a coin\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\.$/;
-// The opponent flips on their own turn when declaring an attack, so this is a durated install, not
-// a `coinFlipGate`.
-const DEFENDER_FLIP_ATTACK_LOCK =
-  /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin\. If tails, that attack doesn['’]t happen\.$/;
-const DEFENDER_COSTS_TAXED =
-  /^During your opponent['’]s next turn, attacks used by the Defending Pokémon cost \{C\} more, and its Retreat Cost is \{C\} more\.$/;
-const FLIP_TAILS_SELF_DISCARD_ALL =
-  /^Flip a coin\. If tails, discard all Energy from this Pokémon\.$/;
-const FLIP_TAILS_SELF_DAMAGE =
-  /^Flip a coin\. If tails, this Pokémon also does (\d+) damage to itself\.$/;
-const FLIP_TWO_BOTH_TAILS_SELF_DAMAGE =
-  /^Flip 2 coins\. If both of them are tails, this Pokémon also does (\d+) damage to itself\.$/;
-const DEFENDER_POISON_N =
-  /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
-// Anchored whole because the tail refers back to the head ("that Pokémon", "this Special
-// Condition"). Composed as a tail, it could attach to any status head.
-const DEFENDER_CONFUSION_N =
-  /^Your opponent['’]s Active Pokémon is now Confused\. Put (\d+) damage counters instead of 3 on that Pokémon for this Special Condition\.$/;
-// The Poison compound has its own anchor so that matching only the lock clause never drops the
-// Poison.
-const DEFENDER_CANT_RETREAT =
-  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\.$/;
-const DEFENDER_POISON_CANT_RETREAT =
-  /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
-// Only printed after a clause naming the opponent's Active Pokémon, so "that Pokémon" is read as
-// the Defending Pokémon. Reached through `splitAttackTrailingClause`.
-const DEFENDER_PRONOUN_CANT_RETREAT =
-  /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
-// Only printed as the tail of a heal compound. It is kept bare so that `splitAttackTrailingClause`
-// composes it after `SELF_HEAL`.
-const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retreat\.$/;
-const DELAYED_DEFENDER_COUNTERS =
-  /^At the end of your opponent['’]s next turn, put (\d+) damage counters on the Defending Pokémon\.$/;
-// A discard, not a Knock Out, so no Prize is taken (§8.1).
-const DELAYED_DEFENDER_DISCARD =
-  /^At the end of your opponent['’]s next turn, discard the Defending Pokémon and all attached cards\.$/;
-// Only printed as a tail. It is kept bare so that `splitAttackTrailingClause` composes it after the
-// claimed head.
-const DELAYED_DEFENDER_KO =
-  /^At the end of your opponent['’]s next turn, the Defending Pokémon will be Knocked Out\.$/;
-// The class alternation is closed so that other hand-play bars stay unread.
-const OPPONENT_CANT_PLAY =
-  /^During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
-const OPPONENT_CANT_PLAY_TRAILING =
-  /^Your opponent can['’]t play any (Item|Supporter) cards from their hand during their next turn\.$/;
-// The COMPOUND, and it is `SELF_DISCARD_ALL_THEN_REDUCTION`'s exact twin one
-// family over: the same printed cost, the same `^…$` mutual exclusion against
-// arm 9's bare `SELF_DISCARD_ALL`, and the same reason for existing at all —
-// matching the lock clause alone would silently swallow the discard, which is
-// `DEFENDER_POISON_CANT_RETREAT`'s stated ground two lines up.
-const SELF_DISCARD_ALL_THEN_HAND_LOCK =
-  /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
-
-const OPPONENT_CANT_EVOLVE_FROM_HAND =
-  /^During your opponent['’]s next turn, they can['’]t play any Pokémon from their hand to evolve their Pokémon\.$/;
+type HealEachScope = Pick<OpOf<"healEach">, "basicOnly" | "benchOnly">;
 
 /** The captured class word → the `StampedHandPlayClass` key `preventHandPlay`
     carries.
@@ -2684,66 +154,7 @@ const OPPONENT_CANT_EVOLVE_FROM_HAND =
 function handPlayClassOf(word: string | undefined): StampedHandPlayClass {
   return word === "Supporter" ? "Supporter" : "Item";
 }
-const SELF_RECOVERS_ALL = /^This Pokémon recovers from all Special Conditions\.$/;
-// The optional "also" is only emphasis: the main hit rides the attack's `damage` field. The
-// Weakness/Resistance parenthetical is optional because §8.5 makes it true regardless.
-const SPREAD_EACH_BENCH = new RegExp(
-  `^This attack (?:also )?does (\\d+) damage to each of (your opponent['’]s|your) Benched Pokémon\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// A separate anchor, so that plain bench spreads are never given a per-Prize scale.
-const SPREAD_EACH_BENCH_TAKEN_PRIZES = new RegExp(
-  `^This attack (?:also )?does (\\d+) damage to each of your opponent['’]s Benched Pokémon ` +
-    "for each Prize card your opponent has taken\\." +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// Both benches are hit by two `spreadDamage` ops, your bench first in printed order. The order is
-// observable because each hit can draw shield coins.
-const SPREAD_EACH_BOTH_BENCH = new RegExp(
-  "^This attack (?:also )?does (\\d+) damage to each Benched Pokémon" +
-    "( that has any damage counters on it)?" +
-    ` \\(both yours and your opponent['’]s\\)\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// "This attack does N damage to each Pokémon that has any damage counters on it (both yours and
-// your opponent's), except for this Pokémon." Built as a gated `damageDefender` on the opponent's
-// Active (W/R applied) followed by `damagedOnly` spreads on your Bench then the opponent's Bench;
-// the attacker is excluded because no op names its spot. The order Active, own Bench, opponent
-// Bench is observable in the log and in shield coin draws. The gate reads the board before this
-// attack's hit, so the printing must have no base damage.
-const SPREAD_EACH_DAMAGED_FOUR_ZONE = new RegExp(
-  "^This attack does (\\d+) damage to each Pokémon that has any damage counters on it" +
-    ` \\(both yours and your opponent['’]s\\), except for this Pokémon\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// "This attack does N damage to each of your opponent's Pokémon." The Active takes W/R through
-// `damageDefender` and the Bench takes flat `spreadDamage`, so the sentence is a two-op program. No
-// "also" form is admitted: emitting `damageDefender` replaces the printed base damage, so an "also"
-// wording would silently drop the main hit.
-const SPREAD_EACH_OPPONENT_POKEMON = new RegExp(
-  `^This attack does (\\d+) damage to each of your opponent['’]s Pokémon\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// The CHOSEN-single benched hit SCALED by the opponent's taken Prizes — Wo-Chien
-// ex sv02-027 "Covetous Ivy". The "×"/multiply sibling of the Prize-count family
-// (Pecharunt ex, effects.ts's OPPONENT_PRIZES_MULTIPLY), but its target is one
-// CHOSEN Benched Pokémon rather than the Defender, so it is a `damageChosen` op
-// (count 1, `deals` + `perTakenPrize`) and not a pre-W/R damage fold. The "1 of"
-// is what distinguishes it from SPREAD_EACH_BENCH's "each of"; the optional W/R
-// clarifier tail is the spread family's, and true here for the same §8.5 reason.
-const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
-  `^This attack does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon ` +
-    "for each Prize card your opponent has taken\\." +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// A chosen Benched hit scaled by the damage counters on the chosen Pokémon
-// (`damageChosen.perDamageCounterOnTarget`). Without "Benched " the target is any of the opponent's
-// Pokémon (`opponentAny`), and the Active takes W/R.
-const BENCHED_SNIPE_TARGET_COUNTERS = new RegExp(
-  `^This attack does (\\d+) damage to 1 of your opponent['’]s (Benched )?Pokémon ` +
-    "for each damage counter on that Pokémon\\." +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
+
 // "This attack (also) does N damage to C of your (opponent's) Benched Pokémon [class] [that has any
 // damage counters on it]." Shared by several readers, so widening it widens all of them. Groups:
 // [1] amount, [2] count, [3] side, [4] class, [5] damaged-only narrowing. The whole-sentence `\.`
@@ -2761,10 +172,12 @@ const BENCHED_SNIPE_CLASS_NOUNS: ReadonlyMap<string, CardFilter> = new Map<strin
     },
   ],
 ]);
+
 // The class alternation, built from the map's keys longest-first.
 const BENCHED_SNIPE_CLASS_GROUP = `(?: (${[...BENCHED_SNIPE_CLASS_NOUNS.keys()]
   .sort((a, b) => b.length - a.length)
   .join("|")}))?`;
+
 // The pieces are kept as a concatenation rather than one long template literal for readability, so
 // the style rule is suppressed here.
 const ALSO_BENCHED_SNIPE_BODY =
@@ -2773,342 +186,19 @@ const ALSO_BENCHED_SNIPE_BODY =
   BENCHED_SNIPE_CLASS_GROUP +
   "( that has any damage counters on it)?\\." +
   `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?`;
-const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
-/**
- * The same benched rider behind a board-condition clause, e.g. "If there are 3 or fewer cards in
- * your deck, this attack also does 120 damage to 2 of your opponent's Benched Pokémon." The clause
- * is resolved through `CONDITIONAL_DAMAGE_CLAUSES`, so an unmapped clause returns null and the
- * sentence stays on the skipped path.
- */
-const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}$`);
+
 /**
  * "this Pokémon has at least N extra Energy attached (in addition to this attack's cost)" →
  * `extraEnergyBeyondAttackCost`, or null. Fallback for `CONDITIONAL_BENCH_SNIPE` only.
  */
 const EXTRA_ENERGY_GATE_CLAUSE =
   /^this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\)$/;
+
 function extraEnergyGateForClause(clause: string): BoardCondition | null {
   const extra = Number(EXTRA_ENERGY_GATE_CLAUSE.exec(clause)?.[1] ?? 0);
   return extra >= 1 ? { kind: "extraEnergyBeyondAttackCost", extra } : null;
 }
-// "This attack does N damage to C of your opponent's Pokémon." A chosen hit on the Active or a
-// Benched Pokémon (`opponentAny`), with W/R applying to the Active (§8.5). The tail is either the
-// Benched clarifier or "This attack's damage isn't affected by Weakness or Resistance[, or by any
-// effects on that Pokémon].", which sets `ignoreWR` (the bare form also sets `wrOnly`). The tail's
-// "that"/"those" must agree with the count; that check and the refusal of a per-Energy count
-// combined with the W/R tail happen at the read site. Also admits "each of C of" for counts of 2 or
-// more.
-const CHOSEN_ANY_TARGET = new RegExp(
-  `^This attack does (\\d+) damage to (?:each of (?=[2-9]))?(\\d+) of your opponent['’]s Pokémon` +
-    "( for each Energy attached to this Pokémon)?\\." +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
-    `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
-    "(?:, or by any effects on (that|those) Pokémon)?\\.))?$",
-);
-// "Choose 1 of your opponent's Pokémon N times. (You can choose the same Pokémon more than once.)
-// For each time you chose a Pokémon, do M damage to it. This damage isn't affected by Weakness or
-// Resistance." Derived as N separate single-pick `damageChosen` parks, because a multi-pick prompt
-// rejects repeated picks; each park re-reads the candidate set. `deals: true` because the card says
-// "do damage" rather than placing counters. A count of 0 is refused so it does not emit an empty
-// program.
-const ATTACK_PICK_WITH_REPLACEMENT_SNIPE = new RegExp(
-  `^Choose 1 of your opponent['’]s Pokémon (\\d+) times\\. ` +
-    "\\(You can choose the same Pokémon more than once\\.\\) " +
-    "For each time you chose a Pokémon, do (\\d+) damage to it\\. " +
-    `This damage isn['’]t affected by Weakness or Resistance\\.$`,
-);
-// The self-discard attack cost (§8): "an" lets the player pick one Energy, "{N}" asks for exactly
-// that many, "all" strips the lot. Typed variants ("Discard a {L} Energy…") are not matched here
-// because they need an Energy-provides-type filter. "this Pokémon" is the Active (§8).
-const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\.$/;
-const SELF_DISCARD_N = /^Discard (\d+) Energy from this Pokémon\.$/;
-// The whole-sentence anchor keeps compound printings that add a second sentence after the discard
-// off this path.
-const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 
-// Self-discard cost followed by an any-target snipe, e.g. "Discard all Energy from this Pokémon.
-// This attack does 120 damage to 1 of your opponent's Pokémon." The join is either ". This" or ",
-// and this". No W/R tail is admitted because no compound prints one. Also admits the "each of"
-// spelling.
-const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
-  "^Discard (all|\\d+) Energy from this Pokémon(?:\\. This|, and this) " +
-    `attack does (\\d+) damage to (?:each of (?=[2-9]))?(\\d+) of your opponent['’]s Pokémon\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-// Literal anchors: a shuffle-all cost then an any-target hit; an any-target hit narrowed to Pokémon
-// with Special Energy attached; and a discard-all cost then counters placed on any target
-// (`damageChosen` without `deals`). The counter anchor spells "put" because `normaliseMeWording`
-// rewrites the printed "place" first.
-const SELF_SHUFFLE_ALL_THEN_ANY_TARGET = new RegExp(
-  "^Shuffle all Energy attached to this Pokémon into your deck, and this attack does (\\d+) damage to 1 of " +
-    `your opponent['’]s Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-const CHOSEN_ANY_TARGET_SPECIAL_ENERGY = new RegExp(
-  `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon that has any Special Energy attached\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-const SELF_DISCARD_ALL_THEN_COUNTERS =
-  /^Discard all Energy from this Pokémon and put (\d+) damage counters on 1 of your opponent['’]s Pokémon\.$/;
-
-// "Discard up to N Energy cards from your hand. This attack does M damage to 1 of your opponent's
-// Pokémon for each Energy card you discarded in this way." [1] is the discard ceiling
-// (`payFromHand.cap`) and [2] the per-card damage.
-const HAND_DISCARD_THEN_SCALED_ANY_TARGET = new RegExp(
-  "^Discard up to (\\d+) Energy cards from your hand\\. " +
-    `This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon` +
-    " for each Energy card you discarded in this way\\." +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
-
-// Self-discard cost joined with ", and" to taking a Prize card. This has to be a single anchor
-// because the clause splitter refuses this sentence.
-const SELF_DISCARD_ALL_THEN_TAKE_PRIZE =
-  /^Discard all Energy from this Pokémon, and take a Prize card\.$/;
-// The opponent-side twin of the self-discard family is declared below, after the Energy-type maps
-// its regexes are built from. "You may put an Energy attached to your opponent's Active Pokémon
-// into their hand." "You may " is required: the mandatory form has no legal printing.
-const MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND =
-  /^You may put (an|\d+) Energy attached to your opponent['’]s Active (Stage 2 )?Pokémon into their hand\.$/;
-// "Put an Energy attached to this Pokémon into your hand." Mandatory (no "You may"), so it is not
-// wrapped in `optional`; the only decision is which Energy.
-const PUT_SELF_ENERGY_TO_HAND = /^Put an Energy attached to this Pokémon into your hand\.$/;
-const FLIP_OPPONENT_ACTIVE_DISCARD =
-  /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
-// The reveal-and-bottom attack sentence (Greavard "Underworld Stroll") — the
-// whole effect, anchored end to end like every rule here. Only the SUPPORTER
-// narrowing is derived: Ortega's unfiltered Supporter form carries a second
-// sentence (an opponent draw behind a §9.2 gate) that no attack prints, so it
-// is registry-authored and this anchor must not loosen toward it.
-const REVEAL_BOTTOM_SUPPORTER =
-  /^Your opponent reveals their hand\. Choose a Supporter card you find there and put it on the bottom of their deck\.$/;
-// Recoil: "This Pokémon also does N damage to itself." A self-damage in addition to the main
-// damage. No /i: the capital and the anchors keep a mid-sentence clause off this path.
-const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
-// Recoil scaled by the attacker's own damage counters. Mutually exclusive with `SELF_DAMAGE` by
-// `\.$`, so the order of the two checks does not matter.
-const SELF_DAMAGE_PER_COUNTER =
-  /^This Pokémon also does (\d+) damage to itself for each damage counter on it\.$/;
-
-// Knock Out sentences whose targets are named by the text, resolving to `knockOutDefender`.
-// Sentences that choose a target need a park and are handled separately.
-const OPPONENT_ACTIVE_BASIC_KO =
-  /^If your opponent['’]s Active Pokémon is a Basic Pokémon, it is Knocked Out\.$/;
-const BOTH_ACTIVES_KO = /^Both Active Pokémon are Knocked Out\.$/;
-const OPPONENT_ACTIVE_SPECIAL_ENERGY_KO =
-  /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\.$/;
-// The same shape gated on `opponentActiveHasSpecialCondition` before `knockOutDefender`.
-const OPPONENT_ACTIVE_SPECIAL_CONDITION_KO =
-  /^If your opponent['’]s Active Pokémon is affected by a Special Condition, it is Knocked Out\.$/;
-// "If <clause>, your opponent's Active Pokémon is now Paralyzed." The clause is spelled into the
-// anchor rather than looked up in the damage-bonus clause table, so that table stays unreachable
-// from a status consequent.
-const SELF_PRIZE_GATE_PARALYZE =
-  /^If you have exactly 1 Prize card remaining, your opponent['’]s Active Pokémon is now Paralyzed\.$/;
-const SELF_DAMAGE_THEN_COIN_KO =
-  /^This Pokémon does (\d+) damage to itself\. Flip a coin\. If heads, your opponent['’]s Active Pokémon is Knocked Out\.$/;
-// The two pick sentences of the Knock Out family, one op (`knockOutChosen`) with two riders.
-const FLIP_KO_ACTIVE_OR_BENCHED_BASIC =
-  /^Flip a coin\. If heads, Knock Out your opponent['’]s Active Basic Pokémon\. If tails, Knock Out 1 of your opponent['’]s Benched Basic Pokémon\.$/;
-// The count is captured and guarded `>= 1`: a printed 0 would admit every undamaged Pokémon.
-const KO_EXACT_DAMAGE_COUNTERS =
-  /^Knock Out 1 of your opponent['’]s Pokémon that has exactly (\d+) damage counters on it\.$/;
-// Gate on `opponentActiveDamageCountersExactly`; the count is captured (`>= 1`).
-const OPPONENT_ACTIVE_EXACT_COUNTERS_KO =
-  /^If your opponent['’]s Active Pokémon has exactly (\d+) damage counters on it, that Pokémon is Knocked Out\.$/;
-// Inteleon "Bring Down" ×3: `knockOutChosen` over `anyExceptSelf` with `leastHpRemaining`.
-const LEAST_HP_ANY_KO =
-  /^Choose a Pokémon in play \(yours or your opponent['’]s\) that has the least HP remaining, except for this Pokémon, and it is Knocked Out\.$/;
-// N's Vanilluxe "Snow Coating": `counterEachAll` with `perDamageCounterOnTarget` (10 per counter).
-const DOUBLE_OPPONENT_COUNTERS =
-  /^Double the number of damage counters on each of your opponent['’]s Pokémon\.$/;
-// `conditionGate { opponentKnockedOutByDamage }` over `preventDamage { effects }`.
-const KO_BY_THIS_ATTACK_PREVENT_ALL =
-  /^If your opponent['’]s Pokémon is Knocked Out by damage from this attack, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
-// `bountyThisAttack`; the count is captured (`>= 1`) and the noun agrees with it ("1 … card", "2 …
-// cards").
-const KO_BY_THIS_ATTACK_MORE_PRIZES =
-  /^If your opponent['’]s Pokémon is Knocked Out by damage from this attack, take (\d+) more Prize card(s?)\.$/;
-// `knockOutEach`; the HP is captured (`>= 10`).
-const KO_EACH_AT_REMAINING_HP =
-  /^Knock Out each of your opponent['’]s Pokémon that has (\d+) HP or less remaining\.$/;
-// `coinFlipGate` over `switchWithDeckChosen`.
-const FLIP_SWITCH_WITH_DECK_POKEMON =
-  /^Flip a coin\. If heads, search your deck for a Pokémon and switch it with this Pokémon\. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon\. If you switched a Pokémon in this way, put this card into your deck\. Then, shuffle your deck\.$/;
-// `revealDeckBottomCount` filing Pokémon with the named attack, then `damageDefender { per, count
-// }`. The window, per-card damage and attack name are captured.
-const BOTTOM_REVEAL_NAMED_ATTACK_SCALE =
-  /^Reveal the bottom (\d+) cards of your deck, and this attack does (\d+) damage for each Pokémon you find there that has the ([A-Z][A-Za-z'’ -]*) attack\. Then, shuffle any revealed Pokémon back into your deck\. Discard the other cards\.$/;
-// Two `attachFromHand { max }` ops, the opponent's first.
-const EACH_PLAYER_HAND_ATTACH =
-  /^Each player may attach up to (\d+) Basic Energy cards from their hand to their Pokémon in any way they like\. Your opponent does this first\.$/;
-// `ATTACK_LOOK_TOP_BENCH`'s sentence with a comma join.
-const LOOK_TOP_COMMA_BENCH =
-  /^Look at the top (\d+) cards of your deck, and you may put any number of Pokémon you find there onto your Bench\. Shuffle the other cards back into your deck\.$/;
-// Tropius "Fruity Aroma": the same look into the HAND, revealed (Roto-Stick's `max: "any"` + `reveal`).
-const LOOK_TOP_COMMA_REVEAL_HAND =
-  /^Look at the top (\d+) cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand\. Shuffle the other cards back into your deck\.$/;
-// Pikachu ex "Pika-Pika Parade" ×3: Precious Trolley's program (`searchDeck` Basic → Bench, `max: "any"`).
-const SEARCH_ANY_BASIC_TO_BENCH =
-  /^Search your deck for any number of Basic Pokémon and put them onto your Bench\. Then, shuffle your deck\.$/;
-// `healEachAll`.
-const HEAL_EACH_BOTH_SIDES =
-  /^Heal (\d+) damage from each Pokémon \(both yours and your opponent['’]s\)\.$/;
-// Scraggy "Nitpick" ×2: `handRefresh` on the opponent alone (Distorted Future's `who`), a fixed draw.
-const OPPONENT_SHUFFLES_HAND_DRAWS =
-  /^Your opponent shuffles their hand into their deck and draws (\d+) cards\.$/;
-// Ho-Oh "Flames of Revival": `discardPileRetrieval` of Basic Pokémon onto the Bench.
-const RETRIEVE_BASIC_TO_BENCH =
-  /^Put up to (\d+) Basic Pokémon from your discard pile onto your Bench\.$/;
-// `DEVOLVE_EACH_TO_DECK`'s sweep into the hand (`devolveEach.toHand`).
-const DEVOLVE_EACH_TO_HAND =
-  /^Devolve each of your opponent['’]s evolved Pokémon by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
-// Frosmoth "Cold Cyclone": `ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH` with a typed noun (`providesEnergy`).
-const MOVE_TYPED_ENERGY_SELF_TO_BENCH =
-  /^Move a \{([A-Z])\} Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
-// The self-discard, then Paralysis.
-const SELF_DISCARD_THEN_PARALYZE =
-  /^Discard (\d+) Energy from this Pokémon, and your opponent['’]s Active Pokémon is now Paralyzed\.$/;
-// Volcanion "Backfire": `PUT_SELF_ENERGY_TO_HAND`'s op at a printed typed count.
-const PUT_TYPED_SELF_ENERGY_TO_HAND =
-  /^Put (\d+) \{([A-Z])\} Energy attached to this Pokémon into your hand\.$/;
-// `healChosen` on the Bench with a typed candidate filter.
-const HEAL_ONE_BENCHED_TYPED = /^Heal (\d+) damage from 1 of your Benched \{([A-Z])\} Pokémon\.$/;
-// Claydol "Devolution Ray" ×2: `devolveChosen` narrowed to the Defending Pokémon (`defenderOnly`, NEW).
-const DEVOLVE_ACTIVE_TO_HAND =
-  /^If your opponent['’]s Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
-// Sudowoodo "Trials and Trip-ulations": a two-word card name (`NAMED_CARD_NOUN` takes one word), so a literal.
-const SEARCH_TRANSFORMATION_TOME =
-  /^Search your deck for up to (\d+) Transformation Tome cards, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
-// Rotom "Roto Call": a name-fragment Bench search behind the printed "You may" (`optional`).
-const MAY_SEARCH_NAMED_FRAGMENT_TO_BENCH =
-  /^You may search your deck for any number of Pokémon that have ["“]([A-Z][a-z]+)["”] in their name and put them onto your Bench\. Then, shuffle your deck\.$/;
-// Dialga "Reversed Clock": Super Rod's program (`pokemonOrBasicEnergy` → deck, then shuffle).
-const SHUFFLE_POKEMON_OR_BASIC_ENERGY_FROM_DISCARD =
-  /^Shuffle up to (\d+) in any combination of Pokémon and Basic Energy cards from your discard pile into your deck\.$/;
-// Celebi "Traverse Time": a revealed hand search over `anyOf` a typed Pokémon and a Stadium.
-const SEARCH_TYPED_POKEMON_OR_STADIUM =
-  /^Search your deck for up to (\d+) in any combination of \{([A-Z])\} Pokémon and Stadium cards, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
-// Eevee "Fetch and Hide": `REVEAL_BOTTOM_SUPPORTER`'s op over an Item.
-const REVEAL_BOTTOM_ITEM =
-  /^Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent['’]s deck\.$/;
-// A clause-table gate over the opponent-side mill. The clause is looked up, not captured.
-const CLAUSE_GATED_OPPONENT_MILL =
-  /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
-// Clause-table gate over the opponent-side counter fold; the printed "place" is read as "put" by
-// `normaliseMeWording`.
-const CLAUSE_GATED_OPPONENT_COUNTER_FOLD =
-  /^If (.+), put (\d+) damage counters on each of your opponent['’]s Pokémon\.$/;
-// "quadruple the number of damage counters" is `damageChosen.perDamageCounterOnTarget` placing 3
-// more per counter already there.
-const CLAUSE_GATED_CHOSEN_QUADRUPLE =
-  /^If (.+), choose (\d+) of your opponent['’]s Pokémon and quadruple the number of damage counters on each of them\.$/;
-// Benched counter placement behind a clause-table gate; "place" is read as "put"
-// (`normaliseMeWording`).
-const CLAUSE_GATED_BENCH_COUNTERS =
-  /^If (.+), put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
-// `attachFromDiscard` at a count-scaled ceiling.
-const DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY =
-  /^Choose Basic \{([A-Z])\} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent['’]s Pokémon and attach them to your \{([A-Z])\} Pokémon in any way you like\.$/;
-// Furfrou "Hand Trim": the random discard down to a printed hand size (`untilHandSize`, NEW).
-const RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO =
-  /^Discard random cards from your opponent['’]s hand until they have (\d+) cards in their hand\.$/;
-// `lookAtTopN` exact with the rest discarded; the kept card is revealed.
-const MILL_TOP_KEEP_ONE =
-  /^Discard the top (\d+) cards of your deck and put 1 of them into your hand\.$/;
-// Shaymin "Send Flowers": `attachFromDeck` of ANY Energy card onto a typed Benched body.
-const SEARCH_ENERGY_ATTACH_BENCHED_TYPED =
-  /^Search your deck for an Energy card and attach it to 1 of your Benched \{([A-Z])\} Pokémon\. Then, shuffle your deck\.$/;
-// Fletchling "Chirp": a revealed hand search over the NEW `pokemonWithResistance` filter.
-const SEARCH_POKEMON_WITH_RESISTANCE =
-  /^Search your deck for up to (\d+) Pokémon with \{([A-Z])\} Resistance, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
-
-// Unconditional mill in both directions: "Discard the top [N cards|card] of your [opponent's]
-// deck." The captures fill `count` and `whose`. The singular is a separate branch because "the top
-// card" carries no digits; the undefined capture means one.
-const DECK_TOP_MILL = /^Discard the top (?:(\d+) cards|card) of your (opponent['’]s )?deck\.$/;
-// Additive damage scaling: "This attack does N more damage for each <resource>." This folds per ×
-// count onto the printed base before the §8.5 W/R pipeline, so it has its own reader rather than an
-// op. "more" is the discriminator: without it the printed N is the per-unit and per × count is the
-// whole damage (`deriveAttackDamageMultiplier`). Each additive regex must refuse its no-"more" twin
-// and vice versa.
-const SELF_COUNTER_SCALE =
-  /^This attack does (\d+) more damage for each damage counter on this Pokémon\.$/;
-// "This attack does N less damage for each damage counter on this Pokémon." A third fold (keep the
-// base, subtract), so a separate reader rather than a negative `per`, which would break the
-// `scaledTotal > 0` guard and the "+" log crumb.
-const SELF_COUNTER_PENALTY =
-  /^This attack does (\d+) less damage for each damage counter on this Pokémon\.$/;
-// "This attack does N damage for each damage counter on this Pokémon." The multiply twin of the two
-// lines above on the same count source.
-const SELF_COUNTER_MULTIPLY =
-  /^This attack does (\d+) damage for each damage counter on this Pokémon\.$/;
-const OPPONENT_PRIZES_SCALE =
-  /^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/;
-// Prizes the opponent took during their last turn, read from `PlayerSide.prizesTakenOnTurn`.
-const OPPONENT_PRIZES_LAST_TURN_SCALE =
-  /^This attack does (\d+) more damage for each Prize card your opponent took during their last turn\.$/;
-// "that much more": the bonus is the recorded damage itself (`per: 1`, count in HP), read from
-// `InPlayPokemon.attackDamageTaken`.
-const DAMAGED_LAST_TURN_THAT_MUCH_MORE =
-  /^If this Pokémon was damaged by an attack during your opponent['’]s last turn, this attack does that much more damage\.$/;
-// The "×"/multiply twin of OPPONENT_PRIZES_SCALE — the SAME Prize-count source, no
-// "more": the whole damage is `per × count`, the printed base dropped (attack.ts).
-// Refuses Wo-Chien ex's benched-target print ("… to 1 of your opponent's Benched
-// Pokémon for each Prize …") by the mid-sentence text the anchors exclude, and
-// Chien-Pao ex's discarded-Energy count ("… for each card you discarded in this
-// way.") by the tail.
-const OPPONENT_PRIZES_MULTIPLY =
-  /^This attack does (\d+) damage for each Prize card your opponent has taken\.$/;
-// Own-side twin ("…Prize card you have taken."), read as `yourPrizesTaken`.
-const YOUR_PRIZES_MULTIPLY = /^This attack does (\d+) damage for each Prize card you have taken\.$/;
-// Retreat-cost readers, counting {C} in the defender's effective Retreat Cost
-// (`effectiveRetreatCost`). Additive adds per {C} to the base; multiply is per {C} only, so a
-// retreat-0 defender takes 0. Both apostrophe slots carry `['’]`.
-const RETREAT_COST_SCALE =
-  /^This attack does (\d+) more damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
-const RETREAT_COST_MULTIPLY =
-  /^This attack does (\d+) damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
-// Subtractive retreat-cost twin: "This attack does N less damage for each {C} in your opponent's
-// Active Pokémon's Retreat Cost."
-const RETREAT_COST_PENALTY =
-  /^This attack does (\d+) less damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
-// Penalty fold counting Energy on the opponent's Active (`energyOnOpponent`).
-const OPPONENT_ENERGY_PENALTY =
-  /^This attack does (\d+) less damage for each Energy attached to your opponent['’]s Active Pokémon\.$/;
-// "This attack does N more damage for each damage counter on your opponent's Active Pokémon." A
-// `DamageCountSource` member on the additive fold. Disjoint from the self-counter patterns by their
-// literal `on this Pokémon\.` tail.
-const OPPONENT_COUNTER_SCALE =
-  /^This attack does (\d+) more damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
-// The multiply twin of the line above: "This attack does N damage for each damage counter on your
-// opponent's Active Pokémon."
-const OPPONENT_COUNTER_MULTIPLY =
-  /^This attack does (\d+) damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
-/**
- * "This attack does N damage for each Special Condition affecting your opponent's Active Pokémon."
- * A separate anchor because both the noun and the preposition differ; merging them would admit
- * unprinted combinations.
- */
-const OPPONENT_CONDITION_COUNT_MULTIPLY =
-  /^This attack does (\d+) damage for each Special Condition affecting your opponent['’]s Active Pokémon\.$/;
-/**
- * "This attack does N more damage for each damage counter on all of your opponent's Pokémon."
- * Counts the opponent's Active and Bench.
- */
-const OPPONENT_BOARD_COUNTER_SCALE =
-  /^This attack does (\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\.$/;
-// "This attack does N damage for each damage counter on all of your Benched Pokémon." Tallies every
-// Pokémon on the attacker's Bench.
-const BENCH_COUNTER_MULTIPLY =
-  /^This attack does (\d+) damage for each damage counter on all of your Benched Pokémon\.$/;
-/**
- * The bench-wide counter tally narrowed by a printed noun, e.g. "…on all of your Benched {F}
- * Pokémon." The whole noun is captured and resolved by `inPlayBodyFilter`. The noun need not end in
- * "Pokémon" (e.g. "Benched Rattata."); `(?!Pokémon\.)` keeps the bare "Benched Pokémon." on
- * `BENCH_COUNTER_MULTIPLY` alone.
- */
-const BENCH_COUNTER_FILTERED_MULTIPLY =
-  /^This attack does (\d+) damage for each damage counter on all of your Benched ((?!Pokémon\.)[^.]+)\.$/;
 /**
  * The same head with "This attack's damage isn't affected by Weakness." appended. Read by two
  * readers: `deriveAttackDamageMultiplier` for the fold and `deriveAttackDamageSuppression` for `{
@@ -3117,68 +207,7 @@ const BENCH_COUNTER_FILTERED_MULTIPLY =
  */
 const BENCH_COUNTER_FILTERED_SUPPRESSED =
   /^This attack does (\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
-// Bench counted as Pokémon rather than counters: both Benches (additive only, "(both yours and your
-// opponent's)") and the opponent's Bench on both folds. "more" picks the additive fold; without it
-// the printed N is the per-unit.
-const BOTH_BENCH_SCALE =
-  /^This attack does (\d+) more damage for each Benched Pokémon \(both yours and your opponent['’]s\)\.$/;
-const OPPONENT_BENCH_SCALE =
-  /^This attack does (\d+) more damage for each of your opponent['’]s Benched Pokémon\.$/;
-const OPPONENT_BENCH_MULTIPLY =
-  /^This attack does (\d+) damage for each of your opponent['’]s Benched Pokémon\.$/;
-// The attacker's own Bench counted as Pokémon, on both folds. A noun narrowed by "that has …" is
-// not matched, so it stays on the skipped path rather than being read as the unfiltered total.
-const YOUR_BENCH_SCALE = /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
-/**
- * "This attack does N more damage for each of your Benched <noun>." where the noun is a bare card
- * name. The `(?!Pokémon\.)` lookahead is load-bearing and this arm runs before `YOUR_BENCH_SCALE`;
- * without it this pattern would also claim "…your Benched Pokémon." with an `anyPokemon` filter.
- */
-const YOUR_BENCHED_NOUN_SCALE =
-  /^This attack does (\d+) more damage for each of your Benched (?!Pokémon\.)([^.]+)\.$/;
-const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
-/**
- * "This attack does N more damage for each <noun> on your Bench." A separate anchor from
- * `YOUR_BENCH_SCALE` because the word order differs. The noun is `[^.]+`, resolved by
- * `inPlayBodyFilter`; the map is what refuses unknown nouns.
- */
-const YOUR_BENCH_FILTERED_SCALE =
-  /^This attack does (\d+) more damage for each ([^.]+) on your Bench\.$/;
-// "This attack does N [more] damage for each of your <noun> in play." The noun is resolved by
-// `inPlayBodyFilter`. The `(?!opponent)` lookahead is load-bearing: without it the capture would
-// swallow "opponent's Pokémon ex" and score the opponent's sentence off the attacker's board. The
-// capture is `[^.]+` so it cannot span a sentence break into a compound.
-const IN_PLAY_BODY_MULTIPLY =
-  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\.$/;
-const IN_PLAY_BODY_SCALE =
-  /^This attack does (\d+) more damage for each of your ((?!opponent)[^.]+) in play\.$/;
-/**
- * The opponent's Pokémon in play, a separate anchor from the attacker's (which keeps its
- * `(?!opponent)` lookahead). The noun is `[^.]+` so it cannot span a sentence break.
- */
-const IN_PLAY_FOE_BODY_MULTIPLY =
-  /^This attack does (\d+) damage for each of your opponent['’]s ([^.]+) in play\.$/;
-/**
- * "This attack does N damage for each of your Pokémon that has any damage counters on it." The
- * narrowing is a board fact carried as `damagedOnly` on the count, so the noun still goes through
- * `inPlayBodyFilter`. `(?!opponent)` keeps the attacker's anchor off an opponent-side sentence.
- */
-const IN_PLAY_DAMAGED_BODY_MULTIPLY =
-  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) that has any damage counters on it\.$/;
-/**
- * "This attack does N damage for each of your Pokémon in play that has the <name> attack."
- * "Pokémon" is a literal so the whole phrase resolves to one `attackNamePokemon` filter (there is
- * no intersection combinator); only the bare "Pokémon" head is read.
- */
-const IN_PLAY_ATTACK_NAME_MULTIPLY =
-  /^This attack does (\d+) damage for each of your Pokémon in play that has the ([^.]+) attack\.$/;
-/**
- * "This attack does N damage for each Pokémon in play that has "A" or "B" in its name (both yours
- * and your opponent's)." Exactly two name fragments, captured with `([^"]+)` between the printed
- * quotes and combined with `anyOf`; other arities fall to the skipped path.
- */
-const IN_PLAY_BOTH_SIDES_NAME_MULTIPLY =
-  /^This attack does (\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \(both yours and your opponent['’]s\)\.$/;
+
 /** The three printed nouns with no parameter, mapped to the `CardFilter` members
     that already spell them. A MAP and not a regex alternation, for
     `CLAUSE_ENERGY_TOKENS`' reason: the accepted vocabulary is a single list rather
@@ -3252,23 +281,14 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
     },
   ],
 ]);
+
 /**
  * The class nouns a whole-side spread can target, a shortlist of `IN_PLAY_BODY_NOUNS` keys so both
  * readers answer the same filter. A key missing from the map leaves the sentence on the skipped
  * path.
  */
 const SPREAD_EACH_CLASS_NOUNS: readonly string[] = ["Pokémon ex and Pokémon V", "Pokémon ex"];
-/**
- * "This attack does N damage to each of your opponent's <class>. This attack's damage isn't
- * affected by Weakness or Resistance." Declared here because it reads `IN_PLAY_BODY_NOUNS`, which
- * would be in the temporal dead zone further up. The W/R sentence is mandatory and sets `ignoreWR`
- * (with `wrOnly`).
- */
-const SPREAD_EACH_CLASSED_OPPONENT_POKEMON = new RegExp(
-  `^This attack does (\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(
-    "|",
-  )})\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$`,
-);
+
 /**
  * "This attack does N damage for each of your X in play. This attack also does M damage to each of
  * your X." Two readers claim this one sentence: the multiplier folds the count and the effect
@@ -3278,17 +298,20 @@ const SPREAD_EACH_CLASSED_OPPONENT_POKEMON = new RegExp(
  */
 const NAMED_BODIES_MULTIPLY_SPREAD =
   /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\. This attack also does (\d+) damage to each of your \2\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
+
 /**
  * An owner-prefixed noun such as "Team Rocket's Pokémon". The owner is captured rather than listed,
  * so new owner prefixes need no code change.
  */
 const IN_PLAY_OWNER_NOUN = /^(.+)['’]s Pokémon$/;
+
 /** The TYPED noun ("{G} Pokémon", and the spelled-out "Grass Pokémon" the older
     prints carry). Resolved through `CLAUSE_POKEMON_TYPES` — the map that is TOTAL
     over `POKEMON_TYPES` in BOTH notations and already pinned against it — rather
     than through a fresh table, so a type meaning Grass in one clause of this file
     means Grass in every other one. */
 const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
+
 /**
  * Resolves the printed noun between "for each of your " and " in play." (or "on your Bench.") to a
  * `CardFilter`, or `null` when it cannot be spelled, which keeps the sentence on the loud skipped
@@ -3309,22 +332,7 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
   }
   return null;
 }
-// "This attack does N [more] damage for each <noun> in your [opponent's] discard pile." The seat is
-// captured from the printed words, never inferred from the fold. The noun goes through a closed map
-// rather than a `(.+) card` capture, so an unknown noun stays loud instead of counting zero
-// forever. `[^.]+` cannot cross a sentence break.
-const DISCARD_PILE_COUNT_MULTIPLY =
-  /^This attack does (\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
-const DISCARD_PILE_COUNT_SCALE =
-  /^This attack does (\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
-/**
- * "This attack does N damage for each Pokémon in your discard pile that has the X attack." A
- * separate anchor rather than a widening of the pile anchors. The attack name is captured because
- * it is a catalog column, so a misspelling matches nothing loudly; only the attacker's own pile is
- * printed.
- */
-const DISCARD_PILE_ATTACK_NAME_MULTIPLY =
-  /^This attack does (\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\.$/;
+
 /**
  * Printed discard-pile nouns mapped to their `CardFilter`. Read through `literalClauseRow` because
  * a key spells an apostrophe, and a curly-apostrophe re-ingest would otherwise miss it.
@@ -3342,11 +350,13 @@ const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // `bannerCard` counts Ancient cards of any category, including Ancient Trainers.
   ["Ancient card", { kind: "bannerCard", banner: "Ancient" }],
 ]);
+
 /**
  * "Supporter card that has "X" in its name". The capture is delimited by the printed quotes and
  * cannot be empty, so it can never match every Supporter.
  */
 const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its name$/;
+
 /**
  * Resolves the printed discard-pile noun to a `CardFilter`, or `null` to keep the sentence on the
  * loud skipped path. Literal map rows are checked before the name-fragment pattern.
@@ -3360,11 +370,8 @@ function discardPileFilter(noun: string): CardFilter | null {
     : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };
 }
 
-// "Discard the top N cards of your deck, and this attack does P damage for each <noun> [that] you
-// discarded in this way." The noun group is lazy so an optional "that" is not swallowed into the
-// noun ("Misty's Pokémon that").
-const DECK_MILL_FILTERED_SCALED_DAMAGE =
-  /^Discard the top (\d+) cards of your deck, and this attack does (\d+) damage for each (.+?) (?:that )?you discarded in this way\.$/;
+const MILLED_TYPED_BASIC_NOUN = /^Basic \{([A-Z])\} Energy card$/;
+
 /**
  * Resolves the milled-card noun to a `CardFilter`, or `null` to stay loud. Reuses
  * `discardPileFilter` but does not add rows to its map, since that would also widen the
@@ -3382,17 +389,11 @@ function milledCardFilter(noun: string): CardFilter | null {
   if (owner !== null && owner[1] !== undefined) return { kind: "ownerPokemon", owner: owner[1] };
   return null;
 }
-const MILLED_TYPED_BASIC_NOUN = /^Basic \{([A-Z])\} Energy card$/;
-// Damage scaled by cards in the opponent's hand. Counting the whole hand leaks nothing since hand
-// size is public; a filtered count ("Trainer card you find there") is only legitimate because the
-// sentence reveals the hand first, which is why the reveal op reads the same anchor.
-const OPPONENT_HAND_COUNT_MULTIPLY =
-  /^This attack does (\d+) damage for each ([^.]+) in your opponent['’]s hand\.$/;
+
 // Also matches the comma-joined wording "…reveals their hand, and this attack does…".
 const ATTACK_REVEAL_AND_TRAINER_SCALE =
   /^Your opponent reveals their hand(?:\. This|, and this) attack does (\d+) damage for each ([^.]+) you find there\.$/;
-// The attacker's own hand, bare noun only.
-const YOUR_HAND_COUNT_MULTIPLY = /^This attack does (\d+) damage for each card in your hand\.$/;
+
 /**
  * Printed opponent-hand nouns mapped to their `CardFilter`. A closed map rather than a capture, so
  * an unknown noun stays loud instead of counting zero.
@@ -3409,78 +410,20 @@ const OPPONENT_HAND_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Car
   ["card", { kind: "anyCard" }],
   ["Energy card", { kind: "anyEnergy" }],
 ]);
+
 /** Resolves the printed opponent-hand noun to a `CardFilter`, or `null` to stay loud. */
 function opponentHandFilter(noun: string): CardFilter | null {
   return literalClauseRow(OPPONENT_HAND_NOUNS, noun) ?? null;
 }
-// Damage scaled by Energy attached to the opponent's Active or whole board, with an optional type
-// filter. An absent token means untyped; an unresolvable token stays loud rather than counting
-// everything. The additive form is Active-only because the board-wide additive sentence is not
-// printed.
-const OPPONENT_ENERGY_SCALE =
-  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to your opponent['’]s Active Pokémon\.$/;
-const OPPONENT_ENERGY_MULTIPLY =
-  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to (your opponent['’]s Active Pokémon|all of your opponent['’]s Pokémon)\.$/;
-// Damage scaled by Energy attached to the attacker (or, additive only, all of your Pokémon).
-// `attachedEnergyFilter` keeps "no filter printed" (`null`) distinct from "unreadable filter"
-// (`undefined`, stays loud). The multiply form accepts an optional "card" after Energy. Sentences
-// that attach Energy mid-attack are refused because this count is read at declaration.
-const SELF_ENERGY_SCALE =
-  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\.$/;
-/**
- * "…for each {L} Energy attached to all of your Iono's Pokémon." Narrows the board count to the
- * bodies the noun names, resolved through `inPlayBodyFilter`. `(?!opponent)` refuses "all of your
- * opponent's Pokémon", which would otherwise resolve to an owner filter that matches nothing.
- */
-const SELF_ENERGY_FILTERED_SCALE =
-  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to all of your ((?!opponent)[^.]+ Pokémon)\.$/;
-const SELF_ENERGY_MULTIPLY =
-  /^This attack does (\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\.$/;
-/**
- * The multiply form of the board-wide own Energy count ("…attached to all of your Pokémon."),
- * separate from `SELF_ENERGY_MULTIPLY`.
- */
-const SELF_BOARD_ENERGY_MULTIPLY =
-  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to all of your Pokémon\.$/;
-// Energy attached to both Active Pokémon, summed. Additive only and untyped, matching the printed
-// sentences.
-const SELF_ENERGY_BOTH_ACTIVES_SCALE =
-  /^This attack does (\d+) more damage for each Energy attached to both Active Pokémon\.$/;
-// Pokémon Tools attached to all of your Pokémon (Active and Bench). Multiply only: with no Tools
-// the attack deals nothing.
-const YOUR_TOOLS_MULTIPLY =
-  /^This attack does (\d+) damage for each Pokémon Tool attached to all of your Pokémon\.$/;
-// "all Pokémon" (without "of your") counts both boards. "each type of Basic Energy" counts distinct
-// Basic Energy types.
-const BOTH_SIDES_TOOLS_MULTIPLY =
-  /^This attack does (\d+) damage for each Pokémon Tool attached to all Pokémon\.$/;
-const BOTH_SIDES_ENERGY_MULTIPLY =
-  /^This attack does (\d+) damage for each Energy attached to all Pokémon\.$/;
-const BASIC_ENERGY_TYPES_MULTIPLY =
-  /^This attack does (\d+) damage for each type of Basic Energy attached to all of your Pokémon\.$/;
-// Benched Pokémon counts narrowed by a board fact. "any {R} Energy" is read by provision. The two
-// additive anchors also match `YOUR_BENCHED_NOUN_SCALE`, whose noun map refuses them.
-const YOUR_DAMAGED_BENCH_SCALE =
-  /^This attack does (\d+) more damage for each of your Benched Pokémon that has any damage counters on it\.$/;
-const YOUR_FIRE_BENCH_SCALE =
-  /^This attack does (\d+) more damage for each of your Benched Pokémon that has any \{R\} Energy attached\.$/;
-const YOUR_BENCH_MAX_HP_MULTIPLY =
-  /^This attack does (\d+) damage for each of your Benched Pokémon that has a maximum HP of (\d+)\.$/;
+
 // Read by two readers: the multiplier folds the discard-pile count and the effect reader shuffles
 // those same cards back. The fold lands before the program (§8), so the count is taken before the
 // shuffle.
 const DISCARD_PILE_COUNT_THEN_SHUFFLE =
   /^This attack does (\d+) damage for each Basic \{W\} Energy card in your discard pile\. Then, shuffle those cards into your deck\.$/;
+
 const RIPTIDE_PILE_FILTER: CardFilter = { kind: "basicEnergy", energyType: "Water" };
-// "Discard up to N Pokémon Tools from your opponent's Pokémon." Claimed whole, at the program tail.
-const ATTACK_DISCARD_TOOLS_UP_TO =
-  /^Discard up to (\d+) Pokémon Tools from your opponent['’]s Pokémon\.$/;
-// "If <clause>, this attack does N more damage.": the clause is a 0-or-1 indicator. The leading
-// `^If` anchor keeps flip sentences and optional-cost sentences off this path. The extra-Energy
-// form counts provided units against this attack's effective cost (§8.2), not cards.
-const EXTRA_ENERGY_BONUS =
-  /^If this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\), this attack does (\d+) more damage\.$/;
-const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
+
 /**
  * The conditional bonus with a Weakness-only suppression rider. Capture groups match
  * `CONDITIONAL_DAMAGE_BONUS` so one arm reads both; the bonus and suppression readers both read
@@ -3488,6 +431,79 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
  */
 const CONDITIONAL_BONUS_SUPPRESSED =
   /^If (.+), this attack does (\d+) more damage\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
+
+// Both printed energy notations: brace codes ({L}) and spelled-out names (Fire). {C} and {N} are
+// absent (§6.1): Colorless is the provision fallback for unauthored Special Energy, so a {C} filter
+// would match cards nobody meant.
+export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
+  BASIC_ENERGY_TYPES.map((type) => [TYPE_SYMBOL[type], type]),
+);
+
+/** The spelled-out notation, keyed straight off BASIC_ENERGY_TYPES rather than
+    re-listed — so the two notations cannot resolve to different vocabularies, and
+    a type added to the schema is admitted here by construction. */
+const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
+  BASIC_ENERGY_TYPES.map((type) => [type, type]),
+);
+
+/**
+ * Brace code read as a Pokémon type rather than a payable Energy. Extends `ENERGY_TYPE_BY_CODE`
+ * with `N` (Dragon, which has no Basic Energy) and `C` (Colorless, excluded from the energy map
+ * because `{C}` there is the Special Energy fallback).
+ */
+export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = Object.fromEntries(
+  POKEMON_TYPES.map((type) => [TYPE_SYMBOL[type], type]),
+);
+
+const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, EnergyClass> = new Map<string, EnergyClass>([
+  ...Object.entries(ENERGY_TYPE_BY_CODE).map(([code, type]): [string, EnergyClass] => [
+    `{${code}}`,
+    type,
+  ]),
+  ...Object.entries(ENERGY_TYPE_BY_NAME).map(([name, type]): [string, EnergyClass] => [name, type]),
+  ["Special", "special"],
+  // `Basic` is a card category, the complement of `Special`, not a tenth type.
+  ["Basic", "basic"],
+]);
+
+/** Accepts both the type name and its brace code, since the catalog prints both notations. */
+const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map<string, PokemonType>([
+  ...POKEMON_TYPES.map((type): [string, PokemonType] => [type, type]),
+  ...Object.entries(POKEMON_TYPE_BY_CODE).map(([code, type]): [string, PokemonType] => [
+    `{${code}}`,
+    type,
+  ]),
+]);
+
+/**
+ * Every exact lookup on printed text goes through this fold so curly and straight apostrophes match
+ * the same key.
+ */
+const CURLY_APOSTROPHE = "’";
+
+const STRAIGHT_APOSTROPHE = "'";
+
+/**
+ * The same apostrophe fold applied to a captured value rather than a table key; exported for use in
+ * another file.
+ */
+export function foldApostrophes(text: string): string {
+  return text.includes(CURLY_APOSTROPHE)
+    ? text.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE)
+    : text;
+}
+
+function literalClauseRow<T>(table: ReadonlyMap<string, T>, clause: string): T | undefined {
+  const exact = table.get(clause);
+  if (exact !== undefined) return exact;
+  // The `includes` guard is not an optimisation: it states that the second lookup
+  // exists ONLY for text carrying a curly apostrophe, so a clause that misses for
+  // any other reason misses exactly once and stays LOUD.
+  return clause.includes(CURLY_APOSTROPHE)
+    ? table.get(clause.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE))
+    : undefined;
+}
+
 /**
  * Printed conditional clauses keyed on the exact text between "If " and ", this attack does". A Map
  * so arbitrary text cannot hit `Object.prototype` keys. "this Pokémon" resolves to the attacker's
@@ -3816,59 +832,12 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     { kind: "yourDiscardPokemonWithAbilityNamedAtLeast", ability: "Hide 'n' Sneak", count: 13 },
   ],
 ]);
-// Both printed energy notations: brace codes ({L}) and spelled-out names (Fire). {C} and {N} are
-// absent (§6.1): Colorless is the provision fallback for unauthored Special Energy, so a {C} filter
-// would match cards nobody meant.
-export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = {
-  G: "Grass",
-  R: "Fire",
-  W: "Water",
-  L: "Lightning",
-  P: "Psychic",
-  F: "Fighting",
-  D: "Darkness",
-  M: "Metal",
-  Y: "Fairy",
-};
-/** The spelled-out notation, keyed straight off BASIC_ENERGY_TYPES rather than
-    re-listed — so the two notations cannot resolve to different vocabularies, and
-    a type added to the schema is admitted here by construction. */
-const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
-  BASIC_ENERGY_TYPES.map((type) => [type, type]),
-);
-/**
- * Brace code read as a Pokémon type rather than a payable Energy. Extends `ENERGY_TYPE_BY_CODE`
- * with `N` (Dragon, which has no Basic Energy) and `C` (Colorless, excluded from the energy map
- * because `{C}` there is the Special Energy fallback).
- */
-export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = {
-  ...ENERGY_TYPE_BY_CODE,
-  N: "Dragon",
-  C: "Colorless",
-};
+
 /** "If this Pokémon has any <energy> Energy attached, this attack does N more damage." */
 const SELF_ENERGY_ATTACHED_CLAUSE = /^this Pokémon has any (.+) Energy attached$/;
-const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special" | "basic"> = new Map([
-  ...Object.entries(ENERGY_TYPE_BY_CODE).map(
-    ([code, type]) => [`{${code}}`, type] as [string, BasicEnergyType | "special" | "basic"],
-  ),
-  ...Object.entries(ENERGY_TYPE_BY_NAME).map(
-    ([name, type]) => [name, type] as [string, BasicEnergyType | "special" | "basic"],
-  ),
-  ["Special", "special"] as [string, BasicEnergyType | "special" | "basic"],
-  // `Basic` is a card category, the complement of `Special`, not a tenth type.
-  ["Basic", "basic"] as [string, BasicEnergyType | "special" | "basic"],
-]);
 
 /** "If your opponent's Active Pokémon is a <type> Pokémon, this attack does N more damage." */
 const OPPONENT_ACTIVE_TYPE_CLAUSE = /^your opponent['’]s Active Pokémon is a (.+) Pokémon$/;
-/** Accepts both the type name and its brace code, since the catalog prints both notations. */
-const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
-  ...POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
-  ...Object.entries(POKEMON_TYPE_BY_CODE).map(
-    ([code, type]) => [`{${code}}`, type] as [string, PokemonType],
-  ),
-]);
 
 /** "If you have any <type> Pokémon on your Bench, this attack does N more damage." */
 const YOUR_BENCH_TYPE_CLAUSE = /^you have any (.+) Pokémon on your Bench$/;
@@ -3878,32 +847,6 @@ const OPPONENT_ACTIVE_RESISTANCE_CLAUSE = /^your opponent['’]s Active Pokémon
 
 /** "If your opponent has any <type> Pokémon in play, this attack does N more damage." */
 const OPPONENT_IN_PLAY_TYPE_CLAUSE = /^your opponent has any (.+) Pokémon in play$/;
-
-/**
- * Every exact lookup on printed text goes through this fold so curly and straight apostrophes match
- * the same key.
- */
-const CURLY_APOSTROPHE = "’";
-const STRAIGHT_APOSTROPHE = "'";
-/**
- * The same apostrophe fold applied to a captured value rather than a table key; exported for use in
- * another file.
- */
-export function foldApostrophes(text: string): string {
-  return text.includes(CURLY_APOSTROPHE)
-    ? text.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE)
-    : text;
-}
-function literalClauseRow<T>(table: ReadonlyMap<string, T>, clause: string): T | undefined {
-  const exact = table.get(clause);
-  if (exact !== undefined) return exact;
-  // The `includes` guard is not an optimisation: it states that the second lookup
-  // exists ONLY for text carrying a curly apostrophe, so a clause that misses for
-  // any other reason misses exactly once and stays LOUD.
-  return clause.includes(CURLY_APOSTROPHE)
-    ? table.get(clause.replaceAll(CURLY_APOSTROPHE, STRAIGHT_APOSTROPHE))
-    : undefined;
-}
 
 /**
  * The clause between "If " and ", this attack does" as a `BoardCondition`, or null so the sentence
@@ -3945,6 +888,7 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // negation lives in the skeleton, so the table maps each printed negative clause to the positive
 // condition required.
 const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
+
 /**
  * The requirement printed second, as on Coalossal — Tar Cannon. Group 1 is the single "This attack
  * does …" sentence, group 2 the clause, group 3 the optional Benched clarifier, which stays with
@@ -3952,6 +896,7 @@ const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
  */
 const ATTACK_DOES_NOTHING_SECOND =
   /^(This attack does [^.]+\.) If (.+?), this attack does nothing\.( \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\))?$/;
+
 /**
  * Printed negative clauses mapped to the positive board fact the attack requires. A Map so
  * arbitrary printed text cannot reach `Object.prototype`.
@@ -4070,17 +1015,6 @@ export function splitAttackRequirementClause(
 // Discarding Basic Energy from hand as an attack cost (§7.5), always printed with a trailing cancel
 // and reached behind `splitAttackCancelClause`.
 const ENERGY_CODES = Object.keys(ENERGY_TYPE_BY_CODE).join("");
-const HAND_BASIC_ENERGY_COST = new RegExp(
-  `^Discard (?:(\\d+) Basic \\{([${ENERGY_CODES}])\\} Energy cards|(a) Basic \\{([${ENERGY_CODES}])\\} Energy card) from your hand\\.$`,
-);
-const HAND_BASIC_ENERGY_COST_KO = new RegExp(
-  `^Discard (\\d+) Basic \\{([${ENERGY_CODES}])\\} Energy cards from your hand, and Knock Out your opponent['’]s Active Pokémon\\.$`,
-);
-
-// Trailing cancel: "If you can't, this attack does nothing." printed after the body, pointing back
-// at the sentence in front of it.
-const ATTACK_CANCEL_TRAILING =
-  /^(.+\.) (If you can['’]t(?: discard \d+ cards in this way)?, this attack does nothing\.)$/;
 
 /**
  * The head sentence an anaphoric "If you can't," points back at, mapped to the positive board fact
@@ -4117,6 +1051,11 @@ export function attackCancelHeadRows(): readonly (readonly [string, BoardConditi
   return [...ATTACK_CANCEL_HEADS];
 }
 
+// Trailing cancel: "If you can't, this attack does nothing." printed after the body, pointing back
+// at the sentence in front of it.
+const ATTACK_CANCEL_TRAILING =
+  /^(.+\.) (If you can['’]t(?: discard \d+ cards in this way)?, this attack does nothing\.)$/;
+
 /**
  * Takes a trailing "If you can't, this attack does nothing." off an attack's text and returns the
  * head sentence it points at, or null when the head is not one this engine can account for.
@@ -4146,131 +1085,10 @@ export function deriveAttackCancelRequirement(text: string): BoardCondition | nu
   return literalClauseRow(ATTACK_CANCEL_HEADS, split.head) ?? null;
 }
 
-// "Flip a coin. If heads, this attack does N more damage." and "Flip a coin. If tails, this attack
-// does nothing." are one flip taken before the §8.5 damage pipeline, read from either face.
-const ATTACK_COIN_BONUS = /^Flip a coin\. If heads, this attack does (\d+) more damage\.$/;
-const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$/;
-// Cancel on tails with a heads consequent on the same flip.
-const ATTACK_COIN_CANCEL_THEN_PREVENT =
-  /^Flip a coin\. If tails, this attack does nothing\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
-
-// "Flip N coins. This attack does D damage for each heads." N flips are announced in order as N
-// `ATTACK_EFFECT_COIN_FLIP` events.
-const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for each heads\.$/;
-
-// "Flip N coins. This attack does D more damage for each heads."
-const ATTACK_COIN_MULTI_BONUS =
-  /^Flip (\d+) coins\. This attack does (\d+) more damage for each heads\.$/;
-
-// "Flip N coins. This attack does D damage for each heads. If <threshold>, your opponent's Active
-// Pokémon is now <Status>."
-const ATTACK_COIN_MULTI_THRESHOLD_STATUS = new RegExp(
-  `^Flip (\\d+) coins\\. This attack does (\\d+) damage for each heads\\. If (?:(either|both)|at least (\\d+)) of them (?:is|are) (heads|tails),\\s+your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
-);
-
-/**
- * A closed map rather than a capture: "either" and "both" only make sense for two coins, and a
- * capture would accept quantifiers nothing printed.
- */
-const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 2 };
-
-// "Flip a coin for each [{X}] Energy attached to this Pokémon. This attack does D damage for each
-// heads."
-const ATTACK_COIN_PER_ENERGY =
-  /^Flip a coin for each (?:(.+) )?Energy attached to this Pokémon\. This attack does (\d+) damage for each heads\.$/;
-
-// "Flip a coin for each Energy attached to both Active Pokémon. This attack does N damage for each
-// heads."
-const ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY =
-  /^Flip a coin for each Energy attached to both Active Pokémon\. This attack does (\d+) damage for each heads\.$/;
-
-// "Flip a coin for each <kind of Pokémon> you have in play. This attack does N damage for each
-// heads."
-const ATTACK_COIN_PER_BODY_IN_PLAY =
-  /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\.$/;
-
-// "Flip a coin until you get tails. This attack does D [more] damage for each heads."
-const ATTACK_COIN_UNTIL_TAILS_BONUS =
-  /^Flip a coin until you get tails\. This attack does (\d+) more damage for each heads\.$/;
-const ATTACK_COIN_UNTIL_TAILS_MULTI =
-  /^Flip a coin until you get tails\. This attack does (\d+) damage for each heads\.$/;
-
-// "Flip N coins|a coin until you get tails. For each heads, discard the top M cards of your
-// opponent's deck."
-const ATTACK_COIN_MILL_PRINTED =
-  /^Flip (\d+) coins\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
-const ATTACK_COIN_MILL_UNTIL_TAILS =
-  /^Flip a coin until you get tails\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
-
-// Per-heads consequents built from ops `deriveAttackEffect` already emits for the bare sentence.
-const ATTACK_COIN_MILL_ONE_PRINTED =
-  /^Flip (\d+) coins\. For each heads, discard the top card of your opponent['’]s deck\.$/;
-const ATTACK_COIN_HAND_PRINTED =
-  /^Flip (\d+) coins\. For each heads, discard a random card from your opponent['’]s hand\.$/;
-
-// "For each heads, discard an Energy from your opponent's Active Pokémon", in both flip counts it
-// is printed with.
-const ATTACK_COIN_ENERGY_PRINTED =
-  /^Flip (\d+) coins\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
-const ATTACK_COIN_ENERGY_UNTIL_TAILS =
-  /^Flip a coin until you get tails\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
-
 // "Your opponent flips a coin for each of their Benched Pokémon. This attack does N damage to your
 // opponent's Active Pokémon for each tails." plus the Weakness and Resistance clause.
 const ATTACK_OPPONENT_BENCH_TAILS =
   /^Your opponent flips a coin for each of their Benched Pokémon\. This attack does (\d+) damage to your opponent['’]s Active Pokémon for each tails\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\.$/;
-
-// "Flip N coins. For each tails, discard an Energy from this Pokémon."
-const ATTACK_COIN_SELF_ENERGY_PER_TAILS =
-  /^Flip (\d+) coins\. For each tails, discard an Energy from this Pokémon\.$/;
-
-// "Flip N coins. Put a number of cards up to the number of heads from your discard pile into your
-// hand." The heads count is the retrieval ceiling.
-const ATTACK_COIN_RETRIEVAL_UP_TO_HEADS =
-  /^Flip (\d+) coins\. Put a number of cards up to the number of heads from your discard pile into your hand\.$/;
-
-// "Flip N coins. Attach a number of Basic {X} Energy cards up to the number of heads from your
-// discard pile to your Benched Pokémon in any way you like."
-const ATTACK_COIN_ATTACH_UP_TO_HEADS =
-  /^Flip (\d+) coins\. Attach a number of Basic \{([A-Z])\} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
-/**
- * Coin sentences read as `programPerHeads` over existing ops. The untyped attach omits
- * `energyType`, as the bare attach sentence does.
- */
-const ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS =
-  /^Flip (\d+) coins\. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
-const ATTACK_COIN_MILL_ONE_UNTIL_TAILS =
-  /^Flip a coin until you get tails\. For each heads, discard the top card of your opponent['’]s deck\.$/;
-const ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS =
-  /^Flip a coin until you get tails\. For each heads, choose a random card from your opponent['’]s hand\. Your opponent reveals those cards and shuffles them into their deck\.$/;
-/**
- * Coin sentences read as `programPerHeads` over existing ops. The named-in-play count takes one
- * capitalised word, so "Pokémon" and class nouns stay on the body-count anchor.
- */
-const ATTACK_COIN_MILL_PER_NAMED_IN_PLAY =
-  /^Flip a coin for each ([A-Z][a-z]+) you have in play\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
-const ATTACK_COIN_DECK_ATTACH_PER_HEADS =
-  /^Flip (\d+) coins\. For each heads, search your deck for up to (\d+) Basic Energy cards and attach them to your Pokémon in any way you like\. Then, shuffle your deck\.$/;
-/** `ATTACK_COIN_BOTH_HEADS_BONUS` pays its bonus only when both coins are heads. */
-const ATTACK_COIN_BOTH_HEADS_BONUS =
-  /^Flip 2 coins\. If both of them are heads, this attack does (\d+) more damage\.$/;
-const ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND =
-  /^Flip a coin until you get tails\. Search your deck for a number of cards up to the number of heads and put them into your hand\. Then, shuffle your deck\.$/;
-const ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF =
-  /^Flip a coin until you get tails\. Search your deck for an amount of Basic (?:\{([A-Z])\} )?Energy up to the number of heads and attach it to this Pokémon\. Then, shuffle your deck\.$/;
-const ATTACK_COIN_REVEALED_HAND_TO_DECK =
-  /^Flip (\d+) coins\. If any of them are heads, your opponent reveals their hand\. For each heads, choose a card you find there and shuffle it into your opponent['’]s deck\.$/;
-
-// "Flip 3 coins. If 1 of them is heads, … 20 more … If 2 …, 50 more … If all …, 80 more damage."
-// The payoff is a table rather than per-heads scaling.
-const ATTACK_COIN_BONUS_LADDER =
-  /^Flip 3 coins\. If 1 of them is heads, this attack does (\d+) more damage\. If 2 of them are heads, this attack does (\d+) more damage\. If all of them are heads, this attack does (\d+) more damage\.$/;
-
-/**
- * Upper bound on printed flip counts; the digits come from ingested third-party text and an
- * unbounded count could spin the resolution loop. Exceeding it refuses the sentence loudly.
- */
-const MAX_PRINTED_FLIPS = 10;
 
 /**
  * How many times an attack's printed sentence calls for a coin flip. Only `printed` is known at
@@ -4284,7 +1102,7 @@ export type AttackFlipCount =
        * `"basic"` is possible because this resolves through `CLAUSE_ENERGY_TOKENS`, but no printing
        * uses it here.
        */
-      energy: BasicEnergyType | "special" | "basic" | null;
+      energy: EnergyClass | null;
     }
   | { kind: "pokemonInPlay"; filter: CardFilter }
   | { kind: "bothActivesEnergy" }
@@ -4331,6 +1149,168 @@ export type AttackCoinFlip =
       ops: EffectOp[];
     };
 
+// "Flip a coin. If heads, this attack does N more damage." and "Flip a coin. If tails, this attack
+// does nothing." are one flip taken before the §8.5 damage pipeline, read from either face.
+const ATTACK_COIN_BONUS = /^Flip a coin\. If heads, this attack does (\d+) more damage\.$/;
+
+const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$/;
+
+// Cancel on tails with a heads consequent on the same flip.
+const ATTACK_COIN_CANCEL_THEN_PREVENT =
+  /^Flip a coin\. If tails, this attack does nothing\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
+
+// "Flip N coins. This attack does D damage for each heads." N flips are announced in order as N
+// `ATTACK_EFFECT_COIN_FLIP` events.
+const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for each heads\.$/;
+
+// "Flip N coins. This attack does D more damage for each heads."
+const ATTACK_COIN_MULTI_BONUS =
+  /^Flip (\d+) coins\. This attack does (\d+) more damage for each heads\.$/;
+
+// "Flip N coins. This attack does D damage for each heads. If <threshold>, your opponent's Active
+// Pokémon is now <Status>."
+const ATTACK_COIN_MULTI_THRESHOLD_STATUS = new RegExp(
+  `^Flip (\\d+) coins\\. This attack does (\\d+) damage for each heads\\. If (?:(either|both)|at least (\\d+)) of them (?:is|are) (heads|tails),\\s+your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
+);
+
+/**
+ * A closed map rather than a capture: "either" and "both" only make sense for two coins, and a
+ * capture would accept quantifiers nothing printed.
+ */
+const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 2 };
+
+// "Flip a coin for each [{X}] Energy attached to this Pokémon. This attack does D damage for each
+// heads."
+const ATTACK_COIN_PER_ENERGY =
+  /^Flip a coin for each (?:(.+) )?Energy attached to this Pokémon\. This attack does (\d+) damage for each heads\.$/;
+
+// "Flip a coin for each Energy attached to both Active Pokémon. This attack does N damage for each
+// heads."
+const ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY =
+  /^Flip a coin for each Energy attached to both Active Pokémon\. This attack does (\d+) damage for each heads\.$/;
+
+// "Flip a coin for each <kind of Pokémon> you have in play. This attack does N damage for each
+// heads."
+const ATTACK_COIN_PER_BODY_IN_PLAY =
+  /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\.$/;
+
+// "Flip a coin until you get tails. This attack does D [more] damage for each heads."
+const ATTACK_COIN_UNTIL_TAILS_BONUS =
+  /^Flip a coin until you get tails\. This attack does (\d+) more damage for each heads\.$/;
+
+const ATTACK_COIN_UNTIL_TAILS_MULTI =
+  /^Flip a coin until you get tails\. This attack does (\d+) damage for each heads\.$/;
+
+// "Flip N coins|a coin until you get tails. For each heads, discard the top M cards of your
+// opponent's deck."
+const ATTACK_COIN_MILL_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
+
+const ATTACK_COIN_MILL_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
+
+// Per-heads consequents built from ops `deriveAttackEffect` already emits for the bare sentence.
+const ATTACK_COIN_MILL_ONE_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard the top card of your opponent['’]s deck\.$/;
+
+const ATTACK_COIN_HAND_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard a random card from your opponent['’]s hand\.$/;
+
+// "For each heads, discard an Energy from your opponent's Active Pokémon", in both flip counts it
+// is printed with.
+const ATTACK_COIN_ENERGY_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+
+const ATTACK_COIN_ENERGY_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+
+// "Flip N coins. For each tails, discard an Energy from this Pokémon."
+const ATTACK_COIN_SELF_ENERGY_PER_TAILS =
+  /^Flip (\d+) coins\. For each tails, discard an Energy from this Pokémon\.$/;
+
+// "Flip N coins. Put a number of cards up to the number of heads from your discard pile into your
+// hand." The heads count is the retrieval ceiling.
+const ATTACK_COIN_RETRIEVAL_UP_TO_HEADS =
+  /^Flip (\d+) coins\. Put a number of cards up to the number of heads from your discard pile into your hand\.$/;
+
+// "Flip N coins. Attach a number of Basic {X} Energy cards up to the number of heads from your
+// discard pile to your Benched Pokémon in any way you like."
+const ATTACK_COIN_ATTACH_UP_TO_HEADS =
+  /^Flip (\d+) coins\. Attach a number of Basic \{([A-Z])\} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
+
+/**
+ * Coin sentences read as `programPerHeads` over existing ops. The untyped attach omits
+ * `energyType`, as the bare attach sentence does.
+ */
+const ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS =
+  /^Flip (\d+) coins\. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
+
+const ATTACK_COIN_MILL_ONE_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, discard the top card of your opponent['’]s deck\.$/;
+
+const ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, choose a random card from your opponent['’]s hand\. Your opponent reveals those cards and shuffles them into their deck\.$/;
+
+/**
+ * Coin sentences read as `programPerHeads` over existing ops. The named-in-play count takes one
+ * capitalised word, so "Pokémon" and class nouns stay on the body-count anchor.
+ */
+const ATTACK_COIN_MILL_PER_NAMED_IN_PLAY =
+  /^Flip a coin for each ([A-Z][a-z]+) you have in play\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
+
+const ATTACK_COIN_DECK_ATTACH_PER_HEADS =
+  /^Flip (\d+) coins\. For each heads, search your deck for up to (\d+) Basic Energy cards and attach them to your Pokémon in any way you like\. Then, shuffle your deck\.$/;
+
+/** `ATTACK_COIN_BOTH_HEADS_BONUS` pays its bonus only when both coins are heads. */
+const ATTACK_COIN_BOTH_HEADS_BONUS =
+  /^Flip 2 coins\. If both of them are heads, this attack does (\d+) more damage\.$/;
+
+const ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND =
+  /^Flip a coin until you get tails\. Search your deck for a number of cards up to the number of heads and put them into your hand\. Then, shuffle your deck\.$/;
+
+const ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF =
+  /^Flip a coin until you get tails\. Search your deck for an amount of Basic (?:\{([A-Z])\} )?Energy up to the number of heads and attach it to this Pokémon\. Then, shuffle your deck\.$/;
+
+const ATTACK_COIN_REVEALED_HAND_TO_DECK =
+  /^Flip (\d+) coins\. If any of them are heads, your opponent reveals their hand\. For each heads, choose a card you find there and shuffle it into your opponent['’]s deck\.$/;
+
+// "Flip 3 coins. If 1 of them is heads, … 20 more … If 2 …, 50 more … If all …, 80 more damage."
+// The payoff is a table rather than per-heads scaling.
+const ATTACK_COIN_BONUS_LADDER =
+  /^Flip 3 coins\. If 1 of them is heads, this attack does (\d+) more damage\. If 2 of them are heads, this attack does (\d+) more damage\. If all of them are heads, this attack does (\d+) more damage\.$/;
+
+/**
+ * Upper bound on printed flip counts; the digits come from ingested third-party text and an
+ * unbounded count could spin the resolution loop. Exceeding it refuses the sentence loudly.
+ */
+const MAX_PRINTED_FLIPS = 10;
+
+/**
+ * A printed "Flip N coins" count, or null. The plural "coins" means at least 2 (one coin is printed
+ * "Flip a coin." and read by its own anchors), and `MAX_PRINTED_FLIPS` is the ingested-text ceiling.
+ */
+function printedFlipCount(digits: string | undefined): number | null {
+  const n = Number(digits);
+  return n >= 2 && n <= MAX_PRINTED_FLIPS ? n : null;
+}
+
+function printedFlips(count: number): AttackFlipCount {
+  return { kind: "printed", count };
+}
+
+/** Until-tails flips need no ceiling: `MAX_UNTIL_TAILS_FLIPS` in the RNG bounds them. */
+function untilTails(): AttackFlipCount {
+  return { kind: "untilTails" };
+}
+
+function programPerHeads(
+  flips: AttackFlipCount,
+  ops: EffectOp[],
+  face: CoinFace = "heads",
+): AttackCoinFlip {
+  return { kind: "programPerHeads", flips, ops, face };
+}
+
 /**
  * The coin flip an attack's printed text calls for, or null when the text is not a recognised whole
  * sentence, keeping the attack on the loud ATTACK_EFFECT_SKIPPED path.
@@ -4339,33 +1319,23 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   const effect = text.trim();
   const bonus = ATTACK_COIN_BONUS.exec(effect);
   if (bonus !== null) {
-    const per = Number(bonus[1]);
-    // The same `per >= 1` guard every arm of the scaling family carries: a
-    // printed 0 is not a bonus, and admitting one would spend a flip (and an
-    // rngState step) to add nothing. No card prints it; the guard is what keeps
-    // that a fact about the pool rather than an assumption.
-    return per >= 1 ? { kind: "bonusOnHeads", flips: { kind: "printed", count: 1 }, per } : null;
+    const per = positiveInt(bonus[1]);
+    return per !== null ? { kind: "bonusOnHeads", flips: printedFlips(1), per } : null;
   }
   const multi = ATTACK_COIN_MULTI.exec(effect);
   if (multi !== null) {
-    const flips = Number(multi[1]);
-    const per = Number(multi[2]);
-    // `flips >= 2` because the regex's own "coins" is PLURAL: the one-flip form is
-    // printed "Flip a coin." and is read by the two patterns above, so "Flip 1
-    // coins." is not English and not in the pool. Refusing it (rather than quietly
-    // treating it as one flip) keeps the grammar of the sentence and the shape of
-    // the value in agreement. `per >= 1` is the same guard every scaling arm
-    // carries; `flips <= MAX_PRINTED_FLIPS` is the ingested-text ceiling.
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
-      ? { kind: "perHeads", flips: { kind: "printed", count: flips }, per }
+    const flips = printedFlipCount(multi[1]);
+    const per = positiveInt(multi[2]);
+    return flips !== null && per !== null
+      ? { kind: "perHeads", flips: printedFlips(flips), per }
       : null;
   }
   const multiBonus = ATTACK_COIN_MULTI_BONUS.exec(effect);
   if (multiBonus !== null) {
-    const flips = Number(multiBonus[1]);
-    const per = Number(multiBonus[2]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
-      ? { kind: "bonusOnHeads", flips: { kind: "printed", count: flips }, per }
+    const flips = printedFlipCount(multiBonus[1]);
+    const per = positiveInt(multiBonus[2]);
+    return flips !== null && per !== null
+      ? { kind: "bonusOnHeads", flips: printedFlips(flips), per }
       : null;
   }
   // "Flip N coins. If M or more of them are heads, …": the threshold must be between 1 and the flip
@@ -4373,188 +1343,151 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   // The word forms ("either"/"both of them") only apply to 2 coins.
   const multiThreshold = ATTACK_COIN_MULTI_THRESHOLD_STATUS.exec(effect);
   if (multiThreshold !== null) {
-    const flips = Number(multiThreshold[1]);
-    const per = Number(multiThreshold[2]);
+    const flips = printedFlipCount(multiThreshold[1]);
+    const per = positiveInt(multiThreshold[2]);
     const word = multiThreshold[3];
-    // Exactly one of the two capture groups is defined — the alternation guarantees it
-    // — so this is a resolution and not a default: the WORD branch goes through the
-    // closed map, the NUMERIC branch through the digits the card printed.
+    // The alternation defines exactly one of the word and digit groups.
     const atLeast = word === undefined ? Number(multiThreshold[4]) : FLIP_THRESHOLD_WORDS[word];
     const face = multiThreshold[5] === "tails" ? "tails" : "heads";
     if (atLeast === undefined) return null;
-    return flips >= 2 &&
-      flips <= MAX_PRINTED_FLIPS &&
-      per >= 1 &&
+    return flips !== null &&
+      per !== null &&
       atLeast >= 1 &&
       atLeast <= flips &&
       (word === undefined || flips === 2)
       ? {
           kind: "perHeadsThenThreshold",
-          flips: { kind: "printed", count: flips },
+          flips: printedFlips(flips),
           per,
           threshold: { face, atLeast },
           ops: [{ op: "applyStatus", target: "defender", status: statusOf(multiThreshold[6]) }],
         }
       : null;
   }
+  // Board-counted flips (this arm and the next two) need no ceiling.
   const perEnergy = ATTACK_COIN_PER_ENERGY.exec(effect);
   if (perEnergy !== null) {
     const token = perEnergy[1];
-    const per = Number(perEnergy[2]);
+    const per = positiveInt(perEnergy[2]);
     // An undefined token is the unfiltered sentence ("for each Energy attached") and resolves to
     // `energy: null`. An unresolvable token must refuse rather than count every attached card, so
-    // the two are told apart by the token, not the lookup. No flip ceiling: the count is read off
-    // the board.
+    // the two are told apart by the token, not the lookup.
     if (token !== undefined) {
       const energy = literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
-      return energy !== undefined && per >= 1
+      return energy !== undefined && per !== null
         ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy }, per }
         : null;
     }
-    return per >= 1
+    return per !== null
       ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy: null }, per }
       : null;
   }
   // Counts Pokémon in play rather than Energy attached. An unresolvable body noun refuses rather
-  // than counting zero forever. No flip ceiling: the count comes from the board, not from ingested
-  // text.
+  // than counting zero forever.
   const inPlayBodies = ATTACK_COIN_PER_BODY_IN_PLAY.exec(effect);
   if (inPlayBodies !== null) {
-    const per = Number(inPlayBodies[2]);
-    // Through the SHARED vocabulary, not a local table — `inPlayBodyFilter` is the
-    // one place this file resolves a printed body noun, and an unresolvable noun
-    // answers `null` here exactly as it does for the three damage anchors.
+    const per = positiveInt(inPlayBodies[2]);
     const filter = inPlayBodyFilter(inPlayBodies[1] ?? "");
-    return filter !== null && per >= 1
+    return filter !== null && per !== null
       ? { kind: "perHeads", flips: { kind: "pokemonInPlay", filter }, per }
       : null;
   }
-  // Counts Energy attached to both Active Pokémon. No flip ceiling: the count comes from the board.
   const bothActivesFlip = ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY.exec(effect);
   if (bothActivesFlip !== null) {
-    const per = Number(bothActivesFlip[1]);
-    return per >= 1 ? { kind: "perHeads", flips: { kind: "bothActivesEnergy" }, per } : null;
+    const per = positiveInt(bothActivesFlip[1]);
+    return per !== null ? { kind: "perHeads", flips: { kind: "bothActivesEnergy" }, per } : null;
   }
-  // No flip ceiling on until-tails: termination is bounded by `MAX_UNTIL_TAILS_FLIPS` in the RNG,
-  // not by the sentence.
   const untilBonus = ATTACK_COIN_UNTIL_TAILS_BONUS.exec(effect);
   if (untilBonus !== null) {
-    const per = Number(untilBonus[1]);
-    return per >= 1 ? { kind: "bonusOnHeads", flips: { kind: "untilTails" }, per } : null;
+    const per = positiveInt(untilBonus[1]);
+    return per !== null ? { kind: "bonusOnHeads", flips: untilTails(), per } : null;
   }
   const untilMulti = ATTACK_COIN_UNTIL_TAILS_MULTI.exec(effect);
   if (untilMulti !== null) {
-    const per = Number(untilMulti[1]);
-    return per >= 1 ? { kind: "perHeads", flips: { kind: "untilTails" }, per } : null;
+    const per = positiveInt(untilMulti[1]);
+    return per !== null ? { kind: "perHeads", flips: untilTails(), per } : null;
   }
+  // The program grows one copy per heads, which is the other reason printed flips are capped.
   const millPrinted = ATTACK_COIN_MILL_PRINTED.exec(effect);
   if (millPrinted !== null) {
-    const flips = Number(millPrinted[1]);
-    const count = Number(millPrinted[2]);
-    // `flips >= 2` because the one-coin form is printed "Flip a coin."; `flips <=
-    // MAX_PRINTED_FLIPS` because the digits come from ingested text and the program grows one copy
-    // per heads. A count of 0 would move nothing.
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && count >= 1
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardDeckTop", whose: "opponent", count }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(millPrinted[1]);
+    const count = positiveInt(millPrinted[2]);
+    return flips !== null && count !== null
+      ? programPerHeads(printedFlips(flips), [{ op: "discardDeckTop", whose: "opponent", count }])
       : null;
   }
   const millUntil = ATTACK_COIN_MILL_UNTIL_TAILS.exec(effect);
   if (millUntil !== null) {
-    const count = Number(millUntil[1]);
-    // No ceiling here: termination is bounded by `MAX_UNTIL_TAILS_FLIPS` in the RNG.
-    return count >= 1
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "untilTails" },
-          ops: [{ op: "discardDeckTop", whose: "opponent", count }],
-          face: "heads",
-        }
+    const count = positiveInt(millUntil[1]);
+    return count !== null
+      ? programPerHeads(untilTails(), [{ op: "discardDeckTop", whose: "opponent", count }])
       : null;
   }
   // The singular "discard the top card" form: the count is the article, so the op is built with a
   // literal 1.
   const millOnePrinted = ATTACK_COIN_MILL_ONE_PRINTED.exec(effect);
   if (millOnePrinted !== null) {
-    const flips = Number(millOnePrinted[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(millOnePrinted[1]);
+    return flips !== null
+      ? programPerHeads(printedFlips(flips), [
+          { op: "discardDeckTop", whose: "opponent", count: 1 },
+        ])
       : null;
   }
   // The op carries no count; each heads appends one copy, so every discard is an independent random
   // pick from the shrinking hand.
   const handPrinted = ATTACK_COIN_HAND_PRINTED.exec(effect);
   if (handPrinted !== null) {
-    const flips = Number(handPrinted[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "randomFromOpponentHand", to: "discard" }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(handPrinted[1]);
+    return flips !== null
+      ? programPerHeads(printedFlips(flips), [{ op: "randomFromOpponentHand", to: "discard" }])
       : null;
   }
   const energyPrinted = ATTACK_COIN_ENERGY_PRINTED.exec(effect);
   if (energyPrinted !== null) {
-    const flips = Number(energyPrinted[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(energyPrinted[1]);
+    return flips !== null
+      ? programPerHeads(printedFlips(flips), [
+          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+        ])
       : null;
   }
-  // Unbounded flips and no printed digit, so there is nothing to guard.
   if (ATTACK_COIN_ENERGY_UNTIL_TAILS.test(effect)) {
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "untilTails" },
-      ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      face: "heads",
-    };
+    return programPerHeads(untilTails(), [
+      { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+    ]);
   }
   // The opponent flips one coin per Benched Pokémon. `deriveAttackDamageSuppression` is gated on
   // this return, so refusing here also refuses the suppression half.
   const opponentBenchTails = ATTACK_OPPONENT_BENCH_TAILS.exec(effect);
   if (opponentBenchTails !== null) {
-    const per = Number(opponentBenchTails[1]);
-    return per >= 1 ? { kind: "opponentPerTails", flips: { kind: "opponentBench" }, per } : null;
+    const per = positiveInt(opponentBenchTails[1]);
+    return per !== null
+      ? { kind: "opponentPerTails", flips: { kind: "opponentBench" }, per }
+      : null;
   }
   // `face: "tails"` is stated here so the flip site counts tails directly rather than deriving them
   // from heads.
   const selfEnergyTails = ATTACK_COIN_SELF_ENERGY_PER_TAILS.exec(effect);
   if (selfEnergyTails !== null) {
-    const flips = Number(selfEnergyTails[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
-          face: "tails",
-        }
+    const flips = printedFlipCount(selfEnergyTails[1]);
+    return flips !== null
+      ? programPerHeads(
+          printedFlips(flips),
+          [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
+          "tails",
+        )
       : null;
   }
   // "Put up to that many cards": one park with `max` set to the heads count at the fold, not one
   // park per heads.
   const upToHeads = ATTACK_COIN_RETRIEVAL_UP_TO_HEADS.exec(effect);
   if (upToHeads !== null) {
-    const n = Number(upToHeads[1]);
-    if (n < 2 || n > MAX_PRINTED_FLIPS) return null;
+    const flips = printedFlipCount(upToHeads[1]);
+    if (flips === null) return null;
     return {
       kind: "retrievalUpToHeads",
-      flips: { kind: "printed", count: n },
+      flips: printedFlips(flips),
       filter: { kind: "anyCard" },
       dest: "hand",
     };
@@ -4563,136 +1496,102 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   // distributes the cards independently. An unmapped Energy code refuses.
   const attachUpToHeads = ATTACK_COIN_ATTACH_UP_TO_HEADS.exec(effect);
   if (attachUpToHeads !== null) {
-    const coins = Number(attachUpToHeads[1]);
-    if (coins < 2) return null;
-    if (coins > MAX_PRINTED_FLIPS) return null;
+    const flips = printedFlipCount(attachUpToHeads[1]);
+    if (flips === null) return null;
     const attachType = ENERGY_TYPE_BY_CODE[attachUpToHeads[2] ?? ""];
     if (attachType === undefined) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: coins },
-      ops: [
-        {
-          op: "attachEnergyFrom",
-          source: "discard",
-          energyType: attachType,
-          benchOnly: true,
-          declinable: true,
-        },
-      ],
-      face: "heads",
-    };
+    return programPerHeads(printedFlips(flips), [
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: attachType,
+        benchOnly: true,
+        declinable: true,
+      },
+    ]);
   }
-  // Until-tails arms have no digit to guard.
   const attachAnyUpToHeads = ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS.exec(effect);
   if (attachAnyUpToHeads !== null) {
-    const sketchCoins = Number(attachAnyUpToHeads[1]);
-    if (sketchCoins < 2 || sketchCoins > MAX_PRINTED_FLIPS) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: sketchCoins },
-      ops: [{ op: "attachEnergyFrom", source: "discard", benchOnly: true, declinable: true }],
-      face: "heads",
-    };
+    const flips = printedFlipCount(attachAnyUpToHeads[1]);
+    if (flips === null) return null;
+    return programPerHeads(printedFlips(flips), [
+      { op: "attachEnergyFrom", source: "discard", benchOnly: true, declinable: true },
+    ]);
   }
   if (ATTACK_COIN_MILL_ONE_UNTIL_TAILS.test(effect)) {
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "untilTails" },
-      ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
-      face: "heads",
-    };
+    return programPerHeads(untilTails(), [{ op: "discardDeckTop", whose: "opponent", count: 1 }]);
   }
   if (ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS.test(effect)) {
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "untilTails" },
-      ops: [{ op: "randomFromOpponentHand", to: "deck" }],
-      face: "heads",
-    };
+    return programPerHeads(untilTails(), [{ op: "randomFromOpponentHand", to: "deck" }]);
   }
   // The board-counted flip count needs no ceiling.
   const millPerNamed = ATTACK_COIN_MILL_PER_NAMED_IN_PLAY.exec(effect);
   if (millPerNamed !== null) {
-    const gnawCount = Number(millPerNamed[2]);
-    if (gnawCount < 1) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "pokemonInPlay", filter: { kind: "byName", name: millPerNamed[1] ?? "" } },
-      ops: [{ op: "discardDeckTop", whose: "opponent", count: gnawCount }],
-      face: "heads",
-    };
+    const count = positiveInt(millPerNamed[2]);
+    if (count === null) return null;
+    return programPerHeads(
+      { kind: "pokemonInPlay", filter: { kind: "byName", name: millPerNamed[1] ?? "" } },
+      [{ op: "discardDeckTop", whose: "opponent", count }],
+    );
   }
   const deckAttachPerHeads = ATTACK_COIN_DECK_ATTACH_PER_HEADS.exec(effect);
   if (deckAttachPerHeads !== null) {
-    const waltzCoins = Number(deckAttachPerHeads[1]);
-    const waltzMax = Number(deckAttachPerHeads[2]);
-    if (waltzCoins < 2 || waltzCoins > MAX_PRINTED_FLIPS || waltzMax < 1) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: waltzCoins },
-      ops: [
-        { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: waltzMax },
-        { op: "shuffleDeck" },
-      ],
-      face: "heads",
-    };
+    const flips = printedFlipCount(deckAttachPerHeads[1]);
+    const max = positiveInt(deckAttachPerHeads[2]);
+    if (flips === null || max === null) return null;
+    return programPerHeads(printedFlips(flips), [
+      { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max },
+      { op: "shuffleDeck" },
+    ]);
   }
-  const lariat = ATTACK_COIN_BOTH_HEADS_BONUS.exec(effect);
-  if (lariat !== null) {
-    const lariatBonus = Number(lariat[1]);
-    return lariatBonus >= 1
-      ? { kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: lariatBonus }
-      : null;
+  const bothHeads = ATTACK_COIN_BOTH_HEADS_BONUS.exec(effect);
+  if (bothHeads !== null) {
+    const bonus = positiveInt(bothHeads[1]);
+    return bonus !== null ? { kind: "bonusOnAllHeads", flips: printedFlips(2), bonus } : null;
   }
   if (ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND.test(effect)) {
     return {
       kind: "deckUpToHeads",
-      flips: { kind: "untilTails" },
+      flips: untilTails(),
       filter: { kind: "anyCard" },
       to: "hand",
     };
   }
-  const gormandize = ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF.exec(effect);
-  if (gormandize !== null) {
-    const gormandizeCode = gormandize[1];
-    if (gormandizeCode === undefined) {
+  const deckAttachSelf = ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF.exec(effect);
+  if (deckAttachSelf !== null) {
+    const code = deckAttachSelf[1];
+    if (code === undefined) {
       return {
         kind: "deckUpToHeads",
-        flips: { kind: "untilTails" },
+        flips: untilTails(),
         filter: { kind: "basicEnergy" },
         to: "self",
       };
     }
-    const gormandizeType = ENERGY_TYPE_BY_CODE[gormandizeCode];
-    if (gormandizeType === undefined) return null;
+    const energyType = ENERGY_TYPE_BY_CODE[code];
+    if (energyType === undefined) return null;
     return {
       kind: "deckUpToHeads",
-      flips: { kind: "untilTails" },
-      filter: { kind: "basicEnergy", energyType: gormandizeType },
+      flips: untilTails(),
+      filter: { kind: "basicEnergy", energyType },
       to: "self",
     };
   }
-  const snapInspection = ATTACK_COIN_REVEALED_HAND_TO_DECK.exec(effect);
-  if (snapInspection !== null) {
-    const snapCoins = Number(snapInspection[1]);
-    if (snapCoins < 2 || snapCoins > MAX_PRINTED_FLIPS) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: snapCoins },
-      ops: [{ op: "bottomFromOpponentHand", dest: "deck" }],
-      face: "heads",
-    };
+  const revealedHandToDeck = ATTACK_COIN_REVEALED_HAND_TO_DECK.exec(effect);
+  if (revealedHandToDeck !== null) {
+    const flips = printedFlipCount(revealedHandToDeck[1]);
+    if (flips === null) return null;
+    return programPerHeads(printedFlips(flips), [{ op: "bottomFromOpponentHand", dest: "deck" }]);
   }
   // The coin count is fixed at 3 by the anchor, and the tuple holds the printed tiers in order;
   // `attack.ts` indexes it by `heads - 1`. A zero tier refuses the whole sentence.
   const ladder = ATTACK_COIN_BONUS_LADDER.exec(effect);
   if (ladder !== null) {
-    const t1 = Number(ladder[1]);
-    const t2 = Number(ladder[2]);
-    const t3 = Number(ladder[3]);
-    if (t1 < 1 || t2 < 1 || t3 < 1) return null;
-    return { kind: "bonusLadder", flips: { kind: "printed", count: 3 }, ladder: [t1, t2, t3] };
+    const t1 = positiveInt(ladder[1]);
+    const t2 = positiveInt(ladder[2]);
+    const t3 = positiveInt(ladder[3]);
+    if (t1 === null || t2 === null || t3 === null) return null;
+    return { kind: "bonusLadder", flips: printedFlips(3), ladder: [t1, t2, t3] };
   }
   // The bare cancel runs first so that if its `$` were lost, it would claim the compound sentence
   // observably rather than silently.
@@ -4708,16 +1607,1132 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   return null;
 }
 
+// Shared self-switch clause. The verb is spelled at each call site because the capital and
+// lowercase forms must not be folded into `[Ss]`. The count is literal: a printed 2 would need a
+// different op.
+const SELF_SWITCH_CLAUSE = "this Pokémon with 1 of your Benched Pokémon\\.";
+
+/**
+ * Each `yes` applies the named condition and each `no` asks the next; the last confirm's two
+ * buttons are the last two conditions.
+ */
+function chooseSpecialConditionProgram(): EffectOp[] {
+  const words = Object.values(STATUS_WORD_OF);
+  const apply = (word: StatusWord): EffectOp[] => [
+    { op: "applyStatus", target: "defender", status: STATUS_OF_WORD[word] },
+  ];
+  const ask = (index: number): EffectOp[] => {
+    const word = words[index] as StatusWord;
+    const rest = words.slice(index + 1);
+    const last = rest.length === 1;
+    return [
+      {
+        op: "optional",
+        note: "Choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
+        then: apply(word),
+        otherwise: last ? apply(rest[0] as StatusWord) : ask(index + 1),
+        labels: {
+          yes: word,
+          no: `${rest.slice(0, -1).join(", ")}${last ? "" : " or "}${rest.at(-1) ?? ""}`,
+        },
+      },
+    ];
+  };
+  return ask(0);
+}
+
+// A printed noun phrase carrying a brace type code, resolved to its filter, or `undefined`
+// (including for a code neither map spells, such as "{N} Energy"). `plural` fixes the grammatical
+// number, which only the Energy noun marks. The article is optional because some anchors spell it
+// outside the noun group.
+const TYPED_NOUN = /^(?:a )?(Basic )?\{([A-Z])\} (Pokémon|Energy cards?)$/;
+
+function typedNounFilter(phrase: string, plural: boolean): CardFilter | undefined {
+  const match = TYPED_NOUN.exec(phrase);
+  if (match === null) return undefined;
+  const basic = match[1] !== undefined;
+  const code = match[2] ?? "";
+  if (match[3] === "Pokémon") {
+    const pokemonType = POKEMON_TYPE_BY_CODE[code];
+    return pokemonType === undefined
+      ? undefined
+      : { kind: "typedPokemon", pokemonType, ...(basic ? { stage: "basic" as const } : {}) };
+  }
+  // "Basic" is required on the Energy noun: an unqualified "{R} Energy card" would be a provision
+  // phrase, which no card in a deck matches.
+  if (!basic || match[3] !== (plural ? "Energy cards" : "Energy card")) return undefined;
+  const energyType = ENERGY_TYPE_BY_CODE[code];
+  return energyType === undefined ? undefined : { kind: "basicEnergy", energyType };
+}
+
+/**
+ * A printed proper name with "cards" ("Fennel cards"), resolved to `byName`, or `undefined`. Face
+ * banners are refused because they are not card names, so `byName` would never match.
+ */
+const NAMED_CARD_NOUN = /^([A-Z][a-zé]+) cards$/;
+
+/** Printed face banners that must not be read as card names. */
+const PRINTED_CARD_BANNERS: ReadonlySet<string> = new Set(["Ancient", "Future", "Tera"]);
+
+function namedCardNounFilter(phrase: string): CardFilter | undefined {
+  const match = NAMED_CARD_NOUN.exec(phrase);
+  if (match === null) return undefined;
+  const name = match[1] ?? "";
+  return PRINTED_CARD_BANNERS.has(name) ? undefined : { kind: "byName", name, cardNoun: true };
+}
+
+/**
+ * The same phrases as a regex fragment, per grammatical number and per anchor, since each anchor
+ * places the article differently. The article is a literal "a" because no type name starts with a
+ * vowel.
+ */
+const TYPED_NOUN_SINGULAR = "a (?:Basic )?\\{[A-Z]\\} Pokémon|a Basic \\{[A-Z]\\} Energy card";
+
+const TYPED_NOUN_PLURAL = "(?:Basic )?\\{[A-Z]\\} Pokémon|Basic \\{[A-Z]\\} Energy cards";
+
+/** The BENCH anchor's form: no article (the anchor spells it), and no Energy —
+    a Bench holds Pokémon, so "Basic {G} Energy card" has no business in a group
+    whose every match is benched. The alternative is `stage: "basic"`'s only
+    printed witness in the whole catalog, which is why this 0-legal / 1-catalog
+    sentence is read rather than deferred: without it the rider would be a field
+    no printing drives, and this repo does not ship those. */
+const BENCH_TYPED_NOUN = "Basic \\{[A-Z]\\} Pokémon";
+
+const BENCH_SEARCH_NOUN = `(?:(Basic Pokémon)|(${BENCH_TYPED_NOUN})|([A-Z][a-zé]+))`;
+
+const BENCH_SEARCH_TAIL = " onto your Bench\\. Then, shuffle your deck\\.$";
+
+// Printed noun phrases this reader can resolve, singular and plural, with their filters. The
+// strings must match `retrieveNoun`'s output in promptText.ts so the search prompt uses the
+// printed noun.
+const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
+  ["a card", "cards", { kind: "anyCard" }],
+  ["a Pokémon", "Pokémon", { kind: "anyPokemon" }],
+  ["an Item card", "Item cards", { kind: "item" }],
+  ["a Supporter card", "Supporter cards", { kind: "supporter" }],
+  ["a Stadium card", "Stadium cards", { kind: "stadium" }],
+  ["a Pokémon Tool card", "Pokémon Tool cards", { kind: "toolCard" }],
+  ["a Trainer card", "Trainer cards", { kind: "trainerCard" }],
+  ["a Basic Energy card", "Basic Energy cards", { kind: "basicEnergy" }],
+  ["an Energy card", "Energy cards", { kind: "anyEnergy" }],
+];
+
+// Attach from the discard pile. The arm reads destinations beyond the legal pool. `count` pins the
+// whole batch onto one chosen body ("up to 2 … to 1 of your Benched Pokémon"), while "in any way
+// you like" is separate ops that may land on different bodies.
+const MAX_PRINTED_ATTACH_COUNT = 10;
+
+/**
+ * Printed destination phrases for the attach family, with their target riders and whether "in any
+ * way you like" makes the batch separate decisions. A `Map` so arbitrary printed text cannot hit
+ * `Object.prototype`. An unknown phrase yields `undefined` and the effect is skipped.
+ */
+interface DiscardAttachDestination {
+  readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
+  readonly anyWay: boolean;
+  /**
+   * The printed "each of" spread: the attach goes to every eligible body with no choice. Mutually
+   * exclusive with `anyWay` and a builder `count`.
+   */
+  readonly toEach?: true;
+}
+
+const DISCARD_ATTACH_DESTINATIONS: ReadonlyMap<string, DiscardAttachDestination> = new Map<
+  string,
+  DiscardAttachDestination
+>([
+  // "To this Pokémon" is a UID rider, not a class rider: with two matching bodies a class rider
+  // could land on the wrong one.
+  ["this Pokémon", { riders: { toSelf: true }, anyWay: false }],
+  // Un-narrowed: every own in-play Pokémon. 0 legal, 5 catalog — see the note above.
+  ["1 of your Pokémon", { riders: {}, anyWay: false }],
+  ["1 of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false }],
+  ["your Pokémon in any way you like", { riders: {}, anyWay: true }],
+  ["your Benched Pokémon in any way you like", { riders: { benchOnly: true }, anyWay: true }],
+  // The spread prints no number, so the eligible set is the count.
+  ["each of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false, toEach: true }],
+  ["each of your Pokémon", { riders: {}, anyWay: false, toEach: true }],
+  ...Object.entries(POKEMON_TYPE_BY_CODE).map(
+    ([code, type]) =>
+      [`1 of your {${code}} Pokémon`, { riders: { targetType: type }, anyWay: false }] as [
+        string,
+        DiscardAttachDestination,
+      ],
+  ),
+]);
+
+// The source-zone phrase shared by the discard and hand attach anchors.
+const SOURCE_ZONE_PHRASE = " from your discard pile";
+
+const HAND_SOURCE_ZONE_PHRASE = " from your hand";
+
+/**
+ * Builds the attach clause for a source zone, so the discard, hand and gated anchors share one
+ * grammar. Groups: 1 bare-noun marker ("an"), 2 singular brace code, 3 printed count, 4 plural
+ * brace code, 5 destination phrase; `tail` groups follow at 6+. The article is welded to the
+ * number, and "an Energy card" (unlike "a Basic Energy card") admits Special Energy.
+ */
+function attachFromZoneClause(zonePhrase: string, tail: string): string {
+  return (
+    `(?:(an) Energy card|a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
+    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
+    `${zonePhrase} to ([^.]+)\\.${tail}`
+  );
+}
+
+function attachFromZoneAnchor(zonePhrase: string, tail: string): RegExp {
+  return new RegExp(`^Attach ${attachFromZoneClause(zonePhrase, tail)}$`);
+}
+
+// The printed §9.2 tail of the deck-search attach, already regex-escaped. It is an optional group
+// rather than a second anchor because it modifies the same attach, and the gate is a plain
+// `recordGate`.
+const DECK_SEARCH_POISON_TAIL =
+  "If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned\\.";
+
+/**
+ * Destination phrases for `attachFromDeck`, kept separate from `DISCARD_ATTACH_DESTINATIONS`
+ * because the two ops interpret the phrases differently. `batch: false` means every card lands on
+ * one chosen body ("attach them to 1 of your …"). `toSelf` is `batch: true` since it has exactly
+ * one body.
+ */
+interface DeckSearchAttachDestination {
+  readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
+  readonly batch: boolean;
+}
+
+// Optional heal tail on the hand attach: an amount (`all` or a number) and a pronoun. "That
+// Pokémon" is the body the attach chose; "this Pokémon" is the attacker and is accepted only when
+// the attach targets the attacker. The amount needs no ceiling because the heal is clamped to the
+// damage present.
+const HAND_ATTACH_HEAL_TAIL = "If you do, heal (?:all|(\\d+)) damage from (that|this) Pokémon\\.";
+
+/**
+ * Shared reader for every anchor built from `attachFromZoneClause`. Returns null for an unknown
+ * destination or brace code, an out-of-range count, or a heal pronoun that does not refer to the
+ * attached body. `heal` is the parsed heal tail and is checked here because it depends on the
+ * destination.
+ */
+function attachFromZoneProgram(
+  match: RegExpExecArray,
+  source: "hand" | "discard",
+  heal?: { amount: number | "all"; pronoun: string },
+): EffectOp[] | null {
+  const destination = DISCARD_ATTACH_DESTINATIONS.get(match[5] ?? "");
+  // Exactly one of the three branches matched, so at most one code group is set.
+  const code = match[2] ?? match[4];
+  const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
+  // The bare noun "an Energy card" admits any Energy, not only Basic.
+  const anyEnergy = match[1] !== undefined;
+  // A singular printing emits no `count` (absent means 1) so derived ops compare equal to
+  // hand-authored ones.
+  const count = match[3] === undefined ? 1 : Number(match[3]);
+  if (destination === undefined) return null;
+  if (code !== undefined && energyType === undefined) return null;
+  // A printed 0 is not a real card and would derive to a silent no-op; the
+  // ceiling is the ingested-text guard `MAX_PRINTED_FLIPS` carries one reader
+  // over, and it is load-bearing on the `anyWay` branch specifically — that
+  // branch grows the PROGRAM one op per printed unit, so an unbounded `\d+`
+  // would let one malformed third-party row build an arbitrarily long program.
+  // Applied to every branch so the three anchors cannot disagree about what
+  // counts as a printed number.
+  if (count < 1 || count > MAX_PRINTED_ATTACH_COUNT) return null;
+  // A heal names one body, so it is refused on a multi-op distribution, and "this Pokémon" must
+  // refer to the attach target (`toSelf`).
+  if (heal !== undefined && destination.anyWay && count > 1) return null;
+  if (heal !== undefined && heal.pronoun === "this" && destination.riders.toSelf !== true) {
+    return null;
+  }
+  // "Up to N … to each of them" is ambiguous in print, and a heal tail has no single referent on a
+  // spread, so both are refused.
+  if (destination.toEach === true && count > 1) return null;
+  if (destination.toEach === true && heal !== undefined) return null;
+  const base: OpOf<"attachEnergyFrom"> = {
+    op: "attachEnergyFrom",
+    source,
+    ...(energyType === undefined ? {} : { energyType }),
+    ...(anyEnergy ? { anyEnergy: true as const } : {}),
+    ...destination.riders,
+    ...(destination.toEach === true ? { toEach: true as const } : {}),
+    ...(heal === undefined ? {} : { healTarget: heal.amount }),
+  };
+  // "In any way you like" emits one op per card, each choosing its own target; otherwise one op
+  // whose `count` pins the batch to one body. A printed "up to" (read from `match[3]`, not the
+  // derived count) makes each op declinable.
+  return destination.anyWay
+    ? Array.from({ length: count }, () => ({
+        ...base,
+        ...(match[3] === undefined ? {} : { declinable: true as const }),
+      }))
+    : [count === 1 ? base : { ...base, count }];
+}
+
+/**
+ * Noun alternations built from `HAND_SEARCH_NOUNS`. Table phrases come first so "Pokémon" resolves
+ * to `anyPokemon` rather than a proper name, and the brace-coded fragment is appended after them.
+ */
+const RETRIEVAL_SINGULAR_ALT = `${HAND_SEARCH_NOUNS.map(([one]) => one).join("|")}|${TYPED_NOUN_SINGULAR}`;
+
+const RETRIEVAL_PLURAL_ALT = `${HAND_SEARCH_NOUNS.map(([, many]) => many).join("|")}|${TYPED_NOUN_PLURAL}`;
+
+/**
+ * Shared program for the attack and Supporter printings of this sentence. `shuffleDeck` leads
+ * despite the printed order because the search answer is a set of cards, so shuffling before or
+ * after removing them is equivalent. `reorderTop` is a separate op because the order is a second
+ * decision.
+ */
+export function searchTopOrderProgram(n: number): EffectOp[] {
+  return [
+    { op: "shuffleDeck" },
+    {
+      op: "searchDeck",
+      // The printed noun is plain "cards", so any card is a legal find.
+      filter: { kind: "anyCard" },
+      max: n,
+      // Without `exact`, a short pick would let the next op reorder cards that were never searched.
+      exact: true,
+      dest: "deckTop",
+    },
+    // The reorder window is exactly what the search placed.
+    { op: "reorderTop", n },
+  ];
+}
+
+/**
+ * Rewrites Mega Evolution wording variants to the equivalent Scarlet & Violet wording so the
+ * existing anchors read them. Each pattern is anchored so it cannot change an `sv` sentence.
+ */
+const ME_WORDING_SYNONYMS: readonly (readonly [RegExp, string])[] = [
+  // "Place … damage counters on" becomes "Put …". Only the capitalised form also takes the singular
+  // "counter".
+  [/\bPlace (?=(?:\d+ )?damage counters? on )/g, "Put "],
+  [/\bplace (?=(?:\d+ )?damage counters on )/g, "put "],
+  // Claw of Darkness ×3: ", and you discard a card you find there." → ". Discard a card …".
+  [
+    /(?<=^Your opponent reveals their hand), and you discard a card you find there\.$/,
+    ". Discard a card you find there.",
+  ],
+  // Astonish: ", and your opponent reveals that card …" → ". Your opponent reveals that card …".
+  [
+    /(?<=^Choose a random card from your opponent['’]s hand), and your opponent reveals that card and shuffles it into their deck\.$/,
+    ". Your opponent reveals that card and shuffles it into their deck.",
+  ],
+  // Thunder (Miraidon): "This Pokémon does N damage to itself." → "This Pokémon also does …".
+  [/^This Pokémon does (?=\d+ damage to itself\.$)/, "This Pokémon also does "],
+  // Power Rush (Eternatus): the coin-flipped "can't use attacks." → "can't attack."
+  [
+    /(?<=^Flip a coin\. If tails, during your next turn, )this Pokémon can['’]t use attacks\.$/,
+    "this Pokémon can't attack.",
+  ],
+];
+
+export function normaliseMeWording(text: string): string {
+  let out = text;
+  for (const [pattern, synonym] of ME_WORDING_SYNONYMS) out = out.replace(pattern, synonym);
+  return out;
+}
+
+const DEFENDER_NOW = new RegExp(`^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`);
+
+const FLIP_DEFENDER_NOW = new RegExp(
+  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
+);
+
+// Two statuses on the defender, plus the coin-flipped form. Collisions between the two words are
+// refused by `defenderStatusOps`, not by the regex.
+const DEFENDER_STATUS_PAIR = new RegExp(
+  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\.$`,
+);
+
+const FLIP_DEFENDER_STATUS_PAIR = new RegExp(
+  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\.$`,
+);
+
+// "Flip a coin. If heads, ... is now X and Y. If tails, ... is now Z." The arms are exclusive, so
+// only the heads list is checked for slot collisions.
+const FLIP_DEFENDER_PAIR_OR_TAILS_STATUS = new RegExp(
+  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\. If tails, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
+);
+
+// Three statuses in an Oxford list. The slots stay open so `defenderStatusOps` can still refuse
+// colliding words.
+const DEFENDER_STATUS_TRIPLE = new RegExp(
+  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\.$`,
+);
+
+// Flip-gated status that also discards an Energy from the opponent's Active; "that Pokémon" is the
+// opponent's Active.
+const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(
+  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard an Energy from that Pokémon\\.$`,
+);
+
+// "If your opponent's Active Pokémon is a ... Pokémon, it is now X." The subject is spelled out
+// because "it" must refer to the opponent's Active for a defender status to be correct.
+const CLAUSE_GATED_DEFENDER_NOW = new RegExp(
+  `^If (your opponent['’]s Active Pokémon is a .+ Pokémon), it is now (${STATUS_WORDS})\\.$`,
+);
+
+const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
+
+const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
+
+// "Heal N damage from this Pokémon." No /i: the capital first word plus `^...$` keeps mid-sentence
+// heals off this path.
+const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
+
+// "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon."
+const SELF_HEAL_DEALT =
+  /^Heal from this Pokémon the same amount of damage you did to your opponent['’]s Active Pokémon\.$/;
+
+// "Heal N damage from each of your Pokémon." This includes the Active.
+const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
+
+// "Heal N damage from each of your <adjective> Pokémon." The adjective is read through
+// `OWN_BOARD_HEAL_NOUNS`, so an unknown one stays unbuilt rather than healing everything.
+// `(?!opponent)` keeps an opponent-side heal from being read as own-side.
+const OWN_BOARD_HEAL_NARROWED =
+  /^Heal (\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\.$/;
+
+/**
+ * Printed adjectives accepted by `OWN_BOARD_HEAL_NARROWED`. `Basic` narrows by card and `Benched`
+ * by board position, so they set different fields.
+ */
+const OWN_BOARD_HEAL_NOUNS: ReadonlyMap<string, HealEachScope> = new Map<string, HealEachScope>([
+  ["Basic", { basicOnly: true }],
+  ["Benched", { benchOnly: true }],
+]);
+
+// "Heal N (or all) damage from 1 of your [Benched] Pokémon."
+const CHOSEN_HEAL = /^Heal (\d+|all) damage from 1 of your (Benched )?Pokémon\.$/;
+
+// Flip-gated self-heal. Each flip-gated consequent gets its own literal regex because the
+// consequent is open-ended.
+const FLIP_SELF_HEAL = /^Flip a coin\. If heads, heal (\d+) damage from this Pokémon\.$/;
+
+// Only the singular, opponent-side mill is printed in gated form.
+const FLIP_DECK_TOP_MILL =
+  /^Flip a coin\. If heads, discard the top card of your opponent['’]s deck\.$/;
+
+// Flip-gated prevent. "From and effects of attacks" and "damage ... by attacks" are different
+// readings, carried by the op's `effects` field.
+const FLIP_PREVENT_DAMAGE_AND_EFFECTS =
+  /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
+
+const FLIP_PREVENT_DAMAGE =
+  /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\.$/;
+
+// "Prevent all damage ... by attacks from Basic [non-{X}] Pokémon." The optional excluded type is a
+// single code letter read through `POKEMON_TYPE_BY_CODE`; an unknown letter stays unbuilt.
+const PREVENT_DAMAGE_FROM_CLASS =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic (?:non-\{([A-Z])\} )?Pokémon\.$/;
+
+// Iron Moth "Anachronism Repulsor".
+const PREVENT_DAMAGE_FROM_ANCIENT =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon\.$/;
+
+// Miraidon "C.O.D.E.: Protect": a side-wide block over the controller's Future Pokémon.
+const PREVENT_DAMAGE_FUTURE_SIDE_FROM_EX =
+  /^During your opponent['’]s next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex\. If this Pokémon is no longer your Active Pokémon, this effect ends\.$/;
+
+// Glimmora "Corrosive Shards".
+const POISON_AND_BAR_HAND_ATTACH =
+  /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, Energy cards can['’]t be attached from your opponent['’]s hand to that Pokémon\.$/;
+
+// Hypno "Daydream".
+const HAND_ATTACH_ENDS_TURN =
+  /^During your opponent['’]s next turn, if they attach an Energy card from their hand to the Defending Pokémon, their turn ends\.$/;
+
+// Trevenant "Cursed Roots".
+const BAR_HAND_ATTACH_DEFENDER =
+  /^During your opponent['’]s next turn, Energy can['’]t be attached from your opponent['’]s hand to the Defending Pokémon\.$/;
+
+// Pachirisu "Electrified Incisors". The printed "place" is normalised to "put", so the anchor
+// spells "put".
+const HAND_ATTACH_COUNTERS =
+  /^During your opponent['’]s next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, put (\d+) damage counters on that Pokémon\.$/;
+
+// Octillery "Jet of Ink".
+const DEFENDER_TWO_COIN_ATTACK_LOCK =
+  /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins\. If either of them is tails, that attack doesn['’]t happen\.$/;
+
+const TRAINER_PLAY_FLIP_LOCK =
+  /^During your opponent['’]s next turn, whenever they try to use a Trainer card from their hand, they flip a coin\. If tails, your opponent discards that Trainer card instead of using it\.$/;
+
+const DISCARD_OPPONENT_STADIUM_AND_BAR =
+  /^If your opponent has a Stadium in play, discard it\. If you do, your opponent can['’]t play any Stadium cards from their hand during their next turn\.$/;
+
+const LOOK_AT_OPPONENT_PRIZE = /^Look at 1 of your opponent['’]s face-down Prize cards\.$/;
+
+const WIN_AT_ONE_PRIZE =
+  /^If you use this attack when you have exactly 1 Prize card remaining, you win this game\.$/;
+
+const PREVENT_DAMAGE_FROM_CLASS_D630 =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from (Burned Pokémon|Evolution Pokémon|Pokémon that have an Ability)\.$/;
+
+//   • Bronzong `me05-064` "Metal Block" (index 1) — arm 19d's `reduceDamage` with the NEW optional
+//     `fromClass` (`DamageReduction.fromClass`); the class noun is a closed capture of one member.
+const SELF_DAMAGE_REDUCTION_FROM_EVOLUTION =
+  /^During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks from Evolution Pokémon \(after applying Weakness and Resistance\)\.$/;
+
+const SELF_VULNERABLE_NEXT_TURN =
+  /^During your opponent['’]s next turn, this Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
+
+/**
+ * Maps the printed class noun to the `AttackerClass` it names. A noun missing from the map derives
+ * nothing.
+ */
+const ATTACKER_CLASS_BY_NOUN_D630: Readonly<Record<string, AttackerClass>> = {
+  "Burned Pokémon": { stage: "burned" },
+  "Evolution Pokémon": { stage: "evolution" },
+  "Pokémon that have an Ability": { stage: "hasAbility" },
+};
+
+// The comparator is captured so that the arm can refuse "or more", which is a different mechanism.
+const PREVENT_DAMAGE_UP_TO_CAP =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks if that damage is (\d+) or (less|more)\.$/;
+
+// The parenthetical is part of the rule: the reduction applies after Weakness and Resistance (§8).
+// The "before" wording is a different mechanism, a debuff on the attacker.
+const SELF_DAMAGE_REDUCTION =
+  /^During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
+
+// The compound is anchored as one sentence so that the discard cost never derives without the
+// protection it pays for.
+const SELF_NO_WEAKNESS = /^During your opponent['’]s next turn, this Pokémon has no Weakness\.$/;
+
+const SELF_DISCARD_ALL_THEN_REDUCTION =
+  /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
+
+// "Before applying Weakness and Resistance" makes this a debuff on the Defending Pokémon's attacks,
+// not a reduction on this Pokémon.
+const DEFENDER_ATTACKS_WEAKENED =
+  /^During your opponent['’]s next turn, the Defending Pokémon['’]s attacks do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
+
+const ATTACKS_BY_DEFENDER_WEAKENED =
+  /^During your opponent['’]s next turn, attacks used by the Defending Pokémon do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
+
+const DEFENDER_VULNERABLE_NEXT_TURN =
+  /^During your next turn, the Defending Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
+
+// The reminder parenthetical is required because it states the amount-unchanged rule that the op
+// implements.
+const DEFENDER_WEAKNESS_RETYPED =
+  /^Until the end of your next turn, the Defending Pokémon['’]s Weakness is now \{C\}\. \(The amount of Weakness doesn['’]t change\.\)$/;
+
+const HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE =
+  /^If you have exactly 30 cards in your hand, take 2 Prize cards\. If you do, shuffle your hand into your deck\.$/;
+
+const DEFENDER_WEAKNESS_OVERWRITTEN =
+  /^The Defending Pokémon['’]s Weakness is now \{L\} until the end of your next turn\. \(Apply Weakness as ×2\.\)$/;
+
+const DEFENDER_KO_BOUNTY_NEXT_TURN =
+  /^During your next turn, if the Defending Pokémon is Knocked Out, take (\d+) more Prize cards\.$/;
+
+// The capture counts damage counters, and the arm converts it to HP (x10). The "even if Knocked
+// Out" parenthetical restates that recoil runs before the Knock Out sweep.
+const SELF_INSTALLED_RECOIL =
+  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if (?:it|this Pokémon) is Knocked Out\), put (\d+) damage counters on the Attacking Pokémon\.$/;
+
+// The amount is the damage done to this Pokémon, so there is no capture.
+const SELF_INSTALLED_RECOIL_TAKEN =
+  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if (?:it|this Pokémon) is Knocked Out\), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon\.$/;
+
+// The optional capture is an owner prefix such as "Team Rocket's". The `é` in "Pokémon" falls
+// outside `[A-Za-z]`, so the plain sentence never matches the group.
+const COUNTER_MOVE_TO_DEFENDER =
+  /^Move all damage counters from 1 of your Benched (?:([A-Z][A-Za-z ]*)['’]s )?Pokémon to your opponent['’]s Active Pokémon\.$/;
+
+const COUNTER_MOVE_TO_CHOSEN =
+  /^Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent['’]s Pokémon\.$/;
+
+// Both ends are on the opponent's board, so these derive `moveCountersOpponentAnyWay`, not
+// `moveCountersChosen`.
+const COUNTER_MOVE_OPPONENT_BENCH_TO_ACTIVE =
+  /^You may move any number of damage counters from your opponent['’]s Benched Pokémon to their Active Pokémon\.$/;
+
+const COUNTER_MOVE_OPPONENT_ANY_WAY =
+  /^You may move any number of damage counters from your opponent['’]s Pokémon to their other Pokémon in any way you like\.$/;
+
+const COUNTER_PUT_ON_DEFENDER =
+  /^Put (?:(\d+) damage counters|(1) damage counter) on your opponent['’]s Active Pokémon\.$/;
+
+const COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD =
+  /^Put (\d+) damage counters on your opponent['’]s Active Pokémon for each card in your hand\.$/;
+
+const COUNTER_PUT_ON_OPPONENT_BENCH =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
+
+// N printed counters become N independent picks. This matches simultaneous placement because
+// targets are not HP-filtered and Knock Outs are swept only after the attack. Without "Benched",
+// any of the opponent's Pokémon can be picked.
+const COUNTER_SPREAD_ON_OPPONENT =
+  /^Put (\d+) damage counters on your opponent['’]s (Benched )?Pokémon in any way you like\.$/;
+
+// The `$` matters: this sentence is a strict prefix of the scaled and self-lock compound sentences.
+const COUNTER_PUT_ON_OPPONENT_ANY =
+  /^Put (?:(\d+) damage counters|(1) damage counter) on 1 of your opponent['’]s Pokémon\.$/;
+
+// Group 1 is how many Pokémon are chosen; group 2 is the number of counters placed on each.
+const COUNTER_PUT_ON_CHOSEN_OPPONENTS =
+  /^Choose (\d+) of your opponent['’]s Pokémon and put (\d+) damage counters on each of them\.$/;
+
+// One filter both counts the discard pile and selects the cards to shuffle back. The noun must
+// resolve to basic Energy because the tail says "those Energy cards".
+const COUNTER_PUT_SCALED_BY_PILE =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\. Then, shuffle those Energy cards into your deck\.$/;
+
+// There is no pick: the board decides which Pokémon are hit (`counterEachAll`).
+const COUNTER_FOLD_ON_ABILITY_BODIES =
+  /^Put (\d+) damage counters on each Pokémon that has an Ability \(both yours and your opponent['’]s\)\.$/;
+
+const COUNTER_FOLD_ON_OPPONENT_ALL =
+  /^Put (\d+) damage counters on each of your opponent['’]s Pokémon\.$/;
+
+const COUNTER_FOLD_ON_OPPONENT_DAMAGED =
+  /^Put (\d+) damage counters on each of your opponent['’]s Pokémon that has any damage counters on it\.$/;
+
+// The captured number is HP as printed and is not multiplied by 10. These are two anchors because
+// the determiner and the zone word vary together.
+const COUNTER_UNTIL_REMAINING_HP_ACTIVE =
+  /^Put damage counters on your opponent['’]s Active Pokémon until its remaining HP is (\d+)\.$/;
+
+const COUNTER_UNTIL_REMAINING_HP_BENCH =
+  /^Put damage counters on each of your opponent['’]s Benched Pokémon until its remaining HP is (\d+)\.$/;
+
+const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['’]t attack\.$/;
+
+// The reminder parenthetical is required. It is why the lock is a side record that also covers
+// Pokémon entering play later.
+const SIDE_CANT_ATTACK_NEXT_TURN =
+  /^During your next turn, your Pokémon can['’]t attack\. \(This includes new Pokémon that come into play\.\)$/;
+
+const OPPONENT_LOW_ENERGY_CANT_ATTACK =
+  /^During your opponent['’]s next turn, Pokémon that have (\d+) or less Energy attached can['’]t attack\. \(This includes new Pokémon that come into play\.\)$/;
+
+// Both sentences are in one anchor so that the drawback can never be dropped.
+const COUNTER_PUT_ANY_THEN_SELF_LOCK =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon\. During your next turn, this Pokémon can['’]t attack\.$/;
+
+const FLIP_TAILS_SELF_CANT_ATTACK =
+  /^Flip a coin\. If tails, during your next turn, this Pokémon can['’]t attack\.$/;
+
+// The name must start with a capital so that the plural "attacks" falls through to
+// `SELF_CANT_USE_ATTACKS`. The name is resolved against the holder's printed attacks at install,
+// and nothing is installed if it matches none.
+const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t use ([A-Z].+?)\.$/;
+
+const SELF_CANT_USE_ATTACKS = /^During your next turn, this Pokémon can['’]t use attacks\.$/;
+
+const SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE =
+  /^This Pokémon can['’]t use Blaze Blitz again until it leaves the Active Spot\.$/;
+
+// The name is resolved against the holder's printed attacks at install, and nothing is installed if
+// it matches none.
+const SELF_ATTACK_BOOST =
+  /^During your next turn, this Pokémon['’]s (.+?) attack does (\d+) more damage \(before applying Weakness and Resistance\)\.$/;
+
+// Replaces the attack's base damage rather than adding to it.
+const SELF_ATTACK_BASE_SET =
+  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\d+)\.$/;
+
+// The optional prefix derives Asleep on the defender first, then on this Pokémon.
+const SELF_EVERY_ATTACK_BOOST =
+  /^(Both Active Pokémon are now Asleep\. )?During your next turn, attacks used by this Pokémon do (\d+) more damage to your opponent['’]s Active Pokémon \(before applying Weakness and Resistance\)\.$/;
+
+// There is no capture because "that attack" is chosen by the player through a prompt.
+const OPPONENT_CHOSEN_ATTACK_LOCK =
+  /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks\. During your opponent['’]s next turn, that Pokémon can['’]t use that attack\.$/;
+
+const SELF_DISCARD_ONE_THEN_DEFENDER_LOCK =
+  /^Discard an Energy from this Pokémon\. During your opponent['’]s next turn, the Defending Pokémon can['’]t attack\.$/;
+
+const DEFENDER_BASIC_CANT_ATTACK =
+  /^If the Defending Pokémon is a Basic Pokémon, it can['’]t attack during your opponent['’]s next turn\.$/;
+
+const DEFENDER_CANT_ATTACK_NEXT_TURN =
+  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t (?:attack|use attacks)\.$/;
+
+const FLIP_HEADS_DEFENDER_CANT_ATTACK =
+  /^Flip a coin\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\.$/;
+
+// The opponent flips on their own turn when declaring an attack, so this is a durated install, not
+// a `coinFlipGate`.
+const DEFENDER_FLIP_ATTACK_LOCK =
+  /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin\. If tails, that attack doesn['’]t happen\.$/;
+
+const DEFENDER_COSTS_TAXED =
+  /^During your opponent['’]s next turn, attacks used by the Defending Pokémon cost \{C\} more, and its Retreat Cost is \{C\} more\.$/;
+
+const FLIP_TAILS_SELF_DISCARD_ALL =
+  /^Flip a coin\. If tails, discard all Energy from this Pokémon\.$/;
+
+const FLIP_TAILS_SELF_DAMAGE =
+  /^Flip a coin\. If tails, this Pokémon also does (\d+) damage to itself\.$/;
+
+const FLIP_TWO_BOTH_TAILS_SELF_DAMAGE =
+  /^Flip 2 coins\. If both of them are tails, this Pokémon also does (\d+) damage to itself\.$/;
+
+const DEFENDER_POISON_N =
+  /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
+
+// Anchored whole because the tail refers back to the head ("that Pokémon", "this Special
+// Condition"). Composed as a tail, it could attach to any status head.
+const DEFENDER_CONFUSION_N =
+  /^Your opponent['’]s Active Pokémon is now Confused\. Put (\d+) damage counters instead of 3 on that Pokémon for this Special Condition\.$/;
+
+// The Poison compound has its own anchor so that matching only the lock clause never drops the
+// Poison. "that Pokémon" is only printed after a clause naming the opponent's Active Pokémon, so it
+// is read as the Defending Pokémon; that form is reached through `splitAttackTrailingClause`.
+const DEFENDER_CANT_RETREAT =
+  /^During your opponent['’]s next turn, (?:the Defending|that) Pokémon can['’]t retreat\.$/;
+
+const DEFENDER_POISON_CANT_RETREAT =
+  /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
+
+// Only printed as the tail of a heal compound. It is kept bare so that `splitAttackTrailingClause`
+// composes it after `SELF_HEAL`.
+const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retreat\.$/;
+
+const DELAYED_DEFENDER_COUNTERS =
+  /^At the end of your opponent['’]s next turn, put (\d+) damage counters on the Defending Pokémon\.$/;
+
+// A discard, not a Knock Out, so no Prize is taken (§8.1).
+const DELAYED_DEFENDER_DISCARD =
+  /^At the end of your opponent['’]s next turn, discard the Defending Pokémon and all attached cards\.$/;
+
+// Only printed as a tail. It is kept bare so that `splitAttackTrailingClause` composes it after the
+// claimed head.
+const DELAYED_DEFENDER_KO =
+  /^At the end of your opponent['’]s next turn, the Defending Pokémon will be Knocked Out\.$/;
+
+// The class alternation is closed so that other hand-play bars stay unread.
+const OPPONENT_CANT_PLAY =
+  /^During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
+
+const OPPONENT_CANT_PLAY_TRAILING =
+  /^Your opponent can['’]t play any (Item|Supporter) cards from their hand during their next turn\.$/;
+
+// The COMPOUND, and it is `SELF_DISCARD_ALL_THEN_REDUCTION`'s exact twin one
+// family over: the same printed cost, the same `^…$` mutual exclusion against
+// arm 9's bare `SELF_DISCARD_ALL`, and the same reason for existing at all —
+// matching the lock clause alone would silently swallow the discard, which is
+// `DEFENDER_POISON_CANT_RETREAT`'s stated ground two lines up.
+const SELF_DISCARD_ALL_THEN_HAND_LOCK =
+  /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
+
+const OPPONENT_CANT_EVOLVE_FROM_HAND =
+  /^During your opponent['’]s next turn, they can['’]t play any Pokémon from their hand to evolve their Pokémon\.$/;
+
+const SELF_RECOVERS_ALL = /^This Pokémon recovers from all Special Conditions\.$/;
+
+// The optional "also" is only emphasis: the main hit rides the attack's `damage` field. The
+// Weakness/Resistance parenthetical is optional because §8.5 makes it true regardless.
+const SPREAD_EACH_BENCH = new RegExp(
+  `^This attack (?:also )?does (\\d+) damage to each of (your opponent['’]s|your) Benched Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// A separate anchor, so that plain bench spreads are never given a per-Prize scale.
+const SPREAD_EACH_BENCH_TAKEN_PRIZES = new RegExp(
+  `^This attack (?:also )?does (\\d+) damage to each of your opponent['’]s Benched Pokémon ` +
+    "for each Prize card your opponent has taken\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// Both benches are hit by two `spreadDamage` ops, your bench first in printed order. The order is
+// observable because each hit can draw shield coins.
+const SPREAD_EACH_BOTH_BENCH = new RegExp(
+  "^This attack (?:also )?does (\\d+) damage to each Benched Pokémon" +
+    "( that has any damage counters on it)?" +
+    ` \\(both yours and your opponent['’]s\\)\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// "This attack does N damage to each Pokémon that has any damage counters on it (both yours and
+// your opponent's), except for this Pokémon." Built as a gated `damageDefender` on the opponent's
+// Active (W/R applied) followed by `damagedOnly` spreads on your Bench then the opponent's Bench;
+// the attacker is excluded because no op names its spot. The order Active, own Bench, opponent
+// Bench is observable in the log and in shield coin draws. The gate reads the board before this
+// attack's hit, so the printing must have no base damage.
+const SPREAD_EACH_DAMAGED_FOUR_ZONE = new RegExp(
+  "^This attack does (\\d+) damage to each Pokémon that has any damage counters on it" +
+    ` \\(both yours and your opponent['’]s\\), except for this Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// "This attack does N damage to each of your opponent's Pokémon." The Active takes W/R through
+// `damageDefender` and the Bench takes flat `spreadDamage`, so the sentence is a two-op program. No
+// "also" form is admitted: emitting `damageDefender` replaces the printed base damage, so an "also"
+// wording would silently drop the main hit.
+const SPREAD_EACH_OPPONENT_POKEMON = new RegExp(
+  `^This attack does (\\d+) damage to each of your opponent['’]s Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// The CHOSEN-single benched hit SCALED by the opponent's taken Prizes — Wo-Chien
+// ex sv02-027 "Covetous Ivy". The "×"/multiply sibling of the Prize-count family
+// (Pecharunt ex, effects.ts's OPPONENT_PRIZES_MULTIPLY), but its target is one
+// CHOSEN Benched Pokémon rather than the Defender, so it is a `damageChosen` op
+// (count 1, `deals` + `perTakenPrize`) and not a pre-W/R damage fold. The "1 of"
+// is what distinguishes it from SPREAD_EACH_BENCH's "each of"; the optional W/R
+// clarifier tail is the spread family's, and true here for the same §8.5 reason.
+const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon ` +
+    "for each Prize card your opponent has taken\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// A chosen Benched hit scaled by the damage counters on the chosen Pokémon
+// (`damageChosen.perDamageCounterOnTarget`). Without "Benched " the target is any of the opponent's
+// Pokémon (`opponentAny`), and the Active takes W/R.
+const BENCHED_SNIPE_TARGET_COUNTERS = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s (Benched )?Pokémon ` +
+    "for each damage counter on that Pokémon\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
+
+/**
+ * The same benched rider behind a board-condition clause, e.g. "If there are 3 or fewer cards in
+ * your deck, this attack also does 120 damage to 2 of your opponent's Benched Pokémon." The clause
+ * is resolved through `CONDITIONAL_DAMAGE_CLAUSES`, so an unmapped clause returns null and the
+ * sentence stays on the skipped path.
+ */
+const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}$`);
+
+// "This attack does N damage to C of your opponent's Pokémon." A chosen hit on the Active or a
+// Benched Pokémon (`opponentAny`), with W/R applying to the Active (§8.5). The tail is either the
+// Benched clarifier or "This attack's damage isn't affected by Weakness or Resistance[, or by any
+// effects on that Pokémon].", which sets `ignoreWR` (the bare form also sets `wrOnly`). The tail's
+// "that"/"those" must agree with the count; that check and the refusal of a per-Energy count
+// combined with the W/R tail happen at the read site. Also admits "each of C of" for counts of 2 or
+// more.
+const CHOSEN_ANY_TARGET = new RegExp(
+  `^This attack does (\\d+) damage to (?:each of (?=[2-9]))?(\\d+) of your opponent['’]s Pokémon` +
+    "( for each Energy attached to this Pokémon)?\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
+    `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
+    "(?:, or by any effects on (that|those) Pokémon)?\\.))?$",
+);
+
+// "Choose 1 of your opponent's Pokémon N times. (You can choose the same Pokémon more than once.)
+// For each time you chose a Pokémon, do M damage to it. This damage isn't affected by Weakness or
+// Resistance." Derived as N separate single-pick `damageChosen` parks, because a multi-pick prompt
+// rejects repeated picks; each park re-reads the candidate set. `deals: true` because the card says
+// "do damage" rather than placing counters. A count of 0 is refused so it does not emit an empty
+// program.
+const ATTACK_PICK_WITH_REPLACEMENT_SNIPE = new RegExp(
+  `^Choose 1 of your opponent['’]s Pokémon (\\d+) times\\. ` +
+    "\\(You can choose the same Pokémon more than once\\.\\) " +
+    "For each time you chose a Pokémon, do (\\d+) damage to it\\. " +
+    `This damage isn['’]t affected by Weakness or Resistance\\.$`,
+);
+
+// The self-discard attack cost (§8): "an" lets the player pick one Energy, "{N}" asks for exactly
+// that many, "all" strips the lot. Typed variants ("Discard a {L} Energy…") are not matched here
+// because they need an Energy-provides-type filter. "this Pokémon" is the Active (§8).
+const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\.$/;
+
+const SELF_DISCARD_N = /^Discard (\d+) Energy from this Pokémon\.$/;
+
+// The whole-sentence anchor keeps compound printings that add a second sentence after the discard
+// off this path.
+const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
+
+// Self-discard cost followed by an any-target snipe, e.g. "Discard all Energy from this Pokémon.
+// This attack does 120 damage to 1 of your opponent's Pokémon." The join is either ". This" or ",
+// and this". No W/R tail is admitted because no compound prints one. Also admits the "each of"
+// spelling.
+const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
+  "^Discard (all|\\d+) Energy from this Pokémon(?:\\. This|, and this) " +
+    `attack does (\\d+) damage to (?:each of (?=[2-9]))?(\\d+) of your opponent['’]s Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// Literal anchors: a shuffle-all cost then an any-target hit; an any-target hit narrowed to Pokémon
+// with Special Energy attached; and a discard-all cost then counters placed on any target
+// (`damageChosen` without `deals`). The counter anchor spells "put" because `normaliseMeWording`
+// rewrites the printed "place" first.
+const SELF_SHUFFLE_ALL_THEN_ANY_TARGET = new RegExp(
+  "^Shuffle all Energy attached to this Pokémon into your deck, and this attack does (\\d+) damage to 1 of " +
+    `your opponent['’]s Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+const CHOSEN_ANY_TARGET_SPECIAL_ENERGY = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon that has any Special Energy attached\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+const SELF_DISCARD_ALL_THEN_COUNTERS =
+  /^Discard all Energy from this Pokémon and put (\d+) damage counters on 1 of your opponent['’]s Pokémon\.$/;
+
+// "Discard up to N Energy cards from your hand. This attack does M damage to 1 of your opponent's
+// Pokémon for each Energy card you discarded in this way." [1] is the discard ceiling
+// (`payFromHand.cap`) and [2] the per-card damage.
+const HAND_DISCARD_THEN_SCALED_ANY_TARGET = new RegExp(
+  "^Discard up to (\\d+) Energy cards from your hand\\. " +
+    `This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon` +
+    " for each Energy card you discarded in this way\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// Self-discard cost joined with ", and" to taking a Prize card. This has to be a single anchor
+// because the clause splitter refuses this sentence.
+const SELF_DISCARD_ALL_THEN_TAKE_PRIZE =
+  /^Discard all Energy from this Pokémon, and take a Prize card\.$/;
+
+// "You may put an Energy attached to your opponent's Active Pokémon into their hand." "You may " is
+// required: the mandatory form has no legal printing.
+const MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND =
+  /^You may put (an|\d+) Energy attached to your opponent['’]s Active (Stage 2 )?Pokémon into their hand\.$/;
+
+// "Put an Energy attached to this Pokémon into your hand." Mandatory (no "You may"), so it is not
+// wrapped in `optional`; the only decision is which Energy.
+const PUT_SELF_ENERGY_TO_HAND = /^Put an Energy attached to this Pokémon into your hand\.$/;
+
+const FLIP_OPPONENT_ACTIVE_DISCARD =
+  /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+
+// The reveal-and-bottom attack sentence (Greavard "Underworld Stroll") — the
+// whole effect, anchored end to end like every rule here. Only the SUPPORTER
+// narrowing is derived: Ortega's unfiltered Supporter form carries a second
+// sentence (an opponent draw behind a §9.2 gate) that no attack prints, so it
+// is registry-authored and this anchor must not loosen toward it.
+const REVEAL_BOTTOM_SUPPORTER =
+  /^Your opponent reveals their hand\. Choose a Supporter card you find there and put it on the bottom of their deck\.$/;
+
+// Recoil: "This Pokémon also does N damage to itself." A self-damage in addition to the main
+// damage. No /i: the capital and the anchors keep a mid-sentence clause off this path.
+const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
+
+// Recoil scaled by the attacker's own damage counters. Mutually exclusive with `SELF_DAMAGE` by
+// `\.$`, so the order of the two checks does not matter.
+const SELF_DAMAGE_PER_COUNTER =
+  /^This Pokémon also does (\d+) damage to itself for each damage counter on it\.$/;
+
+// Knock Out sentences whose targets are named by the text, resolving to `knockOutDefender`.
+// Sentences that choose a target need a park and are handled separately.
+const OPPONENT_ACTIVE_BASIC_KO =
+  /^If your opponent['’]s Active Pokémon is a Basic Pokémon, it is Knocked Out\.$/;
+
+const BOTH_ACTIVES_KO = /^Both Active Pokémon are Knocked Out\.$/;
+
+const OPPONENT_ACTIVE_SPECIAL_ENERGY_KO =
+  /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\.$/;
+
+// The same shape gated on `opponentActiveHasSpecialCondition` before `knockOutDefender`.
+const OPPONENT_ACTIVE_SPECIAL_CONDITION_KO =
+  /^If your opponent['’]s Active Pokémon is affected by a Special Condition, it is Knocked Out\.$/;
+
+// "If <clause>, your opponent's Active Pokémon is now Paralyzed." The clause is spelled into the
+// anchor rather than looked up in the damage-bonus clause table, so that table stays unreachable
+// from a status consequent.
+const SELF_PRIZE_GATE_PARALYZE =
+  /^If you have exactly 1 Prize card remaining, your opponent['’]s Active Pokémon is now Paralyzed\.$/;
+
+const SELF_DAMAGE_THEN_COIN_KO =
+  /^This Pokémon does (\d+) damage to itself\. Flip a coin\. If heads, your opponent['’]s Active Pokémon is Knocked Out\.$/;
+
+// The two pick sentences of the Knock Out family, one op (`knockOutChosen`) with two riders.
+const FLIP_KO_ACTIVE_OR_BENCHED_BASIC =
+  /^Flip a coin\. If heads, Knock Out your opponent['’]s Active Basic Pokémon\. If tails, Knock Out 1 of your opponent['’]s Benched Basic Pokémon\.$/;
+
+// The count is captured and guarded `>= 1`: a printed 0 would admit every undamaged Pokémon.
+const KO_EXACT_DAMAGE_COUNTERS =
+  /^Knock Out 1 of your opponent['’]s Pokémon that has exactly (\d+) damage counters on it\.$/;
+
+// Gate on `opponentActiveDamageCountersExactly`; the count is captured (`>= 1`).
+const OPPONENT_ACTIVE_EXACT_COUNTERS_KO =
+  /^If your opponent['’]s Active Pokémon has exactly (\d+) damage counters on it, that Pokémon is Knocked Out\.$/;
+
+// Inteleon "Bring Down" ×3: `knockOutChosen` over `anyExceptSelf` with `leastHpRemaining`.
+const LEAST_HP_ANY_KO =
+  /^Choose a Pokémon in play \(yours or your opponent['’]s\) that has the least HP remaining, except for this Pokémon, and it is Knocked Out\.$/;
+
+// N's Vanilluxe "Snow Coating": `counterEachAll` with `perDamageCounterOnTarget` (10 per counter).
+const DOUBLE_OPPONENT_COUNTERS =
+  /^Double the number of damage counters on each of your opponent['’]s Pokémon\.$/;
+
+// `conditionGate { opponentKnockedOutByDamage }` over `preventDamage { effects }`.
+const KO_BY_THIS_ATTACK_PREVENT_ALL =
+  /^If your opponent['’]s Pokémon is Knocked Out by damage from this attack, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
+
+// `bountyThisAttack`; the count is captured (`>= 1`) and the noun agrees with it ("1 … card", "2 …
+// cards").
+const KO_BY_THIS_ATTACK_MORE_PRIZES =
+  /^If your opponent['’]s Pokémon is Knocked Out by damage from this attack, take (\d+) more Prize card(s?)\.$/;
+
+// `knockOutEach`; the HP is captured (`>= 10`).
+const KO_EACH_AT_REMAINING_HP =
+  /^Knock Out each of your opponent['’]s Pokémon that has (\d+) HP or less remaining\.$/;
+
+// `coinFlipGate` over `switchWithDeckChosen`.
+const FLIP_SWITCH_WITH_DECK_POKEMON =
+  /^Flip a coin\. If heads, search your deck for a Pokémon and switch it with this Pokémon\. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon\. If you switched a Pokémon in this way, put this card into your deck\. Then, shuffle your deck\.$/;
+
+// `revealDeckBottomCount` filing Pokémon with the named attack, then `damageDefender { per, count
+// }`. The window, per-card damage and attack name are captured.
+const BOTTOM_REVEAL_NAMED_ATTACK_SCALE =
+  /^Reveal the bottom (\d+) cards of your deck, and this attack does (\d+) damage for each Pokémon you find there that has the ([A-Z][A-Za-z'’ -]*) attack\. Then, shuffle any revealed Pokémon back into your deck\. Discard the other cards\.$/;
+
+// Two `attachFromHand { max }` ops, the opponent's first.
+const EACH_PLAYER_HAND_ATTACH =
+  /^Each player may attach up to (\d+) Basic Energy cards from their hand to their Pokémon in any way they like\. Your opponent does this first\.$/;
+
+// `ATTACK_LOOK_TOP_BENCH`'s sentence with a comma join.
+const LOOK_TOP_COMMA_BENCH =
+  /^Look at the top (\d+) cards of your deck, and you may put any number of Pokémon you find there onto your Bench\. Shuffle the other cards back into your deck\.$/;
+
+// Tropius "Fruity Aroma": the same look into the HAND, revealed (Roto-Stick's `max: "any"` + `reveal`).
+const LOOK_TOP_COMMA_REVEAL_HAND =
+  /^Look at the top (\d+) cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand\. Shuffle the other cards back into your deck\.$/;
+
+// Pikachu ex "Pika-Pika Parade" ×3: Precious Trolley's program (`searchDeck` Basic → Bench, `max: "any"`).
+const SEARCH_ANY_BASIC_TO_BENCH =
+  /^Search your deck for any number of Basic Pokémon and put them onto your Bench\. Then, shuffle your deck\.$/;
+
+// `healEachAll`.
+const HEAL_EACH_BOTH_SIDES =
+  /^Heal (\d+) damage from each Pokémon \(both yours and your opponent['’]s\)\.$/;
+
+// Scraggy "Nitpick" ×2: `handRefresh` on the opponent alone (Distorted Future's `who`), a fixed draw.
+const OPPONENT_SHUFFLES_HAND_DRAWS =
+  /^Your opponent shuffles their hand into their deck and draws (\d+) cards\.$/;
+
+// Ho-Oh "Flames of Revival": `discardPileRetrieval` of Basic Pokémon onto the Bench.
+const RETRIEVE_BASIC_TO_BENCH =
+  /^Put up to (\d+) Basic Pokémon from your discard pile onto your Bench\.$/;
+
+// `DEVOLVE_EACH_TO_DECK`'s sweep into the hand (`devolveEach.toHand`).
+const DEVOLVE_EACH_TO_HAND =
+  /^Devolve each of your opponent['’]s evolved Pokémon by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
+
+// Frosmoth "Cold Cyclone": `ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH` with a typed noun (`providesEnergy`).
+const MOVE_TYPED_ENERGY_SELF_TO_BENCH =
+  /^Move a \{([A-Z])\} Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+
+// The self-discard, then Paralysis.
+const SELF_DISCARD_THEN_PARALYZE =
+  /^Discard (\d+) Energy from this Pokémon, and your opponent['’]s Active Pokémon is now Paralyzed\.$/;
+
+// Volcanion "Backfire": `PUT_SELF_ENERGY_TO_HAND`'s op at a printed typed count.
+const PUT_TYPED_SELF_ENERGY_TO_HAND =
+  /^Put (\d+) \{([A-Z])\} Energy attached to this Pokémon into your hand\.$/;
+
+// `healChosen` on the Bench with a typed candidate filter.
+const HEAL_ONE_BENCHED_TYPED = /^Heal (\d+) damage from 1 of your Benched \{([A-Z])\} Pokémon\.$/;
+
+// Claydol "Devolution Ray" ×2: `devolveChosen` narrowed to the Defending Pokémon (`defenderOnly`, NEW).
+const DEVOLVE_ACTIVE_TO_HAND =
+  /^If your opponent['’]s Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
+
+// Sudowoodo "Trials and Trip-ulations": a two-word card name (`NAMED_CARD_NOUN` takes one word), so a literal.
+const SEARCH_TRANSFORMATION_TOME =
+  /^Search your deck for up to (\d+) Transformation Tome cards, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
+
+// Rotom "Roto Call": a name-fragment Bench search behind the printed "You may" (`optional`).
+const MAY_SEARCH_NAMED_FRAGMENT_TO_BENCH =
+  /^You may search your deck for any number of Pokémon that have ["“]([A-Z][a-z]+)["”] in their name and put them onto your Bench\. Then, shuffle your deck\.$/;
+
+// Dialga "Reversed Clock": Super Rod's program (`pokemonOrBasicEnergy` → deck, then shuffle).
+const SHUFFLE_POKEMON_OR_BASIC_ENERGY_FROM_DISCARD =
+  /^Shuffle up to (\d+) in any combination of Pokémon and Basic Energy cards from your discard pile into your deck\.$/;
+
+// Celebi "Traverse Time": a revealed hand search over `anyOf` a typed Pokémon and a Stadium.
+const SEARCH_TYPED_POKEMON_OR_STADIUM =
+  /^Search your deck for up to (\d+) in any combination of \{([A-Z])\} Pokémon and Stadium cards, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
+
+// Eevee "Fetch and Hide": `REVEAL_BOTTOM_SUPPORTER`'s op over an Item.
+const REVEAL_BOTTOM_ITEM =
+  /^Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent['’]s deck\.$/;
+
+// A clause-table gate over the opponent-side mill. The clause is looked up, not captured.
+const CLAUSE_GATED_OPPONENT_MILL =
+  /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
+
+// Clause-table gate over the opponent-side counter fold; the printed "place" is read as "put" by
+// `normaliseMeWording`.
+const CLAUSE_GATED_OPPONENT_COUNTER_FOLD =
+  /^If (.+), put (\d+) damage counters on each of your opponent['’]s Pokémon\.$/;
+
+// "quadruple the number of damage counters" is `damageChosen.perDamageCounterOnTarget` placing 3
+// more per counter already there.
+const CLAUSE_GATED_CHOSEN_QUADRUPLE =
+  /^If (.+), choose (\d+) of your opponent['’]s Pokémon and quadruple the number of damage counters on each of them\.$/;
+
+// Benched counter placement behind a clause-table gate; "place" is read as "put"
+// (`normaliseMeWording`).
+const CLAUSE_GATED_BENCH_COUNTERS =
+  /^If (.+), put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
+
+// `attachFromDiscard` at a count-scaled ceiling.
+const DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY =
+  /^Choose Basic \{([A-Z])\} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent['’]s Pokémon and attach them to your \{([A-Z])\} Pokémon in any way you like\.$/;
+
+// Furfrou "Hand Trim": the random discard down to a printed hand size (`untilHandSize`, NEW).
+const RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO =
+  /^Discard random cards from your opponent['’]s hand until they have (\d+) cards in their hand\.$/;
+
+// `lookAtTopN` exact with the rest discarded; the kept card is revealed.
+const MILL_TOP_KEEP_ONE =
+  /^Discard the top (\d+) cards of your deck and put 1 of them into your hand\.$/;
+
+// Shaymin "Send Flowers": `attachFromDeck` of ANY Energy card onto a typed Benched body.
+const SEARCH_ENERGY_ATTACH_BENCHED_TYPED =
+  /^Search your deck for an Energy card and attach it to 1 of your Benched \{([A-Z])\} Pokémon\. Then, shuffle your deck\.$/;
+
+// Fletchling "Chirp": a revealed hand search over the NEW `pokemonWithResistance` filter.
+const SEARCH_POKEMON_WITH_RESISTANCE =
+  /^Search your deck for up to (\d+) Pokémon with \{([A-Z])\} Resistance, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
+
+// Unconditional mill in both directions: "Discard the top [N cards|card] of your [opponent's]
+// deck." The captures fill `count` and `whose`. The singular is a separate branch because "the top
+// card" carries no digits; the undefined capture means one.
+const DECK_TOP_MILL = /^Discard the top (?:(\d+) cards|card) of your (opponent['’]s )?deck\.$/;
+
+/**
+ * "This attack does N damage to each of your opponent's <class>. This attack's damage isn't
+ * affected by Weakness or Resistance." Declared here because it reads `IN_PLAY_BODY_NOUNS`, which
+ * would be in the temporal dead zone further up. The W/R sentence is mandatory and sets `ignoreWR`
+ * (with `wrOnly`).
+ */
+const SPREAD_EACH_CLASSED_OPPONENT_POKEMON = new RegExp(
+  `^This attack does (\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(
+    "|",
+  )})\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$`,
+);
+
+// "Discard the top N cards of your deck, and this attack does P damage for each <noun> [that] you
+// discarded in this way." The noun group is lazy so an optional "that" is not swallowed into the
+// noun ("Misty's Pokémon that").
+const DECK_MILL_FILTERED_SCALED_DAMAGE =
+  /^Discard the top (\d+) cards of your deck, and this attack does (\d+) damage for each (.+?) (?:that )?you discarded in this way\.$/;
+
+// "Discard up to N Pokémon Tools from your opponent's Pokémon." Claimed whole, at the program tail.
+const ATTACK_DISCARD_TOOLS_UP_TO =
+  /^Discard up to (\d+) Pokémon Tools from your opponent['’]s Pokémon\.$/;
+
+const HAND_BASIC_ENERGY_COST = new RegExp(
+  `^Discard (?:(\\d+) Basic \\{([${ENERGY_CODES}])\\} Energy cards|(a) Basic \\{([${ENERGY_CODES}])\\} Energy card) from your hand\\.$`,
+);
+
+const HAND_BASIC_ENERGY_COST_KO = new RegExp(
+  `^Discard (\\d+) Basic \\{([${ENERGY_CODES}])\\} Energy cards from your hand, and Knock Out your opponent['’]s Active Pokémon\\.$`,
+);
+
 // Opponent-side Energy discard from the Active. The leading `^` and the capital "Discard" keep
 // mid-sentence clauses such as Krookodile's "…For each heads, discard an Energy…" off this arm,
 // which would otherwise discard once on top of the per-heads reading; do not add /i. The "ex"
 // variant wraps the op in a `conditionGate` on `opponentActiveIsEx` and is tested first.
 const OPPONENT_ACTIVE_EX_DISCARD =
   /^Discard an Energy from your opponent['’]s Active Pokémon ex\.$/;
+
 const OPPONENT_ACTIVE_DISCARD = new RegExp(
   `^Discard (?:an|a (Special)|a (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\}` +
     `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")}))) Energy from your opponent['’]s Active Pokémon\\.$`,
 );
+
 // Must not match the "each of your opponent's Pokémon" wording (Giacomo), which discards one per
 // body.
 const OPPONENT_EACH_SPECIAL_DISCARD =
@@ -4739,10 +2754,12 @@ const SELF_DISCARD_THEN_BENCH_SNIPE = new RegExp(
   `^Discard (all|\\d+)(?: \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\})?` +
     ` Energy from this Pokémon(?:\\. This|, and this) ${ALSO_BENCHED_SNIPE_BODY}$`,
 );
+
 // Map-built, so these follow `ENERGY_TYPE_BY_CODE`.
 const CHOSEN_ANY_TARGET_PER_TYPED_ENERGY = new RegExp(
   `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon for each \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy attached to this Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+
 const SELF_DISCARD_TYPED_ALL_THEN_ANY_TARGET = new RegExp(
   `^Discard all \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy from this Pokémon, and this attack does (\\d+) damage to 1 of your opponent['’]s Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
@@ -4767,13 +2784,16 @@ const COMMA_DISCARD_SCALED_DAMAGE = new RegExp(
 // Rocket noun, [2] the per-card amount (absent without the damage tail).
 const HAND_DISCARD_ANY_NUMBER =
   /^You may discard any number of (?:cards|(Supporter) cards that have ["“]Team Rocket["”] in their name) from your hand(?:, and this attack does (\d+) damage for each card you discarded in this way)?\.$/;
+
 // Nothing moves; the revealed uids are recorded as "revealed". Captures: [1] the printed name list,
 // [2] the per-card amount.
 const HAND_REVEAL_NAMED_SCALED =
   /^Reveal any number of ((?:[A-Z][A-Za-z'’é-]*, )+and [A-Z][A-Za-z'’é-]*) from your hand, and this attack does (\d+) damage for each card you revealed in this way\.$/;
+
 // The self-damage is a downside, so "You may" is a confirm over both ops.
 const SELF_DAMAGE_AND_PARALYZE_OPTIONAL =
   /^You may have this Pokémon also do (\d+) damage to itself and make your opponent['’]s Active Pokémon Paralyzed\.$/;
+
 // SELF_DISCARD_THREE_TYPED: three `discardEnergy` count-1 ops off the Active in printed order, each but the
 // last carrying `reserve` (the types still owed), so a multi-type Energy (Legacy Energy) cannot fill one slot
 // and dodge a later one. Captures: the three codes.
@@ -4787,29 +2807,34 @@ const MILL_TOP_USE_SUPPORTER_EFFECT =
 // Whole-string anchored so compound sentences that begin with one of these clauses are not read as
 // their first clause. The singular branch leaves the count undefined and the site uses 1.
 const ATTACK_DRAW = /^Draw (?:(\d+) cards|a card)\.$/;
+
 const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.$/;
+
 const ATTACK_DRAW_BOTTOM = /^Draw (\d+) cards from the bottom of your deck\.$/;
+
 // The mood is part of the anchor: a "may" draw would need a question, not an automatic op.
 const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\d+) cards\.$/;
+
 // An attack-derived self-switch moves the attacker off the Active Spot, so `finishAttack` addresses
 // the attacker by uid. The gust moves the opponent's Active, whose defender is captured by uid
 // before the program runs.
 const ATTACK_GUST = /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\.$/;
+
 const ATTACK_FLIP_GUST =
   /^Flip a coin\. If heads, switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\.$/;
-// Shared self-switch clause. The verb is spelled at each call site because the capital and
-// lowercase forms must not be folded into `[Ss]`. The count is literal: a printed 2 would need a
-// different op.
-const SELF_SWITCH_CLAUSE = "this Pokémon with 1 of your Benched Pokémon\\.";
+
 const ATTACK_SELF_SWITCH = new RegExp(`^Switch ${SELF_SWITCH_CLAUSE}$`);
+
 /**
  * `returnSelf` to the deck, mandatory. The printed damage lands first and the emptied Active Spot
  * is promoted afterwards.
  */
 const ATTACK_RETURN_SELF_TO_DECK = /^Shuffle this Pokémon and all attached cards into your deck\.$/;
+
 /** `discardTools` then the opponent-wide Special Energy discard, in printed order. */
 const ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL =
   /^Discard all Pokémon Tools and Special Energy from all of your opponent['’]s Pokémon\.$/;
+
 /**
  * A coin gate over a known consequent: the head sets `coinFlipGate.coins` and the consequent is
  * looked up in the closed `COIN_GATED_CONSEQUENTS` table. Every head/consequent crossing derives,
@@ -4817,11 +2842,13 @@ const ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL =
  */
 const COIN_GATE_HEAD =
   /^(Flip a coin\. If heads|Flip 2 coins\. If both of them are heads|Flip 3 coins\. If all of them are heads), (.+)$/;
+
 const COIN_GATE_COINS: Readonly<Record<string, number | undefined>> = {
   "Flip a coin. If heads": undefined,
   "Flip 2 coins. If both of them are heads": 2,
   "Flip 3 coins. If all of them are heads": 3,
 };
+
 const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map<
   string,
   readonly EffectOp[]
@@ -4864,56 +2891,35 @@ const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map
     [{ op: "returnBenched", whose: "opponent", dest: "deck", includeActive: true }],
   ],
 ]);
-/**
- * Each `yes` applies the named condition and each `no` asks the next; the last confirm's two
- * buttons are the last two conditions.
- */
-function chooseSpecialConditionProgram(): EffectOp[] {
-  const words = Object.values(STATUS_WORD_OF);
-  const apply = (word: StatusWord): EffectOp[] => [
-    { op: "applyStatus", target: "defender", status: STATUS_OF_WORD[word] },
-  ];
-  const ask = (index: number): EffectOp[] => {
-    const word = words[index] as StatusWord;
-    const rest = words.slice(index + 1);
-    const last = rest.length === 1;
-    return [
-      {
-        op: "optional",
-        note: "Choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
-        then: apply(word),
-        otherwise: last ? apply(rest[0] as StatusWord) : ask(index + 1),
-        labels: {
-          yes: word,
-          no: `${rest.slice(0, -1).join(", ")}${last ? "" : " or "}${rest.at(-1) ?? ""}`,
-        },
-      },
-    ];
-  };
-  return ask(0);
-}
+
 const CHOSEN_PER_HEADS_IN_PLAY =
   /^Choose 1 of your opponent['’]s Pokémon and flip a coin for each of your Pokémon in play that has "([^"]+)" in its name\. This attack does (\d+) damage to the chosen Pokémon for each heads\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
+
 const FLIP_EACH_OPPONENT_SNIPE =
   /^For each of your opponent['’]s Pokémon, flip a coin\. If heads, this attack does (\d+) damage to that Pokémon\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
+
 const ATTACK_FLIP_SELF_SWITCH = new RegExp(
   `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
 );
+
 /**
  * A separate anchor rather than an optional "You may" group because the bare sentence capitalises
  * "Switch" and this one does not.
  */
 const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}$`);
+
 /**
  * A separate anchor rather than a widening of `SELF_SWITCH_CLAUSE`. The capture is a single letter
  * so it cannot swallow a clause; a code the map does not know stays unbuilt.
  */
 const ATTACK_SELF_SWITCH_TYPED =
   /^Switch this Pokémon with 1 of your Benched \{([A-Z])\} Pokémon\.$/;
+
 // The parenthetical is the only thing that distinguishes this from a gust (the opponent chooses the
 // new Active), so it is part of the anchor.
 const ATTACK_OPPONENT_SWITCH_OUT =
   /^Switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
+
 // The "You may" sibling — a SEPARATE whole-string anchor rather than an optional
 // `(?:You may )?` group, following the four draw anchors' rule exactly: the bare
 // sentence starts "Switch" and this one "switch", so the shared body is not
@@ -4921,31 +2927,39 @@ const ATTACK_OPPONENT_SWITCH_OUT =
 // not have (`clauseApostrophe.test.ts` pins that they commit to case).
 const ATTACK_MAY_OPPONENT_SWITCH_OUT =
   /^You may switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
+
 // Self-switch, then "If you do," a switch-out: `switchActive { recordAs: "moved" }` plus
 // `recordGate`.
 const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT = new RegExp(
   `^Switch ${SELF_SWITCH_CLAUSE} If you do, switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)$`,
 );
+
 // Two anchors because two programs: the gust form damages whoever is Active even if the gust did
 // nothing, while the "If you do" form is a `recordGate` and deals nothing when the switch-out
 // fails.
 const ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE =
   /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\. This attack does (\d+) damage to the new Active Pokémon\.$/;
+
 const ATTACK_OPPONENT_SWITCH_OUT_THEN_DAMAGE_NEW_ACTIVE =
   /^Switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\) If you do, this attack does (\d+) damage to the new Active Pokémon\.$/;
+
 // The noun is bare so a typed noun ("Move 2 {D} Energy …") is refused rather than moving any
 // Energy.
 const ATTACK_MOVE_ENERGY_SELF_TO_BENCH =
   /^Move (?:(\d+)|an) Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+
 // A separate anchor because the article changes with the noun ("an Energy" vs "a Basic Energy").
 const ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH =
   /^Move a Basic Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+
 // A separate anchor because "all" is a different kind of `max` than a number or the article.
 const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH =
   /^Move all Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+
 // The "in any way you like" form spreads over many bodies, so it is a separate anchor.
 const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH_SPREAD =
   /^Move all Energy from this Pokémon to your Benched Pokémon in any way you like\.$/;
+
 /**
  * The optional brace group switches the filter between `anyEnergy` and `providesEnergy`. "from your
  * Pokémon" means any source body; "your other Pokémon" is enforced per pick by `validateChoice`.
@@ -4953,70 +2967,23 @@ const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH_SPREAD =
 const ATTACK_MOVE_ANY_AMOUNT_SPREAD = new RegExp(
   `^You may move any amount of (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy from your Pokémon to your other Pokémon in any way you like\\.$`,
 );
+
 /**
  * Moving Energy on the opponent's board. The possessives are literal on both ends so the own-board
  * Energy Switch wording cannot match.
  */
 const ATTACK_MOVE_ENERGY_OPPONENT_FREE =
   /^Move an Energy from 1 of your opponent['’]s Pokémon to another of their Pokémon\.$/;
+
 const ATTACK_MOVE_ENERGY_OPPONENT_ACTIVE_TO_BENCH =
   /^You may move an Energy from your opponent['’]s Active Pokémon to 1 of their Benched Pokémon\.$/;
+
 // Separate from the bare draw anchors because the case differs ("You may draw" vs "Draw") and the
 // readers do not use /i.
 const ATTACK_MAY_DRAW = /^You may draw (\d+) cards\.$/;
+
 const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in your hand\.$/;
 
-// A printed noun phrase carrying a brace type code, resolved to its filter, or `undefined`
-// (including for a code neither map spells, such as "{N} Energy"). `plural` fixes the grammatical
-// number, which only the Energy noun marks. The article is optional because some anchors spell it
-// outside the noun group.
-const TYPED_NOUN = /^(?:a )?(Basic )?\{([A-Z])\} (Pokémon|Energy cards?)$/;
-function typedNounFilter(phrase: string, plural: boolean): CardFilter | undefined {
-  const match = TYPED_NOUN.exec(phrase);
-  if (match === null) return undefined;
-  const basic = match[1] !== undefined;
-  const code = match[2] ?? "";
-  if (match[3] === "Pokémon") {
-    const pokemonType = POKEMON_TYPE_BY_CODE[code];
-    return pokemonType === undefined
-      ? undefined
-      : { kind: "typedPokemon", pokemonType, ...(basic ? { stage: "basic" as const } : {}) };
-  }
-  // "Basic" is required on the Energy noun: an unqualified "{R} Energy card" would be a provision
-  // phrase, which no card in a deck matches.
-  if (!basic || match[3] !== (plural ? "Energy cards" : "Energy card")) return undefined;
-  const energyType = ENERGY_TYPE_BY_CODE[code];
-  return energyType === undefined ? undefined : { kind: "basicEnergy", energyType };
-}
-/**
- * A printed proper name with "cards" ("Fennel cards"), resolved to `byName`, or `undefined`. Face
- * banners are refused because they are not card names, so `byName` would never match.
- */
-const NAMED_CARD_NOUN = /^([A-Z][a-zé]+) cards$/;
-/** Printed face banners that must not be read as card names. */
-const PRINTED_CARD_BANNERS: ReadonlySet<string> = new Set(["Ancient", "Future", "Tera"]);
-function namedCardNounFilter(phrase: string): CardFilter | undefined {
-  const match = NAMED_CARD_NOUN.exec(phrase);
-  if (match === null) return undefined;
-  const name = match[1] ?? "";
-  return PRINTED_CARD_BANNERS.has(name) ? undefined : { kind: "byName", name, cardNoun: true };
-}
-/**
- * The same phrases as a regex fragment, per grammatical number and per anchor, since each anchor
- * places the article differently. The article is a literal "a" because no type name starts with a
- * vowel.
- */
-const TYPED_NOUN_SINGULAR = "a (?:Basic )?\\{[A-Z]\\} Pokémon|a Basic \\{[A-Z]\\} Energy card";
-const TYPED_NOUN_PLURAL = "(?:Basic )?\\{[A-Z]\\} Pokémon|Basic \\{[A-Z]\\} Energy cards";
-/** The BENCH anchor's form: no article (the anchor spells it), and no Energy —
-    a Bench holds Pokémon, so "Basic {G} Energy card" has no business in a group
-    whose every match is benched. The alternative is `stage: "basic"`'s only
-    printed witness in the whole catalog, which is why this 0-legal / 1-catalog
-    sentence is read rather than deferred: without it the rider would be a field
-    no printing drives, and this repo does not ship those. */
-const BENCH_TYPED_NOUN = "Basic \\{[A-Z]\\} Pokémon";
-const BENCH_SEARCH_NOUN = `(?:(Basic Pokémon)|(${BENCH_TYPED_NOUN})|([A-Z][a-zé]+))`;
-const BENCH_SEARCH_TAIL = " onto your Bench\\. Then, shuffle your deck\\.$";
 const ATTACK_BENCH_SEARCH = new RegExp(
   `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,
 );
@@ -5031,22 +2998,10 @@ const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
     " to the new Benched Pokémon\\.$",
 );
 
-// Printed noun phrases this reader can resolve, singular and plural, with their filters. The
-// strings must match `retrieveNoun`'s output in interpreter.ts so the search prompt uses the
-// printed noun.
-const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
-  ["a card", "cards", { kind: "anyCard" }],
-  ["a Pokémon", "Pokémon", { kind: "anyPokemon" }],
-  ["an Item card", "Item cards", { kind: "item" }],
-  ["a Supporter card", "Supporter cards", { kind: "supporter" }],
-  ["a Stadium card", "Stadium cards", { kind: "stadium" }],
-  ["a Pokémon Tool card", "Pokémon Tool cards", { kind: "toolCard" }],
-  ["a Trainer card", "Trainer cards", { kind: "trainerCard" }],
-  ["a Basic Energy card", "Basic Energy cards", { kind: "basicEnergy" }],
-  ["an Energy card", "Energy cards", { kind: "anyEnergy" }],
-];
 const HAND_SEARCH_SINGULAR = new Map(HAND_SEARCH_NOUNS.map(([one, , filter]) => [one, filter]));
+
 const HAND_SEARCH_PLURAL = new Map(HAND_SEARCH_NOUNS.map(([, many, filter]) => [many, filter]));
+
 // Groups: 1 singular noun phrase with article, 2 singular reveal clause, 3 count, 4 "any number
 // of", 5 plural noun phrase, 6 "of different types", 7 plural reveal clause. The pronoun is tied to
 // the number so crossed forms cannot match. The lazy noun group lets group 6 take the distinctness
@@ -5092,15 +3047,19 @@ const ATTACK_EVOLVE_FROM_DECK_EACH_CHOSEN =
   /^Choose up to (\d+) of your \{(\w)\} Pokémon\. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
 
 const ATTACK_REVEAL_OPPONENT_HAND = /^Your opponent reveals their hand\.$/;
+
 const ATTACK_RANDOM_DISCARD_FROM_HAND = /^Discard a random card from your opponent['’]s hand\.$/;
+
 // The one sentence in this family printed as TWO sentences, and it is still one
 // op: the "reveals that card" is the `RANDOM_CARD_TAKEN` event naming the uid and
 // the "shuffles it into their deck" is the route — see the op's doc for why the
 // pair cannot be split without inventing a card nobody prints.
 const ATTACK_RANDOM_SHUFFLE_FROM_HAND =
   /^Choose a random card from your opponent['’]s hand\. Your opponent reveals that card and shuffles it into their deck\.$/;
+
 const ATTACK_REVEAL_AND_BOTTOM =
   /^Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck\.$/;
+
 // A separate anchor because this is two sentences, not the joined "…, and you choose…" form. The
 // count is bounded by `BENCH_MAX` as a printed-number guard; the park also clamps to the live bench
 // space.
@@ -5129,72 +3088,13 @@ const ATTACK_OPPONENT_DISCARDS_HAND_MORE =
 const ATTACK_OPPONENT_CHOOSES_SHUFFLE_HAND =
   /^Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\.$/;
 
-// Attach from the discard pile. The arm reads destinations beyond the legal pool. `count` pins the
-// whole batch onto one chosen body ("up to 2 … to 1 of your Benched Pokémon"), while "in any way
-// you like" is separate ops that may land on different bodies.
-const MAX_PRINTED_ATTACH_COUNT = 10;
 /**
  * The largest deck-top look window believed from a printed number. It is separate from
  * `MAX_PRINTED_ATTACH_COUNT` because it bounds how deep a look reaches (Lapras ex looks at 20), not
  * how many cards move. 30 is a guard against malformed rows.
  */
 const MAX_PRINTED_LOOK_WINDOW = 30;
-/**
- * Printed destination phrases for the attach family, with their target riders and whether "in any
- * way you like" makes the batch separate decisions. A `Map` so arbitrary printed text cannot hit
- * `Object.prototype`. An unknown phrase yields `undefined` and the effect is skipped.
- */
-interface DiscardAttachDestination {
-  readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
-  readonly anyWay: boolean;
-  /**
-   * The printed "each of" spread: the attach goes to every eligible body with no choice. Mutually
-   * exclusive with `anyWay` and a builder `count`.
-   */
-  readonly toEach?: true;
-}
-const DISCARD_ATTACH_DESTINATIONS: ReadonlyMap<string, DiscardAttachDestination> = new Map<
-  string,
-  DiscardAttachDestination
->([
-  // "To this Pokémon" is a UID rider, not a class rider: with two matching bodies a class rider
-  // could land on the wrong one.
-  ["this Pokémon", { riders: { toSelf: true }, anyWay: false }],
-  // Un-narrowed: every own in-play Pokémon. 0 legal, 5 catalog — see the note above.
-  ["1 of your Pokémon", { riders: {}, anyWay: false }],
-  ["1 of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false }],
-  ["your Pokémon in any way you like", { riders: {}, anyWay: true }],
-  ["your Benched Pokémon in any way you like", { riders: { benchOnly: true }, anyWay: true }],
-  // The spread prints no number, so the eligible set is the count.
-  ["each of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false, toEach: true }],
-  ["each of your Pokémon", { riders: {}, anyWay: false, toEach: true }],
-  ...Object.entries(POKEMON_TYPE_BY_CODE).map(
-    ([code, type]) =>
-      [`1 of your {${code}} Pokémon`, { riders: { targetType: type }, anyWay: false }] as [
-        string,
-        DiscardAttachDestination,
-      ],
-  ),
-]);
-// The source-zone phrase shared by the discard and hand attach anchors.
-const SOURCE_ZONE_PHRASE = " from your discard pile";
-const HAND_SOURCE_ZONE_PHRASE = " from your hand";
-/**
- * Builds the attach clause for a source zone, so the discard, hand and gated anchors share one
- * grammar. Groups: 1 bare-noun marker ("an"), 2 singular brace code, 3 printed count, 4 plural
- * brace code, 5 destination phrase; `tail` groups follow at 6+. The article is welded to the
- * number, and "an Energy card" (unlike "a Basic Energy card") admits Special Energy.
- */
-function attachFromZoneClause(zonePhrase: string, tail: string): string {
-  return (
-    `(?:(an) Energy card|a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
-    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
-    `${zonePhrase} to ([^.]+)\\.${tail}`
-  );
-}
-function attachFromZoneAnchor(zonePhrase: string, tail: string): RegExp {
-  return new RegExp(`^Attach ${attachFromZoneClause(zonePhrase, tail)}$`);
-}
+
 const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 
 // Grafaiai: "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any
@@ -5203,21 +3103,6 @@ const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 const ATTACK_OPPONENT_DISCARD_ATTACH =
   /^Attach up to 3 Energy cards from your opponent['’]s discard pile to their Pokémon in any way you like\.$/;
 
-// The printed §9.2 tail of the deck-search attach, already regex-escaped. It is an optional group
-// rather than a second anchor because it modifies the same attach, and the gate is a plain
-// `recordGate`.
-const DECK_SEARCH_POISON_TAIL =
-  "If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned\\.";
-/**
- * Destination phrases for `attachFromDeck`, kept separate from `DISCARD_ATTACH_DESTINATIONS`
- * because the two ops interpret the phrases differently. `batch: false` means every card lands on
- * one chosen body ("attach them to 1 of your …"). `toSelf` is `batch: true` since it has exactly
- * one body.
- */
-interface DeckSearchAttachDestination {
-  readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
-  readonly batch: boolean;
-}
 const DECK_SEARCH_ATTACH_DESTINATIONS: ReadonlyMap<string, DeckSearchAttachDestination> = new Map<
   string,
   DeckSearchAttachDestination
@@ -5239,6 +3124,7 @@ const DECK_SEARCH_ATTACH_DESTINATIONS: ReadonlyMap<string, DeckSearchAttachDesti
       ] as [string, DeckSearchAttachDestination][],
   ),
 ]);
+
 // Groups: 1 singular brace code, 2 count, 3 plural brace code, 4 second count, 5 its brace code, 6
 // destination phrase, 7 poison tail. The pronoun is welded to the number ("attach it" / "attach
 // them"). The `$` matters: without it a trailing unread clause would be silently dropped.
@@ -5248,6 +3134,7 @@ const DECK_SEARCH_ATTACH = new RegExp(
     `(?: and up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)?` +
     ` and attach them) to ([^.]+)\\. Then, shuffle your deck\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,
 );
+
 /**
  * Mega Gardevoir ex: "For each of your Benched Pokémon, search your deck for a Basic {P} Energy
  * card and attach it to that Pokémon." Group 1 is the optional brace code. One answer maps up to
@@ -5257,15 +3144,11 @@ const EACH_BENCHED_DECK_ATTACH = new RegExp(
   `^For each of your Benched Pokémon, search your deck for a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card and attach it to that Pokémon\\. Then, shuffle your deck\\.$`,
 );
 
-// Optional heal tail on the hand attach: an amount (`all` or a number) and a pronoun. "That
-// Pokémon" is the body the attach chose; "this Pokémon" is the attacker and is accepted only when
-// the attach targets the attacker. The amount needs no ceiling because the heal is clamped to the
-// damage present.
-const HAND_ATTACH_HEAL_TAIL = "If you do, heal (?:all|(\\d+)) damage from (that|this) Pokémon\\.";
 const HAND_ATTACH = attachFromZoneAnchor(
   HAND_SOURCE_ZONE_PHRASE,
   `(?: (${HAND_ATTACH_HEAL_TAIL}))?`,
 );
+
 /**
  * Alolan Exeggutor ex: "You may attach any number of Basic Energy cards from your hand to your
  * Pokémon in any way you like." It has its own anchor because it emits `attachFromHand`, not
@@ -5275,6 +3158,7 @@ const HAND_ATTACH = attachFromZoneAnchor(
 const ATTACK_HAND_ANY_NUMBER_ATTACH = new RegExp(
   `^You may attach any number of Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards${HAND_SOURCE_ZONE_PHRASE} to ([^.]+)\\.$`,
 );
+
 /**
  * Kilowattrel ex: "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach …". The
  * attach targets the attacker after it has moved to the Bench. With an empty Bench the switch fails
@@ -5283,65 +3167,6 @@ const ATTACK_HAND_ANY_NUMBER_ATTACH = new RegExp(
 const ATTACK_SELF_SWITCH_THEN_HAND_ATTACH = new RegExp(
   `^Switch ${SELF_SWITCH_CLAUSE} If you do, attach ${attachFromZoneClause(HAND_SOURCE_ZONE_PHRASE, "")}$`,
 );
-/**
- * Shared reader for every anchor built from `attachFromZoneClause`. Returns null for an unknown
- * destination or brace code, an out-of-range count, or a heal pronoun that does not refer to the
- * attached body. `heal` is the parsed heal tail and is checked here because it depends on the
- * destination.
- */
-function attachFromZoneProgram(
-  match: RegExpExecArray,
-  source: "hand" | "discard",
-  heal?: { amount: number | "all"; pronoun: string },
-): EffectOp[] | null {
-  const destination = DISCARD_ATTACH_DESTINATIONS.get(match[5] ?? "");
-  // Exactly one of the three branches matched, so at most one code group is set.
-  const code = match[2] ?? match[4];
-  const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
-  // The bare noun "an Energy card" admits any Energy, not only Basic.
-  const anyEnergy = match[1] !== undefined;
-  // A singular printing emits no `count` (absent means 1) so derived ops compare equal to
-  // hand-authored ones.
-  const count = match[3] === undefined ? 1 : Number(match[3]);
-  if (destination === undefined) return null;
-  if (code !== undefined && energyType === undefined) return null;
-  // A printed 0 is not a real card and would derive to a silent no-op; the
-  // ceiling is the ingested-text guard `MAX_PRINTED_FLIPS` carries one reader
-  // over, and it is load-bearing on the `anyWay` branch specifically — that
-  // branch grows the PROGRAM one op per printed unit, so an unbounded `\d+`
-  // would let one malformed third-party row build an arbitrarily long program.
-  // Applied to every branch so the three anchors cannot disagree about what
-  // counts as a printed number.
-  if (count < 1 || count > MAX_PRINTED_ATTACH_COUNT) return null;
-  // A heal names one body, so it is refused on a multi-op distribution, and "this Pokémon" must
-  // refer to the attach target (`toSelf`).
-  if (heal !== undefined && destination.anyWay && count > 1) return null;
-  if (heal !== undefined && heal.pronoun === "this" && destination.riders.toSelf !== true) {
-    return null;
-  }
-  // "Up to N … to each of them" is ambiguous in print, and a heal tail has no single referent on a
-  // spread, so both are refused.
-  if (destination.toEach === true && count > 1) return null;
-  if (destination.toEach === true && heal !== undefined) return null;
-  const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
-    op: "attachEnergyFrom",
-    source,
-    ...(energyType === undefined ? {} : { energyType }),
-    ...(anyEnergy ? { anyEnergy: true as const } : {}),
-    ...destination.riders,
-    ...(destination.toEach === true ? { toEach: true as const } : {}),
-    ...(heal === undefined ? {} : { healTarget: heal.amount }),
-  };
-  // "In any way you like" emits one op per card, each choosing its own target; otherwise one op
-  // whose `count` pins the batch to one body. A printed "up to" (read from `match[3]`, not the
-  // derived count) makes each op declinable.
-  return destination.anyWay
-    ? Array.from({ length: count }, () => ({
-        ...base,
-        ...(match[3] === undefined ? {} : { declinable: true as const }),
-      }))
-    : [count === 1 ? base : { ...base, count }];
-}
 
 // Printed destinations for the discard-pile retrieval. A `Map` so arbitrary printed text cannot hit
 // `Object.prototype`. The deck destination is printed with the Shuffle verb and has its own anchor.
@@ -5349,6 +3174,7 @@ const DISCARD_RETRIEVAL_DESTINATIONS: ReadonlyMap<string, "hand" | "bench"> = ne
   ["into your hand", "hand" as const],
   ["onto your Bench", "bench" as const],
 ]);
+
 /**
  * Filter kinds a Bench destination may carry. Nothing downstream checks that a benched card is a
  * Pokémon, so a derived "Put a Supporter card … onto your Bench." must be refused here.
@@ -5367,12 +3193,7 @@ const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardF
   // `supporterNameContaining` is deliberately excluded: it only matches Trainers, which can never
   // go on the Bench.
 ]);
-/**
- * Noun alternations built from `HAND_SEARCH_NOUNS`. Table phrases come first so "Pokémon" resolves
- * to `anyPokemon` rather than a proper name, and the brace-coded fragment is appended after them.
- */
-const RETRIEVAL_SINGULAR_ALT = `${HAND_SEARCH_NOUNS.map(([one]) => one).join("|")}|${TYPED_NOUN_SINGULAR}`;
-const RETRIEVAL_PLURAL_ALT = `${HAND_SEARCH_NOUNS.map(([, many]) => many).join("|")}|${TYPED_NOUN_PLURAL}`;
+
 /**
  * Groups: 1 singular noun phrase, 2 count, 3 plural table phrase, 4 plural proper name (one
  * capitalised word), 5 destination phrase. The `[^.]` class keeps the capture inside the sentence
@@ -5383,6 +3204,7 @@ const ATTACK_DISCARD_RETRIEVAL = new RegExp(
     `|up to (\\d+) (?:(${RETRIEVAL_PLURAL_ALT})|([A-Z][a-zé]+)))` +
     `${SOURCE_ZONE_PHRASE} ([^.]+)\\.$`,
 );
+
 /**
  * "Shuffle up to N … from your discard pile into your deck." The trailing `shuffleDeck` is required
  * because the retrieval appends to the bottom of the deck. Only the plural form is printed, so
@@ -5396,12 +3218,14 @@ const ATTACK_DISCARD_SHUFFLE_BACK = new RegExp(
 // clauses.
 const ATTACK_LOOK_TOP_BENCH =
   /^Look at the top (\d+) cards of your deck\. You may put any number of Pokémon you find there onto your Bench\. Shuffle the other cards back into your deck\.$/;
+
 /**
  * `attachFromTop`. "To your Pokémon" prints no Bench or type narrowing, so the op carries no
  * riders.
  */
 const ATTACK_LOOK_TOP_ATTACH =
   /^Look at the top (\d+) cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like\. Shuffle the other cards back into your deck\.$/;
+
 /** Nothing in the sentence varies, so it uses `test` and captures nothing. */
 const ATTACK_LOOK_TOP_DISCARD = /^Look at the top card of your deck\. You may discard that card\.$/;
 
@@ -5434,29 +3258,6 @@ const ATTACK_SEARCH_TOP_ORDER = new RegExp(
 );
 
 /**
- * Shared program for the attack and Supporter printings of this sentence. `shuffleDeck` leads
- * despite the printed order because the search answer is a set of cards, so shuffling before or
- * after removing them is equivalent. `reorderTop` is a separate op because the order is a second
- * decision.
- */
-export function searchTopOrderProgram(n: number): EffectOp[] {
-  return [
-    { op: "shuffleDeck" },
-    {
-      op: "searchDeck",
-      // The printed noun is plain "cards", so any card is a legal find.
-      filter: { kind: "anyCard" },
-      max: n,
-      // Without `exact`, a short pick would let the next op reorder cards that were never searched.
-      exact: true,
-      dest: "deckTop",
-    },
-    // The reorder window is exactly what the search placed.
-    { op: "reorderTop", n },
-  ];
-}
-
-/**
  * "Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on
  * it into your opponent's deck." Nothing is captured.
  */
@@ -5464,12 +3265,14 @@ const DEVOLVE_EACH_TO_DECK = new RegExp(
   `^Devolve each of your opponent['’]s evolved Pokémon by shuffling the highest ` +
     `Stage Evolution card on it into your opponent['’]s deck\\.$`,
 );
+
 // "Devolve 1 of your opponent's evolved Pokémon … into your opponent's hand." A separate op from
 // the sweep: there is a choice, no shuffle and no "you may".
 const DEVOLVE_CHOSEN_TO_HAND = new RegExp(
   `^Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +
     `Stage Evolution card on it into your opponent['’]s hand\\.$`,
 );
+
 const RETURN_BENCHED = new RegExp(
   "^(?:" +
     `(Shuffle 1 of your opponent['’]s Benched Pokémon and all attached cards into their deck)` +
@@ -5504,7 +3307,9 @@ const CHOOSE_SHUFFLE_CHOSEN = new RegExp(
  * gate plus an `optional`).
  */
 const DISCARD_STADIUM = /^Discard a Stadium in play\.$/;
+
 const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
+
 /**
  * Ting-Lu "Ground Crasher": a `conditionGate` on `stadiumInPlay` over the Bench spread and then the
  * Stadium discard, in printed order. The order matters when a damage-reducing Stadium such as Full
@@ -5542,40 +3347,6 @@ const TR_ENERGY_COST_THEN_DISCARD_DEFENDER =
   /^Discard a Team Rocket['’]s Energy from this Pokémon\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\.$/;
 
 /**
- * Rewrites Mega Evolution wording variants to the equivalent Scarlet & Violet wording so the
- * existing anchors read them. Each pattern is anchored so it cannot change an `sv` sentence.
- */
-const ME_WORDING_SYNONYMS: readonly (readonly [RegExp, string])[] = [
-  // "Place … damage counters on" becomes "Put …". Only the capitalised form also takes the singular
-  // "counter".
-  [/\bPlace (?=(?:\d+ )?damage counters? on )/g, "Put "],
-  [/\bplace (?=(?:\d+ )?damage counters on )/g, "put "],
-  // Claw of Darkness ×3: ", and you discard a card you find there." → ". Discard a card …".
-  [
-    /(?<=^Your opponent reveals their hand), and you discard a card you find there\.$/,
-    ". Discard a card you find there.",
-  ],
-  // Astonish: ", and your opponent reveals that card …" → ". Your opponent reveals that card …".
-  [
-    /(?<=^Choose a random card from your opponent['’]s hand), and your opponent reveals that card and shuffles it into their deck\.$/,
-    ". Your opponent reveals that card and shuffles it into their deck.",
-  ],
-  // Thunder (Miraidon): "This Pokémon does N damage to itself." → "This Pokémon also does …".
-  [/^This Pokémon does (?=\d+ damage to itself\.$)/, "This Pokémon also does "],
-  // Power Rush (Eternatus): the coin-flipped "can't use attacks." → "can't attack."
-  [
-    /(?<=^Flip a coin\. If tails, during your next turn, )this Pokémon can['’]t use attacks\.$/,
-    "this Pokémon can't attack.",
-  ],
-];
-
-export function normaliseMeWording(text: string): string {
-  let out = text;
-  for (const [pattern, synonym] of ME_WORDING_SYNONYMS) out = out.replace(pattern, synonym);
-  return out;
-}
-
-/**
  * Parse printed attack text into ops, or null unless the whole trimmed text is one recognized
  * sentence; null keeps the attack on the skipped-effect path. Mega Evolution wording is normalised
  * first.
@@ -5592,12 +3363,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 2. "Flip a coin. If heads, your opponent's Active Pokémon is now {X}."
   match = FLIP_DEFENDER_NOW.exec(effect);
   if (match !== null) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: statusOf(match[1]) }],
-      },
-    ];
+    return [headsGate([{ op: "applyStatus", target: "defender", status: statusOf(match[1]) }])];
   }
 
   // 2b. Two statuses in printed order. `defenderStatusOps` returns null when both share a
@@ -5610,14 +3376,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = FLIP_DEFENDER_STATUS_PAIR.exec(effect);
   if (match !== null) {
     const then = defenderStatusOps([match[1], match[2]]);
-    return then === null
-      ? null
-      : [
-          {
-            op: "coinFlipGate",
-            then,
-          },
-        ];
+    return then === null ? null : [headsGate(then)];
   }
 
   // 2b-bis. One coin with both arms. The collision check applies only to the heads pair, since the
@@ -5627,13 +3386,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const heads = defenderStatusOps([match[1], match[2]]);
     return heads === null
       ? null
-      : [
-          {
-            op: "coinFlipGate",
-            then: heads,
-            otherwise: [{ op: "applyStatus", target: "defender", status: statusOf(match[3]) }],
-          },
-        ];
+      : [headsGate(heads, [{ op: "applyStatus", target: "defender", status: statusOf(match[3]) }])];
   }
 
   // 2c. Three statuses in printed order, checked pairwise for collisions.
@@ -5646,13 +3399,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = FLIP_DEFENDER_STATUS_THEN_DISCARD.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "coinFlipGate",
-        then: [
-          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },
-          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
-        ],
-      },
+      headsGate([
+        { op: "applyStatus", target: "defender", status: statusOf(match[1]) },
+        { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+      ]),
     ];
   }
 
@@ -5662,11 +3412,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const gate = boardConditionForClause(match[1] ?? "");
     if (gate !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: gate,
-          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],
-        },
+        conditionGate(gate, [
+          { op: "applyStatus", target: "defender", status: statusOf(match[2]) },
+        ]),
       ];
     }
   }
@@ -5697,7 +3445,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         op: "applyStatus",
         target: "defender",
         status: "poisoned",
-        poisonDamage: Number(match[1]) * 10,
+        poisonDamage: Number(match[1]) * HP_PER_COUNTER,
       },
     ];
   }
@@ -5705,49 +3453,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 5a. Counters convert to HP here (one counter = 10, §12). A printed 0 is refused.
   match = DEFENDER_CONFUSION_N.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) {
+    const counters = positiveInt(match[1]);
+    if (counters !== null) {
       return [
         {
           op: "applyStatus",
           target: "defender",
           status: "confused",
-          confusionDamage: counters * 10,
+          confusionDamage: counters * HP_PER_COUNTER,
         },
       ];
     }
   }
 
-  // 5b. "During your opponent's next turn, the Defending Pokémon can't
-  //     retreat." — the whole effect on 15 printings, none of which needs a
-  //     registry row.
-  match = DEFENDER_CANT_RETREAT.exec(effect);
-  if (match !== null) {
+  // 5b. "During your opponent's next turn, the Defending Pokémon can't retreat.", or "that Pokémon"
+  //     as the tail of a compound.
+  if (DEFENDER_CANT_RETREAT.test(effect)) {
     return [{ op: "preventRetreat" }];
   }
 
   // 5c. "Your opponent's Active Pokémon is now Poisoned. During your opponent's
   //     next turn, that Pokémon can't retreat." (Paldean Clodsire "Poison
   //     Ring") — the same lock behind a Poison clause; ops in printed order.
-  match = DEFENDER_POISON_CANT_RETREAT.exec(effect);
-  if (match !== null) {
+  if (DEFENDER_POISON_CANT_RETREAT.test(effect)) {
     return [
       { op: "applyStatus", target: "defender", status: "poisoned" },
       { op: "preventRetreat" },
     ];
   }
 
-  // 5d. The defender's retreat lock, reached only as the tail of a compound split by
-  // `splitAttackTrailingClause`.
-  match = DEFENDER_PRONOUN_CANT_RETREAT.exec(effect);
-  if (match !== null) {
-    return [{ op: "preventRetreat" }];
-  }
-
   // 5e. Self retreat lock. It needs both `target` and a turn stamp, because the paralysis clock
   // (§13.4) would clear the flag at the end of the attacker's own turn, before the lock applies.
-  match = SELF_CANT_RETREAT.exec(effect);
-  if (match !== null) {
+  if (SELF_CANT_RETREAT.test(effect)) {
     return [{ op: "preventRetreat", target: "self" }];
   }
 
@@ -5755,74 +3492,53 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // HP here, and a printed 0 is refused.
   match = DELAYED_DEFENDER_COUNTERS.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) return [{ op: "scheduleCounters", amount: counters * 10 }];
+    const counters = positiveInt(match[1]);
+    if (counters !== null) return [{ op: "scheduleCounters", amount: counters * HP_PER_COUNTER }];
   }
 
   // 5g. Discards the Defending Pokémon without a Knock Out, so no Prize is taken. A separate op
   // from 5h for that reason.
-  match = DELAYED_DEFENDER_DISCARD.exec(effect);
-  if (match !== null) {
+  if (DELAYED_DEFENDER_DISCARD.test(effect)) {
     return [{ op: "scheduleDiscard" }];
   }
 
   // 5h. A delayed Knock Out, which does award a Prize.
-  match = DELAYED_DEFENDER_KO.exec(effect);
-  if (match !== null) {
+  if (DELAYED_DEFENDER_KO.test(effect)) {
     return [{ op: "scheduleKnockOut" }];
   }
 
   // 6a.
-  match = OPPONENT_ACTIVE_BASIC_KO.exec(effect);
-  if (match !== null) {
-    return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "knockOutDefender" }],
-      },
-    ];
+  if (OPPONENT_ACTIVE_BASIC_KO.test(effect)) {
+    return [conditionGate({ kind: "opponentActiveIsBasic" }, [{ op: "knockOutDefender" }])];
   }
 
   // 6a-ii.
-  match = OPPONENT_ACTIVE_SPECIAL_ENERGY_KO.exec(effect);
-  if (match !== null) {
+  if (OPPONENT_ACTIVE_SPECIAL_ENERGY_KO.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        then: [{ op: "knockOutDefender" }],
-      },
+      conditionGate({ kind: "opponentActiveHasEnergyAttached", energy: "special" }, [
+        { op: "knockOutDefender" },
+      ]),
     ];
   }
 
   // 6a-ii-b.
-  match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);
-  if (match !== null) {
+  if (OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveHasSpecialCondition" },
-        then: [{ op: "knockOutDefender" }],
-      },
+      conditionGate({ kind: "opponentActiveHasSpecialCondition" }, [{ op: "knockOutDefender" }]),
     ];
   }
 
   // 6a-iii.
-  match = SELF_PRIZE_GATE_PARALYZE.exec(effect);
-  if (match !== null) {
+  if (SELF_PRIZE_GATE_PARALYZE.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "yourPrizesRemaining", counts: [1] },
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
-      },
+      conditionGate({ kind: "yourPrizesRemaining", counts: [1] }, [
+        { op: "applyStatus", target: "defender", status: "paralyzed" },
+      ]),
     ];
   }
 
   // 6b. Both Knock Outs resolve in one instant (§8.1), which also orders the Prizes.
-  match = BOTH_ACTIVES_KO.exec(effect);
-  if (match !== null) {
+  if (BOTH_ACTIVES_KO.test(effect)) {
     return [{ op: "knockOutDefender" }, { op: "knockOutSelf" }];
   }
 
@@ -5833,54 +3549,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // `amount >= 1` is the guard every self-damage arm carries — a printed 0 is
     // not a cost and would derive a silent no-op.
     if (amount >= 1) {
-      return [
-        { op: "damageSelf", amount },
-        {
-          op: "coinFlipGate",
-          then: [{ op: "knockOutDefender" }],
-        },
-      ];
+      return [{ op: "damageSelf", amount }, headsGate([{ op: "knockOutDefender" }])];
     }
   }
 
   // 6d. One coin with both arms. The heads arm keeps the Basic restriction because
   // `knockOutDefender` only checks that an Active exists.
-  match = FLIP_KO_ACTIVE_OR_BENCHED_BASIC.exec(effect);
-  if (match !== null) {
+  if (FLIP_KO_ACTIVE_OR_BENCHED_BASIC.test(effect)) {
     return [
-      {
-        op: "coinFlipGate",
-        then: [
-          {
-            op: "conditionGate",
-            cond: { kind: "opponentActiveIsBasic" },
-            then: [{ op: "knockOutDefender" }],
-          },
-        ],
-        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],
-      },
+      headsGate(
+        [conditionGate({ kind: "opponentActiveIsBasic" }, [{ op: "knockOutDefender" }])],
+        [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],
+      ),
     ];
   }
 
   // 6e. `opponentAny` covers the Active and the Bench. A printed 0 is refused.
   match = KO_EXACT_DAMAGE_COUNTERS.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) {
+    const counters = positiveInt(match[1]);
+    if (counters !== null) {
       return [{ op: "knockOutChosen", target: "opponentAny", damageCountersExactly: counters }];
     }
   }
 
   match = OPPONENT_ACTIVE_EXACT_COUNTERS_KO.exec(effect);
   if (match !== null) {
-    const exactCounters = Number(match[1]);
-    if (exactCounters >= 1) {
+    const exactCounters = positiveInt(match[1]);
+    if (exactCounters !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },
-          then: [{ op: "knockOutDefender" }],
-        },
+        conditionGate({ kind: "opponentActiveDamageCountersExactly", count: exactCounters }, [
+          { op: "knockOutDefender" },
+        ]),
       ];
     }
   }
@@ -5889,11 +3589,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   if (KO_BY_THIS_ATTACK_PREVENT_ALL.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentKnockedOutByDamage" },
-        then: [{ op: "preventDamage", effects: true }],
-      },
+      conditionGate({ kind: "opponentKnockedOutByDamage" }, [
+        { op: "preventDamage", effects: true },
+      ]),
     ];
   }
   match = KO_BY_THIS_ATTACK_MORE_PRIZES.exec(effect);
@@ -5908,12 +3606,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (hp >= 10) return [{ op: "knockOutEach", remainingHpAtMost: hp }];
   }
   if (FLIP_SWITCH_WITH_DECK_POKEMON.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
-      },
-    ];
+    return [headsGate([{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }])];
   }
   match = BOTTOM_REVEAL_NAMED_ATTACK_SCALE.exec(effect);
   if (match !== null) {
@@ -5934,8 +3627,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = EACH_PLAYER_HAND_ATTACH.exec(effect);
   if (match !== null) {
-    const max = Number(match[1]);
-    if (max >= 1) {
+    const max = positiveInt(match[1]);
+    if (max !== null) {
       return [
         { op: "attachFromHand", filter: { kind: "basicEnergy" }, max, whose: "opponent" },
         { op: "attachFromHand", filter: { kind: "basicEnergy" }, max },
@@ -5995,13 +3688,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = HEAL_EACH_BOTH_SIDES.exec(effect);
   if (match !== null) {
-    const healedEach = Number(match[1]);
-    if (healedEach >= 1) return [{ op: "healEachAll", amount: healedEach }];
+    const healedEach = positiveInt(match[1]);
+    if (healedEach !== null) return [{ op: "healEachAll", amount: healedEach }];
   }
   match = OPPONENT_SHUFFLES_HAND_DRAWS.exec(effect);
   if (match !== null) {
-    const opponentDraws = Number(match[1]);
-    if (opponentDraws >= 1) {
+    const opponentDraws = positiveInt(match[1]);
+    if (opponentDraws !== null) {
       return [
         { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } },
       ];
@@ -6098,19 +3791,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = MAY_SEARCH_NAMED_FRAGMENT_TO_BENCH.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "optional",
-        note: effect,
-        then: [
-          {
-            op: "searchDeck",
-            filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" },
-            dest: "bench",
-            max: "any",
-          },
-          { op: "shuffleDeck" },
-        ],
-      },
+      optionalStep(effect, [
+        {
+          op: "searchDeck",
+          filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" },
+          dest: "bench",
+          max: "any",
+        },
+        { op: "shuffleDeck" },
+      ]),
     ];
   }
   match = SHUFFLE_POKEMON_OR_BASIC_ENERGY_FROM_DISCARD.exec(effect);
@@ -6158,11 +3847,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const milled = Number(match[2]);
     if (millGate !== null && milled >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: millGate,
-          then: [{ op: "discardDeckTop", whose: "opponent", count: milled }],
-        },
+        conditionGate(millGate, [{ op: "discardDeckTop", whose: "opponent", count: milled }]),
       ];
     }
   }
@@ -6173,19 +3858,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const foldCounters = Number(match[2]);
     if (foldGate !== null && foldCounters >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: foldGate,
-          then: [
-            {
-              op: "counterEachAll",
-              amount: foldCounters * 10,
-              filter: { kind: "anyPokemon" },
-              side: "opponent",
-              source: "attack",
-            },
-          ],
-        },
+        conditionGate(foldGate, [
+          {
+            op: "counterEachAll",
+            amount: foldCounters * HP_PER_COUNTER,
+            filter: { kind: "anyPokemon" },
+            side: "opponent",
+            source: "attack",
+          },
+        ]),
       ];
     }
   }
@@ -6195,21 +3876,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const quadrupled = Number(match[2]);
     if (quadrupleGate !== null && quadrupled >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: quadrupleGate,
-          then: [
-            {
-              op: "damageChosen",
-              target: "opponentAny",
-              // 3 more counters per counter already on the pick: four times the number.
-              amount: 30,
-              count: quadrupled,
-              source: "attack",
-              perDamageCounterOnTarget: true,
-            },
-          ],
-        },
+        conditionGate(quadrupleGate, [
+          {
+            op: "damageChosen",
+            target: "opponentAny",
+            // 3 more counters per counter already on the pick: four times the number.
+            amount: 30,
+            count: quadrupled,
+            source: "attack",
+            perDamageCounterOnTarget: true,
+          },
+        ]),
       ];
     }
   }
@@ -6219,19 +3896,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const benchCounters = Number(match[2]);
     if (benchCounterGate !== null && benchCounters >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: benchCounterGate,
-          then: [
-            {
-              op: "damageChosen",
-              target: "opponentBench",
-              amount: benchCounters * 10,
-              count: 1,
-              source: "attack",
-            },
-          ],
-        },
+        conditionGate(benchCounterGate, [
+          {
+            op: "damageChosen",
+            target: "opponentBench",
+            amount: benchCounters * HP_PER_COUNTER,
+            count: 1,
+            source: "attack",
+          },
+        ]),
       ];
     }
   }
@@ -6253,8 +3926,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO.exec(effect);
   if (match !== null) {
-    const keptInHand = Number(match[1]);
-    if (keptInHand >= 1)
+    const keptInHand = positiveInt(match[1]);
+    if (keptInHand !== null)
       return [{ op: "randomFromOpponentHand", to: "discard", untilHandSize: keptInHand }];
   }
   match = MILL_TOP_KEEP_ONE.exec(effect);
@@ -6383,8 +4056,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
 
   // "This Pokémon recovers from all Special Conditions." `clearStatus` reads `ctx.seat`'s Active,
   // which in an attack program is the attacker, so no `target` is needed.
-  match = SELF_RECOVERS_ALL.exec(effect);
-  if (match !== null) {
+  if (SELF_RECOVERS_ALL.test(effect)) {
     return [{ op: "clearStatus" }];
   }
 
@@ -6437,14 +4109,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Active.
   match = SPREAD_EACH_DAMAGED_FOUR_ZONE.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: { kind: "opponentActiveDamaged" },
-          then: [{ op: "damageDefender", amount }],
-        },
+        conditionGate({ kind: "opponentActiveDamaged" }, [{ op: "damageDefender", amount }]),
         { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },
         { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },
       ];
@@ -6523,8 +4191,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     placed counter. A printed 0-per is not a real card — left on the loud path.
   match = BENCHED_SNIPE_TAKEN_PRIZES.exec(effect);
   if (match !== null) {
-    const per = Number(match[1]);
-    if (per >= 1) {
+    const per = positiveInt(match[1]);
+    if (per !== null) {
       return [
         {
           op: "damageChosen",
@@ -6546,8 +4214,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // `Benched` the target is `opponentAny`.
   match = BENCHED_SNIPE_TARGET_COUNTERS.exec(effect);
   if (match !== null) {
-    const per = Number(match[1]);
-    if (per >= 1) {
+    const per = positiveInt(match[1]);
+    if (per !== null) {
       return [
         {
           op: "damageChosen",
@@ -6650,28 +4318,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ) {
       if (gatedNarrowing !== undefined) {
         return [
-          {
-            op: "conditionGate",
-            cond,
-            then: [
-              {
-                op: "damageChosen",
-                target: gatedSide,
-                amount,
-                count,
-                source: "attack",
-                deals: true,
-                filter: gatedNarrowing,
-              },
-            ],
-          },
+          conditionGate(cond, [
+            {
+              op: "damageChosen",
+              target: gatedSide,
+              amount,
+              count,
+              source: "attack",
+              deals: true,
+              filter: gatedNarrowing,
+            },
+          ]),
         ];
       }
       return [
-        {
-          op: "conditionGate",
+        conditionGate(
           cond,
-          then: damagedOnly
+          damagedOnly
             ? [
                 {
                   op: "damageChosen",
@@ -6693,7 +4356,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
                   deals: true,
                 },
               ],
-        },
+        ),
       ];
     }
   }
@@ -6879,7 +4542,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "damageChosen",
         target: "opponentAny",
-        amount: Number(match[1]) * 10,
+        amount: Number(match[1]) * HP_PER_COUNTER,
         count: 1,
         source: "attack",
       },
@@ -7201,8 +4864,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ...(match[2] === undefined ? {} : { recordAs: "discarded" }),
     };
     if (match[2] === undefined) return [pay];
-    const per = Number(match[2]);
-    if (per >= 1) return [pay, { op: "damageDefender", per, count: "discarded" }];
+    const per = positiveInt(match[2]);
+    if (per !== null) return [pay, { op: "damageDefender", per, count: "discarded" }];
   }
   match = HAND_REVEAL_NAMED_SCALED.exec(effect);
   if (match !== null) {
@@ -7222,17 +4885,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = SELF_DAMAGE_AND_PARALYZE_OPTIONAL.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
-        {
-          op: "optional",
-          note: effect,
-          then: [
-            { op: "damageSelf", amount },
-            { op: "applyStatus", target: "defender", status: "paralyzed" },
-          ],
-        },
+        optionalStep(effect, [
+          { op: "damageSelf", amount },
+          { op: "applyStatus", target: "defender", status: "paralyzed" },
+        ]),
       ];
     }
   }
@@ -7260,11 +4919,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // specific sentence and wraps the same op in a condition gate.
   if (OPPONENT_ACTIVE_EX_DISCARD.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveIsEx" },
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      },
+      conditionGate({ kind: "opponentActiveIsEx" }, [
+        { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+      ]),
     ];
   }
   match = OPPONENT_ACTIVE_DISCARD.exec(effect);
@@ -7306,10 +4963,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   if (FLIP_OPPONENT_ACTIVE_DISCARD.test(effect)) {
     return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      },
+      headsGate([{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }]),
     ];
   }
 
@@ -7336,18 +4990,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         ...(count === undefined ? {} : { count }),
       };
       // `note` is the whole matched sentence, so the prompt shows the printed text.
-      const ask: EffectOp = { op: "optional", note: effect, then: [put] };
+      const ask: EffectOp = optionalStep(effect, [put]);
       // The Stage 2 gate is the outer op so no Yes/No is asked on a board where it would do
       // nothing.
       return match[2] === undefined
         ? [ask]
-        : [
-            {
-              op: "conditionGate",
-              cond: { kind: "opponentActiveIsStage2" },
-              then: [ask],
-            },
-          ];
+        : [conditionGate({ kind: "opponentActiveIsStage2" }, [ask])];
     }
   }
 
@@ -7372,8 +5020,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // match the flat sentence, so the two arms are mutually exclusive.
   match = SELF_DAMAGE_PER_COUNTER.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];
   }
 
   match = SELF_DAMAGE.exec(effect);
@@ -7441,42 +5089,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // coin and then does nothing on either face, which is worse than an unread
     // sentence because the flip makes it look like something happened.
     if (amount >= 1) {
-      return [
-        {
-          op: "coinFlipGate",
-          then: [{ op: "heal", target: "self", amount }],
-        },
-      ];
+      return [headsGate([{ op: "heal", target: "self", amount }])];
     }
   }
   if (FLIP_DECK_TOP_MILL.test(effect)) {
     // No capture at all — the one printing is the SINGULAR, and the `count: 1` is
     // invented at the site exactly as `DECK_TOP_MILL`'s singular branch invents it.
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
-      },
-    ];
+    return [headsGate([{ op: "discardDeckTop", whose: "opponent", count: 1 }])];
   }
   // Coin-gated damage prevention for "this Pokémon" during the opponent's next turn; "from and
   // effects of" sets `effects`.
   if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "preventDamage", effects: true }],
-      },
-    ];
+    return [headsGate([{ op: "preventDamage", effects: true }])];
   }
   if (FLIP_PREVENT_DAMAGE.test(effect)) {
     // `effects` is absent, not `false`, when the sentence does not say "from and effects of".
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "preventDamage" }],
-      },
-    ];
+    return [headsGate([{ op: "preventDamage" }])];
   }
   // Ungated prevention narrowed to an attacker class, with an optional `non-{X}` exclusion. An
   // unresolvable code falls through to the loud path rather than installing a wider block.
@@ -7505,18 +5133,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (BAR_HAND_ATTACH_DEFENDER.test(effect)) return [{ op: "markHandAttach", barred: true }];
   match = HAND_ATTACH_COUNTERS.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) return [{ op: "markHandAttach", counters }];
+    const counters = positiveInt(match[1]);
+    if (counters !== null) return [{ op: "markHandAttach", counters }];
   }
   if (DEFENDER_TWO_COIN_ATTACK_LOCK.test(effect)) return [{ op: "flipLockAttack", coins: 2 }];
   if (TRAINER_PLAY_FLIP_LOCK.test(effect)) return [{ op: "flipLockTrainerPlay" }];
   if (DISCARD_OPPONENT_STADIUM_AND_BAR.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentStadiumInPlay" },
-        then: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
-      },
+      conditionGate({ kind: "opponentStadiumInPlay" }, [
+        { op: "discardStadium" },
+        { op: "preventHandPlay", bars: "Stadium" },
+      ]),
     ];
   }
   match = PREVENT_DAMAGE_FROM_CLASS_D630.exec(effect);
@@ -7526,25 +5153,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = SELF_DAMAGE_REDUCTION_FROM_EVOLUTION.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "reduceDamage", amount, fromClass: { stage: "evolution" } }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "reduceDamage", amount, fromClass: { stage: "evolution" } }];
   }
   match = SELF_VULNERABLE_NEXT_TURN.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "exposeSelf", amount }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "exposeSelf", amount }];
   }
   if (LOOK_AT_OPPONENT_PRIZE.test(effect)) return [{ op: "lookAtPrize", side: "opponent" }];
   if (WIN_AT_ONE_PRIZE.test(effect)) {
     // Bound once so this arm's text stays distinct from the paralyze arm's `cond:` line.
     const atOnePrize: BoardCondition = { kind: "yourPrizesRemaining", counts: [1] };
-    return [
-      {
-        op: "conditionGate",
-        cond: atOnePrize,
-        then: [{ op: "winGame" }],
-      },
-    ];
+    return [conditionGate(atOnePrize, [{ op: "winGame" }])];
   }
   // Damage cap: `maxDamage` is an upper bound, so an "or more" sentence is refused rather than
   // installed as an inverted cap.
@@ -7572,8 +5193,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (SELF_NO_WEAKNESS.test(effect)) return [{ op: "installNoWeakness" }];
   match = SELF_DISCARD_ALL_THEN_REDUCTION.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
         { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
         { op: "reduceDamage", amount },
@@ -7593,8 +5214,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // applying Weakness and Resistance)."
   match = DEFENDER_VULNERABLE_NEXT_TURN.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "exposeDefender", amount }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "exposeDefender", amount }];
   }
   // "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}." The printed
   // `{C}` is the op's `type`.
@@ -7603,11 +5224,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Celebration: the Prize stage, then the shuffle.
   if (HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "yourHandExactly", count: 30 },
-        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],
-      },
+      conditionGate({ kind: "yourHandExactly", count: 30 }, [
+        { op: "takePrize", count: 2, thenShuffleHand: true },
+      ]),
     ];
   }
   // Overwriting Bolt: the same op with the printed `{L}`, applied as ×2.
@@ -7617,8 +5236,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // "During your next turn, if the Defending Pokémon is Knocked Out, take {N} more Prize cards."
   match = DEFENDER_KO_BOUNTY_NEXT_TURN.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "bountyDefender", amount }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "bountyDefender", amount }];
   }
   // Reactive recoil installed by an attack: the trigger is the §9 site's `dealt > 0` gate. The
   // printed counters are converted to HP (× 10) here.
@@ -7629,7 +5248,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // damage counters" would arm a trap that changes no arithmetic anywhere and
     // emit a row announcing it, which is worse than an unread sentence — it
     // claims a threat that does not exist. Leave it LOUD.
-    if (counters >= 1) return [{ op: "installRecoil", amount: counters * 10 }];
+    if (counters >= 1) return [{ op: "installRecoil", amount: counters * HP_PER_COUNTER }];
   }
   // The same trap with `amount: "damageTaken"`: the damage the holder took, resolved at the §9
   // recoil site a turn later. Deliberately not `heal`'s `"dealt"`, which is the attacker's own
@@ -7707,7 +5326,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // whatever it Knocks Out, so a malformed 999 counters KOs the defender and
     // stops, which is a legal board state rather than a runaway.
     if (counters >= 1) {
-      return [{ op: "damageActive", amount: counters * 10, source: "attack" }];
+      return [{ op: "damageActive", amount: counters * HP_PER_COUNTER, source: "attack" }];
     }
   }
 
@@ -7717,7 +5336,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "damageActive",
-        amount: Number(match[1]) * 10,
+        amount: Number(match[1]) * HP_PER_COUNTER,
         source: "attack",
         per: { kind: "cardsInYourHand" },
       },
@@ -7739,7 +5358,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "damageChosen",
           target: "opponentBench",
-          amount: counters * 10,
+          amount: counters * HP_PER_COUNTER,
           // EXACT, not a ceiling: the printed "1 of" carries no "up to" (the op's
           // own doc block), so the park asks for one on the nose and §8.6 is the
           // only thing that softens it — an empty Bench places nothing.
@@ -7804,7 +5423,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "damageChosen",
           target: "opponentAny",
-          amount: pileCounters * 10,
+          amount: pileCounters * HP_PER_COUNTER,
           count: 1,
           source: "attack",
           // The printed "for each …" as a PAYLOAD and not a flag: the multiplier is a
@@ -7837,7 +5456,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // "1 of your opponent's POKÉMON" — the Active OR a Bench, so `oppAnyRefs`
           // and never empty during an attack.
           target: "opponentAny",
-          amount: anyZoneCounters * 10,
+          amount: anyZoneCounters * HP_PER_COUNTER,
           // EXACT at one body, not a ceiling: the print says "1 of" and carries no
           // "up to", so §8.6 is the only thing that softens the pick.
           count: 1,
@@ -7860,7 +5479,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "damageChosen",
           target: "opponentAny",
-          amount: chosenCounters * 10,
+          amount: chosenCounters * HP_PER_COUNTER,
           count: chosenBodies,
           source: "attack",
         },
@@ -7879,7 +5498,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "counterEachAll",
-          amount: abilityFoldCounters * 10,
+          amount: abilityFoldCounters * HP_PER_COUNTER,
           filter: { kind: "abilityPokemon" },
           // The printed "(both yours and your opponent's)", said as the enum value
           // it is rather than as a modifier on a one-seat op.
@@ -7894,12 +5513,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // in-play body, which is what the card says.
   match = COUNTER_FOLD_ON_OPPONENT_ALL.exec(effect);
   if (match !== null) {
-    const oppFoldCounters = Number(match[1]);
-    if (oppFoldCounters >= 1) {
+    const oppFoldCounters = positiveInt(match[1]);
+    if (oppFoldCounters !== null) {
       return [
         {
           op: "counterEachAll",
-          amount: oppFoldCounters * 10,
+          amount: oppFoldCounters * HP_PER_COUNTER,
           filter: { kind: "anyPokemon" },
           // `otherSeat(ctx.seat)` alone — their Active AND their Bench, which is what
           // "each of your opponent's Pokémon" prints and what the ZONE-scoped
@@ -7915,12 +5534,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // separated only by the `$`.
   match = COUNTER_FOLD_ON_OPPONENT_DAMAGED.exec(effect);
   if (match !== null) {
-    const damagedFoldCounters = Number(match[1]);
-    if (damagedFoldCounters >= 1) {
+    const damagedFoldCounters = positiveInt(match[1]);
+    if (damagedFoldCounters !== null) {
       return [
         {
           op: "counterEachAll",
-          amount: damagedFoldCounters * 10,
+          amount: damagedFoldCounters * HP_PER_COUNTER,
           filter: { kind: "anyPokemon" },
           side: "opponent",
           source: "attack",
@@ -7936,8 +5555,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // capture is already HP, so no × 10. A destination of 0 would be lethal, so it is refused.
   match = COUNTER_UNTIL_REMAINING_HP_ACTIVE.exec(effect);
   if (match !== null) {
-    const activeRemainingHp = Number(match[1]);
-    if (activeRemainingHp >= 1) {
+    const activeRemainingHp = positiveInt(match[1]);
+    if (activeRemainingHp !== null) {
       return [
         {
           op: "counterUntilRemainingHp",
@@ -7956,8 +5575,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Each body is filled to `remainingHp` independently, so the op carries no amount.
   match = COUNTER_UNTIL_REMAINING_HP_BENCH.exec(effect);
   if (match !== null) {
-    const benchRemainingHp = Number(match[1]);
-    if (benchRemainingHp >= 1) {
+    const benchRemainingHp = positiveInt(match[1]);
+    if (benchRemainingHp !== null) {
       return [
         {
           op: "counterUntilRemainingHp",
@@ -8026,8 +5645,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // printed base instead of adding to it. A printed 0 would zero the attack, so it stays loud.
   match = SELF_ATTACK_BASE_SET.exec(effect);
   if (match !== null) {
-    const amount = Number(match[2]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[2]);
+    if (amount !== null) {
       return [{ op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount, base: true }];
     }
   }
@@ -8038,8 +5657,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // the boost.
   match = SELF_EVERY_ATTACK_BOOST.exec(effect);
   if (match !== null) {
-    const amount = Number(match[2]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[2]);
+    if (amount !== null) {
       const boost: EffectOp = { op: "boostAttack", attack: null, amount };
       return match[1] === undefined
         ? [boost]
@@ -8075,7 +5694,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // Active or Bench, so never empty during an attack. No `deals`: placed counters stay flat
           // even on the Active.
           target: "opponentAny",
-          amount: counters * 10,
+          amount: counters * HP_PER_COUNTER,
           // EXACT, not a ceiling: no "up to" is printed.
           count: 1,
           // Provenance printed on the COUNTERS_PLACED row.
@@ -8105,8 +5724,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "preventAttack", target: "defender" }];
   }
 
-  match = SELF_DISCARD_ONE_THEN_DEFENDER_LOCK.exec(effect);
-  if (match !== null) {
+  if (SELF_DISCARD_ONE_THEN_DEFENDER_LOCK.test(effect)) {
     return [
       // The PARK, and it comes first because it is printed first: with two
       // different Energy attached the pick is a real decision, so the lock behind
@@ -8133,12 +5751,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // The same lock behind the heads face of a coin. Deliberately a separate copy of the bare
   // program; do not merge them into a shared constant.
   if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "preventAttack", target: "defender" }],
-      },
-    ];
+    return [headsGate([{ op: "preventAttack", target: "defender" }])];
   }
   // "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your
   // opponent flips a coin. If tails, that attack doesn't happen." Not a `coinFlipGate`: the locked
@@ -8153,13 +5766,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // if that hit was prevented; a cancelled attack does not run it.
   if (FLIP_TAILS_SELF_DISCARD_ALL.test(effect)) {
     return [
-      {
-        op: "coinFlipGate",
-        onTails: true,
-        then: [
-          { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-        ],
-      },
+      tailsGate([
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      ]),
     ];
   }
   match = FLIP_TAILS_SELF_DAMAGE.exec(effect);
@@ -8168,29 +5777,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // The bare arm's guard, verbatim: a printed 0 would derive to a silent no-op,
     // so it stays on the loud ATTACK_EFFECT_SKIPPED path.
     if (amount >= 1) {
-      return [
-        {
-          op: "coinFlipGate",
-          onTails: true,
-          then: [{ op: "damageSelf", amount }],
-        },
-      ];
+      return [tailsGate([{ op: "damageSelf", amount }])];
     }
   }
   // "Flip 2 coins. If both of them are tails, this Pokémon also does {N} damage to itself." Both
   // coins are flipped and logged before the branch, and the recoil lands only when both are tails.
   match = FLIP_TWO_BOTH_TAILS_SELF_DAMAGE.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
-      return [
-        {
-          op: "coinFlipGate",
-          coins: 2,
-          onTails: true,
-          then: [{ op: "damageSelf", amount }],
-        },
-      ];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
+      return [tailsGate([{ op: "damageSelf", amount }], 2)];
     }
   }
 
@@ -8213,14 +5809,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Draw from the bottom of the deck.
   match = ATTACK_DRAW_BOTTOM.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) return [{ op: "drawCards", count, from: "bottom" }];
+    const count = positiveInt(match[1]);
+    if (count !== null) return [{ op: "drawCards", count, from: "bottom" }];
   }
   // Each player draws; `drawToHand` short-draws per seat (§8.6).
   match = ATTACK_EACH_PLAYER_DRAW.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];
+    const count = positiveInt(match[1]);
+    if (count !== null) return [{ op: "drawCards", count, who: "eachPlayer" }];
   }
   match = ATTACK_DRAW_UNTIL.exec(effect);
   if (match !== null) {
@@ -8237,16 +5833,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // board.
   match = ATTACK_MAY_DRAW.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) {
-      return [{ op: "optional", note: effect, then: [{ op: "drawCards", count }] }];
+    const count = positiveInt(match[1]);
+    if (count !== null) {
+      return [optionalStep(effect, [{ op: "drawCards", count }])];
     }
   }
   match = ATTACK_MAY_DRAW_UNTIL.exec(effect);
   if (match !== null) {
-    const size = Number(match[1]);
-    if (size >= 1) {
-      return [{ op: "optional", note: effect, then: [{ op: "drawUntilHandSize", size }] }];
+    const size = positiveInt(match[1]);
+    if (size !== null) {
+      return [optionalStep(effect, [{ op: "drawUntilHandSize", size }])];
     }
   }
 
@@ -8256,12 +5852,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "gust" }];
   }
   if (ATTACK_FLIP_GUST.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "gust" }],
-      },
-    ];
+    return [headsGate([{ op: "gust" }])];
   }
   // Self-switch: moves the attacker off the Active Spot. With an empty Bench the attack is still
   // usable and the switch does nothing.
@@ -8277,18 +5868,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (targetType !== undefined) return [{ op: "switchActive", targetType }];
   }
   if (ATTACK_FLIP_SELF_SWITCH.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "switchActive" }],
-      },
-    ];
+    return [headsGate([{ op: "switchActive" }])];
   }
   // "You may switch this Pokémon…": `optional` parks a confirm and the mandatory switch runs on
   // yes. With an empty Bench the player is still asked and yes does nothing, matching the
   // opponent-switch mirror.
   if (ATTACK_MAY_SELF_SWITCH.test(effect)) {
-    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];
+    return [optionalStep(effect, [{ op: "switchActive" }])];
   }
   // Moves the defender's Active like `gust`, but the defender chooses the replacement.
   if (ATTACK_OPPONENT_SWITCH_OUT.test(effect)) {
@@ -8300,7 +5886,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // consents, then the opponent chooses. Both parks are `resumeTail` parks behind
   // the same `attackEpilogue`, which is what makes the sequence work at all.
   if (ATTACK_MAY_OPPONENT_SWITCH_OUT.test(effect)) {
-    return [{ op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] }];
+    return [optionalStep(effect, [{ op: "opponentSwitchOut" }])];
   }
   // Iron Bundle — Interjet: self-switch, then the §9.2 gate, then the opponent chooses their new
   // Active. The gate matters: with an empty Bench the attacker cannot switch, nothing is recorded,
@@ -8308,7 +5894,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT.test(effect)) {
     return [
       { op: "switchActive", recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+      recordGate("moved", [{ op: "opponentSwitchOut" }]),
     ];
   }
   // Both arms promote a new Active and then damage it with `damageNewActive`; they differ only by
@@ -8322,11 +5908,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     return [
       { op: "opponentSwitchOut", recordAs: "moved" },
-      {
-        op: "recordGate",
-        slot: "moved",
-        then: [{ op: "damageNewActive", amount: Number(match[1]) }],
-      },
+      recordGate("moved", [{ op: "damageNewActive", amount: Number(match[1]) }]),
     ];
   }
   // Destination-side spread: "in any way you like" maps to `anyDest: true`.
@@ -8450,19 +6032,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         recordAs: "moved",
       },
       { op: "shuffleDeck" },
-      {
-        op: "recordGate",
-        slot: "moved",
-        then: [
-          {
-            op: "moveEnergy",
-            filter: { kind: "anyEnergy" },
-            max: 1,
-            route: "selfToBench",
-            destRecorded: "moved",
-          },
-        ],
-      },
+      recordGate("moved", [
+        {
+          op: "moveEnergy",
+          filter: { kind: "anyEnergy" },
+          max: 1,
+          route: "selfToBench",
+          destRecorded: "moved",
+        },
+      ]),
     ];
   }
   // Hand search whose max is the attacker's Bench size, resolved when the op runs; an empty Bench
@@ -8593,11 +6171,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (gate !== null && more >= 1) {
       return [
         { op: "opponentDiscardsFromHand", count: 1 },
-        {
-          op: "conditionGate",
-          cond: gate,
-          then: [{ op: "opponentDiscardsFromHand", count: more }],
-        },
+        conditionGate(gate, [{ op: "opponentDiscardsFromHand", count: more }]),
       ];
     }
   }
@@ -8634,8 +6208,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   {
     const match = ATTACK_DISCARD_TOOLS_UP_TO.exec(effect);
     if (match !== null) {
-      const count = Number(match[1]);
-      if (count >= 1) return [{ op: "discardTools", count }];
+      const count = positiveInt(match[1]);
+      if (count !== null) return [{ op: "discardTools", count }];
     }
   }
   // This sentence is read here for the reveal and by `deriveAttackDamageMultiplier` for the damage,
@@ -8730,10 +6304,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const program = attachFromZoneProgram(match, "hand");
     if (program !== null) {
-      return [
-        { op: "switchActive", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: program },
-      ];
+      return [{ op: "switchActive", recordAs: "moved" }, recordGate("moved", program)];
     }
   }
   // Deck search that attaches, with an optional §9.2 poison tail. Must come after
@@ -8770,7 +6341,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           destination.batch &&
           match[7] === undefined))
     ) {
-      const attach: Extract<EffectOp, { op: "attachFromDeck" }> = {
+      const attach: OpOf<"attachFromDeck"> = {
         op: "attachFromDeck",
         filter: { kind: "basicEnergy", ...(energyType === undefined ? {} : { energyType }) },
         max: count,
@@ -8806,11 +6377,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         : [
             ...searches,
             { op: "shuffleDeck" },
-            {
-              op: "recordGate",
-              slot: "moved",
-              then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
-            },
+            recordGate("moved", [{ op: "applyStatus", target: "self", status: "poisoned" }]),
           ];
     }
   }
@@ -9033,12 +6600,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const shuffleAway: EffectOp = { op: "returnBenched", whose: "opponent", dest: "deck" };
     // Sylveon's coin-gated spelling uses the same op behind the coin gate.
     if (match[4] !== undefined) {
-      return [
-        {
-          op: "coinFlipGate",
-          then: [shuffleAway],
-        },
-      ];
+      return [headsGate([shuffleAway])];
     }
     return [shuffleAway];
   }
@@ -9075,14 +6637,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // afterward.
   match = STADIUM_GATED_BENCH_SPREAD.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: { kind: "stadiumInPlay" },
-          then: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
-        },
+        conditionGate({ kind: "stadiumInPlay" }, [
+          { op: "spreadDamage", target: "opponentBench", amount },
+          { op: "discardStadium" },
+        ]),
       ];
     }
   }
@@ -9091,8 +6652,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // draws what it can; deck-out is checked at the next turn's draw (§14.3).
   match = DISCARD_HAND_DRAW.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) {
+    const count = positiveInt(match[1]);
+    if (count !== null) {
       return [{ op: "discardHand" }, { op: "drawCards", count }];
     }
   }
@@ -9102,8 +6663,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // rename it.
   match = SHUFFLE_HAND_DRAW.exec(effect);
   if (match !== null) {
-    const redrawn = Number(match[1]);
-    if (redrawn >= 1) {
+    const redrawn = positiveInt(match[1]);
+    if (redrawn !== null) {
       return [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: redrawn } }];
     }
   }
@@ -9119,11 +6680,11 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // rename it.
   match = HAND_COST_THEN_DRAW.exec(effect);
   if (match !== null) {
-    const drawn = Number(match[1]);
-    if (drawn >= 1) {
+    const drawn = positiveInt(match[1]);
+    if (drawn !== null) {
       return [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
+        recordGate("paid", [{ op: "drawCards", count: drawn }]),
       ];
     }
   }
@@ -9133,7 +6694,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {
     return [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
+      recordGate("paid", [{ op: "opponentDiscardsFromHand", count: 1 }]),
     ];
   }
 
@@ -9148,7 +6709,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         filter: { kind: "byName", name: "Team Rocket's Energy" },
         recordAs: "discarded",
       },
-      { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },
+      recordGate("discarded", [{ op: "discardDefender" }]),
     ];
   }
 
@@ -9174,8 +6735,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Target Together.
   const targetTogether = CHOSEN_PER_HEADS_IN_PLAY.exec(effect);
   if (targetTogether !== null) {
-    const perHeads = Number(targetTogether[2]);
-    if (perHeads >= 1) {
+    const perHeads = positiveInt(targetTogether[2]);
+    if (perHeads !== null) {
       return [
         {
           op: "damageChosen",
@@ -9193,8 +6754,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Nullifying Zero.
   const nullifyingZero = FLIP_EACH_OPPONENT_SNIPE.exec(effect);
   if (nullifyingZero !== null) {
-    const amount = Number(nullifyingZero[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(nullifyingZero[1]);
+    if (amount !== null) {
       return [
         {
           op: "damageChosen",
@@ -9234,88 +6795,123 @@ export interface AttackDamageBonus {
   per: number;
   count: DamageCountSource;
 }
+
+// Additive damage scaling: "This attack does N more damage for each <resource>." This folds per ×
+// count onto the printed base before the §8.5 W/R pipeline, so it has its own reader rather than an
+// op. "more" is the discriminator: without it the printed N is the per-unit and per × count is the
+// whole damage (`deriveAttackDamageMultiplier`). Each additive regex must refuse its no-"more" twin
+// and vice versa.
+const SELF_COUNTER_SCALE =
+  /^This attack does (\d+) more damage for each damage counter on this Pokémon\.$/;
+
+const OPPONENT_PRIZES_SCALE =
+  /^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/;
+
+// Prizes the opponent took during their last turn, read from `PlayerSide.prizesTakenOnTurn`.
+const OPPONENT_PRIZES_LAST_TURN_SCALE =
+  /^This attack does (\d+) more damage for each Prize card your opponent took during their last turn\.$/;
+
+// "that much more": the bonus is the recorded damage itself (`per: 1`, count in HP), read from
+// `InPlayPokemon.attackDamageTaken`.
+const DAMAGED_LAST_TURN_THAT_MUCH_MORE =
+  /^If this Pokémon was damaged by an attack during your opponent['’]s last turn, this attack does that much more damage\.$/;
+
+// Retreat-cost readers, counting {C} in the defender's effective Retreat Cost
+// (`effectiveRetreatCost`). Additive adds per {C} to the base; multiply is per {C} only, so a
+// retreat-0 defender takes 0. Both apostrophe slots carry `['’]`.
+const RETREAT_COST_SCALE =
+  /^This attack does (\d+) more damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
+
+// "This attack does N more damage for each damage counter on your opponent's Active Pokémon." A
+// `DamageCountSource` member on the additive fold. Disjoint from the self-counter patterns by their
+// literal `on this Pokémon\.` tail.
+const OPPONENT_COUNTER_SCALE =
+  /^This attack does (\d+) more damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
+
 /**
- * The resource an `AttackDamageBonus` counts. Energy counts on board read provision; counts over a
- * discard pile or hand read the printed card. "In play" means Active plus Bench, unlike the
- * Bench-only counts. `boardCondition` is a 0-or-1 indicator for conditional flat bonuses.
+ * "This attack does N more damage for each damage counter on all of your opponent's Pokémon."
+ * Counts the opponent's Active and Bench.
  */
-export type DamageCountSource =
-  | { kind: "damageCountersOnSelf" }
-  | { kind: "opponentPrizesTaken" }
-  /** Prizes the attacker has taken. */
-  | { kind: "yourPrizesTaken" }
-  /** Prizes the attacker's opponent took during their last turn. */
-  | { kind: "opponentPrizesTakenLastTurn" }
-  /** Attack damage the attacker took during the opponent's last turn, in HP (`per: 1`). */
-  | { kind: "attackDamageTakenLastTurnOnSelf" }
-  | { kind: "opponentActiveRetreatCost" }
-  | { kind: "boardCondition"; cond: BoardCondition }
-  | { kind: "damageCountersOnOpponentActive" }
-  /**
-   * Number of Special Conditions on the opponent's Active, via `presentStatuses` (at most 3;
-   * `confusionDamage` is not a condition).
-   */
-  | { kind: "specialConditionsOnOpponentActive" }
-  /** Optional noun filter; `undefined` counts every Benched Pokémon. */
-  | { kind: "damageCountersOnYourBench"; filter?: CardFilter }
-  /** Damage counters on every opponent Pokémon in play (Active plus Bench). */
-  | { kind: "damageCountersOnOpponentBoard" }
-  | { kind: "bothSidesBenchCount" }
-  | { kind: "opponentBenchCount" }
-  | { kind: "yourBenchCount"; filter?: CardFilter }
-  | {
-      kind: "energyOnOpponent";
-      zone: OpponentEnergyZone;
-      /** `"basic"` matches Basic Energy cards. */
-      energyType: BasicEnergyType | "special" | "basic" | null;
-    }
-  | {
-      kind: "energyOnSelf";
-      zone?: "board";
-      /**
-       * `"basic"` counts Basic Energy cards, not provision, so a Special Energy providing a basic
-       * type is excluded.
-       */
-      energyType: BasicEnergyType | "special" | "basic" | null;
-      /** Optional noun filter narrowing the board zone; only meaningful with `zone: "board"`. */
-      filter?: CardFilter;
-    }
-  | { kind: "bothActivesEnergyCount" }
-  | { kind: "toolsOnYourBoard" }
-  | { kind: "extraEnergyUnitsBeyondCost"; extra: number }
-  /**
-   * Matching Pokémon in play on both seats. `damagedOnly` restricts the count to Pokémon with
-   * damage counters.
-   */
-  | { kind: "pokemonInPlay"; seat: CountSeat; filter: CardFilter; damagedOnly?: true }
-  | { kind: "bothSidesPokemonInPlay"; filter: CardFilter }
-  | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter }
-  | { kind: "cardsInOpponentHand"; filter: CardFilter }
-  /** Every card in the attacker's own hand. */
-  | { kind: "cardsInYourHand" }
-  /** Every Energy card attached to every Pokémon in play, both seats. */
-  | { kind: "energyInPlayBothSides" }
-  /** Every Pokémon Tool on both boards. */
-  | { kind: "toolsInPlayBothSides" }
-  /**
-   * Number of distinct Basic Energy types attached across the attacker's board; Special Energy adds
-   * no type.
-   */
-  | { kind: "basicEnergyTypesOnYourBoard" }
-  /** Attacker's Benched Pokémon with any damage counters; the Active is not counted. */
-  | { kind: "damagedBenchedPokemon" }
-  /** Attacker's Benched Pokémon with any Energy providing `energyType` attached. */
-  | { kind: "benchedPokemonWithEnergy"; energyType: BasicEnergyType }
-  /** Attacker's Benched Pokémon whose effective maximum HP is exactly `hp`. */
-  | { kind: "benchedPokemonWithMaxHp"; hp: number };
+const OPPONENT_BOARD_COUNTER_SCALE =
+  /^This attack does (\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\.$/;
 
-/** Whose discard pile is counted, relative to the attacking seat. */
-export type CountSeat = "you" | "opponent";
-/** Alias of `CountSeat`. */
-export type DiscardPileSeat = CountSeat;
+// Bench counted as Pokémon rather than counters: both Benches (additive only, "(both yours and your
+// opponent's)") and the opponent's Bench on both folds. "more" picks the additive fold; without it
+// the printed N is the per-unit.
+const BOTH_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each Benched Pokémon \(both yours and your opponent['’]s\)\.$/;
 
-/** Which opponent Pokémon an `energyOnOpponent` count walks. `"board"` is Active plus Bench. */
-export type OpponentEnergyZone = "active" | "board";
+const OPPONENT_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your opponent['’]s Benched Pokémon\.$/;
+
+// The attacker's own Bench counted as Pokémon, on both folds. A noun narrowed by "that has …" is
+// not matched, so it stays on the skipped path rather than being read as the unfiltered total.
+const YOUR_BENCH_SCALE = /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
+
+/**
+ * "This attack does N more damage for each of your Benched <noun>." where the noun is a bare card
+ * name. The `(?!Pokémon\.)` lookahead is load-bearing and this arm runs before `YOUR_BENCH_SCALE`;
+ * without it this pattern would also claim "…your Benched Pokémon." with an `anyPokemon` filter.
+ */
+const YOUR_BENCHED_NOUN_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched (?!Pokémon\.)([^.]+)\.$/;
+
+/**
+ * "This attack does N more damage for each <noun> on your Bench." A separate anchor from
+ * `YOUR_BENCH_SCALE` because the word order differs. The noun is `[^.]+`, resolved by
+ * `inPlayBodyFilter`; the map is what refuses unknown nouns.
+ */
+const YOUR_BENCH_FILTERED_SCALE =
+  /^This attack does (\d+) more damage for each ([^.]+) on your Bench\.$/;
+
+const IN_PLAY_BODY_SCALE =
+  /^This attack does (\d+) more damage for each of your ((?!opponent)[^.]+) in play\.$/;
+
+const DISCARD_PILE_COUNT_SCALE =
+  /^This attack does (\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
+
+// Damage scaled by Energy attached to the opponent's Active or whole board, with an optional type
+// filter. An absent token means untyped; an unresolvable token stays loud rather than counting
+// everything. The additive form is Active-only because the board-wide additive sentence is not
+// printed.
+const OPPONENT_ENERGY_SCALE =
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to your opponent['’]s Active Pokémon\.$/;
+
+// Damage scaled by Energy attached to the attacker (or, additive only, all of your Pokémon).
+// `attachedEnergyFilter` keeps "no filter printed" (`null`) distinct from "unreadable filter"
+// (`undefined`, stays loud). The multiply form accepts an optional "card" after Energy. Sentences
+// that attach Energy mid-attack are refused because this count is read at declaration.
+const SELF_ENERGY_SCALE =
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\.$/;
+
+/**
+ * "…for each {L} Energy attached to all of your Iono's Pokémon." Narrows the board count to the
+ * bodies the noun names, resolved through `inPlayBodyFilter`. `(?!opponent)` refuses "all of your
+ * opponent's Pokémon", which would otherwise resolve to an owner filter that matches nothing.
+ */
+const SELF_ENERGY_FILTERED_SCALE =
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to all of your ((?!opponent)[^.]+ Pokémon)\.$/;
+
+// Energy attached to both Active Pokémon, summed. Additive only and untyped, matching the printed
+// sentences.
+const SELF_ENERGY_BOTH_ACTIVES_SCALE =
+  /^This attack does (\d+) more damage for each Energy attached to both Active Pokémon\.$/;
+
+// Benched Pokémon counts narrowed by a board fact. "any {R} Energy" is read by provision. The two
+// additive anchors also match `YOUR_BENCHED_NOUN_SCALE`, whose noun map refuses them.
+const YOUR_DAMAGED_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched Pokémon that has any damage counters on it\.$/;
+
+const YOUR_FIRE_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched Pokémon that has any \{R\} Energy attached\.$/;
+
+// "If <clause>, this attack does N more damage.": the clause is a 0-or-1 indicator. The leading
+// `^If` anchor keeps flip sentences and optional-cost sentences off this path. The extra-Energy
+// form counts provided units against this attack's effective cost (§8.2), not cards.
+const EXTRA_ENERGY_BONUS =
+  /^If this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\), this attack does (\d+) more damage\.$/;
+
+const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 
 /**
  * Parse an additive damage-scaling sentence into its `per` and count source, or null. Folded into
@@ -9328,45 +6924,45 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // carry.
   const selfCounters = SELF_COUNTER_SCALE.exec(effect);
   if (selfCounters !== null) {
-    const per = Number(selfCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+    const per = positiveInt(selfCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnSelf" } };
   }
   const opponentPrizes = OPPONENT_PRIZES_SCALE.exec(effect);
   if (opponentPrizes !== null) {
-    const per = Number(opponentPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+    const per = positiveInt(opponentPrizes[1]);
+    if (per !== null) return { per, count: { kind: "opponentPrizesTaken" } };
   }
   const lastTurnPrizes = OPPONENT_PRIZES_LAST_TURN_SCALE.exec(effect);
   if (lastTurnPrizes !== null) {
-    const per = Number(lastTurnPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "opponentPrizesTakenLastTurn" } };
+    const per = positiveInt(lastTurnPrizes[1]);
+    if (per !== null) return { per, count: { kind: "opponentPrizesTakenLastTurn" } };
   }
   if (DAMAGED_LAST_TURN_THAT_MUCH_MORE.test(effect))
     return { per: 1, count: { kind: "attackDamageTakenLastTurnOnSelf" } };
   const retreatCost = RETREAT_COST_SCALE.exec(effect);
   if (retreatCost !== null) {
-    const per = Number(retreatCost[1]);
-    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+    const per = positiveInt(retreatCost[1]);
+    if (per !== null) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);
   if (opponentCounters !== null) {
-    const per = Number(opponentCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+    const per = positiveInt(opponentCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnOpponentActive" } };
   }
   const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);
   if (opponentBoardCounters !== null) {
-    const per = Number(opponentBoardCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };
+    const per = positiveInt(opponentBoardCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnOpponentBoard" } };
   }
   const bothBench = BOTH_BENCH_SCALE.exec(effect);
   if (bothBench !== null) {
-    const per = Number(bothBench[1]);
-    if (per >= 1) return { per, count: { kind: "bothSidesBenchCount" } };
+    const per = positiveInt(bothBench[1]);
+    if (per !== null) return { per, count: { kind: "bothSidesBenchCount" } };
   }
   const opponentBench = OPPONENT_BENCH_SCALE.exec(effect);
   if (opponentBench !== null) {
-    const per = Number(opponentBench[1]);
-    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+    const per = positiveInt(opponentBench[1]);
+    if (per !== null) return { per, count: { kind: "opponentBenchCount" } };
   }
   // Bench count narrowed by a bare printed name. Deliberately checked before the unfiltered arm it
   // narrows; see `YOUR_BENCHED_NOUN_SCALE`.
@@ -9380,8 +6976,8 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   }
   const yourBench = YOUR_BENCH_SCALE.exec(effect);
   if (yourBench !== null) {
-    const per = Number(yourBench[1]);
-    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+    const per = positiveInt(yourBench[1]);
+    if (per !== null) return { per, count: { kind: "yourBenchCount" } };
   }
   // An absent filter means every Benched Pokémon; `filter !== null` keeps unknown nouns on the loud
   // skipped path.
@@ -9464,8 +7060,8 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   }
   const bothActivesEnergy = SELF_ENERGY_BOTH_ACTIVES_SCALE.exec(effect);
   if (bothActivesEnergy !== null) {
-    const per = Number(bothActivesEnergy[1]);
-    if (per >= 1) return { per, count: { kind: "bothActivesEnergyCount" } };
+    const per = positiveInt(bothActivesEnergy[1]);
+    if (per !== null) return { per, count: { kind: "bothActivesEnergyCount" } };
   }
   const extraEnergy = EXTRA_ENERGY_BONUS.exec(effect);
   if (extraEnergy !== null) {
@@ -9489,6 +7085,21 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   return null;
 }
 
+// "This attack does N less damage for each damage counter on this Pokémon." A third fold (keep the
+// base, subtract), so a separate reader rather than a negative `per`, which would break the
+// `scaledTotal > 0` guard and the "+" log crumb.
+const SELF_COUNTER_PENALTY =
+  /^This attack does (\d+) less damage for each damage counter on this Pokémon\.$/;
+
+// Subtractive retreat-cost twin: "This attack does N less damage for each {C} in your opponent's
+// Active Pokémon's Retreat Cost."
+const RETREAT_COST_PENALTY =
+  /^This attack does (\d+) less damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
+
+// Penalty fold counting Energy on the opponent's Active (`energyOnOpponent`).
+const OPPONENT_ENERGY_PENALTY =
+  /^This attack does (\d+) less damage for each Energy attached to your opponent['’]s Active Pokémon\.$/;
+
 /**
  * Parse a subtractive damage-scaling sentence ("This attack does N less damage for each …") into
  * `{per, count}`, or null. The printed base is kept and `per × count` is subtracted before Weakness
@@ -9501,22 +7112,169 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
   // than silently claiming to simulate a sentence that does nothing.
   const selfCounters = SELF_COUNTER_PENALTY.exec(effect);
   if (selfCounters !== null) {
-    const per = Number(selfCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+    const per = positiveInt(selfCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnSelf" } };
   }
   const retreatCost = RETREAT_COST_PENALTY.exec(effect);
   if (retreatCost !== null) {
-    const per = Number(retreatCost[1]);
-    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+    const per = positiveInt(retreatCost[1]);
+    if (per !== null) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   const opponentEnergy = OPPONENT_ENERGY_PENALTY.exec(effect);
   if (opponentEnergy !== null) {
-    const per = Number(opponentEnergy[1]);
-    if (per >= 1)
+    const per = positiveInt(opponentEnergy[1]);
+    if (per !== null)
       return { per, count: { kind: "energyOnOpponent", zone: "active", energyType: null } };
   }
   return null;
 }
+
+// "This attack does N damage for each damage counter on this Pokémon." The multiply twin of
+// SELF_COUNTER_SCALE and SELF_COUNTER_PENALTY on the same count source.
+const SELF_COUNTER_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on this Pokémon\.$/;
+
+// The "×"/multiply twin of OPPONENT_PRIZES_SCALE — the SAME Prize-count source, no
+// "more": the whole damage is `per × count`, the printed base dropped (attack.ts).
+// Refuses Wo-Chien ex's benched-target print ("… to 1 of your opponent's Benched
+// Pokémon for each Prize …") by the mid-sentence text the anchors exclude, and
+// Chien-Pao ex's discarded-Energy count ("… for each card you discarded in this
+// way.") by the tail.
+const OPPONENT_PRIZES_MULTIPLY =
+  /^This attack does (\d+) damage for each Prize card your opponent has taken\.$/;
+
+// Own-side twin ("…Prize card you have taken."), read as `yourPrizesTaken`.
+const YOUR_PRIZES_MULTIPLY = /^This attack does (\d+) damage for each Prize card you have taken\.$/;
+
+const RETREAT_COST_MULTIPLY =
+  /^This attack does (\d+) damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
+
+// The multiply twin of OPPONENT_COUNTER_SCALE: "This attack does N damage for each damage counter on
+// your opponent's Active Pokémon."
+const OPPONENT_COUNTER_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
+
+/**
+ * "This attack does N damage for each Special Condition affecting your opponent's Active Pokémon."
+ * A separate anchor because both the noun and the preposition differ; merging them would admit
+ * unprinted combinations.
+ */
+const OPPONENT_CONDITION_COUNT_MULTIPLY =
+  /^This attack does (\d+) damage for each Special Condition affecting your opponent['’]s Active Pokémon\.$/;
+
+// "This attack does N damage for each damage counter on all of your Benched Pokémon." Tallies every
+// Pokémon on the attacker's Bench.
+const BENCH_COUNTER_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on all of your Benched Pokémon\.$/;
+
+/**
+ * The bench-wide counter tally narrowed by a printed noun, e.g. "…on all of your Benched {F}
+ * Pokémon." The whole noun is captured and resolved by `inPlayBodyFilter`. The noun need not end in
+ * "Pokémon" (e.g. "Benched Rattata."); `(?!Pokémon\.)` keeps the bare "Benched Pokémon." on
+ * `BENCH_COUNTER_MULTIPLY` alone.
+ */
+const BENCH_COUNTER_FILTERED_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on all of your Benched ((?!Pokémon\.)[^.]+)\.$/;
+
+const OPPONENT_BENCH_MULTIPLY =
+  /^This attack does (\d+) damage for each of your opponent['’]s Benched Pokémon\.$/;
+
+const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
+
+// "This attack does N [more] damage for each of your <noun> in play." The noun is resolved by
+// `inPlayBodyFilter`. The `(?!opponent)` lookahead is load-bearing: without it the capture would
+// swallow "opponent's Pokémon ex" and score the opponent's sentence off the attacker's board. The
+// capture is `[^.]+` so it cannot span a sentence break into a compound.
+const IN_PLAY_BODY_MULTIPLY =
+  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\.$/;
+
+/**
+ * The opponent's Pokémon in play, a separate anchor from the attacker's (which keeps its
+ * `(?!opponent)` lookahead). The noun is `[^.]+` so it cannot span a sentence break.
+ */
+const IN_PLAY_FOE_BODY_MULTIPLY =
+  /^This attack does (\d+) damage for each of your opponent['’]s ([^.]+) in play\.$/;
+
+/**
+ * "This attack does N damage for each of your Pokémon that has any damage counters on it." The
+ * narrowing is a board fact carried as `damagedOnly` on the count, so the noun still goes through
+ * `inPlayBodyFilter`. `(?!opponent)` keeps the attacker's anchor off an opponent-side sentence.
+ */
+const IN_PLAY_DAMAGED_BODY_MULTIPLY =
+  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) that has any damage counters on it\.$/;
+
+/**
+ * "This attack does N damage for each of your Pokémon in play that has the <name> attack."
+ * "Pokémon" is a literal so the whole phrase resolves to one `attackNamePokemon` filter (there is
+ * no intersection combinator); only the bare "Pokémon" head is read.
+ */
+const IN_PLAY_ATTACK_NAME_MULTIPLY =
+  /^This attack does (\d+) damage for each of your Pokémon in play that has the ([^.]+) attack\.$/;
+
+/**
+ * "This attack does N damage for each Pokémon in play that has "A" or "B" in its name (both yours
+ * and your opponent's)." Exactly two name fragments, captured with `([^"]+)` between the printed
+ * quotes and combined with `anyOf`; other arities fall to the skipped path.
+ */
+const IN_PLAY_BOTH_SIDES_NAME_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \(both yours and your opponent['’]s\)\.$/;
+
+// "This attack does N [more] damage for each <noun> in your [opponent's] discard pile." The seat is
+// captured from the printed words, never inferred from the fold. The noun goes through a closed map
+// rather than a `(.+) card` capture, so an unknown noun stays loud instead of counting zero
+// forever. `[^.]+` cannot cross a sentence break.
+const DISCARD_PILE_COUNT_MULTIPLY =
+  /^This attack does (\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
+
+/**
+ * "This attack does N damage for each Pokémon in your discard pile that has the X attack." A
+ * separate anchor rather than a widening of the pile anchors. The attack name is captured because
+ * it is a catalog column, so a misspelling matches nothing loudly; only the attacker's own pile is
+ * printed.
+ */
+const DISCARD_PILE_ATTACK_NAME_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\.$/;
+
+// Damage scaled by cards in the opponent's hand. Counting the whole hand leaks nothing since hand
+// size is public; a filtered count ("Trainer card you find there") is only legitimate because the
+// sentence reveals the hand first, which is why the reveal op reads the same anchor.
+const OPPONENT_HAND_COUNT_MULTIPLY =
+  /^This attack does (\d+) damage for each ([^.]+) in your opponent['’]s hand\.$/;
+
+// The attacker's own hand, bare noun only.
+const YOUR_HAND_COUNT_MULTIPLY = /^This attack does (\d+) damage for each card in your hand\.$/;
+
+const OPPONENT_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to (your opponent['’]s Active Pokémon|all of your opponent['’]s Pokémon)\.$/;
+
+const SELF_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\.$/;
+
+/**
+ * The multiply form of the board-wide own Energy count ("…attached to all of your Pokémon."),
+ * separate from `SELF_ENERGY_MULTIPLY`.
+ */
+const SELF_BOARD_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to all of your Pokémon\.$/;
+
+// Pokémon Tools attached to all of your Pokémon (Active and Bench). Multiply only: with no Tools
+// the attack deals nothing.
+const YOUR_TOOLS_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon Tool attached to all of your Pokémon\.$/;
+
+// "all Pokémon" (without "of your") counts both boards. "each type of Basic Energy" counts distinct
+// Basic Energy types.
+const BOTH_SIDES_TOOLS_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon Tool attached to all Pokémon\.$/;
+
+const BOTH_SIDES_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each Energy attached to all Pokémon\.$/;
+
+const BASIC_ENERGY_TYPES_MULTIPLY =
+  /^This attack does (\d+) damage for each type of Basic Energy attached to all of your Pokémon\.$/;
+
+const YOUR_BENCH_MAX_HP_MULTIPLY =
+  /^This attack does (\d+) damage for each of your Benched Pokémon that has a maximum HP of (\d+)\.$/;
 
 /**
  * Parse a multiply damage-scaling sentence ("This attack does N damage for each …", with no "more"
@@ -9529,39 +7287,39 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // carries.
   const selfCounters = SELF_COUNTER_MULTIPLY.exec(effect);
   if (selfCounters !== null) {
-    const per = Number(selfCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+    const per = positiveInt(selfCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnSelf" } };
   }
   const opponentPrizes = OPPONENT_PRIZES_MULTIPLY.exec(effect);
   if (opponentPrizes !== null) {
     // A printed 0 does nothing — left loud, the guard the additive rules carry.
-    const per = Number(opponentPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+    const per = positiveInt(opponentPrizes[1]);
+    if (per !== null) return { per, count: { kind: "opponentPrizesTaken" } };
   }
   const yourPrizes = YOUR_PRIZES_MULTIPLY.exec(effect);
   if (yourPrizes !== null) {
-    const per = Number(yourPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "yourPrizesTaken" } };
+    const per = positiveInt(yourPrizes[1]);
+    if (per !== null) return { per, count: { kind: "yourPrizesTaken" } };
   }
   const retreatCost = RETREAT_COST_MULTIPLY.exec(effect);
   if (retreatCost !== null) {
-    const per = Number(retreatCost[1]);
-    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+    const per = positiveInt(retreatCost[1]);
+    if (per !== null) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);
   if (opponentCounters !== null) {
-    const per = Number(opponentCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+    const per = positiveInt(opponentCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnOpponentActive" } };
   }
   const opponentConditions = OPPONENT_CONDITION_COUNT_MULTIPLY.exec(effect);
   if (opponentConditions !== null) {
-    const per = Number(opponentConditions[1]);
-    if (per >= 1) return { per, count: { kind: "specialConditionsOnOpponentActive" } };
+    const per = positiveInt(opponentConditions[1]);
+    if (per !== null) return { per, count: { kind: "specialConditionsOnOpponentActive" } };
   }
   const benchCounters = BENCH_COUNTER_MULTIPLY.exec(effect);
   if (benchCounters !== null) {
-    const per = Number(benchCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnYourBench" } };
+    const per = positiveInt(benchCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnYourBench" } };
   }
   // An absent filter means every Benched Pokémon. The suppressed compound has the same capture
   // groups, so both spellings fold identically.
@@ -9576,14 +7334,14 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   }
   const opponentBench = OPPONENT_BENCH_MULTIPLY.exec(effect);
   if (opponentBench !== null) {
-    const per = Number(opponentBench[1]);
-    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+    const per = positiveInt(opponentBench[1]);
+    if (per !== null) return { per, count: { kind: "opponentBenchCount" } };
   }
   // Terapagos ex reaches this only after `splitAttackGateClause` has removed its gate clause.
   const yourBench = YOUR_BENCH_MULTIPLY.exec(effect);
   if (yourBench !== null) {
-    const per = Number(yourBench[1]);
-    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+    const per = positiveInt(yourBench[1]);
+    if (per !== null) return { per, count: { kind: "yourBenchCount" } };
   }
   const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);
   if (inPlayBodies !== null) {
@@ -9747,8 +7505,8 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   }
   const yourTools = YOUR_TOOLS_MULTIPLY.exec(effect);
   if (yourTools !== null) {
-    const per = Number(yourTools[1]);
-    if (per >= 1) return { per, count: { kind: "toolsOnYourBoard" } };
+    const per = positiveInt(yourTools[1]);
+    if (per !== null) return { per, count: { kind: "toolsOnYourBoard" } };
   }
   const allTools = BOTH_SIDES_TOOLS_MULTIPLY.exec(effect);
   if (allTools !== null && Number(allTools[1]) >= 1) {
@@ -9841,8 +7599,11 @@ export interface AttackOptionalBoost {
 }
 
 const OPTIONAL_DAMAGE_BOOST = /^You may do (\d+) more damage\. If you do, (.+)$/;
+
 const BOOST_RETURN_SELF = /^shuffle this Pokémon and all attached cards into your deck\.$/;
+
 const BOOST_SELF_DAMAGE = /^this Pokémon also does (\d+) damage to itself\.$/;
+
 const BOOST_CANT_ATTACK = /^during your next turn, this Pokémon can['’]t attack\.$/;
 
 /** Parse the optional damage boost into its bonus and its consequent's ops, or
@@ -9865,8 +7626,8 @@ export function deriveAttackOptionalBoost(text: string): AttackOptionalBoost | n
   }
   const recoil = BOOST_SELF_DAMAGE.exec(consequent);
   if (recoil !== null) {
-    const amount = Number(recoil[1]);
-    return amount >= 1 ? { bonus, ops: [{ op: "damageSelf", amount }] } : null;
+    const amount = positiveInt(recoil[1]);
+    return amount !== null ? { bonus, ops: [{ op: "damageSelf", amount }] } : null;
   }
   if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: "preventAttack" }] };
   return null;
@@ -9930,19 +7691,10 @@ export interface AttackBonusConsequent {
   baseOverride?: number;
 }
 
-const BONUS_CONSEQUENT_CONDITION = /^If (.+), this attack does (\d+) more damage, and (.+)$/;
-/**
- * The same condition form with the join spelled ". Then, " (Chi-Yu — Ground Melter), kept as a
- * separate anchor rather than an alternation.
- */
-const BONUS_CONSEQUENT_CONDITION_THEN =
-  /^If (.+), this attack does (\d+) more damage\. Then, (.+)$/;
-const BONUS_CONSEQUENT_COIN =
-  /^Flip a coin\. If heads, this attack does (\d+) more damage, and (.+)$/;
-/** Mega Mawile ex — Huge Bite: the condition form with a base override. */
-const BASE_OVERRIDE_CONDITION = /^If (.+), this attack['’]s base damage is (\d+)\.$/;
 const CONSEQUENT_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon\.$/;
+
 const CONSEQUENT_HEAL_SELF = /^heal (\d+) damage from this Pokémon\.$/;
+
 /**
  * Lowercase and anaphoric "that Stadium": `DISCARD_STADIUM` does not read this string, so the
  * consequent is dispatched here.
@@ -9969,6 +7721,21 @@ function bonusConsequentOps(consequent: string): EffectOp[] | null {
   }
   return null;
 }
+
+const BONUS_CONSEQUENT_CONDITION = /^If (.+), this attack does (\d+) more damage, and (.+)$/;
+
+/**
+ * The same condition form with the join spelled ". Then, " (Chi-Yu — Ground Melter), kept as a
+ * separate anchor rather than an alternation.
+ */
+const BONUS_CONSEQUENT_CONDITION_THEN =
+  /^If (.+), this attack does (\d+) more damage\. Then, (.+)$/;
+
+const BONUS_CONSEQUENT_COIN =
+  /^Flip a coin\. If heads, this attack does (\d+) more damage, and (.+)$/;
+
+/** Mega Mawile ex — Huge Bite: the condition form with a base override. */
+const BASE_OVERRIDE_CONDITION = /^If (.+), this attack['’]s base damage is (\d+)\.$/;
 
 /**
  * Parse the bonus-plus-consequent sentence into its decider, bonus and consequent ops, or null. The
@@ -10019,8 +7786,8 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
       ? boosted
       : [{ op: "damageDefender", amount: reading.baseOverride }];
   return reading.decider.kind === "coinFlip"
-    ? [{ op: "coinFlipGate", then, otherwise }]
-    : [{ op: "conditionGate", cond: reading.decider.cond, then, otherwise }];
+    ? [headsGate(then, otherwise)]
+    : [conditionGate(reading.decider.cond, then, otherwise)];
 }
 
 /**
@@ -10066,47 +7833,33 @@ export type AttackOptionalCostPayoff =
  * necessary and sufficient.
  */
 const OPTIONAL_COST_CONNECTIVE = "(?:If you do|If you discarded any cards in this way)";
-const OPTIONAL_COST_BOOST = new RegExp(`^You may (.+)\\. ${OPTIONAL_COST_CONNECTIVE}, (.+)$`);
-/**
- * Purpose-clause skeleton ("You may {cost} to have this attack do N more damage."). Its infinitive
- * "do" only appears under this connective, so it captures the bonus itself rather than widening the
- * payoff table.
- */
-const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\d+) more damage\.$/;
+
+const OPTIONAL_COST_TURN_PRIZE_FACE_UP = /^turn 1 of your face-down Prize cards face up$/;
+
 const OPTIONAL_COST_DISCARD_STADIUM = /^discard a Stadium in play$/;
+
 /** "your hand" prints no count, so its gate is nullary. */
 const OPTIONAL_COST_DISCARD_HAND = /^discard your hand$/;
+
 /** The printed count is captured because the gate reads it. */
 const OPTIONAL_COST_SHUFFLE_SELF_ENERGY =
   /^shuffle (\d+) Energy attached to this Pokémon into your deck$/;
+
 const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND =
   /^put all Energy attached to this Pokémon into your hand$/;
-const OPTIONAL_COST_TURN_PRIZE_FACE_UP = /^turn 1 of your face-down Prize cards face up$/;
-/**
- * Reminder text stripped from Crescent Purge's payoff only when the cost is the face-up row. It
- * changes nothing because face-up Prizes stay face up anyway.
- */
-const OPTIONAL_COST_FACE_UP_REMINDER =
-  " (That Prize card remains face up for the rest of the game.)";
-/**
- * "You may {cost} and have this attack do N more damage." Each cost row's `cond` is that cost's
- * exact payability.
- */
-const OPTIONAL_COST_AND_HAVE_BOOST = /^You may (.+) and have this attack do (\d+) more damage\.$/;
-const OPTIONAL_COST_AND_MAKE_PARALYZED =
-  /^You may (.+) and make your opponent['’]s Active Pokémon Paralyzed\.$/;
+
 const OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY = new RegExp(
   `^discard (\\d+) \\{([${ENERGY_CODES}])\\} Energy from this Pokémon$`,
 );
+
 const OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon$/;
+
 const OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND = new RegExp(
   `^put a \\{([${ENERGY_CODES}])\\} Energy attached to this Pokémon into your hand$`,
 );
+
 const OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY =
   /^shuffle all Energy attached to this Pokémon into your deck$/;
-const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
-/** Shares its body with `ALSO_BENCHED_SNIPE` so the two spellings cannot drift. */
-const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_BODY}$`);
 
 /**
  * The cost half: the ops a printed "You may …" charges and the board fact that makes them payable,
@@ -10236,6 +7989,11 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   return null;
 }
 
+const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
+
+/** Shares its body with `ALSO_BENCHED_SNIPE` so the two spellings cannot drift. */
+const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_BODY}$`);
+
 /**
  * The payoff half: what the accepted offer buys, or null for a payoff this engine cannot pay out.
  */
@@ -10265,6 +8023,31 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
   }
   return null;
 }
+
+const OPTIONAL_COST_BOOST = new RegExp(`^You may (.+)\\. ${OPTIONAL_COST_CONNECTIVE}, (.+)$`);
+
+/**
+ * Purpose-clause skeleton ("You may {cost} to have this attack do N more damage."). Its infinitive
+ * "do" only appears under this connective, so it captures the bonus itself rather than widening the
+ * payoff table.
+ */
+const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\d+) more damage\.$/;
+
+/**
+ * Reminder text stripped from Crescent Purge's payoff only when the cost is the face-up row. It
+ * changes nothing because face-up Prizes stay face up anyway.
+ */
+const OPTIONAL_COST_FACE_UP_REMINDER =
+  " (That Prize card remains face up for the rest of the game.)";
+
+/**
+ * "You may {cost} and have this attack do N more damage." Each cost row's `cond` is that cost's
+ * exact payability.
+ */
+const OPTIONAL_COST_AND_HAVE_BOOST = /^You may (.+) and have this attack do (\d+) more damage\.$/;
+
+const OPTIONAL_COST_AND_MAKE_PARALYZED =
+  /^You may (.+) and make your opponent['’]s Active Pokémon Paralyzed\.$/;
 
 /**
  * Parse the reversed optional boost into its precondition, cost ops and payoff, or null. It shares
@@ -10337,8 +8120,8 @@ export function optionalCostBoostProgram(
       ...reading.ops,
       { op: "applyStatus", target: "defender", status: reading.payoff.status },
     ];
-    const offer: EffectOp = { op: "optional", note, then };
-    return [{ op: "conditionGate", cond: reading.cond, then: [offer] }];
+    const offer: EffectOp = optionalStep(note, then);
+    return [conditionGate(reading.cond, [offer])];
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
   const then = [...reading.ops, ...boosted];
@@ -10383,7 +8166,7 @@ function costSnipeProgram(
     // still applies; Weakness and Resistance never apply to Benched Pokémon (§8.5).
     { op: "damageChosen", target: "opponentBench", amount, count, source: "attack", deals: true },
   ];
-  const offer: EffectOp = { op: "optional", note, then };
+  const offer: EffectOp = optionalStep(note, then);
   return [
     {
       op: "conditionGate",
@@ -10402,7 +8185,7 @@ function costSnipeProgram(
  * for each card you discarded in this way." The printed base and the scaled part are one §8.5 hit
  * via `damageDefender.base`; declining is N = 0, so no decline arm is needed.
  */
-export interface AttackBenchDiscardScaledBoost {
+interface AttackBenchDiscardScaledBoost {
   /** Discriminator switched on by `discardScaledBoostProgram`. */
   kind: "benchDiscard";
   /** The printed ceiling of the declinable discard (the "up to N"), which rides the
@@ -10420,7 +8203,7 @@ export interface AttackBenchDiscardScaledBoost {
  * "Discard the top card of each player's deck. This attack does N more damage for each Energy card
  * discarded in this way."
  */
-export interface AttackEachDeckMillScaledBoost {
+interface AttackEachDeckMillScaledBoost {
   kind: "eachDeckMill";
   /** The printed extra damage each ENERGY card milled buys. The only capture in the
       anchor, guarded `>= 1` like every captured amount in this file. */
@@ -10438,7 +8221,7 @@ export type AttackDiscardScaledBoost =
  * "You may discard up to N Energy cards from your hand, and this attack does P more damage for each
  * card you discarded in this way." Declining is picking none, so no separate confirm is needed.
  */
-export interface AttackHandDiscardScaledBoost {
+interface AttackHandDiscardScaledBoost {
   kind: "handDiscard";
   /** The printed "up to N" ceiling on the hand discard. */
   cap: number;
@@ -10452,7 +8235,7 @@ export interface AttackHandDiscardScaledBoost {
  * before the hit so the attached Energy is counted in one §8.5 pass; attack.ts passes the
  * declaration-time multiplier as `base`, not the printed number.
  */
-export interface AttackSelfHandAttachScaledBoost {
+interface AttackSelfHandAttachScaledBoost {
   kind: "selfHandAttach";
   /** The printed per-Energy damage. */
   per: number;
@@ -10466,10 +8249,13 @@ export interface AttackSelfHandAttachScaledBoost {
 // nothing else — see the doc block above for why the type map is not admitted here.
 const BENCH_DISCARD_SCALED_BOOST =
   /^You may discard up to (\d+) (Basic )?Energy from your Benched Pokémon\. This attack does (\d+) more damage for each card you discarded in this way\.$/;
+
 const EACH_DECK_MILL_SCALED_BOOST =
   /^Discard the top card of each player['’]s deck\. This attack does (\d+) more damage for each Energy card discarded in this way\.$/;
+
 const SELF_HAND_ATTACH_SCALED =
   /^This attack does (\d+) damage for each \{W\} Energy attached to this Pokémon\. Before doing damage, you may attach any number of Basic \{W\} Energy cards from your hand to this Pokémon\.$/;
+
 const HAND_DISCARD_SCALED_BOOST =
   /^You may discard up to (\d+) Energy cards from your hand, and this attack does (\d+) more damage for each card you discarded in this way\.$/;
 
@@ -10616,6 +8402,49 @@ const ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN: BoardCondition = {
 };
 
 /**
+ * Takes a listed gate or cost clause off the front or the end of an attack's effect text and
+ * returns the clause and the remaining body, or `null` when the text carries none. `body` is `""`
+ * when the clause is the whole text. No reader's `^…$` anchor is relaxed: a whole sentence is
+ * removed at a sentence boundary and the readers run over the remainder whole. The caller must
+ * already enforce the clause through `attackGate`; otherwise dropping the sentence would silently
+ * lose it.
+ */
+export function splitAttackGateClause(
+  text: string,
+): { clause: AttackGateClause; body: string } | null {
+  const trimmed = text.trim();
+  // Refuse a string that carries listed clauses at both ends (or more than one), rather than guess
+  // which one the caller accounted for. Returning `null` keeps the whole text on the loud
+  // `ATTACK_EFFECT_SKIPPED` path instead of throwing.
+  const leadingHits = ATTACK_GATE_CLAUSES.filter(
+    (clause) => trimmed !== clause && trimmed.startsWith(`${clause} `),
+  );
+  const trailingHits = ATTACK_GATE_CLAUSES.filter(
+    (clause) => trimmed !== clause && trimmed.endsWith(` ${clause}`),
+  );
+  if (leadingHits.length + trailingHits.length > 1) return null;
+  for (const clause of ATTACK_GATE_CLAUSES) {
+    // A clause-only printing (e.g. Miltank) is a match with an empty body, not a miss; downstream
+    // treats `""` as no text. Checked before `startsWith` because a clause-only string has no
+    // trailing space to match.
+    if (trimmed === clause) return { clause, body: "" };
+    if (trimmed.startsWith(`${clause} `)) {
+      const body = trimmed.slice(clause.length + 1).trim();
+      // Whitespace-only behind the clause is the same answer as nothing behind it,
+      // by the branch above — the trim is what makes the two one case.
+      return { clause, body };
+    }
+    // Trailing clause (Sylveon ex "Angelite"). The leading space is part of the pattern so only a
+    // whole sentence after the previous period matches, not a mid-word suffix.
+    if (trimmed.endsWith(` ${clause}`)) {
+      const body = trimmed.slice(0, trimmed.length - clause.length - 1).trim();
+      return { clause, body };
+    }
+  }
+  return null;
+}
+
+/**
  * Each printed clause mapped to the gate it means. The two `If you go …` rows point in opposite
  * directions: the go-second row adds a restriction (`barredIf`), while the go-first row removes the
  * §4 first-turn attack ban (`firstTurnExempt`). Some rows are cost clauses (`alternateCostIf`,
@@ -10666,49 +8495,6 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
 };
 
 /**
- * Takes a listed gate or cost clause off the front or the end of an attack's effect text and
- * returns the clause and the remaining body, or `null` when the text carries none. `body` is `""`
- * when the clause is the whole text. No reader's `^…$` anchor is relaxed: a whole sentence is
- * removed at a sentence boundary and the readers run over the remainder whole. The caller must
- * already enforce the clause through `attackGate`; otherwise dropping the sentence would silently
- * lose it.
- */
-export function splitAttackGateClause(
-  text: string,
-): { clause: AttackGateClause; body: string } | null {
-  const trimmed = text.trim();
-  // Refuse a string that carries listed clauses at both ends (or more than one), rather than guess
-  // which one the caller accounted for. Returning `null` keeps the whole text on the loud
-  // `ATTACK_EFFECT_SKIPPED` path instead of throwing.
-  const leadingHits = ATTACK_GATE_CLAUSES.filter(
-    (clause) => trimmed !== clause && trimmed.startsWith(`${clause} `),
-  );
-  const trailingHits = ATTACK_GATE_CLAUSES.filter(
-    (clause) => trimmed !== clause && trimmed.endsWith(` ${clause}`),
-  );
-  if (leadingHits.length + trailingHits.length > 1) return null;
-  for (const clause of ATTACK_GATE_CLAUSES) {
-    // A clause-only printing (e.g. Miltank) is a match with an empty body, not a miss; downstream
-    // treats `""` as no text. Checked before `startsWith` because a clause-only string has no
-    // trailing space to match.
-    if (trimmed === clause) return { clause, body: "" };
-    if (trimmed.startsWith(`${clause} `)) {
-      const body = trimmed.slice(clause.length + 1).trim();
-      // Whitespace-only behind the clause is the same answer as nothing behind it,
-      // by the branch above — the trim is what makes the two one case.
-      return { clause, body };
-    }
-    // Trailing clause (Sylveon ex "Angelite"). The leading space is part of the pattern so only a
-    // whole sentence after the previous period matches, not a mid-word suffix.
-    if (trimmed.endsWith(` ${clause}`)) {
-      const body = trimmed.slice(0, trimmed.length - clause.length - 1).trim();
-      return { clause, body };
-    }
-  }
-  return null;
-}
-
-/**
  * The gate a printed clause in the attack text means, or `undefined` when it carries none; includes
  * cost clauses despite the name. The derived half of `attackGateOf`, which prefers the registry.
  * Deliberately not named `deriveAttack…`: that prefix marks whole-sentence readers returning `T |
@@ -10741,6 +8527,7 @@ const ATTACK_WHOLE_SENTENCE_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
 ];
+
 // `deriveAttackCopy` is deliberately absent: it returns no program, so admitting a compound whose
 // head is a copy sentence would hand the head to `deriveAttackEffect` and silently drop the copy.
 
@@ -10786,9 +8573,7 @@ export function splitAttackTrailingClause(text: string): { head: string; tail: s
  * which callers send to `ATTACK_EFFECT_SKIPPED`. The two nullish answers must not be collapsed: one
  * counts everything, the other must count nothing.
  */
-function attachedEnergyFilter(
-  token: string | undefined,
-): BasicEnergyType | "special" | "basic" | null | undefined {
+function attachedEnergyFilter(token: string | undefined): EnergyClass | null | undefined {
   return token === undefined ? null : literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
 }
 
@@ -10798,6 +8583,19 @@ function attachedEnergyFilter(
 function statusOf(word: string | undefined): StatusName {
   return STATUS_OF_WORD[(word ?? "Asleep") as StatusWord];
 }
+
+/**
+ * Which `SpecialConditions` field each status word writes. Asleep, Paralyzed and Confused share one
+ * field, so applying two of them would overwrite; `defenderStatusOps` uses this to refuse such
+ * combinations.
+ */
+const CONDITION_SLOT: Record<StatusName, keyof SpecialConditions> = {
+  asleep: "rotation",
+  paralyzed: "rotation",
+  confused: "rotation",
+  poisoned: "poisonDamage",
+  burned: "burned",
+};
 
 /**
  * The printed status words as `applyStatus` ops in printed order, or `null` when two of them share
@@ -10880,67 +8678,12 @@ export function deriveAttackPreDamage(text: string): AttackPreDamage | null {
   return null;
 }
 
-// Copy-attack sentences ("…and use it as this attack."), each anchored whole. This reader returns
-// no program: the sentence replaces the attack, and attack.ts re-enters `attack()` with the copied
-// attack's damage, text and gate while the copier keeps its name, type, cost and
-// Weakness/Resistance. Copied text still reports `ATTACK_EFFECT_SKIPPED` when unbuilt, and a copied
-// gate clause is enforced for the copier.
-const ATTACK_COPY_OPPONENT_ACTIVE =
-  /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
-const ATTACK_COPY_OPPONENT_ACTIVE_TERA =
-  /^Choose 1 of your opponent['’]s Active Tera Pokémon['’]s attacks and use it as this attack\.$/;
-const ATTACK_COPY_BENCHED_N =
-  /^Choose 1 of your Benched N['’]s Pokémon['’]s attacks and use it as this attack\.$/;
-const ATTACK_COPY_FLIP_OPPONENT_ACTIVE =
-  /^Flip a coin\. If heads, choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
-// Haughty Order and Seek Inspiration: the copy is chosen after the reveal or mill, mid-attack.
-const ATTACK_COPY_OPPONENT_DECK_TOP =
-  /^Reveal the top 10 cards of your opponent['’]s deck\. You may choose an attack from a Pokémon you find there and use it as this attack\. Shuffle the revealed cards into your opponent['’]s deck\.$/;
-const ATTACK_COPY_OWN_DECK_TOP_MILL =
-  /^Discard the top card of your deck, and if that card is a Pokémon that doesn['’]t have a Rule Box, choose 1 of its attacks and use it as this attack\. \(Pokémon ex, Pokémon V, etc\. have Rule Boxes\.\)$/;
-// Thievul "Skill Thief".
-const ATTACK_COPY_OPPONENT_IN_PLAY_EMPTY_HAND =
-  /^If you have no cards in your hand, choose an attack from 1 of your opponent['’]s Pokémon in play and use it as this attack\.$/;
-
 /**
  * The phrase every copy-family sentence prints. attack.ts drops any candidate attack carrying it,
  * so a copy can never copy a copy. Deliberately the bare phrase rather than the anchors, so every
  * family member is excluded.
  */
 export const COPY_FAMILY_MARKER = /use it as this attack/;
-
-/**
- * Where the copied attack comes from. `opponentActiveTera` requires the opponent's Active to be a
- * Tera Pokémon; `benchOwner` is the attacker's own Benched `<owner>'s Pokémon`. `flip` is Try to
- * Imitate's coin, taken after the choice.
- */
-export interface AttackCopy {
-  from: "opponentActive" | "opponentActiveTera" | "benchOwner";
-  /** The printed owner prefix, `benchOwner` only ("N"). */
-  owner?: "N";
-  flip?: true;
-}
-
-/**
- * Copy kinds whose source is found while the attack resolves, so the choice comes after the reveal
- * or mill. `opponentDeckTop`: reveal the opponent's top 10, optionally copy an attack from a
- * Pokémon there, then shuffle them back. `ownDeckTopMill`: discard the top card; only a Pokémon
- * without a Rule Box offers its attacks, and the choice is mandatory. Separate from `AttackCopy` so
- * the persisted `useAttackAs.from` keeps its three members.
- */
-export type ResolvedAttackCopy =
-  | { from: "opponentDeckTop"; count: 10; may: true }
-  | { from: "ownDeckTopMill"; count: 1 };
-
-/**
- * Skill Thief: every Pokémon the opponent has in play (Active first, then the Bench in order) is a
- * source, only while the copier's controller has no cards in hand at declaration. Separate type so
- * the persisted `useAttackAs.from` keeps its three members.
- */
-export interface InPlayAttackCopy {
-  from: "opponentInPlay";
-  ifEmptyHand: true;
-}
 
 export function isInPlayAttackCopy(
   copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy,
@@ -10954,6 +8697,34 @@ export function isResolvedAttackCopy(
 ): copy is ResolvedAttackCopy {
   return copy.from === "opponentDeckTop" || copy.from === "ownDeckTopMill";
 }
+
+// Copy-attack sentences ("…and use it as this attack."), each anchored whole. This reader returns
+// no program: the sentence replaces the attack, and attack.ts re-enters `attack()` with the copied
+// attack's damage, text and gate while the copier keeps its name, type, cost and
+// Weakness/Resistance. Copied text still reports `ATTACK_EFFECT_SKIPPED` when unbuilt, and a copied
+// gate clause is enforced for the copier.
+const ATTACK_COPY_OPPONENT_ACTIVE =
+  /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
+
+const ATTACK_COPY_OPPONENT_ACTIVE_TERA =
+  /^Choose 1 of your opponent['’]s Active Tera Pokémon['’]s attacks and use it as this attack\.$/;
+
+const ATTACK_COPY_BENCHED_N =
+  /^Choose 1 of your Benched N['’]s Pokémon['’]s attacks and use it as this attack\.$/;
+
+const ATTACK_COPY_FLIP_OPPONENT_ACTIVE =
+  /^Flip a coin\. If heads, choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
+
+// Haughty Order and Seek Inspiration: the copy is chosen after the reveal or mill, mid-attack.
+const ATTACK_COPY_OPPONENT_DECK_TOP =
+  /^Reveal the top 10 cards of your opponent['’]s deck\. You may choose an attack from a Pokémon you find there and use it as this attack\. Shuffle the revealed cards into your opponent['’]s deck\.$/;
+
+const ATTACK_COPY_OWN_DECK_TOP_MILL =
+  /^Discard the top card of your deck, and if that card is a Pokémon that doesn['’]t have a Rule Box, choose 1 of its attacks and use it as this attack\. \(Pokémon ex, Pokémon V, etc\. have Rule Boxes\.\)$/;
+
+// Thievul "Skill Thief".
+const ATTACK_COPY_OPPONENT_IN_PLAY_EMPTY_HAND =
+  /^If you have no cards in your hand, choose an attack from 1 of your opponent['’]s Pokémon in play and use it as this attack\.$/;
 
 /** The copy-attack reader: the whole-sentence anchors above, `null` for every other string. */
 export function deriveAttackCopy(

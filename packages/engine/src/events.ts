@@ -1,6 +1,6 @@
 import type { DamageModifier } from "./cards";
 import type { Banner } from "./banners";
-import type { AttackerClass, CardFilter, PokemonType, StampedPlayLockKey } from "./effects";
+import type { AttackerClass, CardFilter, PokemonType, StampedPlayLockKey } from "./effectTypes";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, ScheduledEffect, Seat } from "./types";
 

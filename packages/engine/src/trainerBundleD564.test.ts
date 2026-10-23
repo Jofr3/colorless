@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { BoardCondition } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -18,6 +18,9 @@ import {
   trainerCard,
   must,
   mustApply as run,
+  ensureInDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -135,50 +138,8 @@ function refused(state: GameState, action: GameAction): { code: string; message:
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-/** TEST SURGERY — one copy of `id` into `seat`'s DECK (back from the hand, or swapped out
-    of the Prizes for the deck's bottom card). Every uid stays in exactly one zone. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
 }
 
 /** p1's turn 2: p1 `active` + `bench`, p2 `oppActive` + `oppBench`. */
@@ -885,11 +846,11 @@ describe("§8 — the online offer follows the gate (redact.ts), term for term w
 describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 → 36)", () => {
   it("both allowance keys round-trip through JSON and still act", () => {
     const amarys = play(table(), AMARYS[0], [FILLER]).state;
-    const revivedAmarys = JSON.parse(JSON.stringify(amarys)) as GameState;
+    const revivedAmarys = roundTrip(amarys);
     expect(revivedAmarys.allowances.endOfTurnHandDiscard).toBe(5);
     expect(endTurn(revivedAmarys).state.players.p1.hand).toEqual([]);
     const licensed = play(withStadium(table(), FACTORY), ARIANA).state;
-    const revived = JSON.parse(JSON.stringify(licensed)) as GameState;
+    const revived = roundTrip(licensed);
     expect(revived.allowances.supporterPlayedUid).toBe(licensed.allowances.supporterPlayedUid);
     expect(drawn(useStadium(revived).events)).toEqual([2]);
   });
@@ -897,18 +858,14 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
   it("(i) A v35 ROLLBACK resuming a v36 record mid-turn DROPS a pending Amarys discard and a Factory licence — NOT inert", () => {
     // A v35 engine never reads either key, which is this engine with the key at its
     // fresh value: the Supporter is spent (`supporterPlayed` true) and its effect is gone.
-    const amarys = JSON.parse(
-      JSON.stringify(play(table(), AMARYS[0], [FILLER]).state),
-    ) as GameState;
+    const amarys = roundTrip(play(table(), AMARYS[0], [FILLER]).state);
     const rolledAmarys: GameState = {
       ...amarys,
       allowances: { ...amarys.allowances, endOfTurnHandDiscard: null },
     };
     expect(rolledAmarys.allowances.supporterPlayed).toBe(true);
     expect(endTurn(rolledAmarys).state.players.p1.hand).toHaveLength(5);
-    const licensed = JSON.parse(
-      JSON.stringify(play(withStadium(table(), FACTORY), ARIANA).state),
-    ) as GameState;
+    const licensed = roundTrip(play(withStadium(table(), FACTORY), ARIANA).state);
     const rolledLicence: GameState = {
       ...licensed,
       allowances: { ...licensed.allowances, supporterPlayedUid: null },

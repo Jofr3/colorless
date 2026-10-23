@@ -11,6 +11,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -404,12 +405,12 @@ describe("§6 — persistence, purity, and the property the export did not cost"
         IDX.shed,
       ],
     ] as [string, GameState, number][]) {
-      const rehydrated = JSON.parse(JSON.stringify(start)) as GameState;
+      const rehydrated = roundTrip(start);
       const live = swing(start, index);
       const replayed = swing(rehydrated, index);
       expect(JSON.stringify(replayed.events), label).toBe(JSON.stringify(live.events));
       expect(JSON.stringify(replayed.state), label).toBe(JSON.stringify(live.state));
-      const after = JSON.parse(JSON.stringify(live.state)) as GameState;
+      const after = roundTrip(live.state);
       expect(JSON.stringify(after), label).toBe(JSON.stringify(live.state));
     }
   });

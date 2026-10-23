@@ -24,7 +24,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { AttackOptionalCostBoost } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -35,11 +35,12 @@ import {
   battler,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -149,34 +150,11 @@ const ENERGY_TO_HAND_DECK = deckOf({
 const SEED = 11;
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
+  return driveSetup(
     seed,
-    decks: { p1: ENERGY_TO_HAND_DECK, p2: ENERGY_TO_HAND_DECK },
-    cardPool: ENERGY_TO_HAND_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+    { p1: ENERGY_TO_HAND_DECK, p2: ENERGY_TO_HAND_DECK },
+    { pool: ENERGY_TO_HAND_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 type Board = {
@@ -254,7 +232,7 @@ describe("D524 §1 — the printed row derives to EXACTLY D405's op at `all` beh
     expect(Object.keys(got.ops[0] ?? {}).sort()).toEqual(["count", "filter", "from", "op", "to"]);
     expect(got.cond).toEqual(GATE);
     expect(got.payoff).toEqual({ kind: "moreDamage", bonus: 80 });
-    const [d405] = deriveAttackEffect(D405_TAKEN) as EffectOp[];
+    const [d405] = mustDerive(deriveAttackEffect, D405_TAKEN);
     expect(got.ops[0]).toEqual({ ...d405, count: "all" });
   });
 
@@ -603,12 +581,12 @@ describe("D524 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes — the reading and the program round-trip unchanged, and the park is D381's shipped confirm", () => {
-    expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
+    expect(roundTrip(READING)).toEqual(READING);
     const program = optionalCostBoostProgram(READING, BASE, PRINTED);
-    expect(JSON.parse(JSON.stringify(program))).toEqual(program);
+    expect(roundTrip(program)).toEqual(program);
     const { after } = swing();
     const prompt = confirmPrompt(after);
-    expect(JSON.parse(JSON.stringify(prompt))).toEqual(prompt);
+    expect(roundTrip(prompt)).toEqual(prompt);
   });
 
   it("the demonstrator is FILE-LOCAL — zero `FIXTURE_POOL` ids, the deck is 60, the Energy are the shared pool's Colorless Basic and unauthored Special", () => {

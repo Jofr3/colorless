@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -20,6 +20,9 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  unprize,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koToolTriggersOf } from "./triggers";
 
@@ -191,28 +194,7 @@ const BOARD_IDS = Object.keys(LOCAL)
 
 /** Setup, then P1's own SECOND turn (P2 went first; every turn passed); both hands back into the decks. */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 6260, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6260, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -226,26 +208,11 @@ function p1Turn(): GameState {
   return state;
 }
 
-/** TEST SURGERY — every Prize whose id is a board id swapped with a SPARE from the deck. */
-function unprize(state: GameState, seat: Seat): GameState {
-  const side = state.players[seat];
-  const kept = new Set(BOARD_IDS);
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!kept.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !kept.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
-}
-
 /** P1's Active is `attacker` (one {C} attached) over a FILLER; P2's Active is `defender` over `bench`. */
 function table(attacker: string, defender: string, bench: readonly string[] = [FILLER]): GameState {
   let state = p1Turn();
   for (const s of ["p1", "p2"] as const)
-    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s, BOARD_IDS);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   state = benchFromDeck(attachFromDeck(state, "p1", E, 1), "p1", FILLER);
   state = clearBench(setActiveFromDeck(state, "p2", defender), "p2");
@@ -331,11 +298,10 @@ describe("D626 §1 — the texts and the registry rows", () => {
     for (const id of FLYGON) {
       expect(programFor(id), id).toEqual({
         triggered: [
-          { name: "Sandy Flapping", trigger: "onEvolve", optional: true, program: confirm },
+          { name: "Sandy Flapping", trigger: "onEvolve", program: confirm },
           {
             name: "Sandy Flapping",
             trigger: "onKnockOut",
-            optional: true,
             activeOnly: true,
             byOpponentAttack: true,
             program: confirm,
@@ -478,7 +444,7 @@ describe("D626 §3 — Sandy Flapping, the Knock Out half: Active, by an opponen
       seat: "p1",
       prizeIndices: [0],
     }).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const deck = revived.players.p1.deck;
     expect(resolve(revived, { kind: "confirm", yes: true }).state.players.p1.deck).toEqual(
       deck.slice(2),
@@ -619,9 +585,7 @@ describe("D626 §4 — Photon Cord: the Ability twin of Heavy Baton, before the 
   });
 
   it("the parked move round-trips through JSON (no new park shape)", () => {
-    const parked = JSON.parse(
-      JSON.stringify(mustApply(miraidon(), attack(CRUSH)).state),
-    ) as GameState;
+    const parked = roundTrip(mustApply(miraidon(), attack(CRUSH)).state);
     const [a] = (parked.players.p2.active?.energy ?? []).filter(
       (u) => parked.cardIdByUid[u] === L,
     ) as [string];

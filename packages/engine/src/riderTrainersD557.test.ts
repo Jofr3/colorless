@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import type { BoardCondition, CardFilter } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -27,6 +27,9 @@ import {
   types,
   must,
   effectPrompt,
+  ensureInDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const MORTY = ["sv05-155", "sv05-201", "sv05-211"] as const;
@@ -127,50 +130,8 @@ const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-/** TEST SURGERY — one copy of `id` into `seat`'s DECK (back from the hand, or swapped out
-    of the Prizes for the deck's bottom card). Every uid stays in exactly one zone. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
 }
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
@@ -444,7 +405,7 @@ describe("D557 §2 — Morty's Conviction: `drawCards.per` reads the OPPONENT's 
     expect(parked.phase.cont.rest).toEqual([
       { op: "drawCards", count: 1, per: { kind: "opponentBenchCount" } },
     ]);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const tool = before.players.p1.hand.find((u) => before.cardIdByUid[u] === TOOL) as string;
     const resumed = mustApply(revived, cards([tool]));
@@ -904,7 +865,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
 
   it("`MATCH_RECORD_VERSION` holds: the parked op round-trips through JSON and resolves identically", () => {
     const parked = play(tooled(), SCRAPPER).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const p = effectPrompt(parked);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
     const answer: GameAction = {

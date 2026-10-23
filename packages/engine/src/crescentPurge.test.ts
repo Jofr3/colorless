@@ -9,12 +9,11 @@ import {
   optionalCostBoostProgram,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -22,10 +21,10 @@ import {
   clearBench,
   deckOf,
   expectErr,
-  must,
   mustApply,
   setActiveFromDeck,
   setPrizes,
+  driveSetup,
 } from "./testFixtures";
 
 const SENTENCE =
@@ -68,15 +67,7 @@ function all<T extends GameEvent["type"]>(
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: PURGE_DECK, p2: PURGE_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: PURGE_DECK, p2: PURGE_DECK }, { pool: POOL, first: "p1" });
 }
 
 function stackPrizes(state: GameState, seat: Seat, ids: readonly string[]): GameState {

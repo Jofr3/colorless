@@ -23,7 +23,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -33,7 +33,6 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -41,6 +40,9 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   types,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -153,34 +155,11 @@ const GATED_SPREAD_DECK = deckOf({
 const SEED = 11;
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
+  return driveSetup(
     seed,
-    decks: { p1: GATED_SPREAD_DECK, p2: GATED_SPREAD_DECK },
-    cardPool: GATED_SPREAD_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+    { p1: GATED_SPREAD_DECK, p2: GATED_SPREAD_DECK },
+    { pool: GATED_SPREAD_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 /** Put a Beach Court into `seat`'s hand and play it — `stadiumPresence.test.ts`'s idiom. The
@@ -256,7 +235,7 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
   });
 
   it("the gate's sorted KEY SET is exactly [cond, op, then] — no `otherwise` (D135), and the spread carries no `damagedOnly` (D507's rider is not printed)", () => {
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
     expect(Object.keys(gate).sort()).toEqual(["cond", "op", "then"]);
     expect(gate.otherwise).toBeUndefined();
@@ -269,14 +248,14 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
   });
 
   it("the `then` is BYTE-EQUAL to the two bare halves' OWN derivations, concatenated in printed order (measured, not quoted)", () => {
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
     const spread = deriveAttackEffect(BARE_SPREAD);
     const discard = deriveAttackEffect(BARE_DISCARD);
     expect(spread).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 30 }]);
     expect(discard).toEqual([{ op: "discardStadium" }]);
     expect(gate.then).toEqual([...(spread as EffectOp[]), ...(discard as EffectOp[])]);
-    const may = (deriveAttackEffect("You may discard a Stadium in play.") as EffectOp[])[0];
+    const may = mustDerive(deriveAttackEffect, "You may discard a Stadium in play.")[0];
     if (may?.op !== "conditionGate") throw new Error("arm 43's op 0 is not a conditionGate");
     expect(gate.cond).toEqual(may.cond);
     expect(gate.cond).toEqual({ kind: "stadiumInPlay" });
@@ -620,7 +599,7 @@ describe("D522 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, neither op parks, the gate is spliced", () => {
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // The declaration never parks: no board above ended in `effect:choose`.
     for (const board of [{}, { stadium: false }, { oppBench: [] }] as const) {
       expect(swing(board).after.phase.kind).not.toBe("effect:choose");

@@ -2,7 +2,7 @@ import type { Card, SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { prizeValueOf } from "./cards";
 import { deriveAttackEffect } from "./effects";
-import type { BoardCondition, EffectOp } from "./effects";
+import type { BoardCondition } from "./effects";
 import { applyAction, attackLocked, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   setConditions,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const EISCUE_TEXT =
@@ -157,19 +158,19 @@ describe("the opponent-side lock — derived, not authored", () => {
   });
 
   it("the gated `then` is byte-identical to the compound's SECOND op", () => {
-    const gated = deriveAttackEffect(HOUNDOOM_TEXT) as EffectOp[];
+    const gated = mustDerive(deriveAttackEffect, HOUNDOOM_TEXT);
     const gate = gated[0];
     if (gate?.op !== "conditionGate") throw new Error("expected a conditionGate");
-    const compound = deriveAttackEffect(EISCUE_TEXT) as EffectOp[];
+    const compound = mustDerive(deriveAttackEffect, EISCUE_TEXT);
     expect(gate.then).toEqual([compound[1]]);
     expect(Object.keys(gate)).toEqual(["op", "cond", "then"]);
   });
 
   it("the DEFENDER arm and the SELF arm are two different programs", () => {
     expect(deriveAttackEffect(SELF_TEXT)).toEqual([{ op: "preventAttack" }]);
-    const selfOp = (deriveAttackEffect(SELF_TEXT) as EffectOp[])[0] as object;
+    const selfOp = mustDerive(deriveAttackEffect, SELF_TEXT)[0] as object;
     expect(Object.keys(selfOp)).toEqual(["op"]);
-    const defenderOp = (deriveAttackEffect(EISCUE_TEXT) as EffectOp[])[1] as object;
+    const defenderOp = mustDerive(deriveAttackEffect, EISCUE_TEXT)[1] as object;
     expect(Object.keys(defenderOp)).toEqual(["op", "target"]);
     expect(defenderOp).not.toEqual(selfOp);
   });
@@ -179,7 +180,7 @@ describe("the opponent-side lock — derived, not authored", () => {
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
     ]);
     expect(deriveAttackEffect(EISCUE_TEXT)).not.toEqual(deriveAttackEffect(DISCARD_HALF_ONLY));
-    const compoundOps = deriveAttackEffect(EISCUE_TEXT) as EffectOp[];
+    const compoundOps = mustDerive(deriveAttackEffect, EISCUE_TEXT);
     expect(
       deriveAttackEffect("During your opponent's next turn, the Defending Pokémon can't attack."),
     ).toEqual([compoundOps[1]]);

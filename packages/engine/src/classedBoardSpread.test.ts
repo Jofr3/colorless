@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effectsModule from "./effects";
 import { deriveAttackDamageMultiplier, deriveAttackEffect } from "./effects";
-import { applyAction, createGame } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -14,10 +13,11 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const SPREAD_SEED = 492_0492;
@@ -112,34 +112,11 @@ const SPREAD_DECK = deckOf({
 });
 
 function openSpreadTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SPREAD_SEED,
-    decks: { p1: SPREAD_DECK, p2: SPREAD_DECK },
-    cardPool: SPREAD_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  return driveSetup(
+    SPREAD_SEED,
+    { p1: SPREAD_DECK, p2: SPREAD_DECK },
+    { pool: SPREAD_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 /** p1 owns TURN 2 with the Sniper Active. BOTH benches are cleared before anything is
@@ -408,7 +385,7 @@ describe("D492 §2 — one op, exactly these bytes", () => {
   });
 
   it("the filter values are the SHIPPED map's, byte for byte — one noun, one answer", () => {
-    const spread = deriveAttackEffect(EX_V_100) as EffectOp[];
+    const spread = mustDerive(deriveAttackEffect, EX_V_100);
     const hit = spread[0];
     if (hit?.op !== "damageChosen") throw new Error("expected a damageChosen");
     const counted = deriveAttackDamageMultiplier(FOR_EACH_EX_V_60);
@@ -417,7 +394,7 @@ describe("D492 §2 — one op, exactly these bytes", () => {
     expect(countSource.kind).toBe("pokemonInPlay");
     expect(hit.filter).toEqual(countSource.filter);
     // …and the same for the singleton noun.
-    const exSpread = deriveAttackEffect(EX_60) as EffectOp[];
+    const exSpread = mustDerive(deriveAttackEffect, EX_60);
     const exHit = exSpread[0];
     if (exHit?.op !== "damageChosen") throw new Error("expected a damageChosen");
     const exCounted = deriveAttackDamageMultiplier(FOR_EACH_EX_60);
@@ -666,7 +643,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
   } as unknown as EffectOp;
 
   it("the two ops differ in exactly ONE key, which is what makes this a claim about the quantifier ( D622 (D539): and in `wrOnly`, which no v29 writer wrote)", () => {
-    const derived = (deriveAttackEffect(EX_V_100) as EffectOp[])[0];
+    const derived = mustDerive(deriveAttackEffect, EX_V_100)[0];
     if (derived === undefined) throw new Error("expected a program");
     const differing = Object.keys(derived).filter(
       (k) =>
@@ -675,7 +652,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
     );
     expect(differing).toEqual(["count", "wrOnly"]);
     // The v29 bytes survive a JSON round trip unchanged — this is what a record holds.
-    expect(JSON.parse(JSON.stringify(V29_SNIPE))).toEqual(V29_SNIPE);
+    expect(roundTrip(V29_SNIPE)).toEqual(V29_SNIPE);
   });
 
   it("a v29 `count: 1` over the SAME board still asks for ONE and PARKS", () => {
@@ -691,7 +668,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
   it("and the NEW byte on the SAME board answers differently — the control for both", () => {
     const state = spreadTable("d492-wall-ex", MIXED_BENCH);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(EX_V_100) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, EX_V_100), ctx, events);
     expect(run.kind).toBe("done");
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([100, 100, 100, 0, 100]);

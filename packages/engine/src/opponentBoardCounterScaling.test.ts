@@ -7,7 +7,7 @@ import {
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
 } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -16,13 +16,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,28 +87,7 @@ const PLAIN = 3;
 const SEED = 7;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 function bare(by: Seat = "p1"): GameState {
@@ -484,7 +464,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   it("DIRECTION 2 — a v29 record round-trips and the NEXT swing reads the same", () => {
     const first = swing(mixed(), BOARD);
     expect(findEvent(first.events, "DAMAGE_DEALT")?.dealt).toBe(100);
-    const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
+    const saved = roundTrip(first.state);
     expect(saved).toEqual(first.state);
     // …and the parsed record is a LIVE board: hand the turn back and swing the same
     // clause off the bytes that came out of `JSON.parse`. The defender is now on 150,

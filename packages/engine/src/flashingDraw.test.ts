@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, programFor, programPlayable } from "./index";
+import { applyAction, programFor, programPlayable } from "./index";
 import type { EffectOp, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -11,12 +11,11 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const FLASHING_DRAW_IDS = ["svp-182", "sv09-055", "sv09-163"] as const;
@@ -60,31 +59,8 @@ const useFlashingDrawFromBench = {
   abilityName: "Flashing Draw",
 } as const;
 
-/** `driveSetup` against the LOCAL pool — `testFixtures.ts`'s own closes over
-    `FIXTURE_POOL`, and `createGame` takes its `cardPool` as a PARAMETER. */
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** Setup, then open P1's turn (P2 went first and passed). */

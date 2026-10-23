@@ -7,7 +7,7 @@ import * as effects from "./effects";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -19,13 +19,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
   mustApply,
   setActiveFromDeck,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { WeaknessRetype } from "./types";
 
@@ -127,28 +128,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 /** P1's turn 3: P1 fields the marker with two Energy; P2 fields `defender` with one
@@ -549,7 +529,7 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
   });
 
   it("v33-SHAPED body (the key genuinely ABSENT): the first main hit THROWS (D326)", () => {
-    const revived = JSON.parse(JSON.stringify(inWindow(installed().state))) as GameState;
+    const revived = roundTrip(inWindow(installed().state));
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v33 record looks like (D124).
     delete target.weaknessRetype;
@@ -561,7 +541,7 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
 
   it("…and a ROLLBACK (v33) reading a v34 record DROPS the live retype: the {C} hit pays the printed 50", () => {
     const window = inWindow(installed().state);
-    const revived = JSON.parse(JSON.stringify(window)) as GameState;
+    const revived = roundTrip(window);
     const record = body(revived.players.p2.active).weaknessRetype as WeaknessRetype;
     expect(record).toEqual({ turn: 5, type: "Colorless" });
     const v33 = weaknessOf(LOCAL_CARDS["d552-marker"] as Card, LOCAL_CARDS["d552-wall"] as Card);

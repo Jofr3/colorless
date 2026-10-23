@@ -54,16 +54,16 @@ import {
   providedEnergy,
   retreatLocked,
 } from "./continuous";
-import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
+import type { DiscardScope, EffectPrompt, PokemonRef } from "./effectPrompt";
 import {
   attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
   conditionHolds,
   conditionNote,
-  handCostAction,
-  handCostUnmet,
-} from "./interpreter";
+} from "./boardCondition";
+import { handCostAction } from "./promptText";
+import { handCostUnmet } from "./ops/cards";
 import { inSetup, phaseViewOf } from "./phaseView";
 import { discardableTargets, evolutionTargetUids } from "./turn";
 import { programFor } from "./registry";
@@ -76,7 +76,7 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { isImmobilized, otherSeat } from "./types";
+import { answererOf, bodyAt, isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state.
@@ -179,7 +179,7 @@ function redactedPromptOf(
   phase: Extract<Phase, { kind: "effect:choose" }>,
   viewerSeat: Seat,
 ): RedactedEffectPrompt | null {
-  const answerer = phase.answerer ?? phase.seat;
+  const answerer = answererOf(phase);
   if (answerer !== viewerSeat) return null;
   const prompt = redactPrompt(state, phase.prompt);
   const op = phase.cont.pendingOp;
@@ -790,9 +790,8 @@ function redactedDiscardableOf(
   if (viewerSeat !== turnSeat) return [];
   const side = state.players[viewerSeat];
   return discardableTargets(state, viewerSeat).map((target) => {
-    const body = target.spot === "active" ? side.active : side.bench[target.index];
-    const name =
-      (body === null || body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
+    const body = bodyAt(side, target);
+    const name = (body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
     const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
     return {
       target:

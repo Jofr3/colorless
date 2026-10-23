@@ -16,7 +16,7 @@ import {
 import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import { briarPrizeBonus } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
@@ -33,6 +33,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  driveSetup,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 import { koByEffectMarker } from "./types";
@@ -453,28 +454,7 @@ function rejected(state: GameState, action: GameAction): string {
 
 /** p2 went first and passed: p1's turn 2 — p1's FIRST turn. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -890,7 +870,6 @@ describe("§3 — the rows, exactly as authored", () => {
         {
           name: "Jewel Seeker",
           trigger: "onEvolve",
-          optional: true,
           program: [
             {
               op: "conditionGate",
@@ -1282,53 +1261,80 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     const state = briarBoard(CYCLIZAR, WEAK);
     const dying = bodyAt(state, "p2", "active");
     const attacker = topOf(bodyAt(state, "p1", "active"));
-    expect(briarPrizeBonus(state, "p1", dying, "p1", attacker, false)).toBe(1);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(1);
     // the mid-turn sweep (an Ability's counters) passes no attacker…
-    expect(briarPrizeBonus(state, "p1", dying, undefined, undefined, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: false,
+        attackerSeat: undefined,
+        attackerUid: undefined,
+      }),
+    ).toBe(0);
     // …the Checkup is refused…
-    expect(briarPrizeBonus(state, "p1", dying, "p1", attacker, true)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: true,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …a benched KO has no Active body to hand in…
-    expect(briarPrizeBonus(state, "p1", null, "p1", attacker, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", null, {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …a body doomed by an EFFECT (`knockOutDefender`) is not "by damage"…
     const doomed = { ...dying, markers: [...dying.markers, koByEffectMarker(state.turn)] };
-    expect(briarPrizeBonus(state, "p1", doomed, "p1", attacker, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", doomed, {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …the attack must be the TAKER's own ("used by YOUR Tera Pokémon"): the same Tera uid
     // handed in under the other seat is refused…
-    expect(briarPrizeBonus(state, "p1", dying, "p2", attacker, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: false,
+        attackerSeat: "p2",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …and the attacker's card is read off its UID, wherever it now stands: a benched Tera
     // body's uid pays (Flygon ex's switch-out, end to end above), a non-Tera one does not.
     const benched = briarBoard(FILLER, WEAK, { p1Bench: [CYCLIZAR] });
     expect(
-      briarPrizeBonus(
-        benched,
-        "p1",
-        bodyAt(benched, "p2", "active"),
-        "p1",
-        topOf(bodyAt(benched, "p1", 0)),
-        false,
-      ),
+      briarPrizeBonus(benched, "p1", bodyAt(benched, "p2", "active"), {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: topOf(bodyAt(benched, "p1", 0)),
+      }),
     ).toBe(1);
     expect(
-      briarPrizeBonus(
-        benched,
-        "p1",
-        bodyAt(benched, "p2", "active"),
-        "p1",
-        topOf(bodyAt(benched, "p1", "active")),
-        false,
-      ),
+      briarPrizeBonus(benched, "p1", bodyAt(benched, "p2", "active"), {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: topOf(bodyAt(benched, "p1", "active")),
+      }),
     ).toBe(0);
     // A non-Tera attacker in the same seat: nothing.
     const plain = briarBoard(STRIKER, WEAK);
     expect(
-      briarPrizeBonus(
-        plain,
-        "p1",
-        bodyAt(plain, "p2", "active"),
-        "p1",
-        topOf(bodyAt(plain, "p1", "active")),
-        false,
-      ),
+      briarPrizeBonus(plain, "p1", bodyAt(plain, "p2", "active"), {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: topOf(bodyAt(plain, "p1", "active")),
+      }),
     ).toBe(0);
   });
 });

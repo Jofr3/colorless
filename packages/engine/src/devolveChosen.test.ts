@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect } from "./effects";
-import { applyAction, createGame, programFor, redactGame } from "./index";
+import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -15,7 +15,6 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -25,6 +24,8 @@ import {
   setDamage,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -94,28 +95,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: CHOSEN_DECK, p2: CHOSEN_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: CHOSEN_DECK, p2: CHOSEN_DECK }, { pool: POOL, first });
 }
 
 function pass(state: GameState, seat: Seat): GameState {
@@ -776,7 +756,7 @@ describe("§10 — the persisted `pendingOp`, over the serialized bytes", () => 
   });
 
   it("DIRECTION 1 — the parked op survives a JSON round trip and resolves", () => {
-    // The whole board through `JSON.parse(JSON.stringify(...))`: what a `MatchRecord`
+    // The whole board through `roundTrip(...)`: what a `MatchRecord`
     // actually stores, rather than the in-memory object.
     const parkedState = strike(armed(81, { stages: 1, benchStages: 1 }), "p1", PICK).state;
     const bytes = JSON.stringify(parkedState);
@@ -816,7 +796,7 @@ describe("§10 — the persisted `pendingOp`, over the serialized bytes", () => 
     expect(Object.keys(active)).toContain("stack");
     expect(Object.keys(active)).toContain("markers");
     expect(Object.keys(active)).toContain("evolvedTurn");
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     const live = strike(before, "p1", PICK);
     const replayed = strike(revived, "p1", PICK);
     expect(types(replayed.events)).toEqual(types(live.events));

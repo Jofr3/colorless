@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import { BENCH_MAX } from "./types";
@@ -13,7 +13,7 @@ import {
   deckOf,
   handFromDeck,
   must,
-  firstBasicInHand,
+  driveSetup,
 } from "./testFixtures";
 
 const RIBOMBEE = "sv09-067";
@@ -91,28 +91,7 @@ function apply(
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** TEST SURGERY — put every card in `seat`'s hand back under their deck, so the
@@ -244,9 +223,6 @@ describe("D350 §1 — the registry row, read off the LIVE registry", () => {
     const triggered = program?.triggered?.[0];
     expect(triggered?.name).toBe("Inviting Wink");
     expect(triggered?.trigger).toBe("onEvolve");
-    // The printed "you MAY" lives on the trigger's own decline (GREEDY_ORDER's
-    // reading), not on an `optional` OP — a wrapper would be a second question.
-    expect(triggered?.optional).toBe(true);
     expect(triggered?.program).toHaveLength(1);
   });
 
@@ -465,11 +441,9 @@ describe("D350 §7 — the pool and the registry, asserted by id", () => {
     }
   });
 
-  it("the THREE ids are CONTIGUOUS and in order — a property of the ROW, permanent", () => {
+  it("every printing is a registry key", () => {
     const raw = registryCardIds();
-    const at = raw.indexOf(RIBOMBEE_IDS[0] as string);
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect(raw.slice(at, at + 3)).toEqual([...RIBOMBEE_IDS]);
+    for (const id of RIBOMBEE_IDS) expect(raw).toContain(id);
   });
 
   it("all THREE real ids are registry keys, and none of the four demonstrators is", () => {

@@ -26,7 +26,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { EffectContext, EffectContinuation, EffectPrompt, PokemonRef } from "./interpreter";
 import { attachEnergyTargets, attachSeat, runProgram } from "./interpreter";
@@ -41,11 +41,11 @@ import {
   clearBench,
   deckOf,
   discardFromDeck,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -170,35 +170,13 @@ const ATTACH_DECK = deckOf({
 const SEED = 7;
 
 function openTable(seed: number): GameState {
-  const created = createGame({
+  const state = driveSetup(
     seed,
-    decks: { p1: ATTACH_DECK, p2: ATTACH_DECK },
-    cardPool: ATTACH_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first: "p2" }),
+    { p1: ATTACH_DECK, p2: ATTACH_DECK },
+    { pool: ATTACH_POOL, first: "p2" },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
   // `p2` opens and passes, so `p1` attacks on a turn that carries no first-turn lock.
-  return mustApply(table, { type: "endTurn", seat: "p2" }).state;
+  return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
@@ -523,7 +501,7 @@ describe("D532 §3 — a new optional key on a PERSISTED op, and the record vers
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"attachEnergyFrom","source":"discard","anyEnergy":true,"declinable":true,"whose":"opponent"}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
     const dropped = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "whose" ? undefined : v)),
     ) as EffectOp;
@@ -912,7 +890,7 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
     expect(b.before).toEqual(a.before);
     expect(b.after).toEqual(a.after);
     expect(b.events).toEqual(a.events);
-    const persisted = JSON.parse(JSON.stringify(a.after)) as GameState;
+    const persisted = roundTrip(a.after);
     expect(persisted).toEqual(a.after);
     expect(JSON.stringify(persisted)).toBe(JSON.stringify(a.after));
     const [x] = pokemonPrompt(a.after).candidates;

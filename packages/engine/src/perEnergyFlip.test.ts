@@ -22,6 +22,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  headsIn,
 } from "./testFixtures";
 
 const CONCENTRATED_FIRE =
@@ -142,10 +143,6 @@ function foldFlips(state: number, count: number): [faces: CoinFace[], next: numb
     rng = next;
   }
   return [faces, rng];
-}
-
-function headsIn(events: GameEvent[]): number {
-  return all(events, "ATTACK_EFFECT_COIN_FLIP").filter((e) => e.result === "heads").length;
 }
 
 describe("the printed sentences — the fixture-text-verbatim guards", () => {

@@ -41,6 +41,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const REVEAL_TRAINER_SCALE =
@@ -703,7 +704,7 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
     // API and must still put the card under the opponent's deck.
     const state = board();
     const { state: parked } = swing(deepFreeze(state), 28);
-    const wire = JSON.parse(JSON.stringify(parked)) as GameState;
+    const wire = roundTrip(parked);
     if (wire.phase.kind !== "effect:choose") throw new Error("expected the pick park");
     expect(JSON.stringify(wire.phase.cont.pendingOp)).not.toContain('"dest"');
     const prompt = wire.phase.prompt;
@@ -721,7 +722,7 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   it("DIRECTION 2 — the NEW value round-trips and lands in the pile, not the deck", () => {
     const state = board();
     const { state: parked } = swing(deepFreeze(state), SNATCH);
-    const wire = JSON.parse(JSON.stringify(parked)) as GameState;
+    const wire = roundTrip(parked);
     expect(JSON.stringify(wire)).toContain('"dest":"discard"');
     if (wire.phase.kind !== "effect:choose") throw new Error("expected the pick park");
     const prompt = wire.phase.prompt;

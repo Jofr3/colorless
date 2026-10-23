@@ -1,27 +1,24 @@
 import { BASIC_ENERGY_TYPES } from "@colorless/schema";
 import type { Attack, Card } from "@colorless/schema";
-import type { ApplyResult } from "./actions";
+import type { Rejection } from "./actions";
 import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
 import { normalizedFace } from "./cardText";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
-// TYPE-ONLY, and it must stay that way: effects.ts imports no engine module at
-// runtime (only `import type { StatusName } from "./events"`), and events.ts in
-// turn imports `type { DamageModifier }` back from here — so the cycle
-// cards → effects → events → cards exists in the TYPE graph and is erased
-// wholesale by `import type`. A value import along any of those three edges
-// would make it a real one.
-import type { CardFilter } from "./effects";
+import type { CardFilter, PokemonSuffix } from "./effectTypes";
 import type { GameState, InPlayPokemon, Seat } from "./types";
+import { SEATS } from "./types";
+
+export type { PokemonSuffix };
 
 // The engine reads catalog data only through these accessors. An Antique Fossil uid in an in-play
 // stack reads as its synthesized 60-HP Basic {C} Pokémon face, and as the catalog Item elsewhere;
 // the fossil-id test runs first so other lookups pay one `Set.has`. Every face is read through the
 // markup normaliser, so a persisted raw face reads the same as a re-ingested one.
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
-  const id = state.cardIdByUid[uid];
+  const id = Object.hasOwn(state.cardIdByUid, uid) ? state.cardIdByUid[uid] : undefined;
   if (id === undefined) return undefined;
-  const pooled = state.cardPool[id];
+  const pooled = Object.hasOwn(state.cardPool, id) ? state.cardPool[id] : undefined;
   const card = pooled === undefined ? undefined : normalizedFace(pooled);
   if (card === undefined || !FOSSIL_IDS.has(id)) return card;
   return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;
@@ -32,7 +29,7 @@ export function cardOfUid(state: GameState, uid: string): Card | undefined {
  * stack cards.
  */
 function uidInPlayStack(state: GameState, uid: string): boolean {
-  for (const seat of ["p1", "p2"] as const) {
+  for (const seat of SEATS) {
     const side = state.players[seat];
     if (side.active?.stack.includes(uid) === true) return true;
     if (side.bench.some((body) => body.stack.includes(uid))) return true;
@@ -53,6 +50,13 @@ export function isFossilTop(state: GameState, pokemon: InPlayPokemon): boolean {
 /** `stage` uses the tcgdex vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
 export function isBasicPokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
+}
+
+export function handHasBasic(state: GameState, seat: Seat): boolean {
+  return state.players[seat].hand.some((uid) => {
+    const card = cardOfUid(state, uid);
+    return card !== undefined && isBasicPokemon(card);
+  });
 }
 
 /**
@@ -242,11 +246,9 @@ export function isMegaEvolutionPokemonEx(card: Card): boolean {
 }
 
 /**
- * The rule-box suffix of a Pokémon ("V", "VMAX", "VSTAR", "ex", "GX"), or null. Read from the card
- * name because ingest drops tcgdex's `suffix` field. Matched literally, so "V" does not match
- * "VMAX" or "VSTAR".
+ * The rule-box suffix of a Pokémon, or null. Read from the card name because ingest drops tcgdex's
+ * `suffix` field. Matched literally, so "V" does not match "VMAX" or "VSTAR".
  */
-export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX";
 export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   if (card.category !== "Pokemon") return null;
   const { name } = card;
@@ -667,7 +669,7 @@ export function activeTop(
  * The "a Basic Pokémon out of your own hand" check shared by the two setup placements and the
  * in-turn bench play (§3.6–§3.7, §5.2). Returns the rejection, or null when the play is legal.
  */
-export function basicFromHandError(state: GameState, seat: Seat, uid: string): ApplyResult | null {
+export function basicFromHandError(state: GameState, seat: Seat, uid: string): Rejection | null {
   if (!state.players[seat].hand.includes(uid)) {
     return err("CARD_NOT_IN_HAND", `${uid} is not in ${seat}'s hand`);
   }

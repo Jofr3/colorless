@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -482,7 +483,7 @@ describe("§7 — purity and the structural answers", () => {
 
     // DIRECTION 1 — FORWARD. Round-trip the PARKED board through JSON, which is what
     // persistence actually does to it, and resume from the bytes.
-    const persisted = JSON.parse(JSON.stringify(parked)) as GameState;
+    const persisted = roundTrip(parked);
     const live = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
@@ -511,7 +512,7 @@ describe("§7 — purity and the structural answers", () => {
       "rotation",
     ]);
 
-    const lossy = JSON.parse(JSON.stringify(parked)) as GameState;
+    const lossy = roundTrip(parked);
     const victim = lossy.players.p2.active;
     if (victim === undefined || victim === null) throw new Error("expected a defender");
     (victim as unknown as { conditions: { rotation: string } }).conditions.rotation = "none";

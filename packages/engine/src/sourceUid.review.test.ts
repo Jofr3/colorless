@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -350,7 +351,7 @@ describe("degenerate decks — D14 holds at both edges", () => {
     // path but exercises the empty-assignments arm on the revived object.
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const { state: parked } = useElectrogenesis(state, 0);
-    const wire = JSON.parse(JSON.stringify(parked)) as GameState;
+    const wire = roundTrip(parked);
     const direct = attach(parked, []);
     const viaWire = attach(wire, []);
     expect(viaWire.state).toEqual(direct.state);

@@ -3,11 +3,20 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter, topCardOf } from "./cards";
 import { effectiveTypesOf, inPlayCardOf, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, must, mustApply as run } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  must,
+  mustApply as run,
+  patchSide,
+  driveSetup,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const IRON_TREADS = "sv05-118";
@@ -101,37 +110,8 @@ const DECK = deckOf({
 });
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
 function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid: string } {
@@ -144,13 +124,13 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
     const swap = side.deck.find((u) => !is(u)) ?? "";
     return {
       uid,
-      state: withSide(state, seat, {
+      state: patchSide(state, seat, {
         prizes: side.prizes.map((u) => (u === uid ? swap : u)),
         deck: side.deck.filter((u) => u !== swap),
       }),
     };
   }
-  return { uid, state: withSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
+  return { uid, state: patchSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
 }
 
 interface Spot {
@@ -176,7 +156,7 @@ function table(opts: {
         : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -197,7 +177,7 @@ function table(opts: {
   for (const seat of ["p1", "p2"] as const) {
     const active = make(seat, seat === "p1" ? opts.p1 : opts.p2);
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : []).map((s) => make(seat, s));
-    state = withSide(state, seat, { active, bench });
+    state = patchSide(state, seat, { active, bench });
   }
   if (opts.stadium !== undefined) {
     const s = pull(state, "p2", opts.stadium);

@@ -11,9 +11,9 @@ import { runProgram } from "./interpreter";
 // here only as a type, so this value import creates no runtime cycle.
 import { phaseViewOf } from "./phaseView";
 import { programFor } from "./registry";
-import type { TriggeredAbility, TriggerTiming } from "./registry";
+import type { TriggeredAbility, TriggerTiming } from "./programTypes";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
-import { otherSeat } from "./types";
+import { inPlayOf, otherSeat, pokemonAt } from "./types";
 
 // Triggered Abilities (§9) fire on a game event rather than being activated. Board triggers
 // (onPlayToBench, onEvolve) run on the controller's own turn and settle through `settleProgram`, so
@@ -64,12 +64,6 @@ function triggersOf(
 /** The Pokémon at `target` on `seat`'s board, or undefined when the spot is
     empty / the bench index is out of range (wire indices are checked upstream,
     but stay total). */
-function pokemonAt(state: GameState, seat: Seat, target: PokemonTarget): InPlayPokemon | undefined {
-  const side = state.players[seat];
-  if (target.spot === "active") return side.active ?? undefined;
-  return side.bench[target.index];
-}
-
 /** Run the triggered Ability that fires when the actor's own Pokémon at
     `target` was just played to the Bench / evolved (§9), and fold the result to
     a phase. Returns ok(state) unchanged when nothing fires — the caller
@@ -104,7 +98,7 @@ export function runBoardTrigger(
       },
     };
   }
-  // Optional triggers auto-fire; a trigger with a downside carries its own confirm as an inner
+  // Triggers auto-fire; a printed "you may" with a downside carries its own confirm as an inner
   // `optional` op.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(
@@ -337,7 +331,7 @@ export function koToolTriggersOf(
     ability: TriggeredAbility;
     fromAbility?: true;
   }[] = [];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   for (const body of bodies) {
     const holderUid = topUid(body);
     if (holderUid === undefined) continue;

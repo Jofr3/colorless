@@ -11,15 +11,13 @@ import {
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { resumeProgram } from "./interpreter";
 import type { EffectChoice } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
-import type { CoinFace } from "./rng";
 import {
   FIXTURE_POOL,
   battler,
@@ -31,6 +29,9 @@ import {
   must,
   mustApply as run,
   effectPrompt,
+  driveSetup,
+  roundTrip,
+  withFaces,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -412,28 +413,7 @@ function refused(state: GameState, action: GameAction): { code: string; message:
 
 /** Setup with p2 going first; returns p1's turn 2 after p2 passed. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -559,24 +539,6 @@ function armed(
   oppBench: readonly string[] = [],
 ): GameState {
   return attach(table(copier, bench, oppActive, oppBench), "p1", "active", copierOf(copier).energy);
-}
-
-/** TEST SURGERY — the next `faces.length` coins come up as `faces`, by searching rngState (flipCoin is a pure step). */
-function withFaces(state: GameState, faces: readonly CoinFace[]): GameState {
-  for (let seed = state.rngState; seed < state.rngState + 100_000; seed += 1) {
-    let r = seed;
-    let ok = true;
-    for (const face of faces) {
-      const [drawn, nextR] = flipCoin(r);
-      if (drawn !== face) {
-        ok = false;
-        break;
-      }
-      r = nextR;
-    }
-    if (ok) return { ...state, rngState: seed };
-  }
-  throw new Error("no rngState found");
 }
 
 function all<T extends GameEvent["type"]>(
@@ -1276,7 +1238,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
 
   it("a JSON round-trip of the parked state resolves identically", () => {
     const parked = parkedBoard();
-    const revived = JSON.parse(JSON.stringify(parked.state)) as GameState;
+    const revived = roundTrip(parked.state);
     const direct = run(parked.state, pickAttack(1));
     const viaJson = run(revived, pickAttack(1));
     expect(JSON.stringify(viaJson.state)).toBe(JSON.stringify(direct.state));

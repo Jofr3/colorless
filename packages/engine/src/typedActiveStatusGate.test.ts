@@ -19,7 +19,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -28,10 +28,11 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,28 +183,7 @@ function every<T extends GameEvent["type"]>(
 }
 
 function localSetup(first: Seat): GameState {
-  const created = createGame({ seed: SEED, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(SEED, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 interface Table {
@@ -712,7 +692,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
       table({ swinger: "fix-d472-tideswing", foe: "fix-d472-drakefoe" }),
       DRAKE_LOCK,
     );
-    const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
+    const saved = roundTrip(first.state);
     expect(saved).toEqual(first.state);
     expect(conditionsOf(saved, "p2").rotation).toBe("paralyzed");
   });

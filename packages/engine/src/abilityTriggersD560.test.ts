@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -16,6 +16,8 @@ import {
   setConditions,
   setDamage,
   must,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const DRILBUR = "sv05-085";
@@ -191,28 +193,7 @@ const DECK = deckOf({
 /** Setup with p2 going first; p1's turn 2 after p2 passed — or, with `evolve`, p1's turn
     4 (§4: nobody evolves on their first turn). */
 function opened(seed: number, evolve = false): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (!evolve) return state;
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
@@ -332,7 +313,7 @@ function revived(state: GameState, stripLabels = false): GameState {
         .map(([key, inner]) => [key, strip(inner)]),
     );
   };
-  const copy = JSON.parse(JSON.stringify(state)) as GameState;
+  const copy = roundTrip(state);
   return (stripLabels ? { ...copy, phase: strip(copy.phase) } : copy) as GameState;
 }
 
@@ -373,20 +354,18 @@ describe("D560 §1 — the eleven registry rows: 17 printings, 11 objects, NO `a
     }
   });
 
-  it("MID-MAP: every id is keyed and `raw[last]` is still `sv09-107`", () => {
+  it("every id is keyed", () => {
     const keys = registryCardIds();
-    expect(keys[keys.length - 1]).toBe("sv09-107");
     for (const row of ROWS) for (const id of row.ids) expect(keys).toContain(id);
   });
 
   it("the triggered rows' timings, `optional` and Active-Spot clauses are the printed ones", () => {
     const t = (id: string) => programFor(id)?.triggered?.[0];
-    expect(t(DRILBUR)).toMatchObject({ trigger: "onPlayToBench", optional: true });
+    expect(t(DRILBUR)).toMatchObject({ trigger: "onPlayToBench" });
     expect(t(KOFFING_TR)).toMatchObject({ trigger: "onDamagedByAttack", activeOnly: true });
-    expect(t(KOFFING_TR)?.optional).toBeUndefined(); // no "you may" is printed
-    expect(t(WHIMSICOTT[0])).toMatchObject({ trigger: "onEvolve", optional: true });
-    expect(t(DACHSBUN[0])).toMatchObject({ trigger: "onEvolve", optional: true });
-    expect(t(INDEEDEE[0])).toMatchObject({ trigger: "onPlayToBench", optional: true });
+    expect(t(WHIMSICOTT[0])).toMatchObject({ trigger: "onEvolve" });
+    expect(t(DACHSBUN[0])).toMatchObject({ trigger: "onEvolve" });
+    expect(t(INDEEDEE[0])).toMatchObject({ trigger: "onPlayToBench" });
     expect(t(INDEEDEE[0])?.program).toEqual([
       { op: "heal", target: "self", amount: 30 },
       { op: "recoverOneStatus" },

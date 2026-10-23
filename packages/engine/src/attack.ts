@@ -5,6 +5,7 @@ import type {
   GameAction,
   PromoteAction,
   TakePrizesAction,
+  Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
 import {
@@ -111,14 +112,21 @@ import {
   splitAttackTrailingClause,
   splitAttackRequirementClause,
 } from "./effects";
+import type { AttackCopyOverride, BoardCondition } from "./effectTypes";
 import type {
+  AttackBonusConsequent,
   AttackCoinFlip,
+  AttackDamageSuppression,
+  AttackDiscardScaledBoost,
+  AttackOptionalBoost,
+  AttackOptionalCostBoost,
   AttackCopy,
   AttackDamageBonus,
   AttackFlipCount,
   AttackPreDamage,
   CardFilter,
   EffectOp,
+  OpOf,
   ResolvedAttackCopy,
 } from "./effects";
 import type { GameEvent } from "./events";
@@ -129,34 +137,40 @@ import {
   resolvePromotionAndResume,
   settleProgram,
 } from "./flow";
+import { applyStatus } from "./ops/locks";
 import {
-  applyStatus,
   attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
   attackTimingNote,
   attackerPreWRBonus,
-  coinRedoPrompt,
   conditionHolds,
   conditionNote,
   countCardsInDiscardPile,
   countCardsInHand,
   countPokemonInPlay,
+} from "./boardCondition";
+import {
+  coinRedoPrompt,
   consumeTools,
   consumedTools,
   detonateDeluxeBomb,
   discardToPile,
-  effectRefused,
-  runProgram,
-} from "./interpreter";
-import type { EffectChoice, EffectContext, EffectPrompt } from "./interpreter";
+} from "./ops/damage";
+import { effectRefused } from "./effectTargets";
+import { runProgram } from "./interpreter";
+import type { EffectChoice, EffectContext, EffectPrompt } from "./effectPrompt";
 import { programFor } from "./registry";
+import type { ParsedDamage } from "./cards";
+import type { AttackMenuEntry } from "./continuous";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS, shuffle } from "./rng";
 import type { CoinFace } from "./rng";
 import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {
+  damageCountersOn,
+  inPlayOf,
   attackDamageTakenLastTurn,
   isImmobilized,
   makeInPlay,
@@ -168,6 +182,8 @@ import {
   withAttackDamageTaken,
   withSide,
 } from "./types";
+
+export type { AttackCopyOverride };
 
 // The attack step (§8) and the two KO-resolution decisions it can park on (§8.1). Declaring an
 // attack ends the turn, except a first attack under Festival Lead with Festival Grounds in play,
@@ -239,9 +255,9 @@ function resolveDeclarationGates(
 }
 
 function scaledAttackDamage(
+  state: GameState,
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
-  state: GameState,
   defenderSeat: Seat,
   attackerSeat: Seat,
   cost: readonly string[],
@@ -250,7 +266,7 @@ function scaledAttackDamage(
     case "damageCountersOnSelf":
       // One damage counter = 10 HP (§12). `attacker` is the Active as of declaration, so an attack
       // cannot bootstrap the counters it scales off.
-      return Math.floor(attacker.damage / 10) * bonus.per;
+      return damageCountersOn(attacker) * bonus.per;
     case "opponentPrizesTaken":
       // Prizes the opponent has TAKEN (6 − their remaining pile, §8.1), read at
       // declaration before this attack's own KOs award any Prize.
@@ -280,7 +296,7 @@ function scaledAttackDamage(
       // Damage counters on the defending Active, read at declaration so this attack's own hit
       // cannot count; a missing Active cannot happen here, and 0 keeps the arm total.
       const defenderActive = state.players[defenderSeat].active;
-      return defenderActive === null ? 0 : Math.floor(defenderActive.damage / 10) * bonus.per;
+      return defenderActive === null ? 0 : damageCountersOn(defenderActive) * bonus.per;
     }
     case "specialConditionsOnOpponentActive": {
       // Counts Special Conditions via `presentStatuses`, not raw fields: `confusionDamage` is a
@@ -301,7 +317,7 @@ function scaledAttackDamage(
           (total, p) =>
             total +
             (p !== null && (filter === undefined || matchesFilter(inPlayCardOf(state, p), filter))
-              ? Math.floor(p.damage / 10)
+              ? damageCountersOn(p)
               : 0),
           0,
         ) * bonus.per
@@ -703,121 +719,38 @@ function applyAttackPreDamage(
   }
 }
 
-/**
- * §8: declare one attack with the Active Pokémon; resolving it ends the turn through the staged
- * tail, except a first attack under Festival Lead, which opens the attack-again window. The cost is
- * a check, not a payment (§8.2). `copied` is the copy-attack override, set only when this function
- * re-enters itself to resolve a copied attack.
- */
-export function attack(
-  state: GameState,
-  action: AttackAction,
-  copied?: AttackCopyOverride,
+/** How `attack()` was entered. Both fields are absent on a fresh declaration. */
+interface AttackReentry {
+  /** The copy-attack override, set only when `attack()` re-enters itself to resolve a copied attack. */
+  copied?: AttackCopyOverride;
   /**
    * §8: set only on re-entry after a Backtrack Badge offer at the printed coin flip; rows and coins
    * before that flip are not repeated. `keep` takes the offered faces, `again` flips anew.
    */
-  coinRedo?: CoinRedo,
+  coinRedo?: CoinRedo;
+}
+
+/** The SOURCE of a non-empty copy override, else null. */
+function copySourceOf(
+  copied: AttackCopyOverride | undefined,
+): Exclude<AttackCopyOverride, { empty: true }> | null {
+  return copied === undefined || copied.empty === true ? null : copied;
+}
+
+/**
+ * §8: declare one attack with the Active Pokémon; resolving it ends the turn through the staged
+ * tail, except a first attack under Festival Lead, which opens the attack-again window. The cost is
+ * a check, not a payment (§8.2). `reentry` is set only when this function re-enters itself.
+ */
+export function attack(
+  state: GameState,
+  action: AttackAction,
+  reentry: AttackReentry = {},
 ): ApplyResult {
-  const rejected = turnGate(state, action);
-  if (rejected !== null) return rejected;
-  const side = state.players[action.seat];
-  const active = side.active;
-  if (active === null) {
-    // Unreachable — promotion is forced before the next action.
-    return err("NO_TARGET", "no Active Pokémon to attack with");
-  }
-  // §4: the going-first player may not attack on turn 1, unless the Active's Ability or the
-  // declared attack licenses it. It reads `action.index` before the index is validated, which is
-  // safe because it is only a lookup, and keeps this rejection ahead of the others.
-  if (firstTurnAttackBanned(state, active, action.index)) {
-    return err("FIRST_TURN_ATTACK", "the going-first player cannot attack on turn 1 (§4)");
-  }
-  // §8 step 1 / §12 — an Asleep or Paralyzed Active cannot attack at all.
-  // (Confusion does NOT block declaring — it flips at resolution, below.)
-  const rotation = active.conditions.rotation;
-  if (isImmobilized(active.conditions)) {
-    return err(
-      "STATUS_PREVENTS_ATTACK",
-      `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot attack (§12)`,
-    );
-  }
-  // §8/§11: an attack effect locked this Pokémon out of attacking this turn, whichever player's
-  // attack installed it. A rejection rather than `ATTACK_FAILED`, so nothing is spent and the turn
-  // does not end. Checked before the index and cost checks so the lock is the reported reason.
-  if (attackLocked(state, active)) {
-    return err("ATTACK_PREVENTED", "an attack effect stops this Pokémon attacking this turn (§11)");
-  }
-  // §8/§9: the body's own Ability bars attacking unless a board condition holds. Checked before the
-  // index because it is a fact about the body; the message names the printed clause.
-  const abilityGate = attackBarredByAbility(state, action.seat, active);
-  if (abilityGate !== undefined) {
-    return err(
-      "ATTACK_PREVENTED",
-      `this Pokémon's Ability stops it attacking unless ${conditionNote(abilityGate)} (§9)`,
-    );
-  }
-  // §5.3/§8: during the Festival Lead attack-again window, only the first attacker may declare,
-  // from the Active Spot, while Festival Grounds is in play and its Ability is unlocked. The board
-  // may no longer license the window, leaving only `endTurn`.
-  if (attackAgainBarred(state, action.seat, active)) {
-    return err(
-      "ATTACK_PREVENTED",
-      "this Pokémon may not attack again this turn: the Festival Lead window belongs to the Pokémon that attacked first, and needs Festival Grounds in play and its Ability unlocked (§9)",
-    );
-  }
-  const attackerUid = topUid(active);
-  // The in-play view, so a retyped body (Scovillain ex) is read with the types it has in play.
-  const attacker = inPlayCardOf(state, active);
-  if (attackerUid === undefined || attacker === undefined) {
-    return err("UNKNOWN_CARD", "no catalog card for the Active Pokémon");
-  }
-  // `index` addresses the attack menu: printed attacks first, then Memory Dive rows, then a
-  // Technical Machine's. `entry` keeps the card the attack is printed on.
-  const menu = attackMenuOf(state, action.seat, active);
-  const index = action.index;
-  // Wire check (types are not validation): the integer gate matters because
-  // a string "0" WOULD resolve `menu["0"]` while corrupting everything
-  // downstream that does arithmetic with it; the indexed access then covers
-  // range (and noUncheckedIndexedAccess types it `| undefined` anyway).
-  const entry = Number.isInteger(index) ? menu[index] : undefined;
-  if (entry === undefined) {
-    return err("BAD_ATTACK_INDEX", `${attacker.name} has no attack at index ${String(index)}`);
-  }
-  const declared = entry.attack;
-  // The index a persisted record may name: the printed index for a printed row, and -1 for a Memory
-  // Dive or Tool row, so index-keyed locks and named boosts never reach a borrowed attack while
-  // whole-body locks and all-attacks boosts still do.
-  const printedIndex = entry.origin === "printed" ? entry.sourceIndex : -1;
-  // §8/§11: an effect barred this specific attack this turn. Checked after the index check (it is a
-  // fact about the declaration) and before the cost check. Several bars can be live at once, by
-  // index or by name.
-  if (
-    lockedAttackIndexes(state, active).includes(printedIndex) ||
-    lockedAttackNames(state, active).includes(declared.name)
-  ) {
-    return err(
-      "ATTACK_PREVENTED",
-      `an attack effect stops this Pokémon using ${declared.name} this turn (§11)`,
-    );
-  }
-  // §4/§8: the attack's printed timing clause ("only if you go second…"). Checked after the §11 bar
-  // and before the cost check; the message names the clause.
-  const timingGate = attackTimingBlocked(state, action.seat, active, index);
-  if (timingGate !== undefined) {
-    return err(
-      "ATTACK_PREVENTED",
-      `${declared.name} is printed with a timing clause — ${attackTimingNote(timingGate)} (§4)`,
-    );
-  }
-  // §8.2 cost check against the attached Energy's provision, under continuous cost effects and the
-  // attack's printed cost clause. `cost` is the charged array, also used by `scaledAttackDamage`
-  // for extra-Energy readers.
-  const provided = providedEnergy(state, active);
-  const cost = attackCostAt(state, action.seat, active, index, provided);
-  if (!costMet(cost, provided)) {
-    return err("ATTACK_COST_UNMET", `${declared.name} costs [${cost.join(", ")}]`);
-  }
+  const { copied, coinRedo } = reentry;
+  const declaration = checkDeclaration(state, action);
+  if ("ok" in declaration) return declaration;
+  const { active, attackerUid, attacker, entry, declared, index, printedIndex, cost } = declaration;
   // §8: copy-attack substitution at declaration. Every gate has passed for the copier, and only the
   // copier's cost is checked. The choice is made before `ATTACK_DECLARED` and every coin: forced
   // for 0 or 1 candidate by re-entering with the override, or parked. Skipped when an override is
@@ -825,7 +758,7 @@ export function attack(
   const copyText = declared.effect ?? null;
   const copy = copied === undefined && copyText !== null ? deriveAttackCopy(copyText) : null;
   // Except a resolve-time copy (Haughty Order, Seek Inspiration), whose source is only found while
-  // the attack resolves; it is handled below the Confusion block. Skill Thief's in-play copy takes
+  // the attack resolves; it is handled after the opening coins. Skill Thief's in-play copy takes
   // its own declaration-time branch.
   if (copy !== null && isInPlayAttackCopy(copy)) {
     return declareInPlayAttackCopy(state, action, attackerUid, declared.name);
@@ -833,8 +766,7 @@ export function attack(
   if (copy !== null && !isResolvedAttackCopy(copy)) {
     return declareAttackCopy(state, action, copy, attackerUid, declared.name);
   }
-  // The SOURCE of a non-empty override, else null — read at the four substitution sites below.
-  const copiedFrom = copied === undefined || copied.empty === true ? null : copied;
+  const copiedFrom = copySourceOf(copied);
 
   const defenderSeat = otherSeat(action.seat);
   const defenderSpot = activeTop(state, defenderSeat);
@@ -867,14 +799,357 @@ export function attack(
   // so it declares nothing again.
   const events: GameEvent[] =
     copiedFrom?.resumed === true || coinRedo !== undefined ? [] : [declaredEvent];
-  let next = state;
 
+  const opening = flipOpeningCoins(state, action, active, attackerUid, reentry, events);
+  let next = opening.state;
+  if (!opening.resolves) return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  // The copy resolves only from here, so `ATTACK_DECLARED.as` is written only now; every earlier
+  // return resolved nothing. `events[0]` is `declaredEvent`. A resolve-time copy also takes its
+  // source here, after every coin.
+  if (copy !== null && isResolvedAttackCopy(copy)) {
+    return copyAtResolution(next, events, action, copy, attackerUid, declared.name);
+  }
+  // A resumed half names what the attack became in its own row; its `ATTACK_DECLARED` went out with
+  // the first half.
+  if (copiedFrom !== null && copiedFrom?.resumed === true && coinRedo === undefined) {
+    events.push({
+      type: "ATTACK_COPY_RESOLVED",
+      seat: action.seat,
+      uid: attackerUid,
+      attack: declared.name,
+      as: copiedFrom.attack.name,
+    });
+  }
+  if (copiedFrom !== null && copiedFrom?.resumed !== true && coinRedo === undefined)
+    events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
+
+  const text = readAttackText(state, declaration, copiedFrom);
+  const { effect, preDamage, damagePenalty, scaling, coinFlip, discardScaledBoost } = text;
+  // A boosted base ("this attack's base damage is 240") replaces the printed base, with
+  // Weakness/Resistance still applied after it. The boost stays at the copier's index.
+  const base = boostedAttackBase(next, attackerBody, printedIndex) ?? text.printedBase;
+  const scaled =
+    scaling === null
+      ? 0
+      : scaledAttackDamage(next, active, scaling, defenderSeat, action.seat, cost);
+  // Counted at declaration, so this attack's own damage cannot feed the counters it reads.
+  const printedPenalty =
+    damagePenalty === null
+      ? 0
+      : scaledAttackDamage(next, active, damagePenalty, defenderSeat, action.seat, cost);
+  // For `selfHandAttach` the head is a multiplier, so the base is `per × Energy on this Pokémon` at
+  // declaration, and the program adds `per × moved`. Assumes nothing before the program tail
+  // changes this Pokémon's Energy. Other members keep the printed base.
+  const discardScaledBase =
+    discardScaledBoost?.kind === "selfHandAttach"
+      ? scaledAttackDamage(
+          next,
+          active,
+          {
+            per: discardScaledBoost.per,
+            count: { kind: "energyOnSelf", energyType: discardScaledBoost.energyType },
+          },
+          defenderSeat,
+          action.seat,
+          cost,
+        )
+      : base;
+  const terms = baseDamageTerms(text, base);
+  const simulated = simulatedParts(text, terms);
+  // Only on the first pass; a Backtrack Badge re-entry has already emitted it.
+  if (
+    coinRedo === undefined &&
+    ((text.modifier !== null && !simulated.modifier) ||
+      (effect !== null && effect !== "" && !simulated.effect))
+  ) {
+    events.push({
+      type: "ATTACK_EFFECT_SKIPPED",
+      seat: action.seat,
+      attack: declared.name,
+      // Authored/derived/scaled text IS simulated — only an unsimulated one is skipped.
+      effect: simulated.effect ? null : effect,
+      damageModifier: simulated.modifier ? null : text.modifier,
+    });
+  }
+
+  // The requirement gate runs before §8.5 and the program: "this attack does nothing" means no
+  // damage, no effects and no triggers. `finishAttack` still runs, because a cancelled attack was
+  // still used. Read against the declaration board.
+  if (text.requirement !== null && !conditionHolds(next, action.seat, text.requirement)) {
+    events.push({
+      type: "ATTACK_FAILED",
+      seat: action.seat,
+      uid: attackerUid,
+      reason: "requirement",
+    });
+    return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  }
+
+  // Reassigned only by the printed coin flips, which append to it.
+  let program = text.program;
+  let coinBonus = 0;
+  if (coinFlip !== null) {
+    const coins = flipPrintedCoins(
+      next,
+      { action, active, attackerUid, attackName: declared.name, coinFlip, program, reentry },
+      events,
+    );
+    if ("done" in coins) return coins.done;
+    next = coins.state;
+    program = coins.program;
+    coinBonus = coins.coinBonus;
+  }
+  program = withBoostPrograms(program, text, base, discardScaledBase);
+  // The heads bonus is the attack's own printed extra damage, so it folds at the same pre-W/R step
+  // as `scaled`. `scaled` stays board-only, since a coin face is not a board fact.
+  const scaledTotal = scaled + coinBonus;
+
+  // "Before doing damage": runs after everything that can cancel the attack and immediately before
+  // §8.5, so a cancelled attack never strips a Tool and §8.5 reads the defender without it.
+  // `scaled` was computed at declaration and is not re-read.
+  if (preDamage !== null) {
+    const stripped = applyAttackPreDamage(next, preDamage, action.seat, attackerUid, events);
+    next = stripped.state;
+    // Rebind the defender after the pre-damage discard, or §8.5 folds the stale snapshot.
+    defender = next.players[defenderSeat].active ?? defender;
+    // Rebind the attacker too, since the pre-damage step may discard from its own body.
+    attackerBody = next.players[action.seat].active ?? attackerBody;
+    // "If you can't discard any, this attack does nothing." Ends through `finishAttack` like other
+    // cancelled attacks. Tests `stripped.cancelled` rather than `preDamage.kind`.
+    if (stripped.cancelled) {
+      events.push({
+        type: "ATTACK_FAILED",
+        seat: action.seat,
+        uid: attackerUid,
+        reason: "preDamage",
+      });
+      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+    }
+  }
+
+  // What §8.5 dealt to the defending Active, so the effect program can read it ("Heal from this
+  // Pokémon the same amount of damage you did"). Stays 0 for an effect-only attack. Post-W/R,
+  // reduction and prevention, unclamped: the same number `DAMAGE_DEALT.dealt` reports.
+  let dealtToDefender = 0;
+  // §9: the damaged Active's reactive Ability stage, then one stage per damaged-reacting Tool.
+  let damagedStages: PendingStage[] = [];
+  if (terms.scaledBase + scaledTotal > 0) {
+    const hit = dealAttackDamage(
+      next,
+      {
+        seat: action.seat,
+        attackerUid,
+        attacker,
+        attackerBody,
+        defenderSeat,
+        defenderUid,
+        defender,
+        defenderCard,
+        printedIndex,
+        damageSuppression: text.damageSuppression,
+        scaledBase: terms.scaledBase,
+        scaledTotal,
+        printedPenalty,
+      },
+      events,
+    );
+    next = hit.state;
+    dealtToDefender = hit.dealt;
+    damagedStages = hit.damagedStages;
+  }
+
+  // §8 step 4: the effect program runs after the damage, then the damaged trigger, then the on-KO
+  // Tool trigger, all before `finishAttack`'s §8.1 sweep. Any of them can park, so the tail is
+  // staged. The on-KO Tool stage is seeded on presence alone, since a KO can come from the program,
+  // and must sit ahead of `attackEpilogue` before the KO discards the stack.
+  const koToolStage: PendingStage | null =
+    koToolTriggersOf(next, defenderSeat, defenderUid).length > 0
+      ? { kind: "koToolTrigger", seat: defenderSeat }
+      : null;
+  const epilogue: PendingStage[] = [
+    ...damagedStages,
+    ...(koToolStage === null ? [] : [koToolStage]),
+    // `uid` is the attacker as of declaration; the effect program may switch it to the Bench.
+    // `attack` is captured at the same time for `usedAttack`.
+    { kind: "attackEpilogue", seat: action.seat, uid: attackerUid, attack: declared.name },
+  ];
+  if (program !== null) {
+    return settleProgram(
+      runProgram(
+        { ...next, pending: [...next.pending, ...epilogue] },
+        program,
+        // The attacker is identified by uid, not "the Active", in case the program moves it.
+        // `invokedBy: "attack"` is set only here and lets a §11 block tell an attack's effect
+        // apart. `borrowedAttack` names a Memory Dive or Technical Machine row, so a name-keyed
+        // self-lock binds to that row.
+        {
+          seat: action.seat,
+          sourceUid: attackerUid,
+          invokedBy: "attack",
+          dealt: dealtToDefender,
+          ...(entry.origin === "printed" || copiedFrom !== null
+            ? {}
+            : { borrowedAttack: declared.name }),
+        },
+        events,
+      ),
+      action.seat,
+      events,
+      { resumeTail: true },
+    );
+  }
+
+  // No effect program: if the defender reacts, drain the trigger stages and epilogue through
+  // `advance`; otherwise call `finishAttack` directly.
+  if (damagedStages.length > 0 || koToolStage !== null) {
+    return advance({ ...next, pending: [...next.pending, ...epilogue] }, events);
+  }
+
+  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end (or the Festival Lead attack-again
+  // window).
+  return finishAttack(next, events, action.seat, attackerUid, declared.name);
+}
+
+/** A declaration that passed every §4/§8/§9/§11 gate and the §8.2 cost check. */
+interface DeclaredAttack {
+  active: InPlayPokemon;
+  attackerUid: string;
+  /** The in-play view, so a retyped body (Scovillain ex) is read with the types it has in play. */
+  attacker: Card;
+  /** The menu row; it keeps the card the attack is printed on. */
+  entry: AttackMenuEntry;
+  declared: Attack;
+  index: number;
+  /**
+   * The index a persisted record may name: the printed index for a printed row, and -1 for a Memory
+   * Dive or Tool row, so index-keyed locks and named boosts never reach a borrowed attack while
+   * whole-body locks and all-attacks boosts still do.
+   */
+  printedIndex: number;
+  provided: string[];
+  /** The charged cost, also used by `scaledAttackDamage` for extra-Energy readers. */
+  cost: readonly string[];
+}
+
+/** The §4/§8/§9/§11/§12 declaration gates and the §8.2 cost check, in their reporting order. */
+function checkDeclaration(state: GameState, action: AttackAction): DeclaredAttack | Rejection {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  const side = state.players[action.seat];
+  const active = side.active;
+  if (active === null) {
+    // Unreachable — promotion is forced before the next action.
+    return err("NO_TARGET", "no Active Pokémon to attack with");
+  }
+  // §4: the going-first player may not attack on turn 1, unless the Active's Ability or the
+  // declared attack licenses it. It reads `action.index` before the index is validated, which is
+  // safe because it is only a lookup, and keeps this rejection ahead of the others.
+  if (firstTurnAttackBanned(state, active, action.index)) {
+    return err("FIRST_TURN_ATTACK", "the going-first player cannot attack on turn 1 (§4)");
+  }
+  // §8 step 1 / §12 — an Asleep or Paralyzed Active cannot attack at all.
+  // (Confusion does NOT block declaring — it flips at resolution.)
+  const rotation = active.conditions.rotation;
+  if (isImmobilized(active.conditions)) {
+    return err(
+      "STATUS_PREVENTS_ATTACK",
+      `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot attack (§12)`,
+    );
+  }
+  // §8/§11: an attack effect locked this Pokémon out of attacking this turn, whichever player's
+  // attack installed it. A rejection rather than `ATTACK_FAILED`, so nothing is spent and the turn
+  // does not end. Checked before the index and cost checks so the lock is the reported reason.
+  if (attackLocked(state, active)) {
+    return err("ATTACK_PREVENTED", "an attack effect stops this Pokémon attacking this turn (§11)");
+  }
+  // §8/§9: the body's own Ability bars attacking unless a board condition holds. Checked before the
+  // index because it is a fact about the body; the message names the printed clause.
+  const abilityGate = attackBarredByAbility(state, action.seat, active);
+  if (abilityGate !== undefined) {
+    return err(
+      "ATTACK_PREVENTED",
+      `this Pokémon's Ability stops it attacking unless ${conditionNote(abilityGate)} (§9)`,
+    );
+  }
+  // §5.3/§8: during the Festival Lead attack-again window, only the first attacker may declare,
+  // from the Active Spot, while Festival Grounds is in play and its Ability is unlocked. The board
+  // may no longer license the window, leaving only `endTurn`.
+  if (attackAgainBarred(state, action.seat, active)) {
+    return err(
+      "ATTACK_PREVENTED",
+      "this Pokémon may not attack again this turn: the Festival Lead window belongs to the Pokémon that attacked first, and needs Festival Grounds in play and its Ability unlocked (§9)",
+    );
+  }
+  const attackerUid = topUid(active);
+  const attacker = inPlayCardOf(state, active);
+  if (attackerUid === undefined || attacker === undefined) {
+    return err("UNKNOWN_CARD", "no catalog card for the Active Pokémon");
+  }
+  // `index` addresses the attack menu: printed attacks first, then Memory Dive rows, then a
+  // Technical Machine's.
+  const menu = attackMenuOf(state, action.seat, active);
+  const index = action.index;
+  // Wire check (types are not validation): the integer gate matters because
+  // a string "0" WOULD resolve `menu["0"]` while corrupting everything
+  // downstream that does arithmetic with it; the indexed access then covers
+  // range (and noUncheckedIndexedAccess types it `| undefined` anyway).
+  const entry = Number.isInteger(index) ? menu[index] : undefined;
+  if (entry === undefined) {
+    return err("BAD_ATTACK_INDEX", `${attacker.name} has no attack at index ${String(index)}`);
+  }
+  const declared = entry.attack;
+  const printedIndex = entry.origin === "printed" ? entry.sourceIndex : -1;
+  // §8/§11: an effect barred this specific attack this turn. Checked after the index check (it is a
+  // fact about the declaration) and before the cost check. Several bars can be live at once, by
+  // index or by name.
+  if (
+    lockedAttackIndexes(state, active).includes(printedIndex) ||
+    lockedAttackNames(state, active).includes(declared.name)
+  ) {
+    return err(
+      "ATTACK_PREVENTED",
+      `an attack effect stops this Pokémon using ${declared.name} this turn (§11)`,
+    );
+  }
+  // §4/§8: the attack's printed timing clause ("only if you go second…"). Checked after the §11 bar
+  // and before the cost check; the message names the clause.
+  const timingGate = attackTimingBlocked(state, action.seat, active, index);
+  if (timingGate !== undefined) {
+    return err(
+      "ATTACK_PREVENTED",
+      `${declared.name} is printed with a timing clause — ${attackTimingNote(timingGate)} (§4)`,
+    );
+  }
+  // §8.2 cost check against the attached Energy's provision, under continuous cost effects and the
+  // attack's printed cost clause.
+  const provided = providedEnergy(state, active);
+  const cost = attackCostAt(state, action.seat, active, index, provided);
+  if (!costMet(cost, provided)) {
+    return err("ATTACK_COST_UNMET", `${declared.name} costs [${cost.join(", ")}]`);
+  }
+  return { active, attackerUid, attacker, entry, declared, index, printedIndex, provided, cost };
+}
+
+/**
+ * The coins taken before the attack resolves, in rulebook order: the flip-to-attack lock, the
+ * Confusion flip, then Try to Imitate's printed coin. None is repeated on a resumed copy half or a
+ * Backtrack Badge re-entry, which already flipped. `resolves` is false when one of them ended the
+ * attack or an empty copy override leaves nothing to resolve; the caller then finishes the attack.
+ */
+function flipOpeningCoins(
+  state: GameState,
+  action: AttackAction,
+  active: InPlayPokemon,
+  attackerUid: string,
+  { copied, coinRedo }: AttackReentry,
+  events: GameEvent[],
+): { state: GameState; resolves: boolean } {
+  const secondHalf = copySourceOf(copied)?.resumed === true || coinRedo !== undefined;
+  let next = state;
   // §8 flip-to-attack lock: the locked player flips each coin, and any tails fails the attack. RNG
   // is spent only while a lock is live. It runs before the Confusion flip, per the rulebook's
-  // order, so tails ends the attack with no Confusion coin. Skipped on a resumed half or a
-  // Backtrack Badge re-entry, which already flipped heads.
-  const lockCoins =
-    copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);
+  // order, so tails ends the attack with no Confusion coin.
+  const lockCoins = secondHalf ? 0 : attackFlipLockCoins(state, active);
   if (lockCoins > 0) {
     let lockTails = false;
     for (let coin = 0; coin < lockCoins; coin++) {
@@ -895,14 +1170,13 @@ export function attack(
         uid: attackerUid,
         reason: "flipLock",
       });
-      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+      return { state: next, resolves: false };
     }
   }
 
   // §8 step 3: the Confusion flip, after every gate and the cost check. Tails: the attack does not
-  // resolve and the attacker damages itself. Not repeated on a resumed half or a Backtrack Badge
-  // re-entry.
-  if (rotation === "confused" && copiedFrom?.resumed !== true && coinRedo === undefined) {
+  // resolve and the attacker damages itself.
+  if (active.conditions.rotation === "confused" && !secondHalf) {
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });
@@ -929,7 +1203,7 @@ export function attack(
       // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The
       // epilogue sweeps both boards; the defender took no damage on this failed
       // attack, so only the attacker's own board can be lethal here.
-      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+      return { state: next, resolves: false };
     }
   }
 
@@ -939,45 +1213,54 @@ export function attack(
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
-    if (face === "tails")
-      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+    if (face === "tails") return { state: next, resolves: false };
   }
-  if (copied?.empty === true) {
-    return finishAttack(next, events, action.seat, attackerUid, declared.name);
-  }
-  // The copy resolves only from here, so `ATTACK_DECLARED.as` is written only now; every earlier
-  // return resolved nothing. `events[0]` is `declaredEvent`. A resolve-time copy also takes its
-  // source here, after every coin.
-  if (copy !== null && isResolvedAttackCopy(copy)) {
-    return copyAtResolution(next, events, action, copy, attackerUid, declared.name);
-  }
-  // A resumed half names what the attack became in its own row; its `ATTACK_DECLARED` went out with
-  // the first half.
-  if (copiedFrom !== null && copiedFrom?.resumed === true && coinRedo === undefined) {
-    events.push({
-      type: "ATTACK_COPY_RESOLVED",
-      seat: action.seat,
-      uid: attackerUid,
-      attack: declared.name,
-      as: copiedFrom.attack.name,
-    });
-  }
-  if (copiedFrom !== null && copiedFrom?.resumed !== true && coinRedo === undefined)
-    events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
+  return { state: next, resolves: copied?.empty !== true };
+}
 
-  // Mechanical damage and Weakness/Resistance are simulated; effect text runs only for shapes
-  // effects.ts recognizes, and anything else is flagged rather than guessed. A boosted base ("this
-  // attack's base damage is 240") replaces the printed base here, the only `parseAttackDamage`
-  // caller, with Weakness/Resistance still applied after it. The damage box is the copied attack's
-  // under a copy; the boost stays at the copier's index.
+/** What the printed (or copied) attack text resolves to: the damage box and every reader's result. */
+interface AttackText {
+  printedBase: number;
+  modifier: ParsedDamage["modifier"];
+  /** The effect text left after every clause split, or null; `""` means no text remains. */
+  effect: string | null;
+  /** The printed "this attack does nothing" requirement, or null. */
+  requirement: BoardCondition | null;
+  /** A requirement or cancel clause was split off, so `effect` is a different sentence. */
+  requirementSplit: boolean;
+  /** The authored or derived effect program, or null (unsimulated). */
+  program: EffectOp[] | null;
+  preDamage: AttackPreDamage | null;
+  damageMultiplier: AttackDamageBonus | null;
+  damagePenalty: AttackDamageBonus | null;
+  damageSuppression: AttackDamageSuppression | null;
+  /** The count-scaling bonus or multiplier; at most one fires. */
+  scaling: AttackDamageBonus | null;
+  coinFlip: AttackCoinFlip | null;
+  optionalBoost: AttackOptionalBoost | null;
+  bonusConsequent: AttackBonusConsequent | null;
+  optionalCostBoost: AttackOptionalCostBoost | null;
+  discardScaledBoost: AttackDiscardScaledBoost | null;
+}
+
+/**
+ * Reads the attack's text. Mechanical damage and Weakness/Resistance are simulated; effect text
+ * runs only for shapes effects.ts recognizes, and anything else is flagged rather than guessed.
+ * Under a copy, the damage box, text and source gate are the copied attack's; `usableCopies`
+ * already enforced that gate for the copier.
+ */
+function readAttackText(
+  state: GameState,
+  { active, entry, declared, index, provided, cost }: DeclaredAttack,
+  copiedFrom: Exclude<AttackCopyOverride, { empty: true }> | null,
+): AttackText {
+  // `parseAttackDamage`'s only caller.
   const { base: printedBase, modifier } = parseAttackDamage(
     (copiedFrom?.attack ?? declared).damage,
   );
-  const base = boostedAttackBase(next, attackerBody, printedIndex) ?? printedBase;
   // The attack's gate clause was already enforced at declaration, so it is stripped before the
   // effect readers run, but only when `attackGateOf` confirms a gate at this index; otherwise the
-  // whole string stays and is reported as skipped. Under a copy, the copied attack's text and
-  // source gate are used; `usableCopies` already enforced that gate for the copier.
+  // whole string stays and is reported as skipped.
   const printedEffect = (copiedFrom?.attack ?? declared).effect ?? null;
   const gateSplit =
     printedEffect === null ||
@@ -1015,6 +1298,8 @@ export function attack(
   const compoundSplit =
     uncancelled === null || uncancelled === "" ? null : splitAttackTrailingClause(uncancelled);
   const effect = compoundSplit === null ? uncancelled : compoundSplit.head;
+  const read = <T>(reader: (text: string) => T | null): T | null =>
+    effect === null || effect === "" ? null : reader(effect);
   // An authored registry program wins over the text deriver, else null (unsimulated). Programs are
   // keyed by attack index so one authored attack does not leak onto its siblings. A copied or
   // menu-row attack runs its source card's program at the source index.
@@ -1022,123 +1307,117 @@ export function attack(
     programFor((copiedFrom?.card ?? entry.card).id)?.attack?.[
       copiedFrom?.index ?? entry.sourceIndex
     ] ?? null;
-  const derivedHead = effect === null || effect === "" ? null : deriveAttackEffect(effect);
+  const derivedHead = read(deriveAttackEffect);
   // Head program first, then the trailing clause's ops, in printed order.
   const derivedTail = compoundSplit === null ? null : deriveAttackEffect(compoundSplit.tail);
   const derived = derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];
-  // Reassigned only by the flip block below, which appends one copy of a `programPerHeads` member's
-  // ops per matching face.
-  let program = resolveDeclarationGates(authored ?? derived, provided.length - cost.length);
-  // "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon." Kept
-  // separate from `program` because it runs before §8.5, while `program` runs at the tail.
-  const preDamage = effect === null || effect === "" ? null : deriveAttackPreDamage(effect);
   // Count-scaling folds into the damage before §8.5. "more" adds `per × count` to the printed base,
   // no adjective replaces the base with `per × count`, and "less" subtracts it. The regexes are
   // mutually exclusive, so at most one fires.
-  const damageBonus = effect === null || effect === "" ? null : deriveAttackDamageBonus(effect);
-  const damageMultiplier =
-    damageBonus !== null || effect === null || effect === ""
-      ? null
-      : deriveAttackDamageMultiplier(effect);
-  // "This attack does N less damage for each …". Kept out of `scaling`: it is reported through
-  // `debuff`, not `scaled`. The count may come from the defender, not only the attacker.
-  const damagePenalty =
-    damageBonus !== null || damageMultiplier !== null || effect === null || effect === ""
-      ? null
-      : deriveAttackDamagePenalty(effect);
-  // "This attack's damage isn't affected by Weakness or Resistance …". Read unconditionally rather
-  // than chained onto the scaling ladder, because it is a separate clause that can trail a scaling
-  // clause.
-  const damageSuppression =
-    effect === null || effect === "" ? null : deriveAttackDamageSuppression(effect);
-  const scaling = damageBonus ?? damageMultiplier;
-  const scaled =
-    scaling === null
-      ? 0
-      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, cost);
-  // Counted at declaration, so this attack's own damage cannot feed the counters it reads.
-  const printedPenalty =
-    damagePenalty === null
-      ? 0
-      : scaledAttackDamage(active, damagePenalty, next, defenderSeat, action.seat, cost);
-  // The attack's own printed coin flip: a heads bonus, a cancel on tails, a per-heads fold, or
-  // null. Disjoint from the other readers and from `coinFlipGate` programs, so at most one flip
-  // decision applies per attack.
-  const coinFlip = effect === null || effect === "" ? null : deriveAttackCoinFlip(effect);
-  // "You may do N more damage. If you do, …". The program is assembled further down, where `base`
-  // is in scope.
-  const optionalBoost = effect === null || effect === "" ? null : deriveAttackOptionalBoost(effect);
-  // "…this attack does N more damage, and …", decided by a board fact or a coin instead of a
-  // confirm. The program is assembled further down, where `base` is in scope.
-  const bonusConsequent =
-    effect === null || effect === "" ? null : deriveAttackBonusConsequent(effect);
-  // "You may {cost}. If you do, {payoff}". The program is assembled further down, where `base` is
-  // in scope.
-  const optionalCostBoost =
-    effect === null || effect === "" ? null : deriveAttackOptionalCostBoost(effect);
-  // "You may discard up to N Energy from your Benched Pokémon. This attack does P more damage for
-  // each card you discarded in this way." The program is assembled further down, where `base` is in
-  // scope.
-  const discardScaledBoost =
-    effect === null || effect === "" ? null : deriveAttackDiscardScaledBoost(effect);
-  // For `selfHandAttach` the head is a multiplier, so the base is `per × Energy on this Pokémon` at
-  // declaration, and the program adds `per × moved`. Assumes nothing before the program tail
-  // changes this Pokémon's Energy. Other members keep the printed base.
-  const discardScaledBase =
-    discardScaledBoost?.kind === "selfHandAttach"
-      ? scaledAttackDamage(
-          active,
-          {
-            per: discardScaledBoost.per,
-            count: { kind: "energyOnSelf", energyType: discardScaledBoost.energyType },
-          },
-          next,
-          defenderSeat,
-          action.seat,
-          cost,
-        )
-      : base;
-  // A program that deals the main damage itself owns the printed number, so the base must not also
-  // land before the program. `damageNewActive` is deliberately excluded: it is an additional hit on
-  // another body, not the printed base.
-  const programDamage = program?.some((step) => step.op === "damageDefender") ?? false;
+  const damageBonus = read(deriveAttackDamageBonus);
+  const damageMultiplier = damageBonus !== null ? null : read(deriveAttackDamageMultiplier);
+  return {
+    printedBase,
+    modifier,
+    effect,
+    requirement,
+    requirementSplit: requirementSplit !== null || cancelSplit !== null,
+    program: resolveDeclarationGates(authored ?? derived, provided.length - cost.length),
+    // "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon." Kept
+    // separate from `program` because it runs before §8.5, while `program` runs at the tail.
+    preDamage: read(deriveAttackPreDamage),
+    damageMultiplier,
+    // "This attack does N less damage for each …". Kept out of `scaling`: it is reported through
+    // `debuff`, not `scaled`. The count may come from the defender, not only the attacker.
+    damagePenalty:
+      damageBonus !== null || damageMultiplier !== null ? null : read(deriveAttackDamagePenalty),
+    // "This attack's damage isn't affected by Weakness or Resistance …". Read unconditionally
+    // rather than chained onto the scaling ladder, because it is a separate clause that can trail a
+    // scaling clause.
+    damageSuppression: read(deriveAttackDamageSuppression),
+    scaling: damageBonus ?? damageMultiplier,
+    // The attack's own printed coin flip: a heads bonus, a cancel on tails, a per-heads fold, or
+    // null. Disjoint from the other readers and from `coinFlipGate` programs, so at most one flip
+    // decision applies per attack.
+    coinFlip: read(deriveAttackCoinFlip),
+    // "You may do N more damage. If you do, …".
+    optionalBoost: read(deriveAttackOptionalBoost),
+    // "…this attack does N more damage, and …", decided by a board fact or a coin instead of a
+    // confirm.
+    bonusConsequent: read(deriveAttackBonusConsequent),
+    // "You may {cost}. If you do, {payoff}".
+    optionalCostBoost: read(deriveAttackOptionalCostBoost),
+    // "You may discard up to N Energy from your Benched Pokémon. This attack does P more damage for
+    // each card you discarded in this way."
+    discardScaledBoost: read(deriveAttackDiscardScaledBoost),
+  };
+}
+
+/** Whether a reader or the program owns the printed base, and the base that lands before §8.5. */
+interface BaseDamageTerms {
+  /**
+   * A program that deals the main damage itself owns the printed number, so the base must not also
+   * land before the program. `damageNewActive` is deliberately excluded: it is an additional hit on
+   * another body, not the printed base.
+   */
+  programDamage: boolean;
+  /**
+   * For `optionalCostBoost`, only the `moreDamage` payoff re-homes the base; `benchSnipe` is an
+   * extra hit and keeps it.
+   */
+  costBoostOwnsTheBase: boolean;
+  scaledBase: number;
+}
+
+function baseDamageTerms(text: AttackText, base: number): BaseDamageTerms {
+  const programDamage = text.program?.some((step) => step.op === "damageDefender") ?? false;
+  const costBoostOwnsTheBase = text.optionalCostBoost?.payoff.kind === "moreDamage";
+  const { coinFlip } = text;
   // The multiply family's printed "N×" is the per-unit already counted in `scaled`, so the base is
   // dropped; additive families keep it. Readers whose hit is dealt inside a nested gate or appended
   // program also drop it here, since `programDamage` only sees top-level ops of the registry or
-  // derived program. For `optionalCostBoost`, only the `moreDamage` payoff re-homes the base;
-  // `benchSnipe` is an extra hit and keeps it.
-  const costBoostOwnsTheBase = optionalCostBoost?.payoff.kind === "moreDamage";
-  // `opponentPerTails` drops the printed base like `perHeads`, since its marker is read as "N×".
+  // derived program. `opponentPerTails` drops the printed base like `perHeads`, since its marker is
+  // read as "N×".
   const scaledBase =
-    damageMultiplier !== null ||
+    text.damageMultiplier !== null ||
     programDamage ||
-    optionalBoost !== null ||
-    bonusConsequent !== null ||
+    text.optionalBoost !== null ||
+    text.bonusConsequent !== null ||
     costBoostOwnsTheBase ||
-    discardScaledBoost !== null ||
+    text.discardScaledBoost !== null ||
     coinFlip?.kind === "perHeads" ||
     coinFlip?.kind === "opponentPerTails" ||
     coinFlip?.kind === "perHeadsThenThreshold"
       ? 0
       : base;
-  // The +/× modifier counts as simulated only when a reader consumes it or the program deals the
-  // damage; the effect text is simulated when a program or reader resolves it. Everything else is
-  // reported as `ATTACK_EFFECT_SKIPPED`. Readers that explain no damage marker must not claim the
-  // modifier.
-  const effectSimulated =
-    program !== null ||
-    preDamage !== null ||
-    scaling !== null ||
-    damagePenalty !== null ||
+  return { programDamage, costBoostOwnsTheBase, scaledBase };
+}
+
+/**
+ * Whether the effect text and the +/× damage modifier are simulated. The modifier counts only when
+ * a reader consumes it or the program deals the damage; the text counts when a program or reader
+ * resolves it. Everything else is reported as `ATTACK_EFFECT_SKIPPED`. Readers that explain no
+ * damage marker must not claim the modifier.
+ */
+function simulatedParts(
+  text: AttackText,
+  { programDamage, costBoostOwnsTheBase }: BaseDamageTerms,
+): { effect: boolean; modifier: boolean } {
+  const { coinFlip } = text;
+  const effect =
+    text.program !== null ||
+    text.preDamage !== null ||
+    text.scaling !== null ||
+    text.damagePenalty !== null ||
     // Only when no split fired: after a split, `effect` holds a different sentence that the
     // requirement says nothing about, and a bare term would silence an unresolved sentence.
-    (requirement !== null && requirementSplit === null && cancelSplit === null) ||
+    (text.requirement !== null && !text.requirementSplit) ||
     coinFlip !== null ||
-    optionalBoost !== null ||
-    bonusConsequent !== null ||
-    optionalCostBoost !== null ||
-    discardScaledBoost !== null ||
-    damageSuppression !== null;
+    text.optionalBoost !== null ||
+    text.bonusConsequent !== null ||
+    text.optionalCostBoost !== null ||
+    text.discardScaledBoost !== null ||
+    text.damageSuppression !== null;
   // Coin members that fold no damage explain no printed damage marker, so they are listed as
   // exceptions rather than testing `coinFlip !== null`.
   const coinExplainsModifier =
@@ -1149,551 +1428,475 @@ export function attack(
     coinFlip.kind !== "programPerHeads" &&
     coinFlip.kind !== "retrievalUpToHeads";
   // Only the `moreDamage` payoff explains a printed "+"; `benchSnipe` is a second hit and explains
-  // none. Kept above the `const` rather than inside the chain.
-  const modifierSimulated =
-    scaling !== null ||
-    damagePenalty !== null ||
+  // none.
+  const modifier =
+    text.scaling !== null ||
+    text.damagePenalty !== null ||
     programDamage ||
-    optionalBoost !== null ||
-    bonusConsequent !== null ||
+    text.optionalBoost !== null ||
+    text.bonusConsequent !== null ||
     costBoostOwnsTheBase ||
-    discardScaledBoost !== null ||
+    text.discardScaledBoost !== null ||
     coinExplainsModifier;
-  // Only on the first pass; a Backtrack Badge re-entry has already emitted it.
-  if (
-    coinRedo === undefined &&
-    ((modifier !== null && !modifierSimulated) ||
-      (effect !== null && effect !== "" && !effectSimulated))
-  ) {
-    events.push({
-      type: "ATTACK_EFFECT_SKIPPED",
-      seat: action.seat,
-      attack: declared.name,
-      // Authored/derived/scaled text IS simulated — only an unsimulated one is skipped.
-      effect: effectSimulated ? null : effect,
-      damageModifier: modifierSimulated ? null : modifier,
-    });
-  }
+  return { effect, modifier };
+}
 
-  // The requirement gate runs before §8.5 and the program: "this attack does nothing" means no
-  // damage, no effects and no triggers. `finishAttack` still runs, because a cancelled attack was
-  // still used. Read against the declaration board.
-  if (requirement !== null && !conditionHolds(next, action.seat, requirement)) {
-    events.push({
-      type: "ATTACK_FAILED",
-      seat: action.seat,
-      uid: attackerUid,
-      reason: "requirement",
-    });
-    return finishAttack(next, events, action.seat, attackerUid, declared.name);
-  }
-
-  // The attack's own printed coin flips are taken here, before §8.5, so a flip can add to or cancel
-  // the damage. They run after the requirement gate so a cancelled attack does not consume rng.
-  // Each flip emits one `ATTACK_EFFECT_COIN_FLIP` row in order. Zero flips consume no rng and emit
-  // no rows. A per-heads program is expanded into repeated ops and appended to `program`, never
-  // assigned over it.
+/**
+ * The attack's own printed coin flips, taken before §8.5 so a flip can add to or cancel the damage,
+ * and after the requirement gate so a cancelled attack does not consume rng. Each flip emits one
+ * `ATTACK_EFFECT_COIN_FLIP` row in order. A per-heads program is expanded into repeated ops and
+ * appended to `program`, never assigned over it. `done` is set when the flips parked a Backtrack
+ * Badge offer or cancelled the attack.
+ */
+function flipPrintedCoins(
+  state: GameState,
+  printed: {
+    action: AttackAction;
+    active: InPlayPokemon;
+    attackerUid: string;
+    attackName: string;
+    coinFlip: AttackCoinFlip;
+    program: EffectOp[] | null;
+    reentry: AttackReentry;
+  },
+  events: GameEvent[],
+): { done: ApplyResult } | { state: GameState; program: EffectOp[] | null; coinBonus: number } {
+  const { action, active, attackerUid, attackName, coinFlip } = printed;
+  const { copied, coinRedo } = printed.reentry;
+  let next = state;
+  let program = printed.program;
   let coinBonus = 0;
-  if (coinFlip !== null) {
-    // A Backtrack Badge "keep" re-entry reuses the offered faces without flipping; "again" flips
-    // anew.
-    const kept = coinRedo?.kind === "keep" ? coinRedo.faces : undefined;
-    const [faces, rngState] =
-      kept === undefined
-        ? takeFlips(next, action.seat, active, printedFlips(coinFlip))
-        : [kept, next.rngState];
-    next = { ...next, rngState };
-    // Coin rows are filed under the seat that flips: the opponent for `opponentPerTails` ("Your
-    // opponent flips a coin"), otherwise the attacker.
-    const flipper = coinFlip.kind === "opponentPerTails" ? otherSeat(action.seat) : action.seat;
-    let heads = 0;
-    for (const face of faces) {
-      if (kept === undefined)
-        events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
-      if (face === "heads") heads += 1;
-    }
-    // Backtrack Badge: after the attacker's own coins, on the first pass only, a Badge on the
-    // attacking Pokémon offers its reflip before any coin is read.
-    const redoTool =
-      coinRedo === undefined && flipper === action.seat && faces.length > 0
-        ? coinRedoToolOf(next, next.players[action.seat].active ?? active)
-        : null;
-    if (redoTool !== null) {
-      return parkCoinRedo(next, events, action.seat, attackerUid, declared.name, {
+  // A Backtrack Badge "keep" re-entry reuses the offered faces without flipping; "again" flips
+  // anew.
+  const kept = coinRedo?.kind === "keep" ? coinRedo.faces : undefined;
+  const [faces, rngState] =
+    kept === undefined
+      ? takeFlips(next, action.seat, active, printedFlips(coinFlip))
+      : [kept, next.rngState];
+  next = { ...next, rngState };
+  // Coin rows are filed under the seat that flips: the opponent for `opponentPerTails` ("Your
+  // opponent flips a coin"), otherwise the attacker.
+  const flipper = coinFlip.kind === "opponentPerTails" ? otherSeat(action.seat) : action.seat;
+  let heads = 0;
+  for (const face of faces) {
+    if (kept === undefined)
+      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
+    if (face === "heads") heads += 1;
+  }
+  // Backtrack Badge: after the attacker's own coins, on the first pass only, a Badge on the
+  // attacking Pokémon offers its reflip before any coin is read.
+  const redoTool =
+    coinRedo === undefined && flipper === action.seat && faces.length > 0
+      ? coinRedoToolOf(next, next.players[action.seat].active ?? active)
+      : null;
+  if (redoTool !== null) {
+    return {
+      done: parkCoinRedo(next, events, action.seat, attackerUid, attackName, {
         op: "reflipAttackCoins",
         toolUid: redoTool,
         index: action.index,
         faces: [...faces],
         ...(copied === undefined ? {} : { copied }),
-      });
-    }
-    if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
-      if (heads === 0) {
-        // No damage, no effects, no triggers; `finishAttack` still runs because the attack was
-        // used.
-        events.push({
-          type: "ATTACK_FAILED",
-          seat: action.seat,
-          uid: attackerUid,
-          reason: "coinFlip",
-        });
-        return finishAttack(next, events, action.seat, attackerUid, declared.name);
-      }
-      // Heads branch of the same flip. Appended to `program`, never assigned, so a registry program
-      // is not dropped.
-      if (coinFlip.kind === "cancelOnTailsElseProgram") {
-        program = [...(program ?? []), ...coinFlip.ops];
-      }
-    } else if (coinFlip.kind === "programPerHeads") {
-      // One copy of the member's ops per face matching its printed face, in flip order. Sharing the
-      // same ops array is safe because the interpreter never mutates ops. The tally counts the
-      // printed face, not `heads`.
-      let onPrintedFace = 0;
-      for (const drawn of faces) if (drawn === coinFlip.face) onPrintedFace += 1;
-      const repeated: EffectOp[] = [];
-      for (let i = 0; i < onPrintedFace; i += 1) repeated.push(...coinFlip.ops);
-      const expanded = [...(program ?? []), ...repeated];
-      // Back to NULL when nothing came out of it (zero of the printed face and no
-      // prior program), because null is what the tail below tests for: an empty
-      // `EffectOp[]` would
-      // route the attack through `settleProgram` to say nothing at all, which is a
-      // different ending with the same result, and "different ending" is how a
-      // no-op grows a KO sweep it did not have.
-      program = expanded.length > 0 ? expanded : null;
-    } else if (coinFlip.kind === "retrievalUpToHeads") {
-      // "Up to" the number of heads: the count becomes one op's `max`. On zero heads nothing is
-      // appended, rather than an empty program or a `max: 0` op.
-      if (heads > 0) {
-        program = [
-          ...(program ?? []),
-          { op: "discardPileRetrieval", filter: coinFlip.filter, dest: coinFlip.dest, max: heads },
-        ];
-      }
-    } else if (coinFlip.kind === "deckUpToHeads") {
-      // The heads count is the search's `max`; 0 heads searches and shuffles nothing.
-      if (heads > 0) {
-        const upToHeadsTake: EffectOp =
-          coinFlip.to === "hand"
-            ? { op: "searchDeck", filter: coinFlip.filter, dest: "hand", max: heads }
-            : { op: "attachFromDeck", filter: coinFlip.filter, max: heads, toSelf: true };
-        program = [...(program ?? []), upToHeadsTake, { op: "shuffleDeck" }];
-      }
-    } else if (coinFlip.kind === "bonusOnAllHeads") {
-      // Hyper Lariat: the bonus applies only when every flipped coin is heads.
-      coinBonus = heads === faces.length ? coinFlip.bonus : 0;
-    } else if (coinFlip.kind === "bonusLadder") {
-      // Heads ladder: a table lookup, not `per × heads`. Each tier is exclusive, so three heads
-      // pays only the third tier. Spelled tier by tier rather than `ladder[heads - 1]` so an
-      // out-of-range index is not silently absorbed.
-      const [onOneHead, onTwoHeads, onAllThree] = coinFlip.ladder;
-      coinBonus = heads === 0 ? 0 : heads === 1 ? onOneHead : heads === 2 ? onTwoHeads : onAllThree;
-    } else if (coinFlip.kind === "opponentPerTails") {
-      // Per-tails fold in its own branch: falling through to the `else` would compile but count
-      // heads instead of tails.
-      let tails = 0;
-      for (const drawn of faces) if (drawn === "tails") tails += 1;
-      coinBonus = tails * coinFlip.per;
-    } else {
-      coinBonus = heads * coinFlip.per;
-    }
-    // Threshold check over the same faces. A separate `if` so the `per × heads` fold stays in one
-    // expression. Counts the printed face, not `heads`. Appended to `program`, never assigned; a
-    // failed threshold appends nothing.
-    if (coinFlip.kind === "perHeadsThenThreshold") {
-      let matching = 0;
-      for (const face of faces) if (face === coinFlip.threshold.face) matching += 1;
-      if (matching >= coinFlip.threshold.atLeast) {
-        program = [...(program ?? []), ...coinFlip.ops];
-      }
-    }
+      }),
+    };
   }
-  // Optional boost: both arms deal one `damageDefender` through §8.5 (yes at `base + bonus` plus
-  // the consequent, no at the printed base), so W/R applies once. `scaledBase` is already 0, so
-  // nothing is dealt before the program. Appended to `program`, never assigned.
-  if (optionalBoost !== null) {
-    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? "")];
-  }
-  // The gate takes a single coin inside `runProgram` and both arms branch on that face; reading it
-  // with `deriveAttackCoinFlip` as well would flip twice. Appended to `program`, never assigned.
-  if (bonusConsequent !== null) {
-    program = [...(program ?? []), ...bonusConsequentProgram(bonusConsequent, base)];
-  }
-  // Two nested gates, each with a decline arm that still deals the printed base, since the attack
-  // is "140+" rather than "+140". Appended to `program`, never assigned.
-  if (optionalCostBoost !== null) {
-    program = [
-      ...(program ?? []),
-      ...optionalCostBoostProgram(optionalCostBoost, base, effect ?? ""),
-    ];
-  }
-  // No gate and no decline arm: declining discards zero cards, so the hit is `base + P × 0`.
-  // Appended to `program`, never assigned. `discardScaledBase` is the declaration-time head for
-  // `selfHandAttach` and the printed base otherwise.
-  if (discardScaledBoost !== null) {
-    program = [
-      ...(program ?? []),
-      ...discardScaledBoostProgram(discardScaledBoost, discardScaledBase),
-    ];
-  }
-  // The heads bonus is the attack's own printed extra damage, so it folds at the same pre-W/R step
-  // as `scaled`. `scaled` stays board-only, since a coin face is not a board fact.
-  const scaledTotal = scaled + coinBonus;
-
-  // "Before doing damage": runs after everything that can cancel the attack and immediately before
-  // §8.5, so a cancelled attack never strips a Tool and §8.5 reads the defender without it.
-  // `scaled` was computed at declaration and is not re-read.
-  if (preDamage !== null) {
-    const stripped = applyAttackPreDamage(next, preDamage, action.seat, attackerUid, events);
-    next = stripped.state;
-    // Rebind the defender after the pre-damage discard, or §8.5 folds the stale snapshot.
-    defender = next.players[defenderSeat].active ?? defender;
-    // Rebind the attacker too, since the pre-damage step may discard from its own body.
-    attackerBody = next.players[action.seat].active ?? attackerBody;
-    // "If you can't discard any, this attack does nothing." Ends through `finishAttack` like other
-    // cancelled attacks. Tests `stripped.cancelled` rather than `preDamage.kind`.
-    if (stripped.cancelled) {
+  if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
+    if (heads === 0) {
+      // No damage, no effects, no triggers; `finishAttack` still runs because the attack was
+      // used.
       events.push({
         type: "ATTACK_FAILED",
         seat: action.seat,
         uid: attackerUid,
-        reason: "preDamage",
+        reason: "coinFlip",
       });
-      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+      return { done: finishAttack(next, events, action.seat, attackerUid, attackName) };
+    }
+    // Heads branch of the same flip. Appended to `program`, never assigned, so a registry program
+    // is not dropped.
+    if (coinFlip.kind === "cancelOnTailsElseProgram") {
+      program = [...(program ?? []), ...coinFlip.ops];
+    }
+  } else if (coinFlip.kind === "programPerHeads") {
+    // One copy of the member's ops per face matching its printed face, in flip order. Sharing the
+    // same ops array is safe because the interpreter never mutates ops. The tally counts the
+    // printed face, not `heads`.
+    let onPrintedFace = 0;
+    for (const drawn of faces) if (drawn === coinFlip.face) onPrintedFace += 1;
+    const repeated: EffectOp[] = [];
+    for (let i = 0; i < onPrintedFace; i += 1) repeated.push(...coinFlip.ops);
+    const expanded = [...(program ?? []), ...repeated];
+    // Back to null when nothing came out of it (zero of the printed face and no prior program):
+    // null is what the tail tests for, and an empty `EffectOp[]` would route the attack through
+    // `settleProgram`, a different ending that could grow a KO sweep it did not have.
+    program = expanded.length > 0 ? expanded : null;
+  } else if (coinFlip.kind === "retrievalUpToHeads") {
+    // "Up to" the number of heads: the count becomes one op's `max`. On zero heads nothing is
+    // appended, rather than an empty program or a `max: 0` op.
+    if (heads > 0) {
+      program = [
+        ...(program ?? []),
+        { op: "discardPileRetrieval", filter: coinFlip.filter, dest: coinFlip.dest, max: heads },
+      ];
+    }
+  } else if (coinFlip.kind === "deckUpToHeads") {
+    // The heads count is the search's `max`; 0 heads searches and shuffles nothing.
+    if (heads > 0) {
+      const upToHeadsTake: EffectOp =
+        coinFlip.to === "hand"
+          ? { op: "searchDeck", filter: coinFlip.filter, dest: "hand", max: heads }
+          : { op: "attachFromDeck", filter: coinFlip.filter, max: heads, toSelf: true };
+      program = [...(program ?? []), upToHeadsTake, { op: "shuffleDeck" }];
+    }
+  } else if (coinFlip.kind === "bonusOnAllHeads") {
+    // Hyper Lariat: the bonus applies only when every flipped coin is heads.
+    coinBonus = heads === faces.length ? coinFlip.bonus : 0;
+  } else if (coinFlip.kind === "bonusLadder") {
+    // Heads ladder: a table lookup, not `per × heads`. Each tier is exclusive, so three heads
+    // pays only the third tier. Spelled tier by tier rather than `ladder[heads - 1]` so an
+    // out-of-range index is not silently absorbed.
+    const [onOneHead, onTwoHeads, onAllThree] = coinFlip.ladder;
+    coinBonus = heads === 0 ? 0 : heads === 1 ? onOneHead : heads === 2 ? onTwoHeads : onAllThree;
+  } else if (coinFlip.kind === "opponentPerTails") {
+    // Per-tails fold in its own branch: falling through to the `else` would compile but count
+    // heads instead of tails.
+    let tails = 0;
+    for (const drawn of faces) if (drawn === "tails") tails += 1;
+    coinBonus = tails * coinFlip.per;
+  } else {
+    coinBonus = heads * coinFlip.per;
+  }
+  // Threshold check over the same faces. A separate `if` so the `per × heads` fold stays in one
+  // expression. Counts the printed face, not `heads`. Appended to `program`, never assigned; a
+  // failed threshold appends nothing.
+  if (coinFlip.kind === "perHeadsThenThreshold") {
+    let matching = 0;
+    for (const face of faces) if (face === coinFlip.threshold.face) matching += 1;
+    if (matching >= coinFlip.threshold.atLeast) {
+      program = [...(program ?? []), ...coinFlip.ops];
     }
   }
+  return { state: next, program, coinBonus };
+}
 
-  let defended = defender;
-  // §9 — the damaged Active's reactive onDamagedByAttack Ability, recorded at
-  // damage time but run as a staged epilogue below (so a PARKING discard survives).
-  let damagedTriggerStage: PendingStage | null = null;
-  // One stage per damaged-reacting Tool (Lucky Helmet, Handheld Fan), queued behind the Ability's.
-  // A list, because a parking Ability program would strand a program chained behind it in the same
-  // stage.
-  let damagedToolStages: PendingStage[] = [];
-  // What §8.5 dealt to the defending Active, hoisted so the effect program can read it ("Heal from
-  // this Pokémon the same amount of damage you did"). `dealt` is out of scope at the `runProgram`
-  // call. Stays 0 for an effect-only attack. Post-W/R, reduction and prevention, unclamped: the
-  // same number `DAMAGE_DEALT.dealt` reports.
-  let dealtToDefender = 0;
-  if (scaledBase + scaledTotal > 0) {
-    // §8.5 damage pipeline in printed order: base + the attack's own extra (`scaledTotal`) +
-    // pre-W/R bonuses → Weakness → Resistance → the defender's damage reduction, floored at 0.
-    // `scaledBase` is 0 for a multiply clause, whose "N×" is already in `scaled`. The installed
-    // next-turn boost is summed separately because an Ability lock must not suppress it. "Any
-    // effects on your opponent's Active Pokémon" can come from the attack text or from the
-    // attacker's Ability; both feed this one flag.
-    const suppressTargetEffects =
-      damageSuppression?.targetEffects === true ||
-      attackerSuppressesTargetEffects(next, attackerBody);
-    // Black Belt's Training this-turn bonus against a Pokémon ex: an installation, so a §9 lock
-    // cannot reach it, and unaffected by `suppressTargetEffects` because it is the attacker's
-    // number.
-    const bonus =
-      attackerPreWRBonus(next, attackerBody, action.seat, defenderCard) +
-      boostedAttackDamage(next, attackerBody, printedIndex) +
-      sideAttackBonusThisTurn(next, action.seat, defenderCard, attackerBody);
-    // Pre-W/R subtraction from three sources: an installed debuff on the attacker, an opposing
-    // Active's aura, and the attack's own "less damage" clause. Kept separate from the bonus
-    // because it is reported as `debuff` and needs a clamp. Only the aura half is an effect on the
-    // defender, so only it is nulled by `suppressTargetEffects`.
-    const debuff =
-      installedAttackDebuffOf(next, attackerBody) +
-      (suppressTargetEffects ? 0 : opposingAttackDebuff(next, attackerBody)) +
-      // Gloomy Garbage: the suppression drops only a defending holder's own term.
-      opposingToolAttackDebuff(next, attackerBody, suppressTargetEffects ? defender : undefined) +
-      printedPenalty;
-    // Weakness is nulled by a "no Weakness" aura (Blooming Garden), by the attack's own "isn't
-    // affected by Weakness", or by a bar the defender's previous attack installed; Resistance still
-    // applies. The order of the disjuncts does not matter. A Weakness retype is applied after the
-    // null paths and dropped by `suppressTargetEffects`.
-    const weaknessRetype = suppressTargetEffects ? null : installedWeaknessRetypeOf(next, defender);
-    // Lillie's Clefairy ex "Fairy Zone" rewrites the defender's Weakness from the attacker's side;
-    // the null paths still win, and `suppressTargetEffects` drops it. Overwriting Bolt's installed
-    // rewrite applies first.
-    const weaknessRewrite = suppressTargetEffects
+/**
+ * Appends the boost readers' programs, each never assigned over `program`. `base` is the printed
+ * (or boosted) base, and `discardScaledBase` the declaration-time head for `selfHandAttach`.
+ */
+function withBoostPrograms(
+  program: EffectOp[] | null,
+  text: AttackText,
+  base: number,
+  discardScaledBase: number,
+): EffectOp[] | null {
+  let out = program;
+  // Optional boost: both arms deal one `damageDefender` through §8.5 (yes at `base + bonus` plus
+  // the consequent, no at the printed base), so W/R applies once. `scaledBase` is already 0, so
+  // nothing is dealt before the program.
+  if (text.optionalBoost !== null) {
+    out = [...(out ?? []), ...optionalBoostProgram(text.optionalBoost, base, text.effect ?? "")];
+  }
+  // The gate takes a single coin inside `runProgram` and both arms branch on that face; reading it
+  // with `deriveAttackCoinFlip` as well would flip twice.
+  if (text.bonusConsequent !== null) {
+    out = [...(out ?? []), ...bonusConsequentProgram(text.bonusConsequent, base)];
+  }
+  // Two nested gates, each with a decline arm that still deals the printed base, since the attack
+  // is "140+" rather than "+140".
+  if (text.optionalCostBoost !== null) {
+    out = [
+      ...(out ?? []),
+      ...optionalCostBoostProgram(text.optionalCostBoost, base, text.effect ?? ""),
+    ];
+  }
+  // No gate and no decline arm: declining discards zero cards, so the hit is `base + P × 0`.
+  if (text.discardScaledBoost !== null) {
+    out = [
+      ...(out ?? []),
+      ...discardScaledBoostProgram(text.discardScaledBoost, discardScaledBase),
+    ];
+  }
+  return out;
+}
+
+/** The main hit's two bodies and the damage terms fixed before §8.5. */
+interface AttackHit {
+  /** The declaring seat, which deals the main hit. */
+  seat: Seat;
+  attackerUid: string;
+  /** The attacker's in-play card as of declaration. */
+  attacker: Card;
+  /** The attacker's post-pre-damage binding. */
+  attackerBody: InPlayPokemon;
+  defenderSeat: Seat;
+  defenderUid: string;
+  /** The defender's post-pre-damage binding. */
+  defender: InPlayPokemon;
+  defenderCard: Card;
+  printedIndex: number;
+  damageSuppression: AttackDamageSuppression | null;
+  scaledBase: number;
+  /** The attack's own extra: scaling plus any heads bonus. */
+  scaledTotal: number;
+  printedPenalty: number;
+}
+
+/**
+ * §8.5 damage pipeline in printed order: base + the attack's own extra (`scaledTotal`) + pre-W/R
+ * bonuses → Weakness → Resistance → the defender's damage reduction, floored at 0, then the §9
+ * reactions to the hit. Returns what was dealt and the damaged-trigger stages to queue.
+ */
+function dealAttackDamage(
+  state: GameState,
+  hit: AttackHit,
+  events: GameEvent[],
+): { state: GameState; dealt: number; damagedStages: PendingStage[] } {
+  const { seat, attackerUid, attacker, attackerBody, defenderSeat, defenderUid, defender } = hit;
+  const { defenderCard, printedIndex, damageSuppression, scaledBase, scaledTotal } = hit;
+  let next = state;
+  // `scaledBase` is 0 for a multiply clause, whose "N×" is already in `scaled`. The installed
+  // next-turn boost is summed separately because an Ability lock must not suppress it. "Any
+  // effects on your opponent's Active Pokémon" can come from the attack text or from the
+  // attacker's Ability; both feed this one flag.
+  const suppressTargetEffects =
+    damageSuppression?.targetEffects === true ||
+    attackerSuppressesTargetEffects(next, attackerBody);
+  // Black Belt's Training this-turn bonus against a Pokémon ex: an installation, so a §9 lock
+  // cannot reach it, and unaffected by `suppressTargetEffects` because it is the attacker's
+  // number.
+  const bonus =
+    attackerPreWRBonus(next, attackerBody, seat, defenderCard) +
+    boostedAttackDamage(next, attackerBody, printedIndex) +
+    sideAttackBonusThisTurn(next, seat, defenderCard, attackerBody);
+  // Pre-W/R subtraction from three sources: an installed debuff on the attacker, an opposing
+  // Active's aura, and the attack's own "less damage" clause. Kept separate from the bonus
+  // because it is reported as `debuff` and needs a clamp. Only the aura half is an effect on the
+  // defender, so only it is nulled by `suppressTargetEffects`.
+  const debuff =
+    installedAttackDebuffOf(next, attackerBody) +
+    (suppressTargetEffects ? 0 : opposingAttackDebuff(next, attackerBody)) +
+    // Gloomy Garbage: the suppression drops only a defending holder's own term.
+    opposingToolAttackDebuff(next, attackerBody, suppressTargetEffects ? defender : undefined) +
+    hit.printedPenalty;
+  // Weakness is nulled by a "no Weakness" aura (Blooming Garden), by the attack's own "isn't
+  // affected by Weakness", or by a bar the defender's previous attack installed; Resistance still
+  // applies. The order of the disjuncts does not matter. A Weakness retype is applied after the
+  // null paths and dropped by `suppressTargetEffects`.
+  const weaknessRetype = suppressTargetEffects ? null : installedWeaknessRetypeOf(next, defender);
+  // Lillie's Clefairy ex "Fairy Zone" rewrites the defender's Weakness from the attacker's side;
+  // the null paths still win, and `suppressTargetEffects` drops it. Overwriting Bolt's installed
+  // rewrite applies first.
+  const weaknessRewrite = suppressTargetEffects
+    ? null
+    : (installedWeaknessRewriteOf(next, defender) ??
+      seatWeaknessRewrite(next, defenderSeat, defenderCard));
+  const weakness =
+    damageSuppression?.weakness === true ||
+    seatRemovesWeakness(next, defenderSeat) ||
+    installedNoWeakness(next, defender)
       ? null
-      : (installedWeaknessRewriteOf(next, defender) ??
-        seatWeaknessRewrite(next, defenderSeat, defenderCard));
-    const weakness =
-      damageSuppression?.weakness === true ||
-      seatRemovesWeakness(next, defenderSeat) ||
-      installedNoWeakness(next, defender)
-        ? null
-        : // Illumise "Supereffective Pheromones": Weakness applies as ×3 instead of ×2.
-          withWeaknessAmount(
-            weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),
-            weaknessAmountOverride(next),
-          );
-    // Resistance has its own suppression flag because some attacks suppress Resistance alone.
-    const resistance =
-      damageSuppression?.resistance === true ? null : resistanceOf(attacker, defenderCard);
-    // Clamped at this step, not only at the end, because an attack never does negative damage; with
-    // additive old-era Weakness the two placements differ.
-    const preWR = Math.max(0, scaledBase + scaledTotal + bonus - debuff);
-    const afterWR = Math.max(
-      0,
-      applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
-    );
-    // The fold plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping), read only
-    // by the recoil below.
-    const defenderPassives = withWatchedRecoil(
-      next,
-      defenderSeat,
-      defender,
-      passivesOf(next, defender),
-    );
-    // "Takes N less damage from attacks (after applying Weakness and Resistance)", summed from
-    // catalog Abilities and Tools, installed reductions, own-side seat-wide auras, and Berries.
-    // Under `suppressTargetEffects` the on-target terms drop and the seat-wide aura only counts
-    // when granted by another Pokémon. A Berry is asked only when `preWR > 0`, and a dropped or
-    // unasked Berry is not spent.
-    const berry =
-      suppressTargetEffects || preWR === 0
-        ? NO_CONSUMABLE
-        : berryReductionOf(next, defender, attacker, action.seat);
-    const reduction = suppressTargetEffects
-      ? seatDamageReduction(next, defender, "othersOnly", action.seat)
-      : berry.amount +
-        defenderPassives.damageReductionAfterWR +
-        // Attacker-gated reductions (Sacred Charm, Thick Scale, Thick Fat), on-target.
-        attackerGatedReductionOf(
-          next,
-          defender,
-          defenderPassives.damageReductionsFromAttacker,
-          attacker,
-          action.seat,
-        ) +
-        installedReductionOf(next, defender, attacker, attackerBody) + // Metal Block.
-        seatDamageReduction(next, defender, "all", action.seat);
-    // Full prevention, which supersedes any reduction: catalog auras on the holder and installed
-    // blocks are on-target and dropped by `suppressTargetEffects`; the shielding Active and the
-    // Stadium are off-target and stay. The off-target reads are always false for the defending
-    // Active but are kept so the check is total. A block's `maxDamage` is compared against
-    // `wouldDeal`. An installed vulnerability adds after W/R, only when `preWR > 0` (the rulebook
-    // stops when base damage is 0), and is on-target.
-    const vulnerability =
-      suppressTargetEffects || preWR === 0 ? 0 : installedVulnerabilityOf(next, defender);
-    const wouldDeal = Math.max(0, afterWR + vulnerability - reduction);
-    // The coin-flip shield is asked after the pure preventions, so no coin is flipped for damage
-    // already stopped.
-    const preventedBeforeFlip =
-      (!suppressTargetEffects &&
-        ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
-          preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
-          // Inside the suppression guard because it is a catalog aura on the damaged Pokémon.
-          (defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker)) ||
-          // Inside the suppression guard because it is a catalog aura on the damaged Pokémon. Reads
-          // `attacker` because it gates on the attacking card's printed name and stage.
-          preventsAttackerClass(defenderPassives.preventDamageFromAttackerClasses, attacker) ||
-          // Sparkling Scales, inside the suppression guard.
-          preventsAttackerBanner(defenderPassives.preventDamageAndEffectsFromBanners, attacker) ||
-          // Reads `attackerBody`, the post-discard binding, because it gates on the attacker's
-          // attachments. Inside the suppression guard.
-          (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
-            attackerHasSpecialEnergy(next, attackerBody)) ||
-          // Plume Protection, the damage-only twin.
-          defenderPassives.preventDamageWhileBenched ||
-          // Always false here, since this is the defending Active and the flag only applies on the
-          // Bench; read anyway so the check is total.
-          defenderPassives.preventDamageAndEffectsWhileBenched ||
-          // Prevents damage by amount rather than by attacker ("or more"), in the Active Spot and
-          // on the Bench alike. ORed with `attackBlockOf`'s cap, not merged, because they are
-          // different channels with opposite polarity.
-          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||
-          attackBlockOf(next, defender, attacker, wouldDeal, attackerBody) !== null)) ||
-      // Always false here: both sentences target benched Pokémon and `defender` is the Active.
-      benchShieldedFromDamage(next, defender, "all") ||
-      // Ancient Bulwark: the holder is benched, so it is never the defender here.
-      seatShieldedFromLowEnergyAttacker(next, defender, attackerBody, action.seat, "all") ||
-      stadiumPreventsDamage(next, defender, attacker);
-    // The coin-flip shield must be a statement, last, because it draws rng and emits a row. It
-    // flips only if damage would still land after prevention, suppression and reduction. Its row
-    // precedes `DAMAGE_DEALT`, and `next` takes the advanced `rngState` immediately.
-    const [flipPrevented, rngState] = coinFlipShieldPrevents(
-      next,
-      defender,
-      defenderSeat,
-      preventedBeforeFlip || suppressTargetEffects ? 0 : wouldDeal,
-      events,
-    );
-    next = { ...next, rngState };
-    const prevented = preventedBeforeFlip || flipPrevented;
-    const dealt = prevented ? 0 : wouldDeal;
-    // Published to the effect program as `EffectContext.dealt`.
-    dealtToDefender = dealt;
-    // §8.1 KO-survival clamp, read here because "has full HP" is a pre-damage fact and `defender`
-    // is the last binding holding it. `dealt` is not clamped, so the `dealt > 0` reactions still
-    // see the damage. The result names the Survival Brace that answered, if any.
-    const clamped = koSurvivalClamp(next, defender, dealt, action.seat);
-    // Tenacious Body / Durable Body coin-flip survival, asked only when the clamp did not answer.
-    const [coinSaved, survivalRng] =
-      clamped === null
-        ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events)
-        : [null, next.rngState];
-    next = { ...next, rngState: survivalRng };
-    // Record the damage dealt on the body (Juggernaut Horn).
-    defended = withAttackDamageTaken(
-      { ...defender, damage: clamped?.damage ?? coinSaved ?? defender.damage + dealt },
-      next.turn,
-      dealt,
-    );
-    next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
+      : // Illumise "Supereffective Pheromones": Weakness applies as ×3 instead of ×2.
+        withWeaknessAmount(
+          weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite),
+          weaknessAmountOverride(next),
+        );
+  // Resistance has its own suppression flag because some attacks suppress Resistance alone.
+  const resistance =
+    damageSuppression?.resistance === true ? null : resistanceOf(attacker, defenderCard);
+  // Clamped at this step, not only at the end, because an attack never does negative damage; with
+  // additive old-era Weakness the two placements differ.
+  const preWR = Math.max(0, scaledBase + scaledTotal + bonus - debuff);
+  const afterWR = Math.max(
+    0,
+    applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
+  );
+  // The fold plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping), read only
+  // by the recoil below.
+  const defenderPassives = withWatchedRecoil(
+    next,
+    defenderSeat,
+    defender,
+    passivesOf(next, defender),
+  );
+  // "Takes N less damage from attacks (after applying Weakness and Resistance)", summed from
+  // catalog Abilities and Tools, installed reductions, own-side seat-wide auras, and Berries.
+  // Under `suppressTargetEffects` the on-target terms drop and the seat-wide aura only counts
+  // when granted by another Pokémon. A Berry is asked only when `preWR > 0`, and a dropped or
+  // unasked Berry is not spent.
+  const berry =
+    suppressTargetEffects || preWR === 0
+      ? NO_CONSUMABLE
+      : berryReductionOf(next, defender, attacker, seat);
+  const reduction = suppressTargetEffects
+    ? seatDamageReduction(next, defender, "othersOnly", seat)
+    : berry.amount +
+      defenderPassives.damageReductionAfterWR +
+      // Attacker-gated reductions (Sacred Charm, Thick Scale, Thick Fat), on-target.
+      attackerGatedReductionOf(
+        next,
+        defender,
+        defenderPassives.damageReductionsFromAttacker,
+        attacker,
+        seat,
+      ) +
+      installedReductionOf(next, defender, attacker, attackerBody) + // Metal Block.
+      seatDamageReduction(next, defender, "all", seat);
+  // Full prevention, which supersedes any reduction: catalog auras on the holder and installed
+  // blocks are on-target and dropped by `suppressTargetEffects`; the shielding Active and the
+  // Stadium are off-target and stay. The off-target reads are always false for the defending
+  // Active but are kept so the check is total. A block's `maxDamage` is compared against
+  // `wouldDeal`. An installed vulnerability adds after W/R, only when `preWR > 0` (the rulebook
+  // stops when base damage is 0), and is on-target.
+  const vulnerability =
+    suppressTargetEffects || preWR === 0 ? 0 : installedVulnerabilityOf(next, defender);
+  const wouldDeal = Math.max(0, afterWR + vulnerability - reduction);
+  // The coin-flip shield is asked after the pure preventions, so no coin is flipped for damage
+  // already stopped.
+  const preventedBeforeFlip =
+    (!suppressTargetEffects &&
+      ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
+        preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
+        // Inside the suppression guard because it is a catalog aura on the damaged Pokémon.
+        (defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker)) ||
+        // Inside the suppression guard because it is a catalog aura on the damaged Pokémon. Reads
+        // `attacker` because it gates on the attacking card's printed name and stage.
+        preventsAttackerClass(defenderPassives.preventDamageFromAttackerClasses, attacker) ||
+        // Sparkling Scales, inside the suppression guard.
+        preventsAttackerBanner(defenderPassives.preventDamageAndEffectsFromBanners, attacker) ||
+        // Reads `attackerBody`, the post-discard binding, because it gates on the attacker's
+        // attachments. Inside the suppression guard.
+        (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
+          attackerHasSpecialEnergy(next, attackerBody)) ||
+        // Plume Protection, the damage-only twin.
+        defenderPassives.preventDamageWhileBenched ||
+        // Always false here, since this is the defending Active and the flag only applies on the
+        // Bench; read anyway so the check is total.
+        defenderPassives.preventDamageAndEffectsWhileBenched ||
+        // Prevents damage by amount rather than by attacker ("or more"), in the Active Spot and
+        // on the Bench alike. ORed with `attackBlockOf`'s cap, not merged, because they are
+        // different channels with opposite polarity.
+        preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||
+        attackBlockOf(next, defender, attacker, wouldDeal, attackerBody) !== null)) ||
+    // Always false here: both sentences target benched Pokémon and `defender` is the Active.
+    benchShieldedFromDamage(next, defender, "all") ||
+    // Ancient Bulwark: the holder is benched, so it is never the defender here.
+    seatShieldedFromLowEnergyAttacker(next, defender, attackerBody, seat, "all") ||
+    stadiumPreventsDamage(next, defender, attacker);
+  // The coin-flip shield must be a statement, last, because it draws rng and emits a row. It
+  // flips only if damage would still land after prevention, suppression and reduction. Its row
+  // precedes `DAMAGE_DEALT`, and `next` takes the advanced `rngState` immediately.
+  const [flipPrevented, rngState] = coinFlipShieldPrevents(
+    next,
+    defender,
+    defenderSeat,
+    preventedBeforeFlip || suppressTargetEffects ? 0 : wouldDeal,
+    events,
+  );
+  next = { ...next, rngState };
+  const prevented = preventedBeforeFlip || flipPrevented;
+  const dealt = prevented ? 0 : wouldDeal;
+  // §8.1 KO-survival clamp, read here because "has full HP" is a pre-damage fact and `defender`
+  // is the last binding holding it. `dealt` is not clamped, so the `dealt > 0` reactions still
+  // see the damage. The result names the Survival Brace that answered, if any.
+  const clamped = koSurvivalClamp(next, defender, dealt, seat);
+  // Tenacious Body / Durable Body coin-flip survival, asked only when the clamp did not answer.
+  const [coinSaved, survivalRng] =
+    clamped === null
+      ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events)
+      : [null, next.rngState];
+  next = { ...next, rngState: survivalRng };
+  // Record the damage dealt on the body (Juggernaut Horn).
+  let defended = withAttackDamageTaken(
+    { ...defender, damage: clamped?.damage ?? coinSaved ?? defender.damage + dealt },
+    next.turn,
+    dealt,
+  );
+  next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
+  events.push({
+    type: "DAMAGE_DEALT",
+    seat: defenderSeat,
+    // The main hit's dealer is always the declaring seat.
+    by: seat,
+    uid: defenderUid,
+    base: scaledBase,
+    // Present only when the attack's own extra (scaling or heads bonus) added damage.
+    scaled: scaledTotal > 0 ? scaledTotal : undefined,
+    // Present only when a continuous effect actually moved the total.
+    bonus: bonus > 0 ? bonus : undefined,
+    // The pre-W/R subtraction, in its own field rather than a negative `bonus`.
+    debuff: debuff > 0 ? debuff : undefined,
+    weakness,
+    resistance,
+    reduction: reduction > 0 ? reduction : undefined,
+    // The post-W/R addition, in its own field.
+    vulnerability: vulnerability > 0 ? vulnerability : undefined,
+    prevented: prevented ? true : undefined,
+    survived: clamped === null && coinSaved === null ? undefined : true,
+    dealt,
+    damage: defended.damage,
+  });
+  // Tools this hit consumed (Berries that reduced an unprevented hit, the Survival Brace that
+  // answered) leave after the row showing their effect. `defended` is rebound so the Deluxe Bomb
+  // scan sees the body without them.
+  const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
+  defended = consumeTools(defended, spent, defenderSeat, events);
+  next = discardToPile(
+    withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended }),
+    defenderSeat,
+    spent,
+  );
+
+  // §9 reactive recoil: when the defender is damaged, even if Knocked Out, it puts counters on
+  // the attacker before the §8.1 sweep, outside the §8.5 pipeline. Labelled "counterattack"
+  // because the sum mixes Ability, Tool and installed sources. `dealt`, not the clamped total,
+  // feeds "equal to the damage done". An attacker with "Luminous Wing" refuses the Ability share.
+  const refusedRecoil =
+    dealt > 0 && passivesOf(next, attackerBody).preventAbilityEffects
+      ? defenderPassives.damageAttackerFromAbility
+      : 0;
+  if (refusedRecoil > 0) {
+    events.push({ type: "ABILITY_EFFECT_PREVENTED", seat, uid: attackerUid });
+  }
+  const recoil =
+    defenderPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, defender, dealt);
+  if (dealt > 0 && recoil > 0) {
+    const retaliated = { ...attackerBody, damage: attackerBody.damage + recoil };
+    next = withActive(next, seat, retaliated);
     events.push({
-      type: "DAMAGE_DEALT",
-      seat: defenderSeat,
-      // The main hit's dealer is always the declaring seat.
-      by: action.seat,
-      uid: defenderUid,
-      base: scaledBase,
-      // Present only when the attack's own extra (scaling or heads bonus) added damage.
-      scaled: scaledTotal > 0 ? scaledTotal : undefined,
-      // Present only when a continuous effect actually moved the total.
-      bonus: bonus > 0 ? bonus : undefined,
-      // The pre-W/R subtraction, in its own field rather than a negative `bonus`.
-      debuff: debuff > 0 ? debuff : undefined,
-      weakness,
-      resistance,
-      reduction: reduction > 0 ? reduction : undefined,
-      // The post-W/R addition, in its own field.
-      vulnerability: vulnerability > 0 ? vulnerability : undefined,
-      prevented: prevented ? true : undefined,
-      survived: clamped === null && coinSaved === null ? undefined : true,
-      dealt,
-      damage: defended.damage,
+      type: "COUNTERS_PLACED",
+      seat,
+      uid: attackerUid,
+      amount: recoil,
+      source: "counterattack",
     });
-    // Tools this hit consumed (Berries that reduced an unprevented hit, the Survival Brace that
-    // answered) leave after the row showing their effect. `defended` is rebound so the Deluxe Bomb
-    // scan sees the body without them.
-    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-    defended = consumeTools(defended, spent, defenderSeat, events);
-    next = discardToPile(
-      withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended }),
-      defenderSeat,
-      spent,
-    );
-
-    // §9 reactive recoil: when the defender is damaged, even if Knocked Out, it puts counters on
-    // the attacker before the §8.1 sweep, outside the §8.5 pipeline. Labelled "counterattack"
-    // because the sum mixes Ability, Tool and installed sources. `dealt`, not the clamped total,
-    // feeds "equal to the damage done". An attacker with "Luminous Wing" refuses the Ability share.
-    const refusedRecoil =
-      dealt > 0 && passivesOf(next, attackerBody).preventAbilityEffects
-        ? defenderPassives.damageAttackerFromAbility
-        : 0;
-    if (refusedRecoil > 0) {
-      events.push({ type: "ABILITY_EFFECT_PREVENTED", seat: action.seat, uid: attackerUid });
-    }
-    const recoil =
-      defenderPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, defender, dealt);
-    if (dealt > 0 && recoil > 0) {
-      const retaliated = { ...attackerBody, damage: attackerBody.damage + recoil };
-      next = withActive(next, action.seat, retaliated);
-      events.push({
-        type: "COUNTERS_PLACED",
-        seat: action.seat,
-        uid: attackerUid,
-        amount: recoil,
-        source: "counterattack",
-      });
-    }
-
-    // §9 reactive trigger for the damaged Active (`onDamagedByAttack`), even if Knocked Out. Runs
-    // as a staged epilogue after the attack's effect program and before the §8.1 sweep so it can
-    // park. Seeded only when such an unlocked Ability is present.
-    if (dealt > 0 && damagedByAttackAbility(next, defenderSeat, defenderUid) !== undefined) {
-      damagedTriggerStage = { kind: "damagedTrigger", seat: defenderSeat, uid: defenderUid };
-    }
-    // Deluxe Bomb, under the same `dealt > 0` gate. Then one stage per damaged-reacting Tool,
-    // behind the Ability's stage, seeded only when such a Tool is present.
-    if (dealt > 0) {
-      next = detonateDeluxeBomb(next, defenderSeat, defended, action.seat, dealt, events);
-      damagedToolStages = damagedToolTriggersOf(next, defenderSeat, defenderUid).map(
-        ({ toolUid }): PendingStage => ({
-          kind: "damagedTrigger",
-          seat: defenderSeat,
-          uid: toolUid,
-        }),
-      );
-    }
   }
 
-  // §8 step 4: the effect program runs after the damage, then the damaged trigger, then the on-KO
-  // Tool trigger, all before `finishAttack`'s §8.1 sweep. Any of them can park, so the tail is
-  // staged. The on-KO Tool stage is seeded on presence alone, since a KO can come from the program,
-  // and must sit ahead of `attackEpilogue` before the KO discards the stack.
-  const koToolStage: PendingStage | null =
-    koToolTriggersOf(next, defenderSeat, defenderUid).length > 0
-      ? { kind: "koToolTrigger", seat: defenderSeat }
-      : null;
-  const epilogue: PendingStage[] = [
-    ...(damagedTriggerStage === null ? [] : [damagedTriggerStage]),
-    ...damagedToolStages,
-    ...(koToolStage === null ? [] : [koToolStage]),
-    // `uid` is the attacker as of declaration; the effect program may switch it to the Bench.
-    // `attack` is captured at the same time for `usedAttack`.
-    { kind: "attackEpilogue", seat: action.seat, uid: attackerUid, attack: declared.name },
-  ];
-  if (program !== null) {
-    return settleProgram(
-      runProgram(
-        { ...next, pending: [...next.pending, ...epilogue] },
-        program,
-        // The attacker is identified by uid, not "the Active", in case the program moves it.
-        // `invokedBy: "attack"` is set only here and lets a §11 block tell an attack's effect
-        // apart. `borrowedAttack` names a Memory Dive or Technical Machine row, so a name-keyed
-        // self-lock binds to that row.
-        {
-          seat: action.seat,
-          sourceUid: attackerUid,
-          invokedBy: "attack",
-          dealt: dealtToDefender,
-          ...(entry.origin === "printed" || copiedFrom !== null
-            ? {}
-            : { borrowedAttack: declared.name }),
-        },
-        events,
-      ),
-      action.seat,
-      events,
-      { resumeTail: true },
-    );
-  }
-
-  // No effect program: if the defender reacts, drain the trigger stages and epilogue through
-  // `advance`; otherwise call `finishAttack` directly.
-  if (damagedTriggerStage !== null || damagedToolStages.length > 0 || koToolStage !== null) {
-    return advance({ ...next, pending: [...next.pending, ...epilogue] }, events);
-  }
-
-  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end (or the Festival Lead attack-again
-  // window).
-  return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  if (dealt === 0) return { state: next, dealt, damagedStages: [] };
+  // §9 reactive trigger for the damaged Active (`onDamagedByAttack`), even if Knocked Out. Runs
+  // as a staged epilogue after the attack's effect program and before the §8.1 sweep so it can
+  // park. Seeded only when such an unlocked Ability is present.
+  const damagedTrigger: PendingStage[] =
+    damagedByAttackAbility(next, defenderSeat, defenderUid) !== undefined
+      ? [{ kind: "damagedTrigger", seat: defenderSeat, uid: defenderUid }]
+      : [];
+  // Deluxe Bomb. Then one stage per damaged-reacting Tool, behind the Ability's stage, seeded only
+  // when such a Tool is present. A list, because a parking Ability program would strand a program
+  // chained behind it in the same stage.
+  next = detonateDeluxeBomb(next, defenderSeat, defended, seat, dealt, events);
+  const damagedToolStages = damagedToolTriggersOf(next, defenderSeat, defenderUid).map(
+    ({ toolUid }): PendingStage => ({
+      kind: "damagedTrigger",
+      seat: defenderSeat,
+      uid: toolUid,
+    }),
+  );
+  return { state: next, dealt, damagedStages: [...damagedTrigger, ...damagedToolStages] };
 }
 
 // Copy attacks ("Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack."):
 // made at declaration by re-entering `attack()` with an override, so the copied attack takes the
 // normal §8 pipeline. The copied cost is ignored, the copier does the attack, and copy-family
 // attacks are never candidates.
-
-/**
- * The override `attack()` re-enters with. `empty` means no candidate; otherwise the source attack,
- * card, body and index. `flip` is Try to Imitate's printed coin.
- */
-export type AttackCopyOverride =
-  | { empty: true; flip?: true }
-  | {
-      empty?: undefined;
-      attack: Attack;
-      card: Card;
-      body: InPlayPokemon;
-      index: number;
-      flip?: true;
-      /**
-       * The second half of a resolve-time copy: no declaration, no lock or Confusion coin, no
-       * reveal. `body` is a one-card phantom body over the source card.
-       */
-      resumed?: true;
-    };
 
 /** One body the copy may read, with its ELIGIBLE attacks (`index` into `attacksOf`). `ref` is
     the own-Bench spot for Night Joker, `null` for the opponent's Active. */
@@ -1761,7 +1964,7 @@ function parkCopy(
   state: GameState,
   seat: Seat,
   attackerUid: string,
-  op: Extract<EffectOp, { op: "useAttackAs" }>,
+  op: OpOf<"useAttackAs">,
   prompt: EffectPrompt,
 ): ApplyResult {
   return settleProgram(
@@ -1815,10 +2018,12 @@ function declareAttackCopy(
   const pairs = sources.flatMap((source) => source.attacks.map((picked) => ({ source, picked })));
   const only = pairs.length === 1 ? pairs[0] : undefined;
   if (pairs.length === 0)
-    return attack(state, action, { empty: true, ...(copy.flip === true ? { flip: true } : {}) });
+    return attack(state, action, {
+      copied: { empty: true, ...(copy.flip === true ? { flip: true } : {}) },
+    });
   if (only !== undefined)
-    return attack(state, action, copiedOverride(only.source, only.picked, copy.flip));
-  const op: Extract<EffectOp, { op: "useAttackAs" }> = {
+    return attack(state, action, { copied: copiedOverride(only.source, only.picked, copy.flip) });
+  const op: OpOf<"useAttackAs"> = {
     op: "useAttackAs",
     from: copy.from,
     ...(copy.owner === undefined ? {} : { owner: copy.owner }),
@@ -1851,7 +2056,7 @@ function declareAttackCopy(
 export function resolveCopiedAttack(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "useAttackAs" }>,
+  op: OpOf<"useAttackAs">,
   choice: EffectChoice,
 ): ApplyResult {
   const seat = phase.seat;
@@ -1892,7 +2097,7 @@ export function resolveCopiedAttack(
     }
     const forced = source.attacks.length === 1 ? source.attacks[0] : undefined;
     if (forced !== undefined)
-      return attack(resumed, action, copiedOverride(source, forced, op.flip));
+      return attack(resumed, action, { copied: copiedOverride(source, forced, op.flip) });
     return parkCopy(
       resumed,
       seat,
@@ -1912,7 +2117,7 @@ export function resolveCopiedAttack(
     if (source === undefined || picked === undefined) {
       return err("BAD_EFFECT_CHOICE", `${String(choice.index)} is not an attack this copy can use`);
     }
-    return attack(resumed, action, copiedOverride(source, picked, op.flip));
+    return attack(resumed, action, { copied: copiedOverride(source, picked, op.flip) });
   }
   return err("BAD_EFFECT_CHOICE", "expected an attack or Pokémon choice");
 }
@@ -1925,7 +2130,7 @@ export function resolveCopiedAttack(
 /** The (top uid, printed index, label) pairs Skill Thief may copy for `seat`, Active first. */
 function inPlayCopyPairs(state: GameState, seat: Seat): FoundPair[] {
   const side = state.players[otherSeat(seat)];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   const seen = new Set<string>();
   return bodies.flatMap((body) => {
     const uid = topUid(body);
@@ -1944,7 +2149,7 @@ function inPlayCopyPairs(state: GameState, seat: Seat): FoundPair[] {
     one of the opponent's in-play bodies and its attack is still eligible. */
 function reenterInPlay(state: GameState, action: AttackAction, pair: FoundPair): ApplyResult {
   const side = state.players[otherSeat(action.seat)];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   const body = bodies.find((b) => topUid(b) === pair.uid);
   const card = body === undefined ? undefined : topCardOf(state, body);
   const picked =
@@ -1954,7 +2159,9 @@ function reenterInPlay(state: GameState, action: AttackAction, pair: FoundPair):
   if (body === undefined || card === undefined || picked === undefined) {
     return err("PHASE_DESYNC", "that attack is no longer one this copy can use");
   }
-  return attack(state, action, { attack: picked.attack, card, body, index: picked.index });
+  return attack(state, action, {
+    copied: { attack: picked.attack, card, body, index: picked.index },
+  });
 }
 
 /**
@@ -1967,10 +2174,11 @@ function declareInPlayAttackCopy(
   attackerUid: string,
   copierName: string,
 ): ApplyResult {
-  if (state.players[action.seat].hand.length > 0) return attack(state, action, { empty: true });
+  if (state.players[action.seat].hand.length > 0)
+    return attack(state, action, { copied: { empty: true } });
   const pairs = inPlayCopyPairs(state, action.seat);
   const only = pairs.length === 1 ? pairs[0] : undefined;
-  if (pairs.length === 0) return attack(state, action, { empty: true });
+  if (pairs.length === 0) return attack(state, action, { copied: { empty: true } });
   if (only !== undefined) return reenterInPlay(state, action, only);
   return settleProgram(
     {
@@ -1995,7 +2203,7 @@ function declareInPlayAttackCopy(
 export function resolveInPlayCopiedAttack(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "useInPlayAttackAs" }>,
+  op: OpOf<"useInPlayAttackAs">,
   choice: EffectChoice,
 ): ApplyResult {
   const seat = phase.seat;
@@ -2075,7 +2283,7 @@ function parkFoundCopy(
   seat: Seat,
   attackerUid: string,
   copierName: string,
-  op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
+  op: OpOf<"useFoundAttackAs">,
   prompt: EffectPrompt,
 ): ApplyResult {
   const epilogue: PendingStage = {
@@ -2188,11 +2396,7 @@ function reenterFound(state: GameState, action: AttackAction, pair: FoundPair): 
     return err("PHASE_DESYNC", "the found attack is no longer one this copy can use");
   }
   return attack(state, action, {
-    attack: picked.attack,
-    card,
-    body,
-    index: picked.index,
-    resumed: true,
+    copied: { attack: picked.attack, card, body, index: picked.index, resumed: true },
   });
 }
 
@@ -2203,7 +2407,7 @@ function reenterFound(state: GameState, action: AttackAction, pair: FoundPair): 
 export function resolveFoundAttack(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
+  op: OpOf<"useFoundAttackAs">,
   choice: EffectChoice,
 ): ApplyResult {
   const seat = phase.seat;
@@ -2259,7 +2463,7 @@ export function resolveFoundAttack(
 }
 
 /** Backtrack Badge re-entry: `keep` the offered faces, or flip `again`. */
-export type CoinRedo = { kind: "keep"; faces: CoinFace[] } | { kind: "again" };
+type CoinRedo = { kind: "keep"; faces: CoinFace[] } | { kind: "again" };
 
 /** Park Backtrack Badge's offer after the printed coin flip. */
 function parkCoinRedo(
@@ -2268,7 +2472,7 @@ function parkCoinRedo(
   seat: Seat,
   attackerUid: string,
   attackName: string,
-  op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
+  op: OpOf<"reflipAttackCoins">,
 ): ApplyResult {
   const epilogue: PendingStage = {
     kind: "attackEpilogue",
@@ -2301,7 +2505,7 @@ function parkCoinRedo(
 export function resolveCoinRedo(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
+  op: OpOf<"reflipAttackCoins">,
   choice: EffectChoice,
 ): ApplyResult {
   if (choice.kind !== "confirm") return err("BAD_EFFECT_CHOICE", "expected a yes or a no");
@@ -2328,8 +2532,10 @@ export function resolveCoinRedo(
   const resumed = attack(
     spent,
     { type: "attack", seat, index: op.index },
-    op.copied,
-    choice.yes ? { kind: "again" } : { kind: "keep", faces: op.faces },
+    {
+      copied: op.copied,
+      coinRedo: choice.yes ? { kind: "again" } : { kind: "keep", faces: op.faces },
+    },
   );
   return resumed.ok ? ok(resumed.state, [...events, ...resumed.events]) : resumed;
 }
@@ -2352,9 +2558,7 @@ function interruptGate<K extends KoPhase["kind"]>(
   state: GameState,
   action: { type: GameAction["type"]; seat: Seat },
   kind: K,
-):
-  | { phase: KoPhase & { kind: K }; reject?: undefined }
-  | { phase?: undefined; reject: ApplyResult } {
+): { phase: KoPhase & { kind: K }; reject?: undefined } | { phase?: undefined; reject: Rejection } {
   const phase = state.phase;
   if (phase.kind !== kind) {
     return { reject: err("BAD_PHASE", `${action.type} is not legal during ${phase.kind}`) };

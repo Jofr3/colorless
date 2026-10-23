@@ -10,7 +10,7 @@ import {
   discardScaledBoostProgram,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import type { EffectRecord } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -22,12 +22,11 @@ import {
   battler,
   clearBench,
   deckOf,
-  firstBasicInHand,
   itemTrainer,
-  must,
   mustApply,
   setActiveFromDeck,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const MILL_BOTH =
@@ -103,34 +102,7 @@ const SELF_PILE = ["d490-energy-2", "d490-energy-3", "d490-item-3"] as const;
 const FOE_PILE = ["d490-energy-4", "d490-item-4"] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: D490_DECK, p2: D490_DECK },
-    cardPool: D490_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(SEED, { p1: D490_DECK, p2: D490_DECK }, { pool: D490_POOL, first });
 }
 
 function withZones(

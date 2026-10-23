@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
+import { applyAction, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -15,7 +15,8 @@ import {
   setActiveFromDeck,
   setDamage,
   must,
-  firstBasicInHand,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const MASSIVE_BODY_TEXT =
@@ -115,28 +116,7 @@ const WIRE_DECK = deckOf({
 const SEEDS = [8311, 8317, 8329, 8353] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: WIRE_DECK, p2: WIRE_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: WIRE_DECK, p2: WIRE_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, barrier: Seat, barrierId: string): GameState {
@@ -379,12 +359,12 @@ describe("D288 §7 — the version does NOT move, and the claim is driven", () =
   it("A v16 RECORD ANSWERS THE NEW QUESTION — a PROJECTION, not a persisted byte", () => {
     for (const seed of SEEDS) {
       const barred = turnOf(board(seed, "p1", "p1", COPPERAJAH), "p2");
-      const reloaded = JSON.parse(JSON.stringify(barred)) as GameState;
+      const reloaded = roundTrip(barred);
       expect(wireTrainerIds(reloaded, "p2")).toContain(STADIUM);
       expect(wireDisabled(reloaded, "p2", STADIUM)).toBe(true);
       expect(play(reloaded, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
       const free = turnOf(board(seed, "p1", "p1", PLAIN), "p2");
-      const freeReloaded = JSON.parse(JSON.stringify(free)) as GameState;
+      const freeReloaded = roundTrip(free);
       expect(wireTrainerIds(freeReloaded, "p2")).toContain(STADIUM);
       expect(wireDisabled(freeReloaded, "p2", STADIUM)).toBe(false);
       expect(play(freeReloaded, "p2", STADIUM)).toBe("OK");

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, programFor } from "./index";
+import { applyAction, engineVersion, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import type { EffectContext } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -16,11 +16,12 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { BENCH_MAX, otherSeat } from "./types";
 
@@ -68,28 +69,7 @@ const PREY_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: PREY_DECK, p2: PREY_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: PREY_DECK, p2: PREY_DECK }, { pool: POOL, first });
 }
 
 /** Every uid in the seat's hand goes back under their deck — the log.test.ts
@@ -634,7 +614,7 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     // record written HERE, read back HERE. If the park did not survive
     // serialisation the version question would be moot and the bug louder.
     const before = parked();
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     expect(revived.phase).toEqual(before.phase);
     const uid = cardsPrompt(revived).candidates[0];
     if (uid === undefined) throw new Error("empty offer");

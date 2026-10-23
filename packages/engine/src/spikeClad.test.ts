@@ -1,11 +1,19 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame } from "./index";
-import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import { applyAction } from "./index";
+import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { programPlayable } from "./cardplay";
 import { firstAttachableEnergy } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
-import { battler, deckOf, itemTrainer, specialEnergy, typedEnergy, must } from "./testFixtures";
+import {
+  battler,
+  deckOf,
+  itemTrainer,
+  specialEnergy,
+  typedEnergy,
+  must,
+  driveSetup,
+} from "./testFixtures";
 
 const LYCANROC_IDS = ["sv09-085", "sv09-166"] as const;
 const LYCANROC = "sv09-085";
@@ -77,15 +85,6 @@ function idOf(state: GameState, uid: string): string {
   return state.cardIdByUid[uid] ?? "";
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[idOf(state, h)];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
 function passTo(state: GameState, turn: number): GameState {
   let next = state;
   while (next.turn < turn) {
@@ -98,28 +97,7 @@ function passTo(state: GameState, turn: number): GameState {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 function board(
@@ -215,7 +193,6 @@ describe("D353 §1 — the authored row is ONE object over TWO printings", () =>
     const row = triggered[0];
     expect(row?.name).toBe("Spike-Clad");
     expect(row?.trigger).toBe("onEvolve");
-    expect(row?.optional).toBe(true);
     expect(row?.program).toEqual([
       {
         op: "attachEnergyFrom",
@@ -524,12 +501,10 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
   });
 });
 
-describe("D353 §8 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("THE BATON, SPENT AND CONVERTED — the two ids are CONTIGUOUS, forever", () => {
+describe("D353 §8 — the pool and the registry keys", () => {
+  it("every printing is a registry key", () => {
     const raw = registryCardIds();
-    const at = raw.indexOf(LYCANROC_IDS[0]);
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect(raw.slice(at, at + 2)).toEqual([...LYCANROC_IDS]);
+    for (const id of LYCANROC_IDS) expect(raw).toContain(id);
   });
 
   it("the +2 on `raw.length` is EXACTLY the two Lycanroc ids — the Energy ids were already keys", () => {

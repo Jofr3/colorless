@@ -18,6 +18,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -457,12 +458,12 @@ describe("§8 — nothing persisted moves, and it is DRIVEN rather than argued",
 
   it("a v26 record round-trips BOTH DIRECTIONS through the swing", () => {
     const withTool = board("fix-chestwall", CHESTPLATE);
-    const rehydrated = JSON.parse(JSON.stringify(withTool)) as GameState;
+    const rehydrated = roundTrip(withTool);
     const live = swing(withTool, IDX.pry100);
     const replayed = swing(rehydrated, IDX.pry100);
     expect(JSON.stringify(replayed.events)).toBe(JSON.stringify(live.events));
     expect(JSON.stringify(replayed.state)).toBe(JSON.stringify(live.state));
-    const after = JSON.parse(JSON.stringify(live.state)) as GameState;
+    const after = roundTrip(live.state);
     expect(JSON.stringify(after)).toBe(JSON.stringify(live.state));
   });
 });

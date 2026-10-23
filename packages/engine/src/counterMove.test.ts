@@ -22,6 +22,7 @@ import {
   setDamage,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const CLAUSE =
@@ -501,7 +502,7 @@ describe("end to end — the park, and the two halves of one move", () => {
     let state = dedenneActive(board(), "p1");
     state = benchTitans(state, "p1", [BENCH_HURT, OTHER_BENCH_HURT]);
     const { state: parked } = declare(state, TAIL_SWAP_INDEX);
-    const rehydrated = JSON.parse(JSON.stringify(parked)) as GameState;
+    const rehydrated = roundTrip(parked);
     expect(rehydrated).toEqual(parked);
     const a = mustApply(parked, pick(P1_BENCH_1));
     const b = mustApply(rehydrated, pick(P1_BENCH_1));

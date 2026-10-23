@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { shuffle } from "./rng";
 import {
@@ -14,7 +14,8 @@ import {
   deckOf,
   setActiveFromDeck,
   must,
-  firstBasicInHand,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { stackUids } from "./types";
 
@@ -100,28 +101,7 @@ const DECK = deckOf({
 });
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
 }
 
 /** TEST SURGERY — attach one `cardId` off `seat`'s deck onto the benched body at
@@ -712,7 +692,7 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
   it("THE FIRST DOOR, MEASURED: `phase.cont.pendingOp` carries the op as a LITERAL", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(JSON.parse(JSON.stringify(state.phase.cont.pendingOp))).toEqual(PROGRAM[0]);
+    expect(roundTrip(state.phase.cont.pendingOp)).toEqual(PROGRAM[0]);
     expect(JSON.stringify(state)).toContain('{"op":"returnBenchedRest","keep":3}');
   });
 
@@ -732,7 +712,7 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
 
   it("the parked record REPLAYS — the persisted op is applied from `pendingOp` and nothing else", () => {
     const { state } = attack(board(SEED, [B1, B2, B3, B4, B5]));
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(revived.phase.kind).toBe("effect:choose");
     const { state: done } = answer(revived, [benchRef(0), benchRef(1), benchRef(2)]);
     expect(benchIds(done, "p2")).toEqual([B1, B2, B3]);

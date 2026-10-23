@@ -16,6 +16,7 @@ import {
   setActiveFromDeck,
   setDamage,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -226,7 +227,7 @@ describe("§4 — the op's bytes, three directions, and why none of them is pers
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageSelf","amount":10,"perDamageCounterOnSelf":true}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
   });
 
   it("DIRECTION 3 — a record that LOSES the key degrades LOUDLY (D421's criterion)", () => {

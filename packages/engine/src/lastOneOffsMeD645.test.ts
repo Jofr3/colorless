@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -18,6 +18,8 @@ import {
   setActiveFromDeck,
   typedEnergy,
   must,
+  unprize,
+  driveSetup,
 } from "./testFixtures";
 
 const WILD_GROWTH_TEXT =
@@ -162,28 +164,7 @@ const BOARD_IDS = new Set(
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 6451, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6451, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
@@ -193,20 +174,6 @@ function p1Turn(): GameState {
     };
   }
   return state;
-}
-
-/** TEST SURGERY — every Prize whose id is a board id swapped with a non-board deck card. */
-function unprize(state: GameState, seat: Seat): GameState {
-  const side = state.players[seat];
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!BOARD_IDS.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !BOARD_IDS.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
 }
 
 /** TEST SURGERY — `count` copies of the Energy `cardId` from `seat`'s deck onto its Active, or Bench body `index`. */
@@ -255,7 +222,7 @@ function table(p1: Board, p2: Board): GameState {
     ["p1", p1],
     ["p2", p2],
   ] as const) {
-    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s, BOARD_IDS);
     state = clearBench(setActiveFromDeck(state, s, board.active), s);
     for (const [id, n] of board.energy ?? []) state = energize(state, s, id, n);
     for (const id of board.bench ?? []) state = benchFromDeck(state, s, id);

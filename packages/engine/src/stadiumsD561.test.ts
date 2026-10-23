@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { stadiumPoisonExtraCounters } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -19,6 +19,9 @@ import {
   types,
   must,
   effectPrompt,
+  ensureInDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const ACADEMY = "sv06.5-054";
@@ -78,50 +81,8 @@ const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-/** TEST SURGERY — one copy of `id` into `seat`'s DECK (back from the hand, or swapped out
-    of the Prizes for the deck's bottom card). Every uid stays in exactly one zone. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
 }
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
@@ -396,7 +357,7 @@ describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck
   it("a parked Academy at Night round-trips through JSON and resumes identically", () => {
     const board = setHand(stadium(table(), ACADEMY), "p1", [ITEM_A, ITEM_B]);
     const { state: parked } = activate(board);
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer = cards([board.players.p1.hand[0] as string]);
     expect(mustApply(revived, answer).state).toEqual(mustApply(parked, answer).state);

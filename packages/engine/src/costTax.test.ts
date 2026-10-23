@@ -6,7 +6,7 @@ import * as effectsModule from "./effects";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameState, InPlayPokemon, PlayerSide, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -18,13 +18,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
   mustApply,
   setActiveFromDeck,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const S171 =
@@ -113,28 +114,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 /** P1's turn 3: P1 fields the taxer with one Energy; P2 fields `victim` with ONE Energy
@@ -571,7 +551,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
   });
 
   it("a v32-shaped BODY (the key genuinely ABSENT) reads the tax as 0 — the silent soft landing", () => {
-    const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
+    const revived = roundTrip(installed().state);
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
     delete target.costTaxTurn;
@@ -580,7 +560,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
   });
 
   it("a v32-shaped STATE (no `sideAttackLock` on either side) THROWS on the declaration and the projection", () => {
-    const revived = JSON.parse(JSON.stringify(installed().state)) as GameState;
+    const revived = roundTrip(installed().state);
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;
       // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT (D124).

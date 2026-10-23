@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect } from "./effects";
-import { ANY_ENERGY, applyAction, createGame, programFor, providedEnergy } from "./index";
+import { ANY_ENERGY, applyAction, programFor, providedEnergy } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -16,7 +16,6 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -26,6 +25,8 @@ import {
   setDamage,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -122,32 +123,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: DEVOLVE_DECK, p2: DEVOLVE_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DEVOLVE_DECK, p2: DEVOLVE_DECK }, { pool: POOL, first });
 }
 
 function pass(state: GameState, seat: Seat): GameState {
@@ -842,7 +818,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   function parkedMidAttack(seed: number): GameState {
     const parked = strike(armed(seed, { stages: 1, energy: 2, fire: 1 }), "p1", TOLL).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    return JSON.parse(JSON.stringify(parked)) as GameState;
+    return roundTrip(parked);
   }
 
   it("DIRECTION 1 — a v27 `cont.rest` WITHOUT the op still drains", () => {
@@ -869,7 +845,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
     const chosen = (phase.prompt as { discardable: { uid: string }[] }).discardable[0]?.uid;
     const newOp: EffectOp = { op: "devolveEach" };
     (phase as unknown as { cont: { rest: EffectOp[] } }).cont.rest = [newOp];
-    const roundTripped = JSON.parse(JSON.stringify(carrying)) as GameState;
+    const roundTripped = roundTrip(carrying);
     const drained = mustApply(roundTripped, {
       type: "resolveEffect",
       seat: "p1",
@@ -885,7 +861,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
     expect(Object.keys(active)).toContain("stack");
     expect(Object.keys(active)).toContain("markers");
     expect(Object.keys(active)).toContain("evolvedTurn");
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     const live = strike(before, "p1", CALL);
     const replayed = strike(revived, "p1", CALL);
     expect(types(replayed.events)).toEqual(types(live.events));
@@ -909,7 +885,7 @@ describe("§12 — the op is a pure reduction", () => {
     // Without this the case above passes on an op that mutates a board nobody
     // froze deeply enough.
     const before = armed(23, { stages: 2, damage: 100, benchStages: 1 });
-    const snapshot = JSON.parse(JSON.stringify(before)) as GameState;
+    const snapshot = roundTrip(before);
     strike(before, "p1", CALL);
     expect(before).toEqual(snapshot);
   });

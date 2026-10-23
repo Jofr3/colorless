@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, programFor, topCardOf } from "./index";
+import { applyAction, programFor, topCardOf } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { registryCardIds } from "./registry";
 import {
@@ -9,10 +9,11 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   must,
   setActiveFromDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SUBJUGATING_CHAINS_TEXT =
@@ -67,28 +68,7 @@ const CHAINS_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: CHAINS_DECK, p2: CHAINS_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: CHAINS_DECK, p2: CHAINS_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, activeId: string, bench: readonly string[]): GameState {
@@ -429,7 +409,7 @@ describe("the blast radius", () => {
   it("`MATCH_RECORD_VERSION` STAYS 14 — DRIVEN by replaying a v14-shaped park", () => {
     const state = board(3, "sv06.5-039", ["fix-lightbench", "fix-darkbench", "fix-dualdark"]);
     const parked = must(useChains(state, ACTIVE));
-    const roundTripped = JSON.parse(JSON.stringify(parked)) as GameState;
+    const roundTripped = roundTrip(parked);
     // A JSON round trip alone changes nothing — the whole union is JSON-safe.
     expect(choosePrompt(roundTripped).candidates.length).toBe(2);
 

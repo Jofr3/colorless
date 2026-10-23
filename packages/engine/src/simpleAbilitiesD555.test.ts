@@ -1,10 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, handCostAction } from "./index";
+import { applyAction, handCostAction } from "./index";
 import type { EffectOp, GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -18,6 +17,9 @@ import {
   typedEnergy,
   types,
   must,
+  ensureInDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const TORRID_TEXT =
@@ -163,39 +165,8 @@ const DECK = deckOf({
   [BEACH_COURT]: 4,
 });
 
-/** Setup with `first` going first; returns the board at the start of turn 1. */
 function opened(first: Seat, seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
-}
-
-/** TEST SURGERY — make sure a copy of `id` sits in `seat`'s DECK, pulling one back
-    from the hand or (swapped for the deck's bottom card) from the Prizes when the
-    shuffle put every copy there. Every uid stays in exactly one zone. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>
@@ -419,7 +390,6 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
       {
         name: "Snow Sink",
         trigger: "onPlayToBench",
-        optional: true,
         program: [
           {
             op: "conditionGate",
@@ -441,7 +411,6 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
       {
         name: "Wicked Tail",
         trigger: "onEvolve",
-        optional: true,
         program: [
           { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
           { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
@@ -643,7 +612,7 @@ describe("D555 B §5 — Torrential Whirlpool: switch; if you do, the OPPONENT s
       table(SAMUROTT[0], [FILLER], [FILLER, STAGE1]),
       use("Torrential Whirlpool"),
     ).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer: GameAction = {
       type: "resolveEffect",

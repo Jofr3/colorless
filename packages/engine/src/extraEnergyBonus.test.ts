@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   activeOf,
+  roundTrip,
 } from "./testFixtures";
 
 const CLAUSE =
@@ -343,7 +344,7 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     ready(4379, "p1", "fix-powerpress", { "fix-psychic-energy": 1, "fix-energy": 3 });
 
   it("DIRECTION 1 — a v29 record round-trips and STILL scores the bonus", () => {
-    const record = JSON.parse(JSON.stringify(armed())) as GameState;
+    const record = roundTrip(armed());
     expect(damageDealt(record)).toBe(100);
   });
 

@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  headsIn,
 } from "./testFixtures";
 
 const RELENTLESS_FLAMES =
@@ -120,10 +121,6 @@ function foldFlips(state: number, count: number): [faces: CoinFace[], next: numb
     rng = next;
   }
   return [faces, rng];
-}
-
-function headsIn(events: GameEvent[]): number {
-  return all(events, "ATTACK_EFFECT_COIN_FLIP").filter((e) => e.result === "heads").length;
 }
 
 function facesIn(events: GameEvent[]): CoinFace[] {

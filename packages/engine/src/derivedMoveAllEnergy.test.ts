@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp, EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
+import type { EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
 import { redactGame } from "./index";
 import {
   CLEAR_STATUS_DECK,
@@ -13,6 +13,8 @@ import {
   expectErr,
   mustApply,
   setActiveFromDeck,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const SENTENCE = "Move all Energy from this Pokémon to 1 of your Benched Pokémon.";
@@ -66,8 +68,8 @@ describe("§1 — the deriver: one anchor, and the edges it must not reach", () 
   });
 
   it("the DECLINABLE sibling is untouched — one determiner, two quantifiers", () => {
-    const all = deriveAttackEffect(SENTENCE) as EffectOp[];
-    const one = deriveAttackEffect(DECLINABLE_SIBLING) as EffectOp[];
+    const all = mustDerive(deriveAttackEffect, SENTENCE);
+    const one = mustDerive(deriveAttackEffect, DECLINABLE_SIBLING);
     expect(one).toEqual([
       { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench" },
     ]);
@@ -91,7 +93,7 @@ describe("§1 — the deriver: one anchor, and the edges it must not reach", () 
         anyDest: true,
       },
     ]);
-    const mine = deriveAttackEffect(SENTENCE) as EffectOp[];
+    const mine = mustDerive(deriveAttackEffect, SENTENCE);
     expect(Object.hasOwn(mine[0] as object, "anyDest")).toBe(false);
     expect(SENTENCE.startsWith("Move all Energy from this Pokémon to ")).toBe(true);
     expect(SENTENCE.endsWith("1 of your Benched Pokémon.")).toBe(true);
@@ -301,7 +303,7 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
     const live = swing(board({ basics: 3, ownBench: 2 })).state;
     expect(parked(live).min).toBe(3);
 
-    const v29: GameState = JSON.parse(JSON.stringify(live)) as GameState;
+    const v29: GameState = roundTrip(live);
     if (v29.phase.kind !== "effect:choose" || v29.phase.prompt.kind !== "moveEnergy") {
       throw new Error("expected a serialized moveEnergy park");
     }

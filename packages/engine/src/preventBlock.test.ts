@@ -30,6 +30,7 @@ import {
   types,
   walkProgram,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -97,8 +98,8 @@ describe("the gated PREVENT clause — derived, not authored", () => {
   });
 
   it("the two spellings differ in EXACTLY the `effects` field", () => {
-    const wide = deriveAttackEffect(WIDE_TEXT) as EffectOp[];
-    const narrow = deriveAttackEffect(NARROW_TEXT) as EffectOp[];
+    const wide = mustDerive(deriveAttackEffect, WIDE_TEXT);
+    const narrow = mustDerive(deriveAttackEffect, NARROW_TEXT);
     const stripped = JSON.parse(JSON.stringify(wide).replace(',"effects":true', ""));
     expect(stripped).toEqual(narrow);
   });

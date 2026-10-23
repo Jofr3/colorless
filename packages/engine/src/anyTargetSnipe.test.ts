@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect } from "./index";
-import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
+import type { GameEvent, GameState, PokemonRef } from "./index";
 import {
   ANY_SNIPE_DECK,
   COST_SNIPE_DECK,
@@ -19,6 +19,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 /** Setup with BOTH Actives pinned to fix-lightning-weak (×2 Lightning, 130 HP, empty
@@ -674,13 +675,13 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
     expect(reads).toHaveLength(8);
     expect(units(reads)).toBe(13);
     const aimedAnywhere = reads.filter(([, t]) => {
-      const snipe = (deriveAttackEffect(t) as EffectOp[])[1];
+      const snipe = mustDerive(deriveAttackEffect, t)[1];
       return snipe?.op === "damageChosen" && snipe.target === "opponentAny";
     });
     expect(aimedAnywhere.map(([, t]) => t).sort()).toEqual([...COMPOUNDS].sort());
     expect(units(aimedAnywhere)).toBe(7);
     const aimedAtTheBench = reads.filter(([, t]) => {
-      const snipe = (deriveAttackEffect(t) as EffectOp[])[1];
+      const snipe = mustDerive(deriveAttackEffect, t)[1];
       return snipe?.op === "damageChosen" && snipe.target === "opponentBench";
     });
     expect(aimedAtTheBench).toHaveLength(4);
@@ -800,26 +801,24 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
     // The whole claim of a compound anchor is that it buys a JOIN and nothing else. If
     // either half drifted from the reading the standalone sentence already has, this
     // arm would be a second, quieter implementation of an op that already ships.
-    const compound = deriveAttackEffect(COST_TWO) as EffectOp[];
+    const compound = mustDerive(deriveAttackEffect, COST_TWO);
     expect(compound[0]).toEqual(
-      (deriveAttackEffect("Discard 2 Energy from this Pokémon.") as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, "Discard 2 Energy from this Pokémon.")[0],
     );
     expect(compound[1]).toEqual(
-      (
-        deriveAttackEffect(
-          "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-        ) as EffectOp[]
+      mustDerive(
+        deriveAttackEffect,
+        "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       )[0],
     );
-    const all = deriveAttackEffect(ALL_THREE) as EffectOp[];
+    const all = mustDerive(deriveAttackEffect, ALL_THREE);
     expect(all[0]).toEqual(
-      (deriveAttackEffect("Discard all Energy from this Pokémon.") as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, "Discard all Energy from this Pokémon.")[0],
     );
     expect(all[1]).toEqual(
-      (
-        deriveAttackEffect(
-          "This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-        ) as EffectOp[]
+      mustDerive(
+        deriveAttackEffect,
+        "This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       )[0],
     );
   });
@@ -848,7 +847,7 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
     for (const text of [
       "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
-      const program = deriveAttackEffect(text) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, text);
       expect(program, text).toHaveLength(2);
       expect(program[0]?.op, text).toBe("payFromHand");
       expect(program[0], text).toMatchObject({ count: "any", cap: 3, recordAs: "discarded" });
@@ -863,7 +862,7 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
     for (const text of [
       "Discard all Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
-      const program = deriveAttackEffect(text) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, text);
       expect(program, text).toHaveLength(2);
       expect(program[0]?.op, text).toBe("discardEnergy");
       const snipe = program[1];
@@ -880,7 +879,7 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
       "Discard all Energy from this Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "Discard all {R} Energy from this Pokémon, and this attack does 180 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
-      const program = deriveAttackEffect(text) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, text);
       expect(program, text).toHaveLength(2);
       expect(program[0]?.op, text).toBe("discardEnergy");
       const snipe = program[1];

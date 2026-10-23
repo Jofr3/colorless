@@ -4,7 +4,7 @@ import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import { splitAttackGateClause, timingGateFromAttackText } from "./effects";
 import type { AttackTimingGate, GameState, Seat } from "./index";
-import { applyAction, attackGateOf, createGame, programFor } from "./index";
+import { applyAction, attackGateOf, programFor } from "./index";
 import { attackTimingBlocked, firstTurnAttackBanned, redactGame } from "./index";
 import { registryCardIds } from "./registry";
 import {
@@ -18,8 +18,9 @@ import {
   setActiveFromDeck,
   typedEnergy,
   must,
-  firstBasicInHand,
   activeOf,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const BAN_TEXT =
@@ -149,28 +150,7 @@ const GATE_DECK = deckOf({
 const SEEDS = [6011, 6029, 6037, 6043] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: GATE_DECK, p2: GATE_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: GATE_DECK, p2: GATE_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, seat: Seat, activeId: string, passes = 0): GameState {
@@ -477,6 +457,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     );
     expect(declare(reconstructed, "p2", 0)).toBe("ATTACK_PREVENTED");
     // …and the round trip is not vacuous: it really did lose every non-JSON value.
-    expect(reconstructed).toEqual(JSON.parse(JSON.stringify(state)) as GameState);
+    expect(reconstructed).toEqual(roundTrip(state));
   });
 });

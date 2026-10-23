@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -11,7 +11,7 @@ import {
   deckOf,
   trainerCard,
   must,
-  firstBasicInHand,
+  driveSetup,
 } from "./testFixtures";
 
 const LEDIAN = "svp-133";
@@ -105,28 +105,7 @@ function takeLoneGust(parked: { state: GameState; events: readonly GameEvent[] }
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** TEST SURGERY — seat exactly the bodies each side names, Active first, on p1's
@@ -247,7 +226,6 @@ describe("D349 §1 — the two registry rows, read off the LIVE registry", () =>
     expect(program?.triggered).toHaveLength(1);
     expect(ability?.name).toBe("Glittering Star Pattern");
     expect(ability?.trigger).toBe("onEvolve");
-    expect(ability?.optional).toBe(true);
     expect(ability?.program).toEqual([{ op: "gust", remainingHpAtMost: 90, optional: true }]);
   });
 

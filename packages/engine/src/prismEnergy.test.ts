@@ -13,6 +13,7 @@ import {
   setActiveFromDeck,
   types,
   activeOf,
+  roundTrip,
 } from "./testFixtures";
 
 function p1Turn2(seed: number): GameState {
@@ -303,7 +304,7 @@ describe("D300 §5 — the persisted shape does NOT move, and that is measured",
     // Both directions: a serialised board rehydrates and the wildcard is computed
     // again from the top card, not restored from a field that does not exist.
     const state = holding(20, "fix-prism-basic", "fix-prism-energy");
-    const round = JSON.parse(JSON.stringify(state)) as GameState;
+    const round = roundTrip(state);
     expect(round).toEqual(state);
     expect(providedEnergy(round, activeOf(round, "p1"))).toEqual([ANY_ENERGY]);
   });

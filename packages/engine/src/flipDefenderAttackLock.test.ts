@@ -17,6 +17,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -152,14 +153,14 @@ describe("§1 — the datum and the anchor", () => {
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0] as {
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0] as {
       op: string;
       then: EffectOp[];
     };
     expect(gate.then).toEqual(deriveAttackEffect(DEFENDER_BARE));
     // …and it is the ONE-op program: nothing is appended, so nothing rides behind
     // the gate into a continuation (§8's reachability half).
-    expect((deriveAttackEffect(PRINTED) as EffectOp[]).length).toBe(1);
+    expect(mustDerive(deriveAttackEffect, PRINTED).length).toBe(1);
     expect(Object.keys(gate).sort()).toEqual(["op", "then"]);
   });
 
@@ -476,9 +477,9 @@ describe("§7 — what this slice does NOT owe, traced rather than argued", () =
     const bareBoard = board(bareSeed(), DEFENDER_BARE);
     const bare = swing(bareBoard).state.players.p2.active?.attackLockedTurn;
     expect(gated).toBe(bare);
-    const shippedGate = deriveAttackEffect(GATED_PREVENT) as EffectOp[];
-    const shippedLock = deriveAttackEffect(DEFENDER_BARE) as EffectOp[];
-    const built = deriveAttackEffect(PRINTED) as EffectOp[];
+    const shippedGate = mustDerive(deriveAttackEffect, GATED_PREVENT);
+    const shippedLock = mustDerive(deriveAttackEffect, DEFENDER_BARE);
+    const built = mustDerive(deriveAttackEffect, PRINTED);
     expect((built[0] as { op: string }).op).toBe((shippedGate[0] as { op: string }).op);
     expect(Object.keys(built[0] as object).sort()).toEqual(
       Object.keys(shippedGate[0] as object).sort(),

@@ -22,6 +22,7 @@ import {
   setBenchDamage,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -580,7 +581,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
     ]);
     const { state: p } = mustApply(state, { type: "attack", seat: "p1", index: PICKY });
     if (p.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    return JSON.parse(JSON.stringify(p)) as GameState;
+    return roundTrip(p);
   }
 
   it("DIRECTION 1 — the op DOES ride `phase.cont.pendingOp`, so the question is real", () => {

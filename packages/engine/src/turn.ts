@@ -7,6 +7,7 @@ import type {
   GameAction,
   PlayBasicToBenchAction,
   RetreatAction,
+  Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
 import { abilityUsedKey } from "./cardplay";
@@ -36,7 +37,7 @@ import {
   stadiumLicensesSameTurnEvolve,
   stageChangeConditions,
 } from "./continuous";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -46,16 +47,16 @@ import {
   settleProgram,
   turnTail,
 } from "./flow";
+import { benchArrivalCounters } from "./ops/cards";
 import {
-  benchArrivalCounters,
   conditionHolds,
   conditionNote,
   evolveAliasLicensed,
   evolveEarlyLicensed,
-  runProgram,
-  shockHandAttach,
-  switchInto,
-} from "./interpreter";
+} from "./boardCondition";
+import { runProgram } from "./interpreter";
+import { shockHandAttach } from "./ops/energy";
+import { switchInto } from "./ops/board";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -64,14 +65,24 @@ import {
   runSelfWatchedTriggers,
   runWatchedTriggers,
 } from "./triggers";
-import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
+import type {
+  EvolutionHost,
+  GameState,
+  InPlayPokemon,
+  PlayerSide,
+  PokemonTarget,
+  Seat,
+} from "./types";
 import {
+  bodyAt,
+  inPlayOf,
   BENCH_CEILING,
   discardFromStack,
   drawToHand,
   evolveOnto,
   isFirstTurnOf,
   isImmobilized,
+  clearedAttackEffects,
   makeInPlay,
   noConditions,
   otherSeat,
@@ -98,7 +109,7 @@ export function isBenchIndex(value: unknown): value is number {
 export function turnGate(
   state: GameState,
   action: { type: GameAction["type"]; seat: Seat },
-): ApplyResult | null {
+): Rejection | null {
   const phase = state.phase;
   if (phase.kind !== "turn:action") {
     return err("BAD_PHASE", `${action.type} is not legal during ${phase.kind}`);
@@ -371,7 +382,7 @@ function searchAfterAttach(
  */
 function bodyHoldingEnergy(state: GameState, seat: Seat, energyUid: string): string | undefined {
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   for (const body of bodies) {
     if (body.energy.includes(energyUid)) return topUid(body);
   }
@@ -388,7 +399,7 @@ function benchFromHandRotation(
   state: GameState,
   seat: Seat,
   uid: string,
-): { reject: ApplyResult } | { usedKey: string; name: string } | null {
+): { reject: Rejection } | { usedKey: string; name: string } | null {
   if (!state.players[seat].hand.includes(uid)) return null;
   const card = cardOfUid(state, uid);
   const rotation =
@@ -493,7 +504,7 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
 export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   const placement = checkEvolution(state, action);
   if ("ok" in placement) return placement;
-  const { side, target, benchIndex, targetTopUid } = placement;
+  const { side, target, targetTopUid } = placement;
   // §10 — the evolution card leaves hand; the shared placement (below) puts it
   // on the stack, carries over damage/energy/tools, clears conditions/markers,
   // resets turnPlayed, and runs the evolve-below-HP KO check + the on-evolve
@@ -505,11 +516,7 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   });
   return placeEvolution(
     stateAfterHand,
-    action.seat,
-    action.target,
-    benchIndex,
-    target,
-    targetTopUid,
+    { seat: action.seat, target: action.target, body: target, bodyUid: targetTopUid },
     action.uid,
     [],
   );
@@ -540,7 +547,6 @@ function checkEvolution(
   | {
       side: PlayerSide;
       target: InPlayPokemon;
-      benchIndex: number;
       targetTopUid: string;
     } {
   const rejected = turnGate(state, action);
@@ -634,7 +640,7 @@ function checkEvolution(
     );
   }
 
-  return { side, target, benchIndex, targetTopUid };
+  return { side, target, targetTopUid };
 }
 
 /**
@@ -645,24 +651,17 @@ function checkEvolution(
  */
 export function placeEvolution(
   state: GameState,
-  seat: Seat,
-  target: PokemonTarget,
-  benchIndex: number,
-  from: InPlayPokemon,
-  fromUid: string,
+  host: EvolutionHost,
   evolutionUid: string,
   events: GameEvent[],
 ): ApplyResult {
+  const { seat, target } = host;
   const { state: next, evolved } = evolveOnto(
     state,
-    seat,
-    target,
-    benchIndex,
-    from,
-    fromUid,
+    host,
     evolutionUid,
+    stageChangeConditions(state, host.body.conditions),
     events,
-    stageChangeConditions(state, from.conditions),
   );
   if (isLethallyDamaged(next, evolved)) {
     return resolveMidTurnKnockOuts(next, seat, [seat], events);
@@ -674,7 +673,7 @@ export function placeEvolution(
   const subject =
     target.spot === "active"
       ? watched.players[seat].active
-      : watched.players[seat].bench[benchIndex];
+      : watched.players[seat].bench[target.index];
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
     return resolveMidTurnKnockOuts(watched, seat, [seat], events);
   }
@@ -699,30 +698,9 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
   return {
     ...pokemon,
     conditions: noConditions(),
-    retreatBlocked: false,
-    // Cannot fire on a retreat (it forbids retreating), but kept so the three §10 clears stay in
-    // agreement.
-    retreatLockedTurn: null,
-    attackBlock: null,
-    attackLockedTurn: null,
-    attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null,
-    damageReduction: null,
-    noWeaknessTurn: null,
-    // Retreating the Defending Pokémon during its own turn is the printed counterplay to the
-    // scheduled effect.
-    scheduledEffect: null,
-    attackDamageDebuff: null,
-    damageVulnerability: null,
-    weaknessRetype: null,
-    // The retreat pays the taxed cost, since the surcharge is live as the cost is read.
-    costTaxTurn: null,
-    koBounty: null,
-    handAttachMark: null,
-    installedRecoil: null,
-    // Sheds the whole list: keeping a bar imposed by the opponent would contradict §10.
-    lockedAttacks: [],
-    boostedAttack: null,
+    // Retreating the Defending Pokémon during its own turn is the printed counterplay to a
+    // scheduled effect. The retreat has already paid any taxed cost.
+    ...clearedAttackEffects(),
   };
 }
 
@@ -942,8 +920,8 @@ export function discardFromPlay(state: GameState, action: DiscardFromPlayAction)
   if (target.spot === "bench" && !isBenchIndex(target.index)) {
     return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(target.index)}`);
   }
-  const body = target.spot === "active" ? side.active : side.bench[target.index];
-  if (body === null || body === undefined) {
+  const body = bodyAt(side, target);
+  if (body === undefined) {
     return err("NO_TARGET", "there is no Pokémon in that spot");
   }
   const uid = topUid(body);

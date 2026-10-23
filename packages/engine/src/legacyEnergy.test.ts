@@ -25,6 +25,7 @@ import {
   setConditions,
   setDamage,
   activeOf,
+  roundTrip,
 } from "./testFixtures";
 
 const LEGACY_PRINTED =
@@ -397,7 +398,7 @@ describe("the population of the printed sentence — 2 of 2, and the residue mov
 describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () => {
   it("the persisted `GameState` carries EXACTLY these keys", () => {
     const game = freshGame();
-    const revived = JSON.parse(JSON.stringify(game)) as GameState;
+    const revived = roundTrip(game);
     expect(Object.keys(revived).sort()).toEqual([
       "allowances",
       "cardIdByUid",
@@ -427,7 +428,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 
   it("BACKWARD: a version-17 board round-trips through JSON with the latch intact", () => {
     const spent = mustApply(field(1, { legacy: 1 }), bite).state;
-    const revived = JSON.parse(JSON.stringify(spent)) as GameState;
+    const revived = roundTrip(spent);
     expect(revived.oncePerGameSpent).toEqual(spent.oncePerGameSpent);
     // …and the revived board still refuses a second application, so the latch is
     // carried by the RECORD and not by anything in memory.

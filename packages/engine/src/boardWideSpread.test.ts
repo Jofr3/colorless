@@ -33,6 +33,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   types,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 5;
@@ -494,7 +495,7 @@ describe("D482 §9 — the surface, the version and what does NOT move", () => {
   it("`MATCH_RECORD_VERSION` does NOT move, and the argument is BOTH of D463's tests", () => {
     const ops = deriveAttackEffect(PRINTED) ?? [];
     expect(ops.map((o) => o.op)).toEqual(["damageDefender", "spreadDamage"]);
-    expect(JSON.parse(JSON.stringify(ops))).toEqual(program(30));
+    expect(roundTrip(ops)).toEqual(program(30));
     const { state: after } = swing(loaded());
     expect(after.phase.kind).not.toBe("effect:choose");
   });

@@ -5,7 +5,7 @@ import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./in
 import { applyAction, createGame, formatElapsed, logFromEvents } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import { programFor } from "./registry";
-import { type CoinFace, flipCoin } from "./rng";
+import type { CoinFace } from "./rng";
 import {
   FIXTURE_POOL,
   battler,
@@ -17,6 +17,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   must,
+  roundTrip,
+  seedForFlips,
 } from "./testFixtures";
 import { type PokemonTarget, makeInPlay } from "./types";
 
@@ -351,28 +353,11 @@ function inHand(
   const uid = next.players[seat].hand.filter((u) => next.cardIdByUid[u] === id).pop() as string;
   return { state: next, uid };
 }
-/** The first `rngState` (from 1) whose next flips are exactly `faces`, so a coin is chosen rather than hoped for. */
-function seedFor(faces: readonly CoinFace[]): number {
-  for (let seed = 1; seed < 100_000; seed++) {
-    let s = seed;
-    let hit = true;
-    for (const face of faces) {
-      const [got, next] = flipCoin(s);
-      if (got !== face) {
-        hit = false;
-        break;
-      }
-      s = next;
-    }
-    if (hit) return seed;
-  }
-  throw new Error("no seed");
-}
 const rolled = (state: GameState, faces: readonly CoinFace[]): GameState => ({
   ...state,
-  rngState: seedFor(faces),
+  rngState: seedForFlips(faces),
 });
-const revived = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revived = (state: GameState): GameState => roundTrip(state);
 function rows(events: GameEvent[], state: GameState): string[] {
   const entries = logFromEvents(events, {
     names: { p1: "Ana", p2: "Bo" },

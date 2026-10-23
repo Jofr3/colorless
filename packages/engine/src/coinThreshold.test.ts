@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  headsIn,
 } from "./testFixtures";
 
 const EITHER_HEADS =
@@ -62,12 +63,6 @@ function all<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
-/** The heads count off the EMITTED rows, so every assertion below is a claim about
-    what the engine reported doing rather than about a recomputed rng. */
-function headsIn(events: GameEvent[]): number {
-  return all(events, "ATTACK_EFFECT_COIN_FLIP").filter((e) => e.result === "heads").length;
 }
 
 /** The defender's rotation slot — the one `applyStatus` writes for Paralysis and

@@ -23,7 +23,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { AttackCoinFlip } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -37,11 +37,11 @@ import {
   clearBench,
   deckOf,
   discardFromDeck,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -130,34 +130,11 @@ const RETRIEVAL_DECK = deckOf({
 const SEED = 11;
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
+  return driveSetup(
     seed,
-    decks: { p1: RETRIEVAL_DECK, p2: RETRIEVAL_DECK },
-    cardPool: RETRIEVAL_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+    { p1: RETRIEVAL_DECK, p2: RETRIEVAL_DECK },
+    { pool: RETRIEVAL_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 /** `perTailsSelfDiscard.test.ts`'s idiom: the smallest `rngState` whose next `faces.length` draws are
@@ -714,7 +691,7 @@ describe("D525 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30 — DRIVEN in three directions: the parked board round-trips and resumes from its bytes; the continuation's alphabet is the SHIPPED op with a `number` max; a record whose `max` is LOST refuses the pick a live one accepts", () => {
-    expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
+    expect(roundTrip(READING)).toEqual(READING);
     const { after: parked } = swing({ faces: HHH });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const offered = cardsPrompt(parked).candidates;
@@ -722,7 +699,7 @@ describe("D525 §4 — the version steps, the heading is written, the prose is c
     expect(chosen).toHaveLength(2);
 
     // DIRECTION 1 — FORWARD. Round-trip the PARKED board through JSON and resume from the bytes.
-    const persisted = JSON.parse(JSON.stringify(parked)) as GameState;
+    const persisted = roundTrip(parked);
     expect(persisted).toEqual(parked);
     const live = pick(parked, chosen);
     const replayed = pick(persisted, chosen);
@@ -742,7 +719,7 @@ describe("D525 §4 — the version steps, the heading is written, the prose is c
 
     // DIRECTION 3 — LOSS. H lives ONLY in the record's `max`: a persisted board whose prompt and
     // pending op lost two of the three heads refuses the two-card pick the live board accepts.
-    const lossy = JSON.parse(JSON.stringify(parked)) as GameState;
+    const lossy = roundTrip(parked);
     if (lossy.phase.kind !== "effect:choose" || lossy.phase.prompt.kind !== "chooseCards") {
       throw new Error("expected a chooseCards park");
     }

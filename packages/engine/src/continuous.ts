@@ -22,7 +22,7 @@ import {
   topUid,
 } from "./cards";
 import type { DamageModifier, PokemonSuffix, PreventedAttackerClass } from "./cards";
-import { type Banner, bannerOf } from "./banners";
+import { type Banner, bannerOf, bannerOfId } from "./banners";
 import type { Attack, BasicEnergyType, Card } from "@colorless/schema";
 import type {
   AttackerClass,
@@ -32,9 +32,7 @@ import type {
   HandPlayClass,
   PokemonPlayAct,
   PokemonType,
-} from "./effects";
-// No cycle: `effects.ts` imports nothing from this file, and its only edge back to `registry.ts` is
-// type-only.
+} from "./effectTypes";
 import { COPY_FAMILY_MARKER, timingGateFromAttackText } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 // No cycle: phaseView.ts imports only types from here.
@@ -47,7 +45,7 @@ import type {
   MaxHpScale,
   PassiveEffects,
   StadiumEffects,
-} from "./registry";
+} from "./programTypes";
 import { programFor, registryCardIds } from "./registry";
 import type {
   AttackBlock,
@@ -61,6 +59,8 @@ import type {
   SpecialConditions,
 } from "./types";
 import {
+  damageCountersOn,
+  inPlayOf,
   BENCH_MAX,
   SEATS,
   noConditions,
@@ -110,7 +110,7 @@ function benchLimitFrom(stadiumCardId: string | undefined, teraInPlay: boolean):
 export function benchLimitOf(state: GameState, seat: Seat): number {
   const stadiumCardId = state.stadium === null ? undefined : state.cardIdByUid[state.stadium.uid];
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   return benchLimitFrom(
     stadiumCardId,
     bodies.some((body) => isTeraPokemon(topCardOf(state, body))),
@@ -127,7 +127,7 @@ export function benchLimitForIds(
 ): number {
   return benchLimitFrom(
     stadiumCardId,
-    inPlayCardIds.some((id) => bannerOf({ id } as Card) === "Tera"),
+    inPlayCardIds.some((id) => bannerOfId(id) === "Tera"),
   );
 }
 
@@ -158,7 +158,7 @@ export function benchTrimStages(
 export function toolCapOf(state: GameState, seat: Seat, body: InPlayPokemon): number {
   const name = topCardOf(state, body)?.name ?? "";
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     const raise = top === undefined ? undefined : programFor(top.id)?.passive?.toolCapForName;
@@ -215,7 +215,7 @@ export function toolTrimStages(
     .filter((seat) => {
       if (queued.some((stage) => stage.kind === "toolTrim" && stage.seat === seat)) return false;
       const side = state.players[seat];
-      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      const bodies = inPlayOf(side);
       return bodies.some((body) => owesToolTrim(state, seat, body));
     })
     .map((seat): PendingStage => ({ kind: "toolTrim", seat }));
@@ -506,7 +506,7 @@ export function disabledAbilityUids(state: GameState): Set<string> {
   }[] = [];
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     for (const holder of holders) {
       const top = topCardOf(state, holder);
       if (top === undefined) continue;
@@ -529,67 +529,34 @@ export function disabledAbilityUids(state: GameState): Set<string> {
     auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner, holder: null });
   }
   if (auras.length === 0) return disabled;
-  // The stratified lock pass. `true` = on, `false` = off, `undefined` = undecided. Ground
-  // repeatedly: an aura is on once every aura reaching its holder is off (vacuously for a Stadium),
-  // off once an on aura reaches its holder. When nothing changes, switch on only the source cycles
-  // (strongly connected undecided groups no outside undecided aura reaches) and ground again; each
-  // round decides at least one cycle, so it ends. Run only for two or more auras.
-  const on: (boolean | undefined)[] = auras.map(() => true);
-  if (auras.length >= 2) {
-    // `reachedBy[i]` — the auras whose predicate reaches aura i's HOLDER. A Pokémon aura's
-    // `sourceSeat` IS its holder's seat.
-    const reachedBy = auras.map(({ holder, sourceSeat: holderSeat }) =>
-      holder === null
-        ? []
-        : auras.flatMap(({ aura, sourceSeat }, j) =>
-            auraSuppresses(aura, sourceSeat, holderSeat, holder.body, holder.top, holder.isActive)
-              ? [j]
-              : [],
+  // Run only for two or more auras: a lone aura is always on.
+  const on: readonly boolean[] =
+    auras.length < 2
+      ? auras.map(() => true)
+      : resolveSuppressionGraph(
+          // `reachedBy[i]` — the auras whose predicate reaches aura i's HOLDER. A Pokémon aura's
+          // `sourceSeat` IS its holder's seat.
+          auras.map(({ holder, sourceSeat: holderSeat }) =>
+            holder === null
+              ? []
+              : auras.flatMap(({ aura, sourceSeat }, j) =>
+                  auraSuppresses(
+                    aura,
+                    sourceSeat,
+                    holderSeat,
+                    holder.body,
+                    holder.top,
+                    holder.isActive,
+                  )
+                    ? [j]
+                    : [],
+                ),
           ),
-    );
-    on.fill(undefined);
-    for (;;) {
-      let changed = true;
-      while (changed) {
-        changed = false;
-        for (const [i, by] of reachedBy.entries()) {
-          if (on[i] !== undefined) continue;
-          if (by.some((j) => on[j] === true)) {
-            on[i] = false; // one-way: an ON lock reaches this lock's source
-            changed = true;
-          } else if (by.every((j) => on[j] === false)) {
-            on[i] = true; // grounded: nothing ON reaches it, and nothing undecided does
-            changed = true;
-          }
-        }
-      }
-      // `upstream[i]` — the undecided auras that reach aura i's holder, directly or through
-      // other undecided auras (empty for a decided aura).
-      const upstream = reachedBy.map((by, i) => {
-        const seen = new Set<number>();
-        if (on[i] !== undefined) return seen;
-        const stack = by.filter((j) => on[j] === undefined);
-        for (let j = stack.pop(); j !== undefined; j = stack.pop()) {
-          if (seen.has(j)) continue;
-          seen.add(j);
-          for (const k of reachedBy[j] ?? []) if (on[k] === undefined) stack.push(k);
-        }
-        return seen;
-      });
-      // A source cycle member: it reaches itself, and every undecided aura reaching it is one it
-      // reaches back. Kept on.
-      const sources = upstream.flatMap((up, i) =>
-        up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],
-      );
-      if (sources.length === 0) break;
-      for (const i of sources) on[i] = true;
-    }
-  }
-  // Evaluate each aura's targets. Only an aura switched off stays silent (`!== false`); an
-  // undecided one would read on.
+        );
+  // Evaluate each aura's targets against the auras left on.
   for (const targetSeat of SEATS) {
     const side = state.players[targetSeat];
-    const targets = side.active === null ? side.bench : [side.active, ...side.bench];
+    const targets = inPlayOf(side);
     for (const target of targets) {
       const top = topCardOf(state, target);
       const uid = topUid(target);
@@ -599,13 +566,64 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       if (
         auras.some(
           ({ aura, sourceSeat }, i) =>
-            on[i] !== false && auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
+            on[i] === true && auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
         )
       )
         disabled.add(uid);
     }
   }
   return disabled;
+}
+
+/**
+ * Which Ability locks stay on when locks can silence each other's holders. `reachedBy[i]` lists
+ * the locks that reach lock i's holder; the result says, per lock, whether it is on.
+ *
+ * Stratified: a lock is on once every lock reaching it is off (vacuously when nothing reaches it),
+ * and off once an on lock reaches it (one-way). When grounding stalls, every source cycle — a
+ * strongly connected group of undecided locks that no outside undecided lock reaches — is switched
+ * on, and grounding resumes. Each round decides at least one cycle, so it terminates with every
+ * lock decided.
+ */
+export function resolveSuppressionGraph(reachedBy: readonly (readonly number[])[]): boolean[] {
+  const on: (boolean | undefined)[] = reachedBy.map(() => undefined);
+  for (;;) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const [i, by] of reachedBy.entries()) {
+        if (on[i] !== undefined) continue;
+        if (by.some((j) => on[j] === true)) {
+          on[i] = false;
+          changed = true;
+        } else if (by.every((j) => on[j] === false)) {
+          on[i] = true;
+          changed = true;
+        }
+      }
+    }
+    // `upstream[i]` — the undecided locks that reach lock i, directly or through other undecided
+    // locks (empty for a decided lock).
+    const upstream = reachedBy.map((by, i) => {
+      const seen = new Set<number>();
+      if (on[i] !== undefined) return seen;
+      const stack = by.filter((j) => on[j] === undefined);
+      for (let j = stack.pop(); j !== undefined; j = stack.pop()) {
+        if (seen.has(j)) continue;
+        seen.add(j);
+        for (const k of reachedBy[j] ?? []) if (on[k] === undefined) stack.push(k);
+      }
+      return seen;
+    });
+    // A source cycle member reaches itself, and reaches back every undecided lock reaching it.
+    const sources = upstream.flatMap((up, i) =>
+      up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],
+    );
+    if (sources.length === 0) break;
+    for (const i of sources) on[i] = true;
+  }
+  // Every lock is decided by now; an undecided one would read on.
+  return on.map((value) => value !== false);
 }
 
 /** Does `aura` (emitted by `sourceSeat`) suppress the Abilities of the in-play
@@ -667,7 +685,7 @@ export function hasSelfKnockOutAbility(top: Card): boolean {
  */
 export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     if (top === undefined || programFor(top.id)?.passive?.removeWeakness !== true) continue;
@@ -691,7 +709,7 @@ export function seatWeaknessRewrite(
 ): PokemonType | null {
   if (defenderCard === undefined) return null;
   const side = state.players[otherSeat(defenderSeat)];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     const rewrite =
@@ -712,7 +730,7 @@ export function seatWeaknessRewrite(
 export function weaknessAmountOverride(state: GameState): number | null {
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     for (const holder of holders) {
       const top = topCardOf(state, holder);
       const rule =
@@ -756,7 +774,7 @@ export function opponentMillRetortOf(
 export function countersMoveLocked(state: GameState): boolean {
   for (const seat of SEATS) {
     const side = state.players[seat];
-    for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    for (const holder of inPlayOf(side)) {
       const top = topCardOf(state, holder);
       if (top === undefined || programFor(top.id)?.passive?.countersCantMove !== true) continue;
       const uid = topUid(holder);
@@ -774,7 +792,7 @@ export function countersMoveLocked(state: GameState): boolean {
  */
 export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): number {
   const side = state.players[otherSeat(burnedSeat)];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let extra = 0;
   for (const holder of holders) {
     const top = topCardOf(state, holder);
@@ -795,7 +813,7 @@ export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): numbe
  */
 export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean {
   const side = state.players[otherSeat(ownerSeat)];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     if (top === undefined || programFor(top.id)?.passive?.opponentInPlayToHandBlocked !== true)
@@ -816,7 +834,7 @@ export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean 
  */
 export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPokemon): string[] {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let rescued: BasicEnergyType | undefined;
   for (const holder of holders) {
     const top = topCardOf(state, holder);
@@ -962,10 +980,8 @@ const FOSSIL_CARD_RULE: PassiveEffects = {
   statusImmunities: ["asleep", "burned", "confused", "paralyzed", "poisoned"],
 };
 
-export function passivesOf(
-  state: GameState,
-  pokemon: InPlayPokemon,
-): {
+/** The fold of every passive source on one in-play Pokémon (`passivesOf`). */
+export interface PokemonPassives {
   /**
    * §8.5 post-W/R reduction, summed over the holder's passive and every attached Tool, including
    * type-gated Tools (Rock Chestplate). That gate names the holder, so it is resolved here against
@@ -977,7 +993,7 @@ export function passivesOf(
   /** Pre-W/R bonuses gated on a board condition (Defiance Band), collected RAW
       and UNEVALUATED: the condition is seat-relative and this aggregation has no
       seat, so the two pre-W/R read sites fold them via `conditionHolds`
-      (interpreter.ts `attackerPreWRBonus`). Kept out of `damageBonusBeforeWR` so
+      (boardCondition.ts `attackerPreWRBonus`). Kept out of `damageBonusBeforeWR` so
       the defender-reduction / HP reads, which never look at either, can't be
       accidentally credited an attacker's conditional bonus. */
   conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[];
@@ -1157,7 +1173,63 @@ export function passivesOf(
   survivesKoAtFullHp: boolean;
   /** The name of this body's coin-flip survival Ability (Tenacious Body, Durable Body), or null. */
   survivesKoOnCoinFlip: string | null;
-} {
+}
+
+function emptyPassives(): PokemonPassives {
+  return {
+    damageReductionAfterWR: 0,
+    damageBonusBeforeWR: 0,
+    conditionalDamageBonusBeforeWR: [],
+    targetConditionalDamageBonusBeforeWR: [],
+    cantAttackUnless: [],
+    attackTwiceIf: [],
+    attackFirstTurnExempt: false,
+    evolveEarlyExempt: [],
+    attackCostClauses: [],
+    evolveAsNamed: [],
+    hpBonus: 0,
+    damageAttacker: 0,
+    damageAttackerOnKo: 0,
+    damageAttackerFromAbility: 0,
+    damageAttackerOnKoFromAbility: 0,
+    preventDamageFromExV: false,
+    preventDamageFromTypes: [],
+    preventDamageFromHasAbility: false,
+    preventDamageAndEffectsFromSpecialEnergy: false,
+    preventDamageAndEffectsWhileBenched: false,
+    preventDamageWhileBenched: false,
+    preventTrainerEffects: false,
+    preventSupporterEffects: false,
+    preventAttackEffects: false,
+    preventAbilityEffects: false,
+    preventDamageFromAttackerClasses: [],
+    preventDamageAndEffectsFromBanners: [],
+    damageReductionsFromAttacker: [],
+    // `undefined` means no threshold aura, rather than `Infinity`.
+    preventDamageAtOrAbove: undefined,
+    preventDamageOnCoinFlip: [],
+    koPrizeReductions: [],
+    statusImmunities: [],
+    statusRecovery: [],
+    suppressTargetEffectsOnAttack: false,
+    survivesKoAtFullHp: false,
+    survivesKoOnCoinFlip: null,
+  };
+}
+
+/** The holder facts every passive source is gated against. */
+interface PassiveHolder {
+  state: GameState;
+  pokemon: InPlayPokemon;
+  /** The in-play card, or the printed one for a locked holder. */
+  card: Card | undefined;
+  types: readonly string[];
+  isBasic: boolean;
+  onBench: boolean;
+  hasTool: boolean;
+}
+
+export function passivesOf(state: GameState, pokemon: InPlayPokemon): PokemonPassives {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools are not Abilities
   // and keep contributing (Jamming Tower is a separate gate via `toolsInEffect`). The lock aura is
@@ -1195,260 +1267,234 @@ export function passivesOf(
   // leaving the Bench ends the prevention.
   const onBench = isOnBench(state, pokemon);
   const hasTool = pokemon.tools.length > 0;
-  let damageReductionAfterWR = 0;
-  let damageBonusBeforeWR = 0;
-  let hpBonus = 0;
-  let damageAttacker = 0;
-  let damageAttackerOnKo = 0;
-  let damageAttackerFromAbility = 0;
-  let damageAttackerOnKoFromAbility = 0;
-  let preventAbilityEffects = false;
-  let preventDamageFromExV = false;
-  let preventDamageFromHasAbility = false;
-  let preventDamageAndEffectsFromSpecialEnergy = false;
-  let preventDamageAndEffectsWhileBenched = false;
-  let preventDamageWhileBenched = false;
-  let preventTrainerEffects = false;
-  let preventSupporterEffects = false;
-  let preventAttackEffects = false;
-  let suppressTargetEffectsOnAttack = false;
-  let survivesKoAtFullHp = false;
-  let survivesKoOnCoinFlip: string | null = null;
-  // `undefined` means no threshold aura, rather than `Infinity`.
-  let preventDamageAtOrAbove: number | undefined;
-  const preventDamageFromTypes: PokemonType[] = [];
-  const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
-  const preventDamageAndEffectsFromBanners: Banner[] = [];
-  const damageReductionsFromAttacker: { amount: number; attacker: CardFilter }[] = [];
-  // Collected with their Ability names because `ABILITY_COIN_FLIP` has to name one.
-  const preventDamageOnCoinFlip: { ability: string }[] = [];
-  const koPrizeReductions: KoPrizeReduction[] = [];
-  const statusImmunities: StatusName[] = [];
-  const statusRecovery: StatusName[] = [];
-  const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
-  const targetConditionalDamageBonusBeforeWR: {
-    amount: number;
-    targetSuffix: PokemonSuffix;
-  }[] = [];
-  const cantAttackUnless: BoardCondition[] = [];
-  const attackTwiceIf: BoardCondition[] = [];
-  let attackFirstTurnExempt = false;
-  const evolveEarlyExempt: (BoardCondition | undefined)[] = [];
-  const attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[] = [];
-  const evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[] = [];
+  const holder: PassiveHolder = {
+    state,
+    pokemon,
+    card: holderCard,
+    types: holderTypes,
+    isBasic,
+    onBench,
+    hasTool,
+  };
+  const out = emptyPassives();
   for (const [index, passive] of sources.entries()) {
     if (passive === undefined) continue;
     // `sources[0]` is the top card's own printed passive, i.e. its Ability.
     const fromAbility = index === 0;
-    damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
-    // The same reduction gated on the holder's in-play type, summed into the ungated total: it is
-    // the same sentence at the same §8.5 step.
-    const typed = passive.damageReductionAfterWRIfType;
-    if (typed !== undefined && holderTypes.includes(typed.type)) {
-      damageReductionAfterWR += typed.amount;
-    }
-    // Regirock "Rock Armor": the same reduction gated on the holder having any Energy attached (a
-    // card count).
-    if (passive.damageReductionAfterWRIfEnergy !== undefined && pokemon.energy.length > 0)
-      damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
-    // The attacker-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is answered
-    // here, the attacker gate only at the read sites.
-    const fromAttacker = passive.damageReductionAfterWRFromAttacker;
-    if (
-      fromAttacker !== undefined &&
-      (fromAttacker.holderType === undefined || holderTypes.includes(fromAttacker.holderType))
-    )
-      damageReductionsFromAttacker.push({
-        amount: fromAttacker.amount,
-        attacker: fromAttacker.attacker,
-      });
-    damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
-    if (passive.damageBonusBeforeWRIf !== undefined)
-      conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
-    // Brave Bangle's holder clause ("If the Pokémon this card is attached to doesn't have a Rule
-    // Box"), resolved here because only the fold holds the holder.
-    const targeted = passive.damageBonusBeforeWRIfTarget;
-    if (
-      targeted !== undefined &&
-      (targeted.holder === undefined || matchesFilter(holderCard, targeted.holder))
-    )
-      targetConditionalDamageBonusBeforeWR.push(targeted);
-    if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
-    // Stage-free HP bonus, summed into the same accumulator: Hero's Cape has no stage clause so it
-    // must not take `isBasic`; Cynthia's Power Weight gates on `beneficiary`; Okidogi gates on
-    // having any {D} Energy attached (`hasAttachedEnergy`, since the printed word is "any").
-    const stageFree = passive.hpBonus;
-    if (
-      stageFree !== undefined &&
-      (stageFree.beneficiary === undefined || matchesFilter(holderCard, stageFree.beneficiary)) &&
-      (stageFree.requiresEnergyType === undefined ||
-        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType)) &&
-      // Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no threshold).
-      // Counts Energy cards by provision.
-      (stageFree.requiresEnergyCount === undefined ||
-        countAttachedEnergy(state, pokemon, stageFree.requiresEnergyType ?? null) >=
-          stageFree.requiresEnergyCount)
-    ) {
-      hpBonus += stageFree.amount;
-    }
-    // Scaled max-HP bonus: `amount × count`, summed into the same accumulator as the flat bonuses.
-    // The count is never negative, so this only ever adds.
-    const scaled = passive.hpBonusPer;
-    if (scaled !== undefined)
-      hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
-    // Orthworm ex: "for each {M} Energy attached to this Pokémon" multiplies the amount by the
-    // holder's count of that type.
-    const recoil = passive.damageAttacker;
-    if (
-      recoil !== undefined &&
-      (recoil.requiresTool !== true || hasTool) &&
-      // Punk Helmet: "{D} Pokémon this card is attached to" checks the holder's in-play types.
-      (recoil.holderType === undefined || holderTypes.includes(recoil.holderType))
-    ) {
-      const amount =
-        recoil.perAttachedEnergy === undefined
-          ? recoil.amount
-          : recoil.amount * countAttachedEnergy(state, pokemon, recoil.perAttachedEnergy);
-      damageAttacker += amount;
-      if (fromAbility) damageAttackerFromAbility += amount;
-    }
-    // Being in this loop means a §9 lock silences an Ability printing (Maractus "Exploding
-    // Needles") but never an attached Tool. `activeOnly` is answered off `onBench`; `koRecoilOf`
-    // reads this fold before `knockOut` moves the body, so the zone is still the one it was Knocked
-    // Out in.
-    const onKo = passive.damageAttackerOnKo;
-    if (onKo !== undefined && (onKo.activeOnly !== true || !onBench)) {
-      damageAttackerOnKo += onKo.amount;
-      if (fromAbility) damageAttackerOnKoFromAbility += onKo.amount;
-    }
-    if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
-    if (passive.preventDamageFromType !== undefined)
-      preventDamageFromTypes.push(passive.preventDamageFromType);
-    // Read in this loop so a §9 Ability-lock switches the prevention off; reading the program off
-    // `top` at the damage sites would miss that.
-    if (passive.preventDamageFromHasAbility === true) preventDamageFromHasAbility = true;
-    // Separate from the damage-only flag: "prevent all damage" does not imply "and effects of".
-    if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
-      preventDamageAndEffectsFromSpecialEnergy = true;
-    // "As long as this Pokémon is on your Bench": the zone clause is answered here.
-    if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
-      preventDamageAndEffectsWhileBenched = true;
-    // Plume Protection: the same Bench gate, damage only.
-    if (passive.preventDamageWhileBenched === true && onBench) preventDamageWhileBenched = true;
-    // Trainer-borne shield with no conditions. In this loop so a §9 lock switches it off.
-    if (passive.preventTrainerEffects === true) preventTrainerEffects = true;
-    // Protective Sail: the same shield, Supporters only (read at the funnel).
-    if (passive.preventSupporterEffects === true) preventSupporterEffects = true;
-    // Attack-effect shield with no conditions. In this loop so a §9 lock switches it off.
-    if (passive.preventAttackEffects === true) preventAttackEffects = true;
-    if (passive.preventAbilityEffects === true) preventAbilityEffects = true;
-    // Pushed rather than OR'd because sources can name different classes ("Pokémon ex", "Basic
-    // Pokémon ex"). In this loop so a §9 lock switches it off.
-    if (passive.preventDamageFromAttackerClass !== undefined)
-      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
-    // Sparkling Scales, in this loop so a §9 lock switches it off.
-    if (passive.preventDamageAndEffectsFromBanner !== undefined)
-      preventDamageAndEffectsFromBanners.push(passive.preventDamageAndEffectsFromBanner);
-    // `Math.min` because a lower threshold shields strictly more damage, so the minimum keeps every
-    // source's promise. In this loop so a §9 lock switches it off.
-    if (passive.preventDamageAtOrAbove !== undefined)
-      preventDamageAtOrAbove =
-        preventDamageAtOrAbove === undefined
-          ? passive.preventDamageAtOrAbove
-          : Math.min(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
-    // `requiresEnergyType` (Fezandipiti's "has any {D} Energy attached") is a holder fact resolved
-    // here; absent means the unconditional printing. Pushed, not OR'd: each source is its own coin
-    // flip. In this loop so a locked holder draws no coin.
-    if (
-      passive.preventDamageOnCoinFlip !== undefined &&
-      (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||
-        hasAttachedEnergy(state, pokemon, passive.preventDamageOnCoinFlip.requiresEnergyType))
-    )
-      preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
-    // §8.1 Prize reduction, pushed raw: its riders concern the seat, the attack cause or the game,
-    // which this fold cannot answer.
-    if (passive.onKoPrizeReduction !== undefined)
-      koPrizeReductions.push(passive.onKoPrizeReduction);
-    // §12 immunity, collected in this loop so a §9 lock drops the holder's own passive while Tools
-    // and Energy still apply.
-    if (passive.statusImmunities !== undefined) statusImmunities.push(...passive.statusImmunities);
-    // §12 recovery, deliberately not derived from the immunity: most immunity printings refuse
-    // without recovering.
-    if (passive.statusRecovery !== undefined) statusRecovery.push(...passive.statusRecovery);
-    // Attacker-side suppression ("Azure Seas"), in this loop so a §9 lock silences it.
-    if (passive.suppressTargetEffectsOnAttack === true) suppressTargetEffectsOnAttack = true;
-    // §8.1 KO survival ("Resolute Heart", "Sturdy"), in this loop so a §9 lock silences it.
-    // Survival Brace uses `survivesKoAtFullHpFromOpponentThenDiscard` instead because it needs the
-    // Tool's uid.
-    if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
-    // Tenacious Body / Durable Body, in this loop so a §9 lock silences it.
-    if (passive.survivesKoOnCoinFlip !== undefined)
-      survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
-    // §8 attack gate, collected raw; in this loop so a §9 lock silences it ("Power Saver").
-    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);
-    // Attack-again licence (Festival Lead), pushed raw; a locked holder loses the window.
-    if (passive.attackTwiceIf !== undefined) attackTwiceIf.push(passive.attackTwiceIf);
-    // §4 first-turn attack licence ("Debut Performance"); in this loop so a §9 lock hands the ban
-    // back.
-    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;
-    // §4/§10 evolve licence, collected raw because its conditions differ in kind. `activeOnly`
-    // (Eevee) is answered here via `!onBench`; it is per printing, since Karrablast and Shelmet
-    // print no Active Spot clause. `ifInPlay` and `ifCondition` are seat-relative and resolved by
-    // `evolveEarlyLicensed` (interpreter.ts). In this loop so a §9 lock silences the licence.
-    const licence = passive.evolveEarlyExempt;
-    if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {
-      evolveEarlyExempt.push(
-        licence.ifInPlay === undefined
-          ? // Luxio "Fighting Roar"
-            licence.ifCondition
-          : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
-      );
-    }
-    // Ability-printed cost clause (Noivern, Kyurem), pushed raw because the condition is
-    // seat-relative and `attackCostAt` evaluates it. In this loop so a §9 lock restores the printed
-    // cost.
-    if (passive.attackCostClause !== undefined) attackCostClauses.push(passive.attackCostClause);
-    // Evolve alias (Eevee ex "Rainbow DNA"); a locked Eevee ex evolves by §10 name match alone.
-    if (passive.evolveAsNamed !== undefined) evolveAsNamed.push(passive.evolveAsNamed);
+    foldDamageModifiers(out, passive, holder);
+    foldHpBonus(out, passive, holder);
+    foldRecoil(out, passive, holder, fromAbility);
+    foldPreventions(out, passive, holder);
+    foldStatuses(out, passive);
+    foldLicences(out, passive, holder);
   }
-  return {
-    damageReductionAfterWR,
-    damageBonusBeforeWR,
-    conditionalDamageBonusBeforeWR,
-    targetConditionalDamageBonusBeforeWR,
-    cantAttackUnless,
-    attackTwiceIf,
-    attackFirstTurnExempt,
-    evolveEarlyExempt,
-    attackCostClauses,
-    evolveAsNamed,
-    hpBonus,
-    damageAttacker,
-    damageAttackerOnKo,
-    damageAttackerFromAbility,
-    damageAttackerOnKoFromAbility,
-    preventDamageFromExV,
-    preventDamageFromTypes,
-    preventDamageFromHasAbility,
-    preventDamageAndEffectsFromSpecialEnergy,
-    preventDamageAndEffectsWhileBenched,
-    preventDamageWhileBenched,
-    preventTrainerEffects,
-    preventSupporterEffects,
-    preventAttackEffects,
-    preventAbilityEffects,
-    preventDamageFromAttackerClasses,
-    preventDamageAndEffectsFromBanners,
-    damageReductionsFromAttacker,
-    preventDamageAtOrAbove,
-    preventDamageOnCoinFlip,
-    koPrizeReductions,
-    statusImmunities,
-    statusRecovery,
-    suppressTargetEffectsOnAttack,
-    survivesKoAtFullHp,
-    survivesKoOnCoinFlip,
-  };
+  return out;
+}
+
+/** §8.5 reductions and pre-W/R bonuses. */
+function foldDamageModifiers(
+  out: PokemonPassives,
+  passive: PassiveEffects,
+  holder: PassiveHolder,
+): void {
+  out.damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
+  // The same reduction gated on the holder's in-play type, summed into the ungated total: it is
+  // the same sentence at the same §8.5 step.
+  const typed = passive.damageReductionAfterWRIfType;
+  if (typed !== undefined && holder.types.includes(typed.type)) {
+    out.damageReductionAfterWR += typed.amount;
+  }
+  // Regirock "Rock Armor": the same reduction gated on the holder having any Energy attached (a
+  // card count).
+  if (passive.damageReductionAfterWRIfEnergy !== undefined && holder.pokemon.energy.length > 0)
+    out.damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
+  // The attacker-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is answered
+  // here, the attacker gate only at the read sites.
+  const fromAttacker = passive.damageReductionAfterWRFromAttacker;
+  if (
+    fromAttacker !== undefined &&
+    (fromAttacker.holderType === undefined || holder.types.includes(fromAttacker.holderType))
+  )
+    out.damageReductionsFromAttacker.push({
+      amount: fromAttacker.amount,
+      attacker: fromAttacker.attacker,
+    });
+  out.damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
+  if (passive.damageBonusBeforeWRIf !== undefined)
+    out.conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
+  // Brave Bangle's holder clause ("If the Pokémon this card is attached to doesn't have a Rule
+  // Box"), resolved here because only the fold holds the holder.
+  const targeted = passive.damageBonusBeforeWRIfTarget;
+  if (
+    targeted !== undefined &&
+    (targeted.holder === undefined || matchesFilter(holder.card, targeted.holder))
+  )
+    out.targetConditionalDamageBonusBeforeWR.push(targeted);
+}
+
+function foldHpBonus(out: PokemonPassives, passive: PassiveEffects, holder: PassiveHolder): void {
+  const { state, pokemon } = holder;
+  if (holder.isBasic) out.hpBonus += passive.basicHpBonus ?? 0;
+  // Stage-free HP bonus, summed into the same accumulator: Hero's Cape has no stage clause so it
+  // must not take `isBasic`; Cynthia's Power Weight gates on `beneficiary`; Okidogi gates on
+  // having any {D} Energy attached (`hasAttachedEnergy`, since the printed word is "any").
+  const stageFree = passive.hpBonus;
+  if (
+    stageFree !== undefined &&
+    (stageFree.beneficiary === undefined || matchesFilter(holder.card, stageFree.beneficiary)) &&
+    (stageFree.requiresEnergyType === undefined ||
+      hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType)) &&
+    // Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no threshold).
+    // Counts Energy cards by provision.
+    (stageFree.requiresEnergyCount === undefined ||
+      countAttachedEnergy(state, pokemon, stageFree.requiresEnergyType ?? null) >=
+        stageFree.requiresEnergyCount)
+  ) {
+    out.hpBonus += stageFree.amount;
+  }
+  // Scaled max-HP bonus: `amount × count`, summed into the same accumulator as the flat bonuses.
+  // The count is never negative, so this only ever adds.
+  const scaled = passive.hpBonusPer;
+  if (scaled !== undefined)
+    out.hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
+}
+
+/** §9/§8.1 recoil on the attacker, with the holder's own Ability share kept apart. */
+function foldRecoil(
+  out: PokemonPassives,
+  passive: PassiveEffects,
+  holder: PassiveHolder,
+  fromAbility: boolean,
+): void {
+  // Orthworm ex: "for each {M} Energy attached to this Pokémon" multiplies the amount by the
+  // holder's count of that type.
+  const recoil = passive.damageAttacker;
+  if (
+    recoil !== undefined &&
+    (recoil.requiresTool !== true || holder.hasTool) &&
+    // Punk Helmet: "{D} Pokémon this card is attached to" checks the holder's in-play types.
+    (recoil.holderType === undefined || holder.types.includes(recoil.holderType))
+  ) {
+    const amount =
+      recoil.perAttachedEnergy === undefined
+        ? recoil.amount
+        : recoil.amount *
+          countAttachedEnergy(holder.state, holder.pokemon, recoil.perAttachedEnergy);
+    out.damageAttacker += amount;
+    if (fromAbility) out.damageAttackerFromAbility += amount;
+  }
+  // A §9 lock silences an Ability printing (Maractus "Exploding Needles") but never an attached
+  // Tool. `activeOnly` is answered off `onBench`; `koRecoilOf` reads this fold before `knockOut`
+  // moves the body, so the zone is still the one it was Knocked Out in.
+  const onKo = passive.damageAttackerOnKo;
+  if (onKo !== undefined && (onKo.activeOnly !== true || !holder.onBench)) {
+    out.damageAttackerOnKo += onKo.amount;
+    if (fromAbility) out.damageAttackerOnKoFromAbility += onKo.amount;
+  }
+}
+
+/**
+ * §8.5/§11 damage and effect preventions, KO survival and target-effect suppression. Folded per
+ * source, so a §9 lock on the holder switches its Ability's share off.
+ */
+function foldPreventions(
+  out: PokemonPassives,
+  passive: PassiveEffects,
+  holder: PassiveHolder,
+): void {
+  if (passive.preventDamageFromExV === true) out.preventDamageFromExV = true;
+  if (passive.preventDamageFromType !== undefined)
+    out.preventDamageFromTypes.push(passive.preventDamageFromType);
+  if (passive.preventDamageFromHasAbility === true) out.preventDamageFromHasAbility = true;
+  // Separate from the damage-only flag: "prevent all damage" does not imply "and effects of".
+  if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
+    out.preventDamageAndEffectsFromSpecialEnergy = true;
+  // "As long as this Pokémon is on your Bench": the zone clause is answered here.
+  if (passive.preventDamageAndEffectsWhileBenched === true && holder.onBench)
+    out.preventDamageAndEffectsWhileBenched = true;
+  // Plume Protection: the same Bench gate, damage only.
+  if (passive.preventDamageWhileBenched === true && holder.onBench)
+    out.preventDamageWhileBenched = true;
+  if (passive.preventTrainerEffects === true) out.preventTrainerEffects = true;
+  // Protective Sail: the same shield, Supporters only (read at the funnel).
+  if (passive.preventSupporterEffects === true) out.preventSupporterEffects = true;
+  if (passive.preventAttackEffects === true) out.preventAttackEffects = true;
+  if (passive.preventAbilityEffects === true) out.preventAbilityEffects = true;
+  // Pushed rather than OR'd because sources can name different classes ("Pokémon ex", "Basic
+  // Pokémon ex").
+  if (passive.preventDamageFromAttackerClass !== undefined)
+    out.preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
+  // Sparkling Scales.
+  if (passive.preventDamageAndEffectsFromBanner !== undefined)
+    out.preventDamageAndEffectsFromBanners.push(passive.preventDamageAndEffectsFromBanner);
+  // `Math.min` because a lower threshold shields strictly more damage, so the minimum keeps every
+  // source's promise.
+  if (passive.preventDamageAtOrAbove !== undefined)
+    out.preventDamageAtOrAbove =
+      out.preventDamageAtOrAbove === undefined
+        ? passive.preventDamageAtOrAbove
+        : Math.min(out.preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
+  // `requiresEnergyType` (Fezandipiti's "has any {D} Energy attached") is a holder fact resolved
+  // here; absent means the unconditional printing. Pushed, not OR'd: each source is its own coin
+  // flip, collected with its Ability name because `ABILITY_COIN_FLIP` has to name one.
+  if (
+    passive.preventDamageOnCoinFlip !== undefined &&
+    (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||
+      hasAttachedEnergy(
+        holder.state,
+        holder.pokemon,
+        passive.preventDamageOnCoinFlip.requiresEnergyType,
+      ))
+  )
+    out.preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
+  // §8.1 Prize reduction, pushed raw: its riders concern the seat, the attack cause or the game,
+  // which this fold cannot answer.
+  if (passive.onKoPrizeReduction !== undefined)
+    out.koPrizeReductions.push(passive.onKoPrizeReduction);
+  // Attacker-side suppression ("Azure Seas").
+  if (passive.suppressTargetEffectsOnAttack === true) out.suppressTargetEffectsOnAttack = true;
+  // §8.1 KO survival ("Resolute Heart", "Sturdy"). Survival Brace uses
+  // `survivesKoAtFullHpFromOpponentThenDiscard` instead because it needs the Tool's uid.
+  if (passive.survivesKoAtFullHp === true) out.survivesKoAtFullHp = true;
+  // Tenacious Body / Durable Body.
+  if (passive.survivesKoOnCoinFlip !== undefined)
+    out.survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
+}
+
+/** §12 immunity and recovery; a §9 lock drops the holder's own share while Tools and Energy apply. */
+function foldStatuses(out: PokemonPassives, passive: PassiveEffects): void {
+  if (passive.statusImmunities !== undefined)
+    out.statusImmunities.push(...passive.statusImmunities);
+  // Deliberately not derived from the immunity: most immunity printings refuse without recovering.
+  if (passive.statusRecovery !== undefined) out.statusRecovery.push(...passive.statusRecovery);
+}
+
+/** §4/§5.3/§8/§10 attack and evolve gates and licences, collected raw where seat-relative. */
+function foldLicences(out: PokemonPassives, passive: PassiveEffects, holder: PassiveHolder): void {
+  // §8 attack gate ("Power Saver").
+  if (passive.cantAttackUnless !== undefined) out.cantAttackUnless.push(passive.cantAttackUnless);
+  // Attack-again licence (Festival Lead); a locked holder loses the window.
+  if (passive.attackTwiceIf !== undefined) out.attackTwiceIf.push(passive.attackTwiceIf);
+  // §4 first-turn attack licence ("Debut Performance"); a §9 lock hands the ban back.
+  if (passive.attackFirstTurnExempt === true) out.attackFirstTurnExempt = true;
+  // §4/§10 evolve licence, collected raw because its conditions differ in kind. `activeOnly`
+  // (Eevee) is answered here via `!onBench`; it is per printing, since Karrablast and Shelmet
+  // print no Active Spot clause. `ifInPlay` and `ifCondition` are seat-relative and resolved by
+  // `evolveEarlyLicensed` (boardCondition.ts).
+  const licence = passive.evolveEarlyExempt;
+  if (licence !== undefined && (licence.activeOnly !== true || !holder.onBench)) {
+    out.evolveEarlyExempt.push(
+      licence.ifInPlay === undefined
+        ? // Luxio "Fighting Roar"
+          licence.ifCondition
+        : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
+    );
+  }
+  // Ability-printed cost clause (Noivern, Kyurem), pushed raw because the condition is
+  // seat-relative and `attackCostAt` evaluates it; a §9 lock restores the printed cost.
+  if (passive.attackCostClause !== undefined) out.attackCostClauses.push(passive.attackCostClause);
+  // Evolve alias (Eevee ex "Rainbow DNA"); a locked Eevee ex evolves by §10 name match alone.
+  if (passive.evolveAsNamed !== undefined) out.evolveAsNamed.push(passive.evolveAsNamed);
 }
 
 /** §8.1 KO SURVIVAL — the HP `remaining` a clamped body is left with. The printed
@@ -1848,7 +1894,7 @@ export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPok
   if (watched === undefined) return 0;
   const disabled = disabledAbilityUids(state);
   let total = 0;
-  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const holder of inPlayOf(side)) {
     const uid = topUid(holder);
     if (uid === undefined || disabled.has(uid)) continue;
     const top = topCardOf(state, holder);
@@ -2053,7 +2099,7 @@ export interface AttackMenuEntry {
  */
 export function memoryDiveLive(state: GameState, seat: Seat): boolean {
   const side = state.players[seat];
-  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const bodies = inPlayOf(side);
   return bodies.some((body) => {
     const top = topCardOf(state, body);
     if (top === undefined || programFor(top.id)?.passive?.memoryDive !== true) return false;
@@ -2250,7 +2296,7 @@ export function seatMaxHpBonus(state: GameState, pokemon: InPlayPokemon): number
   if (uid === undefined) return 0;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     // The TARGET clause: "ALL of your Pokémon in play" — Active and Bench alike,
     // so membership on this side is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
@@ -2437,7 +2483,7 @@ function seatOfPokemon(state: GameState, pokemon: InPlayPokemon): Seat | undefin
   if (uid === undefined) return undefined;
   return SEATS.find((seat) => {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     return holders.some((holder) => topUid(holder) === uid);
   });
 }
@@ -2470,7 +2516,7 @@ export function countEnergyInPlay(
   filter?: CardFilter,
 ): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   for (const holder of holders) {
     // The in-play card, so a type filter reads the body's current types.
@@ -2499,7 +2545,7 @@ export function countEnergyInPlay(
  */
 export function countToolsInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   for (const holder of holders) total += holder.tools.length;
   return total;
@@ -2512,7 +2558,7 @@ export function countToolsInPlay(state: GameState, seat: Seat): number {
  */
 export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   const types = new Set<string>();
   for (const holder of holders) {
     for (const uid of holder.energy) {
@@ -2530,9 +2576,9 @@ export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): numbe
  */
 export function countDamageCountersInPlay(state: GameState, seat: Seat): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
-  for (const holder of holders) total += Math.floor(holder.damage / 10);
+  for (const holder of holders) total += damageCountersOn(holder);
   return total;
 }
 
@@ -2561,7 +2607,7 @@ const BASIC_ENERGY_CARD: CardFilter = { kind: "basicEnergy" };
 
 /**
  * Does the side that controls `pokemon` have strictly more Prize cards remaining than its opponent
- * (i.e. it is behind)? Read here rather than through `conditionHolds` because interpreter.ts
+ * (i.e. it is behind)? Read here rather than through `conditionHolds` because boardCondition.ts
  * imports this file. A holder with no top card matches no seat and answers false.
  */
 function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokemon): boolean {
@@ -2569,7 +2615,7 @@ function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokem
   if (uid === undefined) return false;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     return side.prizes.length > state.players[otherSeat(seat)].prizes.length;
   }
@@ -2587,7 +2633,7 @@ function doubledBasicEnergyType(
   const seat = seatOfPokemon(state, pokemon);
   if (seat === undefined) return undefined;
   const side = state.players[seat];
-  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const holder of inPlayOf(side)) {
     const top = topCardOf(state, holder);
     const doubled =
       top === undefined ? undefined : programFor(top.id)?.passive?.basicEnergyProvidesTwice;
@@ -2609,7 +2655,7 @@ export function retreatCoinFlipSource(
   seat: Seat,
 ): { uid: string; ability: string } | undefined {
   const side = state.players[otherSeat(seat)];
-  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+  for (const holder of inPlayOf(side)) {
     const top = topCardOf(state, holder);
     const ability =
       top === undefined ? undefined : programFor(top.id)?.passive?.retreatFailsOnTails;
@@ -2676,7 +2722,7 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
   const targetTop = topCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     for (const holder of holders) {
       const top = topCardOf(state, holder);
@@ -2714,7 +2760,7 @@ export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemo
     // holder of this uid is out even though it belongs to this side.
     if (side.active === null || topUid(side.active) !== uid) continue;
     const foes = state.players[otherSeat(seat)];
-    const sources = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+    const sources = inPlayOf(foes);
     let added = 0;
     for (const source of sources) {
       const top = topCardOf(state, source);
@@ -2830,7 +2876,7 @@ export function opposingToolAttackDebuff(
     const side = state.players[seat];
     if (side.active === null || topUid(side.active) !== uid) continue;
     const other = state.players[otherSeat(seat)];
-    const holders = other.active === null ? other.bench : [other.active, ...other.bench];
+    const holders = inPlayOf(other);
     let amount = 0;
     for (const holder of holders) {
       const top = topCardOf(state, holder);
@@ -2919,7 +2965,7 @@ function benchShieldScan(
     // reason to bail out of the scan (it was, while the only source was an
     // Active; that early `return false` was a correct reading of ONE sentence and
     // a bug waiting for the second).
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     for (const holder of holders) {
       if (benchShieldGranted(state, holder, "preventBenchDamageAndEffects", uid, scope))
         return true;
@@ -2994,7 +3040,7 @@ export function healLocked(state: GameState, pokemon: InPlayPokemon): boolean {
     const active = state.players[seat].active;
     if (active === null || topUid(active) !== uid) continue;
     const other = state.players[otherSeat(seat)];
-    const holders = other.active === null ? other.bench : [other.active, ...other.bench];
+    const holders = inPlayOf(other);
     return holders.some((holder) => {
       const top = topCardOf(state, holder);
       const holderUid = topUid(holder);
@@ -3061,7 +3107,7 @@ function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean 
   // (the classifier is asked by `aceSpecPlayBarred` below, never here — this
   // half answers about the BOARD alone, so the two terms can be read apart.)
   const foes = state.players[otherSeat(seat)];
-  const holders = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+  const holders = inPlayOf(foes);
   const silenced = disabledAbilityUids(state);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
@@ -3176,7 +3222,7 @@ export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlay
     // The DERIVED SEAT, `benchShieldScan`'s answer: the caller hands us one of a
     // side's own entries, so find that side and read ONLY it. The target clause
     // says "YOUR … Pokémon", so no other side's aura can reach this body.
-    const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+    const bodies = inPlayOf(side);
     if (!bodies.some((body) => topUid(body) === uid)) continue;
     for (const holder of bodies) {
       const top = topCardOf(state, holder);
@@ -3211,7 +3257,7 @@ export function seatDamageReduction(
   const damagedCard = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     // The TARGET clause: "ALL of your Pokémon" — every body on this side, Active
     // and Bench alike, so membership is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
@@ -3327,7 +3373,7 @@ export function seatPreWRDamageBonus(
   defenderCard?: Card,
 ): number {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   let total = 0;
   // The `noStack` ledger: printed Ability name → the largest single contribution
   // seen for it. Summed in at the end so a capped key and an uncapped one can
@@ -3383,7 +3429,7 @@ export function seatKoPrizeBonuses(
   attackerUid: string | undefined,
 ): { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];
   // The `noStack` ledger. It records the ABILITY NAMES already admitted, and the
   // FIRST holder to satisfy every clause is the one that keeps the entry — a
@@ -3420,7 +3466,7 @@ export function seatKoPrizeReductionOf(
   koCard: Card | undefined,
 ): { uid: string; rule: NonNullable<PassiveEffects["seatKoPrizeReduction"]> } | null {
   const side = state.players[seat];
-  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const holders = inPlayOf(side);
   for (const holder of holders) {
     const top = topCardOf(state, holder);
     const rule = top === undefined ? undefined : programFor(top.id)?.passive?.seatKoPrizeReduction;
@@ -3465,10 +3511,10 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
   if (required === undefined) return true;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     const foe = state.players[otherSeat(seat)];
-    const foeHolders = foe.active === null ? foe.bench : [foe.active, ...foe.bench];
+    const foeHolders = inPlayOf(foe);
     return foeHolders.some((holder) => {
       const card = topCardOf(state, holder);
       return card !== undefined && pokemonSuffixOf(card) === required;
@@ -3656,7 +3702,7 @@ export function selfAttackCostDiscount(
   if (scope !== undefined && scope !== attackName) return tools;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    const holders = inPlayOf(side);
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     let discount = tools;
     if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));

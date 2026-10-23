@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameEvent } from "./events";
 import { resolveMidTurnKnockOuts } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, PendingStage, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -15,6 +15,8 @@ import {
   trainerCard,
   must,
   mustApply as run,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koHolderToolTriggersOf, koToolTriggersOf } from "./triggers";
 import type { InPlayPokemon } from "./types";
@@ -119,28 +121,7 @@ const DECK = deckOf({
 });
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -317,7 +298,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Heavy Baton",
           trigger: "onHolderActiveKnockedOut",
-          optional: true,
           program: [
             {
               op: "moveEnergy",
@@ -354,7 +334,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Powerglass",
           trigger: "atEndOfYourTurnInActive",
-          optional: true,
           program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }],
         },
       ],
@@ -488,7 +467,7 @@ describe("§2 — Heavy Baton: the self arm of the KO-moment Tool scan", () => {
   });
 
   it("the parked move round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36)", () => {
-    const after = JSON.parse(JSON.stringify(run(baton(), attack(0)).state)) as GameState;
+    const after = roundTrip(run(baton(), attack(0)).state);
     const [a] = bodyAt(after, "p2", "active").energy as [string];
     const dest = { seat: "p2", spot: { spot: "bench", index: 1 } } as const;
     const done = drain(
@@ -627,9 +606,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
   });
 
   it("the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36)", () => {
-    const after = JSON.parse(
-      JSON.stringify(drain(run(amulet({ seed: 5692 }), attack(0))).state),
-    ) as GameState;
+    const after = roundTrip(drain(run(amulet({ seed: 5692 }), attack(0))).state);
     const pick = after.players.p2.deck[0] as string;
     const done = run(after, {
       type: "resolveEffect",
@@ -714,9 +691,7 @@ describe("§4 — Powerglass: the first end-of-turn stage that can park", () => 
   });
 
   it("the parked question round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36): the re-queued `endTurn` carries `toolsDone`", () => {
-    const after = JSON.parse(
-      JSON.stringify(run(glass(5700), { type: "endTurn", seat: "p1" }).state),
-    ) as GameState;
+    const after = roundTrip(run(glass(5700), { type: "endTurn", seat: "p1" }).state);
     expect(after.pending[0]).toEqual({ kind: "endTurn", seat: "p1", toolsDone: true });
     const done = run(after, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } });
     expect(all(done.events, "TURN_ENDED")).toHaveLength(1);

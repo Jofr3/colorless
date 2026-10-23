@@ -23,7 +23,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { flipCoin } from "./rng";
 import {
@@ -34,12 +34,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
   setDamage,
   types,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -142,34 +144,7 @@ const TWO_COIN_DECK = deckOf({
 const SEEDS = Array.from({ length: 220 }, (_, i) => i + 1);
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: TWO_COIN_DECK, p2: TWO_COIN_DECK },
-    cardPool: TWO_COIN_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(seed, { p1: TWO_COIN_DECK, p2: TWO_COIN_DECK }, { pool: TWO_COIN_POOL, first });
 }
 
 type Board = {
@@ -242,17 +217,17 @@ describe("D521 §1 — the printed row derives to EXACTLY the one-op program", (
   });
 
   it("the gate's sorted KEY SET is exactly [coins, onTails, op, then] — no stray field, no missing one", () => {
-    const op = (deriveAttackEffect(PRINTED) as EffectOp[])[0] as object;
+    const op = mustDerive(deriveAttackEffect, PRINTED)[0] as object;
     expect(Object.keys(op).sort()).toEqual(["coins", "onTails", "op", "then"]);
   });
 
   it("the `then` is BYTE-EQUAL to what the bare recoil anchor derives — one action, the coins in front of it", () => {
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "coinFlipGate") throw new Error("op 0 is not a coinFlipGate");
     expect(gate.then).toEqual(deriveAttackEffect(BARE));
     expect(deriveAttackEffect(BARE)).toEqual([{ op: "damageSelf", amount: 90 }]);
     // …and the one-coin sibling's `then` is the SAME bytes — the family claim at N=1 and N=2.
-    const one = (deriveAttackEffect(ONE_COIN) as EffectOp[])[0];
+    const one = mustDerive(deriveAttackEffect, ONE_COIN)[0];
     if (one?.op !== "coinFlipGate") throw new Error("sibling op 0 is not a coinFlipGate");
     expect(one.then).toEqual(gate.then);
     expect(Object.keys(one).sort()).toEqual(["onTails", "op", "then"]);
@@ -605,7 +580,7 @@ describe("D521 §4 — the version steps, the heading is written, and what stand
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, `damageSelf` never parks, the gate is spliced", () => {
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // The declaration never parks: no board above ended in `effect:choose`.
     for (const faces of FACES) {
       expect(firstBoardWithFaces(faces).after.phase.kind, faces.join("-")).not.toBe(

@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -16,12 +16,13 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const RAISED =
@@ -264,28 +265,7 @@ const PLAIN = 1;
 const POISON = 2;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** P1 on turn 3 with the raiser Active over an empty Bench, the victim opposite,
@@ -530,7 +510,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
   function saved(): GameState {
     const raised = mustApply(table(), { type: "attack", seat: "p1", index: RAISE });
     // A genuine JSON round-trip, which is what `MatchRecord.state` actually is.
-    return JSON.parse(JSON.stringify(raised.state)) as GameState;
+    return roundTrip(raised.state);
   }
 
   it("THE ADDRESS: the field really is inside the serialized state", () => {
@@ -547,7 +527,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       const start = table(s);
       const inf = applyAction(start, { type: "attack", seat: "p1", index: RAISE });
       if (!inf.ok) continue;
-      const round = JSON.parse(JSON.stringify(inf.state)) as GameState;
+      const round = roundTrip(inf.state);
       const sw = applyAction(round, { type: "attack", seat: "p2", index: 0 });
       if (sw.ok && findEvent(sw.events, "CONFUSION_CHECK")?.result === "tails") {
         expect(findEvent(sw.events, "COUNTERS_PLACED")?.amount).toBe(80);
@@ -569,7 +549,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       const start = table(s);
       const inf = applyAction(start, { type: "attack", seat: "p1", index: RAISE });
       if (!inf.ok) continue;
-      const round = JSON.parse(JSON.stringify(inf.state)) as GameState;
+      const round = roundTrip(inf.state);
       const probe = applyAction(round, { type: "attack", seat: "p2", index: 0 });
       if (probe.ok && findEvent(probe.events, "CONFUSION_CHECK")?.result === "tails") {
         legacy = round;

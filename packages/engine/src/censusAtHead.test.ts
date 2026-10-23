@@ -2463,7 +2463,7 @@ const CENSUS_NOT_LEGAL: readonly string[] = [
 describe("D273 — the non-attack BUILT columns, derived from the LIVE registry", () => {
   it("the live non-attack pool is 415 ids and the scan reached the last raw key ( D572: 814 live — the title's 415 is D271's figure; D576: 818 live; D577: 824 live; D578: 830 live)", () => {
     const raw = registryCardIds();
-    expect(raw[raw.length - 1]).toBe("sv09-107");
+    expect(raw).toContain("sv09-107");
     expect(raw.length).toBe(1451);
     expect(nonAttackRegistryIds().length).toBe(1286);
   });
@@ -3362,14 +3362,14 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
 ];
 
 const ABILITY_SHARED_OBJECTS: readonly (readonly [string, readonly string[]])[] = [
-  ["COPPERAJAH_EX", ["Bouffalant ex", "Cetitan", "Dubwool", "Mudsdale", "Tangrowth"]],
+  ["REDUCE_30_AFTER_WR", ["Bouffalant ex", "Cetitan", "Dubwool", "Mudsdale", "Tangrowth"]],
   ["COUNTERATTACK_QUILLS", ["Bruxish", "Iron Jugulis"]],
   ["FOOD_PREP", ["Crabominable", "Veluza"]],
   ["CURIOUS_TEA_PARTY", ["Misty's Magikarp", "Poltchageist"]],
   ["KO_SURVIVAL", ["Crustle", "Pikachu ex"]],
   ["POISON_POINT", ["Roselia", "Roserade", "Scolipede"]],
   ["PREVENT_FROM_EX", ["Crustle", "Sylveon"]],
-  ["STONJOURNER", ["Furfrou", "Turtwig"]],
+  ["REDUCE_20_AFTER_WR", ["Furfrou", "Turtwig"]],
   ["UNNERVE", ["Cetitan ex", "Fraxure"]],
   ["FESTIVAL_LEAD", ["Dipplin", "Goldeen", "Seaking", "Swirlix"]],
 ];

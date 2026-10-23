@@ -661,11 +661,17 @@ const CORPUS = `
 1 Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, the Defending Pokémon can't retreat.
 `;
 
-/** The parsed corpus: `[legal printings, printed sentence]`, one entry per DISTINCT
-    sentence. Parsed on every call rather than at module load so a malformed record
-    fails inside the test that reads it, with the offending line in the message. */
-export function legalAttackCorpus(): readonly (readonly [number, string])[] {
-  return CORPUS.split("\n")
+/**
+ * Parses a corpus into `[legal printings, printed sentence]` records. Parsed on every call rather
+ * than at module load so a malformed record fails inside the test that reads it, with the offending
+ * line in the message.
+ */
+export function parseAttackCorpus(
+  text: string,
+  label: string,
+): readonly (readonly [number, string])[] {
+  return text
+    .split("\n")
     .filter((line) => line.length > 0)
     .map((line) => {
       const cut = line.indexOf(" ");
@@ -674,13 +680,18 @@ export function legalAttackCorpus(): readonly (readonly [number, string])[] {
       // Rejects a record with no space, a count that is not a positive integer, and a sentence with
       // edge whitespace (which would make the split lossy).
       if (cut < 1 || !Number.isInteger(units) || units < 1) {
-        throw new Error(`census corpus: malformed record ${JSON.stringify(line)}`);
+        throw new Error(`${label}: malformed record ${JSON.stringify(line)}`);
       }
       if (sentence.length === 0 || sentence !== sentence.trim()) {
-        throw new Error(`census corpus: padded sentence ${JSON.stringify(line)}`);
+        throw new Error(`${label}: padded sentence ${JSON.stringify(line)}`);
       }
       return [units, sentence] as const;
     });
+}
+
+/** The parsed corpus, one entry per DISTINCT sentence. */
+export function legalAttackCorpus(): readonly (readonly [number, string])[] {
+  return parseAttackCorpus(CORPUS, "census corpus");
 }
 
 // The reader surface, derived once from the module so census callers never keep hand-maintained
@@ -688,6 +699,10 @@ export function legalAttackCorpus(): readonly (readonly [number, string])[] {
 // is invisible here.
 
 type Reader = (text: string) => unknown;
+
+function isReader(value: unknown): value is Reader {
+  return typeof value === "function";
+}
 
 /** Resolved once on first use; a module's export set is fixed at load, so caching loses nothing. */
 let SURFACE: readonly (readonly [string, Reader])[] | null = null;
@@ -698,9 +713,7 @@ function surface(): readonly (readonly [string, Reader])[] {
     for (const [name, value] of Object.entries(effects)) {
       // The prefix is the naming convention; the `typeof` check keeps a non-function export with
       // that prefix from being called.
-      if (name.startsWith("deriveAttack") && typeof value === "function") {
-        found.push([name, value as unknown as Reader]);
-      }
+      if (name.startsWith("deriveAttack") && isReader(value)) found.push([name, value]);
     }
     found.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
     SURFACE = found;

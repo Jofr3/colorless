@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -13,11 +13,12 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED_BOTH =
@@ -101,34 +102,11 @@ const BOTH_BENCH_DECK = deckOf({
 });
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: BOTH_BENCH_DECK, p2: BOTH_BENCH_DECK },
-    cardPool: BOTH_BENCH_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  return driveSetup(
+    SEED,
+    { p1: BOTH_BENCH_DECK, p2: BOTH_BENCH_DECK },
+    { pool: BOTH_BENCH_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 function table(damaged = false): GameState {
@@ -279,7 +257,7 @@ describe("D507 §2 — both prints derive, the rider is read, and every neighbou
     ]);
     // Neither carries the rider, and neither became a two-op program.
     for (const text of [FLAT_OPP, FLAT_OWN]) {
-      const ops = deriveAttackEffect(text) as EffectOp[];
+      const ops = mustDerive(deriveAttackEffect, text);
       expect(ops).toHaveLength(1);
       expect(JSON.stringify(ops)).not.toContain("damagedOnly");
     }
@@ -588,7 +566,7 @@ describe("D507 §6 — the attacker's own bench is walked FIRST", () => {
   });
 
   it("the ORDER survives into the derived program, where a mutant can be seen without a board", () => {
-    const ops = deriveAttackEffect(PRINTED_BOTH) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, PRINTED_BOTH);
     expect(ops.map((o) => (o.op === "spreadDamage" ? o.target : o.op))).toEqual([
       "yourBench",
       "opponentBench",
@@ -609,7 +587,7 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
   ] as unknown as EffectOp[];
 
   it("each op differs in exactly ONE key, and the v30 bytes survive a JSON round trip", () => {
-    const derived = deriveAttackEffect(PRINTED_DAMAGED) as EffectOp[];
+    const derived = mustDerive(deriveAttackEffect, PRINTED_DAMAGED);
     expect(derived).toHaveLength(2);
     derived.forEach((op, i) => {
       const old = V30_PROGRAM[i] as unknown as Record<string, unknown>;
@@ -619,8 +597,8 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
       );
       expect(differing).toEqual(["damagedOnly"]);
     });
-    expect(JSON.parse(JSON.stringify(V30_PROGRAM))).toEqual(V30_PROGRAM);
-    expect(JSON.parse(JSON.stringify(deriveAttackEffect(PRINTED_BOTH)))).toEqual(
+    expect(roundTrip(V30_PROGRAM)).toEqual(V30_PROGRAM);
+    expect(roundTrip(deriveAttackEffect(PRINTED_BOTH))).toEqual(
       V30_PROGRAM.map((o) => ({ ...o, amount: 10 })),
     );
   });
@@ -628,7 +606,7 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
   it("NEITHER op parks — `runProgram` answers `done` over the WHOLE length-two program", () => {
     const state = table(true);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(PRINTED_DAMAGED) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED_DAMAGED), ctx, events);
     expect(run.kind).toBe("done");
     expect(swing(state, AT.damaged).state.phase.kind).not.toBe("effect:choose");
   });
@@ -645,7 +623,7 @@ describe("D507 §7 — `MATCH_RECORD_VERSION` holds at 30, and D505's argument i
   it("…and the NEW bytes on the SAME board answer differently — both directions or neither (D441)", () => {
     const state = table(true);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(PRINTED_DAMAGED) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED_DAMAGED), ctx, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 50, 0, 0]);
     expect(damageVector(run.state, "p1")).toEqual([0, 0, 60]);
@@ -723,7 +701,7 @@ describe("D507 §9 — the residue, the surface, the version, and what stands st
   it("what this slice does NOT move, stated as zeroes (D496)", () => {
     expect(Object.keys(BOTH_BENCH_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
     for (const text of [PRINTED_BOTH, PRINTED_DAMAGED]) {
-      const ops = deriveAttackEffect(text) as EffectOp[];
+      const ops = mustDerive(deriveAttackEffect, text);
       expect(ops.map((o) => o.op)).toEqual(["spreadDamage", "spreadDamage"]);
       expect(ops.map((o) => (o.op === "spreadDamage" ? o.target : ""))).toEqual([
         "yourBench",

@@ -16,6 +16,8 @@ import {
   setBenchDamage,
   setDamage,
   findEvent,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 function placements(
@@ -329,13 +331,13 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
     // **DIRECTION 1 — FORWARD: the literal this deploy writes, whole.** Key sets are
     // asserted rather than eyeballed, because "the object looked right" is how a key
     // goes missing.
-    const fresh = (deriveAttackEffect(ACTIVE_50) as EffectOp[])[0] as EffectOp;
+    const fresh = mustDerive(deriveAttackEffect, ACTIVE_50)[0] as EffectOp;
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"counterUntilRemainingHp","target":"opponentActive","remainingHp":50,"source":"attack"}',
     );
     expect(Object.keys(fresh).sort()).toEqual(["op", "remainingHp", "source", "target"]);
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
-    const bench = (deriveAttackEffect(BENCH_100) as EffectOp[])[0] as EffectOp;
+    expect(roundTrip(fresh)).toEqual(fresh);
+    const bench = mustDerive(deriveAttackEffect, BENCH_100)[0] as EffectOp;
     expect(JSON.stringify(bench)).toBe(
       '{"op":"counterUntilRemainingHp","target":"opponentBench","remainingHp":100,"source":"attack"}',
     );
@@ -441,7 +443,7 @@ describe("§4 — the maximum is the CONTINUOUS one and a Tool moves it", () => 
     const events: GameEvent[] = [];
     const run = runProgram(
       gapped,
-      deriveAttackEffect(ACTIVE_50) as EffectOp[],
+      mustDerive(deriveAttackEffect, ACTIVE_50),
       { seat: "p1", invokedBy: "attack" },
       events,
     );

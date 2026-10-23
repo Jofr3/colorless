@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { alliedRetreatDiscount, opposingRetreatSurcharge } from "./continuous";
 import {
   applyAction,
-  createGame,
   disabledAbilityUids,
   effectiveRetreatCost,
   hasFreeRetreatSelf,
@@ -18,7 +17,7 @@ import {
   deckOf,
   setActiveFromDeck,
   must,
-  firstBasicInHand,
+  driveSetup,
 } from "./testFixtures";
 
 const ARIADOS = "sv06-005";
@@ -128,32 +127,7 @@ const RETREAT_DECK = deckOf({
 const SEEDS = [8221, 8231, 8237] as const;
 
 function localSetup(seed: number): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: RETREAT_DECK, p2: RETREAT_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: RETREAT_DECK, p2: RETREAT_DECK }, { pool: POOL, first: "p1" });
 }
 
 /** P1 fields `active`, with `p1Bench` behind it; P2 fields `p2Bench` behind a

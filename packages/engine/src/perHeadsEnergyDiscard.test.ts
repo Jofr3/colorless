@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction, createGame, programFor } from "./index";
+import { programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -18,12 +18,13 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
+  headsIn,
 } from "./testFixtures";
 
 const PRINTED_TWO =
@@ -81,37 +82,12 @@ function all<T extends GameEvent["type"]>(
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-function headsIn(events: GameEvent[]): number {
-  return all(events, "ATTACK_EFFECT_COIN_FLIP").filter((e) => e.result === "heads").length;
-}
-
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
+  return driveSetup(
     seed,
-    decks: { p1: PER_HEADS_ENERGY_DECK, p2: PER_HEADS_ENERGY_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
+    { p1: PER_HEADS_ENERGY_DECK, p2: PER_HEADS_ENERGY_DECK },
+    { pool: POOL, first },
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
 }
 
 function armed(seed: number, energies: number): GameState {
@@ -547,7 +523,7 @@ describe("§7 — purity and the structural answers", () => {
     // DIRECTION 1 — FORWARD. Round-trip the PARKED board through JSON, which is what
     // persistence actually does to it, and resume from the bytes. A continuation that
     // did not survive serialization diverges here.
-    const persisted = JSON.parse(JSON.stringify(parked)) as GameState;
+    const persisted = roundTrip(parked);
     const pick = discardPrompt(parked).discardable[0]?.uid as string;
     const live = mustApply(parked, {
       type: "resolveEffect",
@@ -570,7 +546,7 @@ describe("§7 — purity and the structural answers", () => {
     // alphabet argument stated as an equality rather than as an inventory.
     expect(JSON.stringify(deriveAttackEffect(BARE)?.[0])).toBe(shipped);
 
-    const lossy = JSON.parse(JSON.stringify(parked)) as GameState;
+    const lossy = roundTrip(parked);
     if (lossy.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     (lossy.phase.cont as unknown as { rest: unknown[] }).rest = [];
     const truncated = mustApply(lossy, {

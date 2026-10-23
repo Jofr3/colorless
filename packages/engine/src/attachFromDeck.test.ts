@@ -19,6 +19,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -535,7 +536,7 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
     // The record rode the continuation out of the first park and into this one.
     expect(second.cont.record?.moved).toHaveLength(1);
 
-    const wire = JSON.parse(JSON.stringify(second)) as typeof second;
+    const wire = roundTrip(second);
     const events3: GameEvent[] = [];
     const third = resumeProgram(wire.state, wire.cont, { kind: "cards", uids: [] }, events3);
     expect(third.kind).toBe("done");
@@ -579,7 +580,7 @@ describe("purity and replay", () => {
   it("replays identically through a JSON round trip at the park", () => {
     const played = playJanine(janineBoard());
     const prompt = promptOf(played.state);
-    const wire = JSON.parse(JSON.stringify(played.state)) as GameState;
+    const wire = roundTrip(played.state);
     const direct = attach(played.state, [{ uid: prompt.candidates[0] as string, to: ACTIVE }]);
     const viaWire = attach(wire, [{ uid: prompt.candidates[0] as string, to: ACTIVE }]);
     expect(viaWire.state).toEqual(direct.state);

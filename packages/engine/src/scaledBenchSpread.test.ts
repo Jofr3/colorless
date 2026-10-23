@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -13,11 +13,12 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setPrizes,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -91,34 +92,7 @@ const SPREAD_DECK = deckOf({
 });
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: SPREAD_DECK, p2: SPREAD_DECK },
-    cardPool: SPREAD_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(SEED, { p1: SPREAD_DECK, p2: SPREAD_DECK }, { pool: SPREAD_POOL, first });
 }
 
 function table(oppRemaining = 3, ownRemaining = 6): GameState {
@@ -248,7 +222,7 @@ describe("D505 §2 — the rider is read, and every neighbour is read WITHOUT it
       { op: "spreadDamage", target: "yourBench", amount: 10 },
     ]);
     for (const flat of [FLAT_OPP, FLAT_OPP_50, OWN_FLAT]) {
-      const ops = deriveAttackEffect(flat) as EffectOp[];
+      const ops = mustDerive(deriveAttackEffect, flat);
       expect(Object.hasOwn(ops[0] ?? {}, "perTakenPrize")).toBe(false);
     }
   });
@@ -562,7 +536,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
   } as unknown as EffectOp;
 
   it("the two ops differ in exactly ONE key, and the v30 bytes survive a JSON round trip", () => {
-    const derived = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const derived = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (derived === undefined) throw new Error("expected a program");
     const differing = Object.keys(derived).filter(
       (k) =>
@@ -570,7 +544,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
         JSON.stringify((V30_SPREAD as unknown as Record<string, unknown>)[k]),
     );
     expect(differing).toEqual(["perTakenPrize"]);
-    expect(JSON.parse(JSON.stringify(V30_SPREAD))).toEqual(V30_SPREAD);
+    expect(roundTrip(V30_SPREAD)).toEqual(V30_SPREAD);
     expect(deriveAttackEffect(PRINTED)).toHaveLength(1);
   });
 
@@ -580,7 +554,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
     // vacuous on an empty bench.
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(PRINTED) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, events);
     expect(run.kind).toBe("done");
     // …and the whole attack resolves without an `effect:choose` phase either.
     expect(swing(state, AT.scaled).state.phase.kind).not.toBe("effect:choose");
@@ -599,7 +573,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
   it("…and the NEW bytes on the SAME board answer differently — both directions or neither (D441)", () => {
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(PRINTED) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 30, 30, 30]);
   });
@@ -630,7 +604,7 @@ describe("D505 §8 — the residue, the surface, the version, and what stands st
 
   it("what this slice does NOT move, stated as zeroes (D496)", () => {
     expect(Object.keys(SPREAD_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
-    const ops = deriveAttackEffect(PRINTED) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, PRINTED);
     expect(ops.map((o) => o.op)).toEqual(["spreadDamage"]);
   });
 });

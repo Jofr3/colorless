@@ -30,6 +30,7 @@ import {
   setDamage,
   findEvent,
   activeOf,
+  roundTrip,
 } from "./testFixtures";
 
 const BENCH_F_COUNTERS =
@@ -468,9 +469,9 @@ describe("§8 — the NAMED board and fold: 2 bodies, 240 dealt", () => {
 
 describe("§9 — `MATCH_RECORD_VERSION` STAYS 29, driven in THREE directions", () => {
   it("DIRECTION 1 — a v29 record round-trips and STILL scores both numbers", () => {
-    const counters = JSON.parse(JSON.stringify(counterBoard())) as GameState;
+    const counters = roundTrip(counterBoard());
     expect(dealt(counters, 0)).toBe(140);
-    const named = JSON.parse(JSON.stringify(namedBoard())) as GameState;
+    const named = roundTrip(namedBoard());
     expect(dealt(named, 1)).toBe(240);
   });
 
@@ -491,7 +492,7 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 29, driven in THREE directions", 
   });
 
   it("DIRECTION 3 — the LOSS, and it is TOTAL and harmless", () => {
-    const roundTripped = JSON.parse(JSON.stringify(counterBoard())) as GameState;
+    const roundTripped = roundTrip(counterBoard());
     expect(JSON.stringify(roundTripped)).toBe(JSON.stringify(counterBoard()));
     expect(dealt(roundTripped, 0)).toBe(140);
     expect(JSON.stringify(deriveAttackDamageMultiplier(BENCH_BARE_COUNTERS))).toBe(

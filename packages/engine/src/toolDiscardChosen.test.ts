@@ -10,7 +10,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import {
@@ -23,11 +23,11 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SENTENCE = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
@@ -101,28 +101,7 @@ function all<T extends GameEvent["type"]>(
 }
 
 function localSetup(seed: number, first: Seat, deck: string[] = TOOL_DECK): GameState {
-  const created = createGame({ seed, decks: { p1: deck, p2: deck }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: deck, p2: deck }, { pool: POOL, first });
 }
 
 function ready(
@@ -550,7 +529,7 @@ describe("§7 — `MATCH_RECORD_VERSION` HOLDS AT 30 ( held at THIS slice; 31 si
 
   it("DIRECTION 1 — the parked program survives a JSON round trip and resolves", () => {
     const parked = attack(ready(), STRIP).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const uids = parkedPrompt(revived).discardable.map((d) => d.uid);
     const { state, events } = answerWith(revived, "p1", uids);
     expect(all(events, "TOOLS_DISCARDED")).toHaveLength(2);

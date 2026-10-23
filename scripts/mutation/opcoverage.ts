@@ -13,6 +13,7 @@ import { type Mutant, MUTANTS } from "./mutants";
 const FANIN = Number(process.env.FANIN ?? 4);
 const LEV = Number(process.env.LEV ?? 2);
 
+const EFFECT_TYPES = "packages/engine/src/effectTypes.ts";
 const EFFECTS = "packages/engine/src/effects.ts";
 const REGISTRY = "packages/engine/src/registry.ts";
 const INTERP = "packages/engine/src/interpreter.ts";
@@ -38,9 +39,9 @@ function lineStarts(text: string): number[] {
 // EffectOp =` header, then read until the first line that starts a NEW
 // top-level declaration (column-0 content), which is the union's terminator.
 function effectOpKinds(): { kinds: string[]; declarations: number } {
-  const lines = source(EFFECTS).split("\n");
+  const lines = source(EFFECT_TYPES).split("\n");
   const head = lines.findIndex((l) => l.startsWith("export type EffectOp ="));
-  if (head < 0) throw new Error("opcoverage: `export type EffectOp =` not found in effects.ts");
+  if (head < 0) throw new Error("opcoverage: `export type EffectOp =` not found in effectTypes.ts");
   let end = lines.length;
   for (let i = head + 1; i < lines.length; i++) {
     if (/^\S/.test(lines[i] ?? "")) {

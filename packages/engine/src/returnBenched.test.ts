@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, programFor, topUid } from "./index";
+import { applyAction, programFor, topUid } from "./index";
 import type { GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import {
@@ -15,11 +15,12 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { otherSeat } from "./types";
 
@@ -111,28 +112,7 @@ const RETURN_DECK = deckOf({
 const SEEDS = [4_299_001, 4_299_002, 4_299_003, 4_299_004] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: RETURN_DECK, p2: RETURN_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: RETURN_DECK, p2: RETURN_DECK }, { pool: POOL, first });
 }
 
 function board(
@@ -460,7 +440,7 @@ describe("D299 §5 — the persisted shape, and the bump a slice ago never made"
 
   it("the SAME board round-trips through JSON with the key intact", () => {
     const state = board(SEEDS[0], "sv06-085", 1, 1);
-    const round = JSON.parse(JSON.stringify(state)) as GameState;
+    const round = roundTrip(state);
     expect(round.oncePerGameSpent).toEqual({ p1: [], p2: [] });
     expect(round).toEqual(state);
   });

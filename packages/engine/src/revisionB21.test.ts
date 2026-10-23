@@ -10,6 +10,7 @@ import {
   trainerCard,
   typedEnergy,
   mustApply as must,
+  roundTrip,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -137,7 +138,7 @@ interface SideSpec {
 
 /** TEST SURGERY — fresh uids for every card placed; both boards replaced. */
 function table(p1: SideSpec, p2: SideSpec): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b21#${n++}`;

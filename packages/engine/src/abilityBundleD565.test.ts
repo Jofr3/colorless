@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { abilityUsedKey } from "./cardplay";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type EffectContext, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -21,6 +21,8 @@ import {
   must,
   mustApply as run,
   effectPrompt,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -231,28 +233,7 @@ function refused(state: GameState, action: GameAction): { code: string; message:
 
 /** Setup with p2 going first; returns p1's turn 2 after p2 passed. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -494,7 +475,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Impromptu Carrier",
           trigger: "onPlayToBench",
-          optional: true,
           program: [
             { op: "searchDeck", filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 },
             { op: "shuffleDeck" },
@@ -510,7 +490,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Zero to Hero",
           trigger: "onActiveMovedToBench",
-          optional: true,
           oncePerTurn: true,
           program: [{ op: "switchWithDeckNamed", name: "Palafin ex" }],
         },
@@ -1128,7 +1107,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
       20,
     );
     const parked = run(state, use("Rocket Brain", ACTIVE)).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(revived.phase.cont.pendingOp).toEqual({
@@ -1142,7 +1121,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
       ownerPokemon: "Team Rocket",
       from: { spot: "bench", index: 0 },
     });
-    const again = JSON.parse(JSON.stringify(second)) as GameState;
+    const again = roundTrip(second);
     const done = run(again, pick({ seat: "p1", spot: { spot: "active" } })).state;
     expect(bodyAt(done, "p1", "active").damage).toBe(40);
   });
@@ -1155,7 +1134,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
       seat: "p1",
       uid: before.players.p1.hand[0] as string,
     }).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const p = effectPrompt(revived);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");

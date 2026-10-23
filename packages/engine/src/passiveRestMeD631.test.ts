@@ -10,11 +10,10 @@ import {
   selfPreWRBonusPerOpponentPrize,
 } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -32,6 +31,8 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  driveSetup,
+  seedForFlips,
 } from "./testFixtures";
 
 const BULWARK_TEXT =
@@ -304,28 +305,7 @@ const DECK = deckOf({
 
 /** Setup with p2 going first; returns p1's turn 2 after p2 passed, both hands back into the decks. */
 function opened(): GameState {
-  const created = createGame({ seed: 6310, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6310, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
@@ -509,12 +489,6 @@ function attachFromHand(state: GameState, spot: PokemonRef["spot"]) {
     },
   };
   return mustApply(held, { type: "attachEnergy", seat: "p1", uid, target: spot });
-}
-
-/** An `rngState` whose next flip is `face`. */
-function seedFor(face: "heads" | "tails"): number {
-  for (let seed = 1; seed < 1000; seed++) if (flipCoin(seed)[0] === face) return seed;
-  throw new Error("no seed");
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -883,7 +857,7 @@ describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage"
       100,
     );
     if (opts.asleep) board = setConditions(board, "p1", { rotation: "asleep" });
-    return { ...board, rngState: seedFor(opts.face) };
+    return { ...board, rngState: seedForFlips([opts.face]) };
   };
 
   it("tails (still Asleep): heals all 100; heads (woke up): no heal; not Asleep: no heal", () => {
@@ -924,7 +898,7 @@ describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage"
   it("Collapse puts Snorlax to sleep, and the Checkup that follows can heal it", () => {
     const board = {
       ...table({ attacker: { id: SNORLAX }, energy: [["fix-energy", 3]] }),
-      rngState: seedFor("tails"),
+      rngState: seedForFlips(["tails"]),
     };
     const swung = swing(setDamage(board, "p1", 50), 0);
     expect(swung.state.players.p1.active?.conditions.rotation).toBe("asleep");

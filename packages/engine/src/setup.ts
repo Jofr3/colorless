@@ -9,7 +9,7 @@ import type {
   SetupReadyAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { basicFromHandError, cardOfUid, isBasicPokemon } from "./cards";
+import { basicFromHandError, cardOfUid, handHasBasic, isBasicPokemon } from "./cards";
 import type { GameEvent } from "./events";
 import { startTurn } from "./flow";
 import { flipCoin, shuffle } from "./rng";
@@ -24,6 +24,7 @@ import {
   drawToHand,
   freshAllowances,
   freshHandPlayLocks,
+  isSeat,
   makeInPlay,
   otherSeat,
   withSide,
@@ -166,13 +167,6 @@ function emptySide(deck: string[]): PlayerSide {
   };
 }
 
-function handHasBasic(state: GameState, seat: Seat): boolean {
-  return state.players[seat].hand.some((uid) => {
-    const card = cardOfUid(state, uid);
-    return card !== undefined && isBasicPokemon(card);
-  });
-}
-
 /** §3.5 mulligan loop, auto-resolved (no player choice): reveal, shuffle the
     hand back, redraw 7, repeat until the hand has a Basic. Termination is
     guaranteed in practice by createGame's ≥1-Basic validation. */
@@ -207,7 +201,7 @@ export function chooseFirstPlayer(state: GameState, action: ChooseFirstPlayerAct
   // `first` is a seat the caller NAMES, not the acting seat applyAction
   // already guarded — an unvalidated one lands in state.firstPlayer and only
   // explodes later, inside startTurn, several actions past the offender.
-  if (action.first !== "p1" && action.first !== "p2") {
+  if (!isSeat(action.first)) {
     return err("UNKNOWN_SEAT", `"${String(action.first)}" is not a seat`);
   }
 

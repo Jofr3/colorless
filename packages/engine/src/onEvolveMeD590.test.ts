@@ -4,7 +4,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -20,6 +20,8 @@ import {
   toDeckTop,
   typedEnergy,
   must,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const HEAD =
@@ -70,7 +72,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
       for (const id of ids) {
         expect(Object.keys(programFor(id) ?? {}), id).toEqual(["triggered"]);
         expect(programFor(id)?.triggered, id).toHaveLength(1);
-        expect(triggerOf(id), id).toMatchObject({ name, trigger: "onEvolve", optional: true });
+        expect(triggerOf(id), id).toMatchObject({ name, trigger: "onEvolve" });
         expect(triggerOf(id), id).not.toHaveProperty("oncePerTurn");
         expect(programFor(id), id).toBe(programFor(ids[0] as string));
       }
@@ -384,28 +386,7 @@ const DECK = deckOf({
 /** Setup (P2 first), then P1's turn 4 — §4: nobody evolves on a first turn; both hands back into the
     decks and the Prizes swapped out for deck cards, so every named card is findable. */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 5901, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(5901, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -528,7 +509,7 @@ describe("D590 §3 — Psychic Draw: a real confirm, then the draw", () => {
 
   it("the parked confirm survives a JSON round trip (no new persisted key)", () => {
     const parked = evolve(table({ bench: [ABRA], hand: [KADABRA] }), KADABRA).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(resolve(revived, { kind: "confirm", yes: true }).state.players.p1.hand).toHaveLength(2);
   });
 });

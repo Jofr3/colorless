@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { applyAction, createGame, otherSeat, programFor } from "./index";
+import { applyAction, otherSeat, programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
@@ -15,7 +15,6 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -25,6 +24,8 @@ import {
   setDamage,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { koByEffectMarker, scheduledEffectDue, withActive } from "./types";
 
@@ -133,28 +134,7 @@ function baseUid(pokemon: InPlayPokemon | null | undefined): string {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DOOM_DECK, p2: DOOM_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DOOM_DECK, p2: DOOM_DECK }, { pool: POOL, first });
 }
 
 function armed(installer: Seat, victimCard = "fix-doomed", seed = 4): GameState {
@@ -733,7 +713,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   function saved(): GameState {
     const state = install("p1", DELAY, "fix-doom-tank").state;
     expect(state.turn).toBe(3);
-    return JSON.parse(JSON.stringify(state)) as GameState;
+    return roundTrip(state);
   }
 
   it("DIRECTION 1 — a v29 record round-trips and the schedule STILL fires", () => {
@@ -1405,7 +1385,7 @@ describe("§15 — frozen boards, and a v29 record that round-trips", () => {
     });
 
     it(`a v29 record carrying a ${name} appointment round-trips and STILL fires`, () => {
-      const record = JSON.parse(JSON.stringify(install("p1", index).state)) as GameState;
+      const record = roundTrip(install("p1", index).state);
       expect(body(record.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: name });
       const settled = settle(mustApply(record, { type: "endTurn", seat: "p2" }));
       expect(settled.players.p2.bench).toHaveLength(0);

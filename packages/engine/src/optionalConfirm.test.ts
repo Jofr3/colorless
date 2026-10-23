@@ -7,7 +7,7 @@ import { resumeProgram, runProgram } from "./interpreter";
 import { programPlayable } from "./cardplay";
 import { settleProgram } from "./flow";
 import { redactGame } from "./redact";
-import { benchFromDeck, driveSetup, expectErr, mustApply } from "./testFixtures";
+import { benchFromDeck, driveSetup, expectErr, mustApply, roundTrip } from "./testFixtures";
 
 /** The sentence a producer will print. Held once so every assertion below reads
     the SAME string the prompt is supposed to carry verbatim — the note is the
@@ -303,7 +303,7 @@ describe("the phase, the wire check and the seat gate", () => {
   });
 
   it("survives a JSON round-trip — the park is plain data (D14), so v12 records stay readable", () => {
-    const thawed = JSON.parse(JSON.stringify(parkedState())) as GameState;
+    const thawed = roundTrip(parkedState());
     if (thawed.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(thawed.phase.prompt).toEqual({ kind: "confirm", note: SENTENCE });
     const { state: done } = mustApply(thawed, {

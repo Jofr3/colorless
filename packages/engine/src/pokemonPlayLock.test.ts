@@ -10,7 +10,6 @@ import {
 } from "./index";
 import type { GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -22,6 +21,8 @@ import {
   setActiveFromDeck,
   setDamage,
   must,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -140,15 +141,7 @@ const LOCK_DECK = deckOf({
 const SEEDS = [7201, 7213, 7219, 7229] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: LOCK_DECK, p2: LOCK_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: LOCK_DECK, p2: LOCK_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, barrier: Seat, barrierId: string): GameState {
@@ -538,10 +531,10 @@ describe("D285 §6 — MATCH_RECORD_VERSION 15 → 16, driven both directions", 
     // survives only because the number is written down. Both directions asserted
     // on one board, which is what makes the two sources' costs comparable.
     const stamped = swing(turnOf(board(SEEDS[0], "p1", "p1", BRONZONG), "p1"), "p1", 0);
-    const reloaded = JSON.parse(JSON.stringify(stamped)) as GameState;
+    const reloaded = roundTrip(stamped);
     expect(pokemonPlayBarred(reloaded, "p2", "evolve", POOL[EVO_PLAIN])).toBe(true);
     const arbok = turnOf(board(SEEDS[0], "p1", "p1", ARBOK), "p2");
-    const arbokReloaded = JSON.parse(JSON.stringify(arbok)) as GameState;
+    const arbokReloaded = roundTrip(arbok);
     expect(arbokReloaded.handPlayLockedTurn.p2.evolve).toBeNull();
     expect(pokemonPlayBarred(arbokReloaded, "p2", "evolve", POOL[EVO_ABILITY])).toBe(true);
   });

@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { registryCardIds } from "./registry";
 import {
@@ -17,7 +17,7 @@ import {
   specialEnergy,
   typedEnergy,
   must,
-  firstBasicInHand,
+  driveSetup,
 } from "./testFixtures";
 
 // ── THE FIXTURE ─────────────────────────────────────────────────────────────
@@ -82,28 +82,7 @@ const DECK = deckOf({
 const SEEDS = [9107, 9109, 9127] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 function board(
@@ -477,10 +456,9 @@ describe("D356 §6 — clamped to the damage present, and silent when there is n
   });
 });
 
-describe("D356 §7 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("THE BATON, CARRIED RATHER THAN READ. NINTH HAND-OFF", () => {
-    const raw = registryCardIds();
-    expect(raw.slice(-1)).toEqual([MAGEARNA]);
+describe("D356 §7 — the pool and the registry keys", () => {
+  it("Magearna is a registry key", () => {
+    expect(registryCardIds()).toContain(MAGEARNA);
   });
 
   it("the +1 on `raw.length` is EXACTLY this one id", () => {

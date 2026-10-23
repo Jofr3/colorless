@@ -19,6 +19,7 @@ import {
   types,
   walkProgram,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const TAILS_TEXT = "Flip a coin. If tails, during your next turn, this Pokémon can't attack.";
@@ -101,12 +102,12 @@ describe("the tails gate — derived, not authored", () => {
     ]);
     // The key set, not just the value: the op takes NO other field, and `toEqual`
     // alone would not catch a stray one.
-    const op = (deriveAttackEffect(TAILS_TEXT) as EffectOp[])[0] as object;
+    const op = mustDerive(deriveAttackEffect, TAILS_TEXT)[0] as object;
     expect(Object.keys(op).sort()).toEqual(["onTails", "op", "then"]);
   });
 
   it("wraps D143's BARE program byte for byte — one action, printed three ways", () => {
-    const gated = deriveAttackEffect(TAILS_TEXT) as EffectOp[];
+    const gated = mustDerive(deriveAttackEffect, TAILS_TEXT);
     expect(gated).toHaveLength(1);
     expect(gated[0]).toMatchObject({ then: deriveAttackEffect(BARE_TEXT) });
     // …and the two anchors are NOT the same reading: the bare one derives a naked

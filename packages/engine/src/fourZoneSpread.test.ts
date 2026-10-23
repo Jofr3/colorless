@@ -22,7 +22,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { conditionHolds, countPokemonInPlay, runProgram } from "./interpreter";
 import {
@@ -32,13 +32,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
   types,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const FOUR_ZONE =
@@ -147,34 +148,11 @@ const FOUR_ZONE_DECK = deckOf({
 });
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: FOUR_ZONE_DECK, p2: FOUR_ZONE_DECK },
-    cardPool: FOUR_ZONE_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  return driveSetup(
+    SEED,
+    { p1: FOUR_ZONE_DECK, p2: FOUR_ZONE_DECK },
+    { pool: FOUR_ZONE_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 /** Existing damage to seed, body by body. Absent means clean. */
@@ -328,7 +306,7 @@ describe("D520 §2 — the program, spelled whole, and the base rule's witnesses
   });
 
   it("per-op fields: a one-body gate with NO `otherwise`, a flat hit, two damagedOnly spreads", () => {
-    const ops = deriveAttackEffect(FOUR_ZONE) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, FOUR_ZONE);
     expect(ops).toHaveLength(3);
     const [gate, own, foe] = ops;
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
@@ -348,7 +326,7 @@ describe("D520 §2 — the program, spelled whole, and the base rule's witnesses
   });
 
   it("the TOP LEVEL has no `damageDefender` — so `attack.ts`'s `programDamage` is false and the base lands pre-program", () => {
-    const ops = deriveAttackEffect(FOUR_ZONE) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, FOUR_ZONE);
     expect(ops.some((o) => o.op === "damageDefender")).toBe(false);
     expect(ops.map((o) => o.op)).toEqual(["conditionGate", "spreadDamage", "spreadDamage"]);
   });
@@ -524,7 +502,7 @@ describe("D520 §5 — the order is Active → own Bench → opponent Bench, and
 
   it("the derived program runs to the SAME state and log as a hand-built Active → own → opponent sequence (D258/D482)", () => {
     const state = table("d520-wall", CANONICAL);
-    const derived = run(state, deriveAttackEffect(FOUR_ZONE) as EffectOp[]);
+    const derived = run(state, mustDerive(deriveAttackEffect, FOUR_ZONE));
     const hand = run(state, [
       {
         op: "conditionGate",
@@ -549,7 +527,7 @@ describe("D520 §5 — the order is Active → own Bench → opponent Bench, and
   });
 
   it("the ORDER survives into the derived program, where a mutant can be seen without a board", () => {
-    const ops = deriveAttackEffect(FOUR_ZONE) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, FOUR_ZONE);
     expect(ops.map((o) => (o.op === "spreadDamage" ? o.target : o.op))).toEqual([
       "conditionGate",
       "yourBench",
@@ -716,7 +694,7 @@ describe("D520 §9 — no new op kind, the producer counts moved as stated, and 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, no op parks, the gate is spliced", () => {
     // Every kind, field and value in the program already ships — a v30 deploy could already
     // write these bytes — so the program survives a JSON round trip unchanged.
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // Neither damage op parks and the gate is spliced: `runProgram` answers `done` over the
     // WHOLE program on a board where a CHOSEN sibling would genuinely park (five benched
     // bodies), so `phase.cont.pendingOp` and `rest` are never written.

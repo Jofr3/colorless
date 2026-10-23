@@ -6,7 +6,7 @@ import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { collectKnockOuts } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -19,13 +19,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
   mustApply,
   setActiveFromDeck,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { KoBounty } from "./types";
 
@@ -127,28 +128,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 /** P1's turn 3: P1 fields the marker with one Energy; P2 fields `victim` with one
@@ -249,7 +229,7 @@ function sweptCounts(
   checkup: boolean,
 ): { counts: number[]; events: GameEvent[] } {
   const events: GameEvent[] = [];
-  const batch = collectKnockOuts(state, ["p2"], events, checkup);
+  const batch = collectKnockOuts(state, ["p2"], { checkup }, events);
   if (batch.done !== null) throw new Error("the sweep ended the game");
   const counts = batch.stages.flatMap((s) => (s.kind === "takePrizes" ? [s.count] : []));
   return { counts, events };
@@ -662,7 +642,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
   });
 
   it("v32-SHAPED body (the key genuinely ABSENT): the Knock Out THROWS", () => {
-    const revived = JSON.parse(JSON.stringify(inWindow(installed().state))) as GameState;
+    const revived = roundTrip(inWindow(installed().state));
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
     // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
     delete target.koBounty;

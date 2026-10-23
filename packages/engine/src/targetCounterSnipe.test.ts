@@ -24,7 +24,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { PokemonRef } from "./interpreter";
 import {
@@ -36,12 +36,12 @@ import {
   benchTopUid,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
   types,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -153,34 +153,7 @@ const SNIPE_DECK = deckOf({
 const SEED = 7;
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: SNIPE_DECK, p2: SNIPE_DECK },
-    cardPool: SNIPE_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(seed, { p1: SNIPE_DECK, p2: SNIPE_DECK }, { pool: SNIPE_POOL, first });
 }
 
 type Body = { readonly id: string; readonly damage: number };
@@ -473,7 +446,7 @@ describe("D530 §3 — a new optional rider on a PERSISTED op, and the record ve
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"opponentBench","amount":20,"count":1,"source":"attack","deals":true,"perDamageCounterOnTarget":true}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
 
     const dropped = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "perDamageCounterOnTarget" ? undefined : v)),
@@ -665,7 +638,7 @@ describe("D530 §4 — the pick reads the CHOSEN body's counters: 3 → 60, 7 �
     const b = swing([pal(30), pal(70)]);
     expect(b.after).toEqual(a.after);
     expect(b.events).toEqual(a.events);
-    const persisted = JSON.parse(JSON.stringify(a.after)) as GameState;
+    const persisted = roundTrip(a.after);
     expect(persisted).toEqual(a.after);
     expect(JSON.stringify(persisted)).toBe(JSON.stringify(a.after));
     const live = pick(a.after, benchRef(1));

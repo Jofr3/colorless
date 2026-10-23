@@ -23,7 +23,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import {
@@ -34,11 +34,12 @@ import {
   clearBench,
   deckOf,
   discardFromDeck,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED = "Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.";
@@ -129,34 +130,11 @@ const SHUFFLE_BACK_DECK = deckOf({
 const SEED = 7;
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
+  return driveSetup(
     seed,
-    decks: { p1: SHUFFLE_BACK_DECK, p2: SHUFFLE_BACK_DECK },
-    cardPool: SHUFFLE_BACK_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+    { p1: SHUFFLE_BACK_DECK, p2: SHUFFLE_BACK_DECK },
+    { pool: SHUFFLE_BACK_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 type Board = {
@@ -224,14 +202,14 @@ describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with t
   it("file line 485 derives to [retrieval to deck, shuffleDeck] — and this `toEqual` is what pins the printed ORDER (`D523-shuffle-back-arm-order-swapped`) and the second op (`-arm-drops-the-shuffle`)", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
     expect(deriveAttackEffect(PRINTED)).toHaveLength(2);
-    expect((deriveAttackEffect(PRINTED) as EffectOp[]).map((o) => o.op)).toEqual([
+    expect(mustDerive(deriveAttackEffect, PRINTED).map((o) => o.op)).toEqual([
       "discardPileRetrieval",
       "shuffleDeck",
     ]);
   });
 
   it("op 0's sorted KEY SET is exactly [dest, filter, max, op] — no `recordAs`, no `exclude` (D135) — and op 1 is the bare shuffle", () => {
-    const [retrieval, shuffle] = deriveAttackEffect(PRINTED) as EffectOp[];
+    const [retrieval, shuffle] = mustDerive(deriveAttackEffect, PRINTED);
     if (retrieval?.op !== "discardPileRetrieval")
       throw new Error("op 0 is not a discardPileRetrieval");
     if (shuffle?.op !== "shuffleDeck") throw new Error("op 1 is not a shuffleDeck");
@@ -260,7 +238,7 @@ describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with t
       { op: "shuffleDeck" },
     ]);
     // …and the two filters are the SAME bytes: the shared plural table / brace pattern.
-    const [mine] = deriveAttackEffect(PRINTED) as EffectOp[];
+    const [mine] = mustDerive(deriveAttackEffect, PRINTED);
     if (mine?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
     expect(mine.filter).toEqual(twinOp.filter);
     expect(mine.max).toBe(twinOp.max);
@@ -349,7 +327,7 @@ describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with t
   });
 
   it("the noun goes through the brace pattern with the PLURAL flag — the singular flag would refuse `Energy cards` (`D523-shuffle-back-arm-reads-the-singular-flag`)", () => {
-    const [mine] = deriveAttackEffect(PRINTED) as EffectOp[];
+    const [mine] = mustDerive(deriveAttackEffect, PRINTED);
     if (mine?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
     expect(mine.filter).toEqual({ kind: "basicEnergy", energyType: "Water" });
     // The other typed code the table admits, the same way.
@@ -624,11 +602,11 @@ describe("D523 §4 — the version steps, the heading is written, the prose is c
   });
 
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes — the program round-trips unchanged and the park is Pal Pad's shipped shape", () => {
-    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // The park's prompt is a shipped shape too: `chooseCards` with `dest: "deck"`.
     const { after } = swing();
     const prompt = cardsPrompt(after);
-    expect(JSON.parse(JSON.stringify(prompt))).toEqual(prompt);
+    expect(roundTrip(prompt)).toEqual(prompt);
     expect(prompt.dest).toBe("deck");
   });
 

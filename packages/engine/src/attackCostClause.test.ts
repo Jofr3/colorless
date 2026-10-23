@@ -10,14 +10,7 @@ import {
   timingGateFromAttackText,
 } from "./effects";
 import type { GameEvent } from "./events";
-import {
-  applyAction,
-  attackCostAt,
-  attackTimingBlocked,
-  costMet,
-  createGame,
-  redactGame,
-} from "./index";
+import { applyAction, attackCostAt, attackTimingBlocked, costMet, redactGame } from "./index";
 import type { GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { providedEnergy } from "./continuous";
@@ -26,16 +19,15 @@ import {
   attachFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
-  must,
   mustApply,
   setActiveFromDeck,
   setConditions,
   setDamage,
   types,
   activeOf,
+  driveSetup,
 } from "./testFixtures";
 
 const ALT = "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
@@ -131,32 +123,7 @@ const WAIVE_INDEX = 0;
 const PLAIN_INDEX = 1;
 
 function localSetup(): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: COST_DECK, p2: COST_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(SEED, { p1: COST_DECK, p2: COST_DECK }, { pool: POOL, first: "p1" });
 }
 
 type Energy = Partial<Record<"F" | "W" | "G" | "C", number>>;

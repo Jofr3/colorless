@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  roundTrip,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -509,7 +510,7 @@ describe("the parked program survives a JSON round trip", () => {
     const state = ready(41, ["fix-bigbody", "fix-basic-1"]);
     const target = state.players.p2.bench[0]?.stack[0];
     const parked = mustApply(state, { type: "attack", seat: "p1", index: GOAD_N_GRAB });
-    const rehydrated = JSON.parse(JSON.stringify(parked.state)) as GameState;
+    const rehydrated = roundTrip(parked.state);
     expect(rehydrated.phase.kind).toBe("effect:choose");
     const resumed = applyAction(rehydrated, {
       type: "resolveEffect",

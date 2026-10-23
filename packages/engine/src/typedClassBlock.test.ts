@@ -15,6 +15,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 /** The printed sentence, byte for byte. */
@@ -64,7 +65,7 @@ describe("the typed attacker class — derived, not authored", () => {
     expect(deriveAttackEffect(EXCLUDED_TEXT)).toEqual([
       { op: "preventDamage", fromClass: EXCLUDED_CLASS },
     ]);
-    const op = (deriveAttackEffect(EXCLUDED_TEXT) as EffectOp[])[0] as Extract<
+    const op = mustDerive(deriveAttackEffect, EXCLUDED_TEXT)[0] as Extract<
       EffectOp,
       { op: "preventDamage" }
     >;
@@ -79,7 +80,7 @@ describe("the typed attacker class — derived, not authored", () => {
     expect(deriveAttackEffect(PLAIN_TEXT)).toEqual([
       { op: "preventDamage", fromClass: PLAIN_CLASS },
     ]);
-    const op = (deriveAttackEffect(PLAIN_TEXT) as EffectOp[])[0] as Extract<
+    const op = mustDerive(deriveAttackEffect, PLAIN_TEXT)[0] as Extract<
       EffectOp,
       { op: "preventDamage" }
     >;

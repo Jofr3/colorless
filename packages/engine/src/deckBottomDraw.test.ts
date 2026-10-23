@@ -5,7 +5,6 @@ import * as effects from "./effects";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -15,12 +14,11 @@ import {
   battler,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const BOTTOM = "Draw 3 cards from the bottom of your deck.";
@@ -93,34 +91,7 @@ const BOTTOM_THREE = ["d487-c6", "d487-c7", "d487-c8"] as const;
 const TOP_THREE = ["d487-c1", "d487-c2", "d487-c3"] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: BOTTOM_DECK, p2: BOTTOM_DECK },
-    cardPool: BOTTOM_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(SEED, { p1: BOTTOM_DECK, p2: BOTTOM_DECK }, { pool: BOTTOM_POOL, first });
 }
 
 function withDeck(state: GameState, seat: Seat, ids: readonly string[]): GameState {

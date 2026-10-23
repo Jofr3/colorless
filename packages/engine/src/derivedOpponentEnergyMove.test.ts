@@ -15,6 +15,7 @@ import {
   expectErr,
   mustApply,
   setActiveFromDeck,
+  roundTrip,
 } from "./testFixtures";
 import type { Seat } from "./types";
 
@@ -430,7 +431,7 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 29", () => {
   it("a reconstructed v29 park still means the CONTROLLER's board, and a v30 one does not", () => {
     const live = swing(board(), STATIC_FLICK).state;
 
-    const serialized: GameState = JSON.parse(JSON.stringify(live)) as GameState;
+    const serialized: GameState = roundTrip(live);
     if (serialized.phase.kind !== "effect:choose") throw new Error("expected a serialized park");
     const pendingOp = serialized.phase.cont.pendingOp as Record<string, unknown>;
     expect(pendingOp.op).toBe("moveEnergy");

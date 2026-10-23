@@ -10,7 +10,7 @@ import {
   timingGateFromAttackText,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -25,6 +25,8 @@ import {
   specialEnergy,
   typedEnergy,
   must,
+  unprize,
+  driveSetup,
 } from "./testFixtures";
 
 const MASTERS_PUNCH =
@@ -446,28 +448,7 @@ const DECK = deckOf({
 
 /** Setup, then P1's own turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 5933, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(5933, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
@@ -477,21 +458,6 @@ function p1Turn(): GameState {
     };
   }
   return state;
-}
-
-/** TEST SURGERY — every Prize whose id is in `ids` swapped with a deck card whose id is not. */
-function unprize(state: GameState, seat: Seat, ids: readonly string[]): GameState {
-  const side = state.players[seat];
-  const kept = new Set(ids);
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!kept.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !kept.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
 }
 
 /** P1's Active is `attacker` with `energy` attached and one Filler benched; P2's Active is a Filler

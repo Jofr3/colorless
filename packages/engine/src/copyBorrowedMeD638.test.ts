@@ -6,8 +6,8 @@ import { attackMenuOf } from "./continuous";
 import { COPY_FAMILY_MARKER, deriveAttackCopy, deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import { applyAction, redactGame } from "./index";
+import type { GameAction, GameState } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {
@@ -18,6 +18,8 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  patchSide,
+  driveSetup,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -126,37 +128,8 @@ const DECK = deckOf({ [PLAIN]: 6, [FILLER]: 34, "fix-energy": 20 });
 
 /** Setup, then P1's turn 2 (P2 went first and passed). */
 function opened(): GameState {
-  const created = createGame({ seed: 6381, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(6381, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
 let minted = 0;
@@ -199,7 +172,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -219,11 +192,11 @@ function table(opts: {
     const active = build(seat === "p1" ? opts.p1 : opts.p2);
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map(build);
     const hand = (seat === "p1" ? (opts.p1Hand ?? []) : []).map(fresh);
-    state = withSide(state, seat, { active, bench, hand });
+    state = patchSide(state, seat, { active, bench, hand });
   }
   if (opts.p1Top !== undefined) {
     const top = fresh(opts.p1Top);
-    state = withSide(state, "p1", { deck: [top, ...state.players.p1.deck] });
+    state = patchSide(state, "p1", { deck: [top, ...state.players.p1.deck] });
   }
   return state;
 }
@@ -420,7 +393,7 @@ describe("D638 §4 — Skill Thief on a board (R-SKT1)", () => {
     const parked = run(thiefBoard(), attack(0)).state;
     const bad = applyAction(parked, pick(7));
     expect(bad.ok ? null : bad.error.code).toBe("BAD_EFFECT_CHOICE");
-    const swapped = withSide(parked, "p1", { active: { ...makeInPlay("d638-stale", 0) } });
+    const swapped = patchSide(parked, "p1", { active: { ...makeInPlay("d638-stale", 0) } });
     const stale = applyAction(
       { ...swapped, cardIdByUid: { ...swapped.cardIdByUid, "d638-stale": THIEVUL } },
       pick(0),
@@ -487,7 +460,7 @@ describe("D638 §5 — Supernatural Shapeshifter on a board (R-NS1)", () => {
   });
 
   it("an empty deck discards nothing and ends", () => {
-    const state = withSide(foxBoard(undefined), "p1", { deck: [] });
+    const state = patchSide(foxBoard(undefined), "p1", { deck: [] });
     const done = run(state, attack(0));
     expect(of(done.events, "DECK_TOP_DISCARDED")).toEqual([]);
     expect(of(done.events, "SUPPORTER_EFFECT_USED")).toEqual([]);

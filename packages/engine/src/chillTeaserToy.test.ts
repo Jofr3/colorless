@@ -18,6 +18,7 @@ import {
   handUid,
   mustApply,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const CHILL_DECK = deckOf({
@@ -510,7 +511,7 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
     state = attachFromDeck(state, "p2", "fix-special", 1);
     state = attachFromDeck(state, "p2", "fix-special-2", 1);
     const old = mustPlay(state, "p1", "fix-hammer").state;
-    const revived = JSON.parse(JSON.stringify(old)) as GameState;
+    const revived = roundTrip(old);
     const phase = revived.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const pending = (phase as unknown as { cont: { pendingOp: EffectOp } }).cont.pendingOp;
@@ -527,7 +528,7 @@ describe("MATCH_RECORD_VERSION stays 16 — DRIVEN, not asserted", () => {
 
   it("BACKWARD: a record written HERE round-trips through JSON and resolves the same", () => {
     const before = parked();
-    const revived = JSON.parse(JSON.stringify(before)) as GameState;
+    const revived = roundTrip(before);
     expect(revived.phase).toEqual(before.phase);
     const chosen = discardPrompt(revived).discardable[0]?.uid as string;
     const done = mustApply(revived, {

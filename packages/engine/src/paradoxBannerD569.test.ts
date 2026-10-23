@@ -10,7 +10,7 @@ import {
   deriveAttackEffect,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds, conditionNote, retrieveNoun } from "./interpreter";
 import { PARADOX_POOL } from "./paradoxPool";
@@ -27,6 +27,8 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -379,28 +381,7 @@ function rejected(state: GameState, action: GameAction): string {
 
 /** p2 went first and passed: p1's turn 2 — p1's FIRST turn. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -596,7 +577,6 @@ function playRejected(state: GameState, id: string): string {
 const dealt = (events: readonly GameEvent[]): number | undefined =>
   all(events, "DAMAGE_DEALT")[0]?.dealt;
 const card = (id: string): Card => POOL[id] as Card;
-const roundTrip = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the printed face", () => {

@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { disabledAbilityUids } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -18,6 +18,8 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -147,28 +149,7 @@ function rejected(state: GameState, action: GameAction): string {
 }
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -501,7 +482,7 @@ describe("§2 — Brock's Scouting: ONE alternative, WHOLLY (the disjunctive cap
 
   it("the parked search round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and the refusal survives it", () => {
     const { state, basics, evos } = scouting();
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(rejected(revived, cards([basics[0] as string, evos[0] as string]))).toBe(
       "BAD_EFFECT_CHOICE",
     );
@@ -709,10 +690,8 @@ describe("§3 — Ogre's Mask: the in-place swap from the discard pile", () => {
 
   it("the first park round-trips through JSON (`MATCH_RECORD_VERSION` holds at 36) and resumes into question two", () => {
     const state = masked([TEAL_EX, HEARTH_EX]);
-    const first = JSON.parse(JSON.stringify(play(state, OGRE[0]).state)) as GameState;
-    const second = JSON.parse(
-      JSON.stringify(run(first, pickOwn({ spot: "bench", index: 0 })).state),
-    ) as GameState;
+    const first = roundTrip(play(state, OGRE[0]).state);
+    const second = roundTrip(run(first, pickOwn({ spot: "bench", index: 0 })).state);
     expect(chooseCardsPrompt(second).dest).toBe("swap");
     if (second.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(second.phase.cont.pendingOp).toMatchObject({

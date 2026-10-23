@@ -16,6 +16,7 @@ import {
   setDamage,
   types,
   findEvent,
+  roundTrip,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -211,7 +212,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
       invokedBy: "attack",
       dealt: 30,
     });
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(Object.keys(contOf(revived).ctx).sort()).toEqual([
       "dealt",
       "invokedBy",
@@ -233,7 +234,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
 
   it("the version PREDICTION, driven both directions: this is a WIDENING", () => {
     const parked = parkedMidAttack();
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     const phase = revived.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const legacy = phase as unknown as { cont: { ctx: Record<string, unknown> } };
@@ -249,7 +250,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
       seat: "p1",
       choice: { kind: "discardEnergy", uids: [chosen] },
     }).state;
-    const resolvedToday = mustApply(JSON.parse(JSON.stringify(parked)) as GameState, {
+    const resolvedToday = mustApply(roundTrip(parked), {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "discardEnergy", uids: [chosen] },
@@ -259,7 +260,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
 
     const legacyOp: EffectOp = { op: "heal", target: "self", amount: 30 };
     expect(deriveAttackEffect("Heal 30 damage from this Pokémon.")).toEqual([legacyOp]);
-    const withLegacyTail = JSON.parse(JSON.stringify(parked)) as GameState;
+    const withLegacyTail = roundTrip(parked);
     const tail = withLegacyTail.phase;
     if (tail.kind !== "effect:choose") throw new Error("expected effect:choose");
     (tail as unknown as { cont: { rest: EffectOp[] } }).cont.rest = [legacyOp];
@@ -274,7 +275,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
     expect(drained.state.phase.kind).not.toBe("effect:choose");
     // …and the same tail with a DAMAGED healer really does heal the literal 30, which
     // is the half that proves the arm ran rather than that it was skipped.
-    const damagedTail = JSON.parse(JSON.stringify(parked)) as GameState;
+    const damagedTail = roundTrip(parked);
     const dPhase = damagedTail.phase;
     if (dPhase.kind !== "effect:choose") throw new Error("expected effect:choose");
     (dPhase as unknown as { cont: { rest: EffectOp[] } }).cont.rest = [legacyOp];

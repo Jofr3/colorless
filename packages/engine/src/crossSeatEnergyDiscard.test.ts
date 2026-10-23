@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  mustDerive,
 } from "./testFixtures";
 
 /** Every `discardEnergy` op inside an arbitrarily nested program — the recursive
@@ -378,7 +379,7 @@ describe("D361 §5 — the SHAPE RULE over BOTH producers, stated so neither can
 
   it("the two producers AGREE on the one sentence they both express — Mawile's op IS the derived one", () => {
     const fromRegistry = programFor("sv03-143")?.triggered?.[0]?.program?.[0];
-    const fromDeriver = (deriveAttackEffect(SPECIAL_ACTIVE) as EffectOp[])[0];
+    const fromDeriver = mustDerive(deriveAttackEffect, SPECIAL_ACTIVE)[0];
     expect(fromRegistry).toMatchObject({
       op: "discardEnergy",
       from: "opponentActive",

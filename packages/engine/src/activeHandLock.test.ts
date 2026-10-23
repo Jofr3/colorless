@@ -1,9 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
+import { applyAction, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -15,6 +14,8 @@ import {
   setActiveFromDeck,
   setDamage,
   must,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,15 +113,7 @@ const LOCK_DECK = deckOf({
 const SEEDS = [6101, 6113, 6121, 6133] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: LOCK_DECK, p2: LOCK_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: LOCK_DECK, p2: LOCK_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, barrier: Seat, barrierId: string): GameState {
@@ -515,7 +508,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
 
   it("AN OLD RECORD READS BACK IDENTICALLY — a JSON round trip keeps the bar", () => {
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
-    const round = JSON.parse(JSON.stringify(barred)) as GameState;
+    const round = roundTrip(barred);
     expect(round).toEqual(barred);
     expect(handPlayBarred(round, "p2", "Item", undefined)).toBe(true);
     expect(handPlayBarred(round, "p2", "Tool", undefined)).toBe(true);

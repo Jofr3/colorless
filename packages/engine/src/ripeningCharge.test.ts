@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -9,16 +9,15 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handToDeck,
-  must,
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const RIPENING_IDS = ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"] as const;
@@ -61,32 +60,8 @@ const useRipeningFromBench = {
   abilityName: "Ripening Charge",
 } as const;
 
-/** `driveSetup` against the LOCAL pool — `testFixtures.ts`'s own closes over
-    `FIXTURE_POOL`, and `createGame` takes its `cardPool` as a PARAMETER, which is
-    how a demonstrator stays local to one suite (`tealDance.test.ts`'s idiom). */
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** Setup, then open P1's turn (P2 went first and passed). */

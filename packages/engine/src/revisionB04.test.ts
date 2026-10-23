@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -15,6 +15,7 @@ import {
   trainerCard,
   must,
   effectPrompt,
+  driveSetup,
 } from "./testFixtures";
 
 const RARE_CANDY_TEXT =
@@ -94,32 +95,11 @@ function deck(withStage1: boolean): string[] {
 /** Setup with P1 first, then P1's SECOND turn (turn 3 — Rare Candy's "first turn" ban is past).
     `pool` is the engine `cardPool`; its keys beyond the decks' ids are what §3 varies. */
 function p1Turn(pool: Record<string, Card>, withStage1 = true): GameState {
-  const created = createGame({
-    seed: 404,
-    decks: { p1: deck(withStage1), p2: deck(withStage1) },
-    cardPool: pool,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  let state = driveSetup(
+    404,
+    { p1: deck(withStage1), p2: deck(withStage1) },
+    { pool: pool, first: "p1" },
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => pool[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   if (state.turn !== 3) throw new Error(`expected turn 3, got ${state.turn}`);

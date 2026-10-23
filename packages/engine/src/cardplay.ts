@@ -7,6 +7,7 @@ import type {
   ResolveEffectAction,
   UseAbilityAction,
   UseStadiumAbilityAction,
+  Rejection,
 } from "./actions";
 import { err, ok } from "./actions";
 import {
@@ -28,49 +29,68 @@ import {
   toolCapOf,
   countersMoveLocked,
 } from "./continuous";
-import type { EffectOp } from "./effects";
+import type { EffectOp, OpOf } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
-import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
+import type { EffectChoice, EffectPrompt, PokemonRef } from "./effectPrompt";
 import {
   attachEnergyTargets,
   attachFromDiscardOffer,
   attachFromHandPlayable,
   attachSeat,
-  conditionHolds,
-  conditionNote,
+  firstAttachableEnergy,
+} from "./ops/energy";
+import { conditionHolds, conditionNote } from "./boardCondition";
+import {
   counterOwnDestinations,
   counterOwnSources,
   counterToOpponentSources,
-  discardEnergyPlayable,
-  discardRetrievalCandidates,
-  discardableTools,
-  evolveFromHandAvailable,
-  firstAttachableEnergy,
-  gustTargets,
   healChosenTargets,
-  handCostAction,
+  ruffianBodies,
+} from "./ops/damage";
+import {
+  discardEnergyPlayable,
+  discardableTools,
+  moveEnergyPlayable,
+  snipeTargets,
+  refKeyOf,
+} from "./effectTargets";
+import {
+  discardRetrievalCandidates,
+  resumeProgram,
+  runProgram,
+  isCounterMoveOp,
+} from "./interpreter";
+import {
+  evolveFromHandAvailable,
   handCostUnmet,
   handPokemonUids,
-  moveEnergyPlayable,
+  benchArrivalCounters,
+} from "./ops/cards";
+import {
+  gustTargets,
   offeredBranches,
   ownDevolveAvailable,
-  resumeProgram,
-  ruffianBodies,
-  runProgram,
-  snipeTargets,
   swapBodies,
   swapDiscardCards,
   switchActiveTargets,
-  benchArrivalCounters,
-  isCounterMoveOp,
-} from "./interpreter";
-import type { AbilityProgram, StadiumAbility } from "./registry";
+} from "./ops/board";
+import { handCostAction } from "./promptText";
+import type { AbilityProgram, StadiumAbility } from "./programTypes";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "./types";
+import {
+  SEATS,
+  answererOf,
+  isFirstTurnOf,
+  isSeat,
+  makeInPlay,
+  otherSeat,
+  withSide,
+  without,
+} from "./types";
 
 // Card-play actions (§7 Trainers, §9 Abilities) and the resolver for the mid-effect decisions they
 // park on. Stadiums and Tools are different: they stay in play with continuous effects read by
@@ -577,11 +597,7 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   ];
   return placeEvolution(
     stateAfterHand,
-    action.seat,
-    action.target,
-    benchIndex,
-    target,
-    fromUid,
+    { seat: action.seat, target: action.target, body: target, bodyUid: fromUid },
     action.evolutionUid,
     events,
   );
@@ -897,10 +913,8 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     return err("BAD_PHASE", `resolveEffect is not legal during ${state.phase.kind}`);
   }
   const phase = state.phase;
-  // Who may ANSWER: the phase's answerer when one is filed (the opponent's
-  // printed "may" — Ortega's mayDraw park), else the controller as ever. The
-  // controller cannot answer the opponent's "may" for them, and vice versa.
-  const answerer = phase.answerer ?? phase.seat;
+  // The controller cannot answer the opponent's printed "may" for them, and vice versa.
+  const answerer = answererOf(phase);
   if (answerer !== action.seat) {
     return err("WRONG_SEAT", `only ${answerer} resolves this effect`);
   }
@@ -964,7 +978,7 @@ function attachAlternativesAllWhiff(
   // Crispin's `oneOfRecorded` attach uses the Energy its own search puts in hand, so the hand at
   // play time says nothing about it.
   const attaches = program.filter(
-    (op): op is Extract<EffectOp, { op: "attachEnergyFrom" }> =>
+    (op): op is OpOf<"attachEnergyFrom"> =>
       op.op === "attachEnergyFrom" && op.oneOfRecorded === undefined,
   );
   if (attaches.length === 0) return false;
@@ -1227,7 +1241,7 @@ function resolveOwnPokemon(
   state: GameState,
   seat: Seat,
   target: PokemonTarget,
-): { pokemon: InPlayPokemon; uid: string; reject?: undefined } | { reject: ApplyResult } {
+): { pokemon: InPlayPokemon; uid: string; reject?: undefined } | { reject: Rejection } {
   const side = state.players[seat];
   let pokemon: InPlayPokemon;
   if (target.spot === "active") {
@@ -1250,431 +1264,500 @@ function resolveOwnPokemon(
 
 /** Wire-check a resolveEffect choice against the parked prompt (a P4 client
     controls it): the right kind, and every uid/ref among the legal options. */
-function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult | null {
+function validateChoice(prompt: EffectPrompt, choice: EffectChoice): Rejection | null {
   if (typeof choice !== "object" || choice === null) {
-    return err("BAD_EFFECT_CHOICE", "choice must be an object");
+    return badChoice("choice must be an object");
   }
   switch (prompt.kind) {
-    case "chooseCards": {
-      if (choice.kind !== "cards" || !Array.isArray(choice.uids)) {
-        return err("BAD_EFFECT_CHOICE", "expected a card choice");
-      }
-      if (choice.uids.length > prompt.max) {
-        return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} card(s)`);
-      }
-      // The floor: 0 for any printed "up to", and `min === max` for a mandatory exact pick.
-      if (choice.uids.length < prompt.min) {
-        return err("BAD_EFFECT_CHOICE", `pick at least ${prompt.min} card(s)`);
-      }
-      const candidates = new Set(prompt.candidates);
-      const seen = new Set<string>();
-      for (const uid of choice.uids) {
-        if (typeof uid !== "string" || !candidates.has(uid)) {
-          // Reads off the PROMPT: this validator now serves a deck search, a
-          // discard-pile retrieval, a look at the deck top AND a hand cost, so
-          // "searchable" was only ever right for the first of them.
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a legal card for this choice`);
-        }
-        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-        seen.add(uid);
-      }
-      // Per-kind caps (Drayton: "a Pokémon and a Trainer card"), enforced only here because the
-      // validator checks answers against the prompt. A uid in two groups counts against both.
-      for (const cap of prompt.caps ?? []) {
-        const inGroup = new Set(cap.uids);
-        const picked = choice.uids.filter((uid) => inGroup.has(uid)).length;
-        if (picked > cap.max) {
-          return err("BAD_EFFECT_CHOICE", `pick at most ${cap.max} card(s) of that kind`);
-        }
-      }
-      // Disjunctive caps (Brock's Scouting: "up to 2 Basic Pokémon or 1 Evolution Pokémon"): the
-      // answer must fit wholly within one entry. The empty answer fits every entry.
-      const anyOf = prompt.capsAnyOf;
-      if (
-        anyOf !== undefined &&
-        !anyOf.some(
-          (entry) =>
-            choice.uids.length <= entry.max && choice.uids.every((uid) => entry.uids.includes(uid)),
-        )
-      ) {
-        return err("BAD_EFFECT_CHOICE", "pick from one kind only, within its limit");
-      }
-      return null;
+    case "chooseCards":
+      return validateCardsChoice(prompt, choice);
+    case "choosePokemonMulti":
+      return validatePokemonMultiChoice(prompt, choice);
+    case "choosePokemon":
+      return validatePokemonChoice(prompt, choice);
+    case "moveEnergy":
+      return validateMoveEnergyChoice(prompt, choice);
+    case "discardEnergy":
+      return validateDiscardEnergyChoice(prompt, choice);
+    case "discardTools":
+      return validateDiscardToolsChoice(prompt, choice);
+    case "attachCards":
+      return validateAttachCardsChoice(prompt, choice);
+    case "guessHp":
+      return validateGuessHpChoice(choice);
+    case "mayDraw":
+      return validateMayDrawChoice(choice);
+    case "confirm":
+      return validateConfirmChoice(prompt, choice);
+    case "orderCards":
+      return validateOrderCardsChoice(prompt, choice);
+    case "chooseAttack":
+      return validateAttackChoice(prompt, choice);
+    case "choosePrize":
+      return validatePrizeChoice(prompt, choice);
+  }
+}
+
+type PromptOf<K extends EffectPrompt["kind"]> = Extract<EffectPrompt, { kind: K }>;
+
+function badChoice(message: string): Rejection {
+  return err("BAD_EFFECT_CHOICE", message);
+}
+
+function validateCardsChoice(
+  prompt: PromptOf<"chooseCards">,
+  choice: EffectChoice,
+): Rejection | null {
+  if (choice.kind !== "cards" || !Array.isArray(choice.uids)) {
+    return badChoice("expected a card choice");
+  }
+  if (choice.uids.length > prompt.max) {
+    return badChoice(`pick at most ${prompt.max} card(s)`);
+  }
+  // The floor: 0 for any printed "up to", and `min === max` for a mandatory exact pick.
+  if (choice.uids.length < prompt.min) {
+    return badChoice(`pick at least ${prompt.min} card(s)`);
+  }
+  const candidates = new Set(prompt.candidates);
+  const seen = new Set<string>();
+  for (const uid of choice.uids) {
+    if (typeof uid !== "string" || !candidates.has(uid)) {
+      // Generic wording: this validator serves deck searches, discard retrievals, deck-top looks
+      // and hand costs alike.
+      return badChoice(`${String(uid)} is not a legal card for this choice`);
     }
-    case "choosePokemonMulti": {
-      // `min`..`max` distinct offered refs. The printed number is exact unless the card says "up
-      // to", so the floor stops a player paying an irreversible cost and placing nothing. The empty
-      // answer is legal only when `declinable`, and it is all or nothing.
-      if (choice.kind !== "pokemonMulti" || !Array.isArray(choice.refs)) {
-        return err("BAD_EFFECT_CHOICE", "expected a Pokémon multi-choice");
-      }
-      if (choice.refs.length > prompt.max) {
-        return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} Pokémon`);
-      }
-      if (choice.refs.length < prompt.min && !(prompt.declinable && choice.refs.length === 0)) {
-        return err("BAD_EFFECT_CHOICE", `pick ${prompt.min} Pokémon`);
-      }
-      const seen = new Set<string>();
-      for (const ref of choice.refs) {
-        if (!isPokemonRef(ref) || !prompt.candidates.some((c) => refEquals(c, ref))) {
-          return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
-        }
-        const key = refKey(ref);
-        if (seen.has(key)) return err("BAD_EFFECT_CHOICE", "a Pokémon picked twice");
-        seen.add(key);
-      }
-      return null;
-    }
-    case "choosePokemon": {
-      // Exactly one offered ref, or none when the prompt carries a printed ceiling (with a quantity
-      // in 1..upTo when given). Without a ceiling, an omitted ref must be refused (Boss's Orders
-      // has no "up to").
-      if (choice.kind !== "pokemon") {
-        return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
-      }
-      if (choice.ref === undefined) {
-        // The decline, kept as its own arm so the error says it cannot be declined rather than that
-        // it is malformed. A `take` with no ref is refused below.
-        if (prompt.upTo === undefined) {
-          return err("BAD_EFFECT_CHOICE", "this choice cannot be declined");
-        }
-        return choice.take === undefined
-          ? null
-          : err("BAD_EFFECT_CHOICE", "a declined choice takes nothing");
-      }
-      if (!isPokemonRef(choice.ref)) {
-        return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
-      }
-      const picked = choice.ref;
-      if (!prompt.candidates.some((c) => refEquals(c, picked))) {
-        return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
-      }
-      // The answered quantity, enforced against the printed ceiling: refused when the prompt has no
-      // ceiling, when above it or not a whole number, and when zero alongside a named body (the
-      // decline is the absent ref).
-      if (choice.take === undefined) return null;
-      if (prompt.upTo === undefined) {
-        return err("BAD_EFFECT_CHOICE", "this choice takes no quantity");
-      }
-      if (!Number.isInteger(choice.take) || choice.take < 1 || choice.take > prompt.upTo) {
-        return err("BAD_EFFECT_CHOICE", "that is not a legal quantity");
-      }
-      return null;
-    }
-    case "moveEnergy": {
-      // Up to `max` movable Energy, each paired with a destination. Every pick and destination must
-      // be offered, and no pick may land on the body it came from. Unless the prompt sets
-      // `anySource` / `anyDest`, all picks share one source and one destination. An empty pick is a
-      // decline unless the prompt has a floor.
-      if (choice.kind !== "moveEnergy" || !Array.isArray(choice.picks)) {
-        return err("BAD_EFFECT_CHOICE", "expected an energy-move choice");
-      }
-      if (choice.picks.length > prompt.max) {
-        return err("BAD_EFFECT_CHOICE", `move at most ${prompt.max} Energy`);
-      }
-      // The floor for a mandatory move (Castform "Move all Energy"). A missing `min` means
-      // declinable, which keeps older persisted parks meaning what they meant.
-      if (choice.picks.length < (prompt.min ?? 0)) {
-        return err("BAD_EFFECT_CHOICE", `move all ${prompt.min ?? 0} Energy`);
-      }
-      const sourceOf = new Map(prompt.movable.map((m) => [m.uid, m.from]));
-      const seen = new Set<string>();
-      let source: PokemonRef | undefined;
-      let destination: PokemonRef | undefined;
-      let selfMove = false;
-      // The entries come off the WIRE, so each is checked as an unknown shape
-      // (TypeScript's `{uid, dest}` is a claim about the action, not about the
-      // JSON) — the `attachCards` arm's rule, and the one this arm inherits along
-      // with its map.
-      for (const entry of choice.picks as readonly ({
-        uid?: unknown;
-        dest?: unknown;
-      } | null)[]) {
-        if (typeof entry !== "object" || entry === null) {
-          return err("BAD_EFFECT_CHOICE", "each move must name an Energy and a Pokémon");
-        }
-        const uid = entry.uid;
-        const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
-        if (from === undefined || typeof uid !== "string") {
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a movable Energy`);
-        }
-        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-        seen.add(uid);
-        const dest = entry.dest;
-        if (!isPokemonRef(dest) || !prompt.destinations.some((d) => refEquals(d, dest))) {
-          return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal destination");
-        }
-        if (refEquals(from, dest)) selfMove = true;
-        // The couplings, unless the prompt lifted them (N's Plan; Kilowattrel).
-        // Checked INSIDE the loop, before the self-move verdict below, so the
-        // message a mixed-source answer gets is the one it got before these riders
-        // existed.
-        if (prompt.anySource !== true) {
-          if (source === undefined) source = from;
-          else if (!refEquals(source, from)) {
-            return err("BAD_EFFECT_CHOICE", "every Energy must come from the same Pokémon");
-          }
-        }
-        if (prompt.anyDest !== true) {
-          if (destination === undefined) destination = dest;
-          else if (!refEquals(destination, dest)) {
-            return err("BAD_EFFECT_CHOICE", "every Energy must go to the same Pokémon");
-          }
-        }
-      }
-      if (selfMove) {
-        return err("BAD_EFFECT_CHOICE", "cannot move a Pokémon's Energy onto itself");
-      }
-      return null;
-    }
-    case "discardEnergy": {
-      // Mandatory, so the count is exact: `total` takes exactly `count` Energy, `each` exactly one
-      // from every offered Pokémon. Every uid must be offered and none repeated. Nothing pins a
-      // multi-count `total` pick to one host; every current producer is single-Pokémon.
-      if (choice.kind !== "discardEnergy" || !Array.isArray(choice.uids)) {
-        return err("BAD_EFFECT_CHOICE", "expected an energy-discard choice");
-      }
-      const scope = prompt.scope;
-      const sourceOf = new Map(prompt.discardable.map((d) => [d.uid, d.from]));
-      // "You may discard any amount" (Chien-Pao ex "Hail Blade"): DECLINABLE, so
-      // 0..`max` rather than an exact count — every uid still offered and none
-      // twice (the two rules every scope shares), but no per-source rule and an
-      // empty pick is a legal decline. Branched out before the exact-count path
-      // below, which "each" and "total" share.
-      if (scope.kind === "upTo") {
-        if (choice.uids.length > scope.max) {
-          return err("BAD_EFFECT_CHOICE", `discard at most ${scope.max} Energy`);
-        }
-        const picked = new Set<string>();
-        for (const uid of choice.uids) {
-          if (typeof uid !== "string" || !sourceOf.has(uid)) {
-            return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a discardable Energy`);
-          }
-          if (picked.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-          picked.add(uid);
-        }
-        return null;
-      }
-      const required =
-        scope.kind === "total"
-          ? scope.count
-          : new Set(prompt.discardable.map((d) => refKey(d.from))).size;
-      if (choice.uids.length !== required) {
-        return err("BAD_EFFECT_CHOICE", `discard exactly ${required} Energy`);
-      }
-      const seen = new Set<string>();
-      const sources = new Set<string>();
-      for (const uid of choice.uids) {
-        const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
-        if (from === undefined) {
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a discardable Energy`);
-        }
-        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-        seen.add(uid);
-        if (scope.kind === "each") {
-          const key = refKey(from);
-          if (sources.has(key)) {
-            return err("BAD_EFFECT_CHOICE", "only one Energy per Pokémon");
-          }
-          sources.add(key);
-        }
-      }
-      return null;
-    }
-    case "discardTools": {
-      // "Discard up to N Pokémon Tools": 0..`max`, every uid offered, none twice, no per-source
-      // rule. `max` is read off the prompt, which is already clamped to the board. Tools may come
-      // from both boards when offered (Tool Scrapper).
-      if (choice.kind !== "discardTools" || !Array.isArray(choice.uids)) {
-        return err("BAD_EFFECT_CHOICE", "expected a tool-discard choice");
-      }
-      // An exact `total` (Multi Adapter's trim, Ruffian on a two-Tool body).
-      if (prompt.scope.kind === "total" && choice.uids.length !== prompt.scope.count) {
-        return err("BAD_EFFECT_CHOICE", `discard exactly ${prompt.scope.count} Pokémon Tools`);
-      }
-      const scope =
-        prompt.scope.kind === "total"
-          ? { kind: "upTo" as const, max: prompt.scope.count }
-          : prompt.scope;
-      // Any other scope is refused rather than accepted unchecked.
-      if (scope.kind !== "upTo") {
-        return err("BAD_EFFECT_CHOICE", "unsupported tool-discard scope");
-      }
-      if (choice.uids.length > scope.max) {
-        return err("BAD_EFFECT_CHOICE", `discard at most ${scope.max} Pokémon Tools`);
-      }
-      const offered = new Set(prompt.discardable.map((d) => d.uid));
-      const picked = new Set<string>();
-      for (const uid of choice.uids) {
-        if (typeof uid !== "string" || !offered.has(uid)) {
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a discardable Pokémon Tool`);
-        }
-        if (picked.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-        picked.add(uid);
-      }
-      return null;
-    }
-    case "attachCards": {
-      // "Attach … in any way you like": each pick carries its own destination. At most `max` picks;
-      // every uid offered and none twice; every destination an offered target; at most
-      // `maxPerTarget` per Pokémon when set; and one Pokémon for the whole answer when `oneTarget`
-      // is set. Enforced only here; the apply re-derives none of it. An empty list is a decline,
-      // and the leftovers clause still runs.
-      if (choice.kind !== "attachCards" || !Array.isArray(choice.assignments)) {
-        return err("BAD_EFFECT_CHOICE", "expected a card-attach choice");
-      }
-      if (choice.assignments.length > prompt.max) {
-        return err("BAD_EFFECT_CHOICE", `attach at most ${prompt.max} card(s)`);
-      }
-      const candidates = new Set(prompt.candidates);
-      const seen = new Set<string>();
-      const perTarget = new Map<string, number>();
-      // The entries come off the WIRE, so each is checked as an unknown shape
-      // (TypeScript's `{uid, to}` is a claim about the action, not about the JSON).
-      for (const entry of choice.assignments as readonly ({
-        uid?: unknown;
-        to?: unknown;
-      } | null)[]) {
-        if (typeof entry !== "object" || entry === null) {
-          return err("BAD_EFFECT_CHOICE", "each attachment must name a card and a Pokémon");
-        }
-        const uid = entry.uid;
-        if (typeof uid !== "string" || !candidates.has(uid)) {
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not an attachable card`);
-        }
-        if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
-        seen.add(uid);
-        const to = entry.to;
-        if (!isPokemonRef(to) || !prompt.targets.some((t) => refEquals(t, to))) {
-          return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal attach target");
-        }
-        const key = refKey(to);
-        const count = (perTarget.get(key) ?? 0) + 1;
-        if (prompt.maxPerTarget !== undefined && count > prompt.maxPerTarget) {
-          return err(
-            "BAD_EFFECT_CHOICE",
-            `attach at most ${prompt.maxPerTarget} card(s) to any one Pokémon`,
-          );
-        }
-        perTarget.set(key, count);
-        // "Attach them to 1 of your Pokémon": all cards share one destination. Uses the map size,
-        // so an empty answer stays a legal decline.
-        if (prompt.oneTarget === true && perTarget.size > 1) {
-          return err("BAD_EFFECT_CHOICE", "attach every card to the same Pokémon");
-        }
-      }
-      return null;
-    }
-    case "guessHp": {
-      // Tyme's guess must be a non-negative integer.
-      if (choice.kind !== "hpGuess" || !Number.isInteger(choice.hp) || choice.hp < 0) {
-        return err("BAD_EFFECT_CHOICE", "expected a whole-number HP guess");
-      }
-      return null;
-    }
-    case "mayDraw": {
-      // A plain boolean, and CHECKED to be one: a P4 client's truthy string
-      // ("yes", 1) must not read as consent to draw — the wire rule every
-      // index and count in this file already lives by.
-      if (choice.kind !== "mayDraw" || typeof choice.draw !== "boolean") {
-        return err("BAD_EFFECT_CHOICE", "expected a yes/no draw choice");
-      }
-      return null;
-    }
-    case "confirm": {
-      // The printed "you may", answered by the controller. The `mayDraw` check
-      // VERBATIM, and deliberately so: a P4 client's truthy string ("yes", 1)
-      // must not read as consent — and here consent runs a whole op branch
-      // rather than a draw, so the belt matters more, not less. Nothing else to
-      // check: the prompt offers no candidates, so `yes` is the entire answer.
-      if (choice.kind !== "confirm" || typeof choice.yes !== "boolean") {
-        return err("BAD_EFFECT_CHOICE", "expected a yes/no confirmation");
-      }
-      const target = choice.target;
-      if (
-        target !== undefined &&
-        (prompt.cards === undefined ||
-          (!choice.yes && prompt.cards.no === undefined) ||
-          !isPokemonRef(target) ||
-          !prompt.targets?.some((ref) => refEquals(ref, target)))
-      ) {
-        return err("BAD_EFFECT_CHOICE", "not a legal attachment target");
-      }
-      return null;
-    }
-    case "orderCards": {
-      // A permutation: a short answer would destroy cards, a repeat would duplicate one, and an
-      // unoffered uid would pull a card from below the visible window. Equal length, no duplicates
-      // and all offered together make it a bijection.
-      if (choice.kind !== "orderCards" || !Array.isArray(choice.uids)) {
-        return err("BAD_EFFECT_CHOICE", "expected a card ordering");
-      }
-      // An empty ordering is the printed alternative (Deduction Kit: "or shuffle them and put them
-      // on the bottom of your deck"), legal only when the prompt carries `alt`.
-      if (choice.uids.length === 0 && prompt.alt !== undefined) return null;
-      if (choice.uids.length !== prompt.candidates.length) {
-        return err("BAD_EFFECT_CHOICE", `order all ${prompt.candidates.length} card(s)`);
-      }
-      const offered = new Set(prompt.candidates);
-      const placed = new Set<string>();
-      // The entries come off the WIRE, so each is checked as an unknown (the
-      // `string[]` type is a claim about the action, not about the JSON) — the
-      // `attachCards` arm's rule, one case up.
-      for (const uid of choice.uids as readonly unknown[]) {
-        if (typeof uid !== "string" || !offered.has(uid)) {
-          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not one of the cards to order`);
-        }
-        if (placed.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} placed twice`);
-        placed.add(uid);
-      }
-      // NO DECLINE, and it is printed rather than assumed: "put them back in any
-      // order" carries no "you may", so an empty answer is not a legal decline —
-      // it is refused by the length check above, which is the only place it could
-      // be. The identity permutation IS the "leave it alone" answer.
-      return null;
-    }
-    case "chooseAttack": {
-      // Exactly one offered attack index; mandatory ("Choose 1"). `Number.isInteger` because the
-      // value is used as an index.
-      if (choice.kind !== "attack" || !Number.isInteger(choice.index)) {
-        return err("BAD_EFFECT_CHOICE", "expected an attack choice");
-      }
-      if (!prompt.candidates.some((c) => c.index === choice.index)) {
-        return err(
-          "BAD_EFFECT_CHOICE",
-          `${String(choice.index)} is not a legal attack for this choice`,
-        );
-      }
-      return null;
-    }
-    case "choosePrize": {
-      // Exactly one offered face-down prize slot; membership refuses out-of-range and face-up
-      // slots.
-      if (choice.kind !== "prize" || !Number.isInteger(choice.index)) {
-        return err("BAD_EFFECT_CHOICE", "expected exactly one prize choice");
-      }
-      if (!prompt.indices.includes(choice.index)) {
-        return err(
-          "BAD_EFFECT_CHOICE",
-          `${String(choice.index)} is not a face-down Prize you can turn`,
-        );
-      }
-      return null;
+    if (seen.has(uid)) return badChoice(`${uid} picked twice`);
+    seen.add(uid);
+  }
+  // Per-kind caps (Drayton: "a Pokémon and a Trainer card"), enforced only here because the
+  // validator checks answers against the prompt. A uid in two groups counts against both.
+  for (const cap of prompt.caps ?? []) {
+    const inGroup = new Set(cap.uids);
+    const picked = choice.uids.filter((uid) => inGroup.has(uid)).length;
+    if (picked > cap.max) {
+      return badChoice(`pick at most ${cap.max} card(s) of that kind`);
     }
   }
+  // Disjunctive caps (Brock's Scouting: "up to 2 Basic Pokémon or 1 Evolution Pokémon"): the
+  // answer must fit wholly within one entry. The empty answer fits every entry.
+  const anyOf = prompt.capsAnyOf;
+  if (
+    anyOf !== undefined &&
+    !anyOf.some(
+      (entry) =>
+        choice.uids.length <= entry.max && choice.uids.every((uid) => entry.uids.includes(uid)),
+    )
+  ) {
+    return badChoice("pick from one kind only, within its limit");
+  }
+  return null;
+}
+
+function validatePokemonMultiChoice(
+  prompt: PromptOf<"choosePokemonMulti">,
+  choice: EffectChoice,
+): Rejection | null {
+  // `min`..`max` distinct offered refs. The printed number is exact unless the card says "up
+  // to", so the floor stops a player paying an irreversible cost and placing nothing. The empty
+  // answer is legal only when `declinable`, and it is all or nothing.
+  if (choice.kind !== "pokemonMulti" || !Array.isArray(choice.refs)) {
+    return badChoice("expected a Pokémon multi-choice");
+  }
+  if (choice.refs.length > prompt.max) {
+    return badChoice(`pick at most ${prompt.max} Pokémon`);
+  }
+  if (choice.refs.length < prompt.min && !(prompt.declinable && choice.refs.length === 0)) {
+    return badChoice(`pick ${prompt.min} Pokémon`);
+  }
+  const seen = new Set<string>();
+  for (const ref of choice.refs) {
+    if (!isPokemonRef(ref) || !prompt.candidates.some((c) => refEquals(c, ref))) {
+      return badChoice("that Pokémon is not a legal target");
+    }
+    const key = refKeyOf(ref);
+    if (seen.has(key)) return badChoice("a Pokémon picked twice");
+    seen.add(key);
+  }
+  return null;
+}
+
+function validatePokemonChoice(
+  prompt: PromptOf<"choosePokemon">,
+  choice: EffectChoice,
+): Rejection | null {
+  // Exactly one offered ref, or none when the prompt carries a printed ceiling (with a quantity
+  // in 1..upTo when given). Without a ceiling, an omitted ref must be refused (Boss's Orders
+  // has no "up to").
+  if (choice.kind !== "pokemon") {
+    return badChoice("expected a Pokémon choice");
+  }
+  if (choice.ref === undefined) {
+    // The decline, kept as its own arm so the error says it cannot be declined rather than that
+    // it is malformed. A `take` with no ref is refused below.
+    if (prompt.upTo === undefined) {
+      return badChoice("this choice cannot be declined");
+    }
+    return choice.take === undefined ? null : badChoice("a declined choice takes nothing");
+  }
+  if (!isPokemonRef(choice.ref)) {
+    return badChoice("expected a Pokémon choice");
+  }
+  const picked = choice.ref;
+  if (!prompt.candidates.some((c) => refEquals(c, picked))) {
+    return badChoice("that Pokémon is not a legal target");
+  }
+  // The answered quantity, enforced against the printed ceiling: refused when the prompt has no
+  // ceiling, when above it or not a whole number, and when zero alongside a named body (the
+  // decline is the absent ref).
+  if (choice.take === undefined) return null;
+  if (prompt.upTo === undefined) {
+    return badChoice("this choice takes no quantity");
+  }
+  if (!Number.isInteger(choice.take) || choice.take < 1 || choice.take > prompt.upTo) {
+    return badChoice("that is not a legal quantity");
+  }
+  return null;
+}
+
+function validateMoveEnergyChoice(
+  prompt: PromptOf<"moveEnergy">,
+  choice: EffectChoice,
+): Rejection | null {
+  // Up to `max` movable Energy, each paired with a destination. Every pick and destination must
+  // be offered, and no pick may land on the body it came from. Unless the prompt sets
+  // `anySource` / `anyDest`, all picks share one source and one destination. An empty pick is a
+  // decline unless the prompt has a floor.
+  if (choice.kind !== "moveEnergy" || !Array.isArray(choice.picks)) {
+    return badChoice("expected an energy-move choice");
+  }
+  if (choice.picks.length > prompt.max) {
+    return badChoice(`move at most ${prompt.max} Energy`);
+  }
+  // The floor for a mandatory move (Castform "Move all Energy"). A missing `min` means
+  // declinable, which keeps older persisted parks meaning what they meant.
+  if (choice.picks.length < (prompt.min ?? 0)) {
+    return badChoice(`move all ${prompt.min ?? 0} Energy`);
+  }
+  const sourceOf = new Map(prompt.movable.map((m) => [m.uid, m.from]));
+  const seen = new Set<string>();
+  let source: PokemonRef | undefined;
+  let destination: PokemonRef | undefined;
+  let selfMove = false;
+  // The entries come off the WIRE, so each is checked as an unknown shape
+  // (TypeScript's `{uid, dest}` is a claim about the action, not about the
+  // JSON) — the `attachCards` arm's rule, and the one this arm inherits along
+  // with its map.
+  for (const entry of choice.picks as readonly ({
+    uid?: unknown;
+    dest?: unknown;
+  } | null)[]) {
+    if (typeof entry !== "object" || entry === null) {
+      return badChoice("each move must name an Energy and a Pokémon");
+    }
+    const uid = entry.uid;
+    const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
+    if (from === undefined || typeof uid !== "string") {
+      return badChoice(`${String(uid)} is not a movable Energy`);
+    }
+    if (seen.has(uid)) return badChoice(`${uid} picked twice`);
+    seen.add(uid);
+    const dest = entry.dest;
+    if (!isPokemonRef(dest) || !prompt.destinations.some((d) => refEquals(d, dest))) {
+      return badChoice("that Pokémon is not a legal destination");
+    }
+    if (refEquals(from, dest)) selfMove = true;
+    // The couplings, unless the prompt lifted them (N's Plan; Kilowattrel).
+    // Checked INSIDE the loop, before the self-move verdict below, so the
+    // message a mixed-source answer gets is the one it got before these riders
+    // existed.
+    if (prompt.anySource !== true) {
+      if (source === undefined) source = from;
+      else if (!refEquals(source, from)) {
+        return badChoice("every Energy must come from the same Pokémon");
+      }
+    }
+    if (prompt.anyDest !== true) {
+      if (destination === undefined) destination = dest;
+      else if (!refEquals(destination, dest)) {
+        return badChoice("every Energy must go to the same Pokémon");
+      }
+    }
+  }
+  if (selfMove) {
+    return badChoice("cannot move a Pokémon's Energy onto itself");
+  }
+  return null;
+}
+
+function validateDiscardEnergyChoice(
+  prompt: PromptOf<"discardEnergy">,
+  choice: EffectChoice,
+): Rejection | null {
+  // Mandatory, so the count is exact: `total` takes exactly `count` Energy, `each` exactly one
+  // from every offered Pokémon. Every uid must be offered and none repeated. Nothing pins a
+  // multi-count `total` pick to one host; every current producer is single-Pokémon.
+  if (choice.kind !== "discardEnergy" || !Array.isArray(choice.uids)) {
+    return badChoice("expected an energy-discard choice");
+  }
+  const scope = prompt.scope;
+  const sourceOf = new Map(prompt.discardable.map((d) => [d.uid, d.from]));
+  // "You may discard any amount" (Chien-Pao ex "Hail Blade"): DECLINABLE, so
+  // 0..`max` rather than an exact count — every uid still offered and none
+  // twice (the two rules every scope shares), but no per-source rule and an
+  // empty pick is a legal decline. Branched out before the exact-count path
+  // below, which "each" and "total" share.
+  if (scope.kind === "upTo") {
+    if (choice.uids.length > scope.max) {
+      return badChoice(`discard at most ${scope.max} Energy`);
+    }
+    const picked = new Set<string>();
+    for (const uid of choice.uids) {
+      if (typeof uid !== "string" || !sourceOf.has(uid)) {
+        return badChoice(`${String(uid)} is not a discardable Energy`);
+      }
+      if (picked.has(uid)) return badChoice(`${uid} picked twice`);
+      picked.add(uid);
+    }
+    return null;
+  }
+  const required =
+    scope.kind === "total"
+      ? scope.count
+      : new Set(prompt.discardable.map((d) => refKeyOf(d.from))).size;
+  if (choice.uids.length !== required) {
+    return badChoice(`discard exactly ${required} Energy`);
+  }
+  const seen = new Set<string>();
+  const sources = new Set<string>();
+  for (const uid of choice.uids) {
+    const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
+    if (from === undefined) {
+      return badChoice(`${String(uid)} is not a discardable Energy`);
+    }
+    if (seen.has(uid)) return badChoice(`${uid} picked twice`);
+    seen.add(uid);
+    if (scope.kind === "each") {
+      const key = refKeyOf(from);
+      if (sources.has(key)) {
+        return badChoice("only one Energy per Pokémon");
+      }
+      sources.add(key);
+    }
+  }
+  return null;
+}
+
+function validateDiscardToolsChoice(
+  prompt: PromptOf<"discardTools">,
+  choice: EffectChoice,
+): Rejection | null {
+  // "Discard up to N Pokémon Tools": 0..`max`, every uid offered, none twice, no per-source
+  // rule. `max` is read off the prompt, which is already clamped to the board. Tools may come
+  // from both boards when offered (Tool Scrapper).
+  if (choice.kind !== "discardTools" || !Array.isArray(choice.uids)) {
+    return badChoice("expected a tool-discard choice");
+  }
+  // An exact `total` (Multi Adapter's trim, Ruffian on a two-Tool body).
+  if (prompt.scope.kind === "total" && choice.uids.length !== prompt.scope.count) {
+    return badChoice(`discard exactly ${prompt.scope.count} Pokémon Tools`);
+  }
+  const scope =
+    prompt.scope.kind === "total"
+      ? { kind: "upTo" as const, max: prompt.scope.count }
+      : prompt.scope;
+  // Any other scope is refused rather than accepted unchecked.
+  if (scope.kind !== "upTo") {
+    return badChoice("unsupported tool-discard scope");
+  }
+  if (choice.uids.length > scope.max) {
+    return badChoice(`discard at most ${scope.max} Pokémon Tools`);
+  }
+  const offered = new Set(prompt.discardable.map((d) => d.uid));
+  const picked = new Set<string>();
+  for (const uid of choice.uids) {
+    if (typeof uid !== "string" || !offered.has(uid)) {
+      return badChoice(`${String(uid)} is not a discardable Pokémon Tool`);
+    }
+    if (picked.has(uid)) return badChoice(`${uid} picked twice`);
+    picked.add(uid);
+  }
+  return null;
+}
+
+function validateAttachCardsChoice(
+  prompt: PromptOf<"attachCards">,
+  choice: EffectChoice,
+): Rejection | null {
+  // "Attach … in any way you like": each pick carries its own destination. At most `max` picks;
+  // every uid offered and none twice; every destination an offered target; at most
+  // `maxPerTarget` per Pokémon when set; and one Pokémon for the whole answer when `oneTarget`
+  // is set. Enforced only here; the apply re-derives none of it. An empty list is a decline,
+  // and the leftovers clause still runs.
+  if (choice.kind !== "attachCards" || !Array.isArray(choice.assignments)) {
+    return badChoice("expected a card-attach choice");
+  }
+  if (choice.assignments.length > prompt.max) {
+    return badChoice(`attach at most ${prompt.max} card(s)`);
+  }
+  const candidates = new Set(prompt.candidates);
+  const seen = new Set<string>();
+  const perTarget = new Map<string, number>();
+  // The entries come off the WIRE, so each is checked as an unknown shape
+  // (TypeScript's `{uid, to}` is a claim about the action, not about the JSON).
+  for (const entry of choice.assignments as readonly ({
+    uid?: unknown;
+    to?: unknown;
+  } | null)[]) {
+    if (typeof entry !== "object" || entry === null) {
+      return badChoice("each attachment must name a card and a Pokémon");
+    }
+    const uid = entry.uid;
+    if (typeof uid !== "string" || !candidates.has(uid)) {
+      return badChoice(`${String(uid)} is not an attachable card`);
+    }
+    if (seen.has(uid)) return badChoice(`${uid} picked twice`);
+    seen.add(uid);
+    const to = entry.to;
+    if (!isPokemonRef(to) || !prompt.targets.some((t) => refEquals(t, to))) {
+      return badChoice("that Pokémon is not a legal attach target");
+    }
+    const key = refKeyOf(to);
+    const count = (perTarget.get(key) ?? 0) + 1;
+    if (prompt.maxPerTarget !== undefined && count > prompt.maxPerTarget) {
+      return err(
+        "BAD_EFFECT_CHOICE",
+        `attach at most ${prompt.maxPerTarget} card(s) to any one Pokémon`,
+      );
+    }
+    perTarget.set(key, count);
+    // "Attach them to 1 of your Pokémon": all cards share one destination. Uses the map size,
+    // so an empty answer stays a legal decline.
+    if (prompt.oneTarget === true && perTarget.size > 1) {
+      return badChoice("attach every card to the same Pokémon");
+    }
+  }
+  return null;
+}
+
+function validateGuessHpChoice(choice: EffectChoice): Rejection | null {
+  // Tyme's guess must be a non-negative integer.
+  if (choice.kind !== "hpGuess" || !Number.isInteger(choice.hp) || choice.hp < 0) {
+    return badChoice("expected a whole-number HP guess");
+  }
+  return null;
+}
+
+function validateMayDrawChoice(choice: EffectChoice): Rejection | null {
+  // A plain boolean, and CHECKED to be one: a P4 client's truthy string
+  // ("yes", 1) must not read as consent to draw — the wire rule every
+  // index and count in this file already lives by.
+  if (choice.kind !== "mayDraw" || typeof choice.draw !== "boolean") {
+    return badChoice("expected a yes/no draw choice");
+  }
+  return null;
+}
+
+function validateConfirmChoice(
+  prompt: PromptOf<"confirm">,
+  choice: EffectChoice,
+): Rejection | null {
+  // The printed "you may", answered by the controller. The `mayDraw` check
+  // VERBATIM, and deliberately so: a P4 client's truthy string ("yes", 1)
+  // must not read as consent — and here consent runs a whole op branch
+  // rather than a draw, so the belt matters more, not less. Nothing else to
+  // check: the prompt offers no candidates, so `yes` is the entire answer.
+  if (choice.kind !== "confirm" || typeof choice.yes !== "boolean") {
+    return badChoice("expected a yes/no confirmation");
+  }
+  const target = choice.target;
+  if (
+    target !== undefined &&
+    (prompt.cards === undefined ||
+      (!choice.yes && prompt.cards.no === undefined) ||
+      !isPokemonRef(target) ||
+      !prompt.targets?.some((ref) => refEquals(ref, target)))
+  ) {
+    return badChoice("not a legal attachment target");
+  }
+  return null;
+}
+
+function validateOrderCardsChoice(
+  prompt: PromptOf<"orderCards">,
+  choice: EffectChoice,
+): Rejection | null {
+  // A permutation: a short answer would destroy cards, a repeat would duplicate one, and an
+  // unoffered uid would pull a card from below the visible window. Equal length, no duplicates
+  // and all offered together make it a bijection.
+  if (choice.kind !== "orderCards" || !Array.isArray(choice.uids)) {
+    return badChoice("expected a card ordering");
+  }
+  // An empty ordering is the printed alternative (Deduction Kit: "or shuffle them and put them
+  // on the bottom of your deck"), legal only when the prompt carries `alt`.
+  if (choice.uids.length === 0 && prompt.alt !== undefined) return null;
+  if (choice.uids.length !== prompt.candidates.length) {
+    return badChoice(`order all ${prompt.candidates.length} card(s)`);
+  }
+  const offered = new Set(prompt.candidates);
+  const placed = new Set<string>();
+  // The entries come off the WIRE, so each is checked as an unknown (the
+  // `string[]` type is a claim about the action, not about the JSON) — the
+  // `attachCards` arm's rule, one case up.
+  for (const uid of choice.uids as readonly unknown[]) {
+    if (typeof uid !== "string" || !offered.has(uid)) {
+      return badChoice(`${String(uid)} is not one of the cards to order`);
+    }
+    if (placed.has(uid)) return badChoice(`${uid} placed twice`);
+    placed.add(uid);
+  }
+  // NO DECLINE, and it is printed rather than assumed: "put them back in any
+  // order" carries no "you may", so an empty answer is not a legal decline —
+  // it is refused by the length check above, which is the only place it could
+  // be. The identity permutation IS the "leave it alone" answer.
+  return null;
+}
+
+function validateAttackChoice(
+  prompt: PromptOf<"chooseAttack">,
+  choice: EffectChoice,
+): Rejection | null {
+  // Exactly one offered attack index; mandatory ("Choose 1"). `Number.isInteger` because the
+  // value is used as an index.
+  if (choice.kind !== "attack" || !Number.isInteger(choice.index)) {
+    return badChoice("expected an attack choice");
+  }
+  if (!prompt.candidates.some((c) => c.index === choice.index)) {
+    return err(
+      "BAD_EFFECT_CHOICE",
+      `${String(choice.index)} is not a legal attack for this choice`,
+    );
+  }
+  return null;
+}
+
+function validatePrizeChoice(
+  prompt: PromptOf<"choosePrize">,
+  choice: EffectChoice,
+): Rejection | null {
+  // Exactly one offered face-down prize slot; membership refuses out-of-range and face-up
+  // slots.
+  if (choice.kind !== "prize" || !Number.isInteger(choice.index)) {
+    return badChoice("expected exactly one prize choice");
+  }
+  if (!prompt.indices.includes(choice.index)) {
+    return err(
+      "BAD_EFFECT_CHOICE",
+      `${String(choice.index)} is not a face-down Prize you can turn`,
+    );
+  }
+  return null;
 }
 
 function isPokemonRef(value: unknown): value is PokemonRef {
   if (typeof value !== "object" || value === null) return false;
   const ref = value as { seat?: unknown; spot?: unknown };
-  if (ref.seat !== "p1" && ref.seat !== "p2") return false;
+  if (!isSeat(ref.seat)) return false;
   return isPokemonTarget(ref.spot);
-}
-
-/** A stable string key for de-duping picked refs (the multi-choice's "no
-    Pokémon twice" check). */
-function refKey(ref: PokemonRef): string {
-  return `${ref.seat}:${ref.spot.spot}:${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
 }
 
 function refEquals(a: PokemonRef, b: PokemonRef): boolean {

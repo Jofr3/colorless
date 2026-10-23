@@ -7,9 +7,9 @@ import type {
   PokemonPlayAct,
   PokemonType,
   StampedPlayLockKey,
-} from "./effects";
+} from "./effectTypes";
 import type { DrawReason, GameEvent, StatusName } from "./events";
-import type { EffectContinuation, EffectPrompt } from "./interpreter";
+import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 
 // The whole GameState is a plain JSON-safe value — no classes, no Date, no
 // functions — so snapshots serialize, replay and structurally share. Nothing
@@ -22,11 +22,29 @@ export type Seat = "p1" | "p2";
     first (rules §3.3), recorded in `GameState.firstPlayer`. */
 export const SEATS: readonly Seat[] = ["p1", "p2"];
 
+export function isSeat(value: unknown): value is Seat {
+  return value === "p1" || value === "p2";
+}
+
 export function otherSeat(seat: Seat): Seat {
   return seat === "p1" ? "p2" : "p1";
 }
 
+/** `seat` itself, or its opponent when the op's seat field names the other side. */
+export function relativeSeat(seat: Seat, opponent: boolean): Seat {
+  return opponent ? otherSeat(seat) : seat;
+}
+
 // Rule constants (docs/reference/ptcg-rules.md §2–§3).
+/**
+ * The seat whose turn number `state.turn` is: odd turns belong to firstPlayer. Null before the
+ * first turn. At the Checkup it is still the ended turn's owner.
+ */
+export function turnOwnerOf(state: GameState): Seat | null {
+  if (state.turn < 1 || state.firstPlayer === null) return null;
+  return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);
+}
+
 export const DECK_SIZE = 60;
 export const HAND_SIZE = 7;
 export const PRIZE_COUNT = 6;
@@ -37,6 +55,16 @@ export const BENCH_MAX = 5;
  * seat may hold.
  */
 export const BENCH_CEILING = 8;
+
+/** §12: one damage counter is 10 HP. */
+export const HP_PER_COUNTER = 10;
+
+export function damageCountersOn(pokemon: InPlayPokemon): number {
+  return Math.floor(pokemon.damage / HP_PER_COUNTER);
+}
+
+/** §13.1: the HP a Burned Pokémon takes at each Checkup (2 counters). */
+export const BURN_DAMAGE = 20;
 
 /** §12/§13.1 — the HP a Poisoned Pokémon takes at each Checkup unless the
     inflicting effect raised it ("put N damage counters … instead of 1"). */
@@ -86,7 +114,7 @@ export function isImmobilized(conditions: SpecialConditions): boolean {
 /** The conditions present, in the event vocabulary — the stable order
     (rotation, then poisoned, then burned) that a "benched"/"evolved"/switched
     STATUS_CLEARED lists. Shared by retreat + evolve (turn.ts) and the effect
-    switch (interpreter.ts) so the ordering can't drift between them. */
+    switch (ops/board.ts) so the ordering can't drift between them. */
 export function presentStatuses(conditions: SpecialConditions): StatusName[] {
   const statuses: StatusName[] = [];
   if (conditions.rotation !== "none") statuses.push(conditions.rotation);
@@ -618,16 +646,35 @@ export function scheduledEffectDue(pokemon: InPlayPokemon, turn: number): Schedu
   return scheduled !== null && scheduled.turn === turn ? scheduled : null;
 }
 
-export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
+/** Per-body effect fields that §10 sheds when a Pokémon evolves, devolves or leaves the Active Spot. */
+type AttackEffectField =
+  | "retreatBlocked"
+  | "attackBlock"
+  | "attackLockedTurn"
+  | "attackFlipLockTurn"
+  | "attackTwoFlipLockTurn"
+  | "retreatLockedTurn"
+  | "damageReduction"
+  | "noWeaknessTurn"
+  | "scheduledEffect"
+  | "attackDamageDebuff"
+  | "damageVulnerability"
+  | "weaknessRetype"
+  | "costTaxTurn"
+  | "koBounty"
+  | "handAttachMark"
+  | "installedRecoil"
+  | "lockedAttacks"
+  | "boostedAttack";
+
+/**
+ * The cleared value of every §10 effect field: what a card entering play carries and what
+ * evolving, devolving or leaving the Active Spot resets. Spread it so each caller adds only its
+ * own extras (conditions, markers, turn stamps).
+ */
+export function clearedAttackEffects(): Pick<InPlayPokemon, AttackEffectField> {
   return {
-    stack: [uid],
-    energy: [],
-    tools: [],
-    damage: 0,
-    conditions: noConditions(),
     retreatBlocked: false,
-    // Nothing has attacked with it yet — a card entering play carries no
-    // effect of an attack (§10's carry-over rule read from the other end).
     attackBlock: null,
     attackLockedTurn: null,
     attackFlipLockTurn: null,
@@ -645,6 +692,18 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     installedRecoil: null,
     lockedAttacks: [],
     boostedAttack: null,
+  };
+}
+
+export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
+  return {
+    stack: [uid],
+    energy: [],
+    tools: [],
+    damage: 0,
+    conditions: noConditions(),
+    // A card entering play carries no effect of an attack.
+    ...clearedAttackEffects(),
     markers: [],
     turnPlayed,
     // Never moved: a card entering play arrives from the HAND (or a deck
@@ -959,9 +1018,6 @@ export type Phase =
     }
   | { kind: "gameOver"; outcome: GameOutcome };
 
-/** The in-turn phase, narrowed — the shape every turn action is gated on. */
-export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
-
 /** No hand-play lock live on either seat — `createGame`'s initialiser, written
     once here rather than spelled at the literal (the `freshAllowances` idiom).
     Every class present with `null`; see `GameState.handPlayLockedTurn`. */
@@ -1027,6 +1083,11 @@ export interface GameState {
   cardPool: Record<string, Card>;
 }
 
+/** The seat that answers a parked prompt: the filed answerer, else the controller. */
+export function answererOf(phase: Extract<Phase, { kind: "effect:choose" }>): Seat {
+  return phase.answerer ?? phase.seat;
+}
+
 export function withSide(state: GameState, seat: Seat, side: PlayerSide): GameState {
   return { ...state, players: { ...state.players, [seat]: side } };
 }
@@ -1036,6 +1097,24 @@ export function withSide(state: GameState, seat: Seat, side: PlayerSide): GameSt
     spells out otherwise. */
 export function withActive(state: GameState, seat: Seat, active: InPlayPokemon): GameState {
   return withSide(state, seat, { ...state.players[seat], active });
+}
+
+/** The body at a spot; an empty Active spot and a vacant bench index both read as undefined. */
+export function bodyAt(side: PlayerSide, target: PokemonTarget): InPlayPokemon | undefined {
+  return target.spot === "active" ? (side.active ?? undefined) : side.bench[target.index];
+}
+
+export function pokemonAt(
+  state: GameState,
+  seat: Seat,
+  target: PokemonTarget,
+): InPlayPokemon | undefined {
+  return bodyAt(state.players[seat], target);
+}
+
+/** The side's Pokémon in play, Active first. */
+export function inPlayOf(side: PlayerSide): InPlayPokemon[] {
+  return side.active === null ? side.bench : [side.active, ...side.bench];
 }
 
 /** Prizes a seat has TAKEN — `PRIZE_COUNT − what remains in their pile`. Each
@@ -1189,6 +1268,14 @@ export function discardFromStack(
   };
 }
 
+/** The body an evolution lands on: where it is, and its current top card's uid. */
+export interface EvolutionHost {
+  seat: Seat;
+  target: PokemonTarget;
+  body: InPlayPokemon;
+  bodyUid: string;
+}
+
 /**
  * §10 evolution placement without the Knock Out and board-trigger follow-up: replaces the stack
  * top, applies §10's carry-over and clears, and appends `POKEMON_EVOLVED`. Returns the new state
@@ -1196,48 +1283,20 @@ export function discardFromStack(
  */
 export function evolveOnto(
   state: GameState,
-  seat: Seat,
-  target: PokemonTarget,
-  benchIndex: number,
-  from: InPlayPokemon,
-  fromUid: string,
+  host: EvolutionHost,
   evolutionUid: string,
+  /** Special Conditions the new top keeps (e.g. Confused under Dizzying Valley); §12 clears the rest. */
+  kept: SpecialConditions,
   events: GameEvent[],
-  // Special Conditions the new top keeps (e.g. Confused under Dizzying Valley); by default all are
-  // cleared (§12).
-  kept: SpecialConditions = noConditions(),
 ): { state: GameState; evolved: InPlayPokemon } {
+  const { seat, target, body: from, bodyUid: fromUid } = host;
   const evolved: InPlayPokemon = {
     ...from,
     stack: [...from.stack, evolutionUid],
     conditions: kept,
-    // §10: evolving sheds the effects of attacks too, not just conditions, including the
-    // attack-installed damage block even though no legal sequence can evolve inside its window.
-    retreatBlocked: false,
-    attackBlock: null,
-    // Evolving also sheds an attack-installed attack lock, so a locked Pokémon can evolve on its
-    // own next turn and attack.
-    attackLockedTurn: null,
-    attackFlipLockTurn: null,
-    attackTwoFlipLockTurn: null,
-    retreatLockedTurn: null,
-    damageReduction: null,
-    noWeaknessTurn: null,
-    // Evolving the Defending Pokémon cancels a scheduled delayed effect (counters, discard or Knock
-    // Out) before it resolves.
-    scheduledEffect: null,
-    attackDamageDebuff: null,
-    damageVulnerability: null,
-    weaknessRetype: null,
-    costTaxTurn: null,
-    koBounty: null,
-    handAttachMark: null,
-    installedRecoil: null,
-    // Sheds the whole list of per-attack bars, not just one.
-    lockedAttacks: [],
-    // Evolving also throws away a beneficial per-attack buff; §10 sheds attack effects whether or
-    // not the holder wanted it.
-    boostedAttack: null,
+    // §10: evolving sheds every effect of an attack, beneficial ones included, so a locked Pokémon
+    // can evolve and attack and a scheduled delayed effect is cancelled.
+    ...clearedAttackEffects(),
     markers: [],
     turnPlayed: state.turn,
     // Records that this Pokémon evolved this turn. This is the only write site, shared by every
@@ -1249,7 +1308,7 @@ export function evolveOnto(
   const updated: PlayerSide =
     target.spot === "active"
       ? { ...side, active: evolved }
-      : { ...side, bench: side.bench.map((p, i) => (i === benchIndex ? evolved : p)) };
+      : { ...side, bench: side.bench.map((p, i) => (i === target.index ? evolved : p)) };
   events.push({
     type: "POKEMON_EVOLVED",
     seat,

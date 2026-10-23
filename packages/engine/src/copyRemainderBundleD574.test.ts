@@ -12,17 +12,14 @@ import {
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { resumeProgram } from "./interpreter";
 import type { EffectChoice } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
-import type { CoinFace } from "./rng";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -34,6 +31,9 @@ import {
   must,
   mustApply as run,
   effectPrompt,
+  driveSetup,
+  roundTrip,
+  withFaces,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -286,14 +286,7 @@ function refused(state: GameState, action: GameAction): { code: string; message:
 
 /** Setup with p2 going first; returns p1's turn 2 (p1's FIRST turn — p1 went second). */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  state = completeSetup(state);
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -455,24 +448,6 @@ function armed(
   oppBench: readonly string[] = [],
 ): GameState {
   return attach(table(id, bench, oppActive, oppBench), "p1", "active", attackerOf(id).energy);
-}
-
-/** TEST SURGERY — the next `faces.length` coins come up as `faces` (flipCoin is a pure step). */
-function withFaces(state: GameState, faces: readonly CoinFace[]): GameState {
-  for (let seed = state.rngState; seed < state.rngState + 100_000; seed += 1) {
-    let r = seed;
-    let ok = true;
-    for (const face of faces) {
-      const [drawn, nextR] = flipCoin(r);
-      if (drawn !== face) {
-        ok = false;
-        break;
-      }
-      r = nextR;
-    }
-    if (ok) return { ...state, rngState: seed };
-  }
-  throw new Error("no rngState found");
 }
 
 function all<T extends GameEvent["type"]>(
@@ -1411,7 +1386,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
       [seekPark().state, pickAttack(1)],
       [loopPark().state, pickOpp(0, 2)],
     ] as const) {
-      const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+      const revived = roundTrip(parked);
       const direct = run(parked, action);
       const viaJson = run(revived, action);
       expect(JSON.stringify(viaJson.state)).toBe(JSON.stringify(direct.state));

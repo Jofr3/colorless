@@ -18,6 +18,7 @@ import {
   types,
   findEvent,
   activeOf,
+  mustDerive,
 } from "./testFixtures";
 
 const BASIC_TEXT =
@@ -87,20 +88,20 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
   });
 
   it("is UNGATED — the first producer of this op that is not a coinFlipGate body", () => {
-    const derived = deriveAttackEffect(BASIC_TEXT) as EffectOp[];
+    const derived = mustDerive(deriveAttackEffect, BASIC_TEXT);
     expect(derived.map((op) => op.op)).toEqual(["preventDamage"]);
-    const gated = deriveAttackEffect(UNFILTERED_TEXT) as EffectOp[];
+    const gated = mustDerive(deriveAttackEffect, UNFILTERED_TEXT);
     expect(gated.map((op) => op.op)).toEqual(["coinFlipGate"]);
   });
 
   it("keeps `effects` ABSENT and `fromClass` PRESENT — the two fields, two phrases", () => {
-    const derived = deriveAttackEffect(BASIC_TEXT) as EffectOp[];
+    const derived = mustDerive(deriveAttackEffect, BASIC_TEXT);
     expect(Object.keys(derived[0] as object).sort()).toEqual(["fromClass", "op"]);
   });
 
   it("differs from D142's unfiltered narrow body in EXACTLY `fromClass`", () => {
-    const filtered = deriveAttackEffect(BASIC_TEXT) as EffectOp[];
-    const gate = (deriveAttackEffect(UNFILTERED_TEXT) as EffectOp[])[0] as Extract<
+    const filtered = mustDerive(deriveAttackEffect, BASIC_TEXT);
+    const gate = mustDerive(deriveAttackEffect, UNFILTERED_TEXT)[0] as Extract<
       EffectOp,
       { op: "coinFlipGate" }
     >;

@@ -18,6 +18,7 @@ import {
   setDamage,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const DISCARD_TEXT = "Flip a coin. If tails, discard all Energy from this Pokémon.";
@@ -124,7 +125,7 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       },
     ]);
     for (const text of [DISCARD_TEXT, RECOIL_TEXT]) {
-      const op = (deriveAttackEffect(text) as EffectOp[])[0] as object;
+      const op = mustDerive(deriveAttackEffect, text)[0] as object;
       expect(Object.keys(op).sort(), text).toEqual(["onTails", "op", "then"]);
     }
   });
@@ -134,7 +135,7 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       [DISCARD_TEXT, BARE_DISCARD],
       [RECOIL_TEXT, BARE_RECOIL],
     ] as const) {
-      const gated = deriveAttackEffect(gatedText) as EffectOp[];
+      const gated = mustDerive(deriveAttackEffect, gatedText);
       expect(gated, gatedText).toHaveLength(1);
       expect(gated[0], gatedText).toMatchObject({ then: deriveAttackEffect(bareText) });
       // …and the two anchors are NOT the same reading. A build where either
@@ -190,13 +191,13 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     expect(deriveAttackEffect(BARE_RECOIL)).not.toEqual(deriveAttackEffect(RECOIL_TEXT));
     // The bare readings are UNWRAPPED — a single op, not a gate.
     for (const bare of [BARE_DISCARD, BARE_RECOIL]) {
-      const ops = deriveAttackEffect(bare) as EffectOp[];
+      const ops = mustDerive(deriveAttackEffect, bare);
       expect(ops, bare).toHaveLength(1);
       expect(ops[0]?.op, bare).not.toBe("coinFlipGate");
     }
     // …and the gated readings are gates, with the field set.
     for (const gated of [DISCARD_TEXT, RECOIL_TEXT]) {
-      const ops = deriveAttackEffect(gated) as EffectOp[];
+      const ops = mustDerive(deriveAttackEffect, gated);
       expect(ops[0]?.op, gated).toBe("coinFlipGate");
     }
   });
@@ -638,7 +639,7 @@ describe("the tails-gated self-costs — the whiff, and purity", () => {
       players: { ...state.players, p1: { ...state.players.p1, active: { ...active, energy: [] } } },
     };
     const events: GameEvent[] = [];
-    const bare = deriveAttackEffect(BARE_DISCARD) as EffectOp[];
+    const bare = mustDerive(deriveAttackEffect, BARE_DISCARD);
     const out = runProgram(
       stripped,
       bare,
@@ -650,7 +651,7 @@ describe("the tails-gated self-costs — the whiff, and purity", () => {
     // …and the same op through the GATE spends the coin and still says nothing,
     // which is the combination a reader has to see once.
     const gatedEvents: GameEvent[] = [];
-    const gated = deriveAttackEffect(DISCARD_TEXT) as EffectOp[];
+    const gated = mustDerive(deriveAttackEffect, DISCARD_TEXT);
     runProgram(stripped, gated, { seat: "p1", sourceUid: activeUid(stripped, "p1") }, gatedEvents);
     expect(types(gatedEvents)).toEqual(["ATTACK_EFFECT_COIN_FLIP"]);
   });

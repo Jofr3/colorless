@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { programPlayable } from "./cardplay";
 import { redactGame } from "./redact";
@@ -14,12 +14,14 @@ import {
   deckOf,
   deepFreeze,
   expectErr,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -341,28 +343,7 @@ const DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 function matchup(seed: number, attackerId: string, defenderId: string): GameState {
@@ -564,7 +545,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
 
   it("the attack is DECLARABLE — programPlayable does not descend into `then`", () => {
     const state = matchup(13, "fix-may-return", "fix-bigbody");
-    const program = deriveAttackEffect(CLAUSES[UNTIL].text) as EffectOp[];
+    const program = mustDerive(deriveAttackEffect, CLAUSES[UNTIL].text);
     const empty: GameState = {
       ...state,
       players: { ...state.players, p1: { ...state.players.p1, deck: [] } },
@@ -622,7 +603,7 @@ describe("the wire and the seat gate, on the DERIVED park", () => {
 
   it("MATCH_RECORD_VERSION stays 12 — and D186's SECOND leg has retired, so this is the check", () => {
     const state = parked();
-    const thawed = JSON.parse(JSON.stringify(state)) as GameState;
+    const thawed = roundTrip(state);
     if (thawed.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(thawed.phase.prompt).toEqual({ kind: "confirm", note: CLAUSES[UNTIL].text });
     expect(thawed.phase.cont.pendingOp).toEqual({

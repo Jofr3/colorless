@@ -2,7 +2,14 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameEvent, GameState } from "./index";
 import { applyAction, createGame } from "./index";
-import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  typedEnergy,
+  mustApply as must,
+  roundTrip,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const POLLEN =
@@ -63,7 +70,7 @@ function base(): GameState {
     with one {C}); P2: Active Victim carrying `damage`, one benched Tapper (so a Knock Out promotes
     rather than ends the game). Six Prize cards each, ten deck cards each, fresh uids throughout. */
 function table(opts: { damage: number; benchRibombee?: boolean }): GameState {
-  const state: GameState = JSON.parse(JSON.stringify(base()));
+  const state: GameState = roundTrip(base());
   let n = 0;
   const alloc = (id: string): string => {
     const uid = `b37#${n++}`;

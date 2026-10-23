@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
@@ -17,6 +17,8 @@ import {
   trainerCard,
   must,
   effectPrompt,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const SALVATORE = ["sv05-160", "sv05-202", "sv05-212"] as const;
@@ -70,28 +72,7 @@ const DECK = deckOf({
 });
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -179,7 +160,7 @@ const pickBody = (state: GameState, spot: "active" | number) =>
       },
     },
   });
-const revive = (state: GameState): GameState => JSON.parse(JSON.stringify(state)) as GameState;
+const revive = (state: GameState): GameState => roundTrip(state);
 const shuffled = (events: readonly GameEvent[]) => events.some((e) => e.type === "SHUFFLE");
 
 // ────────────────────────────────────────────────────────────────────────────

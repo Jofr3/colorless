@@ -22,7 +22,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, resumeProgram, runProgram } from "./interpreter";
 import {
@@ -33,7 +33,6 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -41,6 +40,8 @@ import {
   setActiveFromDeck,
   trainerCard,
   types,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -155,30 +156,7 @@ const HAND_2 = ["d486-h1", "d486-h2"] as const;
 const HAND_1 = ["d486-h1"] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({ seed: SEED, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(SEED, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** Rebuild `seat`'s HAND outright (`opponentHandDiscard.test.ts`'s `withHand`, needed here
@@ -689,7 +667,7 @@ describe("§8 — what this program can put into a persisted `phase.cont`", () =
     const state = ready({ from: "d486-salandit", to: "d486-salazzle" });
     const parked = mustApply(state, { type: "attack", seat: "p1", index: GATED_DISCARD }).state;
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the discard park");
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const answer = (from: GameState): GameState => {
       let now = from;

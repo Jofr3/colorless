@@ -3,7 +3,7 @@ import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { CardFilter, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { redactGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -16,14 +16,14 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setDamage,
   trainerCard,
   types,
   findEvent,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const KIERAN = ["sv06-154", "sv06-206", "sv06-218", "sv08.5-113", "sv08.5-174"] as const;
@@ -163,27 +163,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 /** TEST SURGERY — one copy of `id` into `seat`'s DECK (back from the hand, or swapped
@@ -516,7 +496,7 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
 
 describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a widening, DRIVEN", () => {
   function stripped(parked: GameState): GameState {
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     if (revived.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const phase = revived.phase as unknown as {
       prompt: Record<string, unknown>;
@@ -524,7 +504,7 @@ describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a wide
     };
     phase.prompt.labels = undefined;
     phase.cont.pendingOp.labels = undefined;
-    return JSON.parse(JSON.stringify(revived)) as GameState;
+    return roundTrip(revived);
   }
 
   it("the parked record really carries the labels on the prompt AND on the pending op", () => {

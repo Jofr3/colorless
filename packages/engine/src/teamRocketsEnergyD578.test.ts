@@ -10,7 +10,7 @@ import {
 import type { GameEvent } from "./events";
 import { advance } from "./flow";
 import { resumeProgram, runProgram } from "./interpreter";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -21,6 +21,8 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  patchSide,
+  driveSetup,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -93,37 +95,8 @@ function rejected(state: GameState, action: GameAction): string {
 }
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
 function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid: string } {
@@ -136,13 +109,13 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
     const swap = side.deck.find((u) => !is(u)) ?? "";
     return {
       uid,
-      state: withSide(state, seat, {
+      state: patchSide(state, seat, {
         prizes: side.prizes.map((u) => (u === uid ? swap : u)),
         deck: side.deck.filter((u) => u !== swap),
       }),
     };
   }
-  return { uid, state: withSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
+  return { uid, state: patchSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
 }
 
 interface Spot {
@@ -166,7 +139,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -186,10 +159,10 @@ function table(opts: {
   const p1Active = build("p1", opts.p1);
   const p1Bench = (opts.p1Bench ?? []).map((s) => build("p1", s));
   const p2Active = build("p2", opts.p2);
-  state = withSide(state, "p1", { active: p1Active, bench: p1Bench });
-  state = withSide(state, "p2", { active: p2Active, bench: [] });
+  state = patchSide(state, "p1", { active: p1Active, bench: p1Bench });
+  state = patchSide(state, "p2", { active: p2Active, bench: [] });
   const hand = (opts.hand ?? []).map((id) => take("p1", id));
-  return withSide(state, "p1", { hand });
+  return patchSide(state, "p1", { hand });
 }
 
 const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon =>
@@ -375,7 +348,7 @@ describe("D578 Team Rocket's Energy §5 — 'If this card is attached to anythin
   it("both seats are swept: a card on the OPPONENT's non-Team Rocket's body is discarded into THEIR pile", () => {
     let state = table({ p1: { id: TR_MON }, p2: { id: PLAIN } });
     const pulled = pull(state, "p2", TR_ENERGY);
-    state = withSide(pulled.state, "p2", {
+    state = patchSide(pulled.state, "p2", {
       active: { ...active(pulled.state, "p2"), energy: [pulled.uid] },
     });
     const after = run(state, { type: "endTurn", seat: "p1" }).state;
@@ -389,7 +362,7 @@ describe("D578 Team Rocket's Energy §6 — R-TRE1 (RULED: fixed at the landing)
     const pulled = pull(state, "p1", TR_ENERGY);
     return {
       uid: pulled.uid,
-      state: withSide(pulled.state, "p1", {
+      state: patchSide(pulled.state, "p1", {
         discard: [...pulled.state.players.p1.discard, pulled.uid],
       }),
     };

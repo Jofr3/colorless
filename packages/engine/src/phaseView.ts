@@ -2,10 +2,10 @@
 // parked, and how the game ended. This is the one exhaustive switch over `Phase`, shared by the web
 // playmat projection and the server redactor.
 
-import type { EffectPrompt } from "./interpreter";
-import { cardOfUid, isBasicPokemon } from "./cards";
+import type { EffectPrompt } from "./effectPrompt";
+import { handHasBasic } from "./cards";
 import type { GameOutcome, GameState, Seat } from "./types";
-import { SEATS, otherSeat } from "./types";
+import { SEATS, answererOf, turnOwnerOf } from "./types";
 
 /** A parked KO interrupt (§8.1 resolution — mid-turn from an attack, or between
     turns from the Checkup) awaiting `waitingSeat`'s decision. Without this a
@@ -61,10 +61,7 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
               !phase.ready[seat] &&
               (phase.stage !== "opening" ||
                 state.players[seat].active !== null ||
-                state.players[seat].hand.some((uid) => {
-                  const card = cardOfUid(state, uid);
-                  return card !== undefined && isBasicPokemon(card);
-                })),
+                handHasBasic(state, seat)),
           ),
           viewerSeat,
         ),
@@ -92,7 +89,7 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     // marks the mid-tail parks, which read the turn owner off the pending queue instead
     // (`koParkActiveSeat`).
     case "effect:choose": {
-      const answerer = phase.answerer ?? phase.seat;
+      const answerer = answererOf(phase);
       const withheld = phase.answerer !== undefined && phase.answerer !== viewerSeat;
       return {
         activeSeat: phase.resumeTail === true ? koParkActiveSeat(state) : phase.seat,
@@ -135,15 +132,6 @@ function koParkActiveSeat(state: GameState): Seat | null {
       stage.kind === "attackEpilogue",
   );
   return inTurn ? turnOwnerOf(state) : null;
-}
-
-/**
- * Odd turns belong to firstPlayer. Only meaningful while a turn is in progress; `koParkActiveSeat`
- * guards the between-turns case.
- */
-function turnOwnerOf(state: GameState): Seat | null {
-  if (state.turn < 1 || state.firstPlayer === null) return null;
-  return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);
 }
 
 /** Both seats can owe a simultaneous setup decision; a single waitingSeat must

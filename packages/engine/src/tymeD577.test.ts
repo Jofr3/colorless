@@ -1,11 +1,20 @@
 import type { Card } from "@colorless/schema";
 import { redactedGameSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, redactGame } from "./index";
-import type { GameState, Seat } from "./index";
+import { applyAction, redactGame } from "./index";
+import type { GameState } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, must, mustApply as run } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  must,
+  mustApply as run,
+  patchSide,
+  driveSetup,
+} from "./testFixtures";
 
 const TYME = "sv08-190";
 const TYME_2 = "sv08.5-143";
@@ -46,37 +55,8 @@ const DECK = deckOf({
 });
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
 /** p1's turn 2 with p1's hand EXACTLY `hand` (ids, pulled from the deck or the prizes), and
@@ -84,13 +64,13 @@ function withSide(
 function table(hand: readonly string[], oppDeck?: number): GameState {
   let state = opened(5779);
   const p1 = state.players.p1;
-  state = withSide(state, "p1", { hand: [], deck: [...p1.deck, ...p1.hand] });
+  state = patchSide(state, "p1", { hand: [], deck: [...p1.deck, ...p1.hand] });
   for (const id of hand) {
     const side = state.players.p1;
     const is = (u: string) => state.cardIdByUid[u] === id;
     const inDeck = side.deck.find(is);
     if (inDeck !== undefined) {
-      state = withSide(state, "p1", {
+      state = patchSide(state, "p1", {
         deck: side.deck.filter((u) => u !== inDeck),
         hand: [...side.hand, inDeck],
       });
@@ -99,7 +79,7 @@ function table(hand: readonly string[], oppDeck?: number): GameState {
     const prized = side.prizes.find(is);
     const swap = side.deck.find((u) => !is(u));
     if (prized === undefined || swap === undefined) throw new Error(`p1 has no more ${id}`);
-    state = withSide(state, "p1", {
+    state = patchSide(state, "p1", {
       prizes: side.prizes.map((u) => (u === prized ? swap : u)),
       deck: side.deck.filter((u) => u !== swap),
       hand: [...side.hand, prized],
@@ -107,7 +87,7 @@ function table(hand: readonly string[], oppDeck?: number): GameState {
   }
   if (oppDeck !== undefined) {
     const p2 = state.players.p2;
-    state = withSide(state, "p2", {
+    state = patchSide(state, "p2", {
       deck: p2.deck.slice(0, oppDeck),
       discard: [...p2.discard, ...p2.deck.slice(oppDeck)],
     });

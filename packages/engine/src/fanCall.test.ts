@@ -3,14 +3,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import type { CardFilter } from "./effects";
-import {
-  applyAction,
-  conditionHolds,
-  conditionNote,
-  createGame,
-  engineVersion,
-  programFor,
-} from "./index";
+import { applyAction, conditionHolds, conditionNote, engineVersion, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -18,10 +11,11 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   must,
   setActiveFromDeck,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 import { isFirstTurnOf } from "./types";
 
@@ -58,28 +52,7 @@ const FAN_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: FAN_DECK, p2: FAN_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: FAN_DECK, p2: FAN_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, seat: Seat, activeId = "sv07-118"): GameState {
@@ -499,7 +472,7 @@ describe("Fan Call on a real board", () => {
 describe("MATCH_RECORD_VERSION stays 14", () => {
   it("a v14-shaped park — a `searchDeck` with NO `maxHp` — replays BENIGNLY", () => {
     const parked = must(useFanCall(board(SEEDS[2], "p1", "p1"), "p1", ACTIVE));
-    const roundTripped = JSON.parse(JSON.stringify(parked)) as GameState;
+    const roundTripped = roundTrip(parked);
     expect(cardsPrompt(roundTripped).candidates.length).toBeGreaterThan(0);
 
     const legacy = JSON.parse(
@@ -523,7 +496,7 @@ describe("MATCH_RECORD_VERSION stays 14", () => {
     // `firstPlayer` have been on the record since M1, so a v14 snapshot answers
     // the new condition with no migration, no default and no `?? 0`.
     const state = board(SEEDS[0], "p1", "p1");
-    const legacy = JSON.parse(JSON.stringify(state)) as GameState;
+    const legacy = roundTrip(state);
     expect(conditionHolds(legacy, "p1", { kind: "yourFirstTurn" })).toBe(true);
     expect(useFanCall(legacy, "p1", ACTIVE).ok).toBe(true);
   });

@@ -5,11 +5,10 @@ import * as effects from "./effects";
 import type { EffectOp } from "./effects";
 import { deriveAttackCancelRequirement, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { runProgram, resumeProgram } from "./interpreter";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   basicEnergy,
@@ -18,11 +17,11 @@ import {
   clearBench,
   deckOf,
   itemTrainer,
-  must,
   mustApply,
   setActiveFromDeck,
   typedEnergy,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED =
@@ -160,19 +159,7 @@ const HAND = [
 const PILE = ["d489-en-d", "d489-en-d", "d489-item-3", "d489-item-3"] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: D489_DECK, p2: D489_DECK },
-    cardPool: D489_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  table = completeSetup(table);
-  return table;
+  return driveSetup(SEED, { p1: D489_DECK, p2: D489_DECK }, { pool: D489_POOL, first });
 }
 
 function withZones(

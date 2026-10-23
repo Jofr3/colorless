@@ -9,7 +9,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter, EffectOp } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { countCardsInDiscardPile } from "./interpreter";
 import {
@@ -20,7 +20,8 @@ import {
   deckOf,
   setActiveFromDeck,
   must,
-  firstBasicInHand,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const PRINTED =
@@ -126,28 +127,7 @@ const DECK = deckOf({
 });
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
 }
 
 function toPile(state: GameState, seat: Seat, cardId: string, count: number): GameState {
@@ -699,7 +679,7 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
   it("THE FIRST DOOR, MEASURED: the rider rides `phase.cont.pendingOp`", () => {
     const { state } = attack(stockPile(board(SEED, [B1, B2])));
     if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
-    expect(JSON.parse(JSON.stringify(state.phase.cont.pendingOp))).toEqual(PROGRAM[0]);
+    expect(roundTrip(state.phase.cont.pendingOp)).toEqual(PROGRAM[0]);
     expect(JSON.stringify(state)).toContain(
       '"perDiscardPileCard":{"kind":"basicEnergy","energyType":"Grass"}',
     );
@@ -745,7 +725,7 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
 
   it("the parked record REPLAYS — the rider is applied from `pendingOp` and nothing else", () => {
     const { state } = attack(stockPile(board(SEED, [B1, B2])));
-    const revived = JSON.parse(JSON.stringify(state)) as GameState;
+    const revived = roundTrip(state);
     expect(revived.phase.kind).toBe("effect:choose");
     const { state: done } = answer(revived, benchRef(0));
     expect(done.players.p2.bench[0]?.damage).toBe(60);

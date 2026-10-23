@@ -14,6 +14,8 @@ import {
   setBenchDamage,
   setDamage,
   findEvent,
+  roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 /** The two printed sentences, transcribed byte for byte off the committed column. */
@@ -188,7 +190,7 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       { op: "preventAttack" },
     ]);
     expect(deriveAttackEffect("Put 9 damage counters on 1 of your opponent's Pokémon.")).toEqual([
-      (deriveAttackEffect(COMPOUND) as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, COMPOUND)[0],
     ]);
   });
 
@@ -381,9 +383,9 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
       '{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack"}',
     );
     expect(Object.keys(fresh).sort()).toEqual(["amount", "count", "op", "source", "target"]);
-    const shipped = (deriveAttackEffect(COMPOUND) as EffectOp[])[0] as EffectOp;
+    const shipped = mustDerive(deriveAttackEffect, COMPOUND)[0] as EffectOp;
     expect(Object.keys(shipped).sort()).toEqual(Object.keys(fresh).sort());
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
 
     // **DIRECTION 2 — BACKWARD. Every byte string a v29 deploy could have written still
     // resumes to exactly what its writer meant.** Three of them, spanning the two other

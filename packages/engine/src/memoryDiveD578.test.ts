@@ -5,7 +5,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { attackMenuOf, firstTurnAttackBanned, memoryDiveLive } from "./continuous";
 import { COPY_FAMILY_MARKER } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -16,6 +16,8 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  patchSide,
+  driveSetup,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -319,37 +321,8 @@ function rejected(state: GameState, action: GameAction): string {
 }
 
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
 function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid: string } {
@@ -362,13 +335,13 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
     const swap = side.deck.find((u) => !is(u)) ?? "";
     return {
       uid,
-      state: withSide(state, seat, {
+      state: patchSide(state, seat, {
         prizes: side.prizes.map((u) => (u === uid ? swap : u)),
         deck: side.deck.filter((u) => u !== swap),
       }),
     };
   }
-  return { uid, state: withSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
+  return { uid, state: patchSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
 }
 
 interface Spot {
@@ -394,7 +367,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -417,7 +390,7 @@ function table(opts: {
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
       build(seat, s),
     );
-    state = withSide(state, seat, { active, bench });
+    state = patchSide(state, seat, { active, bench });
   }
   return state;
 }
@@ -582,7 +555,7 @@ describe("D578 Memory Dive §4 — R-MD3: whole-body locks and all-attacks boost
   it("an ALL-ATTACKS boost (`attackIndex: null`) pays a borrowed attack; a NAMED boost at printed index 0 does not", () => {
     const state = table({ p1: LINE, p1Bench: [DIVER], p2: { id: PLAIN } });
     const boosted = (attackIndex: number | null) =>
-      withSide(state, "p1", {
+      patchSide(state, "p1", {
         active: { ...active(state), boostedAttack: { turn: state.turn, attackIndex, amount: 30 } },
       });
     expect(dealt(run(boosted(null), { type: "attack", seat: "p1", index: 3 }).events)).toBe(70);
@@ -717,7 +690,7 @@ describe("D578 Memory Dive §7 — R-MD2: copies and imposed attack bars read PR
 
 describe("D578 Memory Dive §8 — a PRINTED-index record survives the menu changing", () => {
   const barred = (state: GameState): GameState =>
-    withSide(state, "p1", {
+    patchSide(state, "p1", {
       active: { ...active(state), lockedAttacks: [{ turn: state.turn, attackIndex: 0 }] },
     });
 
@@ -734,7 +707,7 @@ describe("D578 Memory Dive §8 — a PRINTED-index record survives the menu chan
       ["Mid Strike", false],
       ["Low Strike", true],
     ]);
-    const gone = withSide(state, "p1", { bench: [] });
+    const gone = patchSide(state, "p1", { bench: [] });
     expect(names(gone)).toEqual(["Mid Strike/printed"]);
     expect(rejected(gone, { type: "attack", seat: "p1", index: 0 })).toBe("ATTACK_PREVENTED");
   });
@@ -747,7 +720,7 @@ describe("D578 Memory Dive §8 — a PRINTED-index record survives the menu chan
       seat: "p2",
     }).state;
     expect(names(shed)).toEqual(["Tap/printed"]);
-    const boosted = withSide(shed, "p1", {
+    const boosted = patchSide(shed, "p1", {
       active: { ...active(shed), boostedAttack: { turn: shed.turn, attackIndex: 0, amount: 30 } },
     });
     expect(dealt(run(boosted, { type: "attack", seat: "p1", index: 0 }).events)).toBe(40);

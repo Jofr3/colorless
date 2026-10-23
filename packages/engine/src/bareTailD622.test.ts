@@ -4,7 +4,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameEvent, GameState, InPlayPokemon } from "./index";
 import {
   FIXTURE_POOL,
@@ -15,6 +15,8 @@ import {
   mustApply,
   setActiveFromDeck,
   must,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 /** Arboliva ex "Oil Salvo" — sv10-023, sv10-207. */
@@ -66,28 +68,7 @@ const DECK = deckOf({ [SNIPER]: 4, [TARGET]: 6, [SHIELD]: 6, [FILLER]: 44 });
 
 /** Setup, then P1's first turn (P2 went first and passed). */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 6220, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(6220, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
@@ -251,7 +232,7 @@ describe("D622 §4 — an in-flight v43 park keeps the reading it was parked und
       ...state.phase,
       cont: { ...cont, pendingOp: strip(cont.pendingOp), rest: cont.rest.map(strip) },
     };
-    return JSON.parse(JSON.stringify({ ...state, phase })) as GameState;
+    return roundTrip({ ...state, phase });
   }
 
   it("a parked Telekinesis without `wrOnly` resumes as before (lands through the block); with it, it is stopped", () => {

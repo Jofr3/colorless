@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
+import { applyAction, deriveAttackEffect, programFor, topCardOf } from "./index";
 import { deriveAttackCopy } from "./effects";
 import type { GameState, PokemonRef, Seat } from "./index";
 // `attachEnergyTargets` is not re-exported from index.ts (it is an engine-internal
@@ -14,7 +14,6 @@ import {
   clearBench,
   deckOf,
   discardFromDeck,
-  firstBasicInHand,
   handFromDeck,
   handToDeck,
   handUid,
@@ -24,6 +23,7 @@ import {
   specialEnergy,
   trainerCard,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const IN_PLAY_TARGET_CENSUS = [
@@ -208,28 +208,7 @@ const DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 function board(seed: number): GameState {
@@ -563,10 +542,9 @@ describe("Marnie's Grimmsnarl ex sv10-136 — 'Punk Up' on `attachFromDeck`", ()
     expect(["effect:choose", "turn:action"]).toContain(after.phase.kind);
   });
 
-  it("carries Charizard ex's shape: onEvolve, optional, max 5, no maxPerTarget", () => {
+  it("carries Charizard ex's shape: onEvolve, max 5, no maxPerTarget", () => {
     const trigger = programFor("sv10-136")?.triggered?.[0];
     expect(trigger?.trigger).toBe("onEvolve");
-    expect(trigger?.optional).toBe(true);
     const op = trigger?.program[0];
     expect(op).toMatchObject({
       op: "attachFromDeck",

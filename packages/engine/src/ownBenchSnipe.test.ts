@@ -14,6 +14,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  roundTrip,
 } from "./testFixtures";
 
 const SEED = 447_0447;
@@ -300,7 +301,7 @@ describe("§3 — `damageChosen.target` has three members, and the record versio
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"damageChosen","target":"yourBench","amount":40,"count":1,"source":"attack","deals":true}',
     );
-    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+    expect(roundTrip(fresh)).toEqual(fresh);
     expect(Object.keys(fresh ?? {}).includes("filter")).toBe(false);
   });
 });

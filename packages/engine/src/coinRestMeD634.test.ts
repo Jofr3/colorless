@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { PokemonRef } from "./interpreter";
 import { formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
@@ -20,6 +20,8 @@ import {
   setActiveFromDeck,
   typedEnergy,
   must,
+  driveSetup,
+  roundTrip,
 } from "./testFixtures";
 
 const T = {
@@ -252,28 +254,7 @@ const DECK = deckOf({
 });
 
 function p1Turn(): GameState {
-  const created = createGame({ seed: 6341, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6341, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
@@ -571,7 +552,7 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
 
   it("the parked board survives a JSON round trip and resumes the same", () => {
     const parked = attack(table(WATCHOG, [H, H, X], { oppHand: hand })).state;
-    const revived = JSON.parse(JSON.stringify(parked)) as GameState;
+    const revived = roundTrip(parked);
     expect(revived).toEqual(parked);
     const pick = parked.players.p2.hand[0] as string;
     expect(resolve(revived, { kind: "cards", uids: [pick] }).state).toEqual(

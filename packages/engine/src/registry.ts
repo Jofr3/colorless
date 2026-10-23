@@ -1,1133 +1,27 @@
-import type { BasicEnergyType } from "@colorless/schema";
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
-import type { Banner } from "./banners";
-import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { searchTopOrderProgram } from "./effects";
-import type {
-  BoardCondition,
-  CardFilter,
-  EffectOp,
-  HandPlayClass,
-  PokemonPlayAct,
-  PokemonType,
-} from "./effects";
-import type { StatusName } from "./events";
+import type { CardProgram } from "./programTypes";
+import { activated, berry, searchThenShuffle } from "./registryBuilders";
 import { BENCH_CEILING } from "./types";
+
+export type {
+  AbilityProgram,
+  AttackTimingGate,
+  CardProgram,
+  EnergyOnAttach,
+  EnergyProgram,
+  KoPrizeReduction,
+  MaxHpScale,
+  PassiveEffects,
+  StadiumAbility,
+  StadiumEffects,
+  TriggeredAbility,
+  TriggerTiming,
+} from "./programTypes";
 
 // The id-keyed card-program registry. It sits above the text deriver: attacks resolve
 // `programFor(id)?.attack ?? deriveAttackEffect(text)`, and Trainers/Abilities have no deriver, so
 // unauthored ones can't be played.
-
-/**
- * A card's activated Ability (§9). Passive abilities are `passive`; triggered ones are `triggered`.
- */
-export interface AbilityProgram {
-  name: string;
-  /**
-   * §9 usable once per turn per Pokémon (tracked in TurnAllowances); "Once during your turn" limits
-   * this body, so two copies can each be used.
-   */
-  oncePerTurn: boolean | "sharedByName";
-  /**
-   * §9 the Ability's printed board gate (Fezandipiti ex), sharing `BoardCondition` with
-   * `trainerPlayableIf`.
-   */
-  playableIf?: BoardCondition;
-  /**
-   * §9 per-body gate: "if this Pokémon's remaining HP is 30 or less" (Pidove — Emergency
-   * Evolution).
-   */
-  remainingHpAtMost?: number;
-  /** §9 per-body gate: "if this Pokémon has any {D} Energy attached" (Munkidori — Adrena-Brain). */
-  requiresEnergyType?: BasicEnergyType | "any";
-  /**
-   * §9 per-body gate: usable only on the turn this body moved from the Active Spot to the Bench
-   * (Clawitzer — Fall Back to Reload).
-   */
-  benchedThisTurn?: true;
-  /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
-      "if this Pokémon is in the Active Spot"). */
-  activeOnly: boolean;
-  /**
-   * The Ability may only be used while this Pokémon is on the Bench (Misty's Psyduck — Flustered
-   * Leap); the mirror of `activeOnly`.
-   */
-  benchOnly?: true;
-  /** The Ability ENDS the controller's turn once its program completes
-      (Koraidon "Dino Cry": "If you use this Ability, your turn ends."). Folded by
-      flow.ts settleProgram — instead of returning to turn:action, it seeds the
-      turn tail. Assumes the program does not damage (Koraidon attaches Energy). */
-  endsTurn?: true;
-  /** The op program `useAbility` runs (may park like a Trainer's). */
-  program: EffectOp[];
-}
-
-/** When a triggered Ability (§9) fires. */
-export type TriggerTiming =
-  | "onPlayToBench"
-  | "onEvolve"
-  | "betweenTurns"
-  | "onKnockOut"
-  | "onDamagedByAttack"
-  | "onAllyActiveKnockOut"
-  | "onEnergyAttach"
-  /** The moment a seat's Active Pokémon moves to the Bench (Magcargo — Lava Zone). */
-  | "onActiveMovedToBench"
-  /**
-   * A Tool's trigger when its holder is Knocked Out in the Active Spot by damage from an opponent's
-   * attack (Heavy Baton); runs before the stack is discarded.
-   */
-  | "onHolderActiveKnockedOut"
-  /**
-   * A Tool's trigger when its holder, Active or Benched, is Knocked Out by damage from an
-   * opponent's attack (Amulet of Hope); runs after the Knock Out.
-   */
-  | "onHolderKnockedOut"
-  /** A Tool's end-of-turn trigger while its holder is in the Active Spot (Powerglass). */
-  | "atEndOfYourTurnInActive"
-  /**
-   * An Ability's trigger when this Pokémon is Knocked Out in the Active Spot by damage from an
-   * opponent's attack (Miraidon — Photon Cord); runs before the stack is discarded.
-   */
-  | "onSelfActiveKnockedOut";
-
-/** A card's triggered Ability (§9) — one that FIRES on a game event rather than
-    being player-activated. The framework runs `program` through the shared
-    interpreter (triggers.ts): a board trigger (onPlayToBench/onEvolve, the
-    controller's turn) PARKS on effect:choose like a Trainer and resumes to
-    turn:action; a betweenTurns trigger is NON-PARKING by construction (a
-    heal-each / a fixed counter placement) and runs synchronously inside the
-    one Checkup reduction. */
-export interface TriggeredAbility {
-  name: string;
-  trigger: TriggerTiming;
-  /** The op program to run (interpreter EffectOps). */
-  program: EffectOp[];
-  /**
-   * "You may …": the trigger is optional. Optional triggers currently auto-fire since every one is
-   * pure upside.
-   */
-  optional?: boolean;
-  /** Fires only while this Pokémon is in the Active Spot (Trevenant). */
-  activeOnly?: boolean;
-  /**
-   * Which seat's actions the trigger watches (e.g. "Whenever your opponent…"); a scan direction,
-   * not a separate timing.
-   */
-  opponentAction?: true;
-  /**
-   * The printed "Once during your turn" on a triggered Ability (Palafin — Zero to Hero), keyed
-   * through `abilityUsedKey`.
-   */
-  oncePerTurn?: true | "sharedByName";
-  /**
-   * "The effect of {name} doesn't stack": the board sweep fires the ability name at most once
-   * however many bodies print it.
-   */
-  doesNotStack?: true;
-  /**
-   * `onKnockOut` only: a coin-flip Prize denial (Glimmora — Shattering Crystal), resolved by the KO
-   * sweep rather than the interpreter.
-   */
-  onKoPrizeGuard?: "coinFlipPrevent" | "pokemonExAttackPrevent";
-  /**
-   * `onKnockOut` only: the program runs only if the Knock Out was by damage from an opponent's
-   * attack (Pecharunt — Final Chain).
-   */
-  byOpponentAttack?: true;
-  /** `onKnockOut` only: a cause-conditioned Prize reduction (Munkidori ex — Oh No You Don't). */
-  onKoPrizeReduction?: KoPrizeReduction;
-}
-
-/**
- * §8.1 cause-conditioned Prize reduction, shared so an attached card can carry the same sentence.
- */
-export interface KoPrizeReduction {
-  /** How many Prize cards fewer. `1` on all three carriers today; CLAMPED at 0 by
-      the read site, so "1 fewer" than a 1-Prize Pokémon is 0 and never −1. */
-  by: number;
-  /** Munkidori ex's board clause — *"if you have any Pecharunt ex in play"* —
-      matched on the card NAME, scanned on the KO'd body's OWN side. */
-  requiresInPlay?: string;
-  /**
-   * Owner-prefix gate on the holder's top card name (Lillie's Pearl: "If the Lillie's Pokémon this
-   * card is attached to…"); exact case, trailing space significant.
-   */
-  requiresHolderOwner?: string;
-  /**
-   * Once-per-game latch key naming the printed effect, shared by every printing of it (Legacy
-   * Energy).
-   */
-  oncePerGame?: string;
-}
-
-/** §8.1 what `PassiveEffects.hpBonusPer` counts to scale its max-HP grant. */
-export type MaxHpScale =
-  | { kind: "attachedEnergy"; energyType: BasicEnergyType }
-  | { kind: "opponentPrizesTaken" };
-
-/** Continuous modifiers read by the pipeline while the Pokémon is in play.
-    Carried by a Pokémon's own printed passive Ability (Bouffalant) OR by an
-    attached Pokémon Tool (§7.4) — continuous.ts aggregates the top card's
-    entry with every attached Tool's, so both sources feed one read site. */
-export interface PassiveEffects {
-  /** Flat HP subtracted from the attack damage this Pokémon TAKES, applied
-      AFTER Weakness and Resistance (Bouffalant "Bouffer", §8.5/§15.B). */
-  damageReductionAfterWR?: number;
-  /** `damageReductionAfterWR` gated on the holder's in-play type (Rock Chestplate). */
-  damageReductionAfterWRIfType?: { amount: number; type: PokemonType };
-  /**
-   * §8.5 `damageReductionAfterWR` gated on the holder having any Energy attached (Regirock — Rock
-   * Armor).
-   */
-  damageReductionAfterWRIfEnergy?: number;
-  /**
-   * §8.5 a consumable post-W/R reduction against one attacker type (the type Berries), discarded
-   * after use.
-   */
-  damageReductionAfterWRFromTypeThenDiscard?: { amount: number; type: PokemonType };
-  /** §8.5 `damageReductionAfterWR` gated on the attacker's class (Sacred Charm, Thick Scale). */
-  damageReductionAfterWRFromAttacker?: {
-    amount: number;
-    attacker: CardFilter;
-    holderType?: PokemonType;
-  };
-  /**
-   * §8.1 Survival Brace: at full HP, survives a Knock Out from an opponent's attack with 10 HP,
-   * then the Tool is discarded.
-   */
-  survivesKoAtFullHpFromOpponentThenDiscard?: true;
-  /**
-   * §9 Deluxe Bomb: when the Active holder is damaged by an opponent's attack, put 12 damage
-   * counters on the Attacking Pokémon, then discard this card.
-   */
-  damageAttackerActiveThenDiscard?: number;
-  /**
-   * §9 Tremendous Bomb: as Deluxe Bomb, but only for a non-Mega holder taking 240 or more damage
-   * from a Mega Evolution Pokémon ex.
-   */
-  damageAttackerActiveThenDiscardIf?: {
-    amount: number;
-    minDamage: number;
-    attacker: CardFilter;
-    holderNot: CardFilter;
-  };
-  /**
-   * §8.5 own-side aura: while this Pokémon is in play, all its controller's Pokémon take this much
-   * less attack damage after W/R (Hariyama).
-   */
-  seatDamageReductionAfterWR?: {
-    amount: number;
-    beneficiary?: CardFilter;
-    /**
-     * Beneficiary clause: only Pokémon with any {M} Energy attached get the reduction (Klinklang —
-     * Gear Coating).
-     */
-    beneficiaryHasEnergy?: BasicEnergyType;
-    sourceOnBench?: true;
-    /** Gates the aura on the source being in its side's Active Spot (Antique Armor Fossil). */
-    sourceActive?: true;
-    otherNamedInPlay?: string;
-    noStack?: string;
-  };
-  /** §8.5 seat-wide pre-W/R damage aura to the opponent's Active (Serperior ex — Regal Cheer). */
-  seatDamageBonusBeforeWR?: {
-    amount: number;
-    beneficiary?: CardFilter;
-    /**
-     * Narrows which defender the bonus applies to (Carracosta: "…to your opponent's Active
-     * Evolution Pokémon").
-     */
-    target?: CardFilter;
-    noStack?: string;
-    /**
-     * Excludes attackers by name from the beneficiary (Iron Crown ex: "except any Iron Crown ex").
-     */
-    exceptName?: string;
-  };
-  /** §8.1 seat-wide Prize bonus for a Knock Out on the other board (Togekiss — Wonder Kiss). */
-  koPrizeBonus?: {
-    ability: string;
-    amount: number;
-    koSpot?: "active";
-    koTarget?: CardFilter;
-    byThisPokemonsAttack?: true;
-    coinFlip?: true;
-    noStack?: true;
-  };
-  /** Flat HP added to the attack damage this Pokémon DEALS to the opponent's
-      Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
-      attacks that already do damage get it (a 0-damage attack stays 0). */
-  damageBonusBeforeWR?: number;
-  /**
-   * Like `damageBonusBeforeWR`, but only while a board condition holds for the attacking seat
-   * (Defiance Band).
-   */
-  damageBonusBeforeWRIf?: { amount: number; cond: BoardCondition };
-  /** §8.5 pre-W/R bonus per Prize card the opponent has taken (Kingambit — Supreme Overlord). */
-  damageBonusBeforeWRPerOpponentPrize?: number;
-  /**
-   * Like `damageBonusBeforeWR`, but only when the defender has a given rule-box suffix (Choice
-   * Belt).
-   */
-  damageBonusBeforeWRIfTarget?: {
-    amount: number;
-    targetSuffix: PokemonSuffix;
-    holder?: CardFilter;
-  };
-  /** Max-HP added while the holder's TOP card is a Basic Pokémon (Bravery
-      Charm — "The Basic Pokémon this card is attached to gets +50 HP");
-      evolving the holder ends it, the Tool staying attached notwithstanding.
-      This is the one effect that can LOWER effective max HP on evolution: a
-      charmed Basic damaged into the window is Knocked Out the instant it
-      evolves (§8.1), which `evolve` now checks via the mid-turn KO flow (M4
-      slice 4 — turn.ts evolve → flow.ts resolveMidTurnKnockOuts). */
-  basicHpBonus?: number;
-  /**
-   * §8.1 flat max-HP bonus with no stage clause, optionally gated on an owner prefix (Hero's Cape,
-   * Cynthia's Power Weight).
-   */
-  hpBonus?: {
-    amount: number;
-    beneficiary?: CardFilter;
-    requiresEnergyType?: BasicEnergyType | "special";
-    requiresEnergyCount?: number;
-  };
-  /** §8.1 max HP added once per something counted on the live board. */
-  hpBonusPer?: { amount: number; scale: MaxHpScale };
-  /**
-   * Seat-wide max-HP aura: all of the holder's Pokémon in play, itself included, get `amount` more
-   * HP. Read by a board scan (`seatMaxHpBonus`), not folded into `hpBonus`. `noStack` keys the
-   * ledger on the ability name, so two copies of the same Ability count once.
-   */
-  seatHpBonus?: { amount: number; ability: string; noStack?: true };
-  /**
-   * §9 reactive recoil: when this Pokémon is damaged by an opponent's attack, this many HP of
-   * damage counters go on the Attacking Pokémon, even if this Pokémon is Knocked Out. Applied
-   * before the §8.1 sweep so a lethal recoil KOs the attacker. Only the main-hit Active defender
-   * retaliates; `perAttachedEnergy` multiplies by attached Energy of that type, and `holderType`
-   * gates on the holder's in-play types.
-   */
-  damageAttacker?: {
-    amount: number;
-    requiresTool?: boolean;
-    perAttachedEnergy?: BasicEnergyType;
-    holderType?: PokemonType;
-  };
-  /**
-   * §8.1 recoil paid only when the holder is Knocked Out by damage from an opponent's attack, in
-   * HP. A separate field from `damageAttacker` because that one pays on mere damage. The read site
-   * scans the whole KO'd board, so a benched holder retaliates too unless `activeOnly` (checked
-   * before the body leaves play).
-   */
-  damageAttackerOnKo?: { amount: number; activeOnly?: true };
-  /**
-   * §9 recoil from an Ability about the controller's Active: when that Active (filtered by
-   * `activeType` or `activeNames`) is damaged by an opponent's attack, `amount` HP of counters go
-   * on the attacker. The holder may be on the Bench; each holder pays its own amount.
-   */
-  damageAttackerWatched?: {
-    amount: number;
-    activeType?: PokemonType;
-    activeNames?: readonly string[];
-  };
-  /**
-   * §7.4 raised Tool cap: while a holder with a live Ability is in play, each of its owner's
-   * Pokémon whose name contains `nameContains` may carry `cap` Tools. Multiple holders do not
-   * stack; when the Ability goes away, extra Tools are discarded down to one.
-   */
-  toolCapForName?: { nameContains: string; cap: number };
-  /**
-   * §9 Damage counters on any Pokémon in play can't be moved; counter-move ops whiff while a live
-   * holder is on either board.
-   */
-  countersCantMove?: true;
-  /**
-   * §8.5 While a live holder's own board has a Pokémon named `name`, Weakness for both Active
-   * Pokémon applies as `amount`.
-   */
-  weaknessTimesWithNamedInPlay?: { name: string; amount: number };
-  /**
-   * §6.3 Each Basic Energy of this type attached to the holder's side provides two units. Card
-   * counts do not change, and several holders do not stack.
-   */
-  basicEnergyProvidesTwice?: BasicEnergyType;
-  /**
-   * §11 When the opponent's Active retreats, they flip a coin; on tails the Active stays, keeps its
-   * Energy, and the retreat is still spent. The value is the Ability name; several holders do not
-   * stack.
-   */
-  retreatFailsOnTails?: string;
-  /**
-   * §8 Tool that lets the controller, once per turn, redo the coin flips of an attack by a holder
-   * of `holderType`. `name` is the once-per-turn key. Silenced by Jamming Tower.
-   */
-  reflipAttackCoins?: { name: string; holderType: PokemonType };
-  /**
-   * §8.1 Prize reduction from an attached card when the holder is Knocked Out by damage from an
-   * opponent's attack. Collected as a list rather than summed, because sources can differ in their
-   * riders (such as a once-per-game cap).
-   */
-  onKoPrizeReduction?: KoPrizeReduction;
-  /**
-   * §8.1 If this Pokémon has full HP and would be Knocked Out by damage from an attack, it survives
-   * with 10 HP. Applied as a clamp at the damage writes, because the KO sweep no longer sees the
-   * pre-damage HP. Placed counters are not damage, so they bypass it.
-   */
-  survivesKoAtFullHp?: true;
-  /**
-   * If this Pokémon would be Knocked Out by damage from an attack, flip a coin; on heads it
-   * survives with 10 HP. The value is the Ability name. Asked only when the full-HP clamp did not
-   * apply; placed counters are not damage.
-   */
-  survivesKoOnCoinFlip?: string;
-  /**
-   * If this Pokémon is Knocked Out by damage from an opponent's attack, flip a coin; on heads the
-   * Attacking Pokémon is Knocked Out (not damaged, so no survival clamp applies). The value is the
-   * Ability name.
-   */
-  koAttackerOnCoinFlip?: string;
-  /**
-   * §9 Ability-lock aura: while this Pokémon is in play (and Active when `requiresActive`), every
-   * in-play Pokémon matching the target predicate has no Abilities. It reaches other Pokémon, so it
-   * is read by a both-boards scan, and only the top card grants it. Locks that silence each other
-   * are settled by `disabledAbilityUids`.
-   */
-  disableAbilities?: {
-    /** Target must be this stage; omitted means any stage. */
-    stage?: "Basic" | "Stage2";
-    /** Target must carry this printed rule-box suffix (Spiritomb: "V"). */
-    suffix?: PokemonSuffix;
-    /** Which side the lock reaches: "both" (Klefki/Spiritomb — "both yours and
-        your opponent's") or the source's "opponent" (Ting-Lu — "your opponent's
-        Pokémon"). */
-    side: "both" | "opponent";
-    /** Target must have damage counters on it (Ting-Lu — "that have any damage
-        counters on them"). */
-    requiresDamage?: boolean;
-    /** The aura is live only while the SOURCE is in the Active Spot ("As long as
-        this Pokémon is in the Active Spot" — Klefki/Ting-Lu). Spiritomb omits it. */
-    requiresActive?: boolean;
-    /** The aura is live only while the source is on its Bench. */
-    sourceOnBench?: true;
-    /**
-     * Target zone: `"active"` or `"bench"` only; omitted means both. Read live, so the target
-     * changes as Pokémon move.
-     */
-    targetZone?: "active" | "bench";
-    /** A target with this rule-box suffix keeps its Abilities (Ting-Lu: "ex" —
-        "except for Pokémon ex"). */
-    exemptSuffix?: PokemonSuffix;
-    /** A target whose printed Ability is named this keeps it (Klefki:
-        "Mischievous Lock" — "except for Mischievous Lock"). Matched against the
-        target CARD's printed abilities; keeps a mirror-match Klefki's own lock on. */
-    exemptAbilityNamed?: string;
-    /**
-     * Target must be of this printed type; omitted means any type. Reads printed types
-     * deliberately, since effective types depend on `disabledAbilityUids` and would recurse.
-     */
-    targetType?: PokemonType;
-    /** Target must have a Rule Box. */
-    ruleBox?: true;
-    /** A target with this banner keeps its Abilities. */
-    exemptBanner?: Banner;
-    /**
-     * Target must have an Ability that Knocks Out the Pokémon using it (a `knockOutSelf` Ability
-     * program).
-     */
-    selfKnockOutAbility?: true;
-  };
-  /**
-   * §8.5 own-board aura: while this Pokémon is in play, its controller's Pokémon have no Weakness.
-   * Resistance is unaffected. It reaches other Pokémon, so it is read by a dedicated scan and only
-   * a top card grants it.
-   */
-  removeWeakness?: true;
-  /**
-   * §8.5 The Weakness of each opposing Pokémon of `targetType` becomes `weaknessType` ×2, replacing
-   * (or granting) its printed Weakness. Effects that remove Weakness still win.
-   */
-  opponentWeaknessRewrite?: { targetType: PokemonType; weaknessType: PokemonType };
-  /**
-   * §13.2 Extra Burn damage, in HP, on the opponent's Burned Pokémon at each Checkup. Summed across
-   * holders and added before the cure flip, so a Burn that heals still takes it.
-   */
-  opponentBurnExtraCounters?: number;
-  /**
-   * While a live holder is in play, the opponent's in-play Pokémon and attached cards can't be put
-   * into their hand; such moves whiff. Applies to the holder's own effects too.
-   */
-  opponentInPlayToHandBlocked?: true;
-  /**
-   * When one of the holder's Pokémon of this type is Knocked Out by damage from an opponent's
-   * attack, its attached Basic Energy of this type goes to the hand instead of the discard. The
-   * optional effect auto-fires; multiple holders do not stack.
-   */
-  koBasicEnergyToHand?: BasicEnergyType;
-  /**
-   * If this Pokémon is Knocked Out by damage from an opponent's attack, its cards go to the hand
-   * instead of the discard pile; attached Energy and Tools are discarded. The opponent still takes
-   * Prizes.
-   */
-  koSelfToHand?: true;
-  /**
-   * Seat-wide Prize reduction on the KO'd side: when a matching Pokémon is Knocked Out by damage
-   * from an opponent's Pokémon ex, the taker takes `by` fewer Prizes. Doesn't stack.
-   */
-  seatKoPrizeReduction?: { ability: string; by: number; koTarget: CardFilter };
-  /**
-   * §8.5 Damage from this Pokémon's attacks isn't affected by any effects on the opponent's Active
-   * Pokémon. Read off the attacker through `passivesOf`, so an Ability lock silences it.
-   */
-  suppressTargetEffectsOnAttack?: true;
-  /**
-   * §8.5 Prevent all attack damage this Pokémon takes from an opponent's Pokémon ex or Pokémon V
-   * (not VMAX/VSTAR). The attacker's class is checked at the read sites. No Active Spot clause, so
-   * it also protects on the Bench.
-   */
-  preventDamageFromExV?: true;
-  /**
-   * §8.5 Prevent all attack damage this Pokémon takes from an opponent's Pokémon of `type`.
-   * Collected as a list across sources. No Active Spot clause, so it also protects on the Bench.
-   */
-  preventDamageFromType?: PokemonType;
-  /**
-   * §8.5 Prevent all attack damage this Pokémon takes from an opponent's Pokémon that has an
-   * Ability. Damage only, not effects; also protects on the Bench.
-   */
-  preventDamageFromHasAbility?: true;
-  /**
-   * §8.5/§11 Prevent all damage from and effects of attacks done to this Pokémon by opponent's
-   * Pokémon with any Special Energy attached. Also protects on the Bench.
-   */
-  preventDamageAndEffectsFromSpecialEnergy?: true;
-  /**
-   * §8.5/§11 While this Pokémon is on the Bench, prevent all damage from and effects of the
-   * opponent's attacks done to it.
-   */
-  preventDamageAndEffectsWhileBenched?: true;
-  /**
-   * §8.5 While this Pokémon is on the Bench, prevent all damage done to it by the opponent's
-   * attacks. Damage only; effects still land. Attacks from its own side are not prevented.
-   */
-  preventDamageWhileBenched?: true;
-  /**
-   * §8.5 While the holder is on the Bench, prevent all damage done to each of its side's Pokémon by
-   * attacks from opposing Pokémon with `n` or fewer Energy cards attached.
-   */
-  preventSeatDamageWhileBenchedFromEnergyAtMost?: number;
-  /**
-   * §8.5 Prevent all attack damage this Pokémon takes from opposing Pokémon of the given rule-box
-   * class (e.g. ex, or Basic ex). Damage only; also protects on the Bench.
-   */
-  preventDamageFromAttackerClass?: PreventedAttackerClass;
-  /**
-   * §8.5/§11 Prevent all damage from and effects of attacks done to this Pokémon by opposing
-   * Pokémon with this banner (e.g. Tera).
-   */
-  preventDamageAndEffectsFromBanner?: Banner;
-  /**
-   * §8.5 Prevent attack damage to this Pokémon from an opponent's Pokémon when that damage is this
-   * amount or more (inclusive). Multiple sources take the lowest threshold.
-   */
-  preventDamageAtOrAbove?: number;
-  /**
-   * §8.5 When this Pokémon would take attack damage (and has Energy of `requiresEnergyType`, if
-   * set), flip a coin; on heads prevent that damage. `ability` names the flip in the log. One flip
-   * per entry; a suppressed holder flips nothing.
-   */
-  preventDamageOnCoinFlip?: { ability: string; requiresEnergyType?: BasicEnergyType };
-  /**
-   * §12 Special Conditions this Pokémon can't be given. Checked only where conditions are applied,
-   * since that is the only writer of a condition.
-   */
-  statusImmunities?: StatusName[];
-  /**
-   * The opponent's Active Pokémon can't be healed while a holder is anywhere in play. Moving damage
-   * counters off it is not a heal.
-   */
-  opponentActiveCantBeHealed?: true;
-  /**
-   * §12 Special Conditions this Pokémon recovers from while the effect is live. The condition is
-   * actually removed, so it does not come back when the source leaves.
-   */
-  statusRecovery?: StatusName[];
-  /**
-   * §8.5 While this Pokémon is in the Active Spot, prevent all attack damage done to its
-   * controller's Benched Pokémon. Read by an own-side scan; not nulled by an attack that ignores
-   * effects on the target, since the source is another body.
-   */
-  preventBenchDamageWhileActive?: true;
-  /**
-   * §8.5/§11 Prevent all damage from and effects of the opponent's attacks done to the holder's
-   * Benched Pokémon, the holder included. No source zone clause.
-   */
-  preventBenchDamageAndEffects?: true;
-  /**
-   * §8.5 Prevent all attack damage done to the holder's Benched Pokémon that don't have a Rule Box.
-   * A benched holder shields itself.
-   */
-  preventBenchDamageNoRuleBox?: true;
-  /**
-   * §11 When the opponent plays an Item or Supporter, prevent all its effects on this Pokémon, in
-   * any zone.
-   */
-  preventTrainerEffects?: true;
-  /**
-   * §11 While this Pokémon is Active, prevent all effects of the opponent's Supporters on all of
-   * the holder's Pokémon, itself included.
-   */
-  preventSupporterEffectsWhileActive?: true;
-  /** §11 When the opponent plays a Supporter, prevent all its effects on this Pokémon. */
-  preventSupporterEffects?: true;
-  /**
-   * §7.1 While this Pokémon is in the Active Spot, the opponent can't play cards of these Trainer
-   * classes from their hand.
-   */
-  preventOpponentHandPlay?: readonly HandPlayClass[];
-  /**
-   * §7.1 While this Pokémon has a Tool attached (in any zone), the opponent can't play ACE SPEC
-   * cards from their hand. ACE SPEC is read from the rarity label, matching the deck builder.
-   * Energy plays are not barred, since attaching Energy asks no hand-play bar.
-   */
-  preventOpponentAceSpecPlayWhileToolAttached?: true;
-  /**
-   * §7.5/§10 While this Pokémon is Active, the opponent can't play matching Pokémon from their hand
-   * for the listed acts (bench, evolve). `only` narrows the Pokémon and `except` exempts from the
-   * result.
-   */
-  preventOpponentPokemonPlay?: {
-    readonly acts: readonly PokemonPlayAct[];
-    readonly only?: CardFilter;
-    readonly except?: CardFilter;
-  };
-  /**
-   * §11 Prevent all effects (not damage) of the opponent's attacks done to this Pokémon. The
-   * benched put-counter snipe does not ask this refusal.
-   */
-  preventAttackEffects?: true;
-  /**
-   * §11 Prevent all effects of the opponent's Pokémon's Abilities done to this Pokémon. Continuous
-   * Ability auras are not refused.
-   */
-  preventAbilityEffects?: true;
-  /**
-   * §11 Prevent all effects (not damage) of the opponent's attacks on the holder's Pokémon matching
-   * this filter, in any zone. Existing effects are not removed.
-   */
-  preventAttackEffectsForGroup?: CardFilter;
-  /**
-   * §11 While this Pokémon is in play, its controller's Pokémon matching `requiresEnergyType` (by
-   * provision) and `stage` have no Retreat Cost. Absent fields are ungated. A set-to-zero, so it
-   * wins over Stadium deltas.
-   */
-  noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType; stage?: "Basic" };
-  /**
-   * §11 The opponent's Active Pokémon's Retreat Cost is `amount` {C} more, optionally only when it
-   * matches `target`. A benched holder still applies it. Summed across sources and floored once.
-   */
-  opponentActiveRetreatSurcharge?: { amount: number; target?: CardFilter };
-  /**
-   * §11 The holder's side's Active Pokémon's Retreat Cost is `amount` {C} less. `sourceOnBench`
-   * requires the holder to be on the Bench.
-   */
-  ownActiveRetreatDiscount?: { amount: number; sourceOnBench?: true };
-  /**
-   * §11 While both this Pokémon and the opponent's Active are in the Active Spot, the opponent's
-   * Active can't retreat.
-   */
-  preventOpponentActiveRetreat?: true;
-  /**
-   * §11 This Pokémon alone has no Retreat Cost, optionally only while the opponent has a Pokémon of
-   * `requiresOpponentSuffixInPlay` in play or while it has no Energy cards attached. Kept off
-   * `BoardCondition` to avoid an import cycle with interpreter.ts.
-   */
-  noRetreatCostSelf?: {
-    requiresOpponentSuffixInPlay?: PokemonSuffix;
-    requiresNoEnergyAttached?: true;
-  };
-  /**
-   * §11 Attached Tool's discount on its holder's Retreat Cost; `freeAtRemainingHpAtMost` makes
-   * retreat free at or below that remaining HP. Not §9-gated, since a Tool is not an Ability.
-   */
-  retreatCostDiscount?: { amount: number; freeAtRemainingHpAtMost?: number };
-  /**
-   * §11 While the Tool's holder is Active, both Active Pokémon's Retreat Cost is this much {C}
-   * more. Stacks per Tool.
-   */
-  activeRetreatSurchargeBoth?: number;
-  /**
-   * §8.5 While both this Pokémon and the attacker are Active, the opponent's Active's attacks do
-   * this much less damage before Weakness and Resistance.
-   */
-  opponentActiveAttackDebuff?: number;
-  /**
-   * §8.5 Attacks by the opponent's Active that has a Tool attached do this much less damage before
-   * Weakness and Resistance. The holder may be anywhere in play.
-   */
-  opponentActiveToolAttackDebuff?: number;
-  /**
-   * §8.2 While both this Pokémon and the attacker are Active, the opponent's Active's attacks cost
-   * this many {C} more. Stage-agnostic on both ends.
-   */
-  opponentActiveAttackCostSurcharge?: number;
-  /** Narrows the surcharge above to attackers whose top card is a Basic Pokémon. */
-  opponentActiveAttackCostSurchargeBasicOnly?: true;
-  /**
-   * §8.2 This Pokémon's attacks cost this many {C} less for each Prize the opponent has taken. No
-   * floor is needed: a discount can only remove symbols that exist.
-   */
-  attackCostDiscountPerOpponentPrize?: number;
-
-  /**
-   * §8.2 This Pokémon's attacks cost `amount` {C} less for each card named `name` in its owner's
-   * discard pile, matched by name.
-   */
-  attackCostDiscountPerNamedInDiscard?: { name: string; amount: number };
-
-  /**
-   * §8.2 This Pokémon's attacks cost this many {C} less for each Pokémon on the opponent's Bench.
-   */
-  attackCostDiscountPerOpponentBenched?: number;
-  /**
-   * §8.2 Attack name the self-only discounts above are limited to; absent, they apply to every
-   * attack. Never scopes an attached Tool's discount.
-   */
-  attackCostDiscountAttack?: string;
-  /**
-   * §8.2 If the opponent has exactly this many cards in hand, ignore all {C} in this Pokémon's
-   * attack costs, surcharges included.
-   */
-  ignoreColorlessCostIfOpponentHandExactly?: number;
-  /**
-   * §8.2 Attached Tool's {C} discount on its holder's attacks. Not §9-gated. `holder` filters the
-   * holder's top card; `ifMorePrizesRemaining` requires the holder's side to have strictly more
-   * Prizes remaining.
-   */
-  attackCostDiscount?: {
-    amount: number;
-    holder?: CardFilter;
-    ifMorePrizesRemaining?: true;
-    /**
-     * The discount may remove a typed Energy symbol, not only {C}; applied last, chosen against the
-     * holder's attached Energy.
-     */
-    anyType?: true;
-  };
-
-  /**
-   * §8 This Pokémon can't attack unless this condition holds. Stores the printed permission; the
-   * read site negates it.
-   */
-  cantAttackUnless?: BoardCondition;
-  /**
-   * §5.3/§8 While this condition holds, this Pokémon may attack twice in a turn; if the first
-   * attack Knocks Out the opponent's Active, it may attack again after a new Active is chosen.
-   * Between the attacks only `attack` and `endTurn` are legal, and the second attack is a full
-   * declaration.
-   */
-  attackTwiceIf?: BoardCondition;
-
-  /**
-   * §4 This Pokémon may attack on the going-first player's first turn. Per body, unlike per-attack
-   * first-turn licences.
-   */
-  attackFirstTurnExempt?: true;
-  /**
-   * §4/§10 This Pokémon may evolve on its owner's first turn or the turn it was played, lifting
-   * both bans. `activeOnly` requires it to be Active, `ifInPlay` requires a named Pokémon in play,
-   * and `ifCondition` requires a board condition.
-   */
-  evolveEarlyExempt?: { activeOnly?: true; ifInPlay?: string; ifCondition?: BoardCondition };
-  /**
-   * §8.2 Cost clause an Ability prints on one of the holder's own attacks, matched by attack name.
-   * Unlike `attackGate`, an Ability lock silences it.
-   */
-  attackCostClause?: {
-    attack: string;
-    gate:
-      | { kind: "alternateCostIf"; condition: BoardCondition; cost: readonly string[] }
-      | { kind: "costWaivedIf"; condition: BoardCondition };
-  };
-  /**
-   * §10 This Pokémon may be evolved from the hand as if named `name`, by an evolution card with
-   * suffix `intoSuffix`. Does not apply to evolving from the deck.
-   */
-  evolveAsNamed?: { name: string; intoSuffix: "ex" };
-  /**
-   * §9 The holder's full type list while in play, replacing its printed types. An Ability lock
-   * restores the printed types; hand, deck and discard reads stay printed.
-   */
-  typesInPlay?: readonly PokemonType[];
-  /**
-   * Iron Treads "Dual Core": the `typesInPlay` retype applies only while a Tool with exactly this
-   * card name is attached to the holder. Checked against the attached `tools` list, not
-   * `toolsInEffect`, so a Tool silenced by Jamming Tower still counts; otherwise the body keeps its
-   * printed card.
-   */
-  typesInPlayWhileToolNamed?: string;
-  /**
-   * Relicanth "Memory Dive": each of the seat's evolved Pokémon can also use the attacks of the
-   * cards under its top card (the cards in the stack only, so a stage skipped by Rare Candy adds
-   * nothing). Several holders do not stack.
-   */
-  memoryDive?: true;
-  /**
-   * Mew ex "Memory Helix": the holder can use the printed attacks of each of its controller's
-   * Benched Pokémon, excluding copy-family attacks.
-   */
-  memoryHelix?: true;
-}
-
-/**
- * A Stadium's "once during each player's turn" activated ability (§7.3), run by the
- * `useStadiumAbility` action. It is always once per player turn (tracked by
- * `TurnAllowances.stadiumAbilityUsed`), so there is no `oncePerTurn` or `activeOnly` field. `label`
- * is the Stadium's name for the log and HUD.
- */
-export interface StadiumAbility {
-  label: string;
-  /**
-   * The printed condition between "Once during each player's turn," and the effect (Community
-   * Center, Team Rocket's Factory), evaluated for the acting seat. Read by `useStadiumAbility` and
-   * by both HUDs, so the option is greyed out rather than rejected after the click. Absent means
-   * ungated.
-   */
-  playableIf?: BoardCondition;
-  /**
-   * When using the Stadium ends the turn: `"always"` (Lumiose City) or `"ifHealed"` (Celebratory
-   * Fanfare, read off the `HEALED` rows the use emitted). Absent means the turn continues.
-   */
-  endsTurn?: "always" | "ifHealed";
-  program: EffectOp[];
-}
-
-/** A Stadium's effects (§7.3) — applied while the card sits in the shared zone.
-    The two continuous fields are read by continuous.ts off `GameState.stadium`
-    for BOTH players' boards; the optional `ability` is the activated "once during
-    each player's turn" effect (Artazon / Mesagoza / Town Store), run by the
-    `useStadiumAbility` action for the turn's own player. */
-export interface StadiumEffects {
-  /** §11 retreat costs THIS much less for every Basic Pokémon in play
-      (Beach Court), floored at a free retreat. */
-  basicRetreatDiscount?: number;
-  /** §11 retreat costs `amount` MORE for every Basic Pokémon in play
-      (Calamitous Wasteland), except one exempt type — the print reads "each
-      Basic non-{F} Pokémon". An OBJECT rather than a bare number twin of
-      `basicRetreatDiscount` because this print NARROWS where Beach Court's
-      does not; `excludesType` is the optional refinement (the
-      `noRetreatCostAura.requiresEnergyType` idiom), so an ungated surcharge
-      would just omit it. Matched against the Pokémon's own `Card.types`, whose
-      vocabulary is the same word list ("Fighting" for {F}). */
-  basicRetreatSurcharge?: { amount: number; excludesType?: BasicEnergyType };
-  /** Attacks of every Basic Pokémon in play cost this many {C} more
-      (Pokémon League Headquarters). */
-  basicAttackCostSurcharge?: number;
-  /**
-   * Nighttime Mine: attacks used by Pokémon matching `attacker` (checked on the top card) cost this
-   * many more {C}, added in `effectiveAttackCost`.
-   */
-  attackCostSurcharge?: { amount: number; attacker: CardFilter };
-  /**
-   * Neutralization Zone (§8.5): prevent all attack damage to Pokémon without a Rule Box, on both
-   * sides, when the attacker is a Pokémon ex or V. Uses `hasRuleBox` negated for the protected body
-   * and `isExOrV` for the attacker. Not suppressed by Ability locks or by `ignoreWR`, since a
-   * Stadium is not an effect on a Pokémon.
-   */
-  preventDamageToNoRuleBoxFromExV?: true;
-  /**
-   * Max HP change for every Pokémon of one stage on both sides (Lively Stadium +30 Basic, Gravity
-   * Mountain -30 Stage 2). One signed field. Not gated by Ability locks.
-   */
-  hpDelta?: {
-    amount: number;
-    stage: "basic" | "stage2";
-    /**
-     * When set, the HP change applies only to top cards with exactly this name (Ange Floette's Mega
-     * Floette ex).
-     */
-    name?: string;
-  };
-  /**
-   * Post-W/R reduction on attack damage to Pokémon matching `beneficiary`, on both sides (Full
-   * Metal Lab, Granite Cave). Applies only to damage from the opponent's attacks:
-   * `seatDamageReduction` pays nothing when the attacker's seat equals the damaged body's seat,
-   * since own-bench spreads and snipes exist.
-   */
-  damageReductionAfterWR?: { amount: number; beneficiary: CardFilter };
-  /**
-   * Postwick: pre-W/R bonus on attacks by Pokémon matching `attacker`, on both sides. Stacks with
-   * ability-based bonuses such as Hop's Snorlax.
-   */
-  damageBonusBeforeWR?: { amount: number; attacker: CardFilter };
-  /**
-   * Retreat Cost clause for Pokémon matching `filter`, on both sides, at any stage: `free` (N's
-   * Castle) or `discount` (Paradise Resort).
-   */
-  retreat?: { filter: CardFilter; discount?: number; free?: true };
-  /** The "once during each player's turn" activated ability (Artazon / Mesagoza
-      / Town Store). A Stadium WITH this can be activated; the continuous-only
-      Stadiums (Beach Court / League HQ) leave it undefined. */
-  ability?: StadiumAbility;
-  /**
-   * Perilous Jungle: extra Poison damage (in HP) at each Checkup on both sides, skipping bodies
-   * whose in-play types include `excludesType`. Summed into the single poison `COUNTERS_PLACED`
-   * row.
-   */
-  poisonExtraCounters?: { amount: number; excludesType?: BasicEnergyType };
-  /**
-   * Jamming Tower: attached Tools have no effect. Read through `toolsInEffect`; Tool counts still
-   * use the raw `tools` list.
-   */
-  toolsHaveNoEffect?: true;
-  /**
-   * Festival Grounds: a Pokémon with any Energy attached recovers from and cannot be affected by
-   * Special Conditions.
-   */
-  statusShieldIfEnergyAttached?: true;
-  /**
-   * Team Rocket's Watchtower: {C} Pokémon in play have no Abilities. Expressed as a
-   * `disableAbilities` aura so `disabledAbilityUids` and its readers handle it unchanged; it cannot
-   * itself be silenced.
-   */
-  disableAbilities?: NonNullable<PassiveEffects["disableAbilities"]>;
-  /**
-   * Area Zero Underdepths: a seat with a Tera Pokémon in play may have up to this many Benched
-   * Pokémon. The discard when the limit drops is handled by `benchTrimStages`.
-   */
-  benchLimitWithTera?: number;
-  /**
-   * Battle Cage: damage counters from the opponent's attack or Ability effects cannot be placed on
-   * Benched Pokémon; attack damage is still taken. A move of counters onto a Benched body is
-   * refused as a whole.
-   */
-  benchCounterShield?: true;
-  /**
-   * Forest of Vitality: a Pokémon whose in-play types include `type` may evolve into a card of that
-   * type on the turn it was played, except during the player's first turn.
-   */
-  sameTurnEvolution?: { type: PokemonType };
-  /**
-   * Risky Ruins: whenever a player puts a Basic Pokémon (not of `excludesType`) onto their own
-   * Bench during their turn, place `amount` HP of damage counters on it.
-   */
-  benchArrivalCounters?: { amount: number; excludesType: PokemonType };
-  /** Dizzying Valley: Confused Pokémon stay Confused when they evolve or devolve. */
-  confusionSurvivesStageChange?: true;
-  /**
-   * Ange Floette: this Stadium can be played only by discarding a Stadium with this name in play,
-   * and may be played the same turn that Stadium was played.
-   */
-  playOnlyOverStadium?: string;
-}
-
-/** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
-    from hand. Kept a tiny tagged union (not an EffectOp program) because these
-    read the ATTACH context, which the {seat}-only interpreter doesn't carry. */
-export type EnergyOnAttach =
-  /** Jet Energy: attaching to a Benched Pokémon switches it to the Active Spot. */
-  | { kind: "switchIfBenched" }
-  /**
-   * Enriching Energy: draw `count` cards when attached from hand to any Pokémon, Active or Benched.
-   */
-  | { kind: "draw"; count: number }
-  /**
-   * Telepathic Psychic Energy: when attached from hand to a Pokémon of `holderType`, search the
-   * deck for up to `max` matching Basic Pokémon onto the Bench, then shuffle. Runs as the attach's
-   * last step because its choice cannot be resumed mid-attach.
-   */
-  | { kind: "benchSearch"; filter: CardFilter; max: number };
-
-/** A Special Energy's rules text (§6.1), read while attached. `provides` is the
-    units it contributes to attack costs (a concrete type, or `ANY_ENERGY` for
-    a wildcard — Luminous "every type of Energy but 1 at a time"); multi-unit is
-    allowed. A Special Energy WITH this entry provisions through it; one WITHOUT
-    falls back to the conservative Colorless provider (cards.ts energyProvidesOf),
-    so an unauthored special energy stays playable (energy always provides
-    something) rather than loudly rejecting like a Trainer. */
-export interface EnergyProgram {
-  provides: string[];
-  /**
-   * Boomerang Energy: when discarded by an attack of its holder, reattach it from the discard pile
-   * after the attack. `"hand"` (Nitro Fire Energy) returns it to the hand instead.
-   */
-  returnAfterAttackDiscard?: true | "hand";
-  /**
-   * The type the holder must be for this Energy's other rules (`passive`, `onAttach`,
-   * `returnAfterAttackDiscard`) to apply, read from its in-play types. `provides` is never gated.
-   */
-  holderType?: PokemonType;
-  /** Luminous: the units provided INSTEAD when the holder already has another
-      Special Energy attached ("this card provides {C} Energy instead"). */
-  demoteWithOtherSpecial?: string[];
-  /**
-   * Units provided instead when the holder's printed stage matches (Neo Upper Energy, Prism Energy,
-   * Reversal Energy). `units` is a multiset: `[ANY_ENERGY, ANY_ENERGY]` is two wildcard units, not
-   * one worth two. `whileMorePrizesRemaining` is a flag rather than a `BoardCondition` because
-   * reading conditions from continuous.ts would create an import cycle.
-   */
-  promoteOnHolderStage?: {
-    stage: "Basic" | "Stage2" | "Evolution";
-    /** The holder must also have no Rule Box. */
-    noRuleBox?: true;
-    /**
-     * You must have more Prize cards remaining than your opponent, that is, be behind on Prizes
-     * taken.
-     */
-    whileMorePrizesRemaining?: true;
-    units: string[];
-  };
-  /**
-   * Ignition Energy: discarded at the end of its owner's turn from any of the turn owner's Pokémon.
-   */
-  discardAtEndOfYourTurn?: true;
-  /**
-   * Team Rocket's Energy: may only sit on a Pokémon whose top card matches this owner prefix. A
-   * hand attach elsewhere is refused; if it ends up elsewhere by another route it provides nothing
-   * and is discarded at the next settle point.
-   */
-  attachOnlyToOwner?: string;
-  /** Effect run on attach from hand (Jet's switch). */
-  onAttach?: EnergyOnAttach;
-  /**
-   * Continuous effects while this Energy is attached (Therapeutic Energy). Unlike a Pokémon's
-   * printed passive, it is not suppressed by Ability locks, since an Energy is not an Ability.
-   */
-  passive?: PassiveEffects;
-}
-
-/**
- * Printed timing or cost clause on one attack index. `onlyIf` and `barredIf` block,
- * `firstTurnExempt` lifts the first-turn ban, and `alternateCostIf` / `costWaivedIf` only change
- * the cost and never block.
- */
-export type AttackTimingGate =
-  /** *"You can use this attack only if <condition>."* — the index is barred
-      unless the condition holds. Illumise / Scream Tail ex. */
-  | { kind: "onlyIf"; condition: BoardCondition }
-  /** *"If <condition>, you can't use this attack."* — the index is barred while
-      the condition holds. Terapagos ex ×7. */
-  | { kind: "barredIf"; condition: BoardCondition }
-  /** *"If you go first, you can use this attack during your first turn."* — §4's
-      turn-1 attack ban is lifted for THIS index only. Volbeat / Exeggcute. */
-  | { kind: "firstTurnExempt" }
-  /**
-   * While the condition holds, `cost` is an alternate cost the attack may be paid with instead of
-   * the printed one. Excluded from `BlockingAttackGate`, otherwise it would be read as a ban.
-   */
-  | { kind: "alternateCostIf"; condition: BoardCondition; cost: readonly string[] }
-  /**
-   * While the condition holds, the attack costs nothing. The waive is applied last, after every
-   * surcharge. Never blocks.
-   */
-  | { kind: "costWaivedIf"; condition: BoardCondition };
-
-export interface CardProgram {
-  /**
-   * Registry-authored attack programs keyed by attack menu index (for printed attacks, the printed
-   * index). A Tool's row keys them by index into the Tool's own printed attacks. Takes precedence
-   * over `deriveAttackEffect`; unauthored indexes fall back to it.
-   */
-  attack?: { readonly [attackIndex: number]: EffectOp[] };
-  /**
-   * Printed timing clause per attack index. Read straight off the card rather than through
-   * `passivesOf`, because it is attack text and Ability locks must not affect it. Takes precedence
-   * over the clause derived from attack text.
-   */
-  attackGate?: { readonly [attackIndex: number]: AttackTimingGate };
-  /** Activated Abilities printed on this card. */
-  abilities?: AbilityProgram[];
-  /** The Trainer's play effect (Item/Supporter — §7.1/§7.2). */
-  trainer?: EffectOp[];
-  /**
-   * Printed "You can use this card only if ..." gate, checked before the card leaves the hand and
-   * mirrored by the HUD. Honoured only on `playTrainer`'s Item/Supporter path; Stadiums, Tools,
-   * Rare Candy and Abilities ignore it.
-   */
-  trainerPlayableIf?: BoardCondition;
-  /** Triggered Abilities printed on this card (§9) — fire on a game event
-      (played to Bench / evolved / between turns), not player-activated. */
-  triggered?: TriggeredAbility[];
-  /**
-   * Continuous modifiers from a Pokémon's passive Ability or a Tool's effect on its holder. A Tool
-   * is attachable when it has this or a `triggered` entry.
-   */
-  passive?: PassiveEffects;
-  /** The Stadium's continuous effects (§7.3). A Stadium with this entry is
-      playable; one without is "not simulated" (coverage strategy). */
-  stadium?: StadiumEffects;
-  /** A Special Energy's rules text (§6.1). */
-  energy?: EnergyProgram;
-  /**
-   * Marks Rare Candy (§7.1). It runs no op program because evolving is handled by the dedicated
-   * `rareCandy` action; `playTrainer` rejects it and the HUD opens the Rare Candy dialog instead.
-   */
-  rareCandy?: true;
-  /**
-   * Antique Fossils: played onto the Bench as a 60 HP Basic {C} Pokémon. It is an Item play (Item
-   * bars apply), not playing a Basic Pokémon, so Pokémon-play bars and bench-play triggers are not
-   * consulted.
-   */
-  playAsPokemon?: true;
-  /**
-   * This Pokémon may be put into play only by the named Ability (Palafin ex). A card key rather
-   * than a passive because it applies outside play and Ability locks must not lift it. Checked by
-   * hand `evolve` and deck evolution offers.
-   */
-  intoPlayOnlyVia?: "Zero to Hero";
-  /**
-   * "This card can't be put into your hand or deck from the discard pile." Enforced by
-   * `discardRetrievalCandidates`, which drops the card for hand and deck destinations.
-   */
-  discardPileLocked?: true;
-  /**
-   * Klinklang "Emergency Rotation": once per turn, put this non-Basic Pokémon from hand onto the
-   * Bench when `playableIf` holds. A card key rather than an `abilities` row because every
-   * `abilities` reader is an in-play surface. In-play Ability locks do not reach it.
-   */
-  benchFromHand?: { name: string; playableIf: BoardCondition };
-  /**
-   * Cinderace "Explosiveness": during setup this non-Basic Pokémon may be placed face down as the
-   * Active. A hand with no Basic still mulligans.
-   */
-  setupActiveFromHand?: string;
-  /**
-   * Ferrothorn "Startling Drop": when discarded from its owner's deck by the opponent during their
-   * turn, discard `count` cards from the opponent's deck.
-   */
-  opponentMillWhenMilled?: { ability: string; count: number };
-  /** The `trainer` play ENDS the controller's turn once its program completes
-      (Katy: "Shuffle your hand into your deck. Then, draw 8 cards. Your turn
-      ends."). playTrainer passes this to flow.ts settleProgram, which folds it
-      EXACTLY like AbilityProgram.endsTurn — instead of returning to turn:action it
-      seeds the turn tail. Only meaningful alongside `trainer`; assumes the program
-      does not damage (Katy only draws), so no mid-turn KO sweep is owed. */
-  trainerEndsTurn?: true;
-  /**
-   * "If you go first, you may use this card during your first turn." Lifts only the first-turn
-   * Supporter ban; the once-per-turn Supporter allowance still applies. Both HUDs read it too.
-   */
-  trainerFirstTurnExempt?: true;
-  /**
-   * This turn, if the opponent's Active is Knocked Out by damage from an attack by your Pokémon
-   * matching `attacker`, take `amount` more Prize cards (Briar, Anthea & Concordia). Resolved off
-   * `attackerUid`, not the Active spot.
-   */
-  supporterKoPrizeBonus?: { amount: number; attacker: CardFilter };
-  /**
-   * A Tool whose printed attacks the holder can use (Technical Machine). Listed in the attack menu
-   * for every in-effect Tool; their programs are this row's `attack` entries keyed by index into
-   * the Tool's attacks.
-   */
-  toolAttacks?: true;
-  /**
-   * Restricts `toolAttacks` to holders whose top card matches this filter (Core Memory). Absent
-   * means any holder.
-   */
-  toolAttacksHolder?: CardFilter;
-  /** Discard this Tool at the end of its owner's turn. */
-  toolDiscardAtEndOfYourTurn?: true;
-}
 
 // ── The programs, authored from the printed text (verified vs the live
 //    catalog, 2026-07-17) — see docs/workstreams/simulator.md "M4 slice 2". ──
@@ -1140,10 +34,7 @@ const PROFESSORS_RESEARCH: CardProgram = {
 /** "Search your deck for a Basic Pokémon and put it onto your Bench. Then,
     shuffle your deck." (Item) */
 const NEST_BALL: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "bench", max: 1 }),
 };
 
 /** "Switch in 1 of your opponent's Benched Pokémon to the Active Spot."
@@ -1202,20 +93,24 @@ const PICNIC_BASKET: CardProgram = {
 /** "Search your deck for a Basic Energy card, reveal it, and put it into your
     hand. Then, shuffle your deck." (Item) */
 const ENERGY_SEARCH: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicEnergy" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
  * Jacq: search for up to 2 Evolution Pokémon to hand, revealed. Playable even if the deck has none.
  */
 const JACQ: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 2, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "evolutionPokemon" },
+    dest: "hand",
+    max: 2,
+    reveal: true,
+  }),
 };
 
 /**
@@ -1240,16 +135,12 @@ const CHIEN_PAO: CardProgram = {
       name: "Shivery Chill",
       oncePerTurn: true,
       activeOnly: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicEnergy", energyType: "Water" },
-          dest: "hand",
-          max: 2,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "basicEnergy", energyType: "Water" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -1273,10 +164,6 @@ const MEWTWO_VSTAR: CardProgram = {
     ],
   },
 };
-
-/** Bouffalant — "Bouffer": "This Pokémon takes 20 less damage from attacks
-    (after applying Weakness and Resistance)." (passive) */
-const BOUFFALANT: CardProgram = { passive: { damageReductionAfterWR: 20 } };
 
 /** Cacnea / Cacturne — "Counterattack Quills": "If this Pokémon is in the Active
     Spot and is damaged by an attack from your opponent's Pokémon (even if this
@@ -1575,13 +462,6 @@ const PRESSURE: CardProgram = { passive: { opponentActiveAttackDebuff: 20 } };
 const AZURE_SEAS: CardProgram = { passive: { suppressTargetEffectsOnAttack: true } };
 
 /**
- * Fixture only: a -30 post-W/R reduction on synthetic defenders that also have a Weakness or
- * Resistance. Kept separate from `COPPERAJAH_EX` so edits to that card do not change these
- * fixtures.
- */
-const FIX_SUPPRESS_WALL: CardProgram = { passive: { damageReductionAfterWR: 30 } };
-
-/**
  * Dachsbun "Well-Baked Body": can't be Burned, and prevent attack damage from the opponent's {R}
  * Pokémon.
  */
@@ -1650,15 +530,11 @@ const ARTAZON: CardProgram = {
   stadium: {
     ability: {
       label: "Artazon",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicPokemon", noRuleBox: true },
-          dest: "bench",
-          max: 1,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "basicPokemon", noRuleBox: true },
+        dest: "bench",
+        max: 1,
+      }),
     },
   },
 };
@@ -1675,16 +551,12 @@ const MESAGOZA: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [
-            {
-              op: "searchDeck",
-              filter: { kind: "anyPokemon" },
-              dest: "hand",
-              max: 1,
-              reveal: true,
-            },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "anyPokemon" },
+            dest: "hand",
+            max: 1,
+            reveal: true,
+          }),
         },
       ],
     },
@@ -1699,10 +571,12 @@ const TOWN_STORE: CardProgram = {
   stadium: {
     ability: {
       label: "Town Store",
-      program: [
-        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 1, reveal: true },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "toolCard" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
     },
   },
 };
@@ -1796,7 +670,6 @@ const EXP_SHARE: CardProgram = {
     {
       name: "Exp. Share",
       trigger: "onAllyActiveKnockOut",
-      optional: true,
       program: [
         {
           op: "moveEnergy",
@@ -1849,17 +722,12 @@ const FLAMIGO: CardProgram = {
     {
       name: "Insta-Flock",
       trigger: "onPlayToBench",
-      optional: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "byName", name: "Flamigo" },
-          dest: "hand",
-          max: 3,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "byName", name: "Flamigo" },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -1872,7 +740,6 @@ const ARBOLIVA: CardProgram = {
     {
       name: "Enriching Oil",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "healChosen", amount: "all" }],
     },
   ],
@@ -1966,15 +833,14 @@ const COUNTERATTACKING_PINCER: CardProgram = {
 // ── M4 slice 8: the mid-turn-damage snipe (§9). ──
 
 /**
- * Hawlucha — "Flying Entry". The trigger's `optional` auto-fires, so the printed "you may" survives
- * as the op's own `optional`: take 2 or none.
+ * Hawlucha — "Flying Entry". The trigger auto-fires, so the printed "you may" survives as the op's
+ * own `optional`: take 2 or none.
  */
 const HAWLUCHA: CardProgram = {
   triggered: [
     {
       name: "Flying Entry",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "damageChosen",
@@ -1995,10 +861,8 @@ const HAWLUCHA: CardProgram = {
  */
 const MEOWSCARADA: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Bouquet Magic",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -2008,7 +872,7 @@ const MEOWSCARADA: CardProgram = {
         },
         { op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "ability" },
       ],
-    },
+    }),
   ],
 };
 
@@ -2019,10 +883,8 @@ const MEOWSCARADA: CardProgram = {
  */
 const RADIANT_BLASTOISE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Pump Shot",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -2032,7 +894,7 @@ const RADIANT_BLASTOISE: CardProgram = {
         },
         { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "ability" },
       ],
-    },
+    }),
   ],
 };
 
@@ -2042,15 +904,13 @@ const RADIANT_BLASTOISE: CardProgram = {
  */
 const REVAVROOM: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Rumbling Engine",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard", filter: { kind: "anyEnergy" } },
         { op: "drawUntilHandSize", size: 6 },
       ],
-    },
+    }),
   ],
 };
 
@@ -2061,15 +921,13 @@ const REVAVROOM: CardProgram = {
     `AbilityCost` field could not express. */
 const TINKATON: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Gather Materials",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard" },
         { op: "drawCards", count: 3 },
       ],
-    },
+    }),
   ],
 };
 
@@ -2128,16 +986,12 @@ const FAN_CALL: CardProgram = {
       oncePerTurn: "sharedByName",
       activeOnly: false,
       playableIf: { kind: "yourFirstTurn" },
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "typedPokemon", pokemonType: "Colorless", maxHp: 100 },
-          dest: "hand",
-          max: 3,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "typedPokemon", pokemonType: "Colorless", maxHp: 100 },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -2149,8 +1003,7 @@ const FAN_CALL: CardProgram = {
 const ULTRA_BALL: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 2, to: "discard" },
-    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
+    ...searchThenShuffle({ filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true }),
   ],
 };
 
@@ -2162,8 +1015,7 @@ const ULTRA_BALL: CardProgram = {
 const EARTHEN_VESSEL: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 1, to: "discard" },
-    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 2, reveal: true },
-    { op: "shuffleDeck" },
+    ...searchThenShuffle({ filter: { kind: "basicEnergy" }, dest: "hand", max: 2, reveal: true }),
   ],
 };
 
@@ -2174,8 +1026,7 @@ const EARTHEN_VESSEL: CardProgram = {
 const LARRYS_SKILL: CardProgram = {
   trainer: [
     { op: "discardHand" },
-    {
-      op: "searchDeck",
+    ...searchThenShuffle({
       filter: { kind: "anyPokemon" },
       dest: "hand",
       max: 1,
@@ -2184,25 +1035,20 @@ const LARRYS_SKILL: CardProgram = {
         { filter: { kind: "supporter" }, max: 1 },
         { filter: { kind: "basicEnergy" }, max: 1 },
       ],
-    },
-    { op: "shuffleDeck" },
+    }),
   ],
 };
 
 /** Arven's rotated printings remain usable in existing decks. One search with
     separate caps lets the player take an Item, a Tool, either one, or neither. */
 const ARVEN: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "item" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [{ filter: { kind: "toolCard" }, max: 1 }],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "item" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [{ filter: { kind: "toolCard" }, max: 1 }],
+  }),
 };
 
 /**
@@ -2212,8 +1058,7 @@ const ARVEN: CardProgram = {
 const SECRET_BOX: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 3, to: "discard" },
-    {
-      op: "searchDeck",
+    ...searchThenShuffle({
       filter: { kind: "item" },
       dest: "hand",
       max: 1,
@@ -2223,8 +1068,7 @@ const SECRET_BOX: CardProgram = {
         { filter: { kind: "supporter" }, max: 1 },
         { filter: { kind: "stadium" }, max: 1 },
       ],
-    },
-    { op: "shuffleDeck" },
+    }),
   ],
 };
 
@@ -2236,60 +1080,44 @@ const SECRET_BOX: CardProgram = {
  * included.
  */
 const HILDA: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "evolutionPokemon" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "evolutionPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
+  }),
 };
 
 /** Colress's Tenacity. Hilda's shape with a Stadium as the first noun. */
 const COLRESSS_TENACITY: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "stadium" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "stadium" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
+  }),
 };
 
 /** Cyrano. `suffixPokemon` "ex" matches only Pokémon ex, not Pokémon V. */
 const CYRANO: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "suffixPokemon", suffix: "ex" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "suffixPokemon", suffix: "ex" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /** Hyper Aroma. Stage 1 Pokémon only. */
 const HYPER_AROMA: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "stagePokemon", stage: "Stage1" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "stagePokemon", stage: "Stage1" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /**
@@ -2297,16 +1125,12 @@ const HYPER_AROMA: CardProgram = {
  * not Team Rocket's Items.
  */
 const TEAM_ROCKETS_TRANSCEIVER: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
@@ -2314,17 +1138,13 @@ const TEAM_ROCKETS_TRANSCEIVER: CardProgram = {
  * dialog ceiling can exceed any legal answer; the validator refuses a repeated type.
  */
 const ENERGY_SEARCH_PRO: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicEnergy" },
-      dest: "hand",
-      max: "any",
-      reveal: true,
-      distinctEnergyTypes: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicEnergy" },
+    dest: "hand",
+    max: "any",
+    reveal: true,
+    distinctEnergyTypes: true,
+  }),
 };
 
 /**
@@ -2332,10 +1152,7 @@ const ENERGY_SEARCH_PRO: CardProgram = {
  * nothing, and shuffles.
  */
 const PRECIOUS_TROLLEY: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: "any" },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "bench", max: "any" }),
 };
 
 /**
@@ -2343,10 +1160,7 @@ const PRECIOUS_TROLLEY: CardProgram = {
  * decline, or no park at all.
  */
 const BOXED_ORDER: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "item" }, dest: "hand", max: 2, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "item" }, dest: "hand", max: 2, reveal: true }),
   trainerEndsTurn: true,
 };
 
@@ -2356,10 +1170,7 @@ const BOXED_ORDER: CardProgram = {
  */
 const CASSIOPEIA: CardProgram = {
   trainerPlayableIf: { kind: "yourHandExactly", count: 1 },
-  trainer: [
-    { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 2 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 2 }),
 };
 
 /** Cook. Heals the controller's Active; playable even when the Active is undamaged. */
@@ -2421,22 +1232,18 @@ const MEDDLING_MEMO: CardProgram = {
  * `also`. `ownerPokemon` admits any stage; the Energy side is Basic {R} only.
  */
 const ETHANS_ADVENTURE: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: {
-        kind: "anyOf",
-        filters: [
-          { kind: "ownerPokemon", owner: "Ethan" },
-          { kind: "basicEnergy", energyType: "Fire" },
-        ],
-      },
-      dest: "hand",
-      max: 3,
-      reveal: true,
+  trainer: searchThenShuffle({
+    filter: {
+      kind: "anyOf",
+      filters: [
+        { kind: "ownerPokemon", owner: "Ethan" },
+        { kind: "basicEnergy", energyType: "Fire" },
+      ],
     },
-    { op: "shuffleDeck" },
-  ],
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /**
@@ -2445,22 +1252,18 @@ const ETHANS_ADVENTURE: CardProgram = {
  */
 const LICKING_CATCH: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: {
-          kind: "anyOf",
-          filters: [
-            { kind: "typedPokemon", pokemonType: "Fire" },
-            { kind: "basicEnergy", energyType: "Fire" },
-          ],
-        },
-        dest: "hand",
-        max: 3,
-        reveal: true,
+    0: searchThenShuffle({
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Fire" },
+          { kind: "basicEnergy", energyType: "Fire" },
+        ],
       },
-      { op: "shuffleDeck" },
-    ],
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    }),
   },
 };
 
@@ -2470,21 +1273,17 @@ const LICKING_CATCH: CardProgram = {
  */
 const FAMILIAL_MARCH: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: {
-          kind: "anyOf",
-          filters: [
-            { kind: "byName", name: "Maushold" },
-            { kind: "byName", name: "Maushold ex" },
-          ],
-        },
-        dest: "bench",
-        max: 2,
+    0: searchThenShuffle({
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "byName", name: "Maushold" },
+          { kind: "byName", name: "Maushold ex" },
+        ],
       },
-      { op: "shuffleDeck" },
-    ],
+      dest: "bench",
+      max: 2,
+    }),
   },
 };
 
@@ -2509,10 +1308,8 @@ const DENDRA: CardProgram = {
  */
 const SKWOVET: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Nest Stash",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "handRefresh",
@@ -2522,7 +1319,7 @@ const SKWOVET: CardProgram = {
           onlyIfAnyMoved: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -2583,11 +1380,7 @@ const FIX_ONKO: CardProgram = {
     {
       name: "Last Wish",
       trigger: "onKnockOut",
-      optional: true,
-      program: [
-        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "hand", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "hand", max: 1 }),
     },
   ],
 };
@@ -2614,10 +1407,12 @@ const POKE_BALL: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [
-        { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
-        { op: "shuffleDeck" },
-      ],
+      then: searchThenShuffle({
+        filter: { kind: "anyPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
     },
   ],
 };
@@ -2631,14 +1426,17 @@ const POKEMON_CATCHER: CardProgram = {
 /** Nemona — "Draw 3 cards." (Supporter) */
 const NEMONA: CardProgram = { trainer: [{ op: "drawCards", count: 3 }] };
 
-/** Copperajah ex — "Bronze Body": "This Pokémon takes 30 less damage from
-    attacks (after applying Weakness and Resistance)." (passive — the Bouffalant
-    "Bouffer" shape, a bigger flat reduction). */
-const COPPERAJAH_EX: CardProgram = { passive: { damageReductionAfterWR: 30 } };
+/**
+ * "This Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)." Printed
+ * under several Ability names (Bronze Body, Bouffer, Thicket Body, Soft Wool, ...).
+ */
+const REDUCE_30_AFTER_WR: CardProgram = { passive: { damageReductionAfterWR: 30 } };
 
-/** Stonjourner — "Exoskeleton": "This Pokémon takes 20 less damage from attacks
-    (after applying Weakness and Resistance)." (passive) */
-const STONJOURNER: CardProgram = { passive: { damageReductionAfterWR: 20 } };
+/**
+ * "This Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance)." Printed
+ * under several Ability names (Exoskeleton, Bouffer, Solid Shell, Fur Coat, ...).
+ */
+const REDUCE_20_AFTER_WR: CardProgram = { passive: { damageReductionAfterWR: 20 } };
 
 /** Rock Chestplate. The {F} gate is resolved in `passivesOf` against the holder's types. */
 const ROCK_CHESTPLATE: CardProgram = {
@@ -2809,21 +1607,15 @@ const PRIMAL_KNOWLEDGE: CardProgram = {
  */
 const METALLIC_SIGNAL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Metallic Signal",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },
-          dest: "hand",
-          max: 2,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -2835,12 +1627,10 @@ const METALLIC_SIGNAL: CardProgram = {
     Energy card from your hand to 1 of your Pokémon." (activated, once/turn) */
 const QUAQUAVAL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Energy Carnival",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "hand" }],
-    },
+    }),
   ],
 };
 
@@ -2864,22 +1654,18 @@ const BAXCALIBUR: CardProgram = {
     "Dino Cry" (multi + "your turn ends") still needs later ops. */
 const FIX_ATTACHER: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Recharge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Fire" }],
-    },
+    }),
   ],
 };
 
 /** Koraidon ex — "Dino Cry". Two attach ops, each `declinable`, so "up to 2" allows 0, 1 or 2. */
 const KORAIDON_EX: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Dino Cry",
-      oncePerTurn: true,
-      activeOnly: false,
       endsTurn: true,
       program: [
         {
@@ -2899,7 +1685,7 @@ const KORAIDON_EX: CardProgram = {
           declinable: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -2935,12 +1721,10 @@ const GARDEVOIR_EX: CardProgram = {
  */
 const BLISSEY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Busybody Nurse",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "clearStatus" }],
-    },
+    }),
   ],
 };
 
@@ -3090,10 +1874,8 @@ const ELECTRIC_GENERATOR: CardProgram = {
  */
 const HYDREIGON: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Tri Howl",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromTop",
@@ -3103,7 +1885,7 @@ const HYDREIGON: CardProgram = {
           restTo: "discard",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3162,15 +1944,11 @@ const FIX_GRASSDOUBLE: CardProgram = {
  * read while attached.
  */
 const FIX_PILESCAN: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "providesEnergy", energyType: "Fire" },
-      dest: "hand",
-      max: 1,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "providesEnergy", energyType: "Fire" },
+    dest: "hand",
+    max: 1,
+  }),
 };
 
 /**
@@ -3272,10 +2050,7 @@ const CALL_BELL: CardProgram = {
     kind: "allOf",
     conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
   },
-  trainer: [
-    { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true }),
 };
 
 /**
@@ -3330,10 +2105,8 @@ const ILLUMISE_SLOWING_PERFUME: CardProgram = {
  */
 const LOOK_FOR_PREY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Look for Prey",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "bottomFromOpponentHand",
@@ -3341,7 +2114,7 @@ const LOOK_FOR_PREY: CardProgram = {
           dest: "bench",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3524,7 +2297,6 @@ const MAWILE: CardProgram = {
     {
       name: "Special Eater",
       trigger: "onPlayToBench",
-      optional: true,
       program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "specialEnergy" } }],
     },
   ],
@@ -3548,7 +2320,6 @@ const CHARIZARD_EX: CardProgram = {
     {
       name: "Infernal Reign",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachFromDeck",
@@ -3591,10 +2362,8 @@ const JANINES_SECRET_ART: CardProgram = {
  */
 const PAWMOT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Electrogenesis",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromDeck",
@@ -3604,7 +2373,7 @@ const PAWMOT: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -3642,15 +2411,13 @@ const POISON_POINT: CardProgram = {
     `handCostUnmet`). 4 legal printings of 4 in the catalog. */
 const NS_ZOROARK_EX: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Trade",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "discard" },
         { op: "drawCards", count: 2 },
       ],
-    },
+    }),
   ],
 };
 
@@ -3695,7 +2462,6 @@ const TEAM_ROCKETS_CROBAT_EX: CardProgram = {
     {
       name: "Biting Spree",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "damageChosen",
@@ -3725,7 +2491,6 @@ const SNEAKY_BITE: CardProgram = {
     {
       name: "Sneaky Bite",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "damageChosen",
@@ -3787,7 +2552,6 @@ const SUDDEN_SHEARING: CardProgram = {
     {
       name: "Sudden Shearing",
       trigger: "onPlayToBench",
-      optional: true,
       program: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
     },
   ],
@@ -3802,7 +2566,6 @@ const DEFIANT_HORN: CardProgram = {
     {
       name: "Defiant Horn",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "gust", optional: true }],
     },
   ],
@@ -3877,7 +2640,6 @@ const RAPID_VERNIER: CardProgram = {
     {
       name: "Rapid Vernier",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -3910,12 +2672,10 @@ const RAPID_VERNIER: CardProgram = {
  */
 const SHOWTIME: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Showtime",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "switchActive", fromSource: true }],
-    },
+    }),
   ],
 };
 
@@ -3925,10 +2685,8 @@ const SHOWTIME: CardProgram = {
  */
 const GATHER_INWARD: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Gather Inward",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "moveEnergy",
@@ -3938,7 +2696,7 @@ const GATHER_INWARD: CardProgram = {
           anySource: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -3964,12 +2722,10 @@ const INFERNO_FANDANGO: CardProgram = {
 /** Blaziken ex — "Seething Spirit". */
 const SEETHING_SPIRIT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Seething Spirit",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard" }],
-    },
+    }),
   ],
 };
 
@@ -3979,26 +2735,22 @@ const SEETHING_SPIRIT: CardProgram = {
  */
 const CHARGING_UP: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Charging Up",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true }],
-    },
+    }),
   ],
 };
 
 /** Eelektrik — "Dynamotor". `benchOnly` stops the usually-Active holder from feeding itself. */
 const DYNAMOTOR: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Dynamotor",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true },
       ],
-    },
+    }),
   ],
 };
 
@@ -4012,7 +2764,6 @@ const ASSEMBLE_ALLOY: CardProgram = {
     {
       name: "Assemble Alloy",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachEnergyFrom",
@@ -4040,12 +2791,10 @@ const ASSEMBLE_ALLOY: CardProgram = {
     "1 of your Pokémon") on the Ability surface. 1 legal printing. */
 const CONFECTIONARY_GIFT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Confectionary Gift",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "healChosen", amount: 30 }],
-    },
+    }),
   ],
 };
 
@@ -4058,15 +2807,13 @@ const INSOMNIA: CardProgram = { passive: { statusImmunities: ["asleep"] } };
  */
 const RECONSTITUTE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Reconstitute",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 2, to: "discard" },
         { op: "drawCards", count: 1 },
       ],
-    },
+    }),
   ],
 };
 
@@ -4076,15 +2823,13 @@ const RECONSTITUTE: CardProgram = {
  */
 const UP_TEMPO: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Up-Tempo",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "payFromHand", count: 1, to: "deckBottom" },
         { op: "drawUntilHandSize", size: 5 },
       ],
-    },
+    }),
   ],
 };
 
@@ -4153,7 +2898,6 @@ const GREEDY_ORDER: CardProgram = {
     {
       name: "Greedy Order",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "discardPileRetrieval",
@@ -4176,7 +2920,6 @@ const INVITING_WINK: CardProgram = {
     {
       name: "Inviting Wink",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "bottomFromOpponentHand",
@@ -4195,10 +2938,8 @@ const INVITING_WINK: CardProgram = {
  */
 const PYRO_DANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Pyro Dance",
-      oncePerTurn: true,
-      activeOnly: false,
       // `atLeastOne` over one `recordAs` slot: {R}, {F} or 1 of each are all reachable, and the
       // empty answer is not.
       program: [
@@ -4217,7 +2958,7 @@ const PYRO_DANCE: CardProgram = {
           atLeastOne: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -4227,10 +2968,8 @@ const PYRO_DANCE: CardProgram = {
  */
 const METAL_MAKER: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Metal Maker",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromTop",
@@ -4240,7 +2979,7 @@ const METAL_MAKER: CardProgram = {
           restTo: "shuffledBottom",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -4250,12 +2989,10 @@ const METAL_MAKER: CardProgram = {
  */
 const SNACK_SEEK: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Snack Seek",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "lookAtTopN", n: 1, filter: { kind: "anyCard" }, max: 1, dest: "discard" }],
-    },
+    }),
   ],
 };
 
@@ -4269,7 +3006,6 @@ const SPIKE_CLAD: CardProgram = {
     {
       name: "Spike-Clad",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachEnergyFrom",
@@ -4288,10 +3024,11 @@ const SPIKE_CLAD: CardProgram = {
  * onto your Bench. Then, shuffle your deck."
  */
 const BUDDY_BUDDY_POFFIN: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicPokemon", maxHp: 70 },
+    dest: "bench",
+    max: 2,
+  }),
 };
 
 /**
@@ -4348,10 +3085,12 @@ const SACRED_ASH: CardProgram = {
     the coin gate REMOVED, i.e. Mesagoza's gated pair lifted to the top level.
     1 legal printing. */
 const MASTER_BALL: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "anyPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Treasure Tracker sv08.5-131 — "Search your deck for up to 5 Pokémon Tool
@@ -4359,10 +3098,7 @@ const MASTER_BALL: CardProgram = {
     (Item) — Town Store's `toolCard` filter searched to HAND at `max: 5`.
     1 legal printing. */
 const TREASURE_TRACKER: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "toolCard" }, dest: "hand", max: 5, reveal: true }),
 };
 
 /** Dangerous Laser sv06.5-058 — "Your opponent's Active Pokémon is now Burned
@@ -4734,20 +3470,14 @@ const LILLIES_PEARL: CardProgram = {
     Photon Blaster's printed damage and next-turn lock already derive from text. */
 const TANDEM_UNIT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Tandem Unit",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "typedPokemon", pokemonType: "Lightning", stage: "basic" },
-          dest: "bench",
-          max: 2,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "typedPokemon", pokemonType: "Lightning", stage: "basic" },
+        dest: "bench",
+        max: 2,
+      }),
+    }),
   ],
 };
 
@@ -4757,21 +3487,15 @@ const TANDEM_UNIT: CardProgram = {
  */
 const CHAMPIONS_CALL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Champion's Call",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "ownerPokemon", owner: "Cynthia" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "ownerPokemon", owner: "Cynthia" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -4781,16 +3505,12 @@ const CHAMPIONS_CALL: CardProgram = {
  */
 const SWIM_TOGETHER: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: { kind: "ownerPokemon", owner: "Misty" },
-        dest: "hand",
-        max: 3,
-        reveal: true,
-      },
-      { op: "shuffleDeck" },
-    ],
+    0: searchThenShuffle({
+      filter: { kind: "ownerPokemon", owner: "Misty" },
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    }),
   },
 };
 
@@ -4803,15 +3523,11 @@ const SWIM_TOGETHER: CardProgram = {
     anything leaves the deck, so a full Bench makes this a no-op that still
     shuffles rather than a card-destroying overflow. 1 legal printing of 1. */
 const HOPS_BAG: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },
-      dest: "bench",
-      max: 2,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },
+    dest: "bench",
+    max: 2,
+  }),
 };
 
 /**
@@ -4820,15 +3536,11 @@ const HOPS_BAG: CardProgram = {
  */
 const SUMMONING_SIGN: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: { kind: "ownerPokemon", owner: "Steven", stage: "basic" },
-        dest: "bench",
-        max: 2,
-      },
-      { op: "shuffleDeck" },
-    ],
+    0: searchThenShuffle({
+      filter: { kind: "ownerPokemon", owner: "Steven", stage: "basic" },
+      dest: "bench",
+      max: 2,
+    }),
   },
 };
 
@@ -4838,17 +3550,12 @@ const SUMMONING_SIGN: CardProgram = {
  */
 const LILLIES_COMFEY: CardProgram = {
   attack: {
-    0: [
-      {
-        op: "searchDeck",
-        filter: { kind: "ownerPokemon", owner: "Lillie", stage: "basic" },
-        dest: "bench",
-        // `BENCH_CEILING`, not `BENCH_MAX`: Area Zero Underdepths can allow 8 Benched Pokémon, and
-        // `benchSpace` still clamps to the live limit.
-        max: BENCH_CEILING,
-      },
-      { op: "shuffleDeck" },
-    ],
+    0: searchThenShuffle({
+      filter: { kind: "ownerPokemon", owner: "Lillie", stage: "basic" },
+      dest: "bench", // `BENCH_CEILING`, not `BENCH_MAX`: Area Zero Underdepths can allow 8 Benched Pokémon, and
+      // `benchSpace` still clamps to the live limit.
+      max: BENCH_CEILING,
+    }),
     1: [{ op: "returnSelf", dest: "hand" }],
   },
 };
@@ -4868,16 +3575,12 @@ const SPIKEMUTH_GYM: CardProgram = {
   stadium: {
     ability: {
       label: "Spikemuth Gym",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "ownerPokemon", owner: "Marnie" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "ownerPokemon", owner: "Marnie" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
     },
   },
 };
@@ -4927,7 +3630,6 @@ const MARNIES_GRIMMSNARL_EX: CardProgram = {
     {
       name: "Punk Up",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachFromDeck",
@@ -4947,10 +3649,8 @@ const MARNIES_GRIMMSNARL_EX: CardProgram = {
  */
 const ETHANS_HO_OH_EX: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Golden Flame",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachEnergyFrom",
@@ -4961,7 +3661,7 @@ const ETHANS_HO_OH_EX: CardProgram = {
           benchOnly: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5075,10 +3775,8 @@ const EMCEES_HYPE: CardProgram = {
  */
 const TEAL_DANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Teal Dance",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachEnergyFrom",
@@ -5093,7 +3791,7 @@ const TEAL_DANCE: CardProgram = {
           then: [{ op: "drawCards", count: 1 }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5104,10 +3802,8 @@ const TEAL_DANCE: CardProgram = {
  */
 const RIPENING_CHARGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Ripening Charge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachEnergyFrom",
@@ -5116,7 +3812,7 @@ const RIPENING_CHARGE: CardProgram = {
           healTarget: 30,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5129,7 +3825,6 @@ const BATTLE_HARDENED: CardProgram = {
     {
       name: "Battle-Hardened",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "attachEnergyFrom",
@@ -5150,10 +3845,8 @@ const BATTLE_HARDENED: CardProgram = {
  */
 const FLASHING_DRAW: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flashing Draw",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "discardEnergy",
@@ -5162,7 +3855,7 @@ const FLASHING_DRAW: CardProgram = {
         },
         { op: "drawUntilHandSize", size: 6 },
       ],
-    },
+    }),
   ],
 };
 
@@ -5181,16 +3874,12 @@ const CARMINE: CardProgram = {
  * shuffle your deck."
  */
 const TEAM_ROCKETS_PROTON: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
   trainerFirstTurnExempt: true,
 };
 
@@ -5269,17 +3958,15 @@ const HUSTLE_PLAY: CardProgram = {
  */
 const CAPTIVATING_INVITATION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Captivating Invitation",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
           then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5370,10 +4057,8 @@ const EXPLORERS_GUIDANCE: CardProgram = {
  */
 const DRAKLOAK: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Recon Directive",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "lookAtTopN",
@@ -5384,7 +4069,7 @@ const DRAKLOAK: CardProgram = {
           restTo: "bottom",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -5410,10 +4095,12 @@ const RIKA: CardProgram = {
  * Then, shuffle your deck."
  */
 const TRAINER_SEARCH: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "trainerCard" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "trainerCard" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
@@ -5422,16 +4109,14 @@ const TRAINER_SEARCH: CardProgram = {
  */
 const EMERGENCY_EVOLUTION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Emergency Evolution",
-      oncePerTurn: true,
-      activeOnly: false,
       remainingHpAtMost: 30,
       program: [
         { op: "evolveFromDeck", names: ["Unfezant", "Unfezant ex"] },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -5441,15 +4126,13 @@ const EMERGENCY_EVOLUTION: CardProgram = {
  */
 const RUN_AWAY_DRAW: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Run Away Draw",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "drawCards", count: 3, recordAs: "moved" },
         { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
       ],
-    },
+    }),
   ],
 };
 
@@ -5489,8 +4172,7 @@ const BREEZY_GIFT: CardProgram = {
   attack: {
     0: [
       { op: "returnSelf", dest: "deck" },
-      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },
-      { op: "shuffleDeck" },
+      ...searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 3 }),
     ],
   },
 };
@@ -5507,30 +4189,26 @@ const CIPHERMANIACS_CODEBREAKING: CardProgram = { trainer: searchTopOrderProgram
  */
 const CURSED_BLAST_5: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Cursed Blast",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },
         { op: "knockOutSelf" },
       ],
-    },
+    }),
   ],
 };
 
 /** Dusknoir's version of the Cursed Blast sentence (13 counters). */
 const CURSED_BLAST_13: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Cursed Blast",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "damageChosen", target: "opponentAny", amount: 130, count: 1, source: "ability" },
         { op: "knockOutSelf" },
       ],
-    },
+    }),
   ],
 };
 
@@ -5540,17 +4218,15 @@ const CURSED_BLAST_13: CardProgram = {
  */
 const OVERVOLT_DISCHARGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Overvolt Discharge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
         { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
         { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
         { op: "knockOutSelf" },
       ],
-    },
+    }),
   ],
 };
 
@@ -5581,7 +4257,6 @@ const GLITTERING_STAR_PATTERN: CardProgram = {
     {
       name: "Glittering Star Pattern",
       trigger: "onEvolve",
-      optional: true,
       // `optional`: the printed "you may" lets the player decline the pick.
       program: [{ op: "gust", remainingHpAtMost: 90, optional: true }],
     },
@@ -5596,10 +4271,8 @@ const BIANCAS_DEVOTION: CardProgram = {
 /** Steven's Metagross ex — "X-Boot". */
 const X_BOOT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "X-Boot",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromDeck",
@@ -5615,7 +4288,7 @@ const X_BOOT: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -5639,69 +4312,55 @@ const ENERGY_COIN: CardProgram = {
 /** Rapidash — "Hurried Gait": once during your turn, you may draw a card. */
 const HURRIED_GAIT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Hurried Gait",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "drawCards", count: 1 }],
-    },
+    }),
   ],
 };
 
 /** Chandelure — "Alluring Light": once during your turn, you may have each player draw a card. */
 const ALLURING_LIGHT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Alluring Light",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "drawCards", count: 1, who: "eachPlayer" }],
-    },
+    }),
   ],
 };
 
 /** Blissey ex — "Happy Switch": move a Basic Energy from 1 of your Pokémon to another. */
 const HAPPY_SWITCH: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Happy Switch",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1 }],
-    },
+    }),
   ],
 };
 
 /** Swadloon — "Healing Leaves": once during your turn, heal 20 damage from your Active Pokémon. */
 const HEALING_LEAVES: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Healing Leaves",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "heal", target: "self", amount: 20 }],
-    },
+    }),
   ],
 };
 
 /** Mamoswine ex — "Mammoth Hauler". */
 const MAMMOTH_HAULER: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Mammoth Hauler",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "anyPokemon" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "anyPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -5713,21 +4372,15 @@ const MAMMOTH_HAULER: CardProgram = {
     `retrieveNoun`'s "a Stadium card". */
 const CHANGING_SEASONS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Changing Seasons",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "stadium" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "stadium" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -5737,31 +4390,23 @@ const CHANGING_SEASONS: CardProgram = {
  */
 const BONDED_BY_THE_JOURNEY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Bonded by the Journey",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "byName", name: "Ethan's Adventure", cardNoun: true },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "byName", name: "Ethan's Adventure", cardNoun: true },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
 /** Volcarona — "Torrid Scales"; requires discarding a Basic {R} Energy from hand. */
 const TORRID_SCALES: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Torrid Scales",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -5771,7 +4416,7 @@ const TORRID_SCALES: CardProgram = {
         },
         { op: "applyStatus", target: "defender", status: "burned" },
       ],
-    },
+    }),
   ],
 };
 
@@ -5790,10 +4435,8 @@ const ANCIENT_WING: CardProgram = {
 /** Meowstic — "Beckoning Tail"; requires discarding a Chill Teaser Toy from hand. */
 const BECKONING_TAIL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Beckoning Tail",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -5803,22 +4446,20 @@ const BECKONING_TAIL: CardProgram = {
         },
         { op: "gust" },
       ],
-    },
+    }),
   ],
 };
 
 /** Samurott — "Torrential Whirlpool". */
 const TORRENTIAL_WHIRLPOOL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Torrential Whirlpool",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "switchActive", recordAs: "moved" },
         { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
       ],
-    },
+    }),
   ],
 };
 
@@ -5848,7 +4489,6 @@ const SNOW_SINK: CardProgram = {
     {
       name: "Snow Sink",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "conditionGate",
@@ -5872,7 +4512,6 @@ const WICKED_TAIL: CardProgram = {
     {
       name: "Wicked Tail",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "coinFlipGate",
@@ -6023,13 +4662,11 @@ const COMMUNITY_CENTER: CardProgram = {
 /** Crobat — "Shadowy Envoy": usable only if you played Janine's Secret Art this turn. */
 const SHADOWY_ENVOY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Shadowy Envoy",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Janine's Secret Art" },
       program: [{ op: "drawUntilHandSize", size: 8 }],
-    },
+    }),
   ],
 };
 
@@ -6165,24 +4802,17 @@ const MEGATON_BLOWER: CardProgram = {
  * Brilliant Blender (ACE SPEC): search your deck for up to 5 cards and discard them, then shuffle.
  */
 const BRILLIANT_BLENDER: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "anyCard" }, dest: "discard", max: 5 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "discard", max: 5 }),
 };
 
 /** TM Machine: search your deck for up to 3 Technical Machine Tools. */
 const TM_MACHINE: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "toolNameContaining", fragment: "Technical Machine" },
-      dest: "hand",
-      max: 3,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "toolNameContaining", fragment: "Technical Machine" },
+    dest: "hand",
+    max: 3,
+    reveal: true,
+  }),
 };
 
 /**
@@ -6333,16 +4963,11 @@ const DIG_DIG_DIG: CardProgram = {
     {
       name: "Dig Dig Dig",
       trigger: "onPlayToBench",
-      optional: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicEnergy", energyType: "Fighting" },
-          dest: "discard",
-          max: 3,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "basicEnergy", energyType: "Fighting" },
+        dest: "discard",
+        max: 3,
+      }),
     },
   ],
 };
@@ -6354,15 +4979,11 @@ const SMOG_SIGNALS: CardProgram = {
       name: "Smog Signals",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "pokemonNameContaining", fragment: "Koffing" },
-          dest: "bench",
-          max: 2,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "pokemonNameContaining", fragment: "Koffing" },
+        dest: "bench",
+        max: 2,
+      }),
     },
   ],
 };
@@ -6370,16 +4991,11 @@ const SMOG_SIGNALS: CardProgram = {
 /** Thwackey — "Boom Boom Groove". */
 const BOOM_BOOM_GROOVE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Boom Boom Groove",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "yourActiveHasAbility", name: "Festival Lead" },
-      program: [
-        { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 1 }),
+    }),
   ],
 };
 
@@ -6421,7 +5037,6 @@ const WAFTING_HEAL: CardProgram = {
     {
       name: "Wafting Heal",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "conditionGate",
@@ -6453,7 +5068,6 @@ const TIME_TO_CHOW_DOWN: CardProgram = {
     {
       name: "Time to Chow Down",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -6478,7 +5092,6 @@ const OBLIGING_HEAL: CardProgram = {
     {
       name: "Obliging Heal",
       trigger: "onPlayToBench",
-      optional: true,
       program: [{ op: "heal", target: "self", amount: 30 }, { op: "recoverOneStatus" }],
     },
   ],
@@ -6487,10 +5100,8 @@ const OBLIGING_HEAL: CardProgram = {
 /** Cradily — "Selective Slime". */
 const SELECTIVE_SLIME: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Selective Slime",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
@@ -6513,7 +5124,7 @@ const SELECTIVE_SLIME: CardProgram = {
           ],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -6573,17 +5184,13 @@ const SUPER_POTION: CardProgram = {
 
 /** Love Ball. */
 const LOVE_BALL: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "anyPokemon" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      sameNameAsOpponentInPlay: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "anyPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    sameNameAsOpponentInPlay: true,
+  }),
 };
 
 /** Hand Trimmer: each player discards down to 5 cards; your opponent discards first. */
@@ -6638,24 +5245,12 @@ const PERILOUS_JUNGLE: CardProgram = {
 };
 
 /** The six type Berries (Tools). */
-const HABAN_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Dragon" } },
-};
-const OCCA_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Fire" } },
-};
-const PAYAPA_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Psychic" } },
-};
-const BABIRI_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Metal" } },
-};
-const COLBUR_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Darkness" } },
-};
-const PASSHO_BERRY: CardProgram = {
-  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Water" } },
-};
+const HABAN_BERRY = berry("Dragon");
+const OCCA_BERRY = berry("Fire");
+const PAYAPA_BERRY = berry("Psychic");
+const BABIRI_BERRY = berry("Metal");
+const COLBUR_BERRY = berry("Darkness");
+const PASSHO_BERRY = berry("Water");
 
 /** Survival Brace (Tool, ACE SPEC). */
 const SURVIVAL_BRACE: CardProgram = {
@@ -6733,15 +5328,13 @@ const PLASMA_BANE: CardProgram = {
 /** Feraligatr — "Torrential Heart". */
 const TORRENTIAL_HEART: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Torrential Heart",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "damageSelf", amount: 50, on: "source", source: "ability" },
         { op: "boostAttack", attack: null, amount: 120, holder: "source", thisTurn: true },
       ],
-    },
+    }),
   ],
 };
 
@@ -6751,10 +5344,8 @@ const HEROS_SPIRIT: CardProgram = { intoPlayOnlyVia: "Zero to Hero" };
 /** Misty's Psyduck — "Flustered Leap". */
 const FLUSTERED_LEAP: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flustered Leap",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       program: [
         { op: "discardDeckBottom", count: 1, recordAs: "moved" },
@@ -6764,7 +5355,7 @@ const FLUSTERED_LEAP: CardProgram = {
           then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -6789,11 +5380,7 @@ const IMPROMPTU_CARRIER: CardProgram = {
     {
       name: "Impromptu Carrier",
       trigger: "onPlayToBench",
-      optional: true,
-      program: [
-        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 }),
     },
   ],
 };
@@ -6804,7 +5391,6 @@ const ZERO_TO_HERO: CardProgram = {
     {
       name: "Zero to Hero",
       trigger: "onActiveMovedToBench",
-      optional: true,
       oncePerTurn: true,
       program: [{ op: "switchWithDeckNamed", name: "Palafin ex" }],
     },
@@ -6813,17 +5399,13 @@ const ZERO_TO_HERO: CardProgram = {
 
 /** Brock's Scouting: search for up to 2 Basic Pokémon or 1 Evolution Pokémon. */
 const BROCKS_SCOUTING: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicPokemon" },
-      max: 2,
-      dest: "hand",
-      reveal: true,
-      orElse: { filter: { kind: "evolutionPokemon" }, max: 1 },
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicPokemon" },
+    max: 2,
+    dest: "hand",
+    reveal: true,
+    orElse: { filter: { kind: "evolutionPokemon" }, max: 1 },
+  }),
 };
 
 /** Ogre's Mask. */
@@ -6842,7 +5424,6 @@ const HEAVY_BATON: CardProgram = {
     {
       name: "Heavy Baton",
       trigger: "onHolderActiveKnockedOut",
-      optional: true,
       program: [
         {
           op: "moveEnergy",
@@ -6862,10 +5443,7 @@ const AMULET_OF_HOPE: CardProgram = {
     {
       name: "Amulet of Hope",
       trigger: "onHolderKnockedOut",
-      program: [
-        { op: "searchDeck", filter: { kind: "anyCard" }, max: 3, dest: "hand" },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "anyCard" }, max: 3, dest: "hand" }),
     },
   ],
 };
@@ -6876,7 +5454,6 @@ const POWERGLASS: CardProgram = {
     {
       name: "Powerglass",
       trigger: "atEndOfYourTurnInActive",
-      optional: true,
       program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }],
     },
   ],
@@ -6964,16 +5541,12 @@ const SPARKLING_CRYSTAL: CardProgram = {
 
 /** Tera Orb: search your deck for a Tera Pokémon and put it into your hand. */
 const TERA_ORB: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "bannerPokemon", banner: "Tera" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "bannerPokemon", banner: "Tera" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Glass Trumpet: usable only if you have a Tera Pokémon in play. */
@@ -7009,21 +5582,16 @@ const JEWEL_SEEKER: CardProgram = {
     {
       name: "Jewel Seeker",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "conditionGate",
           cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
-          then: [
-            {
-              op: "searchDeck",
-              filter: { kind: "trainerCard" },
-              dest: "hand",
-              max: 2,
-              reveal: true,
-            },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "trainerCard" },
+            dest: "hand",
+            max: 2,
+            reveal: true,
+          }),
         },
       ],
     },
@@ -7176,13 +5744,11 @@ const IGNITION_ENERGY: CardProgram = {
 /** Munkidori — "Adrena-Brain". */
 const ADRENA_BRAIN: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Adrena-Brain",
-      oncePerTurn: true,
-      activeOnly: false,
       requiresEnergyType: "Darkness",
       program: [{ op: "moveCountersToOpponentChosen", upTo: 3 }],
-    },
+    }),
   ],
 };
 
@@ -7302,12 +5868,10 @@ const INCANDESCENT_BODY: CardProgram = {
     `me` wording; `HURRIED_GAIT`'s program under the printed name (`useAbility` matches it). */
 const AERIAL_DRAW: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Aerial Draw",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "drawCards", count: 1 }],
-    },
+    }),
   ],
 };
 
@@ -7316,12 +5880,10 @@ const AERIAL_DRAW: CardProgram = {
     Gift" in the `me` wording; `CONFECTIONARY_GIFT`'s program under the printed name. */
 const SHARE_HAPPINESS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Share Happiness",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "healChosen", amount: 30 }],
-    },
+    }),
   ],
 };
 
@@ -7406,14 +5968,12 @@ const COUNTERATTACKING_CREST: CardProgram = { passive: { damageAttacker: { amoun
     (`targetType`, Gardevoir ex's rider). */
 const STONE_ARMS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Stone Arms",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", targetType: "Fighting" },
       ],
-    },
+    }),
   ],
 };
 
@@ -7423,21 +5983,15 @@ const STONE_ARMS: CardProgram = {
     {P} for {W} and without its Active Spot clause. */
 const SCENT_COLLECTION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Scent Collection",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "basicEnergy", energyType: "Psychic" },
-          dest: "hand",
-          max: 2,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "basicEnergy", energyType: "Psychic" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -7447,12 +6001,10 @@ const SCENT_COLLECTION: CardProgram = {
     without its "If you do" rider. */
 const SKY_TRANSPORT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sky Transport",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "switchActive" }],
-    },
+    }),
   ],
 };
 
@@ -7517,16 +6069,12 @@ const JACINTHE: CardProgram = {
  * into your hand. Then, shuffle your deck."
  */
 const FIREBREATHER: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicEnergy", energyType: "Fire" },
-      dest: "hand",
-      max: 7,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicEnergy", energyType: "Fire" },
+    dest: "hand",
+    max: 7,
+    reveal: true,
+  }),
 };
 
 /** Fighting Gong `me01-116` / `-168`, `me02.5-187` (Item) — *"Search your deck for a Basic {F}
@@ -7535,22 +6083,18 @@ const FIREBREATHER: CardProgram = {
     nouns in the printed order: a Basic {F} Energy card, a BASIC {F} Pokémon (`typedPokemon`
     `stage: "basic"` — a Stage 1 {F} is not offered). */
 const FIGHTING_GONG: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: {
-        kind: "anyOf",
-        filters: [
-          { kind: "basicEnergy", energyType: "Fighting" },
-          { kind: "typedPokemon", pokemonType: "Fighting", stage: "basic" },
-        ],
-      },
-      dest: "hand",
-      max: 1,
-      reveal: true,
+  trainer: searchThenShuffle({
+    filter: {
+      kind: "anyOf",
+      filters: [
+        { kind: "basicEnergy", energyType: "Fighting" },
+        { kind: "typedPokemon", pokemonType: "Fighting", stage: "basic" },
+      ],
     },
-    { op: "shuffleDeck" },
-  ],
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Tarragon `me03-085` / `-116` (Supporter) — *"Put up to 4 in any combination of {F} Pokémon and
@@ -7581,16 +6125,12 @@ const TARRAGON: CardProgram = {
     Lana's Aid's `noRuleBox` on `anyPokemon` (any stage; a Mega Evolution Pokémon ex is an "ex",
     `hasRuleBox`). `30th-126` prints no text and is not keyed. */
 const POKE_PAD: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "anyPokemon", noRuleBox: true },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "anyPokemon", noRuleBox: true },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /** Energy Swatter `me03-073` (Item) — *"Your opponent reveals their hand, and you choose an Energy
@@ -7616,14 +6156,12 @@ const REPEL: CardProgram = { trainer: [{ op: "opponentSwitchOut" }] };
 const CANARI: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 1, to: "discard" },
-    {
-      op: "searchDeck",
+    ...searchThenShuffle({
       filter: { kind: "typedPokemon", pokemonType: "Lightning" },
       dest: "hand",
       max: 4,
       reveal: true,
-    },
-    { op: "shuffleDeck" },
+    }),
   ],
 };
 
@@ -7844,7 +6382,7 @@ const MORTAL_SHURIKEN: CardProgram = {
 };
 
 // On-evolve Abilities: the `onEvolve` moment is met once by construction, so no `oncePerTurn` key.
-// `optional: true` auto-fires; consequents with a real downside carry an inner `optional` confirm.
+// Triggers auto-fire; consequents with a real downside carry an inner `optional` confirm.
 // Programs that print "Then, shuffle" shuffle even when the "up to" pick takes nothing.
 
 const PSYCHIC_DRAW_3_TEXT =
@@ -7858,7 +6396,6 @@ const PSYCHIC_DRAW_3: CardProgram = {
     {
       name: "Psychic Draw",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -7876,7 +6413,6 @@ const PSYCHIC_DRAW_2: CardProgram = {
     {
       name: "Psychic Draw",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -7900,7 +6436,6 @@ const PRISON_PANIC: CardProgram = {
     {
       name: "Prison Panic",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -7921,7 +6456,6 @@ const ENERGIZED_STEPS: CardProgram = {
     {
       name: "Energized Steps",
       trigger: "onEvolve",
-      optional: true,
       program: [
         { op: "attachFromTop", n: 4, filter: { kind: "basicEnergy" }, max: "any" },
         { op: "shuffleDeck" },
@@ -7936,7 +6470,6 @@ const HEAVE_HO_CATCHER: CardProgram = {
     {
       name: "Heave-Ho Catcher",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "gust", optional: true }],
     },
   ],
@@ -7948,11 +6481,11 @@ const CAST_OFF_SHELL: CardProgram = {
     {
       name: "Cast-Off Shell",
       trigger: "onEvolve",
-      optional: true,
-      program: [
-        { op: "searchDeck", filter: { kind: "byName", name: "Shedinja" }, dest: "bench", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "byName", name: "Shedinja" },
+        dest: "bench",
+        max: 1,
+      }),
     },
   ],
 };
@@ -7963,7 +6496,6 @@ const ENRICHING_MELODY: CardProgram = {
     {
       name: "Enriching Melody",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "healChosen", amount: "all" }],
     },
   ],
@@ -7975,22 +6507,17 @@ const MULTIPLYING_COCOON: CardProgram = {
     {
       name: "Multiplying Cocoon",
       trigger: "onEvolve",
-      optional: true,
-      program: [
-        {
-          op: "searchDeck",
-          filter: {
-            kind: "anyOf",
-            filters: [
-              { kind: "byName", name: "Silcoon" },
-              { kind: "byName", name: "Cascoon" },
-            ],
-          },
-          dest: "bench",
-          max: 1,
+      program: searchThenShuffle({
+        filter: {
+          kind: "anyOf",
+          filters: [
+            { kind: "byName", name: "Silcoon" },
+            { kind: "byName", name: "Cascoon" },
+          ],
         },
-        { op: "shuffleDeck" },
-      ],
+        dest: "bench",
+        max: 1,
+      }),
     },
   ],
 };
@@ -8004,7 +6531,6 @@ const HAPHAZARD_HAMMER: CardProgram = {
     {
       name: "Haphazard Hammer",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "coinFlipGate",
@@ -8052,10 +6578,8 @@ const ALLURING_WINGS: CardProgram = {
  */
 const FIERY_FLAPPING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Fiery Flapping",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -8064,17 +6588,15 @@ const FIERY_FLAPPING: CardProgram = {
         ],
       },
       program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Fire", toSelf: true }],
-    },
+    }),
   ],
 };
 
 /** Zapdos — Flash-Pop Flapping: Fiery Flapping at {L} over Moltres and Articuno. */
 const FLASH_POP_FLAPPING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flash-Pop Flapping",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -8083,17 +6605,15 @@ const FLASH_POP_FLAPPING: CardProgram = {
         ],
       },
       program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Lightning", toSelf: true }],
-    },
+    }),
   ],
 };
 
 /** Articuno — Frosty Flapping: Fiery Flapping at {W} over Moltres and Zapdos. */
 const FROSTY_FLAPPING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Frosty Flapping",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -8102,7 +6622,7 @@ const FROSTY_FLAPPING: CardProgram = {
         ],
       },
       program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true }],
-    },
+    }),
   ],
 };
 
@@ -8136,10 +6656,8 @@ const LUNAR_CYCLE: CardProgram = {
  */
 const FLARING_MAGIC: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Flaring Magic",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "payFromHand",
@@ -8149,7 +6667,7 @@ const FLARING_MAGIC: CardProgram = {
         },
         { op: "drawUntilHandSize", size: 7 },
       ],
-    },
+    }),
   ],
 };
 
@@ -8172,16 +6690,17 @@ const TUCK_TAIL: CardProgram = {
     {
       name: "Last-Ditch Catch",
       trigger: "onPlayToBench",
-      optional: true,
       oncePerTurn: "sharedByName",
       program: [
         {
           op: "optional",
           note: "You may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
-          then: [
-            { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "supporter" },
+            dest: "hand",
+            max: 1,
+            reveal: true,
+          }),
         },
       ],
     },
@@ -8261,10 +6780,7 @@ const FINAL_CHAIN: CardProgram = {
       name: "Final Chain",
       trigger: "onKnockOut",
       byOpponentAttack: true,
-      program: [
-        { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "anyCard" }, dest: "hand", max: 1 }),
     },
   ],
 };
@@ -8275,16 +6791,16 @@ const FINAL_CHAIN: CardProgram = {
  */
 const CALL_A_BUDDY: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Call a Buddy",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "yourHandExactly", count: 0 },
-      program: [
-        { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "supporter" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -8294,21 +6810,15 @@ const CALL_A_BUDDY: CardProgram = {
  */
 const GATHERING_OF_BLOSSOMS: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Gathering of Blossoms",
-      oncePerTurn: true,
-      activeOnly: false,
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "ownerPokemon", owner: "Erika" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "ownerPokemon", owner: "Erika" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -8318,51 +6828,41 @@ const GATHERING_OF_BLOSSOMS: CardProgram = {
  */
 const GUIDING_DANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Guiding Dance",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
-          then: [
-            {
-              op: "searchDeck",
-              filter: { kind: "anyPokemon" },
-              dest: "hand",
-              max: 1,
-              reveal: true,
-            },
-            { op: "shuffleDeck" },
-          ],
+          then: searchThenShuffle({
+            filter: { kind: "anyPokemon" },
+            dest: "hand",
+            max: 1,
+            reveal: true,
+          }),
         },
       ],
-    },
+    }),
   ],
 };
 
 /** Shuckle — Fermented Juice: with any {G} Energy attached, heal 30 from 1 of your Pokémon. */
 const FERMENTED_JUICE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Fermented Juice",
-      oncePerTurn: true,
-      activeOnly: false,
       requiresEnergyType: "Grass",
       program: [{ op: "healChosen", amount: 30 }],
-    },
+    }),
   ],
 };
 
 /** Erika's Vileplume ex — Lovely Fragrance: heal 30 from each of your Pokémon. */
 const LOVELY_FRAGRANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Lovely Fragrance",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "healEach", amount: 30 }],
-    },
+    }),
   ],
 };
 
@@ -8372,10 +6872,8 @@ const LOVELY_FRAGRANCE: CardProgram = {
  */
 const SUNRISE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sunrise",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       program: [
         {
@@ -8386,7 +6884,7 @@ const SUNRISE: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -8420,13 +6918,11 @@ const EXCITED_TURBO: CardProgram = {
  */
 const EXCITED_HEAL: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Excited Heal",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "yourMegaExInPlay", type: "Grass" },
       program: [{ op: "healChosen", amount: 60 }],
-    },
+    }),
   ],
 };
 
@@ -8436,14 +6932,12 @@ const EXCITED_HEAL: CardProgram = {
  */
 const EXCITED_DASH: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Excited Dash",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       playableIf: { kind: "yourMegaExInPlay" },
       program: [{ op: "switchActive", fromSource: true }],
-    },
+    }),
   ],
 };
 
@@ -8459,10 +6953,12 @@ const EXCITED_POWER: CardProgram = {
 
 /** Mega Signal — search for a Mega Evolution Pokémon ex, reveal it, put it in hand, shuffle. */
 const MEGA_SIGNAL: CardProgram = {
-  trainer: [
-    { op: "searchDeck", filter: { kind: "megaEvolutionEx" }, dest: "hand", max: 1, reveal: true },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "megaEvolutionEx" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+  }),
 };
 
 /**
@@ -8612,10 +7108,7 @@ const LUMIOSE_CITY: CardProgram = {
   stadium: {
     ability: {
       label: "Lumiose City",
-      program: [
-        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "bench", max: 1 }),
       endsTurn: "always",
     },
   },
@@ -8732,10 +7225,8 @@ const THICK_FAT: CardProgram = {
  */
 const FRILLED_GENERATOR: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Frilled Generator",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Canari" },
       program: [
         {
@@ -8746,7 +7237,7 @@ const FRILLED_GENERATOR: CardProgram = {
         },
         { op: "shuffleDeck" },
       ],
-    },
+    }),
   ],
 };
 
@@ -8864,20 +7355,16 @@ const ROXIES_PERFORMANCE: CardProgram = {
 
 /** Dawn — search a Basic, a Stage 1 and a Stage 2 Pokémon into hand, then shuffle. */
 const DAWN: CardProgram = {
-  trainer: [
-    {
-      op: "searchDeck",
-      filter: { kind: "basicPokemon" },
-      dest: "hand",
-      max: 1,
-      reveal: true,
-      also: [
-        { filter: { kind: "stagePokemon", stage: "Stage1" }, max: 1 },
-        { filter: { kind: "stagePokemon", stage: "Stage2" }, max: 1 },
-      ],
-    },
-    { op: "shuffleDeck" },
-  ],
+  trainer: searchThenShuffle({
+    filter: { kind: "basicPokemon" },
+    dest: "hand",
+    max: 1,
+    reveal: true,
+    also: [
+      { filter: { kind: "stagePokemon", stage: "Stage1" }, max: 1 },
+      { filter: { kind: "stagePokemon", stage: "Stage2" }, max: 1 },
+    ],
+  }),
 };
 
 /**
@@ -9011,7 +7498,6 @@ const SANDY_FLAPPING: CardProgram = {
     {
       name: "Sandy Flapping",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -9023,7 +7509,6 @@ const SANDY_FLAPPING: CardProgram = {
     {
       name: "Sandy Flapping",
       trigger: "onKnockOut",
-      optional: true,
       activeOnly: true,
       byOpponentAttack: true,
       program: [
@@ -9098,10 +7583,8 @@ const HIDE_N_SNEAK: CardProgram = {
  */
 const LUSTROUS_ASSIST: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Lustrous Assist",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: {
         kind: "allOf",
         conditions: [
@@ -9118,7 +7601,7 @@ const LUSTROUS_ASSIST: CardProgram = {
           anySource: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -9128,10 +7611,8 @@ const LUSTROUS_ASSIST: CardProgram = {
  */
 const LETHARGIC_CHARGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Lethargic Charge",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       program: [
         {
@@ -9142,7 +7623,7 @@ const LETHARGIC_CHARGE: CardProgram = {
           ownerPokemon: "Larry",
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -9216,15 +7697,11 @@ const FOSSIL_QUARRY: CardProgram = {
   stadium: {
     ability: {
       label: "Fossil Quarry",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "itemNameContaining", fragment: "Antique" },
-          dest: "bench",
-          max: 2,
-        },
-        { op: "shuffleDeck" },
-      ],
+      program: searchThenShuffle({
+        filter: { kind: "itemNameContaining", fragment: "Antique" },
+        dest: "bench",
+        max: 2,
+      }),
     },
   },
 };
@@ -9235,10 +7712,8 @@ const FOSSIL_QUARRY: CardProgram = {
  */
 const FALL_BACK_TO_RELOAD: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Fall Back to Reload",
-      oncePerTurn: true,
-      activeOnly: false,
       benchOnly: true,
       benchedThisTurn: true,
       program: [
@@ -9257,7 +7732,7 @@ const FALL_BACK_TO_RELOAD: CardProgram = {
           declinable: true,
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -9401,10 +7876,8 @@ const NIGHTTIME_MANEUVERS: CardProgram = {
  */
 const SINISTER_SURGE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sinister Surge",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "attachFromDeck",
@@ -9417,7 +7890,7 @@ const SINISTER_SURGE: CardProgram = {
         { op: "shuffleDeck" },
         { op: "countersOnRecordedBody", slot: "moved", amount: 20 },
       ],
-    },
+    }),
   ],
 };
 
@@ -9427,10 +7900,8 @@ const SINISTER_SURGE: CardProgram = {
  */
 const BOISTEROUS_WIND: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Boisterous Wind",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
@@ -9444,7 +7915,7 @@ const BOISTEROUS_WIND: CardProgram = {
           ],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -9474,29 +7945,25 @@ const DESTRUCTIVE_HEADBUTTING: CardProgram = {
  */
 const EVIDENCE_GATHERING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Evidence Gathering",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [{ op: "payFromHand", count: 1, to: "deckTop", swapWithTop: true }],
-    },
+    }),
   ],
 };
 
 /** Talonflame — Sky Hunt: flip; on heads discard a random card from the opponent's hand. */
 const SKY_HUNT: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Sky Hunt",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "coinFlipGate",
           then: [{ op: "randomFromOpponentHand", to: "discard" }],
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -9506,10 +7973,8 @@ const SKY_HUNT: CardProgram = {
  */
 const GRAND_WING: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Grand Wing",
-      oncePerTurn: true,
-      activeOnly: false,
       program: [
         {
           op: "handRefresh",
@@ -9519,7 +7984,7 @@ const GRAND_WING: CardProgram = {
           draw: { kind: "fixed", count: 4 },
         },
       ],
-    },
+    }),
   ],
 };
 
@@ -9529,16 +7994,14 @@ const GRAND_WING: CardProgram = {
  */
 const SPITEFUL_EVOLUTION: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Spiteful Evolution",
-      oncePerTurn: true,
-      activeOnly: false,
       playableIf: { kind: "notYourFirstTurn" },
       program: [
         { op: "evolveFromDeck", fromHand: true, recordAs: "moved" },
         { op: "countersOnRecordedBody", slot: "moved", amount: 20 },
       ],
-    },
+    }),
   ],
 };
 
@@ -9548,22 +8011,16 @@ const SPITEFUL_EVOLUTION: CardProgram = {
  */
 const EVOLUTIONARY_GUIDANCE: CardProgram = {
   abilities: [
-    {
+    activated({
       name: "Evolutionary Guidance",
-      oncePerTurn: true,
-      activeOnly: false,
       requiresEnergyType: "any",
-      program: [
-        {
-          op: "searchDeck",
-          filter: { kind: "evolutionPokemon" },
-          dest: "hand",
-          max: 1,
-          reveal: true,
-        },
-        { op: "shuffleDeck" },
-      ],
-    },
+      program: searchThenShuffle({
+        filter: { kind: "evolutionPokemon" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      }),
+    }),
   ],
 };
 
@@ -9619,7 +8076,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "swsh10.5-079": MEWTWO_VSTAR,
   "swsh10.5-086": MEWTWO_VSTAR,
   // Bouffalant — Bouffer (passive)
-  "sv03-174": BOUFFALANT,
+  "sv03-174": REDUCE_20_AFTER_WR,
   // — M4 slice 3: Stadiums + Tools (verified vs local D1 2026-07-18). —
   // Beach Court (Stadium)
   "sv01-167": BEACH_COURT,
@@ -9706,9 +8163,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
-  "sv02-150": COPPERAJAH_EX, // Copperajah ex — Bronze Body (−30 after W/R)
-  "sv02-245": COPPERAJAH_EX,
-  "sv01-121": STONJOURNER, // Stonjourner — Exoskeleton (−20 after W/R)
+  "sv02-150": REDUCE_30_AFTER_WR, // Copperajah ex — Bronze Body (−30 after W/R)
+  "sv02-245": REDUCE_30_AFTER_WR,
+  "sv01-121": REDUCE_20_AFTER_WR, // Stonjourner — Exoskeleton (−20 after W/R)
   // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
   "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
@@ -9753,9 +8210,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-130": KO_SURVIVAL, // (reprint)
   "fix-sturdy": KO_SURVIVAL, // FIXTURE — 120 HP Basic, the demonstrator that DRIVES the row
   "fix-sturdytiny": KO_SURVIVAL, // FIXTURE — 20 HP Basic: the CHECKUP-boundary witness
-  "fix-suppresswall": FIX_SUPPRESS_WALL, // Fixture: ×2 Fire and −30 after W/R, which orders Weakness before reduction
-  "fix-carapace-tough": FIX_SUPPRESS_WALL,
-  "fix-resistwall": FIX_SUPPRESS_WALL, // Fixture: −30 Fire Resistance and −30 after W/R
+  "fix-suppresswall": REDUCE_30_AFTER_WR, // Fixture: ×2 Fire and −30 after W/R, which orders Weakness before reduction
+  "fix-carapace-tough": REDUCE_30_AFTER_WR,
+  "fix-resistwall": REDUCE_30_AFTER_WR, // Fixture: −30 Fire Resistance and −30 after W/R
   "sv01-099": WELL_BAKED_BODY, // Dachsbun — Well-Baked Body (Burn immunity and {R} prevention)
   "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
   "sv03-201": INSULATOR, // (reprint — Illustration rare)
@@ -10321,15 +8778,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-287": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — twin `sv10-136`
   "me02.5-288": FLIP_THE_SCRIPT, // Fezandipiti ex — twin `sv06.5-038`
   "me02.5-289": X_BOOT, // Steven's Metagross ex — twin `sv10-145`
-  "me04-002": STONJOURNER, // Kakuna — twin `sv01-121` (Stonjourner, same text)
+  "me04-002": REDUCE_20_AFTER_WR, // Kakuna — twin `sv01-121` (Stonjourner, same text)
   "me04-052": POISON_POINT, // Qwilfish — twin `sv05-008` (Roselia, same text)
   // — Pokémon, same Ability text under another name, a nameless passive (11) —
   "me02-011": MELT_AWAY, // Charmander — twin `sv10-036` (Ethan's Magcargo, same text)
-  "me02-041": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02-041": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me02-070": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
   "me02-114": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
-  "me02.5-267": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
-  "me02.5-282": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02.5-267": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02.5-282": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me05-038": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "me05-099": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "me05-115": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
@@ -10668,19 +9125,17 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-031": LUMINOUS_WING, // Mega Clefable ex
   "me03-103": LUMINOUS_WING, // Mega Clefable ex
   "me03-119": LUMINOUS_WING, // Mega Clefable ex
-  "sv06-002": COPPERAJAH_EX, // Tangrowth — "Thicket Body" (mark H)
-  "sv07-125": COPPERAJAH_EX, // Dubwool — "Soft Wool" (mark H)
-  "sv08-054": COPPERAJAH_EX, // Cetitan — "Solid Body" (mark H)
-  "sv08-201": COPPERAJAH_EX, // Cetitan (reprint)
-  "sv10-108": COPPERAJAH_EX, // Mudsdale — "Mud Coat" (mark I)
-  "sv10.5w-077": COPPERAJAH_EX, // Bouffalant ex — "Bouffer" (mark I)
-  "sv10.5w-162": COPPERAJAH_EX, // Bouffalant ex (reprint)
-  "sv10.5w-170": COPPERAJAH_EX, // Bouffalant ex (reprint)
-  // — "This Pokémon takes 20 less damage …" — 2 legal printings (2 in the
-  //   catalog). Both `sv01-121` Stonjourner and `sv03-174` Bouffalant already
-  //   carry this text; STONJOURNER is the anchor named by the census. —
-  "sv05-010": STONJOURNER, // Turtwig — "Solid Shell" (mark H)
-  "sv08.5-088": STONJOURNER, // Furfrou — "Fur Coat" (mark H)
+  "sv06-002": REDUCE_30_AFTER_WR, // Tangrowth — "Thicket Body" (mark H)
+  "sv07-125": REDUCE_30_AFTER_WR, // Dubwool — "Soft Wool" (mark H)
+  "sv08-054": REDUCE_30_AFTER_WR, // Cetitan — "Solid Body" (mark H)
+  "sv08-201": REDUCE_30_AFTER_WR, // Cetitan (reprint)
+  "sv10-108": REDUCE_30_AFTER_WR, // Mudsdale — "Mud Coat" (mark I)
+  "sv10.5w-077": REDUCE_30_AFTER_WR, // Bouffalant ex — "Bouffer" (mark I)
+  "sv10.5w-162": REDUCE_30_AFTER_WR, // Bouffalant ex (reprint)
+  "sv10.5w-170": REDUCE_30_AFTER_WR, // Bouffalant ex (reprint)
+  // "This Pokémon takes 20 less damage …", as on Stonjourner `sv01-121` and Bouffalant `sv03-174`.
+  "sv05-010": REDUCE_20_AFTER_WR, // Turtwig — "Solid Shell" (mark H)
+  "sv08.5-088": REDUCE_20_AFTER_WR, // Furfrou — "Fur Coat" (mark H)
   // — "If this Pokémon is in the Active Spot and is damaged by an attack from
   //   your opponent's Pokémon (even if this Pokémon is Knocked Out), put 3 damage
   //   counters on the Attacking Pokémon." — 3 legal printings (4 in the catalog). —
@@ -11202,7 +9657,7 @@ const REGISTRY: Record<string, CardProgram> = {
     none (an unsimulated Trainer/Ability, or a Pokémon whose attacks are wholly
     text-derived). */
 export function programFor(cardId: string): CardProgram | undefined {
-  return REGISTRY[cardId];
+  return Object.hasOwn(REGISTRY, cardId) ? REGISTRY[cardId] : undefined;
 }
 
 /**
