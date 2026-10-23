@@ -34,6 +34,20 @@ const pendingBuilderCommands = [];
 const pendingSandboxCommands = [];
 const pendingSimulatorCommands = [];
 const pendingOnlineCommands = [];
+// `COLORLESS:<channel>:<rest>` prints whose rest is handed on unchanged.
+const relays = {
+  page: (page) => setPage(page),
+  builder: builderCommand,
+  simulator: simulatorCommand,
+  online: onlineCommand,
+  sandbox: sandboxCommand,
+  library: (command) => libraryCommand(command),
+  auth: authCommand,
+};
+function relayChannel(message) {
+  const channel = message.match(/^COLORLESS:([a-z]+):/)?.[1];
+  return channel && Object.hasOwn(relays, channel) ? channel : undefined;
+}
 let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
@@ -355,20 +369,9 @@ globalThis.Module = {
     } else if (message.startsWith("COLORLESS:transition:")) {
       transitionOpen = message.endsWith(":open");
       syncModalAccessibility();
-    } else if (message.startsWith("COLORLESS:page:")) {
-      setPage(message.slice("COLORLESS:page:".length));
-    } else if (message.startsWith("COLORLESS:builder:")) {
-      builderCommand(message.slice("COLORLESS:builder:".length));
-    } else if (message.startsWith("COLORLESS:simulator:")) {
-      simulatorCommand(message.slice("COLORLESS:simulator:".length));
-    } else if (message.startsWith("COLORLESS:online:")) {
-      onlineCommand(message.slice("COLORLESS:online:".length));
-    } else if (message.startsWith("COLORLESS:sandbox:")) {
-      sandboxCommand(message.slice("COLORLESS:sandbox:".length));
-    } else if (message.startsWith("COLORLESS:library:")) {
-      libraryCommand(message.slice("COLORLESS:library:".length));
-    } else if (message.startsWith("COLORLESS:auth:")) {
-      authCommand(message.slice("COLORLESS:auth:".length));
+    } else if (relayChannel(message)) {
+      const channel = relayChannel(message);
+      relays[channel](message.slice(`COLORLESS:${channel}:`.length));
     } else if (message.startsWith("COLORLESS:account:")) {
       const command = message.slice("COLORLESS:account:".length);
       if (command.startsWith("edit\t")) {
