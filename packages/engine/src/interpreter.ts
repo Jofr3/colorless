@@ -678,9 +678,9 @@ export function discardRetrievalCandidates(
   return state.players[seat].discard.filter(
     (uid) =>
       !barred.has(uid) &&
-      matchesFilter(cardOf(state, uid), op.filter) &&
-      (op.dest === "bench" || !discardPileLockedOf(cardOf(state, uid))) &&
-      (op.dest !== "bench" || benchMatches(cardOf(state, uid), op.filter)),
+      matchesFilter(cardOfUid(state, uid), op.filter) &&
+      (op.dest === "bench" || !discardPileLockedOf(cardOfUid(state, uid))) &&
+      (op.dest !== "bench" || benchMatches(cardOfUid(state, uid), op.filter)),
   );
 }
 
@@ -1044,6 +1044,15 @@ function healedDiscardAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
   ];
 }
 
+/** Whether a `healChosen` pick buys any healed-body rider; the park and the resume must agree. */
+function hasHealedRider(op: OpOf<"healChosen">): boolean {
+  return (
+    op.discardEnergyFromHealed === true ||
+    op.recoverHealed === true ||
+    op.energyToHandFromHealed === true
+  );
+}
+
 /**
  * Every healed-body rider of one `healChosen` pick, in printed order: Super Potion's discard,
  * Pokémon Center Lady's status recovery (only when the pick is the Active) and Wally's Compassion's
@@ -1121,7 +1130,7 @@ function oneOfRecordedChoice(
   if (slot === undefined) return [];
   const choices: { uid: string; type: string }[] = [];
   for (const uid of recorded(record, slot)) {
-    const found = cardOf(state, uid);
+    const found = cardOfUid(state, uid);
     if (found !== undefined && matchesFilter(found, { kind: "basicEnergy" })) {
       const type = energyProvidesOf(found);
       if (!choices.some((choice) => choice.type === type)) choices.push({ uid, type });
@@ -1230,12 +1239,7 @@ function continuationOps(
     return choice.kind === "pokemonMulti" ? [{ ...op, hitRefs: [...choice.refs] }] : [];
   }
   // A parked heal pick buys its healed-body riders.
-  if (
-    op.op === "healChosen" &&
-    (op.discardEnergyFromHealed === true ||
-      op.recoverHealed === true ||
-      op.energyToHandFromHealed === true)
-  ) {
+  if (op.op === "healChosen" && hasHealedRider(op)) {
     return pickedPokemon(choice) ? healedRiderOps(before, choice.ref, op) : [];
   }
   // Strange Timepiece's own-side pick buys the devolve (or the depth question).
@@ -2145,16 +2149,16 @@ function stepOp(
       }));
       // A Bench destination uses `benchMatches` (Basic only unless the noun names the card).
       const onBench = (uid: string, filter: CardFilter) =>
-        op.dest !== "bench" || benchMatches(cardOf(state, uid), filter);
+        op.dest !== "bench" || benchMatches(cardOfUid(state, uid), filter);
       const groupMatches = (filter: CardFilter) =>
         state.players[ctx.seat].deck.filter(
-          (uid) => matchesFilter(cardOf(state, uid), filter) && onBench(uid, filter),
+          (uid) => matchesFilter(cardOfUid(state, uid), filter) && onBench(uid, filter),
         );
       // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
       // matching two filters appears exactly once in the offer — the caps below
       // are what make it count against both (effects.ts states the rule).
       const candidates = state.players[ctx.seat].deck
-        .filter((uid) => groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)))
+        .filter((uid) => groups.some((g) => matchesFilter(cardOfUid(state, uid), g.filter)))
         .filter((uid) => groups.some((g) => onBench(uid, g.filter)))
         // Impromptu Carrier offers simulated Tools only, and only while the program's body has a
         // free Tool slot.
@@ -2182,7 +2186,7 @@ function stepOp(
       const distinctCells = new Map<string, string[]>();
       if (op.distinctEnergyTypes === true) {
         for (const uid of candidates) {
-          const card = cardOf(state, uid);
+          const card = cardOfUid(state, uid);
           if (card === undefined) continue;
           const key = energyProvidesOf(card);
           const cell = distinctCells.get(key);
@@ -2396,8 +2400,8 @@ function stepOp(
       // A Bench destination uses `benchMatches` (Basic only unless the noun names the card).
       const matches = (uid: string, filter: CardFilter) =>
         op.dest === "bench"
-          ? benchMatches(cardOf(state, uid), filter)
-          : matchesFilter(cardOf(state, uid), filter);
+          ? benchMatches(cardOfUid(state, uid), filter)
+          : matchesFilter(cardOfUid(state, uid), filter);
       const also = op.also;
       const candidates = top.filter(
         (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),
@@ -2803,12 +2807,7 @@ function stepOp(
             ? op.bodyUid
             : ctx.sourceUid,
       );
-      const bodies: PokemonRef[] = [];
-      for (const entry of allDiscardable) {
-        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
-      }
-      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));
-      const unreserved = allDiscardable.filter((entry) => allowed.has(refKeyOf(entry.from)));
+      const unreserved = unshieldedEntries(state, allDiscardable, ctx, events);
       // Elemental Blast's `reserve`: keep only the picks that leave the most later slots fillable.
       const discardable =
         op.from === "opponentEach" || op.reserve === undefined
@@ -2881,17 +2880,13 @@ function stepOp(
       // and which. §11 is a per-body filter, so one shielded body does not cancel the discard on
       // the others. `op.sides` adds the controller's own board; own Tools are never shielded.
       const allDiscardable = discardableTools(state, ctx.seat, op.sides, op.bodyUid);
-      const bodies: PokemonRef[] = [];
-      for (const entry of allDiscardable) {
-        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
-      }
-      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));
-      const discardable = allDiscardable.filter((entry) => allowed.has(refKeyOf(entry.from)));
+      const discardable = unshieldedEntries(state, allDiscardable, ctx, events);
       // Zero offers is a silent no-op: no park, no event, no log row.
       if (discardable.length === 0) return { done: state };
-      // A mandatory discard (no "up to") with an offer no bigger than the count resolves inline;
-      // otherwise it parks for an exact total (Multi Adapter bodies can carry two Tools).
-      if (op.bodyUid !== undefined && op.count !== "all" && discardable.length <= op.count) {
+      // Megaton Blower's "all" asks nothing: every unshielded Tool is discarded, each to its
+      // owner's pile. So does a mandatory discard (no "up to") with an offer no bigger than the
+      // count; a bigger one parks for an exact total (Multi Adapter bodies can carry two Tools).
+      if (op.count === "all" || (op.bodyUid !== undefined && discardable.length <= op.count)) {
         return {
           done: toolDiscardApply(
             state,
@@ -2901,7 +2896,7 @@ function stepOp(
           ).state,
         };
       }
-      if (op.bodyUid !== undefined && op.count !== "all") {
+      if (op.bodyUid !== undefined) {
         return {
           park: {
             kind: "discardTools",
@@ -2909,18 +2904,6 @@ function stepOp(
             scope: { kind: "total", count: op.count },
             note: `Discard ${op.count === 1 ? "a Pokémon Tool" : `${op.count} Pokémon Tools`} from that Pokémon.`,
           },
-        };
-      }
-      // Megaton Blower's "all": no question, every unshielded Tool is discarded, each to its
-      // owner's pile.
-      if (op.count === "all") {
-        return {
-          done: toolDiscardApply(
-            state,
-            discardable.map((entry) => entry.uid),
-            ctx,
-            events,
-          ).state,
         };
       }
       // Any non-empty offer asks, even an offer of one, because declining is always legal under "up
@@ -2947,7 +2930,7 @@ function stepOp(
       // Weaponized Swords: any non-empty offer parks since each count gives different damage; no
       // collapse. An empty offer files `[]`.
       const candidates = state.players[ctx.seat].hand.filter((uid) =>
-        matchesFilter(cardOf(state, uid), op.filter),
+        matchesFilter(cardOfUid(state, uid), op.filter),
       );
       if (candidates.length === 0) {
         recordMoved(record, op.recordAs, []);
@@ -3146,7 +3129,7 @@ function stepOp(
       // "Discard all Item cards and Pokémon Tool cards": a predicate, so no park and no `decider`.
       // The hand is read and filtered live when the op runs.
       const swept = state.players[otherSeat(ctx.seat)].hand.filter((uid) =>
-        matchesFilter(cardOf(state, uid), op.filter),
+        matchesFilter(cardOfUid(state, uid), op.filter),
       );
       return { done: discardChosenFromHand(state, otherSeat(ctx.seat), swept, events) };
     }
@@ -3170,7 +3153,7 @@ function stepOp(
         };
       }
       // Second question: the name is public, the card stays in hand, and the opponent guesses.
-      const card = cardOf(state, op.uid);
+      const card = cardOfUid(state, op.uid);
       if (card === undefined || !state.players[ctx.seat].hand.includes(op.uid))
         return { done: state };
       events.push({ type: "POKEMON_NAMED", seat: ctx.seat, name: card.name });
@@ -3482,12 +3465,7 @@ function stepOp(
       }
       // A forced pick is answered here and its riders are scheduled through `continuationOps`, the
       // same path as the parked ending.
-      if (
-        (op.discardEnergyFromHealed === true ||
-          op.recoverHealed === true ||
-          op.energyToHandFromHealed === true) &&
-        candidates.length === 1
-      ) {
+      if (hasHealedRider(op) && candidates.length === 1) {
         const forced = candidates[0] as PokemonRef;
         return {
           done: healChosen(state, forced, op.amount, ctx, events),
@@ -4119,7 +4097,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // Kyurem "Plasma Bane": any card in the opponent's discard pile with "Colress" in its name,
       // case-sensitive.
       return state.players[otherSeat(seat)].discard.some(
-        (uid) => cardOf(state, uid)?.name.includes(cond.fragment) === true,
+        (uid) => cardOfUid(state, uid)?.name.includes(cond.fragment) === true,
       );
     case "yourDiscardHasNamed":
       // Serperior "Solar Coiling": your discard pile, exact name (folded).
@@ -6802,6 +6780,25 @@ function unshieldedRefs(
 }
 
 /**
+ * `unshieldedRefs` over the bodies a discard offer draws from: drops every entry whose host refuses
+ * this effect, announcing one row per distinct refusing body in first-seen order.
+ */
+function unshieldedEntries<T extends { from: PokemonRef }>(
+  state: GameState,
+  entries: readonly T[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): T[] {
+  const bodies = new Map<string, PokemonRef>();
+  for (const entry of entries) {
+    const key = refKeyOf(entry.from);
+    if (!bodies.has(key)) bodies.set(key, entry.from);
+  }
+  const allowed = new Set(unshieldedRefs(state, [...bodies.values()], ctx, events).map(refKeyOf));
+  return entries.filter((entry) => allowed.has(refKeyOf(entry.from)));
+}
+
+/**
  * Spread damage: `amount` to each Benched Pokémon of the named side, flat since §8.5 W/R never
  * apply on the Bench. `amount` arrives already scaled. A benched body's own reductions and
  * preventions still apply; the attacker's pre-W/R bonus is Active-only and does not. Never Knocks
@@ -7053,7 +7050,7 @@ export function coinRedoPrompt(
   toolUid: string,
   faces: readonly CoinFace[],
 ): EffectPrompt {
-  const name = cardOf(state, toolUid)?.name ?? "Backtrack Badge";
+  const name = cardOfUid(state, toolUid)?.name ?? "Backtrack Badge";
   const these = faces.length === 1 ? "this coin flip" : `these ${String(faces.length)} coin flips`;
   return {
     kind: "confirm",
@@ -8575,7 +8572,7 @@ function switchWithDeckNamed(
   const [ref] = sourceRef(state, ctx);
   const body = ref === undefined ? undefined : refPokemon(state, ref);
   const oldTop = body === undefined ? undefined : topUid(body);
-  const found = side.deck.find((uid) => cardOf(state, uid)?.name === name);
+  const found = side.deck.find((uid) => cardOfUid(state, uid)?.name === name);
   if (ref === undefined || body === undefined || oldTop === undefined || found === undefined) {
     const [deck, rngState] = shuffle([...side.deck], state.rngState);
     events.push({ type: "SHUFFLE", seat });
@@ -8619,7 +8616,7 @@ function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
 function deckSwapCandidates(state: GameState, seat: Seat, filter: CardFilter): string[] {
   const seen = new Set<string>();
   return state.players[seat].deck.filter((uid) => {
-    const card = cardOf(state, uid);
+    const card = cardOfUid(state, uid);
     if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;
     if (intoPlayOnlyViaOf(card) !== undefined) return false;
     seen.add(card.id);
@@ -8681,7 +8678,7 @@ export function swapBodies(state: GameState, seat: Seat, filter: CardFilter): Po
 /** Ogre's Mask's second offer: discard-pile cards passing `filter`, in pile order. */
 export function swapDiscardCards(state: GameState, seat: Seat, filter: CardFilter): string[] {
   return state.players[seat].discard.filter((uid) => {
-    const card = cardOf(state, uid);
+    const card = cardOfUid(state, uid);
     return card !== undefined && matchesFilter(card, filter);
   });
 }
@@ -9071,7 +9068,7 @@ function searchMove(
  * `attachTool` asks, so the deck attach never offers a Tool the hand attach would refuse.
  */
 function attachableToolCard(state: GameState, uid: string): boolean {
-  const card = cardOf(state, uid);
+  const card = cardOfUid(state, uid);
   return card !== undefined && toolCardSimulated(card);
 }
 
@@ -9169,7 +9166,7 @@ function evolveFromDeckOffer(
   const body = bodyAt(side, ref.spot);
   if (body === undefined) return undefined;
   const bodyUid = topUid(body);
-  const top = bodyUid === undefined ? undefined : cardOf(state, bodyUid);
+  const top = bodyUid === undefined ? undefined : cardOfUid(state, bodyUid);
   if (bodyUid === undefined || top === undefined) return undefined;
   return {
     target: ref.spot,
@@ -9178,7 +9175,7 @@ function evolveFromDeckOffer(
     bodyUid,
     name: top.name,
     candidates: (fromHand === true ? side.hand : side.deck).filter((uid) => {
-      const card = cardOf(state, uid);
+      const card = cardOfUid(state, uid);
       // An unresolvable deck uid is not a candidate — `evolveFromOf` demands a
       // `Card`, and a missing catalog row must fall OUT of the offer rather than
       // be admitted by a loose comparison (the `hpOf` null rule, one file over).
@@ -9516,9 +9513,12 @@ function bottomFromOpponentHandOffer(
   const kept = new Map<string, number>();
   const candidates: string[] = [];
   for (const uid of hand) {
-    if (op.filter !== undefined && !matchesFilter(cardOf(state, uid), op.filter)) continue;
+    if (op.filter !== undefined && !matchesFilter(cardOfUid(state, uid), op.filter)) continue;
     // Onto their Bench, Basic only.
-    if (op.dest === "bench" && !benchMatches(cardOf(state, uid), op.filter ?? { kind: "anyCard" }))
+    if (
+      op.dest === "bench" &&
+      !benchMatches(cardOfUid(state, uid), op.filter ?? { kind: "anyCard" })
+    )
       continue;
     const key = cardIdentity(state, uid);
     const already = kept.get(key) ?? 0;
@@ -9552,7 +9552,7 @@ export function opponentSupporterOffer(state: GameState, ctx: EffectContext): st
   const candidates: string[] = [];
   const kept = new Set<string>();
   for (const uid of state.players[otherSeat(ctx.seat)].hand) {
-    const card = cardOf(state, uid);
+    const card = cardOfUid(state, uid);
     if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter")
       continue;
     if (kept.has(card.id)) continue;
@@ -9579,7 +9579,7 @@ function copiedSupporterOps(
   ctx: EffectContext,
   uid: string,
 ): readonly EffectOp[] | undefined {
-  const card = cardOf(state, uid);
+  const card = cardOfUid(state, uid);
   if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter")
     return undefined;
   const effect = supporterEffectOf(card.id);
@@ -9880,9 +9880,9 @@ function shuffleBenchedRefsIntoDeck(
   return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
 }
 
-/** Pokémon cards in `seat`'s hand (Tyme's candidates), read through the zone-aware `cardOf`. */
+/** Pokémon cards in `seat`'s hand (Tyme's candidates), read through the zone-aware `cardOfUid`. */
 export function handPokemonUids(state: GameState, seat: Seat): string[] {
-  return state.players[seat].hand.filter((uid) => cardOf(state, uid)?.category === "Pokemon");
+  return state.players[seat].hand.filter((uid) => cardOfUid(state, uid)?.category === "Pokemon");
 }
 
 /**
@@ -9897,7 +9897,7 @@ function hpGuessApply(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const hp = cardOf(state, uid)?.hp ?? null;
+  const hp = cardOfUid(state, uid)?.hp ?? null;
   const right = hp !== null && guess === hp;
   const drawer = right ? otherSeat(ctx.seat) : ctx.seat;
   events.push({ type: "HP_GUESSED", seat: ctx.seat, uid, guess, hp, right, drawer });
@@ -10348,7 +10348,8 @@ function ownDevolveTargets(state: GameState, seat: Seat, pokemonType?: PokemonTy
     if (body === undefined || body.stack.length < 2) return false;
     if (pokemonType === undefined) return true;
     const uid = topUid(body);
-    const card = inPlayCardOf(state, body) ?? (uid === undefined ? undefined : cardOf(state, uid));
+    const card =
+      inPlayCardOf(state, body) ?? (uid === undefined ? undefined : cardOfUid(state, uid));
     return (card?.types ?? []).includes(pokemonType);
   });
 }
@@ -10985,7 +10986,7 @@ function handCostCandidates(
     op.count !== "any" ? op.count : op.cap === "any" ? Number.POSITIVE_INFINITY : op.cap;
   for (const uid of state.players[seat].hand) {
     if (uid === excludeUid) continue;
-    const card = cardOf(state, uid);
+    const card = cardOfUid(state, uid);
     if (op.filter !== undefined && !matchesFilter(card, op.filter)) continue;
     if (op.filter === undefined && card === undefined) continue;
     const key = cardIdentity(state, uid);
@@ -11486,7 +11487,7 @@ function attachableEnergies(
   const zone = source === "hand" ? state.players[seat].hand : state.players[seat].discard;
   const found: string[] = [];
   for (const uid of zone) {
-    const card = cardOf(state, uid);
+    const card = cardOfUid(state, uid);
     if (
       card !== undefined &&
       isEnergyCard(card) &&
@@ -11547,7 +11548,7 @@ function energyPickOffer(
 function energyPickNote(state: GameState, ref: PokemonRef, take: number): string {
   const body = refPokemon(state, ref);
   const top = body === undefined ? undefined : topUid(body);
-  const name = top === undefined ? undefined : cardOf(state, top)?.name;
+  const name = top === undefined ? undefined : cardOfUid(state, top)?.name;
   const what =
     take === 1
       ? "Which Energy card do you want to attach"
@@ -11672,7 +11673,7 @@ function attachedBasicEnergyTypedFilter(state: GameState, ctx: EffectContext): C
   const body = host === undefined ? undefined : refPokemon(state, host);
   const types: PokemonType[] = [];
   for (const uid of body?.energy ?? []) {
-    const card = cardOf(state, uid);
+    const card = cardOfUid(state, uid);
     if (card === undefined || !matchesFilter(card, { kind: "basicEnergy" })) continue;
     const provided = energyProvidesOf(card);
     if (!(POKEMON_TYPES as readonly string[]).includes(provided)) continue;
@@ -11722,7 +11723,7 @@ function attachFromTopOffer(
   op: OpOf<"attachFromTop">,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const top = state.players[seat].deck.slice(0, Math.max(0, op.n));
-  const candidates = top.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
+  const candidates = top.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter));
   return {
     candidates,
     targets: attachEnergyTargets(state, seat, op),
@@ -11748,7 +11749,7 @@ function attachFromDeckOffer(
   const cap =
     op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);
   const matches = state.players[seat].deck.filter((uid) =>
-    matchesFilter(cardOf(state, uid), op.filter),
+    matchesFilter(cardOfUid(state, uid), op.filter),
   );
   const kept = new Map<string, number>();
   const candidates: string[] = [];
@@ -11756,7 +11757,7 @@ function attachFromDeckOffer(
   // type, so every legal answer is pairwise type-distinct.
   const distinct = op.distinctEnergyTypes === true;
   for (const uid of matches) {
-    const card = distinct ? cardOf(state, uid) : undefined;
+    const card = distinct ? cardOfUid(state, uid) : undefined;
     const key = distinct
       ? `type:${card === undefined ? uid : energyProvidesOf(card)}`
       : cardIdentity(state, uid);
@@ -11806,7 +11807,7 @@ export function attachFromDiscardOffer(
   const candidates: string[] = [];
   const pile = state.players[seat].discard;
   for (const uid of pile) {
-    if (!matchesFilter(cardOf(state, uid), op.filter)) continue;
+    if (!matchesFilter(cardOfUid(state, uid), op.filter)) continue;
     const key = cardIdentity(state, uid);
     const already = kept.get(key) ?? 0;
     if (already >= reach) continue;
@@ -11844,7 +11845,7 @@ function eachAttachTopUp(
     if (given.attached.includes(uid)) landed.set(refKeyOf(to), (landed.get(refKeyOf(to)) ?? 0) + 1);
   }
   const pile = given.state.players[ctx.seat].discard.filter((uid) =>
-    matchesFilter(cardOf(given.state, uid), op.filter),
+    matchesFilter(cardOfUid(given.state, uid), op.filter),
   );
   const fill: { uid: string; to: PokemonRef }[] = [];
   const perBody = discardAttachCeiling(state, ctx.seat, op);
@@ -11872,7 +11873,7 @@ function attachFromHandOffer(
   // Takes the context because "to this Pokémon" needs `ctx.sourceUid`.
   const seat = ctx.seat;
   const candidates = state.players[seat].hand.filter((uid) =>
-    matchesFilter(cardOf(state, uid), op.filter),
+    matchesFilter(cardOfUid(state, uid), op.filter),
   );
   // `toSelf` prints "to this Pokémon", so the sole target is `sourceRef`, filtered through
   // Glimmora's bar.
@@ -12301,8 +12302,6 @@ function moveEnergyApply(
     ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index };
   const keyOf = (target: PokemonTarget): string =>
     target.spot === "active" ? "active" : `bench:${target.index}`;
-  const bodyAt = (target: PokemonTarget): InPlayPokemon | undefined =>
-    target.spot === "active" ? (side.active ?? undefined) : side.bench[target.index];
   // uid to destination, built first so a pick naming a body not in play drops out before its uid
   // leaves its host.
   const destOf = new Map<string, PokemonTarget>();
@@ -12310,7 +12309,7 @@ function moveEnergyApply(
     // A pick aimed at the side this op does not act on is dropped silently.
     if (typeof uid !== "string" || dest.seat !== board || destOf.has(uid)) continue;
     const to = targetOf(dest);
-    if (bodyAt(to) === undefined) continue;
+    if (bodyAt(side, to) === undefined) continue;
     destOf.set(uid, to);
   }
   if (destOf.size === 0) return state;
@@ -12610,7 +12609,7 @@ function matchesAttached(
   if (filter.kind === "providesEnergy") {
     return providesEnergyType(state, pokemon, uid, filter.energyType);
   }
-  return matchesFilter(cardOf(state, uid), filter);
+  return matchesFilter(cardOfUid(state, uid), filter);
 }
 
 /**
@@ -12747,7 +12746,7 @@ function reservedDiscards(
  * card gets its own key, so the engine asks rather than guesses.
  */
 function cardIdentity(state: GameState, uid: string): string {
-  const card = cardOf(state, uid);
+  const card = cardOfUid(state, uid);
   if (card === undefined) return `?${uid}`;
   return isBasicEnergy(card) ? `basic:${energyProvidesOf(card)}` : `card:${card.id}`;
 }
@@ -13079,11 +13078,6 @@ function benchSpace(state: GameState, seat: Seat): number {
   return Math.max(0, benchLimitOf(state, seat) - state.players[seat].bench.length);
 }
 
-// Delegates to `cardOfUid` so an in-play Antique Fossil reads as its Pokémon face.
-function cardOf(state: GameState, uid: string): Card | undefined {
-  return cardOfUid(state, uid);
-}
-
 /**
  * The chooseCards note for a deck search: "Search your deck for [up to N] {noun} [onto your Bench |
  * into your hand]", with nouns from the shared `retrieveNoun` table.
@@ -13108,7 +13102,7 @@ function searchDeckOrElse(
   const deck = state.players[ctx.seat].deck;
   const matching = (filter: CardFilter) =>
     deck.filter((uid) => {
-      const card = cardOf(state, uid);
+      const card = cardOfUid(state, uid);
       // A Bench destination asks `benchMatches`.
       return (
         card !== undefined &&
