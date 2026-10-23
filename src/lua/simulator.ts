@@ -54,6 +54,54 @@ export function rareCandyTarget(
   return matches ? target : null;
 }
 
+/** The header's outcome key, title and hint for the viewer's current phase. */
+function headerText(
+  v: RedactedGame | null,
+  names: { you: string; opponent: string } | undefined,
+  online: boolean,
+  rareCandyPending: boolean,
+) {
+  const outcome = v?.outcome
+    ? v.outcome.result === "tie"
+      ? "tie"
+      : v.outcome.winner === "you"
+        ? "win"
+        : "loss"
+    : "";
+  let title = v?.outcome
+    ? v.outcome.result === "tie"
+      ? "Draw"
+      : `${v.outcome.winner === "you" ? names?.you : names?.opponent} wins`
+    : v?.phase.kind === "setup:chooseFirst"
+      ? "Choose who goes first"
+      : v?.phase.kind === "setup:place"
+        ? "Place your Pokémon"
+        : v?.phase.kind === "turn:action"
+          ? "Your turn"
+          : "Choose your next move";
+  let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
+  if (v?.phase.kind === "setup:drawExtra") hint = "Drawing mulligan bonus cards.";
+  if (v?.phase.kind === "ko:takePrizes")
+    hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
+  if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
+  if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
+    hint = GAME_OVER_DETAIL[v.outcome.reason];
+  if (online && v && names && !v.outcome) {
+    const them = names.opponent;
+    // Online, only a rematch's loser chooses; a first game's order is the coin's.
+    if (v.phase.kind === "setup:chooseFirst" && v.waitingOn !== "you")
+      hint = `${them} lost the last game and is choosing who goes first.`;
+    else if (v.phase.kind === "setup:chooseFirst")
+      hint = "You lost the last game. Choose who goes first.";
+    else if (v.phase.kind === "setup:place" && v.phase.ready.you)
+      hint = `Waiting for ${them} to finish placing.`;
+    else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
+    if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
+  }
+  if (rareCandyPending) hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
+  return { outcome, title, hint };
+}
+
 /** A colour key of frontend/lua/ui/theme.lua; Lua falls back to blue for unknown keys. */
 export type ThemeColour =
   | "red"
@@ -1154,45 +1202,7 @@ export class LuaSimulator {
         if (c && c.cardId !== "hidden" && c.cardId !== "empty") infoIds.add(c.cardId);
       } else noteArt(o.card);
     };
-    const outcome = v?.outcome
-      ? v.outcome.result === "tie"
-        ? "tie"
-        : v.outcome.winner === "you"
-          ? "win"
-          : "loss"
-      : "";
-    let title = v?.outcome
-      ? v.outcome.result === "tie"
-        ? "Draw"
-        : `${v.outcome.winner === "you" ? names?.you : names?.opponent} wins`
-      : v?.phase.kind === "setup:chooseFirst"
-        ? "Choose who goes first"
-        : v?.phase.kind === "setup:place"
-          ? "Place your Pokémon"
-          : v?.phase.kind === "turn:action"
-            ? "Your turn"
-            : "Choose your next move";
-    let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
-    if (v?.phase.kind === "setup:drawExtra") hint = "Drawing mulligan bonus cards.";
-    if (v?.phase.kind === "ko:takePrizes")
-      hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
-    if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
-    if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
-      hint = GAME_OVER_DETAIL[v.outcome.reason];
-    if (this.online && v && names && !v.outcome) {
-      const them = names.opponent;
-      // Online, only a rematch's loser chooses; a first game's order is the coin's.
-      if (v.phase.kind === "setup:chooseFirst" && v.waitingOn !== "you")
-        hint = `${them} lost the last game and is choosing who goes first.`;
-      else if (v.phase.kind === "setup:chooseFirst")
-        hint = "You lost the last game. Choose who goes first.";
-      else if (v.phase.kind === "setup:place" && v.phase.ready.you)
-        hint = `Waiting for ${them} to finish placing.`;
-      else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
-      if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
-    }
-    if (this.pendingRareCandy)
-      hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
+    const { outcome, title, hint } = headerText(v, names, !!this.online, !!this.pendingRareCandy);
     const allow = src?.allowances();
     const turns = this.local?.turns();
     row(
