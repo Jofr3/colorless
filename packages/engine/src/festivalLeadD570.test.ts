@@ -21,6 +21,7 @@ import {
   trainerCard,
   must,
   mustApply as run,
+  ensureInDeck,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 import { freshAllowances } from "./types";
@@ -184,27 +185,6 @@ function opened(seed: number, deck: readonly string[] = DECK): GameState {
   );
   state = completeSetup(state);
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-/** TEST SURGERY — one copy of `id` into `seat`'s DECK (back from the hand, or swapped out
-    of the Prizes for the deck's bottom card). Every uid stays in exactly one zone. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
 }
 
 /** TEST SURGERY — `id` into the shared Stadium zone, owned by `owner`. */

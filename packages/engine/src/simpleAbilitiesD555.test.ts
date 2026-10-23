@@ -18,6 +18,7 @@ import {
   typedEnergy,
   types,
   must,
+  ensureInDeck,
 } from "./testFixtures";
 
 const TORRID_TEXT =
@@ -174,28 +175,6 @@ function opened(first: Seat, seed: number): GameState {
   );
   state = completeSetup(state);
   return state;
-}
-
-/** TEST SURGERY — make sure a copy of `id` sits in `seat`'s DECK, pulling one back
-    from the hand or (swapped for the deck's bottom card) from the Prizes when the
-    shuffle put every copy there. Every uid stays in exactly one zone. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
 }
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>

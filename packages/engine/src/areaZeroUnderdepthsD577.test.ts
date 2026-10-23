@@ -5,7 +5,15 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, phaseViewOf } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, trainerCard, must, mustApply as run } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  trainerCard,
+  must,
+  mustApply as run,
+  patchSide,
+} from "./testFixtures";
 import { isBenchIndex } from "./turn";
 import { BENCH_CEILING, BENCH_MAX, makeInPlay } from "./types";
 
@@ -207,14 +215,14 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
   if (inDeck !== undefined) {
     return {
       uid: inDeck,
-      state: withSide(state, seat, { deck: side.deck.filter((u) => u !== inDeck) }),
+      state: patchSide(state, seat, { deck: side.deck.filter((u) => u !== inDeck) }),
     };
   }
   const inHand = side.hand.find(is);
   if (inHand !== undefined) {
     return {
       uid: inHand,
-      state: withSide(state, seat, { hand: side.hand.filter((u) => u !== inHand) }),
+      state: patchSide(state, seat, { hand: side.hand.filter((u) => u !== inHand) }),
     };
   }
   const prized = side.prizes.find(is);
@@ -222,19 +230,11 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
   if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to pull`);
   return {
     uid: prized,
-    state: withSide(state, seat, {
+    state: patchSide(state, seat, {
       prizes: side.prizes.map((u) => (u === prized ? swap : u)),
       deck: side.deck.filter((u) => u !== swap),
     }),
   };
-}
-
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
 }
 
 /** p1's turn 2 on a hand-built board: each seat's Active and Bench (ANY size — no 5 cap), both hands
@@ -258,7 +258,7 @@ function table(opts: {
         : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -267,10 +267,10 @@ function table(opts: {
   }
   const seat = (s: Seat, active: string, bench: readonly string[]) => {
     let pulled = pull(state, s, active);
-    state = withSide(pulled.state, s, { active: makeInPlay(pulled.uid, 0) });
+    state = patchSide(pulled.state, s, { active: makeInPlay(pulled.uid, 0) });
     for (const id of bench) {
       pulled = pull(state, s, id);
-      state = withSide(pulled.state, s, {
+      state = patchSide(pulled.state, s, {
         bench: [...pulled.state.players[s].bench, makeInPlay(pulled.uid, 0)],
       });
     }
@@ -279,7 +279,7 @@ function table(opts: {
   seat("p2", opts.p2Active ?? FILLER, opts.p2Bench ?? []);
   for (const id of opts.p1Hand ?? []) {
     const pulled = pull(state, "p1", id);
-    state = withSide(pulled.state, "p1", { hand: [...pulled.state.players.p1.hand, pulled.uid] });
+    state = patchSide(pulled.state, "p1", { hand: [...pulled.state.players.p1.hand, pulled.uid] });
   }
   if (opts.stadium) {
     const pulled = pull(state, opts.stadium.owner, opts.stadium.id);
@@ -407,7 +407,7 @@ describe("D577 §3 — the live limit at every Bench writer", () => {
       uid: handUid(state, "p1", FILLER),
     }).state;
     expect(state.players.p1.bench).toHaveLength(8);
-    state = withSide(state, "p1", {
+    state = patchSide(state, "p1", {
       hand: [
         ...state.players.p1.hand,
         state.players.p1.deck.find((u) => state.cardIdByUid[u] === FILLER) ?? "",
@@ -446,7 +446,7 @@ describe("D577 §3 — the live limit at every Bench writer", () => {
       stadium: { id: UNDERDEPTHS, owner: "p1" },
     });
     const pulled = pull(state, "p1", "fix-energy");
-    state = withSide(pulled.state, "p1", { hand: [pulled.uid] });
+    state = patchSide(pulled.state, "p1", { hand: [pulled.uid] });
     state = run(state, {
       type: "attachEnergy",
       seat: "p1",
@@ -528,7 +528,7 @@ describe("D577 §4 — the Stadium REPLACED: both trim, the OWNER first (R-AZ3, 
     state = energy.state;
     const lastBody = state.players.p1.bench[5];
     if (lastBody === undefined) throw new Error("no sixth body");
-    state = withSide(state, "p1", {
+    state = patchSide(state, "p1", {
       bench: state.players.p1.bench.map((b, i) => (i === 5 ? { ...b, energy: [energy.uid] } : b)),
     });
     state = run(state, {
@@ -703,10 +703,10 @@ describe("D577 §6 — the last Tera Pokémon LEAVES PLAY (R-AZ2), through every
       p2Active: POISONER,
       stadium: { id: UNDERDEPTHS, owner: "p2" },
     });
-    state = withSide(state, "p1", {
+    state = patchSide(state, "p1", {
       active: state.players.p1.active === null ? null : { ...state.players.p1.active, damage: 20 },
     });
-    state = withSide(state, "p1", {
+    state = patchSide(state, "p1", {
       active:
         state.players.p1.active === null
           ? null
@@ -799,13 +799,15 @@ describe("D577 §7 — the two 'any number' Bench writers reach an 8-Bench (BENC
       seat: "p2",
     }).state;
     const p2 = state.players.p2;
-    state = withSide(state, "p2", {
+    state = patchSide(state, "p2", {
       hand: [],
       deck: [...p2.deck, ...p2.hand],
     });
     for (let i = 0; i < 7; i++) {
       const pulled = pull(state, "p2", LILLIES_BASIC);
-      state = withSide(pulled.state, "p2", { hand: [...pulled.state.players.p2.hand, pulled.uid] });
+      state = patchSide(pulled.state, "p2", {
+        hand: [...pulled.state.players.p2.hand, pulled.uid],
+      });
     }
     state = run(state, {
       type: "evolve",

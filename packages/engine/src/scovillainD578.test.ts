@@ -7,7 +7,7 @@ import { applyAction, createGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { attachEnergyTargets, conditionHolds, runProgram } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, must, mustApply as run } from "./testFixtures";
+import { FIXTURE_POOL, battler, deckOf, must, mustApply as run, patchSide } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const SCOVILLAIN = "sv08-037";
@@ -137,14 +137,6 @@ function opened(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
-}
-
 function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid: string } {
   const side = state.players[seat];
   const is = (u: string) => state.cardIdByUid[u] === id;
@@ -155,13 +147,13 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
     const swap = side.deck.find((u) => !is(u)) ?? "";
     return {
       uid,
-      state: withSide(state, seat, {
+      state: patchSide(state, seat, {
         prizes: side.prizes.map((u) => (u === uid ? swap : u)),
         deck: side.deck.filter((u) => u !== swap),
       }),
     };
   }
-  return { uid, state: withSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
+  return { uid, state: patchSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
 }
 
 interface Spot {
@@ -186,7 +178,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -207,7 +199,7 @@ function table(opts: {
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map((s) =>
       body(seat, s),
     );
-    state = withSide(state, seat, { active, bench });
+    state = patchSide(state, seat, { active, bench });
   }
   return state;
 }

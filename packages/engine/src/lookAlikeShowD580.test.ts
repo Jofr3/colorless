@@ -8,7 +8,7 @@ import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
 import { applyAction, createGame, redactGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameAction, GameState } from "./index";
 import { opponentSupporterOffer, resumeProgram } from "./interpreter";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -24,6 +24,7 @@ import {
   walkProgram,
   must,
   mustApply as run,
+  patchSide,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -199,14 +200,6 @@ function opened(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
-}
-
 /** TEST SURGERY — mint a fresh uid for `id` (any `POOL` card, deck or not; the game's own pool
     holds only the dealt ids, so the card is added to it too) and hand it back. */
 let minted = 0;
@@ -250,7 +243,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -272,7 +265,7 @@ function table(opts: {
     const active = build(seat === "p1" ? opts.p1 : opts.p2);
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map(build);
     const hand = (seat === "p1" ? (opts.p1Hand ?? []) : (opts.p2Hand ?? [])).map(fresh);
-    state = withSide(state, seat, { active, bench, hand });
+    state = patchSide(state, seat, { active, bench, hand });
   }
   return state;
 }
@@ -448,7 +441,7 @@ describe("D580 Look-Alike Show §1 — the offer (R-LA2) and its collapse", () =
     const six = board([sup("Briar")]);
     expect(opponentSupporterOffer(six, { seat: "p1" })).toEqual([]);
     // Briar: "You can use this card only if your opponent has exactly 2 Prize cards remaining."
-    const two = withSide(six, "p2", { prizes: six.players.p2.prizes.slice(0, 2) });
+    const two = patchSide(six, "p2", { prizes: six.players.p2.prizes.slice(0, 2) });
     expect(opponentSupporterOffer(two, { seat: "p1" })).toEqual(two.players.p2.hand);
     expect(supporterEffectOf(sup("Briar"))?.ops).toEqual([]);
   });
@@ -649,9 +642,9 @@ describe("D580 Look-Alike Show §5 — the population pins (R-LA3, R-LA6)", () =
 function unlocked(name: string, state: GameState): GameState {
   switch (name) {
     case "Briar":
-      return withSide(state, "p2", { prizes: state.players.p2.prizes.slice(0, 2) });
+      return patchSide(state, "p2", { prizes: state.players.p2.prizes.slice(0, 2) });
     case "Cassiopeia":
-      return withSide(state, "p1", { hand: [] });
+      return patchSide(state, "p1", { hand: [] });
     case "Hassel":
       return { ...state, lastKoTurn: { ...state.lastKoTurn, p1: state.turn - 1 } };
     case "Team Rocket's Archer":

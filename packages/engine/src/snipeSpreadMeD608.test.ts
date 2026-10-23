@@ -9,7 +9,7 @@ import {
   optionalCostBoostProgram,
   splitAttackTrailingClause,
 } from "./effects";
-import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { GameAction, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
 import { programFor } from "./registry";
 import {
@@ -26,6 +26,7 @@ import {
   setDamage,
   typedEnergy,
   must,
+  unprize,
 } from "./testFixtures";
 
 const SPLIT_BOMB =
@@ -466,20 +467,6 @@ function p1Turn(): GameState {
   return state;
 }
 
-/** TEST SURGERY — every Prize whose id is a board id swapped with a Filler / fix-energy deck card. */
-function unprize(state: GameState, seat: Seat): GameState {
-  const side = state.players[seat];
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!BOARD_IDS.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !BOARD_IDS.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
-}
-
 /** P1's Active is `attacker` with `energy`; P2's Active is `defender` with `bench` behind it. */
 function table(
   attacker: string,
@@ -489,7 +476,7 @@ function table(
 ): GameState {
   let state = p1Turn();
   for (const s of ["p1", "p2"] as const)
-    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s, BOARD_IDS);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   state = clearBench(setActiveFromDeck(state, "p2", defender), "p2");

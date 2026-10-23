@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   typedEnergy,
   must,
+  unprize,
 } from "./testFixtures";
 
 const WILD_GROWTH_TEXT =
@@ -195,20 +196,6 @@ function p1Turn(): GameState {
   return state;
 }
 
-/** TEST SURGERY — every Prize whose id is a board id swapped with a non-board deck card. */
-function unprize(state: GameState, seat: Seat): GameState {
-  const side = state.players[seat];
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!BOARD_IDS.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !BOARD_IDS.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
-}
-
 /** TEST SURGERY — `count` copies of the Energy `cardId` from `seat`'s deck onto its Active, or Bench body `index`. */
 function energize(
   state: GameState,
@@ -255,7 +242,7 @@ function table(p1: Board, p2: Board): GameState {
     ["p1", p1],
     ["p2", p2],
   ] as const) {
-    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s, BOARD_IDS);
     state = clearBench(setActiveFromDeck(state, s, board.active), s);
     for (const [id, n] of board.energy ?? []) state = energize(state, s, id, n);
     for (const id of board.bench ?? []) state = benchFromDeck(state, s, id);

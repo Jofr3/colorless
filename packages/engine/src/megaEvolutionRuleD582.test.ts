@@ -17,6 +17,7 @@ import {
   trainerCard,
   must,
   mustApply as run,
+  patchSide,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -189,14 +190,6 @@ function opened(seed: number, rounds = 0): GameState {
   return state;
 }
 
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
-}
-
 /** Take one copy of `id` out of `seat`'s deck / hand / prizes (a prize is swapped for a deck card). */
 function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid: string } {
   const side = state.players[seat];
@@ -208,13 +201,13 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
     const swap = side.deck.find((u) => !is(u)) ?? "";
     return {
       uid,
-      state: withSide(state, seat, {
+      state: patchSide(state, seat, {
         prizes: side.prizes.map((u) => (u === uid ? swap : u)),
         deck: side.deck.filter((u) => u !== swap),
       }),
     };
   }
-  return { uid, state: withSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
+  return { uid, state: patchSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
 }
 
 interface Spot {
@@ -236,7 +229,7 @@ function table(opts: { p1: Spot; p2: Spot; hand?: readonly string[]; rounds?: nu
         : [...side.active.stack, ...side.active.energy, ...side.active.tools]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy, ...p.tools]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -257,15 +250,15 @@ function table(opts: { p1: Spot; p2: Spot; hand?: readonly string[]; rounds?: nu
   const p1 = make("p1", opts.p1);
   const p2 = make("p2", opts.p2);
   const bench = make("p2", { id: FILLER });
-  state = withSide(state, "p1", { active: p1 });
-  state = withSide(state, "p2", { active: p2, bench: [bench] });
+  state = patchSide(state, "p1", { active: p1 });
+  state = patchSide(state, "p2", { active: p2, bench: [bench] });
   const hand: string[] = [];
   for (const id of opts.hand ?? []) {
     const h = pull(state, "p1", id);
     state = h.state;
     hand.push(h.uid);
   }
-  return withSide(state, "p1", { hand });
+  return patchSide(state, "p1", { hand });
 }
 
 const strike = (index: number): GameAction => ({ type: "attack", seat: "p1", index });

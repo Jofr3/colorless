@@ -21,6 +21,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  unprize,
 } from "./testFixtures";
 
 const EXPLOSIVENESS_TEXT =
@@ -297,21 +298,6 @@ const BOARD_IDS = Object.keys(LOCAL)
   .filter((id) => id !== SPARE)
   .concat([E]);
 
-/** TEST SURGERY — every Prize whose id is a board id swapped with a SPARE from the deck. */
-function unprize(state: GameState, seat: Seat): GameState {
-  const side = state.players[seat];
-  const kept = new Set(BOARD_IDS);
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!kept.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !kept.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
-}
-
 /** P1's Active `attacker` (one {C} attached) over `p1Bench`; P2's Active `defender` over `p2Bench`. */
 function table(
   attacker: string,
@@ -320,7 +306,7 @@ function table(
   p1Bench: readonly string[] = [],
 ): GameState {
   let state = p1Turn();
-  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(state, s), s);
+  for (const s of ["p1", "p2"] as const) state = unprize(clearBench(state, s), s, BOARD_IDS);
   state = clearBench(setActiveFromDeck(state, "p1", attacker), "p1");
   state = attachFromDeck(state, "p1", E, 1);
   for (const id of p1Bench) state = benchFromDeck(state, "p1", id);

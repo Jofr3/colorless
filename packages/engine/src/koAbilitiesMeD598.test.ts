@@ -23,6 +23,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  unprize,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -338,21 +339,6 @@ function p1Turn(): GameState {
 }
 /** Plain Energy padding so the Prize swap never draws a board card. */
 const FILLERS: string[] = deckOf({ [SPARE]: 17 });
-
-/** TEST SURGERY — every Prize whose id is in `ids` swapped with a deck card whose id is not. */
-function unprize(state: GameState, seat: Seat, ids: readonly string[]): GameState {
-  const side = state.players[seat];
-  const kept = new Set(ids);
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!kept.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !kept.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
-}
 
 /** P1's Active is `attacker` with one Energy; P2's Active is `defender` over `bench`. 6 Prizes each. */
 function table(attacker: string, defender: string, bench: readonly string[] = [FILLER]): GameState {

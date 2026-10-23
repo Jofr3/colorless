@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { deriveAttackEffect } from "./effects";
-import type { GameAction, GameEvent, GameState, Seat } from "./index";
+import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction, createGame, formatElapsed, logFromEvents } from "./index";
 import { programFor } from "./registry";
 import {
@@ -19,6 +19,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  unprize,
 } from "./testFixtures";
 
 const YEET = "You may discard any number of cards from your hand.";
@@ -302,20 +303,6 @@ function p1Turn(): GameState {
   return state;
 }
 
-/** TEST SURGERY — every Prize whose id is a board id swapped with a non-board deck card. */
-function unprize(state: GameState, seat: Seat): GameState {
-  const side = state.players[seat];
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!BOARD_IDS.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !BOARD_IDS.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
-}
-
 /** P1's Active is `attacker` with `energy` and `hand` in hand (a Filler on the Bench); P2's Active a Filler. */
 function table(
   attacker: string,
@@ -324,7 +311,7 @@ function table(
 ): GameState {
   let state = p1Turn();
   for (const s of ["p1", "p2"] as const)
-    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s);
+    state = unprize(clearBench(setActiveFromDeck(state, s, FILLER), s), s, BOARD_IDS);
   state = benchFromDeck(clearBench(setActiveFromDeck(state, "p1", attacker), "p1"), "p1", FILLER);
   for (const [id, n] of energy) state = attachFromDeck(state, "p1", id, n);
   for (const [id, n] of hand) state = handFromDeck(state, "p1", id, n);

@@ -21,6 +21,7 @@ import {
   trainerCard,
   must,
   effectPrompt,
+  ensureInDeck,
 } from "./testFixtures";
 
 const PRISM_TEXT =
@@ -121,26 +122,6 @@ function opened(seed: number): GameState {
   for (const s of ["p1", "p2"] as const)
     state = must(applyAction(state, { type: "setupReady", seat: s }));
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-/** TEST SURGERY — `id` back into `seat`'s DECK if it sits in the hand or the Prizes. */
-function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
-  const side = state.players[seat];
-  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
-  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
-  if (held !== undefined) {
-    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
-    return { ...state, players: { ...state.players, [seat]: next } };
-  }
-  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id);
-  const swap = side.deck[side.deck.length - 1];
-  if (prized === undefined || swap === undefined) throw new Error(`${seat} has no ${id} to seat`);
-  const next = {
-    ...side,
-    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
-    deck: [...side.deck.slice(0, -1), prized],
-  };
-  return { ...state, players: { ...state.players, [seat]: next } };
 }
 
 /** p1's turn 2: `active` for p1 and `oppActive` for p2, each Bench exactly the listed bodies. */

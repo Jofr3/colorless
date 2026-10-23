@@ -14,6 +14,7 @@ import {
   specialEnergy,
   must,
   mustApply as run,
+  patchSide,
 } from "./testFixtures";
 import { type PendingStage, makeInPlay } from "./types";
 
@@ -141,14 +142,6 @@ function opened(seed: number): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
-}
-
 function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid: string } {
   const side = state.players[seat];
   const is = (u: string) => state.cardIdByUid[u] === id;
@@ -159,13 +152,13 @@ function pull(state: GameState, seat: Seat, id: string): { state: GameState; uid
     const swap = side.deck.find((u) => !is(u)) ?? "";
     return {
       uid,
-      state: withSide(state, seat, {
+      state: patchSide(state, seat, {
         prizes: side.prizes.map((u) => (u === uid ? swap : u)),
         deck: side.deck.filter((u) => u !== swap),
       }),
     };
   }
-  return { uid, state: withSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
+  return { uid, state: patchSide(state, seat, { [zone]: side[zone].filter((u) => u !== uid) }) };
 }
 
 /** p1's turn 2: p1 `active` carrying `energy` (ids), plus `bench`; p2 `oppActive` carrying `oppEnergy`. */
@@ -184,7 +177,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -201,14 +194,14 @@ function table(opts: {
       state = pulled.state;
       energy.push(pulled.uid);
     }
-    state = withSide(state, seat, { active: { ...body, energy } });
+    state = patchSide(state, seat, { active: { ...body, energy } });
     return energy;
   };
   const energy = place("p1", opts.active, opts.energy ?? []);
   const oppEnergy = place("p2", opts.oppActive ?? FILLER, opts.oppEnergy ?? []);
   for (const id of opts.bench ?? []) {
     const pulled = pull(state, "p1", id);
-    state = withSide(pulled.state, "p1", {
+    state = patchSide(pulled.state, "p1", {
       bench: [...pulled.state.players.p1.bench, makeInPlay(pulled.uid, 0)],
     });
   }
@@ -310,7 +303,7 @@ describe("D577 Boomerang §3 — the epilogue's re-attach, driven at the stage (
     const { state: base } = table({ active: PLAIN, bench: [FILLER] });
     let state = base;
     const pulled = pull(state, "p1", BOOMERANG);
-    state = withSide(pulled.state, "p1", {
+    state = patchSide(pulled.state, "p1", {
       discard: [...pulled.state.players.p1.discard, pulled.uid],
     });
     const active = state.players.p1.active;
@@ -319,12 +312,12 @@ describe("D577 Boomerang §3 — the epilogue's re-attach, driven at the stage (
     let uid = active.stack[0] ?? "";
     if (where === "bench") {
       // The attacker self-switched: it is now Benched, the filler Active.
-      state = withSide(state, "p1", { active: benched, bench: [active] });
+      state = patchSide(state, "p1", { active: benched, bench: [active] });
     } else if (where === "gone") {
       uid = "p1#nowhere";
     }
     if (damage > 0 && state.players.p1.active !== null) {
-      state = withSide(state, "p1", { active: { ...state.players.p1.active, damage } });
+      state = patchSide(state, "p1", { active: { ...state.players.p1.active, damage } });
     }
     const epilogue: PendingStage = {
       kind: "attackEpilogue",
@@ -360,7 +353,7 @@ describe("D577 Boomerang §3 — the epilogue's re-attach, driven at the stage (
 
   it("the card LEFT THE DISCARD PILE: nothing attaches", () => {
     const { state: board, b } = epilogueBoard("active");
-    const state = withSide(board, "p1", {
+    const state = patchSide(board, "p1", {
       discard: board.players.p1.discard.filter((u) => u !== b),
       hand: [...board.players.p1.hand, b],
     });
@@ -405,7 +398,7 @@ describe("D577 Boomerang §4 — only an ATTACK's program records it (R-BE1, the
     const pulled = pull(board, "p1", BOOMERANG);
     const benched = pulled.state.players.p1.bench[0];
     if (benched === undefined) throw new Error("no bench");
-    const state0 = withSide(pulled.state, "p1", { bench: [{ ...benched, energy: [pulled.uid] }] });
+    const state0 = patchSide(pulled.state, "p1", { bench: [{ ...benched, energy: [pulled.uid] }] });
     const uid = state0.players.p1.active?.stack[0] ?? "";
     const epilogue: PendingStage = { kind: "attackEpilogue", seat: "p1", uid, attack: "Fling" };
     const state = { ...state0, pending: [epilogue] };

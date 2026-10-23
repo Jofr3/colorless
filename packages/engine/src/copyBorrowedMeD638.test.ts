@@ -7,7 +7,7 @@ import { COPY_FAMILY_MARKER, deriveAttackCopy, deriveAttackEffect } from "./effe
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
-import type { GameAction, GameState, Seat } from "./index";
+import type { GameAction, GameState } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {
@@ -18,6 +18,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  patchSide,
 } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -151,14 +152,6 @@ function opened(): GameState {
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 
-function withSide(
-  state: GameState,
-  seat: Seat,
-  patch: Partial<GameState["players"]["p1"]>,
-): GameState {
-  return { ...state, players: { ...state.players, [seat]: { ...state.players[seat], ...patch } } };
-}
-
 let minted = 0;
 /** TEST SURGERY — a fresh uid for `id`, its card added to the game's pool. */
 function mint(state: GameState, id: string): { state: GameState; uid: string } {
@@ -199,7 +192,7 @@ function table(opts: {
       ...(side.active === null ? [] : [...side.active.stack, ...side.active.energy]),
       ...side.bench.flatMap((p) => [...p.stack, ...p.energy]),
     ];
-    state = withSide(state, seat, {
+    state = patchSide(state, seat, {
       hand: [],
       active: null,
       bench: [],
@@ -219,11 +212,11 @@ function table(opts: {
     const active = build(seat === "p1" ? opts.p1 : opts.p2);
     const bench = (seat === "p1" ? (opts.p1Bench ?? []) : (opts.p2Bench ?? [])).map(build);
     const hand = (seat === "p1" ? (opts.p1Hand ?? []) : []).map(fresh);
-    state = withSide(state, seat, { active, bench, hand });
+    state = patchSide(state, seat, { active, bench, hand });
   }
   if (opts.p1Top !== undefined) {
     const top = fresh(opts.p1Top);
-    state = withSide(state, "p1", { deck: [top, ...state.players.p1.deck] });
+    state = patchSide(state, "p1", { deck: [top, ...state.players.p1.deck] });
   }
   return state;
 }
@@ -420,7 +413,7 @@ describe("D638 §4 — Skill Thief on a board (R-SKT1)", () => {
     const parked = run(thiefBoard(), attack(0)).state;
     const bad = applyAction(parked, pick(7));
     expect(bad.ok ? null : bad.error.code).toBe("BAD_EFFECT_CHOICE");
-    const swapped = withSide(parked, "p1", { active: { ...makeInPlay("d638-stale", 0) } });
+    const swapped = patchSide(parked, "p1", { active: { ...makeInPlay("d638-stale", 0) } });
     const stale = applyAction(
       { ...swapped, cardIdByUid: { ...swapped.cardIdByUid, "d638-stale": THIEVUL } },
       pick(0),
@@ -487,7 +480,7 @@ describe("D638 §5 — Supernatural Shapeshifter on a board (R-NS1)", () => {
   });
 
   it("an empty deck discards nothing and ends", () => {
-    const state = withSide(foxBoard(undefined), "p1", { deck: [] });
+    const state = patchSide(foxBoard(undefined), "p1", { deck: [] });
     const done = run(state, attack(0));
     expect(of(done.events, "DECK_TOP_DISCARDED")).toEqual([]);
     expect(of(done.events, "SUPPORTER_EFFECT_USED")).toEqual([]);

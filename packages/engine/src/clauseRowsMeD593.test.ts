@@ -25,6 +25,7 @@ import {
   specialEnergy,
   typedEnergy,
   must,
+  unprize,
 } from "./testFixtures";
 
 const MASTERS_PUNCH =
@@ -477,21 +478,6 @@ function p1Turn(): GameState {
     };
   }
   return state;
-}
-
-/** TEST SURGERY — every Prize whose id is in `ids` swapped with a deck card whose id is not. */
-function unprize(state: GameState, seat: Seat, ids: readonly string[]): GameState {
-  const side = state.players[seat];
-  const kept = new Set(ids);
-  let deck = [...side.deck];
-  const prizes = side.prizes.map((u) => {
-    if (!kept.has(state.cardIdByUid[u] ?? "")) return u;
-    const swap = deck.find((d) => !kept.has(state.cardIdByUid[d] ?? ""));
-    if (swap === undefined) throw new Error("no swap card");
-    deck = [...deck.filter((d) => d !== swap), u];
-    return swap;
-  });
-  return { ...state, players: { ...state.players, [seat]: { ...side, prizes, deck } } };
 }
 
 /** P1's Active is `attacker` with `energy` attached and one Filler benched; P2's Active is a Filler
