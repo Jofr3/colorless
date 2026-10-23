@@ -196,6 +196,7 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     const read = readSnapshot(legacy);
     expect(read?.host.forfeitAt).toBeNull();
     expect(read?.guest?.forfeitAt).toBeNull();
+    expect(read?.host.avatarSeed).toBeNull();
     // Everything else survives untouched.
     expect(read?.guest?.connected).toBe(false);
   });
@@ -208,6 +209,14 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     // Never throws on a blob that isn't one — the DO is the only writer, which is
     // precisely why an impossible value must not take the lobby down.
     expect(readSnapshot({})).toBeNull();
+  });
+
+  it("keeps a stored avatar seed and reads a malformed seat as no snapshot", () => {
+    const stored = lobbyWithGuest();
+    const seeded = { ...stored, host: { ...stored.host, avatarSeed: "seed-1" } };
+    expect(readSnapshot(seeded)?.host.avatarSeed).toBe("seed-1");
+    expect(readSnapshot({ ...stored, host: { ...stored.host, ready: "yes" } })).toBeNull();
+    expect(readSnapshot({ ...stored, phase: "lost" })).toBeNull();
   });
 });
 
