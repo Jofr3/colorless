@@ -1,7 +1,7 @@
 -- Files the browser host writes into LÖVE's save directory for Lua to poll.
 local Codec=require('ui.codec')
 local Mailbox={}
-Mailbox.ART='__builder_art.txt'
+Mailbox.ART='__art.txt'
 -- The file's text, or nil until the host has written it.
 function Mailbox.read(name)
   if love.filesystem.getInfo(name) then return (love.filesystem.read(name)) end

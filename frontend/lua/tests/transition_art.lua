@@ -9,7 +9,7 @@ local function publish(ids)
     local path='cached '..id..'.png';files[path]='png'
     rows[#rows+1]=Codec.encode(id)..'\t'..Codec.encode(path)
   end
-  files['__builder_art.txt']=table.concat(rows,'\n')
+  files['__art.txt']=table.concat(rows,'\n')
 end
 -- The empty-cache fallback also exhausts its pool before repeating.
 local fallback={}
@@ -40,7 +40,7 @@ publish({'single'})
 for _=1,3 do assert(Art.pick().id=='single')end
 files['cached single.png']=nil
 assert(Art.pick().path:match('^assets/transition_cards/'))
-files['__builder_art.txt']=nil
+files['__art.txt']=nil
 assert(Art.pick().path:match('^assets/transition_cards/'))
 -- A single prepared disk-cache card outranks the 64-image working cache.
 publish({'working'})

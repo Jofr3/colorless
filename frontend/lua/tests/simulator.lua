@@ -300,7 +300,7 @@ assert(#sim.ghosts==1 and sim.ghosts[1].item.id=='card1','Hand card slides into 
 local rebuilt=0
 local baseRebuild=Card.rebuild
 Card.rebuild=function(self) rebuilt=rebuilt+1;baseRebuild(self) end
-love.filesystem.getInfo=function(path) return path=='__builder_art.txt' and {} or nil end
+love.filesystem.getInfo=function(path) return path=='__art.txt' and {} or nil end
 love.filesystem.read=function() return 'sv01-033\t/art/houndour.png' end
 sim:update(1/60,0.1,0,0,false)
 assert(rebuilt>=1,'Discard pile repainted when its top card art arrives, got '..rebuilt)

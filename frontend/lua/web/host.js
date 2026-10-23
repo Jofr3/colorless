@@ -878,7 +878,7 @@ let artRevision = 0,
   wantedArt = [];
 function publishArt() {
   writeMailbox(
-    "__builder_art.txt",
+    "__art.txt",
     [
       ++artRevision,
       ...[...artCache].map(([id, path]) => [id, path].map(encodeURIComponent).join("\t")),
