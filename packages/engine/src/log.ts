@@ -11,6 +11,7 @@ import type { GameEvent, StatusName } from "./events";
 // interpreter.ts imports nothing from this file, so there is no cycle.
 import { retrieveNoun } from "./interpreter";
 import {
+  bodyAt,
   inPlayOf,
   DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
@@ -136,8 +137,8 @@ function targetName(
   target: { spot: "active" } | { spot: "bench"; index: number },
 ): string {
   const side = state.players[seat];
-  const pokemon = target.spot === "active" ? side.active : side.bench[target.index];
-  if (pokemon == null) return target.spot === "active" ? "the Active spot" : "the Bench";
+  const pokemon = bodyAt(side, target);
+  if (pokemon === undefined) return target.spot === "active" ? "the Active spot" : "the Bench";
   return topCardOf(state, pokemon)?.name ?? "a Pokémon";
 }
 

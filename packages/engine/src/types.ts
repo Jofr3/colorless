@@ -1038,6 +1038,19 @@ export function withActive(state: GameState, seat: Seat, active: InPlayPokemon):
   return withSide(state, seat, { ...state.players[seat], active });
 }
 
+/** The body at a spot; an empty Active spot and a vacant bench index both read as undefined. */
+export function bodyAt(side: PlayerSide, target: PokemonTarget): InPlayPokemon | undefined {
+  return target.spot === "active" ? (side.active ?? undefined) : side.bench[target.index];
+}
+
+export function pokemonAt(
+  state: GameState,
+  seat: Seat,
+  target: PokemonTarget,
+): InPlayPokemon | undefined {
+  return bodyAt(state.players[seat], target);
+}
+
 /** The side's Pokémon in play, Active first. */
 export function inPlayOf(side: PlayerSide): InPlayPokemon[] {
   return side.active === null ? side.bench : [side.active, ...side.bench];

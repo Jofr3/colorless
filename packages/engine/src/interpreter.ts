@@ -145,7 +145,9 @@ import type {
   SpecialConditions,
 } from "./types";
 import {
+  bodyAt,
   inPlayOf,
+  pokemonAt,
   BENCH_CEILING,
   BENCH_MAX,
   DEFAULT_CONFUSION_DAMAGE,
@@ -6803,8 +6805,8 @@ function unshieldedRefs(
 ): PokemonRef[] {
   return refs.filter((ref) => {
     const side = state.players[ref.seat];
-    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    if (body === undefined || body === null) return true; // not our call — the op validates refs
+    const body = bodyAt(side, ref.spot);
+    if (body === undefined) return true; // not our call — the op validates refs
     return !effectRefused(state, ref.seat, ctx, events, body);
   });
 }
@@ -8250,10 +8252,10 @@ function moveCountersFromBench(
   const moved = source.damage;
   if (moved <= 0) return state;
   const destSide = state.players[dest.seat];
-  const target = dest.spot.spot === "active" ? destSide.active : destSide.bench[dest.spot.index];
+  const target = bodyAt(destSide, dest.spot);
   // A move needs both ends, and half of one would silently launder counters off
   // the controller's board — see the doc block above.
-  if (target === undefined || target === null) return state;
+  if (target === undefined) return state;
   const targetUid = topUid(target);
   if (targetUid === undefined) return state;
   // §11: the destination half is a placement (an effect), so the effects block refuses the whole
@@ -9174,8 +9176,8 @@ function evolveFromDeckOffer(
   const [ref] = onto === undefined ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: onto }];
   if (ref === undefined) return undefined;
   const side = state.players[ctx.seat];
-  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-  if (body === undefined || body === null) return undefined;
+  const body = bodyAt(side, ref.spot);
+  if (body === undefined) return undefined;
   const bodyUid = topUid(body);
   const top = bodyUid === undefined ? undefined : cardOf(state, bodyUid);
   if (bodyUid === undefined || top === undefined) return undefined;
@@ -10021,8 +10023,8 @@ function returnSelf(
   if (ref === undefined) return state;
   const seat = ctx.seat;
   const side = state.players[seat];
-  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-  if (body === null || body === undefined) return state;
+  const body = bodyAt(side, ref.spot);
+  if (body === undefined) return state;
   const uid = topUid(body);
   if (uid === undefined) return state;
   const uids = stackUids(body);
@@ -10082,8 +10084,8 @@ function devolveTargets(state: GameState, seat: Seat): PokemonRef[] {
   return oppAnyRefs(state, seat).filter((ref) => {
     const side = state.players[ref.seat];
     const spot = ref.spot;
-    const target = spot.spot === "active" ? side.active : side.bench[spot.index];
-    return target !== null && target !== undefined && target.stack.length >= 2;
+    const target = bodyAt(side, spot);
+    return target !== undefined && target.stack.length >= 2;
   });
 }
 
@@ -10154,13 +10156,13 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
   for (const ref of refs) {
     const side = state.players[ref.seat];
     const spot = ref.spot;
-    const body = spot.spot === "active" ? side.active : side.bench[spot.index];
+    const body = bodyAt(side, spot);
     // Not in play — unreachable (`evolvedRefs` just read every one of these bodies),
     // and a silent skip rather than a throw for the reason every ref guard in this
     // file is: the op validates refs. The "evolved" filter is NOT repeated here; it
     // lives in `evolvedRefs` alone, so the printed candidate set has ONE spelling and
     // the refusal rows above cannot disagree with the bodies this loop collects.
-    if (body === null || body === undefined) continue;
+    if (body === undefined) continue;
     const from = body.stack[body.stack.length - 1];
     if (from === undefined) continue;
     devolved.push({
@@ -10226,8 +10228,8 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
     if (entry.wasLethal) continue;
     const side = next.players[entry.ref.seat];
     const spot = entry.ref.spot;
-    const body = spot.spot === "active" ? side.active : side.bench[spot.index];
-    if (body === null || body === undefined) continue;
+    const body = bodyAt(side, spot);
+    if (body === undefined) continue;
     if (!isLethallyDamaged(next, body)) continue;
     const marker = koByEffectMarker(next.turn);
     // Idempotent, `doomBodyAt`'s contract: a body already carrying this turn's stamp
@@ -10258,11 +10260,11 @@ function devolveBodyToHand(
 ): GameState {
   const side = state.players[ref.seat];
   const spot = ref.spot;
-  const body = spot.spot === "active" ? side.active : side.bench[spot.index];
+  const body = bodyAt(side, spot);
   // Not in play, or nothing to shed — a silent no-op rather than a throw, for the
   // reason every ref guard in this file is: the op validates refs, and a wire answer
   // whose body has since left play moves nothing (`returnBenched`'s trust level).
-  if (body === null || body === undefined) return state;
+  if (body === undefined) return state;
   // Milotic "Mentally Calm" opposite the owner: the devolution fails whole and nothing is shed.
   if (inPlayToHandBlocked(state, ref.seat)) return state;
   const from = body.stack[body.stack.length - 1];
@@ -10315,8 +10317,8 @@ function devolveBodyToHand(
   // Read from the committed board.
   if (wasLethal) return next;
   const committed = next.players[ref.seat];
-  const live = spot.spot === "active" ? committed.active : committed.bench[spot.index];
-  if (live === null || live === undefined) return next;
+  const live = bodyAt(committed, spot);
+  if (live === undefined) return next;
   if (!isLethallyDamaged(next, live)) return next;
   const marker = koByEffectMarker(next.turn);
   // Idempotent, `doomBodyAt`'s contract: a body already carrying this turn's stamp is
@@ -10341,8 +10343,8 @@ function devolveEachToHand(state: GameState, ctx: EffectContext, events: GameEve
   const refs = unshieldedRefs(state, devolveTargets(state, ctx.seat), ctx, events);
   const lethalBefore = refs.map((ref) => {
     const side = state.players[ref.seat];
-    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    return body === null || body === undefined || isLethallyDamaged(state, body);
+    const body = bodyAt(side, ref.spot);
+    return body === undefined || isLethallyDamaged(state, body);
   });
   let next = state;
   for (const ref of refs) next = devolveBodyToHand(next, ref, ctx, events);
@@ -10351,8 +10353,8 @@ function devolveEachToHand(state: GameState, ctx: EffectContext, events: GameEve
     if (lethalBefore[i] === true) return;
     const side = next.players[ref.seat];
     const spot = ref.spot;
-    const body = spot.spot === "active" ? side.active : side.bench[spot.index];
-    if (body === null || body === undefined) return;
+    const body = bodyAt(side, spot);
+    if (body === undefined) return;
     if (!isLethallyDamaged(next, body)) return;
     const marker = koByEffectMarker(next.turn);
     if (body.markers.includes(marker)) return;
@@ -10548,8 +10550,8 @@ function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
 export function doomBodyAt(state: GameState, ref: PokemonRef, marker?: string): GameState {
   const side = state.players[ref.seat];
   const spot = ref.spot;
-  const body = spot.spot === "active" ? side.active : side.bench[spot.index];
-  if (body === null || body === undefined) return state;
+  const body = bodyAt(side, spot);
+  if (body === undefined) return state;
   const hp = effectiveMaxHp(state, body);
   if (hp === null) return state;
   const doomed: InPlayPokemon = {
@@ -11519,8 +11521,8 @@ function healChosen(
 ): GameState {
   if (ref.seat !== ctx.seat) return state;
   const side = state.players[ctx.seat];
-  const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-  if (pokemon === undefined || pokemon === null) return state;
+  const pokemon = bodyAt(side, ref.spot);
+  if (pokemon === undefined) return state;
   const uid = topUid(pokemon);
   if (uid === undefined) return state;
   if (healLocked(state, pokemon)) return state;
@@ -12032,8 +12034,8 @@ export function attachFromHandPlayable(
 function handOpenRefs(state: GameState, refs: PokemonRef[]): PokemonRef[] {
   return refs.filter((ref) => {
     const side = state.players[ref.seat];
-    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    return body == null || liveHandAttachMark(state, body)?.barred !== true;
+    const body = bodyAt(side, ref.spot);
+    return body === undefined || liveHandAttachMark(state, body)?.barred !== true;
   });
 }
 
@@ -12229,8 +12231,8 @@ function attachEnergyFrom(
     .slice(0, chosenUids === undefined ? undefined : printed);
   if (energyUids.length === 0) return state;
   const side = state.players[seat];
-  const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-  if (pokemon === undefined || pokemon === null) return state;
+  const pokemon = bodyAt(side, ref.spot);
+  if (pokemon === undefined) return state;
   // Glimmora's bar at the apply: the `toSelf` hand attaches never pass through
   // `attachEnergyTargets`'s filter. A barred body takes nothing and nothing is filed.
   if (op.source === "hand" && liveHandAttachMark(state, pokemon)?.barred === true) return state;
@@ -12729,8 +12731,8 @@ export function discardableEnergies(
     const [ref] = sourceRef(state, { seat, sourceUid });
     if (ref === undefined) return [];
     const side = state.players[seat];
-    const host = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    if (host === undefined || host === null) return [];
+    const host = bodyAt(side, ref.spot);
+    if (host === undefined) return [];
     return host.energy
       .filter((uid) => matchesAttached(state, host, uid, op.filter))
       .map((uid) => ({ uid, from: ref }));
@@ -13553,14 +13555,8 @@ function refTopCard(state: GameState, ref: PokemonRef): Card | undefined {
   return body === undefined ? undefined : inPlayCardOf(state, body);
 }
 
-/**
- * The body a ref points at. An empty Active spot is `null` and an out-of-range bench index is
- * `undefined`; both are folded into one absent value here.
- */
 function refPokemon(state: GameState, ref: PokemonRef): InPlayPokemon | undefined {
-  const side = state.players[ref.seat];
-  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-  return body === undefined || body === null ? undefined : body;
+  return pokemonAt(state, ref.seat, ref.spot);
 }
 
 /**

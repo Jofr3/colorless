@@ -76,7 +76,7 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { isImmobilized, otherSeat } from "./types";
+import { bodyAt, isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state.
@@ -790,9 +790,8 @@ function redactedDiscardableOf(
   if (viewerSeat !== turnSeat) return [];
   const side = state.players[viewerSeat];
   return discardableTargets(state, viewerSeat).map((target) => {
-    const body = target.spot === "active" ? side.active : side.bench[target.index];
-    const name =
-      (body === null || body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
+    const body = bodyAt(side, target);
+    const name = (body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
     const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
     return {
       target:

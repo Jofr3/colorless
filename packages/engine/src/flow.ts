@@ -66,6 +66,7 @@ import type {
   UsedAttack,
 } from "./types";
 import {
+  bodyAt,
   inPlayOf,
   BENCH_CEILING,
   SEATS,
@@ -332,9 +333,8 @@ function faintingSpells(
         : index === -1
           ? undefined
           : { seat: attackerSeat, spot: { spot: "bench", index } };
-    const attacker =
-      ref === undefined ? undefined : ref.spot.spot === "active" ? own.active : own.bench[index];
-    if (ref === undefined || attacker === null || attacker === undefined) continue;
+    const attacker = ref === undefined ? undefined : bodyAt(own, ref.spot);
+    if (ref === undefined || attacker === undefined) continue;
     if (
       effectRefused(
         next,

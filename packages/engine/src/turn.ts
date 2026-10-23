@@ -66,6 +66,7 @@ import {
 } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
+  bodyAt,
   inPlayOf,
   BENCH_CEILING,
   discardFromStack,
@@ -943,8 +944,8 @@ export function discardFromPlay(state: GameState, action: DiscardFromPlayAction)
   if (target.spot === "bench" && !isBenchIndex(target.index)) {
     return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(target.index)}`);
   }
-  const body = target.spot === "active" ? side.active : side.bench[target.index];
-  if (body === null || body === undefined) {
+  const body = bodyAt(side, target);
+  if (body === undefined) {
     return err("NO_TARGET", "there is no Pokémon in that spot");
   }
   const uid = topUid(body);
