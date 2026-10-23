@@ -249,7 +249,7 @@ function sweptCounts(
   checkup: boolean,
 ): { counts: number[]; events: GameEvent[] } {
   const events: GameEvent[] = [];
-  const batch = collectKnockOuts(state, ["p2"], events, checkup);
+  const batch = collectKnockOuts(state, ["p2"], { checkup }, events);
   if (batch.done !== null) throw new Error("the sweep ended the game");
   const counts = batch.stages.flatMap((s) => (s.kind === "takePrizes" ? [s.count] : []));
   return { counts, events };

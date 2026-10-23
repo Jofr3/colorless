@@ -1281,53 +1281,80 @@ describe("§6 — Briar: +1 Prize when a Tera Pokémon's attack damage Knocks Ou
     const state = briarBoard(CYCLIZAR, WEAK);
     const dying = bodyAt(state, "p2", "active");
     const attacker = topOf(bodyAt(state, "p1", "active"));
-    expect(briarPrizeBonus(state, "p1", dying, "p1", attacker, false)).toBe(1);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(1);
     // the mid-turn sweep (an Ability's counters) passes no attacker…
-    expect(briarPrizeBonus(state, "p1", dying, undefined, undefined, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: false,
+        attackerSeat: undefined,
+        attackerUid: undefined,
+      }),
+    ).toBe(0);
     // …the Checkup is refused…
-    expect(briarPrizeBonus(state, "p1", dying, "p1", attacker, true)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: true,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …a benched KO has no Active body to hand in…
-    expect(briarPrizeBonus(state, "p1", null, "p1", attacker, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", null, {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …a body doomed by an EFFECT (`knockOutDefender`) is not "by damage"…
     const doomed = { ...dying, markers: [...dying.markers, koByEffectMarker(state.turn)] };
-    expect(briarPrizeBonus(state, "p1", doomed, "p1", attacker, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", doomed, {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …the attack must be the TAKER's own ("used by YOUR Tera Pokémon"): the same Tera uid
     // handed in under the other seat is refused…
-    expect(briarPrizeBonus(state, "p1", dying, "p2", attacker, false)).toBe(0);
+    expect(
+      briarPrizeBonus(state, "p1", dying, {
+        checkup: false,
+        attackerSeat: "p2",
+        attackerUid: attacker,
+      }),
+    ).toBe(0);
     // …and the attacker's card is read off its UID, wherever it now stands: a benched Tera
     // body's uid pays (Flygon ex's switch-out, end to end above), a non-Tera one does not.
     const benched = briarBoard(FILLER, WEAK, { p1Bench: [CYCLIZAR] });
     expect(
-      briarPrizeBonus(
-        benched,
-        "p1",
-        bodyAt(benched, "p2", "active"),
-        "p1",
-        topOf(bodyAt(benched, "p1", 0)),
-        false,
-      ),
+      briarPrizeBonus(benched, "p1", bodyAt(benched, "p2", "active"), {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: topOf(bodyAt(benched, "p1", 0)),
+      }),
     ).toBe(1);
     expect(
-      briarPrizeBonus(
-        benched,
-        "p1",
-        bodyAt(benched, "p2", "active"),
-        "p1",
-        topOf(bodyAt(benched, "p1", "active")),
-        false,
-      ),
+      briarPrizeBonus(benched, "p1", bodyAt(benched, "p2", "active"), {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: topOf(bodyAt(benched, "p1", "active")),
+      }),
     ).toBe(0);
     // A non-Tera attacker in the same seat: nothing.
     const plain = briarBoard(STRIKER, WEAK);
     expect(
-      briarPrizeBonus(
-        plain,
-        "p1",
-        bodyAt(plain, "p2", "active"),
-        "p1",
-        topOf(bodyAt(plain, "p1", "active")),
-        false,
-      ),
+      briarPrizeBonus(plain, "p1", bodyAt(plain, "p2", "active"), {
+        checkup: false,
+        attackerSeat: "p1",
+        attackerUid: topOf(bodyAt(plain, "p1", "active")),
+      }),
     ).toBe(0);
   });
 });

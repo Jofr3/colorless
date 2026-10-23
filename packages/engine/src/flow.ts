@@ -588,6 +588,23 @@ function attachedPrizeReductions(
  * `done` is that tie. Prize guards such as Glimmora's coin flip are resolved up front so the
  * speculation and the real KO agree.
  */
+/** What caused a Knock Out sweep; it decides which cause-conditioned Prize riders apply. */
+export interface KnockOutCause {
+  /**
+   * Whether this is the Pokémon Checkup's sweep. Needed because `attackerSeat` is absent for both
+   * the Checkup and mid-turn sweeps, and `state.turn` cannot tell them apart; the Knock Out bounty
+   * pays during a turn but not in the Checkup.
+   */
+  checkup: boolean;
+  /** The attacking seat, set only for an attack's epilogue sweep. */
+  attackerSeat?: Seat;
+  /**
+   * The attacking body's uid, passed only by `finishAttack` alongside `attackerSeat`; answers "by
+   * an attack used by this Pokémon" (Greedy Eater).
+   */
+  attackerUid?: string;
+}
+
 type KnockOutBatch =
   | { done: GameOutcome; state: GameState }
   | { done: null; state: GameState; stages: PendingStage[] };
@@ -595,19 +612,8 @@ type KnockOutBatch =
 export function collectKnockOuts(
   state: GameState,
   seats: readonly Seat[],
+  cause: KnockOutCause,
   events: GameEvent[],
-  /**
-   * Whether this is the Pokémon Checkup's sweep. Needed because `attackerSeat` is absent for both
-   * the Checkup and mid-turn sweeps, and `state.turn` cannot tell them apart; the Knock Out bounty
-   * pays during a turn but not in the Checkup.
-   */
-  checkup: boolean,
-  attackerSeat?: Seat,
-  /**
-   * The attacking body's uid, passed only by `finishAttack` alongside `attackerSeat`; answers "by
-   * an attack used by this Pokémon" (Greedy Eater).
-   */
-  attackerUid?: string,
 ): KnockOutBatch {
   let next = state;
   const stages: PendingStage[] = [];
@@ -620,11 +626,10 @@ export function collectKnockOuts(
     const batch = collectKnockOutPass(
       next,
       seats,
+      // `checkup` holds on every pass, not only the first: a cascade Knock Out is still in the
+      // Checkup or in the turn.
+      pass === 0 ? cause : { checkup: cause.checkup },
       events,
-      // Every pass, not only the first: a cascade Knock Out is still in the Checkup or in the turn.
-      checkup,
-      pass === 0 ? attackerSeat : undefined,
-      pass === 0 ? attackerUid : undefined,
     );
     next = batch.state;
     if (batch.koedSeats.length === 0) break;
@@ -682,11 +687,10 @@ interface KnockOutPass {
 function collectKnockOutPass(
   state: GameState,
   seats: readonly Seat[],
+  cause: KnockOutCause,
   events: GameEvent[],
-  checkup: boolean,
-  attackerSeat?: Seat,
-  attackerUid?: string,
 ): KnockOutPass {
+  const { attackerSeat } = cause;
   const refs = lethalRefs(state, seats);
   if (refs.length === 0) return { state, stages: [], koedSeats: [] };
 
@@ -700,7 +704,7 @@ function collectKnockOutPass(
     // A ref whose body cannot be found answers true, falling back to the batch-level reading.
     return body === null || body === undefined ? true : !lethalByEffect(body, state.turn);
   };
-  const plan = planPrizes(state, refs, checkup, attackerSeat, attackerUid);
+  const plan = planPrizes(state, refs, cause);
   const startState = plan.state;
 
   // Apply each KO for real, grouping the stages PRIZES-first, then on-KO
@@ -803,10 +807,9 @@ function koPrizeBonus(
   state: GameState,
   ref: { seat: Seat; uid: string },
   baseCount: number,
-  attackerUid: string | undefined,
-  checkup: boolean,
-  attackerSeat: Seat | undefined,
+  cause: KnockOutCause,
 ): { state: GameState; count: number; events: GameEvent[] } {
+  const { checkup, attackerUid } = cause;
   const takerSeat = otherSeat(ref.seat);
   const side = state.players[ref.seat];
   const koWasActive = side.active !== null && topUid(side.active) === ref.uid;
@@ -864,7 +867,7 @@ function koPrizeBonus(
   }
   // Briar: the taker's Supporter this turn, after the seat bonuses and the bounty. Not an Ability,
   // so no coin and no ABILITY_TRIGGERED.
-  const briar = briarPrizeBonus(state, takerSeat, dying, attackerSeat, attackerUid, checkup);
+  const briar = briarPrizeBonus(state, takerSeat, dying, cause);
   if (briar > 0) {
     count += briar;
     events.push({ type: "PRIZE_BONUS", seat: ref.seat, uid: ref.uid, by: briar, count });
@@ -884,9 +887,7 @@ export function briarPrizeBonus(
   state: GameState,
   takerSeat: Seat,
   dying: InPlayPokemon | null,
-  attackerSeat: Seat | undefined,
-  attackerUid: string | undefined,
-  checkup: boolean,
+  { checkup, attackerSeat, attackerUid }: KnockOutCause,
 ): number {
   if (dying === null || checkup || attackerUid === undefined) return 0;
   if (lethalByEffect(dying, state.turn)) return 0;
@@ -901,10 +902,9 @@ export function briarPrizeBonus(
 function planPrizes(
   state: GameState,
   refs: readonly { seat: Seat; uid: string }[],
-  checkup: boolean,
-  attackerSeat?: Seat,
-  attackerUid?: string,
+  cause: KnockOutCause,
 ): { state: GameState; entries: KoPrizePlan[] } {
+  const { attackerSeat, attackerUid } = cause;
   let next = state;
   const entries: KoPrizePlan[] = [];
   for (const ref of refs) {
@@ -933,7 +933,7 @@ function planPrizes(
       next = attached.state;
       const bonus = denied
         ? { state: next, count: attached.count, events: [] as GameEvent[] }
-        : koPrizeBonus(next, ref, attached.count, attackerUid, checkup, attackerSeat);
+        : koPrizeBonus(next, ref, attached.count, cause);
       next = bonus.state;
       entries.push({
         ref,
@@ -1025,7 +1025,7 @@ export function resolveMidTurnKnockOuts(
   trimFirst?: Seat,
 ): ApplyResult {
   // A mid-turn Knock Out is during a turn, so the bounty pays.
-  const batch = collectKnockOuts(state, seats, events, false);
+  const batch = collectKnockOuts(state, seats, { checkup: false }, events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   const orphaned = orphanedPromotions(batch.state, seats, batch.stages);
   // Area Zero Underdepths state check: a seat over its Bench limit trims, behind the sweep's prize
@@ -1118,10 +1118,9 @@ export function finishAttack(
   const batch = collectKnockOuts(
     next,
     [otherSeat(attackerSeat), attackerSeat],
+    // An attack's epilogue is during the turn, not the Checkup.
+    { checkup: false, attackerSeat, attackerUid },
     events,
-    false, // An attack's epilogue is during the turn, not the Checkup.
-    attackerSeat,
-    attackerUid,
   );
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // Promotion for an Active Spot emptied without a Knock Out (Surf Back), queued in front of the
@@ -1625,7 +1624,7 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
 
   // Resolve the batch's Knock Outs through the shared sweep, in [endedSeat, other] order. The flag
   // marks the sweep as between turns, so a this-turn bounty does not pay.
-  const batch = collectKnockOuts(next, order, events, true);
+  const batch = collectKnockOuts(next, order, { checkup: true }, events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // A delayed discard can empty an Active Spot with no Knock Out, so owed promotions are spliced in
   // front of the queued `startTurn`. Both seats are scanned as a harmless superset.
