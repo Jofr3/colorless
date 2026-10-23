@@ -349,6 +349,30 @@ export function searchAttachToSelf(
   return { state: withSide(state, ctx.seat, updated), moved: [uid] };
 }
 
+/** The `evolveFromDeck` op fields an offer is derived under, so park and resolution agree. */
+export interface EvolveOfferOptions {
+  /**
+   * The op's `onto`. Absent, the subject is `ctx.sourceUid`; present, it is that target. A slot
+   * that emptied falls out as `undefined`. Seat-relative to `ctx.seat`.
+   */
+  onto?: PokemonTarget;
+  /**
+   * The op's `names`. Absent, candidates are the §10 chain match; present, a name-set test replaces
+   * it (they are alternatives, never conjuncts).
+   */
+  names?: readonly string[];
+  /**
+   * The op's `noAbilities` (Salvatore): a conjunct keeping only cards with no Abilities. Absent
+   * means unfiltered.
+   */
+  noAbilities?: true;
+  /**
+   * When set, candidates are read from the controller's hand instead of the deck (Spiteful
+   * Evolution).
+   */
+  fromHand?: true;
+}
+
 /**
  * What an `evolveFromDeck` op offers: the body "this Pokémon" names, where it sits, and the deck
  * cards that would legally evolve it. The predicate is the §10 evolves-from match used for hand
@@ -359,30 +383,10 @@ export function searchAttachToSelf(
 export function evolveFromDeckOffer(
   state: GameState,
   ctx: EffectContext,
-  /**
-   * The op's `onto`. Absent, the subject is `ctx.sourceUid`; present, it is that target. A slot
-   * that emptied falls out as `undefined`. Seat-relative to `ctx.seat`.
-   */
-  onto?: PokemonTarget,
-  /**
-   * The op's `names`. Absent, candidates are the §10 chain match; present, a name-set test replaces
-   * it (they are alternatives, never conjuncts).
-   */
-  names?: readonly string[],
-  /**
-   * The op's `noAbilities` (Salvatore): a conjunct keeping only cards with no Abilities. Absent
-   * means unfiltered.
-   */
-  noAbilities?: true,
-  /**
-   * When set, candidates are read from the controller's hand instead of the deck (Spiteful
-   * Evolution).
-   */
-  fromHand?: true,
+  { onto, names, noAbilities, fromHand }: EvolveOfferOptions = {},
 ):
   | {
       target: PokemonTarget;
-      benchIndex: number;
       body: InPlayPokemon;
       bodyUid: string;
       name: string;
@@ -399,7 +403,6 @@ export function evolveFromDeckOffer(
   if (bodyUid === undefined || top === undefined) return undefined;
   return {
     target: ref.spot,
-    benchIndex: ref.spot.spot === "bench" ? ref.spot.index : -1,
     body,
     bodyUid,
     name: top.name,
@@ -434,18 +437,11 @@ export function evolveFromDeckMove(
   state: GameState,
   uids: readonly string[],
   ctx: EffectContext,
+  /** The op's offer fields, so resolution re-derives the same offer the park made. */
+  options: Omit<EvolveOfferOptions, "fromHand">,
   events: GameEvent[],
-  /** The op's `onto`, so resolution re-derives the same offer the park made. */
-  onto?: PokemonTarget,
-  /** The op's `names`, so resolution re-derives the offer under the same predicate as the park. */
-  names?: readonly string[],
-  /**
-   * The op's `noAbilities`, so resolution re-derives the offer under the same predicate as the
-   * park.
-   */
-  noAbilities?: true,
 ): GameState {
-  const offer = evolveFromDeckOffer(state, ctx, onto, names, noAbilities);
+  const offer = evolveFromDeckOffer(state, ctx, options);
   if (offer === undefined) return state;
   const uid = uids[0];
   if (uid === undefined || !offer.candidates.includes(uid)) return state;
@@ -456,14 +452,10 @@ export function evolveFromDeckMove(
   });
   return evolveOnto(
     pulled,
-    ctx.seat,
-    offer.target,
-    offer.benchIndex,
-    offer.body,
-    offer.bodyUid,
+    { seat: ctx.seat, target: offer.target, body: offer.body, bodyUid: offer.bodyUid },
     uid,
-    events,
     stageChangeConditions(pulled, offer.body.conditions),
+    events,
   ).state;
 }
 
@@ -478,7 +470,7 @@ export function evolveFromHandMove(
   ctx: EffectContext,
   events: GameEvent[],
 ): { state: GameState; moved: string[] } {
-  const offer = evolveFromDeckOffer(state, ctx, undefined, undefined, undefined, true);
+  const offer = evolveFromDeckOffer(state, ctx, { fromHand: true });
   const uid = uids[0];
   if (offer === undefined || uid === undefined || !offer.candidates.includes(uid))
     return { state, moved: [] };
@@ -490,14 +482,10 @@ export function evolveFromHandMove(
   const kept = stageChangeConditions(pulled, offer.body.conditions);
   const evolved = evolveOnto(
     pulled,
-    ctx.seat,
-    offer.target,
-    offer.benchIndex,
-    offer.body,
-    offer.bodyUid,
+    { seat: ctx.seat, target: offer.target, body: offer.body, bodyUid: offer.bodyUid },
     uid,
-    events,
     kept,
+    events,
   );
   return { state: evolved.state, moved: [uid] };
 }
@@ -512,8 +500,8 @@ export function evolveFromHandAvailable(
   sourceUid: string | undefined,
 ): boolean {
   return (
-    (evolveFromDeckOffer(state, { seat, sourceUid }, undefined, undefined, undefined, true)
-      ?.candidates.length ?? 0) > 0
+    (evolveFromDeckOffer(state, { seat, sourceUid }, { fromHand: true })?.candidates.length ?? 0) >
+    0
   );
 }
 

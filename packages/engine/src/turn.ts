@@ -65,7 +65,14 @@ import {
   runSelfWatchedTriggers,
   runWatchedTriggers,
 } from "./triggers";
-import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
+import type {
+  EvolutionHost,
+  GameState,
+  InPlayPokemon,
+  PlayerSide,
+  PokemonTarget,
+  Seat,
+} from "./types";
 import {
   bodyAt,
   inPlayOf,
@@ -497,7 +504,7 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
 export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   const placement = checkEvolution(state, action);
   if ("ok" in placement) return placement;
-  const { side, target, benchIndex, targetTopUid } = placement;
+  const { side, target, targetTopUid } = placement;
   // §10 — the evolution card leaves hand; the shared placement (below) puts it
   // on the stack, carries over damage/energy/tools, clears conditions/markers,
   // resets turnPlayed, and runs the evolve-below-HP KO check + the on-evolve
@@ -509,11 +516,7 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   });
   return placeEvolution(
     stateAfterHand,
-    action.seat,
-    action.target,
-    benchIndex,
-    target,
-    targetTopUid,
+    { seat: action.seat, target: action.target, body: target, bodyUid: targetTopUid },
     action.uid,
     [],
   );
@@ -544,7 +547,6 @@ function checkEvolution(
   | {
       side: PlayerSide;
       target: InPlayPokemon;
-      benchIndex: number;
       targetTopUid: string;
     } {
   const rejected = turnGate(state, action);
@@ -638,7 +640,7 @@ function checkEvolution(
     );
   }
 
-  return { side, target, benchIndex, targetTopUid };
+  return { side, target, targetTopUid };
 }
 
 /**
@@ -649,24 +651,17 @@ function checkEvolution(
  */
 export function placeEvolution(
   state: GameState,
-  seat: Seat,
-  target: PokemonTarget,
-  benchIndex: number,
-  from: InPlayPokemon,
-  fromUid: string,
+  host: EvolutionHost,
   evolutionUid: string,
   events: GameEvent[],
 ): ApplyResult {
+  const { seat, target } = host;
   const { state: next, evolved } = evolveOnto(
     state,
-    seat,
-    target,
-    benchIndex,
-    from,
-    fromUid,
+    host,
     evolutionUid,
+    stageChangeConditions(state, host.body.conditions),
     events,
-    stageChangeConditions(state, from.conditions),
   );
   if (isLethallyDamaged(next, evolved)) {
     return resolveMidTurnKnockOuts(next, seat, [seat], events);
@@ -678,7 +673,7 @@ export function placeEvolution(
   const subject =
     target.spot === "active"
       ? watched.players[seat].active
-      : watched.players[seat].bench[benchIndex];
+      : watched.players[seat].bench[target.index];
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
     return resolveMidTurnKnockOuts(watched, seat, [seat], events);
   }

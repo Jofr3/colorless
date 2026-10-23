@@ -849,7 +849,11 @@ function chainedEvolveAnswered(
 ): EffectOp[] {
   if (choice.kind !== "cards" || op.onto === undefined) return [];
   const [picked] = choice.uids;
-  const offer = evolveFromDeckOffer(before, cont.ctx, op.onto, op.names, op.noAbilities);
+  const offer = evolveFromDeckOffer(before, cont.ctx, {
+    onto: op.onto,
+    names: op.names,
+    noAbilities: op.noAbilities,
+  });
   if (picked === undefined || offer === undefined || !offer.candidates.includes(picked)) return [];
   return [{ op: "evolveFromDeck", onto: op.onto }];
 }
@@ -1020,8 +1024,7 @@ function evolvableOwnRefs(
       if (!matchesFilter(card, { kind: "typedPokemon", pokemonType })) return false;
     }
     return (
-      (evolveFromDeckOffer(state, ctx, ref.spot, undefined, noAbilities)?.candidates.length ?? 0) >
-      0
+      (evolveFromDeckOffer(state, ctx, { onto: ref.spot, noAbilities })?.candidates.length ?? 0) > 0
     );
   });
 }
@@ -2010,7 +2013,7 @@ function stepOp(
       // Candidates depend on the board, so this cannot be a `searchDeck` filter. "Up to" (`min:
       // 0`); `op.onto` is written only by the ops that schedule this one.
       if (op.fromHand === true) {
-        const handOffer = evolveFromDeckOffer(state, ctx, undefined, undefined, undefined, true);
+        const handOffer = evolveFromDeckOffer(state, ctx, { fromHand: true });
         const candidates = handOffer?.candidates ?? [];
         if (candidates.length <= 1) {
           const placed = evolveFromHandMove(state, candidates, ctx, events);
@@ -2020,7 +2023,11 @@ function stepOp(
         const note = `Choose a card in your hand that evolves from ${handOffer?.name} and put it onto ${handOffer?.name} to evolve it.`;
         return { park: { kind: "chooseCards", candidates, min: 1, max: 1, dest: "evolve", note } };
       }
-      const offer = evolveFromDeckOffer(state, ctx, op.onto, op.names, op.noAbilities);
+      const offer = evolveFromDeckOffer(state, ctx, {
+        onto: op.onto,
+        names: op.names,
+        noAbilities: op.noAbilities,
+      });
       if (offer === undefined || offer.candidates.length === 0) return { done: state };
       return {
         park: {
@@ -3451,7 +3458,13 @@ export function applyChoice(
         return placed?.state ?? state;
       }
       return choice.kind === "cards"
-        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names, op.noAbilities)
+        ? evolveFromDeckMove(
+            state,
+            choice.uids,
+            ctx,
+            { onto: op.onto, names: op.names, noAbilities: op.noAbilities },
+            events,
+          )
         : state;
     case "evolveFromDeckChosen":
       // The body answer moves nothing; `continuationOps` schedules the op that asks for the card.

@@ -1268,6 +1268,14 @@ export function discardFromStack(
   };
 }
 
+/** The body an evolution lands on: where it is, and its current top card's uid. */
+export interface EvolutionHost {
+  seat: Seat;
+  target: PokemonTarget;
+  body: InPlayPokemon;
+  bodyUid: string;
+}
+
 /**
  * §10 evolution placement without the Knock Out and board-trigger follow-up: replaces the stack
  * top, applies §10's carry-over and clears, and appends `POKEMON_EVOLVED`. Returns the new state
@@ -1275,17 +1283,13 @@ export function discardFromStack(
  */
 export function evolveOnto(
   state: GameState,
-  seat: Seat,
-  target: PokemonTarget,
-  benchIndex: number,
-  from: InPlayPokemon,
-  fromUid: string,
+  host: EvolutionHost,
   evolutionUid: string,
+  /** Special Conditions the new top keeps (e.g. Confused under Dizzying Valley); §12 clears the rest. */
+  kept: SpecialConditions,
   events: GameEvent[],
-  // Special Conditions the new top keeps (e.g. Confused under Dizzying Valley); by default all are
-  // cleared (§12).
-  kept: SpecialConditions = noConditions(),
 ): { state: GameState; evolved: InPlayPokemon } {
+  const { seat, target, body: from, bodyUid: fromUid } = host;
   const evolved: InPlayPokemon = {
     ...from,
     stack: [...from.stack, evolutionUid],
@@ -1304,7 +1308,7 @@ export function evolveOnto(
   const updated: PlayerSide =
     target.spot === "active"
       ? { ...side, active: evolved }
-      : { ...side, bench: side.bench.map((p, i) => (i === benchIndex ? evolved : p)) };
+      : { ...side, bench: side.bench.map((p, i) => (i === target.index ? evolved : p)) };
   events.push({
     type: "POKEMON_EVOLVED",
     seat,

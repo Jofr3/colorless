@@ -20,7 +20,7 @@ import {
   findEvent,
 } from "./testFixtures";
 import { topUid } from "./cards";
-import { type InPlayPokemon, evolveOnto } from "./types";
+import { type InPlayPokemon, evolveOnto, noConditions } from "./types";
 
 const FERALIGATR = "svp-089";
 const FERALIGATR_REPRINT = "sv05-041";
@@ -645,12 +645,9 @@ describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; th
     const carrying = { ...holder, boostedAttack: { turn: board.turn, attackIndex: 0, amount: 80 } };
     const { evolved } = evolveOnto(
       board,
-      "p1",
-      { spot: "active" },
-      -1,
-      carrying,
-      topUid(holder) ?? "",
+      { seat: "p1", target: { spot: "active" }, body: carrying, bodyUid: topUid(holder) ?? "" },
       "evo",
+      noConditions(),
       [],
     );
     expect(evolved.boostedAttack).toBeNull();

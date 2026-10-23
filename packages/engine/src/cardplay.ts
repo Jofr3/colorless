@@ -597,11 +597,7 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   ];
   return placeEvolution(
     stateAfterHand,
-    action.seat,
-    action.target,
-    benchIndex,
-    target,
-    fromUid,
+    { seat: action.seat, target: action.target, body: target, bodyUid: fromUid },
     action.evolutionUid,
     events,
   );
