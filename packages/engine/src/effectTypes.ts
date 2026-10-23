@@ -160,6 +160,9 @@ export type HandRefreshDraw =
    */
   | { kind: "coinFlip"; heads: number; tails: number };
 
+/** An Energy reading: a Basic type, any Special Energy, or any Basic Energy card. */
+export type EnergyClass = BasicEnergyType | "special" | "basic";
+
 /**
  * §6.1's full Pokémon type wheel as the catalog spells it in `Card.types`: the Basic Energy types
  * plus Dragon and Colorless. Keep it separate from the energy vocabulary, since a Pokémon can be
@@ -318,7 +321,7 @@ export type BoardCondition =
   /** §6.3: your Active has at least one attached Energy of `energy`. */
   | {
       kind: "yourActiveHasEnergyAttached";
-      energy: BasicEnergyType | "special" | "basic";
+      energy: EnergyClass;
     }
   /** Your opponent's Active has at least one attached Energy of `energy`. */
   | { kind: "opponentActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
@@ -2357,7 +2360,7 @@ export type DamageCountSource =
       kind: "energyOnOpponent";
       zone: OpponentEnergyZone;
       /** `"basic"` matches Basic Energy cards. */
-      energyType: BasicEnergyType | "special" | "basic" | null;
+      energyType: EnergyClass | null;
     }
   | {
       kind: "energyOnSelf";
@@ -2366,7 +2369,7 @@ export type DamageCountSource =
        * `"basic"` counts Basic Energy cards, not provision, so a Special Energy providing a basic
        * type is excluded.
        */
-      energyType: BasicEnergyType | "special" | "basic" | null;
+      energyType: EnergyClass | null;
       /** Optional noun filter narrowing the board zone; only meaningful with `zone: "board"`. */
       filter?: CardFilter;
     }

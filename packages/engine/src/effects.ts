@@ -20,6 +20,7 @@ import type {
   DiscardPileSeat,
   EffectOp,
   EffectSlot,
+  EnergyClass,
   InPlayAttackCopy,
   OpOf,
   OpponentEnergyZone,
@@ -41,6 +42,7 @@ export type {
   DiscardPileSeat,
   EffectOp,
   EffectSlot,
+  EnergyClass,
   HandPlayClass,
   HandRefreshDraw,
   InPlayAttackCopy,
@@ -462,24 +464,24 @@ export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = {
   C: "Colorless",
 };
 
-const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special" | "basic"> = new Map([
-  ...Object.entries(ENERGY_TYPE_BY_CODE).map(
-    ([code, type]) => [`{${code}}`, type] as [string, BasicEnergyType | "special" | "basic"],
-  ),
-  ...Object.entries(ENERGY_TYPE_BY_NAME).map(
-    ([name, type]) => [name, type] as [string, BasicEnergyType | "special" | "basic"],
-  ),
-  ["Special", "special"] as [string, BasicEnergyType | "special" | "basic"],
+const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, EnergyClass> = new Map<string, EnergyClass>([
+  ...Object.entries(ENERGY_TYPE_BY_CODE).map(([code, type]): [string, EnergyClass] => [
+    `{${code}}`,
+    type,
+  ]),
+  ...Object.entries(ENERGY_TYPE_BY_NAME).map(([name, type]): [string, EnergyClass] => [name, type]),
+  ["Special", "special"],
   // `Basic` is a card category, the complement of `Special`, not a tenth type.
-  ["Basic", "basic"] as [string, BasicEnergyType | "special" | "basic"],
+  ["Basic", "basic"],
 ]);
 
 /** Accepts both the type name and its brace code, since the catalog prints both notations. */
-const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
-  ...POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
-  ...Object.entries(POKEMON_TYPE_BY_CODE).map(
-    ([code, type]) => [`{${code}}`, type] as [string, PokemonType],
-  ),
+const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map<string, PokemonType>([
+  ...POKEMON_TYPES.map((type): [string, PokemonType] => [type, type]),
+  ...Object.entries(POKEMON_TYPE_BY_CODE).map(([code, type]): [string, PokemonType] => [
+    `{${code}}`,
+    type,
+  ]),
 ]);
 
 /**
@@ -1109,7 +1111,7 @@ export type AttackFlipCount =
        * `"basic"` is possible because this resolves through `CLAUSE_ENERGY_TOKENS`, but no printing
        * uses it here.
        */
-      energy: BasicEnergyType | "special" | "basic" | null;
+      energy: EnergyClass | null;
     }
   | { kind: "pokemonInPlay"; filter: CardFilter }
   | { kind: "bothActivesEnergy" }
@@ -8192,7 +8194,7 @@ function costSnipeProgram(
  * for each card you discarded in this way." The printed base and the scaled part are one §8.5 hit
  * via `damageDefender.base`; declining is N = 0, so no decline arm is needed.
  */
-export interface AttackBenchDiscardScaledBoost {
+interface AttackBenchDiscardScaledBoost {
   /** Discriminator switched on by `discardScaledBoostProgram`. */
   kind: "benchDiscard";
   /** The printed ceiling of the declinable discard (the "up to N"), which rides the
@@ -8210,7 +8212,7 @@ export interface AttackBenchDiscardScaledBoost {
  * "Discard the top card of each player's deck. This attack does N more damage for each Energy card
  * discarded in this way."
  */
-export interface AttackEachDeckMillScaledBoost {
+interface AttackEachDeckMillScaledBoost {
   kind: "eachDeckMill";
   /** The printed extra damage each ENERGY card milled buys. The only capture in the
       anchor, guarded `>= 1` like every captured amount in this file. */
@@ -8228,7 +8230,7 @@ export type AttackDiscardScaledBoost =
  * "You may discard up to N Energy cards from your hand, and this attack does P more damage for each
  * card you discarded in this way." Declining is picking none, so no separate confirm is needed.
  */
-export interface AttackHandDiscardScaledBoost {
+interface AttackHandDiscardScaledBoost {
   kind: "handDiscard";
   /** The printed "up to N" ceiling on the hand discard. */
   cap: number;
@@ -8242,7 +8244,7 @@ export interface AttackHandDiscardScaledBoost {
  * before the hit so the attached Energy is counted in one §8.5 pass; attack.ts passes the
  * declaration-time multiplier as `base`, not the printed number.
  */
-export interface AttackSelfHandAttachScaledBoost {
+interface AttackSelfHandAttachScaledBoost {
   kind: "selfHandAttach";
   /** The printed per-Energy damage. */
   per: number;
@@ -8580,9 +8582,7 @@ export function splitAttackTrailingClause(text: string): { head: string; tail: s
  * which callers send to `ATTACK_EFFECT_SKIPPED`. The two nullish answers must not be collapsed: one
  * counts everything, the other must count nothing.
  */
-function attachedEnergyFilter(
-  token: string | undefined,
-): BasicEnergyType | "special" | "basic" | null | undefined {
+function attachedEnergyFilter(token: string | undefined): EnergyClass | null | undefined {
   return token === undefined ? null : literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
 }
 
