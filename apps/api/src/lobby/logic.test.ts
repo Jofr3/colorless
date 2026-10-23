@@ -19,6 +19,7 @@ import {
   helloDecision,
   parseClientMessage,
   readSnapshot,
+  readStored,
   rematch,
   reseatHost,
   resetAfterFailedStart,
@@ -30,6 +31,11 @@ import {
   socketIsSilent,
   splitDuePending,
   stampCountdown,
+  storedChooserSchema,
+  storedCleanupAtSchema,
+  storedCodeSchema,
+  storedPendingSchema,
+  storedSeatUsersSchema,
   withForfeitAt,
   withoutPendingDisconnect,
   withPendingDisconnect,
@@ -457,5 +463,33 @@ describe("pending-disconnect bookkeeping", () => {
     const { due, waiting } = splitDuePending(pending, 5000);
     expect(due.map((entry) => entry.playerId)).toEqual(["g1"]);
     expect(waiting.map((entry) => entry.playerId)).toEqual(["h1"]);
+  });
+});
+
+describe("readStored — the DO's smaller storage keys", () => {
+  // DO storage round-trips values through the structured clone algorithm.
+  const stored = <T>(value: T): unknown => structuredClone(value);
+
+  it("reads back what each writer stores", () => {
+    const pending = withPendingDisconnect(withPendingDisconnect([], "g1", 5000), "h1", 6000);
+    expect(readStored(storedPendingSchema, stored(pending))).toEqual(pending);
+    expect(readStored(storedPendingSchema, stored([]))).toEqual([]);
+    const seatUsers = { h1: "user-a", g1: "user-b" };
+    expect(readStored(storedSeatUsersSchema, stored(seatUsers))).toEqual(seatUsers);
+    expect(readStored(storedCodeSchema, stored("ABCD"))).toBe("ABCD");
+    expect(readStored(storedCleanupAtSchema, stored(1_700_000_000_000))).toBe(1_700_000_000_000);
+    expect(readStored(storedChooserSchema, stored("g1"))).toBe("g1");
+  });
+
+  it("reads an absent or unreadable value as never written", () => {
+    expect(readStored(storedPendingSchema, undefined)).toBeUndefined();
+    expect(readStored(storedPendingSchema, [{ playerId: "g1" }])).toBeUndefined();
+    expect(readStored(storedPendingSchema, [{ playerId: "g1", deadline: "soon" }])).toBeUndefined();
+    expect(readStored(storedSeatUsersSchema, { g1: 7 })).toBeUndefined();
+    expect(readStored(storedSeatUsersSchema, "g1")).toBeUndefined();
+    expect(readStored(storedCodeSchema, 1234)).toBeUndefined();
+    expect(readStored(storedCleanupAtSchema, "later")).toBeUndefined();
+    expect(readStored(storedCleanupAtSchema, Number.NaN)).toBeUndefined();
+    expect(readStored(storedChooserSchema, null)).toBeUndefined();
   });
 });
