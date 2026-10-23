@@ -18,8 +18,6 @@ import type { EffectChoice } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
-import type { CoinFace } from "./rng";
 import {
   FIXTURE_POOL,
   battler,
@@ -33,6 +31,7 @@ import {
   effectPrompt,
   driveSetup,
   roundTrip,
+  withFaces,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -540,24 +539,6 @@ function armed(
   oppBench: readonly string[] = [],
 ): GameState {
   return attach(table(copier, bench, oppActive, oppBench), "p1", "active", copierOf(copier).energy);
-}
-
-/** TEST SURGERY — the next `faces.length` coins come up as `faces`, by searching rngState (flipCoin is a pure step). */
-function withFaces(state: GameState, faces: readonly CoinFace[]): GameState {
-  for (let seed = state.rngState; seed < state.rngState + 100_000; seed += 1) {
-    let r = seed;
-    let ok = true;
-    for (const face of faces) {
-      const [drawn, nextR] = flipCoin(r);
-      if (drawn !== face) {
-        ok = false;
-        break;
-      }
-      r = nextR;
-    }
-    if (ok) return { ...state, rngState: seed };
-  }
-  throw new Error("no rngState found");
 }
 
 function all<T extends GameEvent["type"]>(

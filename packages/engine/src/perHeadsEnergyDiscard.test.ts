@@ -24,6 +24,7 @@ import {
   findEvent,
   driveSetup,
   roundTrip,
+  headsIn,
 } from "./testFixtures";
 
 const PRINTED_TWO =
@@ -79,10 +80,6 @@ function all<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
-function headsIn(events: GameEvent[]): number {
-  return all(events, "ATTACK_EFFECT_COIN_FLIP").filter((e) => e.result === "heads").length;
 }
 
 function localSetup(seed: number, first: Seat): GameState {

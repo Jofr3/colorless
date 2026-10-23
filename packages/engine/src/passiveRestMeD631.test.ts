@@ -14,7 +14,6 @@ import { applyAction } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds } from "./interpreter";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -33,6 +32,7 @@ import {
   typedEnergy,
   must,
   driveSetup,
+  seedForFlips,
 } from "./testFixtures";
 
 const BULWARK_TEXT =
@@ -491,12 +491,6 @@ function attachFromHand(state: GameState, spot: PokemonRef["spot"]) {
   return mustApply(held, { type: "attachEnergy", seat: "p1", uid, target: spot });
 }
 
-/** An `rngState` whose next flip is `face`. */
-function seedFor(face: "heads" | "tails"): number {
-  for (let seed = 1; seed < 1000; seed++) if (flipCoin(seed)[0] === face) return seed;
-  throw new Error("no seed");
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 describe("D631 §1 — the prints and the registry rows", () => {
   it("six objects, one per printed text, on the 9 ids; reprints share the object", () => {
@@ -863,7 +857,7 @@ describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage"
       100,
     );
     if (opts.asleep) board = setConditions(board, "p1", { rotation: "asleep" });
-    return { ...board, rngState: seedFor(opts.face) };
+    return { ...board, rngState: seedForFlips([opts.face]) };
   };
 
   it("tails (still Asleep): heals all 100; heads (woke up): no heal; not Asleep: no heal", () => {
@@ -904,7 +898,7 @@ describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage"
   it("Collapse puts Snorlax to sleep, and the Checkup that follows can heal it", () => {
     const board = {
       ...table({ attacker: { id: SNORLAX }, energy: [["fix-energy", 3]] }),
-      rngState: seedFor("tails"),
+      rngState: seedForFlips(["tails"]),
     };
     const swung = swing(setDamage(board, "p1", 50), 0);
     expect(swung.state.players.p1.active?.conditions.rotation).toBe("asleep");

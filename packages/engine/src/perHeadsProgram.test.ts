@@ -22,6 +22,7 @@ import {
   trimDeckTo,
   types,
   findEvent,
+  headsIn,
 } from "./testFixtures";
 
 const UNDERSEA_TUNNEL =
@@ -120,10 +121,6 @@ function foldFlips(state: number, count: number): [faces: CoinFace[], next: numb
     rng = next;
   }
   return [faces, rng];
-}
-
-function headsIn(events: GameEvent[]): number {
-  return all(events, "ATTACK_EFFECT_COIN_FLIP").filter((e) => e.result === "heads").length;
 }
 
 /** The faces off the emitted rows, IN ORDER. */
