@@ -1,6 +1,6 @@
 import { cardOfUid, topUid } from "./cards";
 import type { PokemonRef } from "./effectPrompt";
-import type { AttachTargetRiders, CardFilter, OpOf } from "./effects";
+import type { AttachTargetRiders, CardFilter, OpOf } from "./effectTypes";
 import type { SearchDeckMax } from "./effectTargets";
 import { refPokemon, targetTypeNames } from "./effectTargets";
 import type { GameState, Seat } from "./types";

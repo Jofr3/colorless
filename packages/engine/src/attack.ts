@@ -112,6 +112,7 @@ import {
   splitAttackTrailingClause,
   splitAttackRequirementClause,
 } from "./effects";
+import type { AttackCopyOverride } from "./effectTypes";
 import type {
   AttackCoinFlip,
   AttackCopy,
@@ -174,6 +175,8 @@ import {
   withAttackDamageTaken,
   withSide,
 } from "./types";
+
+export type { AttackCopyOverride };
 
 // The attack step (§8) and the two KO-resolution decisions it can park on (§8.1). Declaring an
 // attack ends the turn, except a first attack under Festival Lead with Festival Grounds in play,
@@ -1680,26 +1683,6 @@ export function attack(
 // made at declaration by re-entering `attack()` with an override, so the copied attack takes the
 // normal §8 pipeline. The copied cost is ignored, the copier does the attack, and copy-family
 // attacks are never candidates.
-
-/**
- * The override `attack()` re-enters with. `empty` means no candidate; otherwise the source attack,
- * card, body and index. `flip` is Try to Imitate's printed coin.
- */
-export type AttackCopyOverride =
-  | { empty: true; flip?: true }
-  | {
-      empty?: undefined;
-      attack: Attack;
-      card: Card;
-      body: InPlayPokemon;
-      index: number;
-      flip?: true;
-      /**
-       * The second half of a resolve-time copy: no declaration, no lock or Confusion coin, no
-       * reveal. `body` is a one-card phantom body over the source card.
-       */
-      resumed?: true;
-    };
 
 /** One body the copy may read, with its ELIGIBLE attacks (`index` into `attacksOf`). `ref` is
     the own-Bench spot for Night Joker, `null` for the opponent's Active. */

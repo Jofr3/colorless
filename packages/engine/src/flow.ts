@@ -29,7 +29,7 @@ import {
   stadiumEffectsOf,
   stadiumShieldsStatus,
 } from "./continuous";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import type { PokemonRef, RunResult } from "./effectPrompt";
 import { attackAgainBarred, attackAgainLicensed } from "./boardCondition";

@@ -56,7 +56,7 @@ import {
   withWeaknessAmount,
 } from "../continuous";
 import type { EffectContext, EffectPrompt, EffectRecord, PokemonRef } from "../effectPrompt";
-import type { CardFilter, EffectOp, EffectSlot, OpOf } from "../effects";
+import type { CardFilter, EffectOp, EffectSlot, OpOf } from "../effectTypes";
 import {
   activeInPlay,
   benchCountersCaged,

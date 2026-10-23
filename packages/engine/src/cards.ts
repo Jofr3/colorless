@@ -5,14 +5,10 @@ import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
 import { normalizedFace } from "./cardText";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
-// TYPE-ONLY, and it must stay that way: effects.ts imports no engine module at
-// runtime (only `import type { StatusName } from "./events"`), and events.ts in
-// turn imports `type { DamageModifier }` back from here — so the cycle
-// cards → effects → events → cards exists in the TYPE graph and is erased
-// wholesale by `import type`. A value import along any of those three edges
-// would make it a real one.
-import type { CardFilter } from "./effects";
+import type { CardFilter, PokemonSuffix } from "./effectTypes";
 import type { GameState, InPlayPokemon, Seat } from "./types";
+
+export type { PokemonSuffix };
 
 // The engine reads catalog data only through these accessors. An Antique Fossil uid in an in-play
 // stack reads as its synthesized 60-HP Basic {C} Pokémon face, and as the catalog Item elsewhere;
@@ -249,11 +245,9 @@ export function isMegaEvolutionPokemonEx(card: Card): boolean {
 }
 
 /**
- * The rule-box suffix of a Pokémon ("V", "VMAX", "VSTAR", "ex", "GX"), or null. Read from the card
- * name because ingest drops tcgdex's `suffix` field. Matched literally, so "V" does not match
- * "VMAX" or "VSTAR".
+ * The rule-box suffix of a Pokémon, or null. Read from the card name because ingest drops tcgdex's
+ * `suffix` field. Matched literally, so "V" does not match "VMAX" or "VSTAR".
  */
-export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX";
 export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   if (card.category !== "Pokemon") return null;
   const { name } = card;

@@ -32,9 +32,7 @@ import type {
   HandPlayClass,
   PokemonPlayAct,
   PokemonType,
-} from "./effects";
-// No cycle: `effects.ts` imports nothing from this file, and its only edge back to `registry.ts` is
-// type-only.
+} from "./effectTypes";
 import { COPY_FAMILY_MARKER, timingGateFromAttackText } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 // No cycle: phaseView.ts imports only types from here.

@@ -32,15 +32,12 @@ import {
   seatWeaknessRewrite,
   selfPreWRBonusPerOpponentPrize,
 } from "./continuous";
-import type { BoardCondition, CardFilter } from "./effects";
+import type { AttackTimingGate, BoardCondition, CardFilter } from "./effectTypes";
 import { foldApostrophes } from "./effects";
 import { hasAnyDamageCounters, opponentKnockedOutByDamage } from "./effectTargets";
 // `conditionHolds` reads the turn owner from the one exhaustive switch over `Phase` rather than
 // re-deriving it by turn parity.
 import { phaseViewOf } from "./phaseView";
-// Type-only: this module takes no runtime edge to registry.ts, which imports effects.ts for its op
-// vocabulary.
-import type { AttackTimingGate } from "./registry";
 import type { GameState, InPlayPokemon, Seat } from "./types";
 import {
   damageCountersOn,

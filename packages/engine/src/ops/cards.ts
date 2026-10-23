@@ -17,7 +17,7 @@ import {
   toolCardSimulated,
 } from "../continuous";
 import type { EffectContext, EffectPrompt, EffectRecord } from "../effectPrompt";
-import type { BoardCondition, CardFilter, EffectOp, HandRefreshDraw, OpOf } from "../effects";
+import type { BoardCondition, CardFilter, EffectOp, HandRefreshDraw, OpOf } from "../effectTypes";
 import { benchSpace, cardIdentity, recordMoved, refPokemon, sourceRef } from "../effectTargets";
 import type { GameEvent } from "../events";
 import { opponentDiscardNote, searchOrElseNote } from "../promptText";

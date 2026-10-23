@@ -18,8 +18,8 @@ import {
   returnsAfterAttackDiscard,
 } from "../continuous";
 import type { EffectContext, EffectRecord, PokemonRef } from "../effectPrompt";
-import type { AttachTargetRiders, CardFilter, OpOf, PokemonType } from "../effects";
-import { POKEMON_TYPES } from "../effects";
+import type { AttachTargetRiders, CardFilter, OpOf, PokemonType } from "../effectTypes";
+import { POKEMON_TYPES } from "../effectTypes";
 import {
   cardIdentity,
   discardVictimSeat,

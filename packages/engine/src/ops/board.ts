@@ -11,7 +11,7 @@ import {
   stageChangeConditions,
 } from "../continuous";
 import type { EffectContext, EffectPrompt, EffectRecord, PokemonRef } from "../effectPrompt";
-import type { CardFilter, EffectOp, EffectSlot, OpOf, PokemonType } from "../effects";
+import type { CardFilter, EffectOp, EffectSlot, OpOf, PokemonType } from "../effectTypes";
 import {
   discardableEnergies,
   discardableTools,

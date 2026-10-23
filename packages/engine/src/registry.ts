@@ -4,15 +4,18 @@ import type { Banner } from "./banners";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { searchTopOrderProgram } from "./effects";
 import type {
+  AttackTimingGate,
   BoardCondition,
   CardFilter,
   EffectOp,
   HandPlayClass,
   PokemonPlayAct,
   PokemonType,
-} from "./effects";
+} from "./effectTypes";
 import type { StatusName } from "./events";
 import { BENCH_CEILING } from "./types";
+
+export type { AttackTimingGate };
 
 // The id-keyed card-program registry. It sits above the text deriver: attacks resolve
 // `programFor(id)?.attack ?? deriveAttackEffect(text)`, and Trainers/Abilities have no deriver, so
@@ -995,32 +998,6 @@ export interface EnergyProgram {
    */
   passive?: PassiveEffects;
 }
-
-/**
- * Printed timing or cost clause on one attack index. `onlyIf` and `barredIf` block,
- * `firstTurnExempt` lifts the first-turn ban, and `alternateCostIf` / `costWaivedIf` only change
- * the cost and never block.
- */
-export type AttackTimingGate =
-  /** *"You can use this attack only if <condition>."* — the index is barred
-      unless the condition holds. Illumise / Scream Tail ex. */
-  | { kind: "onlyIf"; condition: BoardCondition }
-  /** *"If <condition>, you can't use this attack."* — the index is barred while
-      the condition holds. Terapagos ex ×7. */
-  | { kind: "barredIf"; condition: BoardCondition }
-  /** *"If you go first, you can use this attack during your first turn."* — §4's
-      turn-1 attack ban is lifted for THIS index only. Volbeat / Exeggcute. */
-  | { kind: "firstTurnExempt" }
-  /**
-   * While the condition holds, `cost` is an alternate cost the attack may be paid with instead of
-   * the printed one. Excluded from `BlockingAttackGate`, otherwise it would be read as a ban.
-   */
-  | { kind: "alternateCostIf"; condition: BoardCondition; cost: readonly string[] }
-  /**
-   * While the condition holds, the attack costs nothing. The waive is applied last, after every
-   * surcharge. Never blocks.
-   */
-  | { kind: "costWaivedIf"; condition: BoardCondition };
 
 export interface CardProgram {
   /**

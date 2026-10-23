@@ -1,5 +1,7 @@
-import type { EffectOp, EffectSlot } from "./effects";
-import type { GameState, PokemonTarget, Seat } from "./types";
+import type { EffectOp, EffectSlot, PokemonRef } from "./effectTypes";
+import type { GameState, Seat } from "./types";
+
+export type { PokemonRef };
 
 // The wire types of a parked effect: the context an op runs under, the prompt it parks on, the
 // answer it accepts and the continuation that resumes it. Plain JSON, so a park persists.
@@ -49,14 +51,6 @@ export interface EffectContext {
    * switched the attacker to the Bench.
    */
   attackerUid?: string;
-}
-
-/** A specific in-play Pokémon, addressed by the board it sits on and the spot.
-    The one shape a targeting decision resolves to (own bench, opponent bench,
-    own Active — the interpreter validates the ref against the live board). */
-export interface PokemonRef {
-  seat: Seat;
-  spot: PokemonTarget;
 }
 
 /** What a parked op is asking the controller to decide. `note` is a short

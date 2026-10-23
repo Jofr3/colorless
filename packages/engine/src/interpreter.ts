@@ -27,7 +27,7 @@ import type {
   PokemonRef,
   RunResult,
 } from "./effectPrompt";
-import type { CardFilter, EffectOp, EffectSlot, OpOf, PokemonType } from "./effects";
+import type { CardFilter, EffectOp, EffectSlot, OpOf, PokemonType } from "./effectTypes";
 import { STATUS_WORD_OF } from "./effects";
 import {
   benchSpace,

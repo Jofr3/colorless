@@ -24,7 +24,7 @@ import {
   stadiumEffectsOf,
 } from "./continuous";
 import type { DiscardScope, EffectContext, EffectRecord, PokemonRef } from "./effectPrompt";
-import type { CardFilter, EffectSlot, OpOf } from "./effects";
+import type { CardFilter, EffectSlot, OpOf } from "./effectTypes";
 import type { GameEvent } from "./events";
 import type { GameState, InPlayPokemon, Seat } from "./types";
 import { bodyAt, koByEffectMarker, otherSeat, pokemonAt, relativeSeat, withSide } from "./types";

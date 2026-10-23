@@ -37,7 +37,7 @@ import {
   stadiumLicensesSameTurnEvolve,
   stageChangeConditions,
 } from "./continuous";
-import type { EffectOp } from "./effects";
+import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
 import {
   advance,

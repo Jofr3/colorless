@@ -29,7 +29,7 @@ import {
   toolCapOf,
   countersMoveLocked,
 } from "./continuous";
-import type { EffectOp, OpOf } from "./effects";
+import type { EffectOp, OpOf } from "./effectTypes";
 import type { GameEvent } from "./events";
 import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./effectPrompt";

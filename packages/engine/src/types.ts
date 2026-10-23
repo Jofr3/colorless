@@ -7,7 +7,7 @@ import type {
   PokemonPlayAct,
   PokemonType,
   StampedPlayLockKey,
-} from "./effects";
+} from "./effectTypes";
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./effectPrompt";
 
