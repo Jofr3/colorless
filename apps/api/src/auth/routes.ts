@@ -8,7 +8,6 @@
 // payload boundary-parsed through @colorless/schema userSchema, which also
 // guarantees no password/hash field can ever leak.
 
-import { zValidator } from "@hono/zod-validator";
 import {
   loginRequestSchema,
   registerRequestSchema,
@@ -19,9 +18,9 @@ import {
 import { and, eq } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
-import type { z } from "zod";
 import { decks, oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
+import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { avatarSeedOf } from "./avatar";
 import {
@@ -78,15 +77,6 @@ function mapUserRow(row: UserRow): User {
   };
 }
 
-/** Terse 400 for bad request bodies, mirroring the catalog's invalid-query
-    shape. zValidator surfaces the zod-core error type, hence z.core.$ZodError. */
-function invalidBody(c: Context, error: z.core.$ZodError) {
-  const issues = error.issues.map(
-    (issue) => `${issue.path.map(String).join(".") || "body"}: ${issue.message}`,
-  );
-  return c.json({ error: "invalid body", issues }, 400);
-}
-
 /** Best-effort caller IP for rate-limit keys — Cloudflare sets this header
     on every request (wrangler dev included). */
 function clientIp(c: AuthContext): string {
@@ -129,87 +119,75 @@ function isUniqueViolation(error: unknown): boolean {
 
 // --- email + password ------------------------------------------------------
 
-authRoutes.post(
-  "/register",
-  zValidator("json", registerRequestSchema, (result, c) =>
-    result.success ? undefined : invalidBody(c, result.error),
-  ),
-  async (c) => {
-    const body = c.req.valid("json");
-    const limited = await guardRateLimit(c, "register", body.email);
-    if (limited) {
-      return limited;
-    }
-    const db = drizzle(c.env.DB);
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, body.email))
-      .get();
-    if (existing !== undefined) {
+authRoutes.post("/register", validate("json", registerRequestSchema), async (c) => {
+  const body = c.req.valid("json");
+  const limited = await guardRateLimit(c, "register", body.email);
+  if (limited) {
+    return limited;
+  }
+  const db = drizzle(c.env.DB);
+  const existing = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, body.email))
+    .get();
+  if (existing !== undefined) {
+    return c.json({ error: "email already registered" }, 409);
+  }
+  const row: UserRow = {
+    id: crypto.randomUUID(),
+    email: body.email,
+    // Default display name: the email's local part (user can rename later).
+    displayName: body.displayName ?? body.email.split("@")[0] ?? body.email,
+    passwordHash: await hashPassword(body.password),
+    emailVerified: false,
+    favouriteDeckId: null,
+    createdAt: new Date(),
+  };
+  const session = await newSession(row.id);
+  try {
+    await db.batch([db.insert(users).values(row), db.insert(sessions).values(session.row)]);
+  } catch (error) {
+    // Two concurrent registers for one email: the UNIQUE index catches what
+    // the pre-check raced past.
+    if (isUniqueViolation(error)) {
       return c.json({ error: "email already registered" }, 409);
     }
-    const row: UserRow = {
-      id: crypto.randomUUID(),
-      email: body.email,
-      // Default display name: the email's local part (user can rename later).
-      displayName: body.displayName ?? body.email.split("@")[0] ?? body.email,
-      passwordHash: await hashPassword(body.password),
-      emailVerified: false,
-      favouriteDeckId: null,
-      createdAt: new Date(),
-    };
-    const session = await newSession(row.id);
-    try {
-      await db.batch([db.insert(users).values(row), db.insert(sessions).values(session.row)]);
-    } catch (error) {
-      // Two concurrent registers for one email: the UNIQUE index catches what
-      // the pre-check raced past.
-      if (isUniqueViolation(error)) {
-        return c.json({ error: "email already registered" }, 409);
-      }
-      throw error;
-    }
-    c.header("Set-Cookie", sessionCookie(session.token));
-    return c.json(userSchema.parse(mapUserRow(row)), 201);
-  },
-);
+    throw error;
+  }
+  c.header("Set-Cookie", sessionCookie(session.token));
+  return c.json(userSchema.parse(mapUserRow(row)), 201);
+});
 
-authRoutes.post(
-  "/login",
-  zValidator("json", loginRequestSchema, (result, c) =>
-    result.success ? undefined : invalidBody(c, result.error),
-  ),
-  async (c) => {
-    const body = c.req.valid("json");
-    const limited = await guardRateLimit(c, "login", body.email);
-    if (limited) {
-      return limited;
-    }
-    const db = drizzle(c.env.DB);
-    const row = await db.select().from(users).where(eq(users.email, body.email)).get();
-    // Unknown email and password-less (OAuth-only) accounts still burn one
-    // PBKDF2 verify against a throwaway hash — timing parity with the wrong-
-    // password path, and ONE message for every failure (§3.5): no oracle for
-    // which field was wrong.
-    const verified = await verifyPassword(body.password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
-    if (row === undefined || row.passwordHash === null || !verified) {
-      return c.json({ error: "invalid email or password" }, 401);
-    }
-    // Iteration upgrade path: re-hash at today's DEFAULT_ITERATIONS while we
-    // hold the plaintext.
-    if (passwordNeedsRehash(row.passwordHash)) {
-      await db
-        .update(users)
-        .set({ passwordHash: await hashPassword(body.password) })
-        .where(eq(users.id, row.id));
-    }
-    const session = await newSession(row.id);
-    await db.insert(sessions).values(session.row);
-    c.header("Set-Cookie", sessionCookie(session.token));
-    return c.json(userSchema.parse(mapUserRow(row)));
-  },
-);
+authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
+  const body = c.req.valid("json");
+  const limited = await guardRateLimit(c, "login", body.email);
+  if (limited) {
+    return limited;
+  }
+  const db = drizzle(c.env.DB);
+  const row = await db.select().from(users).where(eq(users.email, body.email)).get();
+  // Unknown email and password-less (OAuth-only) accounts still burn one
+  // PBKDF2 verify against a throwaway hash — timing parity with the wrong-
+  // password path, and ONE message for every failure (§3.5): no oracle for
+  // which field was wrong.
+  const verified = await verifyPassword(body.password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
+  if (row === undefined || row.passwordHash === null || !verified) {
+    return c.json({ error: "invalid email or password" }, 401);
+  }
+  // Iteration upgrade path: re-hash at today's DEFAULT_ITERATIONS while we
+  // hold the plaintext.
+  if (passwordNeedsRehash(row.passwordHash)) {
+    await db
+      .update(users)
+      .set({ passwordHash: await hashPassword(body.password) })
+      .where(eq(users.id, row.id));
+  }
+  const session = await newSession(row.id);
+  await db.insert(sessions).values(session.row);
+  c.header("Set-Cookie", sessionCookie(session.token));
+  return c.json(userSchema.parse(mapUserRow(row)));
+});
 
 // --- session ----------------------------------------------------------------
 
@@ -227,57 +205,50 @@ authRoutes.get("/me", privateRevalidate, requireUser, (c) =>
 // it to the opponent and to spectators, so being unable to change it is a real
 // gap, not a nicety. requireUser runs BEFORE validation deliberately — a
 // signed-out caller should hear "unauthorized", not a critique of their body.
-authRoutes.patch(
-  "/me",
-  requireUser,
-  zValidator("json", updateProfileRequestSchema, (result, c) =>
-    result.success ? undefined : invalidBody(c, result.error),
-  ),
-  async (c) => {
-    const row = c.get("user");
-    const { displayName, favouriteDeckId } = c.req.valid("json");
-    const db = drizzle(c.env.DB);
+authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema), async (c) => {
+  const row = c.get("user");
+  const { displayName, favouriteDeckId } = c.req.valid("json");
+  const db = drizzle(c.env.DB);
 
-    const changes: Partial<Pick<UserRow, "displayName" | "favouriteDeckId">> = {};
-    if (displayName !== row.displayName) {
-      changes.displayName = displayName;
-    }
-    // The favourite (P5-7). Absent (undefined) leaves it untouched; null clears
-    // it; a non-null id must be one of the CALLER'S OWN decks — anyone else's or
-    // a phantom is a 400, not a row that would resolve to nothing on the
-    // profile. An UNCHANGED non-null id skips the check: the FK's ON DELETE SET
-    // NULL means it can't have gone stale under us.
-    if (favouriteDeckId !== undefined && favouriteDeckId !== row.favouriteDeckId) {
-      if (favouriteDeckId !== null) {
-        const owned = await db
-          .select({ id: decks.id })
-          .from(decks)
-          .where(and(eq(decks.id, favouriteDeckId), eq(decks.userId, row.id)))
-          .get();
-        if (owned === undefined) {
-          return c.json({ error: "favourite deck not found" }, 400);
-        }
+  const changes: Partial<Pick<UserRow, "displayName" | "favouriteDeckId">> = {};
+  if (displayName !== row.displayName) {
+    changes.displayName = displayName;
+  }
+  // The favourite (P5-7). Absent (undefined) leaves it untouched; null clears
+  // it; a non-null id must be one of the CALLER'S OWN decks — anyone else's or
+  // a phantom is a 400, not a row that would resolve to nothing on the
+  // profile. An UNCHANGED non-null id skips the check: the FK's ON DELETE SET
+  // NULL means it can't have gone stale under us.
+  if (favouriteDeckId !== undefined && favouriteDeckId !== row.favouriteDeckId) {
+    if (favouriteDeckId !== null) {
+      const owned = await db
+        .select({ id: decks.id })
+        .from(decks)
+        .where(and(eq(decks.id, favouriteDeckId), eq(decks.userId, row.id)))
+        .get();
+      if (owned === undefined) {
+        return c.json({ error: "favourite deck not found" }, 400);
       }
-      changes.favouriteDeckId = favouriteDeckId;
     }
+    changes.favouriteDeckId = favouriteDeckId;
+  }
 
-    // No write when nothing changed: the form disables Save in that case, but
-    // the route is the api, and a re-submit shouldn't cost a D1 write.
-    if (Object.keys(changes).length > 0) {
-      await db.update(users).set(changes).where(eq(users.id, row.id));
-    }
-    // The updated row, not a re-read: this session owns the only change.
-    return c.json(
-      userSchema.parse(
-        mapUserRow({
-          ...row,
-          displayName,
-          favouriteDeckId: favouriteDeckId === undefined ? row.favouriteDeckId : favouriteDeckId,
-        }),
-      ),
-    );
-  },
-);
+  // No write when nothing changed: the form disables Save in that case, but
+  // the route is the api, and a re-submit shouldn't cost a D1 write.
+  if (Object.keys(changes).length > 0) {
+    await db.update(users).set(changes).where(eq(users.id, row.id));
+  }
+  // The updated row, not a re-read: this session owns the only change.
+  return c.json(
+    userSchema.parse(
+      mapUserRow({
+        ...row,
+        displayName,
+        favouriteDeckId: favouriteDeckId === undefined ? row.favouriteDeckId : favouriteDeckId,
+      }),
+    ),
+  );
+});
 
 authRoutes.post("/logout", async (c) => {
   const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);

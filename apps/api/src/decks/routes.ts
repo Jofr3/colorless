@@ -2,7 +2,6 @@
 // the user, so another user's resource returns the same 404 as a missing one, while a referenced
 // folder you do not own is a 400.
 
-import { zValidator } from "@hono/zod-validator";
 import {
   createDeckRequestSchema,
   createFolderRequestSchema,
@@ -23,6 +22,7 @@ import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
+import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { type CoverCandidate, effectiveCoverCardId } from "./cover";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
@@ -37,20 +37,6 @@ type Batch = [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]];
 // Response schemas — the domain shapes each route parses itself against.
 const deckSummariesResponseSchema = z.array(deckSummarySchema);
 const foldersResponseSchema = z.array(folderSchema);
-
-/** Terse 400 for bad request bodies (the auth/catalog shape). zValidator
-    surfaces the zod-core error type, hence z.core.$ZodError. */
-function invalidBody(c: Context, error: z.core.$ZodError) {
-  const issues = error.issues.map(
-    (issue) => `${issue.path.map(String).join(".") || "body"}: ${issue.message}`,
-  );
-  return c.json({ error: "invalid body", issues }, 400);
-}
-
-const validateBody = <Schema extends z.ZodType>(schema: Schema) =>
-  zValidator("json", schema, (result, c) =>
-    result.success ? undefined : invalidBody(c, result.error),
-  );
 
 /** 400 when `folderId` names a folder the CALLER doesn't own — a folder that
     doesn't exist at all gets the same answer, so nothing about other users'
@@ -241,7 +227,7 @@ deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
   return c.json(deckSchema.parse(mapDeckRow(row, cardRows)));
 });
 
-deckRoutes.post("/", validateBody(createDeckRequestSchema), requireUser, async (c) => {
+deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
@@ -273,7 +259,7 @@ deckRoutes.post("/", validateBody(createDeckRequestSchema), requireUser, async (
   return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);
 });
 
-deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, async (c) => {
+deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const deckId = c.req.param("id");
@@ -349,7 +335,7 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
   return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
 });
 
-deckRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, async (c) => {
+deckRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser, async (c) => {
   return reorderRows(
     c,
     drizzle(c.env.DB),
@@ -384,7 +370,7 @@ folderRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   return c.json(foldersResponseSchema.parse(rows.map(mapFolderRow)));
 });
 
-folderRoutes.post("/", validateBody(createFolderRequestSchema), requireUser, async (c) => {
+folderRoutes.post("/", validate("json", createFolderRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
@@ -403,7 +389,7 @@ folderRoutes.post("/", validateBody(createFolderRequestSchema), requireUser, asy
   return c.json(folderSchema.parse(mapFolderRow(row)), 201);
 });
 
-folderRoutes.patch("/:id", validateBody(patchFolderRequestSchema), requireUser, async (c) => {
+folderRoutes.patch("/:id", validate("json", patchFolderRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const folderId = c.req.param("id");
@@ -436,7 +422,7 @@ folderRoutes.patch("/:id", validateBody(patchFolderRequestSchema), requireUser, 
   return c.json(folderSchema.parse(mapFolderRow(next)));
 });
 
-folderRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, async (c) => {
+folderRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser, async (c) => {
   return reorderRows(
     c,
     drizzle(c.env.DB),
