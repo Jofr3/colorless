@@ -7,7 +7,7 @@ import {
   deriveAttackEffect,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   CLAUSE_TABLE_DECK,
   FIXTURE_POOL,
@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   setConditions,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CHAIN_CRAZED = "If this Pokémon is Poisoned, this attack does 130 more damage.";
@@ -40,13 +41,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function board(seed: number): GameState {
@@ -370,7 +364,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     // The condition is FALSE and the "+" is still simulated: `effectSimulated` /
     // `modifierSimulated` ride `scaling !== null`, not on the clause holding.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 130, dealt: 130 });
     // `scaled` is omitted at 0 — the indicator genuinely added nothing.
     expect(dealt?.scaled).toBeUndefined();
@@ -382,7 +376,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     const state = setConditions(okidogi(board(2), "p1"), "p1", { poisonDamage: 10 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 130, scaled: 130, dealt: 260 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 130, scaled: 130, dealt: 260 });
   });
 
   it("is armed by the GAME, not by a surgery — P2's Spit Poison one turn, Chain-Crazed the next", () => {
@@ -393,7 +387,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
 
     const poisonRun = mustApply(state, { type: "attack", seat: "p2", index: 0 });
     // Spit Poison deals nothing itself — the only damage in its events is §13.1's.
-    expect(find(poisonRun.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(poisonRun.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(poisonRun.events)).toContain("COUNTERS_PLACED");
     state = poisonRun.state;
     expect(state.players.p1.active?.conditions.poisonDamage).toBe(10);
@@ -402,7 +396,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
 
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 130, scaled: 130, dealt: 260 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 130, scaled: 130, dealt: 260 });
     // Seviper is a 120 HP body, so 260 is lethal — and so would 130 have been.
     // The KO is reported for completeness, not as the proof; the proof is `scaled`.
     expect(types(events)).toContain("KNOCKED_OUT");
@@ -413,7 +407,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     expect(state.players.p1.active?.conditions.poisonDamage).toBe(0);
     expect(state.players.p2.active?.conditions.poisonDamage).toBe(10);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 130, dealt: 130 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -423,13 +417,13 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     // a hardcoded "p1" would read P1's unpoisoned Okidogi here and pay 130.
     const clean = okidogi(boardP2(5), "p2");
     const cleanEvents = mustApply(clean, { type: "attack", seat: "p2", index: 1 }).events;
-    const cleanDealt = find(cleanEvents, "DAMAGE_DEALT");
+    const cleanDealt = findEvent(cleanEvents, "DAMAGE_DEALT");
     expect(cleanDealt).toMatchObject({ base: 130, dealt: 130 });
     expect(cleanDealt?.scaled).toBeUndefined();
 
     const poisoned = setConditions(clean, "p2", { poisonDamage: 10 });
     const poisonedEvents = mustApply(poisoned, { type: "attack", seat: "p2", index: 1 }).events;
-    expect(find(poisonedEvents, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(poisonedEvents, "DAMAGE_DEALT")).toMatchObject({
       base: 130,
       scaled: 130,
       dealt: 260,
@@ -438,7 +432,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     // And Poison on P2's OPPONENT (P1) still scores nothing, mirrored.
     const wrongSide = setConditions(clean, "p1", { poisonDamage: 10 });
     const wrongEvents = mustApply(wrongSide, { type: "attack", seat: "p2", index: 1 }).events;
-    const wrongDealt = find(wrongEvents, "DAMAGE_DEALT");
+    const wrongDealt = findEvent(wrongEvents, "DAMAGE_DEALT");
     expect(wrongDealt).toMatchObject({ base: 130, dealt: 130 });
     expect(wrongDealt?.scaled).toBeUndefined();
   });
@@ -447,7 +441,7 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     const state = okidogi(board(6), "p1");
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     // The attack ran its own program instead: it either parked on WHICH {D}
     // Energy to take, or found none and finished. Both are this sentence's
     // behaviour and neither is index 1's.
@@ -464,7 +458,7 @@ describe("Ceruledge 'Fighting Sword' — opponentActiveIsExOrV, ex and V and not
     expect(state.players.p2.active).not.toBeNull();
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 100, dealt: 100 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -476,7 +470,7 @@ describe("Ceruledge 'Fighting Sword' — opponentActiveIsExOrV, ex and V and not
     const state = setActiveFromDeck(ceruledge(board(11), "p1"), "p2", "sv06.5-036");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 100,
       scaled: 100,
       weakness: null,
@@ -490,14 +484,14 @@ describe("Ceruledge 'Fighting Sword' — opponentActiveIsExOrV, ex and V and not
     const state = setActiveFromDeck(ceruledge(board(12), "p1"), "p2", "fix-pokemon-v");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 100, dealt: 200 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 100, dealt: 200 });
   });
 
   it("into a Pokémon VMAX it does NOT — isExOrV, not hasRuleBox", () => {
     const state = setActiveFromDeck(ceruledge(board(13), "p1"), "p2", "fix-pokemon-vmax");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 100, dealt: 100 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -508,7 +502,7 @@ describe("Ceruledge 'Fighting Sword' — opponentActiveIsExOrV, ex and V and not
     // — a member that read `seat` instead of `otherSeat(seat)` would score there.
     const armed = setActiveFromDeck(ceruledge(boardP2(14), "p2"), "p1", "fix-pokemon-v");
     const armedEvents = mustApply(armed, { type: "attack", seat: "p2", index: 1 }).events;
-    expect(find(armedEvents, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(armedEvents, "DAMAGE_DEALT")).toMatchObject({
       base: 100,
       scaled: 100,
       dealt: 200,
@@ -517,7 +511,7 @@ describe("Ceruledge 'Fighting Sword' — opponentActiveIsExOrV, ex and V and not
     // P2 attacks out of an ex/V-free board into a plain fix-bigbody: no bonus.
     const clean = ceruledge(boardP2(15), "p2");
     const cleanEvents = mustApply(clean, { type: "attack", seat: "p2", index: 1 }).events;
-    const cleanDealt = find(cleanEvents, "DAMAGE_DEALT");
+    const cleanDealt = findEvent(cleanEvents, "DAMAGE_DEALT");
     expect(cleanDealt).toMatchObject({ base: 100, dealt: 100 });
     expect(cleanDealt?.scaled).toBeUndefined();
   });
@@ -531,7 +525,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
       { poisonDamage: 10 },
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 130,
       scaled: 130,
       weakness: { op: "multiply", amount: 2 },
@@ -546,7 +540,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
     const state = setActiveFromDeck(okidogi(board(21), "p1"), "p2", "sv02-098");
     expect(state.players.p1.active?.conditions.poisonDamage).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({
       base: 130,
       weakness: { op: "multiply", amount: 2 },
@@ -575,7 +569,7 @@ describe("ATTACK_EFFECT_SKIPPED never fires — in EITHER direction", () => {
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // And the two boards really are different boards — `scaled` present exactly
       // when the clause held, which is what makes the shared flag meaningful.
-      expect(find(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
+      expect(findEvent(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
     }
   });
 });

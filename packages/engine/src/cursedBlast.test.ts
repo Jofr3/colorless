@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { GameState, PokemonRef, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
@@ -14,6 +14,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const DUSCLOPS = "sv06.5-019";
@@ -151,13 +152,6 @@ function step(state: GameState, action: Parameters<typeof applyAction>[1]) {
     throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   }
   return { state: result.state, events: [...result.events] };
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -349,11 +343,11 @@ describe("D345 §3 — Cursed Blast from the BENCH: the counters land, the host 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 50, source: "ability" });
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 50, source: "ability" });
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(after.players.p2.bench[0]?.damage).toBe(50);
     // And the printed cost: the host is Knocked Out in the SAME resolution.
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(blaster);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(blaster);
     expect(after.players.p1.bench).toHaveLength(0);
   });
 
@@ -393,7 +387,7 @@ describe("D345 §3 — Cursed Blast from the BENCH: the counters land, the host 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "KNOCKED_OUT")?.seat).toBe("p1");
+    expect(findEvent(events, "KNOCKED_OUT")?.seat).toBe("p1");
     expect(after.players.p1.discard).toContain(blaster);
     expect(after.players.p1.discard.length).toBe(before + 1);
     expect(after.players.p2.discard).not.toContain(blaster);
@@ -437,7 +431,7 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(50);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(50);
     expect(after.players.p2.active?.damage).toBe(50); // 50, not 100
   });
 
@@ -478,7 +472,7 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(blaster);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(blaster);
     // Exactly ONE body left play, and it is not the Ludicolo: the aura raises the
     // whole side's maximum, so a mark aimed at the wrong body would kill the
     // SOURCE of the number it was aiming at.
@@ -510,7 +504,7 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
   });
 });
 
@@ -530,8 +524,8 @@ describe("D345 §5 — the ACTIVE Spot: §8.1's promotion, through the shared se
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(130);
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(blaster);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(130);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(blaster);
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
     const { state: promoting } = step(after, {
       type: "takePrizes",
@@ -583,8 +577,8 @@ describe("D345 §6 — the FORCED path: one candidate, no park, same two ops", (
     const blaster = benchTopUid(state, "p1", 0);
     const { state: after, events } = blast(state, { spot: "bench", index: 0 });
     expect(after.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 50, seat: "p2" });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(blaster);
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 50, seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(blaster);
   });
 
   it("a board with NOTHING to snipe is refused at the ACTION layer, so the cost is never paid for nothing", () => {

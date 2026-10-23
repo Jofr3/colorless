@@ -11,7 +11,7 @@ import {
   programFor,
   providedEnergy,
 } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameEvent, GameState } from "./index";
 import {
   FIXTURE_POOL,
   LEGACY_PRIZE_DECK,
@@ -24,6 +24,7 @@ import {
   setActiveFromDeck,
   setConditions,
   setDamage,
+  activeOf,
 } from "./testFixtures";
 
 const LEGACY_PRINTED =
@@ -87,12 +88,6 @@ function freshGame(): GameState {
       cardPool: FIXTURE_POOL,
     }) as never,
   );
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

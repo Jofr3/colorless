@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, engineVersion } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -13,6 +13,7 @@ import {
   handUid,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 // ── The printed bytes, verbatim off `effect` (`sv08-179`) ───────────────────
@@ -23,13 +24,6 @@ const LISIAS_APPEAL =
 const BOSSS_ORDERS = "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.";
 
 const PRINTINGS = ["sv08-179", "sv08-234", "sv08-246"] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function supporterTurn(seed: number): GameState {
   const first = driveSetup(
@@ -269,7 +263,7 @@ describe("§4 the resolution", () => {
     const promoted = activeUid(done, "p2");
     expect(promoted).not.toBe(incumbent);
     expect(done.cardIdByUid[promoted as string]).toBe("fix-invitee");
-    expect(find(events, "POKEMON_SWITCHED")).toBeDefined();
+    expect(findEvent(events, "POKEMON_SWITCHED")).toBeDefined();
 
     // "the new Active Pokémon is now Confused" — the body that MOVED, by uid.
     expect(done.players.p2.active?.conditions.rotation).toBe("confused");

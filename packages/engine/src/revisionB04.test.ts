@@ -14,6 +14,7 @@ import {
   setActiveFromDeck,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const RARE_CANDY_TEXT =
@@ -178,11 +179,6 @@ function play(
   const uid = handOf(next, id);
   return { ...mustApply(next, { type: "playTrainer", seat: "p1", uid }), uid };
 }
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const answer = (choice: unknown): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice }) as GameAction;
 
@@ -219,7 +215,7 @@ describe("B04 §1/§2 — every Standard-legal printing of Rare Candy, Switch, U
       const active = state.players.p1.active?.stack[0];
       const ex = state.players.p1.bench[1]?.stack[0];
       const parked = play(state, id).state;
-      expect(prompt(parked)).toMatchObject({ kind: "choosePokemon" });
+      expect(effectPrompt(parked)).toMatchObject({ kind: "choosePokemon" });
       const done = mustApply(
         parked,
         answer({ kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 1 } } }),
@@ -237,7 +233,7 @@ describe("B04 §1/§2 — every Standard-legal printing of Rare Candy, Switch, U
       // Exactly 2 other cards in the hand: the cost is the whole hand, so it is paid with no prompt.
       const state = play(handFromDeck(board([]), "p1", "fix-energy", 2), id).state;
       expect(state.players.p1.hand).toEqual([]);
-      const search = prompt(state);
+      const search = effectPrompt(state);
       if (search.kind !== "chooseCards")
         throw new Error(`expected chooseCards, got ${search.kind}`);
       expect(search).toMatchObject({ min: 0, max: 1 });
@@ -253,7 +249,7 @@ describe("B04 §1/§2 — every Standard-legal printing of Rare Candy, Switch, U
 
   it("Poké Pad 30th-126: a Pokémon without a Rule Box from the deck to the hand (an ex is not offered)", () => {
     const parked = play(board([]), "30th-126").state;
-    const search = prompt(parked);
+    const search = effectPrompt(parked);
     if (search.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${search.kind}`);
     const offered = new Set(search.candidates.map((u) => idOf(parked, u)));
     expect(offered.has(EX)).toBe(false);

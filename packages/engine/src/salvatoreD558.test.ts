@@ -16,6 +16,7 @@ import {
   setActiveFromDeck,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const SALVATORE = ["sv05-160", "sv05-202", "sv05-212"] as const;
@@ -142,12 +143,6 @@ function table(
 
 const play = (state: GameState) =>
   mustApply(state, { type: "playTrainer", seat: "p1", uid: state.players.p1.hand[0] as string });
-
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 function pendingOp(state: GameState): EffectOp {
   if (state.phase.kind !== "effect:choose")
     throw new Error(`expected effect:choose, got ${state.phase.kind}`);
@@ -155,7 +150,7 @@ function pendingOp(state: GameState): EffectOp {
 }
 const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const candidateIds = (state: GameState) => {
-  const p = prompt(state);
+  const p = effectPrompt(state);
   if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
   return [...new Set(idsOf(state, p.candidates))].sort();
 };
@@ -248,7 +243,7 @@ describe("D558 Salvatore §2 — the OFFER keeps only the Ability-free cards (R-
 
   it("the prompt names the printed noun, and the pick evolves the body then shuffles", () => {
     const parked = play(table(SEED, [], [BLOOM, BLOOM_ABLE])).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     expect(p.kind === "chooseCards" ? p.note : undefined).toBe(
       "Search your deck for a card that has no Abilities and evolves from D558 Seed and put it onto D558 Seed to evolve it.",
     );
@@ -273,7 +268,7 @@ describe("D558 Salvatore §3 — the BODY narrowing asks the same noun (evolvabl
     // Seed (Bloom in deck) Active, Other (only Other Able in deck) Benched: one eligible
     // body under Salvatore's noun, so no body prompt at all — straight to the card.
     const parked = play(table(SEED, [OTHER], [BLOOM, OTHER_ABLE])).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     expect(p.kind).toBe("chooseCards");
     expect(candidateIds(parked)).toEqual([BLOOM]);
   });
@@ -293,7 +288,7 @@ describe("D558 Salvatore §3 — the BODY narrowing asks the same noun (evolvabl
 
   it("with two Ability-free-evolvable bodies the body is ASKED, and the answer carries the key", () => {
     const parked = play(table(SEED, [SEED], [BLOOM, BLOOM_ABLE])).state;
-    expect(prompt(parked).kind).toBe("choosePokemon");
+    expect(effectPrompt(parked).kind).toBe("choosePokemon");
     expect(pendingOp(parked)).toEqual({ op: "evolveFromDeckChosen", noAbilities: true });
     const card = pickBody(parked, 0).state;
     expect(pendingOp(card)).toEqual({

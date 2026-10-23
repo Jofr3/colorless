@@ -27,6 +27,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const MILL_BOTH =
@@ -190,12 +191,6 @@ const idsIn = (state: GameState, seat: Seat, zone: "hand" | "deck" | "discard"):
 function swing(state: GameState, index: number): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "attack", seat: "p1", index });
 }
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -216,7 +211,7 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
 
 const dealtOn = (state: GameState): number => {
   const { events } = swing(state, TWIN_MILL);
-  const row = find(events, "DAMAGE_DEALT");
+  const row = findEvent(events, "DAMAGE_DEALT");
   if (row === undefined) throw new Error("no DAMAGE_DEALT row");
   return row.dealt;
 };
@@ -518,7 +513,7 @@ describe("D490 §5 — the three boards, driven end to end", () => {
   it("BOARD A — one Energy off MY deck, a Pokémon off THEIRS: 190", () => {
     const state = table(A_SELF_DECK, A_FOE_DECK);
     const { state: done, events } = swing(state, TWIN_MILL);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       by: "p1",
       base: 190,
@@ -573,7 +568,7 @@ describe("D490 §5 — the three boards, driven end to end", () => {
   it("BOARD B — the mirror: a Pokémon off MY deck, one Energy off THEIRS: still 190", () => {
     const state = table(B_SELF_DECK, B_FOE_DECK);
     const { state: done, events } = swing(state, TWIN_MILL);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 190 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 190 });
     expect(idsIn(done, "p1", "discard")).toEqual([...SELF_PILE, "d490-item-1"]);
     expect(idsIn(done, "p2", "discard")).toEqual([...FOE_PILE, "d490-energy-2"]);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(2);
@@ -583,7 +578,7 @@ describe("D490 §5 — the three boards, driven end to end", () => {
   it("BOARD C — an Energy off BOTH decks: 330, the only N = 2 in the family", () => {
     const state = table(C_SELF_DECK, C_FOE_DECK);
     const { state: done, events } = swing(state, TWIN_MILL);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 330 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 330 });
     expect(done.players.p2.active?.damage).toBe(330);
     expect(idsIn(done, "p1", "discard")).toEqual([...SELF_PILE, "d490-energy-1"]);
     expect(idsIn(done, "p2", "discard")).toEqual([...FOE_PILE, "d490-energy-2"]);
@@ -608,7 +603,7 @@ describe("D490 §5 — the three boards, driven end to end", () => {
   it("the CONTROL attack on the same body mills nothing and deals its printed 10", () => {
     const state = table(A_SELF_DECK, A_FOE_DECK);
     const { state: done, events } = swing(state, PLAIN_CUFF);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
     expect(all(events, "DECK_TOP_DISCARDED")).toEqual([]);
     expect(idsIn(done, "p1", "deck")).toEqual([...A_SELF_DECK]);
     // The defender's deck is one shorter than the board's, and that ONE card is their own
@@ -630,7 +625,7 @@ describe("D490 §6 — an EMPTY deck on either side, and on both", () => {
     const rows = all(events, "DECK_TOP_DISCARDED");
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ seat: "p2", actor: "p1" });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE });
     expect(idsIn(done, "p1", "deck")).toEqual([]);
     expect(idsIn(done, "p1", "discard")).toEqual([...SELF_PILE]);
   });
@@ -639,14 +634,14 @@ describe("D490 §6 — an EMPTY deck on either side, and on both", () => {
     const state = table([], ["d490-energy-2", "d490-filler"]);
     const { events } = swing(state, TWIN_MILL);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
   });
 
   it("BOTH decks empty: NO mill row at all, and the printed base alone", () => {
     const state = table([], []);
     const { state: done, events } = swing(state, TWIN_MILL);
     expect(all(events, "DECK_TOP_DISCARDED")).toEqual([]);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE });
     const midEvents: GameEvent[] = [];
     const mid = runProgram(
       state,
@@ -682,7 +677,7 @@ describe("D490 §6 — an EMPTY deck on either side, and on both", () => {
     expect(run.kind).toBe("done");
     expect(record.discarded).toEqual([]);
     // 50, not 50 + 3 × 140: the three stale uids are NOT counted.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE });
   });
 });
 
@@ -706,7 +701,7 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
     // BOTH decks were milled — the zones are right and only the RECORD is wrong, which is
     // exactly why no board-shaped assertion could have found this.
     expect(record.discarded).toHaveLength(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(2);
     // …against the shipped one-op spelling on the SAME board.
     const oneOp: EffectRecord = {};
@@ -719,7 +714,7 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
       oneOp,
     );
     expect(oneOp.discarded).toHaveLength(2);
-    expect(find(oneOpEvents, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + 2 * PER });
+    expect(findEvent(oneOpEvents, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + 2 * PER });
   });
 
   it("two SLOTS is no escape either — `damageDefender.count` is ONE address", () => {
@@ -741,7 +736,7 @@ describe("D490 §7 — why it is ONE op: two sequential mills OVERWRITE one slot
     expect(record.paid).toHaveLength(1);
     expect(record.discarded).toHaveLength(1);
     // 190, not 330 — half the sentence, silently.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
   });
 
   it("the state is THREADED through the walk — the second write does not clobber the first", () => {
@@ -790,7 +785,7 @@ describe("D490 §8 — the LOG: two rows, two voices, and no wording moved", () 
   it("the DAMAGE row credits the attacker and names the defender as the victim", () => {
     const state = table(C_SELF_DECK, C_FOE_DECK);
     const { events } = swing(state, TWIN_MILL);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", by: "p1", dealt: 330 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", by: "p1", dealt: 330 });
   });
 
   it("the loud channel does NOT fire — the sentence and the `+` marker are both simulated", () => {
@@ -853,7 +848,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     runProgram(state, v29, { seat: "p1" }, events, record);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(1);
     expect(record.discarded).toHaveLength(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: PRINTED_BASE + PER });
     expect(dealtOn(table(C_SELF_DECK, C_FOE_DECK))).toBe(PRINTED_BASE + 2 * PER);
   });
 

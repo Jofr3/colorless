@@ -7,7 +7,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackEffect,
 } from "./effects";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   RETREAT_COST_PENALTY_DECK,
@@ -19,6 +19,8 @@ import {
   handUid,
   mustApply,
   setActiveFromDeck,
+  findEvent,
+  activeOf,
 } from "./testFixtures";
 
 const THIRTY_LESS =
@@ -41,19 +43,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
-}
 
 // ── boards ─────────────────────────────────────────────────────────────────────
 
@@ -87,7 +76,7 @@ function withStadium(state: GameState, seat: Seat, cardId: string): GameState {
 /** Attack at `index` and report `[damage, debuff, ATTACK_EFFECT_SKIPPED rows]`. */
 function swing(state: GameState, seat: Seat, index: number): [number, number, number] {
   const after = mustApply(state, { type: "attack", seat, index });
-  const dealt = find(after.state === undefined ? [] : after.events, "DAMAGE_DEALT");
+  const dealt = findEvent(after.state === undefined ? [] : after.events, "DAMAGE_DEALT");
   const skipped = after.events.filter((e) => e.type === "ATTACK_EFFECT_SKIPPED");
   return [dealt?.damage ?? 0, dealt?.debuff ?? 0, skipped.length];
 }
@@ -277,7 +266,7 @@ describe("§3 — the FOLD, driven: the base is KEPT and `per × count` comes of
     const zero = board(102, "p1", "fix-retreat0-titan");
     expect(effectiveRetreatCost(zero, activeOf(zero, "p2"))).toBe(0);
     const after = mustApply(zero, { type: "attack", seat: "p1", index: DRAG });
-    const dealt = find(after.events, "DAMAGE_DEALT");
+    const dealt = findEvent(after.events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(200);
     expect(dealt?.damage).toBe(200);
     expect(dealt?.debuff).toBeUndefined();
@@ -286,7 +275,7 @@ describe("§3 — the FOLD, driven: the base is KEPT and `per × count` comes of
       seat: "p1",
       index: 0,
     });
-    expect(find(mult.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(mult.events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("the FLOOR at 0 — a penalty larger than the base does not go negative", () => {
@@ -295,7 +284,7 @@ describe("§3 — the FOLD, driven: the base is KEPT and `per × count` comes of
       seat: "p1",
       index: SLAM,
     });
-    const dealt = find(after.events, "DAMAGE_DEALT");
+    const dealt = findEvent(after.events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(150);
     expect(dealt?.debuff).toBe(200);
     expect(dealt?.dealt).toBe(0);
@@ -377,7 +366,7 @@ describe("§6 — the ADMITTED TWINS still answer their own readers, on one boar
         index: 0,
       },
     );
-    const addRow = find(add.events, "DAMAGE_DEALT");
+    const addRow = findEvent(add.events, "DAMAGE_DEALT");
     expect(addRow?.damage).toBe(70);
     expect(addRow?.scaled).toBe(60);
     expect(addRow?.debuff).toBeUndefined();
@@ -387,7 +376,7 @@ describe("§6 — the ADMITTED TWINS still answer their own readers, on one boar
       seat: "p1",
       index: 0,
     });
-    const multRow = find(mult.events, "DAMAGE_DEALT");
+    const multRow = findEvent(mult.events, "DAMAGE_DEALT");
     expect(multRow?.damage).toBe(100);
     expect(multRow?.debuff).toBeUndefined();
 
@@ -424,7 +413,7 @@ describe("§7 — the loud path: `ATTACK_EFFECT_SKIPPED` fires for the paraphras
     expect(skipped).toHaveLength(1);
     // …and the paraphrase still dealt its printed 90: an unread sentence is loud,
     // never silently scored at 0.
-    expect(find(loud.events, "DAMAGE_DEALT")?.damage).toBe(90);
+    expect(findEvent(loud.events, "DAMAGE_DEALT")?.damage).toBe(90);
   });
 
   it("the printed `-` MARKER is reported simulated too, and that is a SECOND term", () => {
@@ -439,7 +428,7 @@ describe("§7 — the loud path: `ATTACK_EFFECT_SKIPPED` fires for the paraphras
       seat: "p1",
       index: HOOK,
     });
-    const row = find(loud.events, "ATTACK_EFFECT_SKIPPED");
+    const row = findEvent(loud.events, "ATTACK_EFFECT_SKIPPED");
     expect(row?.effect).toBe(PARAPHRASE);
     expect(row?.damageModifier).toBeNull();
   });
@@ -472,16 +461,16 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
       seat: "p1",
       index: DRAG,
     });
-    expect(find(first.events, "DAMAGE_DEALT")?.damage).toBe(140);
+    expect(findEvent(first.events, "DAMAGE_DEALT")?.damage).toBe(140);
     const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
     expect(saved).toEqual(first.state);
     // …and the parsed record is a LIVE board, not a snapshot: hand the turn back
     // and swing the SAME clause again off the bytes that came out of `JSON.parse`.
     const returned = mustApply(saved, { type: "endTurn", seat: "p2" }).state;
     const second = mustApply(returned, { type: "attack", seat: "p1", index: DRAG });
-    expect(find(second.events, "DAMAGE_DEALT")?.dealt).toBe(140);
-    expect(find(second.events, "DAMAGE_DEALT")?.debuff).toBe(60);
-    expect(find(second.events, "DAMAGE_DEALT")?.damage).toBe(280);
+    expect(findEvent(second.events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(second.events, "DAMAGE_DEALT")?.debuff).toBe(60);
+    expect(findEvent(second.events, "DAMAGE_DEALT")?.damage).toBe(280);
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {

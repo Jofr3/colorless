@@ -18,14 +18,8 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup with BOTH Actives pinned to fix-lightning-weak (×2 Lightning, 130 HP, empty
     Bench — a deterministic Defender that is the W/R target), then open P1's turn 2. */
@@ -172,7 +166,7 @@ describe("the any-target snipe — W/R applies on the Active, never on the Bench
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       base: 20,
       weakness: { op: "multiply", amount: 2 },
@@ -199,7 +193,7 @@ describe("the any-target snipe — W/R applies on the Active, never on the Bench
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(e2, "DAMAGE_DEALT")).toMatchObject({ base: 20, weakness: null, dealt: 20 });
+    expect(findEvent(e2, "DAMAGE_DEALT")).toMatchObject({ base: 20, weakness: null, dealt: 20 });
     expect(done.players.p2.bench[0]?.damage).toBe(20);
     expect(done.players.p2.active?.damage).toBe(0); // the Active was NOT the pick
   });
@@ -210,7 +204,11 @@ describe("the any-target snipe — W/R applies on the Active, never on the Bench
     // Pins the amount ≠ Rotom's 20 and that Weakness only fires on a real match.
     const state = anySnipe(3, { attacker: "sv06.5-038", energy: 3, benched: [] });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, weakness: null, dealt: 100 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      base: 100,
+      weakness: null,
+      dealt: 100,
+    });
     expect(done.players.p2.active?.damage).toBe(100);
   });
 
@@ -228,7 +226,7 @@ describe("the any-target snipe — W/R applies on the Active, never on the Bench
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] }, // the benched victim
     });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
     const { state: done } = mustApply(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -247,7 +245,7 @@ describe("the any-target snipe — W/R applies on the Active, never on the Bench
       applyAction(state, { type: "attachTool", seat: "p1", uid: band, target: { spot: "active" } }),
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       bonus: 10,
       weakness: { op: "multiply", amount: 2 },
@@ -269,7 +267,7 @@ describe("Umbreon 'Feint Attack' — the ignoreWR snipe skips W/R and effects on
     // the printed 50 lands flat. The count-1 snipe auto-takes the lone Active.
     const state = anySnipe(1, { attacker: "fix-feint", energy: 1, benched: [] }, FEINT_DECK);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       base: 50,
       weakness: null,
@@ -288,7 +286,7 @@ describe("Umbreon 'Feint Attack' — the ignoreWR snipe skips W/R and effects on
       applyAction(state, { type: "attachTool", seat: "p1", uid: band, target: { spot: "active" } }),
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 50,
       bonus: 10,
       weakness: null,
@@ -315,7 +313,11 @@ describe("Umbreon 'Feint Attack' — the ignoreWR snipe skips W/R and effects on
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, weakness: null, dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      base: 50,
+      weakness: null,
+      dealt: 50,
+    });
     expect(done.players.p2.bench[0]?.damage).toBe(50); // the −20 Bouffer was ignored
     expect(done.players.p2.active?.damage).toBe(0); // the Active was NOT the pick
   });
@@ -983,8 +985,8 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
       seat: "p1",
       choice: { kind: "discardEnergy", uids: picks },
     });
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toEqual(picks);
-    expect(find(events, "ENERGY_DISCARDED")?.actor).toBe("p1");
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toEqual(picks);
+    expect(findEvent(events, "ENERGY_DISCARDED")?.actor).toBe("p1");
     for (const uid of picks) expect(second.players.p1.discard).toContain(uid);
     expect(second.players.p1.active?.energy).toHaveLength(1);
     // …and the turn did NOT end, because `rest` still held the second op.
@@ -1064,7 +1066,7 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     // All three Energy went, including the one that was surplus to the {C} cost.
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
     expect(done.players.p1.active?.energy ?? []).toHaveLength(0);
     const dealt = findAll(events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(3);
@@ -1115,7 +1117,7 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
       dealt: 240,
     });
     expect(dealt[1]).toMatchObject({ base: 120, weakness: null, dealt: 120 });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
   });
 

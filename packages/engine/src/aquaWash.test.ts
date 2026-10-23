@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction, createGame, engineVersion } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
 import { redactGame } from "./redact";
@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const AN = "You may put an Energy attached to your opponent's Active Pokémon into their hand.";
@@ -347,13 +348,6 @@ function attachedUids(state: GameState): string[] {
   return [...(state.players.p2.active?.energy ?? [])];
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** Declare the attack at `index` and return the result. */
 function attack(state: GameState, index = 0) {
   return mustApply(state, { type: "attack", seat: "p1", index });
@@ -369,7 +363,7 @@ describe("§2 — the ask: a printed card parks a confirm carrying its own sente
     const watch = attachedUids(state);
     const { state: parked, events } = attack(state);
 
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
     expect(types(events)).toContain("EFFECT_PENDING");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     // The whole prompt: a kind and the printed sentence. No candidates — the
@@ -392,7 +386,7 @@ describe("§2 — the ask: a printed card parks a confirm carrying its own sente
     const { state: done, events } = attack(state);
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    const row = find(events, "ENERGY_DISCARDED");
+    const row = findEvent(events, "ENERGY_DISCARDED");
     expect(row?.seat).toBe("p2");
     expect(row?.to).toBeUndefined(); // THE PILE — the op's own name
     expect(fateOf(done, watch)).toEqual({ attached: 0, inHand: 0, inDiscard: 1 });
@@ -409,7 +403,7 @@ describe("§3 — the answer: YES moves the card to the victim's HAND, NO moves 
     expect(fateOf(done, watch)).toEqual({ attached: 0, inHand: 1, inDiscard: 0 });
     expect(done.players.p1.hand).toHaveLength(0);
     expect(done.players.p1.discard).toHaveLength(0);
-    const row = find(events, "ENERGY_DISCARDED");
+    const row = findEvent(events, "ENERGY_DISCARDED");
     expect(row?.seat).toBe("p2");
     expect(row?.actor).toBe("p1");
     expect(row?.to).toBe("hand");
@@ -480,7 +474,7 @@ describe("§4 — the COUNT: 'you may put 2' is a decline or a pair, never a sin
       choice: { kind: "discardEnergy", uids },
     });
     expect(fateOf(done, watch)).toEqual({ attached: 1, inHand: 2, inDiscard: 0 });
-    expect(find(events, "ENERGY_DISCARDED")?.to).toBe("hand");
+    expect(findEvent(events, "ENERGY_DISCARDED")?.to).toBe("hand");
   });
 
   it("REFUSES a pick of one where an `upTo` scope would allow it", () => {
@@ -560,7 +554,7 @@ describe("§5 — the Stage 2 gate: the adjective is read BEFORE anybody is aske
     const { state: done, events } = attack(state);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(fateOf(done, watch)).toEqual({ attached: 2, inHand: 0, inDiscard: 0 });
     expect(types(events)).toContain("TURN_ENDED");
   });

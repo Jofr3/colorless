@@ -25,6 +25,7 @@ import {
   expectErr,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const EXP_SHARE =
@@ -38,14 +39,7 @@ const ACCELERATE =
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage
-const spread = { type: "attack", seat: "p1", index: 0 } as const; // Spread Shot
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const spread = { type: "attack", seat: "p1", index: 0 } as const;
 
 /** The rendered log a player actually reads — the same helper shape
     `ohNoYouDont.test.ts` and `vengefulPunch.test.ts` use, so the three suites'
@@ -290,7 +284,7 @@ describe("the park — who is asked, and what resumes", () => {
     expect(after.phase.seat).toBe("p2");
     expect(after.phase.resumeTail).toBe(true);
     expect(after.phase.prompt.kind).toBe("moveEnergy");
-    expect(find(events, "EFFECT_PENDING")?.seat).toBe("p2");
+    expect(findEvent(events, "EFFECT_PENDING")?.seat).toBe("p2");
     expect(after.players.p2.active).not.toBeNull();
     expect(types(events)).not.toContain("KNOCKED_OUT");
     // The attackEpilogue is sitting behind the park, waiting to do the KO.
@@ -572,7 +566,7 @@ describe("the voice", () => {
     const [energy] = victimEnergy(state);
     const { state: parked } = mustApply(state, bite);
     const { state: after, events } = answer(parked, [energy as string]);
-    const moved = find(events, "ENERGY_MOVED");
+    const moved = findEvent(events, "ENERGY_MOVED");
     expect(moved?.fromUid).toBe(parked.players.p2.active?.stack.at(-1));
     const rows = render(events, after);
     expect(rows.some((r) => r.text === "moved 1 energy from fix-victim to fix-bigbody")).toBe(true);

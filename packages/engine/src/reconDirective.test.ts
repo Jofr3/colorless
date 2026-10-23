@@ -12,17 +12,11 @@ import {
   setActiveFromDeck,
   toDeckTop,
   trimDeckTo,
+  findEvent,
 } from "./testFixtures";
 
 function types(events: readonly GameEvent[]): string[] {
   return events.map((e) => e.type);
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 const deckAt = (state: GameState, index: number): string => {
@@ -244,7 +238,7 @@ describe("D335 §2 — Recon Directive puts the other card UNDER the deck", () =
       choice: { kind: "cards", uids: [taken] },
     });
     const all = [...parkEvents, ...events];
-    expect(find(all, "DECK_TOP_REVEALED")?.uids).toEqual([taken]);
+    expect(findEvent(all, "DECK_TOP_REVEALED")?.uids).toEqual([taken]);
     expect(types(all)).not.toContain("DECK_TOP_DISCARDED");
     expect(types(all)).not.toContain("CARD_TO_BOTTOM_OF_DECK");
     expect(types(all)).not.toContain("SHUFFLE");
@@ -423,7 +417,7 @@ describe("D335 §4 — the three destinations are three different games", () => 
       choice: { kind: "cards", uids: [window[0] as string, window[1] as string] },
     });
     const rest = window.slice(2);
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toEqual(rest);
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toEqual(rest);
     for (const leftover of rest) {
       expect(done.players.p1.discard).toContain(leftover);
       expect(done.players.p1.deck).not.toContain(leftover);

@@ -16,6 +16,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const MAGNETON = "svp-153";
@@ -124,13 +125,6 @@ function step(state: GameState, action: Parameters<typeof applyAction>[1]) {
     throw new Error(`${action.type} rejected: ${result.error.code}: ${result.error.message}`);
   }
   return { state: result.state, events: [...result.events] };
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -269,7 +263,7 @@ describe("D346 §2 — the DISTRIBUTION: three cards, three bodies, three parks"
     expect(energyCount(after, benchRef(0))).toBe(1);
     expect(energyCount(after, benchRef(1))).toBe(1);
     // …and the printed cost resolves on the SAME resume as the last attach.
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(host);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(host);
     expect(after.players.p1.active).toBeNull();
   });
 
@@ -355,7 +349,7 @@ describe('D346 §4 — the printed "UP TO", and the KO that is not conditional o
     const parked = discharge(state, { spot: "active" }).state;
     const { state: after, events } = attachTo(parked, benchRef(0));
     expect(energyCount(after, benchRef(0))).toBe(1);
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(host);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(host);
   });
 
   it("the Knock Out is a real §8.1 one: the OPPONENT takes a Prize, mid-p1's-turn", () => {
@@ -419,7 +413,7 @@ describe("D346 §5 — the GATE, and the design call it makes", () => {
       after = answered.state;
       events = [...events, ...answered.events];
     }
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(host);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(host);
     // Nothing reached the {F} body: it was never a candidate.
     expect(after.players.p1.bench.every((b) => b.energy.length === 0)).toBe(true);
     expect(after.players.p1.discard).toContain(host);

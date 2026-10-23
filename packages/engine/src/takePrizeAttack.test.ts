@@ -23,16 +23,10 @@ import {
   setActiveFromDeck,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SENTENCE = "Discard all Energy from this Pokémon, and take a Prize card.";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function count(events: GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
@@ -264,7 +258,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
       choice: { kind: "discardEnergy", uids: [chosen as string] },
     });
     expect(drained.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
-    expect(find(drained.events, "PRIZES_OWED")?.seat).toBe("p1");
+    expect(findEvent(drained.events, "PRIZES_OWED")?.seat).toBe("p1");
   });
 });
 
@@ -285,7 +279,7 @@ describe("§4 — the cost and the prize are ONE sentence and both happen", () =
     ]);
     expect(result.state.players.p1.active?.energy).toEqual([]);
     expect(result.state.players.p1.discard).toHaveLength(3);
-    expect(find(result.events, "PRIZES_OWED")).toEqual({
+    expect(findEvent(result.events, "PRIZES_OWED")).toEqual({
       type: "PRIZES_OWED",
       seat: "p1",
       count: 1,
@@ -296,7 +290,7 @@ describe("§4 — the cost and the prize are ONE sentence and both happen", () =
     const parked = attack(wheel({ attacker: "p1", energy: 2 }), "p1", 0).state;
     const before = parked.players.p1.prizes;
     const taken = mustApply(parked, { type: "takePrizes", seat: "p1", prizeIndices: [3] });
-    expect(find(taken.events, "PRIZES_TAKEN")).toEqual({
+    expect(findEvent(taken.events, "PRIZES_TAKEN")).toEqual({
       type: "PRIZES_TAKEN",
       seat: "p1",
       uids: [before[3] as string],
@@ -344,7 +338,7 @@ describe("§4 — the cost and the prize are ONE sentence and both happen", () =
     // board is one Energy that the discard then removes. The point is the ordering
     // contract — the prize is not gated on the discard having found anything.
     const result = attack(wheel({ attacker: "p1", energy: 1 }), "p1", 2);
-    expect(find(result.events, "PRIZES_OWED")?.count).toBe(1);
+    expect(findEvent(result.events, "PRIZES_OWED")?.count).toBe(1);
   });
 });
 
@@ -429,7 +423,7 @@ describe("§6 — §14, the win, its control, and the empty row", () => {
       "PRIZES_TAKEN",
       "GAME_OVER",
     ]);
-    expect(find(result.events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(result.events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "prizesTaken",
@@ -452,7 +446,7 @@ describe("§6 — §14, the win, its control, and the empty row", () => {
 
   it("the win is the ATTACKER's — p2 on their last prize wins as p2", () => {
     const result = attack(setPrizes(wheel({ attacker: "p2", energy: 3 }), "p2", 1), "p2", 0);
-    expect(find(result.events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(result.events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p2",
       reason: "prizesTaken",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   COMPOUND_COMPOSE_DECK,
   FIXTURE_POOL,
@@ -19,6 +19,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BIND_DOWN_TEXT = "During your opponent's next turn, the Defending Pokémon can't retreat.";
@@ -30,13 +31,6 @@ const SELF_HEAL_COMPOUND_50 =
   "Heal 50 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
 const SELF_HEAL_COMPOUND_60 =
   "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function armed(seed: number, locker = "sv02-016", energy = "fix-grass-energy"): GameState {
   let state = must(
@@ -145,7 +139,7 @@ describe("the retreat lock — applying it", () => {
     const defender = activeUid(state, "p2");
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(find(events, "RETREAT_BLOCKED")).toEqual({
+    expect(findEvent(events, "RETREAT_BLOCKED")).toEqual({
       type: "RETREAT_BLOCKED",
       seat: "p2",
       uid: defender,
@@ -182,7 +176,7 @@ describe("the retreat lock — applying it", () => {
 
     const applied = types(events);
     expect(applied.indexOf("STATUS_APPLIED")).toBeLessThan(applied.indexOf("RETREAT_BLOCKED"));
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({
       seat: "p2",
       uid: defender,
       status: "poisoned",
@@ -268,7 +262,7 @@ describe("the retreat lock — the lifetime is §13.4's paralysis clock", () => 
       type: "endTurn",
       seat: "p2",
     });
-    expect(find(endEvents, "RETREAT_BLOCK_ENDED")).toEqual({
+    expect(findEvent(endEvents, "RETREAT_BLOCK_ENDED")).toEqual({
       type: "RETREAT_BLOCK_ENDED",
       seat: "p2",
       uid: locked,
@@ -363,7 +357,7 @@ describe("D412 — the SELF-side retreat lock, composed off a heal head", () => 
   it("locks the ATTACKER's own body, not the defender — the polarity trap", () => {
     const before = selfArmed(20);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: 9 });
-    expect(find(events, "RETREAT_BLOCKED")).toEqual({
+    expect(findEvent(events, "RETREAT_BLOCKED")).toEqual({
       type: "RETREAT_BLOCKED",
       seat: "p1",
       uid: activeUid(before, "p1"),
@@ -431,7 +425,7 @@ describe("D412 — the SELF-side retreat lock, composed off a heal head", () => 
   it("the 35 bare printings are byte-identical — the widening is additive", () => {
     const before = armed(26);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "RETREAT_BLOCKED")?.seat).toBe("p2");
+    expect(findEvent(events, "RETREAT_BLOCKED")?.seat).toBe("p2");
     expect(state.players.p2.active?.retreatBlocked).toBe(true);
     // …and the bare arm writes the BOOLEAN, never the stamp: two halves, two
     // fields, and the imposed one keeps its own clock.

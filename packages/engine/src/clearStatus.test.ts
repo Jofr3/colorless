@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   setConditions,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows. */
@@ -40,13 +41,6 @@ const ALL_STATUSES: StatusName[] = ["asleep", "confused", "paralyzed", "poisoned
 
 const SEED = 5;
 const ACTIVE: PokemonTarget = { spot: "active" };
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -238,7 +232,7 @@ describe("the ATTACK half — Miracle Force", () => {
       burned: false,
       confusionDamage: 30,
     });
-    const cleared = find(done.events, "STATUS_CLEARED");
+    const cleared = findEvent(done.events, "STATUS_CLEARED");
     expect(cleared).toMatchObject({
       seat: "p1",
       statuses: ["poisoned", "burned"],
@@ -246,24 +240,24 @@ describe("the ATTACK half — Miracle Force", () => {
     });
     // The recovery is a RIDER, not a replacement: the attack's own damage is
     // untouched by it (fix-titan is 340 HP, so nothing dies and the number shows).
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 190 });
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 190 });
     expect(done.state.players.p2.active?.damage).toBe(190);
   });
 
   it("recovers from Confusion — on the HEADS branch of the §8 confusion check", () => {
     const seed = seedFlipping("heads", (s) => gardevoir({ rotation: "confused" }, { seed: s }));
     const done = swing(gardevoir({ rotation: "confused" }, { seed }), "miracleForce");
-    expect(find(done.events, "CONFUSION_CHECK")).toMatchObject({ result: "heads" });
+    expect(findEvent(done.events, "CONFUSION_CHECK")).toMatchObject({ result: "heads" });
     expect(conditionsOf(done.state, "p1")?.rotation).toBe("none");
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({ statuses: ["confused"] });
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({ statuses: ["confused"] });
   });
 
   it("TAILS: the attack does not resolve, so the recovery does not happen either", () => {
     const seed = seedFlipping("tails", (s) => gardevoir({ rotation: "confused" }, { seed: s }));
     const done = swing(gardevoir({ rotation: "confused" }, { seed }), "miracleForce");
-    expect(find(done.events, "ATTACK_FAILED")).toMatchObject({ reason: "confusion" });
+    expect(findEvent(done.events, "ATTACK_FAILED")).toMatchObject({ reason: "confusion" });
     expect(conditionsOf(done.state, "p1")?.rotation).toBe("confused");
-    expect(find(done.events, "STATUS_CLEARED")).toBeUndefined();
+    expect(findEvent(done.events, "STATUS_CLEARED")).toBeUndefined();
     expect(done.state.players.p1.active?.damage).toBe(30); // the confusion self-hit
   });
 
@@ -272,7 +266,7 @@ describe("the ATTACK half — Miracle Force", () => {
       const state = gardevoir({ burned: true }, { printing });
       const done = swing(state, "miracleForce");
       expect(conditionsOf(done.state, "p1")?.burned, `${printing} must recover`).toBe(false);
-      expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+      expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
         statuses: ["burned"],
         reason: "recovered",
       });
@@ -293,7 +287,7 @@ describe("the ATTACK half — Miracle Force", () => {
     // case measures the recovery rather than the sweep behind it.
     const armed = setActiveFromDeck(poisoned.state, "p2", "fix-titan");
     const done = swing(armed, "miracleForce");
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p1",
       statuses: ["poisoned"],
       reason: "recovered",
@@ -305,14 +299,14 @@ describe("the ATTACK half — Miracle Force", () => {
 
   it("SILENT on a clean body — no row, no board change, and NOT an effect-skipped", () => {
     const done = swing(gardevoir(), "miracleForce");
-    expect(find(done.events, "STATUS_CLEARED")).toBeUndefined();
+    expect(findEvent(done.events, "STATUS_CLEARED")).toBeUndefined();
     expect(conditionsOf(done.state, "p1")).toEqual({
       rotation: "none",
       poisonDamage: 0,
       burned: false,
       confusionDamage: 30,
     });
-    expect(find(done.events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(done.events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("touches ONLY the attacker — the DEFENDER keeps every condition it has", () => {
@@ -361,7 +355,7 @@ describe("the ATTACK half cannot reach TWO of the five conditions it names", () 
       const state = blisseyBoard("active", { rotation });
       const done = mustApply(state, nurse());
       expect(conditionsOf(done.state, "p1")?.rotation).toBe("none");
-      expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+      expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
         statuses: [rotation],
         reason: "recovered",
       });
@@ -382,12 +376,12 @@ describe("the ABILITY half — Busybody Nurse", () => {
       burned: false,
       confusionDamage: 30,
     });
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p1",
       statuses: ["confused", "burned"],
       reason: "recovered",
     });
-    expect(find(done.events, "ABILITY_USED")).toMatchObject({ ability: "Busybody Nurse" });
+    expect(findEvent(done.events, "ABILITY_USED")).toMatchObject({ ability: "Busybody Nurse" });
   });
 
   it('works from the BENCH — the print says "your Active Pokémon", not "this Pokémon"', () => {
@@ -396,8 +390,8 @@ describe("the ABILITY half — Busybody Nurse", () => {
     const activeBefore = activeUid(state, "p1");
     const done = mustApply(state, nurse(benchSlot(state, "p1", "sv01-145")));
     expect(conditionsOf(done.state, "p1")?.poisonDamage).toBe(0);
-    expect(find(done.events, "STATUS_CLEARED")?.uid).toBe(activeBefore);
-    expect(find(done.events, "ABILITY_USED")?.uid).not.toBe(activeBefore);
+    expect(findEvent(done.events, "STATUS_CLEARED")?.uid).toBe(activeBefore);
+    expect(findEvent(done.events, "ABILITY_USED")?.uid).not.toBe(activeBefore);
   });
 
   it("ONCE per turn, per BODY — a second Blissey on the same board still nurses", () => {
@@ -415,8 +409,8 @@ describe("the ABILITY half — Busybody Nurse", () => {
 
   it("USABLE with nothing to recover from — the Potion doctrine, and it is a CHOICE", () => {
     const done = mustApply(blisseyBoard("active"), nurse());
-    expect(find(done.events, "ABILITY_USED")).toBeDefined();
-    expect(find(done.events, "STATUS_CLEARED")).toBeUndefined();
+    expect(findEvent(done.events, "ABILITY_USED")).toBeDefined();
+    expect(findEvent(done.events, "STATUS_CLEARED")).toBeUndefined();
     expectErr(done.state, nurse(), "ABILITY_ALREADY_USED");
   });
 
@@ -466,7 +460,11 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
       }),
       nurse(),
     );
-    expect(find(done.events, "STATUS_CLEARED")?.statuses).toEqual(["asleep", "poisoned", "burned"]);
+    expect(findEvent(done.events, "STATUS_CLEARED")?.statuses).toEqual([
+      "asleep",
+      "poisoned",
+      "burned",
+    ]);
     expect(conditionsOf(done.state, "p1")).toEqual({
       rotation: "none",
       poisonDamage: 0,
@@ -482,11 +480,11 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
   });
 
   it("ONE vocabulary word for one printed verb — both halves say `recovered`", () => {
-    const fromAttack = find(
+    const fromAttack = findEvent(
       swing(gardevoir({ burned: true }), "miracleForce").events,
       "STATUS_CLEARED",
     );
-    const fromAbility = find(
+    const fromAbility = findEvent(
       mustApply(blisseyBoard("active", { burned: true }), nurse()).events,
       "STATUS_CLEARED",
     );
@@ -513,7 +511,7 @@ describe("§9 — the lock reaches the ABILITY half and cannot touch the ATTACK 
     );
     const done = swing(state, "miracleForce");
     expect(conditionsOf(done.state, "p1")?.burned).toBe(false);
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({ reason: "recovered" });
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({ reason: "recovered" });
   });
 
   it("…and it kills Busybody Nurse, which is the same seam with the other verdict", () => {

@@ -10,6 +10,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -55,20 +56,13 @@ function swing(
   return mustApply(state, { type: "attack", seat, index });
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function count(events: GameEvent[], type: GameEvent["type"]): number {
   return events.filter((event) => event.type === type).length;
 }
 
 /** What §8.5 said it dealt to the defending Active. */
 function dealt(events: GameEvent[]): number | undefined {
-  return find(events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(events, "DAMAGE_DEALT")?.dealt;
 }
 
 describe("§1 — every §11 printing names the OPPONENT as the attack's source", () => {
@@ -143,13 +137,13 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     const refused = swing(shielded(), IDX.pry);
     expect(refused.state.players.p2.active?.tools).toHaveLength(1);
     expect(refused.state.players.p2.discard).toEqual([]);
-    expect(find(refused.events, "TOOLS_DISCARDED")).toBeUndefined();
-    expect(find(refused.events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(refused.events, "TOOLS_DISCARDED")).toBeUndefined();
+    expect(findEvent(refused.events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
 
     const admitted = swing(tooled(), IDX.pry);
     expect(admitted.state.players.p2.active?.tools).toEqual([]);
-    expect(find(admitted.events, "TOOLS_DISCARDED")?.uids).toHaveLength(1);
-    expect(find(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(admitted.events, "TOOLS_DISCARDED")?.uids).toHaveLength(1);
+    expect(findEvent(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
   });
 
   it("THE NUMBER MOVES WITH IT: 70 refused, 100 admitted, on the same pair", () => {
@@ -168,7 +162,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     expect(dealt(refused.events)).toBe(70);
     expect(refused.state.players.p2.active?.damage).toBe(70);
     // …and the attack still resolved: the turn ended and the attacker is spent.
-    expect(find(refused.events, "ATTACK_FAILED")).toBeUndefined();
+    expect(findEvent(refused.events, "ATTACK_FAILED")).toBeUndefined();
   });
 
   it("ROW 71 — BOTH ZONES are refused together, including the shield's own card", () => {
@@ -177,8 +171,8 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     const refused = swing(state, IDX.purge);
     expect(refused.state.players.p2.active?.tools).toHaveLength(1);
     expect(refused.state.players.p2.active?.energy).toHaveLength(2); // Mist + Basic
-    expect(find(refused.events, "TOOLS_DISCARDED")).toBeUndefined();
-    expect(find(refused.events, "ENERGY_DISCARDED")).toBeUndefined();
+    expect(findEvent(refused.events, "TOOLS_DISCARDED")).toBeUndefined();
+    expect(findEvent(refused.events, "ENERGY_DISCARDED")).toBeUndefined();
     expect(count(refused.events, "ATTACK_EFFECT_PREVENTED")).toBe(1);
 
     let unshielded = tooled();
@@ -191,7 +185,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
 
   it("a REFUSED strip files no row claiming a discard, and is not silent either", () => {
     const { events } = swing(shielded(), IDX.pry);
-    const prevented = find(events, "ATTACK_EFFECT_PREVENTED");
+    const prevented = findEvent(events, "ATTACK_EFFECT_PREVENTED");
     expect(prevented).toBeDefined();
     expect(prevented?.uid).toBe(shielded().players.p2.active?.stack.at(-1));
     expect(count(events, "TOOLS_DISCARDED")).toBe(0);
@@ -206,7 +200,7 @@ describe("§2 — the shielded body keeps its Tool, and the identical board lose
     let state = attachFromDeck(tooled(), "p1", MIST, 1);
     const admitted = swing(state, IDX.pry);
     expect(admitted.state.players.p2.active?.tools).toEqual([]);
-    expect(find(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     // …and the same board with the shield moved one body over refuses (one axis).
     state = attachFromDeck(tooled(), "p2", MIST, 1);
     expect(swing(state, IDX.pry).state.players.p2.active?.tools).toHaveLength(1);
@@ -222,9 +216,9 @@ describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () =
     const state = attachFromDeck(banded(), "p1", MIST, 1);
     const { state: after, events } = swing(state, IDX.shed);
     expect(after.players.p1.active?.tools).toEqual([]);
-    expect(find(events, "TOOLS_DISCARDED")?.seat).toBe("p1");
-    expect(find(events, "TOOLS_DISCARDED")?.actor).toBe("p1");
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(events, "TOOLS_DISCARDED")?.actor).toBe("p1");
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     // …and the number moved with it: 110 with the Band, 100 once it is discarded.
     expect(dealt(events)).toBe(100);
     expect(dealt(swing(banded(), IDX.plain).events)).toBe(110);
@@ -234,7 +228,7 @@ describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () =
     const state = attachFromDeck(banded(), "p2", MIST, 1);
     const { state: after, events } = swing(state, IDX.shed);
     expect(after.players.p1.active?.tools).toEqual([]);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     expect(dealt(events)).toBe(100);
   });
 
@@ -251,9 +245,9 @@ describe("§3 — row 72 strips *this Pokémon* and no shield can stop it", () =
       ["bare + shield", attachFromDeck(board(), "p1", MIST, 1)],
     ] as [string, GameState][]) {
       const { events } = swing(state, IDX.shed);
-      expect(find(events, "ATTACK_FAILED")?.reason, label).toBe("preDamage");
-      expect(find(events, "DAMAGE_DEALT"), label).toBeUndefined();
-      expect(find(events, "ATTACK_EFFECT_PREVENTED"), label).toBeUndefined();
+      expect(findEvent(events, "ATTACK_FAILED")?.reason, label).toBe("preDamage");
+      expect(findEvent(events, "DAMAGE_DEALT"), label).toBeUndefined();
+      expect(findEvent(events, "ATTACK_EFFECT_PREVENTED"), label).toBeUndefined();
     }
   });
 });
@@ -309,12 +303,12 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
   it("p2 attacking: the shield on p1's Active refuses p2's strip", () => {
     const refused = swing(shielded("p2"), IDX.pry, "p2");
     expect(refused.state.players.p1.active?.tools).toHaveLength(1);
-    expect(find(refused.events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p1");
+    expect(findEvent(refused.events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p1");
     expect(dealt(refused.events)).toBe(70);
 
     const admitted = swing(tooled("p2"), IDX.pry, "p2");
     expect(admitted.state.players.p1.active?.tools).toEqual([]);
-    expect(find(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(admitted.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     expect(dealt(admitted.events)).toBe(100);
   });
 
@@ -323,24 +317,24 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
     state = attachFromDeck(state, "p2", MIST, 1);
     const { state: after, events } = swing(state, IDX.shed, "p2");
     expect(after.players.p2.active?.tools).toEqual([]);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
   });
 
   it("a REFUSED sentence is still SIMULATED — no ATTACK_EFFECT_SKIPPED, either way", () => {
     for (const index of [IDX.purge, IDX.pry, IDX.shed, IDX.lock]) {
       expect(
-        find(swing(shielded(), index).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(shielded(), index).events, "ATTACK_EFFECT_SKIPPED"),
         String(index),
       ).toBeUndefined();
       expect(
-        find(swing(tooled(), index).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(tooled(), index).events, "ATTACK_EFFECT_SKIPPED"),
         String(index),
       ).toBeUndefined();
     }
   });
 
   it("THE ATTRIBUTION CONTROL — index 5's unread sentence IS still reported", () => {
-    const skipped = find(swing(shielded(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(swing(shielded(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(LOUD_SENTENCE);
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
     expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
@@ -395,7 +389,7 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       "weaknessRetype",
     ]);
     // …and the refusal event's own key set, for the same reason.
-    const prevented = find(refused.events, "ATTACK_EFFECT_PREVENTED");
+    const prevented = findEvent(refused.events, "ATTACK_EFFECT_PREVENTED");
     expect(Object.keys(prevented ?? {}).sort()).toEqual(["seat", "type", "uid"]);
   });
 

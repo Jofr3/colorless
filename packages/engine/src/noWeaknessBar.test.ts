@@ -21,19 +21,13 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SENTENCE = "During your opponent's next turn, this Pokémon has no Weakness.";
 const VEIL = 0; // fix-nowk index 0 — the sentence
 const PLAIN = 1;
 const LOUD = 2;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function count(events: GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
@@ -217,7 +211,7 @@ describe("§3 — what the install writes, and what it announces", () => {
     expect(must0(after.players.p1.active).noWeaknessTurn).toBe(3);
     // …and nothing landed on the opponent's body: the op has no defender arm.
     expect(must0(after.players.p2.active).noWeaknessTurn).toBeNull();
-    expect(find(events, "WEAKNESS_REMOVED")).toEqual({
+    expect(findEvent(events, "WEAKNESS_REMOVED")).toEqual({
       type: "WEAKNESS_REMOVED",
       seat: "p1",
       uid: activeUid(state, "p1"),
@@ -276,7 +270,7 @@ describe("§4 — the main hit: 100 becomes 50, and the control differs on ONE a
 
     it(`${installer} installs: the ×2 Lightning hit reads 50 instead of 100`, () => {
       const { swung } = exchange(installer, "fix-bolt", VEIL);
-      const row = find(swung.events, "DAMAGE_DEALT");
+      const row = findEvent(swung.events, "DAMAGE_DEALT");
       expect(row?.base).toBe(50);
       expect(row?.dealt).toBe(50);
       expect(row?.weakness).toBeNull();
@@ -288,7 +282,7 @@ describe("§4 — the main hit: 100 becomes 50, and the control differs on ONE a
       // turn, same swinger, same energy — the ONLY difference is that index 1 has no
       // printed sentence, so no bar is installed.
       const { swung } = exchange(installer, "fix-bolt", PLAIN);
-      const row = find(swung.events, "DAMAGE_DEALT");
+      const row = findEvent(swung.events, "DAMAGE_DEALT");
       expect(row?.base).toBe(50);
       expect(row?.dealt).toBe(100);
       expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -312,7 +306,7 @@ describe("§4 — the main hit: 100 becomes 50, and the control differs on ONE a
 describe("§5 — the snipe path: 40 becomes 20, through a DIFFERENT expression in a DIFFERENT file", () => {
   it("the bar nulls the sniped Active's Weakness", () => {
     const { swung } = exchange("p1", "sv01-069", VEIL);
-    const row = find(swung.events, "DAMAGE_DEALT");
+    const row = findEvent(swung.events, "DAMAGE_DEALT");
     expect(row?.base).toBe(20);
     expect(row?.dealt).toBe(20);
     expect(row?.weakness).toBeNull();
@@ -320,7 +314,7 @@ describe("§5 — the snipe path: 40 becomes 20, through a DIFFERENT expression 
 
   it("…and WITHOUT the bar the same snipe doubles — the one-axis control", () => {
     const { swung } = exchange("p1", "sv01-069", PLAIN);
-    const row = find(swung.events, "DAMAGE_DEALT");
+    const row = findEvent(swung.events, "DAMAGE_DEALT");
     expect(row?.base).toBe(20);
     expect(row?.dealt).toBe(40);
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -330,8 +324,8 @@ describe("§5 — the snipe path: 40 becomes 20, through a DIFFERENT expression 
     // The pairing that makes the two sections one claim rather than two: the same
     // install, read by both files, with numbers that cannot be confused for each
     // other (the main hit is a printed 50, the snipe a printed 20).
-    const main = find(exchange("p2", "fix-bolt", VEIL).swung.events, "DAMAGE_DEALT");
-    const snipe = find(exchange("p2", "sv01-069", VEIL).swung.events, "DAMAGE_DEALT");
+    const main = findEvent(exchange("p2", "fix-bolt", VEIL).swung.events, "DAMAGE_DEALT");
+    const snipe = findEvent(exchange("p2", "sv01-069", VEIL).swung.events, "DAMAGE_DEALT");
     expect([main?.dealt, snipe?.dealt]).toEqual([50, 20]);
     expect([main?.weakness, snipe?.weakness]).toEqual([null, null]);
   });
@@ -349,7 +343,7 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
 
     // Turn 3 — the window. The swinger hits for 50.
     const inWindow = mustApply(after, { type: "attack", seat: "p2", index: 0 });
-    expect(find(inWindow.events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(inWindow.events, "DAMAGE_DEALT")?.dealt).toBe(50);
     expect(inWindow.state.turn).toBe(4);
 
     // Turn 4 — p1 does NOT re-install (that would move the stamp and make the case
@@ -362,8 +356,11 @@ describe("§6 — turn-scoped, and a stale stamp answers nothing without being c
     // …and the very next hit lands at FULL price.
     later = attachFromDeck(later, "p2", "fix-energy", 1);
     const outside = mustApply(later, { type: "attack", seat: "p2", index: 0 });
-    expect(find(outside.events, "DAMAGE_DEALT")?.dealt).toBe(100);
-    expect(find(outside.events, "DAMAGE_DEALT")?.weakness).toEqual({ op: "multiply", amount: 2 });
+    expect(findEvent(outside.events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(outside.events, "DAMAGE_DEALT")?.weakness).toEqual({
+      op: "multiply",
+      amount: 2,
+    });
   });
 
   it("the INSTALLER's own turn is not the window — the bar never protects on the turn it lands", () => {
@@ -484,8 +481,8 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const saved = inWindow();
     expect(must0(saved.players.p1.active).noWeaknessTurn).toBe(3);
     const swung = mustApply(saved, { type: "attack", seat: "p2", index: 0 });
-    expect(find(swung.events, "DAMAGE_DEALT")?.dealt).toBe(50);
-    expect(find(swung.events, "DAMAGE_DEALT")?.weakness).toBeNull();
+    expect(findEvent(swung.events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(swung.events, "DAMAGE_DEALT")?.weakness).toBeNull();
   });
 
   it("DIRECTION 2 — a v26-SHAPED body loses the bar SILENTLY, which is the retirement reason", () => {
@@ -502,8 +499,11 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
 
     expect(installedNoWeakness(legacy, body as unknown as InPlayPokemon)).toBe(false);
     const swung = mustApply(legacy, { type: "attack", seat: "p2", index: 0 });
-    expect(find(swung.events, "DAMAGE_DEALT")?.dealt).toBe(100);
-    expect(find(swung.events, "DAMAGE_DEALT")?.weakness).toEqual({ op: "multiply", amount: 2 });
+    expect(findEvent(swung.events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(swung.events, "DAMAGE_DEALT")?.weakness).toEqual({
+      op: "multiply",
+      amount: 2,
+    });
 
     const live = must0(inWindow().players.p1.active);
     expect(Object.keys(body).sort()).not.toEqual(Object.keys(live).sort());
@@ -526,9 +526,10 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const a = mustApply(withKey, { type: "attack", seat: "p2", index: 0 });
     const b = mustApply(withoutKey, { type: "attack", seat: "p2", index: 0 });
     expect(types(a.events)).toEqual(types(b.events));
-    expect([find(a.events, "DAMAGE_DEALT")?.dealt, find(b.events, "DAMAGE_DEALT")?.dealt]).toEqual([
-      50, 100,
-    ]);
+    expect([
+      findEvent(a.events, "DAMAGE_DEALT")?.dealt,
+      findEvent(b.events, "DAMAGE_DEALT")?.dealt,
+    ]).toEqual([50, 100]);
   });
 });
 

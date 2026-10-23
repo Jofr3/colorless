@@ -20,6 +20,7 @@ import {
   setConditions,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const KO_SURVIVAL_TEXT =
@@ -51,14 +52,7 @@ const OVERKILL = 1; // 300 flat — the main hit far past lethal
 const SHOCKWAVE = 2; // spreadDamage — 120 to each benched
 const PINPOINT = 3; // placeSnipe `deals` arm — 120 to one chosen benched
 const ARROW = 4; // opponentAny — snipeActive when the pick is the Active
-const STING = 5; // 12 damage COUNTERS — the boundary control, must NOT clamp
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const STING = 5;
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -208,7 +202,7 @@ describe("write site 1 — attack.ts's main hit", () => {
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
 
     expect(done.players.p2.active?.damage).toBe(STURDY_SURVIVES_AT); // 110 — 10 HP left
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(done.players.p1.prizes).toHaveLength(6); // no Prize taken
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" }); // no ko: park
   });
@@ -223,9 +217,12 @@ describe("write site 1 — attack.ts's main hit", () => {
     });
 
     expect(done.players.p2.active?.damage).toBe(STURDY_SURVIVES_AT); // still 110
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     // …and `dealt` is NOT clamped: the attack really did deal 300.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 300, damage: STURDY_SURVIVES_AT });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      dealt: 300,
+      damage: STURDY_SURVIVES_AT,
+    });
   });
 
   it("ONE damage counter and the same body dies normally — the printed antecedent", () => {
@@ -233,7 +230,7 @@ describe("write site 1 — attack.ts's main hit", () => {
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
 
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(done.phase.kind).toBe("ko:takePrizes");
   });
 
@@ -243,12 +240,12 @@ describe("write site 1 — attack.ts's main hit", () => {
     const state = board(13, { defender: "fix-bigbody" });
     deepFreeze(state);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: OVERKILL });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
   });
 
   it("the DAMAGE_DEALT row carries `survived` and keeps `dealt` honest", () => {
     const clamped = mustApply(board(14), { type: "attack", seat: "p1", index: BLAST });
-    expect(find(clamped.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(clamped.events, "DAMAGE_DEALT")).toMatchObject({
       dealt: STURDY_HP,
       damage: STURDY_SURVIVES_AT,
       survived: true,
@@ -258,7 +255,7 @@ describe("write site 1 — attack.ts's main hit", () => {
       seat: "p1",
       index: BLAST,
     });
-    expect(find(ordinary.events, "DAMAGE_DEALT")?.survived).toBeUndefined();
+    expect(findEvent(ordinary.events, "DAMAGE_DEALT")?.survived).toBeUndefined();
   });
 });
 
@@ -277,7 +274,7 @@ describe("the order witness — survival, death, and the two recoils, on ONE boa
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
 
     expect(done.players.p2.active?.damage).toBe(STURDY_SURVIVES_AT);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(done.players.p1.prizes).toHaveLength(6);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(recoils(events).map((r) => r.amount)).toEqual([HELMET_HP]);
@@ -292,7 +289,7 @@ describe("the order witness — survival, death, and the two recoils, on ONE boa
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
 
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(recoils(events).map((r) => r.amount)).toEqual([HELMET_HP, PUNCH_HP]);
     expect(done.players.p1.active?.damage).toBe(HELMET_HP + PUNCH_HP); // 60
     expect(done.phase.kind).toBe("ko:takePrizes");
@@ -361,12 +358,12 @@ describe("write sites 2-4 — spreadDamage, placeSnipe's `deals` arm, snipeActiv
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       dealt: STURDY_HP,
       damage: STURDY_SURVIVES_AT,
       survived: true,
     });
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(benched(done, "fix-sturdy")?.damage).toBe(STURDY_SURVIVES_AT);
   });
 
@@ -386,11 +383,11 @@ describe("write sites 2-4 — spreadDamage, placeSnipe's `deals` arm, snipeActiv
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       damage: STURDY_SURVIVES_AT,
       survived: true,
     });
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(STURDY_SURVIVES_AT);
   });
 });
@@ -416,9 +413,9 @@ describe("the boundary — a PLACED COUNTER is not damage from an attack", () =>
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 120 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 120 });
     expect(all(events, "DAMAGE_DEALT")).toHaveLength(0);
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(doomedUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(doomedUid);
   });
 
   it("CHECKUP BURN Knocks Out a FULL-HP holder — §13 is not an attack", () => {
@@ -429,9 +426,9 @@ describe("the boundary — a PLACED COUNTER is not damage from an attack", () =>
     const holderUid = activeUid(state, "p2");
 
     const { events } = mustApply(state, { type: "endTurn", seat: "p2" });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "burn" });
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined(); // no attack happened
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(holderUid);
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "burn" });
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined(); // no attack happened
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(holderUid);
   });
 
   it("CHECKUP POISON Knocks Out a FULL-HP holder too", () => {
@@ -441,8 +438,8 @@ describe("the boundary — a PLACED COUNTER is not damage from an attack", () =>
     const holderUid = activeUid(state, "p2");
 
     const { events } = mustApply(state, { type: "endTurn", seat: "p2" });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "poison" });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(holderUid);
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "poison" });
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(holderUid);
   });
 });
 
@@ -457,8 +454,8 @@ describe("effectiveMaxHp and NOT the printed hp — the Bravery Charm board", ()
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
 
     expect(done.players.p2.active?.damage).toBe(120); // plain damage, not 110
-    expect(find(events, "DAMAGE_DEALT")?.survived).toBeUndefined();
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.survived).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("+50 HP also moves the SURVIVOR: a 300 leaves it on 10 of SEVENTEEN, i.e. 160 damage", () => {
@@ -471,8 +468,8 @@ describe("effectiveMaxHp and NOT the printed hp — the Bravery Charm board", ()
     });
 
     expect(done.players.p2.active?.damage).toBe(170 - REMAINING); // 160
-    expect(find(events, "DAMAGE_DEALT")?.survived).toBe(true);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.survived).toBe(true);
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
   });
 });
 
@@ -488,7 +485,7 @@ describe("§9 — an Ability-lock switches the survival OFF", () => {
     const locked = lockBoard(60, true);
     const holderUid = benchTopUid(locked, "p2", 0);
     const { events } = mustApply(locked, { type: "attack", seat: "p1", index: SHOCKWAVE });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(holderUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(holderUid);
     expect(all(events, "DAMAGE_DEALT").some((e) => e.survived === true)).toBe(false);
   });
 
@@ -498,7 +495,7 @@ describe("§9 — an Ability-lock switches the survival OFF", () => {
     // agree vacuously.
     const open = lockBoard(61, false);
     const { events } = mustApply(open, { type: "attack", seat: "p1", index: SHOCKWAVE });
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(all(events, "DAMAGE_DEALT").some((e) => e.survived === true)).toBe(true);
   });
 });
@@ -517,7 +514,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
 
   it("THE FLAG WAS EMITTED AT FOUR SITES AND NOTHING RENDERED IT — it does now", () => {
     const { state, events } = mustApply(board(70), { type: "attack", seat: "p1", index: OVERKILL });
-    expect(find(events, "DAMAGE_DEALT")?.survived).toBe(true);
+    expect(findEvent(events, "DAMAGE_DEALT")?.survived).toBe(true);
     expect(types(events)).not.toContain("KNOCKED_OUT");
     expect(render(state, events)).toContain(
       "p1: dealt 300 damage to Sturdymon · survived the Knock Out",
@@ -526,7 +523,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
 
   it("the row is filed under the ATTACKER's seat, and the wording is true there", () => {
     const { state, events } = mustApply(board(71), { type: "attack", seat: "p1", index: BLAST });
-    expect(find(events, "DAMAGE_DEALT")?.seat).toBe("p2"); // the victim's seat…
+    expect(findEvent(events, "DAMAGE_DEALT")?.seat).toBe("p2"); // the victim's seat…
     expect(render(state, events)).toContain("p1: ");
   });
 
@@ -536,7 +533,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
       seat: "p1",
       index: BLAST,
     });
-    expect(find(events, "DAMAGE_DEALT")?.survived).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.survived).toBeUndefined();
     expect(render(state, events)).not.toContain("· survived");
   });
 

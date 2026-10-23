@@ -8,7 +8,7 @@ import {
   effectiveMaxHp,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   TOOL_CLAUSE_DECK,
@@ -22,6 +22,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const ENHANCED_FANG =
@@ -39,13 +40,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function toolClause(per = 30): string {
@@ -271,7 +265,7 @@ describe("the board — Enhanced Fang through a real attack", () => {
       seat: "p1",
       index: ENHANCED_FANG_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(80);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(80);
   });
 
   it("scores 160 with Bravery Charm — the SILENT arm", () => {
@@ -287,7 +281,7 @@ describe("the board — Enhanced Fang through a real attack", () => {
       seat: "p1",
       index: ENHANCED_FANG_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(160);
   });
 
   it("scores 170 with Vitality Band — the clause and the Tool's own passive STACK", () => {
@@ -300,7 +294,7 @@ describe("the board — Enhanced Fang through a real attack", () => {
     // 80 base + 80 clause + 10 the Band's own damageBonusBeforeWR, all in the
     // same pre-W/R step. The 10 over the Charm's 160 is the whole point: a fold
     // that read the Tool's passive AS the clause would score these two the same.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(170);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(170);
   });
 
   it("is armed BY THE GAME — a real §7.4 attachTool, not surgery", () => {
@@ -320,7 +314,7 @@ describe("the board — Enhanced Fang through a real attack", () => {
       seat: "p1",
       index: ENHANCED_FANG_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(160);
   });
 
   it("reads YOUR ACTIVE — a Tool on your own BENCH arms nothing", () => {
@@ -334,7 +328,7 @@ describe("the board — Enhanced Fang through a real attack", () => {
       seat: "p1",
       index: ENHANCED_FANG_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(80);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(80);
   });
 
   it("reads YOUR side — a Tool on the DEFENDER arms nothing (both seats)", () => {
@@ -347,12 +341,12 @@ describe("the board — Enhanced Fang through a real attack", () => {
         seat,
         index: ENHANCED_FANG_INDEX,
       });
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(80);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(80);
       // …and the SAME Tool on the attacker's own Active does arm it, from the
       // same seat, so the case is not passing for want of a Tool anywhere.
       const mine = attachToolFromDeck(greedent(opened, seat), seat, "active", "sv02-173");
       expect(
-        find(
+        findEvent(
           mustApply(mine, { type: "attack", seat, index: ENHANCED_FANG_INDEX }).events,
           "DAMAGE_DEALT",
         )?.dealt,
@@ -364,14 +358,14 @@ describe("the board — Enhanced Fang through a real attack", () => {
     const opened = setActiveFromDeck(board(11), "p2", "fix-colorless-weak");
     const control = greedent(opened, "p1");
     expect(
-      find(
+      findEvent(
         mustApply(control, { type: "attack", seat: "p1", index: ENHANCED_FANG_INDEX }).events,
         "DAMAGE_DEALT",
       )?.dealt,
     ).toBe(160);
     const armed = attachToolFromDeck(control, "p1", "active", "sv02-173");
     expect(
-      find(
+      findEvent(
         mustApply(armed, { type: "attack", seat: "p1", index: ENHANCED_FANG_INDEX }).events,
         "DAMAGE_DEALT",
       )?.dealt,

@@ -6,7 +6,7 @@ import {
   opposingRetreatSurcharge,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, InPlayPokemon } from "./index";
+import type { GameState, InPlayPokemon } from "./index";
 import {
   FIXTURE_POOL,
   TRAP_TERRITORY_DECK,
@@ -22,18 +22,12 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const ABILITY_TEXT = "Your opponent's Active Pokémon's Retreat Cost is {C} more.";
 const WIRE_HANG_TEXT =
   "This attack does 30 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup on P1's open turn, then field `body` as P1's Active (the starter is
     displaced onto the bench, which a retreat can then promote). */
@@ -254,7 +248,7 @@ describe("Trap Territory — Wire Hang reads the cost it raises", () => {
     expect(effectiveRetreatCost(state, defender)).toBe(2);
 
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 60, dealt: 150 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 60, dealt: 150 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 });

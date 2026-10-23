@@ -29,6 +29,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const POWER_DRAW = "This attack does 50 more damage for each Energy attached to this Pokémon.";
@@ -70,13 +71,6 @@ const TWIN = { surge: 0, blast: 1, flip: 2 } as const;
 const OPP = { drain: 0, siphon: 1, field: 2, flare: 3 } as const;
 const BENCH = { herd: 0, crowd: 1, flank: 2 } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function board(attacker: string, defender: string, by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -103,7 +97,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(events: GameEvent[]): number | null {
-  return find(events, "DAMAGE_DEALT")?.dealt ?? null;
+  return findEvent(events, "DAMAGE_DEALT")?.dealt ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -400,7 +394,7 @@ describe("scaledAttackDamage — the MIRROR board, where all seven answers diffe
 
   it("the `×` fold DROPS the printed base — 3 × 30 is 90, not 120", () => {
     const state = mirrorBoard("fix-selfenergy");
-    const row = find(swing(state, SELF.overflow).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, SELF.overflow).events, "DAMAGE_DEALT");
     expect(FIXTURE_POOL["fix-selfenergy"]?.attacks?.[SELF.overflow]?.damage).toBe("30×");
     expect(row?.base).toBe(0);
     expect(row?.scaled).toBe(90);
@@ -410,8 +404,8 @@ describe("scaledAttackDamage — the MIRROR board, where all seven answers diffe
   it("D500 — the CATEGORY filter FOLDS on a real board, and this board cannot prove it right", () => {
     const state = mirrorBoard("fix-selfenergy");
     const { events } = swing(state, SELF.basic);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    const row = find(events, "DAMAGE_DEALT");
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(0);
     expect(row?.scaled).toBe(120);
     expect(row?.dealt).toBe(120);
@@ -420,11 +414,11 @@ describe("scaledAttackDamage — the MIRROR board, where all seven answers diffe
 
   it("the printed refusal on `fix-bothactives` stays LOUD on a real board — and D475's does NOT", () => {
     const state = mirrorBoard("fix-bothactives");
-    expect(find(swing(state, TWIN.blast).events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+    expect(findEvent(swing(state, TWIN.blast).events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       attack: "Twin Blast",
     });
     const flipped = swing(state, TWIN.flip);
-    expect(find(flipped.events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(flipped.events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     expect(flipped.events.filter((e) => e.type === "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(8);
   });
 });
@@ -433,7 +427,7 @@ describe("the FOLD's position in §8.5 — pre-W/R, witnessed and pinned", () =>
   it("the ADDITIVE fold runs BEFORE Weakness: (30 + 50) × 2 = 160, not 30 × 2 + 50", () => {
     let state = board("fix-selfenergy", "fix-pokemon-v-weak");
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
-    const row = find(swing(state, SELF.power).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, SELF.power).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.scaled).toBe(50);
     expect(row?.dealt).toBe(160);
@@ -447,7 +441,7 @@ describe("the FOLD's position in §8.5 — pre-W/R, witnessed and pinned", () =>
     let state = board("fix-bothactives", "fix-pokemon-v-weak");
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
     state = attachFromDeck(state, "p2", "fix-water-energy", 1);
-    const row = find(swing(state, TWIN.surge).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, TWIN.surge).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.scaled).toBe(60);
     expect(row?.dealt).toBe(180);
@@ -457,7 +451,7 @@ describe("the FOLD's position in §8.5 — pre-W/R, witnessed and pinned", () =>
   it("PINS THE ABSENCE: the `×` fold has ONE term, so NO ordering witness exists", () => {
     let state = board("fix-selfenergy", "fix-pokemon-v-weak");
     state = attachFromDeck(state, "p1", "fix-fire-energy", 2);
-    const row = find(swing(state, SELF.overflow).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, SELF.overflow).events, "DAMAGE_DEALT");
     expect(FIXTURE_POOL["fix-selfenergy"]?.attacks?.[SELF.overflow]?.damage).toBe("30×");
     expect(row?.base).toBe(0);
     expect(row?.scaled).toBe(60);
@@ -616,7 +610,7 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
     // The four numbers a wrong reading gives on this identical board: 280 if the
     // filter were dropped, 70 if it counted `{R}` or `{W}`, 0 if it counted a
     // category it cannot resolve. Only one of them is 140.
-    const row = find(swing(specialBoard(), SELF.special).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(specialBoard(), SELF.special).events, "DAMAGE_DEALT");
     expect(row?.scaled).toBe(140);
     expect(row?.dealt).toBe(140);
     // The `×` fold drops the printed base, exactly as index 2's does.
@@ -628,12 +622,12 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
   it("D500 — THE MINIMAL PAIR ON ONE BOARD: both fold, and they COMPLEMENT", () => {
     const state = specialBoard();
     const basic = swing(state, SELF.basic).events;
-    expect(find(basic, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(basic, "DAMAGE_DEALT")?.scaled).toBe(80);
+    expect(findEvent(basic, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(basic, "DAMAGE_DEALT")?.scaled).toBe(80);
     const special = swing(state, SELF.special).events;
-    expect(find(special, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(special, "DAMAGE_DEALT")?.scaled).toBe(140);
-    expect(find(swing(state, SELF.overflow).events, "DAMAGE_DEALT")?.scaled).toBe(4 * 30);
+    expect(findEvent(special, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(special, "DAMAGE_DEALT")?.scaled).toBe(140);
+    expect(findEvent(swing(state, SELF.overflow).events, "DAMAGE_DEALT")?.scaled).toBe(4 * 30);
   });
 
   it("the census sees it: the sentence LEAVES the residue by the READER arm", () => {

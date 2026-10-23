@@ -37,6 +37,7 @@ import {
   typedEnergy,
   walkProgram,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const OGERPON_TEXT =
@@ -223,13 +224,6 @@ function board(opts: {
 
 const BLAZE = { type: "attack", seat: "p1", index: 1 } as const;
 const LEAF = { type: "attack", seat: "p1", index: 0 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
@@ -497,7 +491,7 @@ describe("D317 §3 — OGERPON: the board condition, and BOTH arms on a real boa
       );
       // ONE hit, at base + bonus. Two hits would be two rows.
       expect(count(events, "DAMAGE_DEALT")).toBe(1);
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
       expect(done.players.p2.active?.damage).toBe(280);
       // …and the printed consequent ran: every Energy left the attacker.
       expect(done.players.p1.active?.energy).toEqual([]);
@@ -509,7 +503,7 @@ describe("D317 §3 — OGERPON: the board condition, and BOTH arms on a real boa
         BLAZE,
       );
       expect(count(events, "DAMAGE_DEALT")).toBe(1);
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 140 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 140 });
       expect(done.players.p2.active?.damage).toBe(140);
       expect(done.players.p1.active?.energy).toHaveLength(3);
     });
@@ -554,12 +548,12 @@ describe("D317 §4 — the LOUD path closed: the sentence and its '+' are both s
       board({ attacker: UNREAD, energy: FIRE, count: 1, defender: EVOLVED }),
       { type: "attack", seat: "p1", index: 0 },
     );
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       effect: UNREAD_TEXT,
       damageModifier: "+",
     });
     // …and the printed base landed the ordinary way, because nothing claimed it.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
   });
 });
 
@@ -574,7 +568,7 @@ describe("D317 §5 — §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD DIFFE
       BLAZE,
     );
     expect(count(events, "DAMAGE_DEALT")).toBe(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       dealt: 250,
       resistance: { op: "subtract", amount: 30 },
     });
@@ -587,7 +581,7 @@ describe("D317 §5 — §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD DIFFE
       board({ attacker: OGERPON, energy: FIRE, count: 3, defender: WEAK }),
       BLAZE,
     );
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       dealt: 560,
       weakness: { op: "multiply", amount: 2 },
     });
@@ -616,9 +610,9 @@ describe("D317 §6 — FLORAGATO: ONE coin decides BOTH halves", () => {
     return {
       done,
       events,
-      face: find(events, "ATTACK_EFFECT_COIN_FLIP")?.result,
+      face: findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result,
       flips: count(events, "ATTACK_EFFECT_COIN_FLIP"),
-      dealt: find(events, "DAMAGE_DEALT")?.dealt,
+      dealt: findEvent(events, "DAMAGE_DEALT")?.dealt,
       selfDamage: done.players.p1.active?.damage,
     };
   }

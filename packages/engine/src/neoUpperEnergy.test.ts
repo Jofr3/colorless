@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ANY_ENERGY, applyAction, costMet, programFor, providedEnergy } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState } from "./index";
 import {
   FIXTURE_POOL,
   NEO_UPPER_ENERGY_DECK,
@@ -12,6 +12,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  activeOf,
 } from "./testFixtures";
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — `specialEnergy.test.ts`'s
@@ -23,12 +24,6 @@ function p1Turn2(seed: number): GameState {
     { first: "p2" },
   );
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active Pokémon`);
-  return active;
 }
 
 function p1LaterTurn(seed: number): GameState {

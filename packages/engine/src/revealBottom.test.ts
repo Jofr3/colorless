@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -24,13 +25,6 @@ const ORTEGA = "sv03-190";
 const ORTEGA_ALT = "sv03-219";
 const GREAVARD = "sv01-105";
 const MIRIAM = "sv01-179";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -157,7 +151,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     });
     // The story in printed order: the play, the reveal, then the question.
     expect(types(events)).toEqual(["TRAINER_PLAYED", "HAND_REVEALED", "EFFECT_PENDING"]);
-    const revealed = find(events, "HAND_REVEALED");
+    const revealed = findEvent(events, "HAND_REVEALED");
     expect(revealed?.seat).toBe("p2");
     expect(revealed?.uids).toEqual(oppHand);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected an effect:choose park");
@@ -191,7 +185,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [picked] },
     });
-    const bottomed = find(events, "CARD_TO_BOTTOM_OF_DECK");
+    const bottomed = findEvent(events, "CARD_TO_BOTTOM_OF_DECK");
     expect(bottomed).toEqual({
       type: "CARD_TO_BOTTOM_OF_DECK",
       seat: "p2",
@@ -204,7 +198,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     expect(asked.players.p2.hand).not.toContain(picked);
     expect(census(asked, "p2")).toEqual(preCensus);
     // The reveal is NOT re-told by the resolve.
-    expect(find(events, "HAND_REVEALED")).toBeUndefined();
+    expect(findEvent(events, "HAND_REVEALED")).toBeUndefined();
     // The gated draw parks for the OPPONENT: seat stays the controller (the
     // turn is still theirs), answerer names who may speak.
     if (asked.phase.kind !== "effect:choose") throw new Error("expected the mayDraw park");
@@ -215,7 +209,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     expect(prompt.count).toBe(1);
     // The prompt speaks to its answerer — second person, across the table.
     expect(prompt.note).toBe("You may draw a card.");
-    expect(find(events, "EFFECT_PENDING")?.seat).toBe("p2");
+    expect(findEvent(events, "EFFECT_PENDING")?.seat).toBe("p2");
   });
 
   it("enforces the answerer BOTH directions — p2 cannot pick, p1 cannot answer the may", () => {
@@ -264,7 +258,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p2",
       choice: { kind: "mayDraw", draw: true },
     });
-    const drew = find(events, "CARDS_DRAWN");
+    const drew = findEvent(events, "CARDS_DRAWN");
     expect(drew?.seat).toBe("p2");
     expect(drew?.reason).toBe("effect");
     expect(drew?.uids).toEqual([topOfP2]);
@@ -315,7 +309,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [picked] },
     });
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")?.uid).toBe(picked);
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")?.uid).toBe(picked);
     expect(asked.players.p2.deck).toEqual([picked]);
     // A one-card deck is still a real question — the may parks.
     if (asked.phase.kind !== "effect:choose") throw new Error("expected the mayDraw park");
@@ -325,7 +319,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p2",
       choice: { kind: "mayDraw", draw: true },
     });
-    expect(find(resolved, "CARDS_DRAWN")?.uids).toEqual([picked]);
+    expect(findEvent(resolved, "CARDS_DRAWN")?.uids).toEqual([picked]);
     expect(drawn.players.p2.hand).toContain(picked);
     expect(drawn.players.p2.deck).toEqual([]);
   });
@@ -343,7 +337,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     const top = state.players.p2.deck.slice(0, 3);
     const drawn = resumeProgram(state, result.cont, { kind: "mayDraw", draw: true }, events);
     if (drawn.kind !== "done") throw new Error("expected the program to finish");
-    expect(find(events, "CARDS_DRAWN")?.uids).toEqual(top);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toEqual(top);
   });
 
   it("reads the op's OWN slot — a record filed under `paid` is not read as `moved`", () => {
@@ -411,9 +405,9 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       "CARD_TO_BOTTOM_OF_DECK",
       "EFFECT_PENDING",
     ]);
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeDefined();
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")).toBeDefined();
     expect(asked.players.p2.hand).toHaveLength(2);
-    expect(asked.players.p2.deck.at(-1)).toBe(find(events, "CARD_TO_BOTTOM_OF_DECK")?.uid);
+    expect(asked.players.p2.deck.at(-1)).toBe(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")?.uid);
     if (asked.phase.kind !== "effect:choose") throw new Error("expected the mayDraw park");
     expect(asked.phase.prompt.kind).toBe("mayDraw");
     expect(asked.phase.answerer).toBe("p2");
@@ -461,7 +455,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       uid: handUid(state, "p1", ORTEGA),
     });
     // One candidate ⇒ forced ⇒ it resolves straight through to the may.
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeDefined();
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")).toBeDefined();
     expect(done.players.p2.hand).toEqual([]);
   });
 
@@ -512,7 +506,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [picked] },
     });
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
     expect(after.players.p2.deck).toEqual(crafted.players.p2.deck);
     expect(after.players.p2.discard).toContain(picked);
     expect(census(after, "p2")).toEqual(before);
@@ -541,7 +535,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     if (result.kind !== "parked") throw new Error("expected the pick park");
     const resumed = resumeProgram(state, result.cont, { kind: "cards", uids: [ghost] }, events);
     if (resumed.kind !== "done") throw new Error("a dropped uid must not park the may");
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
   });
 
   it("files an EMPTY record on a whiff — an honest no, not a missing key", () => {
@@ -568,7 +562,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
       seat: "p1",
       uid: handUid(state, "p1", ORTEGA_ALT),
     });
-    expect(find(events, "HAND_REVEALED")?.seat).toBe("p2");
+    expect(findEvent(events, "HAND_REVEALED")?.seat).toBe("p2");
     expect(parked.phase.kind).toBe("effect:choose");
   });
 
@@ -682,7 +676,7 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     const state = strollBoard([ORTEGA, MIRIAM, "fix-item", "fix-grass-energy"]);
     const oppHand = [...state.players.p2.hand];
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected an effect:choose park");
     expect(parked.phase.resumeTail).toBe(true);
     expect(parked.phase.answerer).toBeUndefined();
@@ -701,10 +695,10 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [picked] },
     });
-    expect(find(resolved, "CARD_TO_BOTTOM_OF_DECK")?.uid).toBe(picked);
+    expect(findEvent(resolved, "CARD_TO_BOTTOM_OF_DECK")?.uid).toBe(picked);
     expect(done.players.p2.deck.at(-1)).toBe(picked);
     // The epilogue drained: the attack ended P1's turn (§5.3).
-    expect(find(resolved, "TURN_ENDED")).toBeDefined();
+    expect(findEvent(resolved, "TURN_ENDED")).toBeDefined();
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
@@ -712,9 +706,9 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     const state = strollBoard(["fix-item", "fix-grass-energy", "fix-basic-1"]);
     const oppHand = [...state.players.p2.hand];
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
-    expect(find(events, "TURN_ENDED")).toBeDefined();
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
+    expect(findEvent(events, "TURN_ENDED")).toBeDefined();
     expect(done.players.p2.hand.slice(0, oppHand.length)).toEqual(oppHand);
     expect(done.players.p2.hand).toHaveLength(oppHand.length + 1);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -723,14 +717,14 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
   it("auto-resolves a lone Supporter class — two copies of one print ask nothing", () => {
     const state = strollBoard([MIRIAM, MIRIAM, "fix-item"]);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const bottomed = find(events, "CARD_TO_BOTTOM_OF_DECK");
+    const bottomed = findEvent(events, "CARD_TO_BOTTOM_OF_DECK");
     expect(bottomed).toBeDefined();
     expect(done.players.p2.deck.at(-1)).toBe(bottomed?.uid);
     // One Miriam went under; its copy stayed in hand (the fix-item and P2's
     // turn-start draw are the rest). No park happened.
     const miriams = done.players.p2.hand.filter((u) => done.cardIdByUid[u] === MIRIAM);
     expect(miriams).toHaveLength(1);
-    expect(find(events, "TURN_ENDED")).toBeDefined();
+    expect(findEvent(events, "TURN_ENDED")).toBeDefined();
   });
 
   it("attacks legally into an EMPTY hand — the reveal is honest about nothing", () => {
@@ -738,8 +732,8 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     // whiff); the reveal event carries zero uids, the (0 cards) precedent.
     const state = strollBoard([]);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual([]);
-    expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual([]);
+    expect(findEvent(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
@@ -750,8 +744,8 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     // {P}{C}{C} — the two {C} from strollBoard plus a {P} provider.
     state = attachFromDeck(state, "p1", "fix-psychic-energy", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "HAND_REVEALED")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.base).toBe(30);
+    expect(findEvent(events, "HAND_REVEALED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(30);
   });
 
   it("emits ONE reveal per attack — the park did not double-tell it", () => {

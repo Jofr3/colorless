@@ -7,7 +7,15 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, typedEnergy, must, mustApply as run } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  typedEnergy,
+  must,
+  mustApply as run,
+  effectPrompt,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const WAKE = "sv06-063";
@@ -212,12 +220,6 @@ const active = (state: GameState, seat: Seat): InPlayPokemon =>
   state.players[seat].active as InPlayPokemon;
 const top = (body: InPlayPokemon): string => body.stack[body.stack.length - 1] ?? "";
 
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
-
 function sliced(board: GameState, answer: GameAction): { state: GameState; events: GameEvent[] } {
   const parked = run(board, slice);
   return run(parked.state, answer);
@@ -242,7 +244,7 @@ describe("D579 Walking Wake §1 — the registry row, and the sentence stays REG
 describe('D579 Walking Wake §2 — ALWAYS PARKED over ONE candidate, `upTo: 9`, `takeVerb: "put"`', () => {
   it("the lone candidate does NOT auto-resolve the quantity: the prompt is the whole question", () => {
     const { state } = run(table({ p1: wake(), p2: { id: WALL } }), slice);
-    expect(prompt(state)).toEqual({
+    expect(effectPrompt(state)).toEqual({
       kind: "choosePokemon",
       candidates: [ACTIVE_REF],
       upTo: 9,

@@ -20,7 +20,7 @@ import {
 } from "./effects";
 import type { CardFilter, CountSeat } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { countPokemonInPlay } from "./interpreter";
 import {
   FIXTURE_POOL,
@@ -33,6 +33,8 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  activeOf,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -74,19 +76,6 @@ const ANY_POKEMON: CardFilter = { kind: "anyPokemon" };
     board is placed by surgery, so a seed table would describe a shuffle rather than a
     rule. */
 const SEED = 1;
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const body = state.players[seat].active;
-  if (body === null) throw new Error(`${seat} has no Active`);
-  return body;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function bodiesOf(state: GameState, seat: Seat) {
   const side = state.players[seat];
@@ -139,7 +128,7 @@ function swing(state: GameState, seat: Seat = "p1") {
 }
 
 function dealt(state: GameState, seat: Seat = "p1"): number | undefined {
-  return find(swing(state, seat).events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(swing(state, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

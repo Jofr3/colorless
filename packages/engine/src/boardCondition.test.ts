@@ -14,14 +14,8 @@ import {
   setBenchDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -192,7 +186,7 @@ describe("M5 op-slice — Fighting Au Lait (the printed trainerPlayableIf gate)"
       choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } },
     });
     expect(resolved.state.players.p1.bench[0]?.damage).toBe(30);
-    expect(find(resolved.events, "HEALED")?.amount).toBe(60);
+    expect(findEvent(resolved.events, "HEALED")?.amount).toBe(60);
     // The played card moved hand → discard; nothing was created or destroyed.
     expect(seatUids(resolved.state, "p1")).toEqual(before);
   });
@@ -207,7 +201,7 @@ describe("M5 op-slice — Fighting Au Lait (the printed trainerPlayableIf gate)"
       choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } },
     });
     expect(resolved.state.players.p1.bench[0]?.damage).toBe(0);
-    expect(find(resolved.events, "HEALED")?.amount).toBe(30);
+    expect(findEvent(resolved.events, "HEALED")?.amount).toBe(30);
   });
 });
 
@@ -262,7 +256,7 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
     // The Grusha itself is put in hand then discarded on play, so the draw runs
     // against an EMPTY hand: 7 cards drawn, hand size exactly 7.
     expect(handCount(played.state, "p1")).toBe(7);
-    expect(find(played.events, "CARDS_DRAWN")?.uids).toHaveLength(7);
+    expect(findEvent(played.events, "CARDS_DRAWN")?.uids).toHaveLength(7);
   });
 
   it("draws until 5 instead when ANY of your Pokémon has Energy — Active or Bench", () => {
@@ -270,7 +264,7 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
     for (const spot of ["active", 0] as const) {
       const played = play(attachEnergy(base, "p1", spot), "sv02-184");
       expect(handCount(played.state, "p1")).toBe(5);
-      expect(find(played.events, "CARDS_DRAWN")?.uids).toHaveLength(5);
+      expect(findEvent(played.events, "CARDS_DRAWN")?.uids).toHaveLength(5);
     }
   });
 
@@ -362,7 +356,7 @@ describe("M5 op-slice — the gate mechanism itself", () => {
       seat: "p1",
       choice: { kind: "pokemon", ref: { seat: "p2", spot: { spot: "bench", index: 0 } } },
     });
-    expect(find(resolved.events, "POKEMON_SWITCHED")).toBeDefined();
+    expect(findEvent(resolved.events, "POKEMON_SWITCHED")).toBeDefined();
   });
 
   it("evaluates AS OF the gate, splices the arm to the FRONT, and keeps the tail", () => {
@@ -372,7 +366,7 @@ describe("M5 op-slice — the gate mechanism itself", () => {
     const played = play(state, "fix-gateorder");
 
     expect(findAll(played.events, "CARDS_DRAWN").map((d) => d.uids.length)).toEqual([1, 4, 2]);
-    expect(find(played.events, "ENERGY_ATTACHED")).toBeDefined();
+    expect(findEvent(played.events, "ENERGY_ATTACHED")).toBeDefined();
     // Hand: the energy left it for the Active, the Item left it for the discard.
     expect(handCount(played.state, "p1")).toBe(before - 1 + 7);
     expect(state.players.p1.active?.energy ?? []).toHaveLength(0);

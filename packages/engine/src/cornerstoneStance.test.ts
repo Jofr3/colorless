@@ -3,7 +3,7 @@ import { hasPrintedAbility } from "./cards";
 import { passivesOf } from "./continuous";
 import { programFor } from "./index";
 import type { Card } from "@colorless/schema";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   CORNERSTONE_DECK,
   FIXTURE_POOL,
@@ -13,20 +13,14 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const;
 const spread = { type: "attack", seat: "p1", index: 1 } as const;
 /** fix-attacker-ex's own Spread Shot sits at index 1 too — the negative twin. */
 const exSpread = { type: "attack", seat: "p1", index: 1 } as const;
-const joust = { type: "attack", seat: "p1", index: 0 } as const; // Klefki — {C}, 10
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const joust = { type: "attack", seat: "p1", index: 0 } as const;
 
 /** Setup, then field the holder in P2's ACTIVE spot and hand the turn to P1, who
     fields `attackerId` with one {C} attached (the main-hit path). */
@@ -125,7 +119,11 @@ describe("Cornerstone Stance — the main hit (attack.ts, read site 1 of 4)", ()
 
     const { events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("an ex attacker with NO Ability deals full damage — the gate is not ex/V", () => {
@@ -134,8 +132,8 @@ describe("Cornerstone Stance — the main hit (attack.ts, read site 1 of 4)", ()
 
     const { events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
   });
 
   it("a plain attacker with neither an Ability nor a rule box deals full damage", () => {
@@ -144,7 +142,7 @@ describe("Cornerstone Stance — the main hit (attack.ts, read site 1 of 4)", ()
 
     const { events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
   });
 });
 
@@ -189,7 +187,7 @@ describe("Cornerstone Stance — the snipe arms (interpreter.ts, read sites 3 an
 
     const { state: done, events } = snipeAt(state, 2, "active");
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -213,7 +211,7 @@ describe("Cornerstone Stance — §9, in both directions on one gate", () => {
 
     const { state: done, events } = mustApply(state, joust);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
     expect(done.players.p2.active?.damage).toBe(10);
   });
 
@@ -236,7 +234,7 @@ describe("Cornerstone Stance — §9, in both directions on one gate", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 });

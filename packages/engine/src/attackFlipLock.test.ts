@@ -24,6 +24,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const S176 =
@@ -87,13 +88,6 @@ const DECK = deckOf({
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260926;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -159,7 +153,7 @@ const pass = (state: GameState, seat: Seat): GameState =>
 function installed() {
   const start = ready();
   const { state, events } = attack(start, APPLY);
-  if (find(events, "ATTACK_LOCKED") === undefined) throw new Error("Apply installed nothing");
+  if (findEvent(events, "ATTACK_LOCKED") === undefined) throw new Error("Apply installed nothing");
   return { start, state, events };
 }
 
@@ -275,7 +269,7 @@ describe("§2 — the install stamps the DEFENDER at T+1 and nothing else", () =
     expect(target.attackFlipLockTurn).toBe(4);
     expect(target.attackLockedTurn).toBeNull();
     expect(state.players.p1.active?.attackFlipLockTurn).toBeNull();
-    const row = find(events, "ATTACK_LOCKED");
+    const row = findEvent(events, "ATTACK_LOCKED");
     expect(row).toEqual({
       type: "ATTACK_LOCKED",
       seat: "p2",
@@ -311,9 +305,12 @@ describe("§3 — the locked player flips at the declaration", () => {
   it("HEADS: the attack resolves normally", () => {
     const window = withFaces(installed().state, ["heads"]);
     const { events } = attack(window, JAB, "p2");
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toMatchObject({ seat: "p2", result: "heads" });
-    expect(find(events, "ATTACK_FAILED")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")).toMatchObject({
+      seat: "p2",
+      result: "heads",
+    });
+    expect(findEvent(events, "ATTACK_FAILED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("TAILS: the attack doesn't happen — no damage, no counters — and the turn ENDS", () => {
@@ -322,14 +319,17 @@ describe("§3 — the locked player flips at the declaration", () => {
     // Apply's own printed 10 already sits on the target from turn 3.
     const p2Damage = body(window.players.p2.active).damage;
     const { state, events } = attack(window, JAB, "p2");
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toMatchObject({ seat: "p2", result: "tails" });
-    expect(find(events, "ATTACK_FAILED")).toMatchObject({ seat: "p2", reason: "flipLock" });
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")).toMatchObject({
+      seat: "p2",
+      result: "tails",
+    });
+    expect(findEvent(events, "ATTACK_FAILED")).toMatchObject({ seat: "p2", reason: "flipLock" });
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "COUNTERS_PLACED")).toBeUndefined();
     expect(body(state.players.p1.active).damage).toBe(p1Damage);
     expect(body(state.players.p2.active).damage).toBe(p2Damage);
     // The turn ended: P1's turn 5 has started.
-    expect(find(events, "TURN_ENDED")).toMatchObject({ turn: 4, seat: "p2" });
+    expect(findEvent(events, "TURN_ENDED")).toMatchObject({ turn: 4, seat: "p2" });
     expect(state.turn).toBe(5);
   });
 
@@ -337,7 +337,7 @@ describe("§3 — the locked player flips at the declaration", () => {
     const window = withFaces(installed().state, ["tails"]);
     const handBefore = window.players.p2.hand.length;
     const { state, events } = attack(window, NAP, "p2");
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("flipLock");
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("flipLock");
     expect(all(events, "CARDS_DRAWN").filter((e) => e.seat === "p2")).toEqual([]);
     expect(state.players.p2.hand).toHaveLength(handBefore);
     expect(events.map((e) => e.type)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -362,8 +362,8 @@ describe("§4 — live on T+1 only", () => {
     expect(attackFlipLocked(later, target)).toBe(false); // …and no longer answers
     const cursor = later.rngState;
     const { events } = attack(later, JAB, "p2");
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(cursor).toBe(later.rngState);
   });
 });
@@ -376,7 +376,7 @@ describe("§5 — no lock, no coin", () => {
   it("an UNLOCKED declaration leaves the rng cursor where it was", () => {
     const start = pass(ready(), "p1"); // P2's turn 4, nothing installed
     const { state, events } = attack(start, NAP, "p2");
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
     // Nap draws a card and flips nothing, and the turn-end Checkup flips nothing on
     // a board with no Special Condition, so the cursor is untouched end to end.
     expect(state.rngState).toBe(start.rngState);
@@ -397,7 +397,7 @@ describe("§6 — stacked with Confusion, in the rulebook's order", () => {
       "ATTACK_FLIP_LOCK_CHECK",
     ]);
     expect(all(events, "ATTACK_FAILED").map((e) => e.reason)).toEqual(["flipLock"]);
-    expect(find(events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(events, "COUNTERS_PLACED")).toBeUndefined();
     // Only Apply's printed 10 from turn 3 — no Confusion self-hit landed.
     expect(body(state.players.p2.active).damage).toBe(body(window.players.p2.active).damage);
     // Exactly ONE coin was drawn — the lock's; the Confusion check was never reached.
@@ -409,10 +409,10 @@ describe("§6 — stacked with Confusion, in the rulebook's order", () => {
     const { state, events } = attack(window, JAB, "p2");
     const order = events.map((e) => e.type);
     expect(order.indexOf("ATTACK_FLIP_LOCK_CHECK")).toBeLessThan(order.indexOf("CONFUSION_CHECK"));
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")?.result).toBe("heads");
-    expect(find(events, "CONFUSION_CHECK")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")?.result).toBe("heads");
+    expect(findEvent(events, "CONFUSION_CHECK")?.result).toBe("tails");
     expect(all(events, "ATTACK_FAILED").map((e) => e.reason)).toEqual(["confusion"]);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ source: "confusion", amount: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ source: "confusion", amount: 30 });
     expect(body(state.players.p2.active).damage).toBe(body(window.players.p2.active).damage + 30);
     expect(state.rngState).toBe(advanced(window.rngState, 2));
   });
@@ -424,8 +424,8 @@ describe("§6 — stacked with Confusion, in the rulebook's order", () => {
       "ATTACK_FLIP_LOCK_CHECK",
       "CONFUSION_CHECK",
     ]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
-    expect(find(events, "ATTACK_FAILED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "ATTACK_FAILED")).toBeUndefined();
   });
 
   it("an UNLOCKED Confused body's rng sequence is byte-identical to before (one flip)", () => {
@@ -434,7 +434,7 @@ describe("§6 — stacked with Confusion, in the rulebook's order", () => {
     expect(events.map((e) => e.type).filter((t) => t.endsWith("_CHECK"))).toEqual([
       "CONFUSION_CHECK",
     ]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -539,8 +539,8 @@ describe("§9 — retreat, a Switch, evolution and a forced switch each clear it
     });
     expect(body(state.players.p2.active).attackFlipLockTurn).toBeNull();
     const { events } = attack(state, JAB, "p2");
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("FORCED switch (`switchInto` through a gust — constructed: no printed line reaches it inside the window)", () => {
@@ -581,8 +581,8 @@ describe("§10 — a §11 shield refuses the install", () => {
   it("Mist Energy on the Defending Pokémon: refused, announced, nothing written", () => {
     const start = attachFromDeck(ready(), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, APPLY);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
-    expect(find(events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeUndefined();
     expect(body(state.players.p2.active).attackFlipLockTurn).toBeNull();
   });
 });
@@ -598,7 +598,7 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
       "d547-target must flip a coin to attack next turn — tails, the attack doesn't happen";
     expect(render(events, state)).toContainEqual({ who: "p2", text });
     expect(render(events, state).some((r) => r.text.includes("can't attack"))).toBe(false);
-    const row = find(events, "ATTACK_LOCKED");
+    const row = findEvent(events, "ATTACK_LOCKED");
     expect(render(row === undefined ? [] : [{ ...row, seat: "p1" }], state)).toEqual([
       { who: "p1", text },
     ]);
@@ -615,7 +615,7 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
 
   it("the plain lock's row is unchanged", () => {
     const { state, events } = installed();
-    const uid = find(events, "ATTACK_LOCKED")?.uid ?? "";
+    const uid = findEvent(events, "ATTACK_LOCKED")?.uid ?? "";
     expect(render([{ type: "ATTACK_LOCKED", seat: "p2", uid }], state)).toEqual([
       { who: "p2", text: "d547-target can't attack next turn" },
     ]);
@@ -632,7 +632,7 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     const bytes = JSON.stringify(window);
     expect(bytes.includes('"attackFlipLockTurn":4')).toBe(true);
     const revived = withFaces(JSON.parse(bytes) as GameState, ["tails"]);
-    expect(find(attack(revived, JAB, "p2").events, "ATTACK_FAILED")?.reason).toBe("flipLock");
+    expect(findEvent(attack(revived, JAB, "p2").events, "ATTACK_FAILED")?.reason).toBe("flipLock");
   });
 
   it("v30-SHAPED body (the key genuinely ABSENT): the gate silently never flips", () => {
@@ -643,7 +643,7 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     expect("attackFlipLockTurn" in target).toBe(false);
     const legacy = withFaces(revived, ["tails"]);
     const { events } = attack(legacy, JAB, "p2");
-    expect(find(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "ATTACK_FLIP_LOCK_CHECK")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });

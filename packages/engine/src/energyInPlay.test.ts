@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   ENERGY_IN_PLAY_DECK,
   FIXTURE_POOL,
@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const DARKFALL = "If you have at least 3 {D} Energy in play, this attack does 50 more damage.";
@@ -35,13 +36,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function inPlayClause(count: number, token: string, per = 30): string {
@@ -255,7 +249,7 @@ describe("Darkfall — the threshold on a real board", () => {
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 20, dealt: 20 });
     expect(dealt?.scaled).toBeUndefined(); // `scaled` is omitted at 0
   });
@@ -264,7 +258,7 @@ describe("Darkfall — the threshold on a real board", () => {
     const state = benchDark(absol(board(2), "p1"), "p1", 2);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(2);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("at THREE it pays — 20 + 50 = 70, from a Bench the attacker never touched", () => {
@@ -273,7 +267,7 @@ describe("Darkfall — the threshold on a real board", () => {
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       scaled: 50,
       weakness: null,
@@ -286,7 +280,7 @@ describe("Darkfall — the threshold on a real board", () => {
     const state = benchDark(absol(board(4), "p1"), "p1", 4);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("folds ACROSS zones — one on the Active and two on the Bench is three", () => {
@@ -302,7 +296,7 @@ describe("Darkfall — the threshold on a real board", () => {
     expect(state.players.p1.active?.energy).toHaveLength(2);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("counts the attacker's OWN Energy too — three on Absol and an empty Bench", () => {
@@ -318,7 +312,7 @@ describe("Darkfall — the threshold on a real board", () => {
     expect(state.players.p1.bench[0]?.energy).toHaveLength(0);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("reads YOUR side — the opponent's three Darkness score nothing", () => {
@@ -328,19 +322,19 @@ describe("Darkfall — the threshold on a real board", () => {
     expect(countEnergyInPlay(state, "p2", "Darkness")).toBe(3);
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("runs identically from the OTHER seat", () => {
     const state = benchDark(absol(boardP2(8), "p2"), "p2", 3);
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 50, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 50, dealt: 70 });
   });
 
   it("and the seat asymmetry mirrors too", () => {
     const state = benchDark(absol(boardP2(9), "p2"), "p1", 3);
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("folds BEFORE Weakness — (20 + 50) × 2 = 140, against the control's 40", () => {
@@ -350,7 +344,7 @@ describe("Darkfall — the threshold on a real board", () => {
       3,
     );
     const { events } = mustApply(armed, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       scaled: 50,
       weakness: { op: "multiply", amount: 2 },
@@ -359,7 +353,7 @@ describe("Darkfall — the threshold on a real board", () => {
 
     const control = absol(setActiveFromDeck(board(11), "p2", "fix-darkness-weak"), "p1");
     const { events: controlEvents } = mustApply(control, { type: "attack", seat: "p1", index: 0 });
-    expect(find(controlEvents, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(controlEvents, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       weakness: { op: "multiply", amount: 2 },
       dealt: 40,
@@ -389,7 +383,7 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
     );
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("a SECOND Luminous on the same body DISARMS it — one more card, less damage", () => {
@@ -406,7 +400,7 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
     // The attack still resolves — the demotion is about what COUNTS, not about
     // whether the cost is payable, and Darkfall's {C} was paid by fix-energy.
     expect(types(events)).toContain("DAMAGE_DEALT");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("demotion is PER POKÉMON — two Luminous on two bodies both count", () => {
@@ -420,7 +414,7 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
     const withBasic = benchDark(state, "p1", 1);
     expect(countEnergyInPlay(withBasic, "p1", "Darkness")).toBe(3);
     const { events } = mustApply(withBasic, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("counts CARDS, not units of provision", () => {
@@ -431,7 +425,7 @@ describe("PROVISION, not the printed name — D118's predicate folded over the b
     expect(countEnergyInPlay(state, "p1", "Darkness")).toBe(1);
     expect(countEnergyInPlay(state, "p1", "Fire")).toBe(1); // the same one card, another type
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 });
 

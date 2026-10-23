@@ -16,14 +16,8 @@ import {
   setActiveFromDeck,
   toDeckTop,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -179,7 +173,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     // …and the trailing shuffleDeck op hid them again. Nothing was discarded:
     // "shuffle the other cards back" is not this op's business.
     expect(types(events)).toContain("SHUFFLE");
-    expect(find(events, "DECK_TOP_DISCARDED")).toBeUndefined();
+    expect(findEvent(events, "DECK_TOP_DISCARDED")).toBeUndefined();
     const attached = findAll(events, "ENERGY_ATTACHED");
     expect(attached).toHaveLength(2);
     expect(attached[0]).toMatchObject({
@@ -230,7 +224,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     expect(done.players.p1.bench.every((p) => p.energy.length === 0)).toBe(true);
     for (const rest of window) expect(done.players.p1.deck).toContain(rest);
     expect(types(events)).toContain("SHUFFLE");
-    expect(find(events, "ENERGY_ATTACHED")).toBeUndefined();
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeUndefined();
   });
 
   it("Electric Generator with no Benched {L} Pokémon is STILL playable — it shuffles", () => {
@@ -245,8 +239,8 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
       uid: handUid(state, "p1", "sv01-170"),
     });
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_ATTACHED")).toBeUndefined();
-    expect(find(events, "DECK_TOP_DISCARDED")).toBeUndefined();
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeUndefined();
+    expect(findEvent(events, "DECK_TOP_DISCARDED")).toBeUndefined();
     expect(types(events)).toContain("SHUFFLE");
     // Nothing left the deck — every looked-at card is still in there.
     for (const uid of top) expect(after.players.p1.deck).toContain(uid);
@@ -268,7 +262,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     });
     expect(after.phase.kind).toBe("turn:action");
     expect(types(events)).toContain("SHUFFLE");
-    expect(find(events, "ENERGY_ATTACHED")).toBeUndefined();
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeUndefined();
   });
 
   it("Electric Generator's cap follows the SHORTER of the print and the window", () => {
@@ -335,7 +329,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     expect(done.players.p1.active?.energy).toEqual([energy]);
     // The two it did NOT attach left the deck for the discard pile, in window
     // (deck) order — and the 4th card is now the top, untouched.
-    const discarded = find(events, "DECK_TOP_DISCARDED");
+    const discarded = findEvent(events, "DECK_TOP_DISCARDED");
     expect(discarded).toMatchObject({ seat: "p1" });
     expect(discarded?.uids).toEqual([special, item]);
     expect(done.players.p1.discard.slice(discardBefore)).toEqual([special, item]);
@@ -382,8 +376,8 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     const { state: after, events } = mustApply(state, triHowl);
 
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_ATTACHED")).toBeUndefined();
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toEqual(window);
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeUndefined();
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toEqual(window);
     expect(after.players.p1.discard.slice(-3)).toEqual(window);
     expect(deckAt(after, "p1", 0)).toBe(fourth);
   });
@@ -397,8 +391,8 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
       seat: "p1",
       choice: { kind: "attachCards", assignments: [] },
     });
-    expect(find(events, "ENERGY_ATTACHED")).toBeUndefined();
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toEqual(window);
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeUndefined();
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toEqual(window);
     expect(done.players.p1.discard.slice(-3)).toEqual(window);
   });
 
@@ -515,7 +509,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
           ],
         } as never,
       });
-      expect(find(events, "ENERGY_ATTACHED")?.target).toEqual({ spot: "bench", index: 0 });
+      expect(findEvent(events, "ENERGY_ATTACHED")?.target).toEqual({ spot: "bench", index: 0 });
     });
   });
 

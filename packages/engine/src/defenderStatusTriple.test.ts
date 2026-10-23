@@ -13,6 +13,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const OXFORD = "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.";
@@ -38,13 +39,6 @@ const RECORDED_REFUSAL =
   "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -368,26 +362,26 @@ describe("§4 — the board: three conditions land, and all three are observable
 describe("§5 — the printed text stops being flagged, and the loud path still works", () => {
   it("neither printed index reports a skipped effect any more", () => {
     for (const index of [0, 1]) {
-      expect(find(swing(board(), index).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(findEvent(swing(board(), index).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     }
   });
 
   it("D464 — index 2 stops being flagged too, because D464 built it", () => {
-    expect(find(swing(board(), 2).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(swing(board(), 2).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("THE ATTRIBUTION CONTROL, RE-POINTED: three REAL printings are still flagged (D214)", () => {
     expect(DOT_ANCHOR_TRIO).toEqual([]);
     for (const text of [...DOT_ANCHOR_TRIO, RECORDED_REFUSAL]) {
       const doctored = withEffect(board(), text);
-      expect(find(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
+      expect(findEvent(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
   });
 
   it("…and a CONSTRUCTED colliding list is announced too — the refusal is loud", () => {
     for (const text of COLLISIONS) {
       const doctored = withEffect(board(), text);
-      expect(find(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
+      expect(findEvent(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
   });
 });

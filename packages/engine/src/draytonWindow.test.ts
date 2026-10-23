@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   DRAYTON_WINDOW_DECK,
@@ -10,16 +10,10 @@ import {
   handUid,
   mustApply,
   toDeckTop,
+  findEvent,
 } from "./testFixtures";
 
 const DRAYTON_IDS = ["sv08-174", "sv08-232", "sv08-244", "sv08.5-172"] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** The uid of the deck card at `index` (0 = top) in p1's deck. */
 function deckAt(state: GameState, index: number): string {
@@ -170,7 +164,7 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
     expect(done.players.p1.deck).not.toContain(pokemon);
     expect(done.players.p1.deck).not.toContain(trainer);
     // `reveal: true` is the printed "you may reveal", so both are named.
-    const revealed = find(events, "DECK_TOP_REVEALED");
+    const revealed = findEvent(events, "DECK_TOP_REVEALED");
     expect(revealed?.reveal).toBe(true);
     expect(new Set(revealed?.uids)).toEqual(new Set([pokemon, trainer]));
   });
@@ -264,10 +258,10 @@ describe("D332 — Drayton, the double-filter lookAtTopN window", () => {
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.hand.length).toBe(handBefore);
     expect(done.players.p1.deck.length).toBe(deckBefore);
-    expect(find(events, "DECK_TOP_REVEALED")?.uids).toEqual([]);
+    expect(findEvent(events, "DECK_TOP_REVEALED")?.uids).toEqual([]);
     // The printed "Shuffle the other cards back" is the trailing op, and a
     // decline is not a whiff: it fires either way.
-    expect(find(events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(events, "SHUFFLE")).toBeDefined();
   });
 
   it("THE ATTRIBUTION CONTROL — Great Ball on the SAME seeded window caps at 1 and offers only Pokémon", () => {

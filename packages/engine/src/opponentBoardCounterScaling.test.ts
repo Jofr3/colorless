@@ -8,7 +8,7 @@ import {
   deriveAttackDamagePenalty,
 } from "./effects";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -22,6 +22,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,13 +84,6 @@ const SELF = 2;
 const PLAIN = 3;
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -276,7 +270,7 @@ describe("§2 — `deriveAttackDamageBonus` reads it as `damageCountersOnOpponen
 describe("§3 — the additive fold on real boards: base KEPT, `per × counters` added", () => {
   it("the MIXED board deals 100 — base 10 + 9 counters × 10", () => {
     const { state, events } = swing(mixed(), BOARD);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
     // …and the damage really landed: the defender was on 50 and is now on 150.
     expect(state.players.p2.active?.damage).toBe(150);
@@ -286,7 +280,7 @@ describe("§3 — the additive fold on real boards: base KEPT, `per × counters`
     // The whole point of the two 15s and the 40/70 on the attacker's own side. Each
     // line is what `dealt` would have been under one wrong implementation; the
     // assertion is that the shipped one is none of them.
-    const dealt = find(swing(mixed(), BOARD).events, "DAMAGE_DEALT")?.dealt;
+    const dealt = findEvent(swing(mixed(), BOARD).events, "DAMAGE_DEALT")?.dealt;
     expect(dealt).toBe(100); //          9 counters — the defender's whole board
     expect(dealt).not.toBe(50); //       4 — the defender's BENCH alone
     expect(dealt).not.toBe(60); //       5 — the defender's ACTIVE alone
@@ -300,25 +294,25 @@ describe("§3 — the additive fold on real boards: base KEPT, `per × counters`
     let benchOnly = setBenchDamage(bare(), "p2", 0, 20);
     benchOnly = setBenchDamage(benchOnly, "p2", 1, 10);
 
-    expect(find(swing(activeOnly, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(40);
-    expect(find(swing(benchOnly, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(swing(activeOnly, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(swing(benchOnly, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(40);
     // …and the SHIPPED Active-only member tells them apart, which is the proof that
     // the two boards are genuinely different and not the same board twice.
-    expect(find(swing(activeOnly, ACTIVE).events, "DAMAGE_DEALT")?.dealt).toBe(40);
-    expect(find(swing(benchOnly, ACTIVE).events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(swing(activeOnly, ACTIVE).events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(swing(benchOnly, ACTIVE).events, "DAMAGE_DEALT")?.dealt).toBe(10);
   });
 
   it("FLOORED PER BODY, then summed — not summed and then floored", () => {
     let board = setBenchDamage(bare(), "p2", 0, 15);
     board = setBenchDamage(board, "p2", 1, 15);
-    expect(find(swing(board, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(swing(board, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("the printed base is KEPT — this is the `+` fold and not the `×` one", () => {
     // A `+`/`×` mix-up is invisible on a board with counters and screams on one
     // without: the multiply fold DROPS the printed base. §4's pristine board is the
     // other half of this pair.
-    const row = find(swing(mixed(), BOARD).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(mixed(), BOARD).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(10);
     expect((row?.base ?? 0) + (row?.scaled ?? 0)).toBe(row?.dealt);
   });
@@ -331,7 +325,7 @@ describe("§3 — the additive fold on real boards: base KEPT, `per × counters`
 describe("§4 — the ZERO-MATCH board, and three controls that make the 0 mean something", () => {
   it("a PRISTINE opponent board adds nothing and the base lands whole", () => {
     const { state, events } = swing(zeroMatch(), BOARD);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     // `scaled` is ABSENT, not 0 — the field's presence guard is `scaledTotal > 0`.
     expect(row).toMatchObject({ base: 10, dealt: 10 });
     expect(row?.scaled).toBeUndefined();
@@ -340,13 +334,14 @@ describe("§4 — the ZERO-MATCH board, and three controls that make the 0 mean 
 
   it("CONTROL 1 — the SAME board with one counter added is not silent", () => {
     // Without this the 0 above is indistinguishable from a reader that never fired.
-    expect(find(swing(setDamage(zeroMatch(), "p2", 10), BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(
-      20,
-    );
+    expect(
+      findEvent(swing(setDamage(zeroMatch(), "p2", 10), BOARD).events, "DAMAGE_DEALT")?.dealt,
+    ).toBe(20);
     // …and one counter on the opponent's BENCH moves it too, so the 0 is not
     // "the Active was pristine" wearing a board's clothes.
     expect(
-      find(swing(setBenchDamage(zeroMatch(), "p2", 2, 10), BOARD).events, "DAMAGE_DEALT")?.dealt,
+      findEvent(swing(setBenchDamage(zeroMatch(), "p2", 2, 10), BOARD).events, "DAMAGE_DEALT")
+        ?.dealt,
     ).toBe(20);
   });
 
@@ -354,14 +349,14 @@ describe("§4 — the ZERO-MATCH board, and three controls that make the 0 mean 
     // The zero-match board carries 40 damage on the attacker and 70 on its Bench.
     // `damageCountersOnSelf` reads the first and answers 4; if the board itself were
     // somehow silent — a broken swing, a mis-set fixture — this would be 10 too.
-    expect(find(swing(zeroMatch(), SELF).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(swing(zeroMatch(), SELF).events, "DAMAGE_DEALT")?.dealt).toBe(50);
   });
 
   it("CONTROL 3 — the CLAUSELESS attack is base-only on the MIXED board", () => {
     // The converse control: on the board where `BOARD_COUNTERS` adds 90, an attack
     // with no effect text at all adds nothing. So the 90 is the CLAUSE and not the
     // board, and the 0 above is the BOARD and not the clause.
-    const row = find(swing(mixed(), PLAIN).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(mixed(), PLAIN).events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 10, dealt: 10 });
     expect(row?.scaled).toBeUndefined();
   });
@@ -369,7 +364,7 @@ describe("§4 — the ZERO-MATCH board, and three controls that make the 0 mean 
   it("an EMPTY opponent Bench is silent for a DIFFERENT reason than a pristine one", () => {
     const swept = setDamage(clearBench(bare(), "p2"), "p2", 30);
     expect(swept.players.p2.bench).toHaveLength(0);
-    expect(find(swing(swept, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(swing(swept, BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(40);
   });
 });
 
@@ -382,16 +377,16 @@ describe("§5 — the seat: `defenderSeat`, driven from both ends of the table",
     // The zero-match board is 11 counters of the attacker's own — 4 on the body and
     // 7 on its Bench — and this clause reads none of them. A `attackerSeat`
     // substitution turns the 10 below into 120.
-    expect(find(swing(zeroMatch(), BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(swing(zeroMatch(), BOARD).events, "DAMAGE_DEALT")?.dealt).toBe(10);
   });
 
   it("is CONTROLLER-RELATIVE — p2 swinging reads p1's board, not p1 always", () => {
     const { events } = swing(mixed("p2"), BOARD, "p2");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
   });
 
   it("the shipped neighbour's seat is UNMOVED by the new arm", () => {
-    expect(find(swing(mixed(), ACTIVE).events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(swing(mixed(), ACTIVE).events, "DAMAGE_DEALT")?.dealt).toBe(60);
   });
 });
 
@@ -488,7 +483,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
 
   it("DIRECTION 2 — a v29 record round-trips and the NEXT swing reads the same", () => {
     const first = swing(mixed(), BOARD);
-    expect(find(first.events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(first.events, "DAMAGE_DEALT")?.dealt).toBe(100);
     const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
     expect(saved).toEqual(first.state);
     // …and the parsed record is a LIVE board: hand the turn back and swing the same
@@ -496,7 +491,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
     // i.e. 15 counters, so the SAME clause reads a bigger board and says so.
     const returned = mustApply(saved, { type: "endTurn", seat: "p2" }).state;
     const second = swing(returned, BOARD);
-    expect(find(second.events, "DAMAGE_DEALT")?.dealt).toBe(10 + 10 * (15 + 2 + 1 + 1));
+    expect(findEvent(second.events, "DAMAGE_DEALT")?.dealt).toBe(10 + 10 * (15 + 2 + 1 + 1));
   });
 });
 

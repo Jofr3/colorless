@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 const RAGING_CRASH =
@@ -46,13 +47,6 @@ const UNPRINTED_LESS =
   "This attack does 10 less damage for each damage counter on all of your Benched Pokémon.";
 
 const SEED = 5;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ATTACKS = {
   crash: { index: 0, energy: [{ id: "fix-energy", count: 2 }] }, // "Raging Crash" ({C}{C}, "10×")
@@ -320,14 +314,14 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
     // unequal slots are the point: `bench[0]` alone reads 20, `bench.length × per`
     // reads 30, and only the sum reads 70.
     const { events } = swing(benched("fix-titan", [2, 0, 5]));
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 70, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 70, dealt: 70 });
   });
 
   it("DROPS THE PRINTED `10×` BASE — the marker is the per-unit, not a floor", () => {
     // The whole difference between this fold and the additive one. A base that
     // leaked would make every number here 10 too high, and would make the ZERO
     // board below deal 10 instead of nothing at all.
-    const row = find(swing(benched("fix-titan", [3])).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(benched("fix-titan", [3])).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(0);
     expect(row?.dealt).toBe(30);
     // …and the printed card really does carry a base the fold had to drop.
@@ -336,7 +330,7 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
 
   it("scales LINEARLY, and the oracle is re-derived from the row's own fields", () => {
     for (const counters of [1, 2, 4, 9]) {
-      const row = find(swing(benched("fix-titan", [counters])).events, "DAMAGE_DEALT");
+      const row = findEvent(swing(benched("fix-titan", [counters])).events, "DAMAGE_DEALT");
       if (row === undefined) throw new Error("no damage row");
       expect(row.scaled ?? 0, `${counters} counters`).toBe(10 * counters);
       expect(row.dealt, `${counters} counters`).toBe(row.base + (row.scaled ?? 0));
@@ -348,8 +342,8 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
     // The `×` fold has no printed ceiling, which is the reason this deck's defender
     // is the largest body in the pool.
     const { state, events } = swing(benched("fix-titan", [10, 10, 10, 10, 10]));
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 500, dealt: 500 });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 500, dealt: 500 });
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(state.players.p2.active).toBeNull();
   });
 
@@ -359,21 +353,21 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
     state = setBenchDamage(state, "p1", 0, 25);
     state = benchFromDeck(state, "p1", "fix-titan");
     state = setBenchDamage(state, "p1", 1, 25);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ scaled: 40, dealt: 40 });
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ scaled: 40, dealt: 40 });
   });
 
   it("runs identically from the OTHER seat", () => {
     // Nothing in the arm is p1-shaped, and a hard-coded seat would look right on
     // exactly one of these two.
     const { events } = swing(benched("fix-titan", [2, 0, 5], "crash", "p2"), "crash", "p2");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 70, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 70, dealt: 70 });
   });
 
   it("leaves index 1 ALONE — the sibling attack does not inherit the clause", () => {
     // "Earthquake" is a flat printed 180 whose own text the engine does not read. A
     // fold keyed on the CARD rather than on the declared attack's text would add 70
     // to it, or would drop its base to 0.
-    const row = find(
+    const row = findEvent(
       swing(benched("fix-titan", [2, 0, 5], "earthquake"), "earthquake").events,
       "DAMAGE_DEALT",
     );
@@ -383,7 +377,7 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
 
   it("D425 — …and index 1 now does its OWN thing, which is the other half of the same claim", () => {
     const { events } = swing(benched("fix-titan", [2, 0, 5], "earthquake"), "earthquake");
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     const rows = events.filter((e) => e.type === "DAMAGE_DEALT");
     // The main hit on the DEFENDER's Active, flat and unscaled…
     expect(rows[0]).toMatchObject({ seat: "p2", base: 180, dealt: 180 });
@@ -399,9 +393,9 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
 describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
   it("a PRISTINE Bench scores 0, and no DAMAGE_DEALT is emitted at all", () => {
     const { state, events } = swing(benched("fix-titan", [0, 0, 0]));
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(state.players.p2.active?.damage).toBe(0);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     // …and the attack was still USED, so the turn passed to the opponent. This is
     // the half an early `return` would break, and the half a player would notice.
     expect(state.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
@@ -411,7 +405,7 @@ describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
     const state = board("fix-titan");
     expect(state.players.p1.bench).toHaveLength(0);
     const { state: after, events } = swing(state);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
 
@@ -421,19 +415,19 @@ describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
     // score 90 — and its Bench is pristine.
     const state = setDamage(benched("fix-titan", [0, 0]), "p1", 90);
     const { events } = swing(state);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("COUNTERS ON THE OPPONENT'S ACTIVE DO NOT COUNT EITHER", () => {
     const state = setDamage(benched("fix-titan", [0, 0]), "p2", 70);
     const { events } = swing(state);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("COUNTERS ON THE OPPONENT'S BENCH DO NOT COUNT — the SEAT is load-bearing", () => {
     let state = benched("fix-titan", []);
     state = withBench(state, [4, 4], "p2");
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("THE SEPARATING BOARD — all four zones damaged, all four differently", () => {
@@ -441,7 +435,7 @@ describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
     state = setDamage(state, "p1", 90);
     state = setDamage(state, "p2", 50);
     state = withBench(state, [3, 4], "p2");
-    const row = find(swing(state).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state).events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 0, scaled: 30 });
     expect(row?.dealt).toBe(30);
   });
@@ -453,7 +447,7 @@ describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
     state = setDamage(state, "p2", 90);
     state = setDamage(state, "p1", 50);
     state = withBench(state, [3, 4], "p1");
-    expect(find(swing(state, "crash", "p2").events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(swing(state, "crash", "p2").events, "DAMAGE_DEALT")).toMatchObject({
       base: 0,
       scaled: 30,
       dealt: 30,
@@ -462,7 +456,7 @@ describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
 
   it("READS THE COUNT AT DECLARATION — this attack cannot bootstrap its own bonus", () => {
     const first = swing(benched("fix-titan", [2, 0, 5]));
-    expect(find(first.events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(first.events, "DAMAGE_DEALT")?.dealt).toBe(70);
     expect(first.state.players.p1.bench.map((p) => p.damage)).toEqual([20, 0, 50]);
   });
 });
@@ -474,7 +468,7 @@ describe("THE ZONE — YOUR Bench, and nothing else on either board", () => {
 describe("§8.5 — the fold happens BEFORE Weakness, and the dropped base is visible THROUGH it", () => {
   it("doubles the folded total, not the printed base", () => {
     const { state, events } = swing(benched("fix-darkness-weak", [3, 3]));
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 0, scaled: 60, dealt: 120 });
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(state.players.p2.active?.damage).toBe(120);
@@ -490,7 +484,7 @@ describe("§8.5 — the fold happens BEFORE Weakness, and the dropped base is vi
     // The Weakness has nothing to double. A base that leaked would deal 20 here,
     // which is the loudest form the same defect can take.
     const { events } = swing(benched("fix-darkness-weak", [0, 0]));
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
   });
 });
 
@@ -521,7 +515,7 @@ describe("VOICE — the existing `scaled` crumb off a `base 0`, under BOTH seats
   it("AND THE PRINTED TEXT STOPS BEING FLAGGED — on the scoring board AND the 0 one", () => {
     for (const counters of [[2, 0, 5], [0, 0], []]) {
       const { events } = swing(benched("fix-titan", counters));
-      expect(find(events, "ATTACK_EFFECT_SKIPPED"), `${counters}`).toBeUndefined();
+      expect(findEvent(events, "ATTACK_EFFECT_SKIPPED"), `${counters}`).toBeUndefined();
     }
   });
 });

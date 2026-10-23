@@ -9,18 +9,12 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const exSpread = { type: "attack", seat: "p1", index: 1 } as const; // fix-attacker-ex Spread Shot
-const sniperSpread = { type: "attack", seat: "p1", index: 0 } as const; // fix-sniper Spread Shot
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const sniperSpread = { type: "attack", seat: "p1", index: 0 } as const;
 
 /** Setup, then field the Mimikyu defender in P2's ACTIVE spot and hand the turn
     to P1, who fields `attackerId` with one {C} attached (main-hit path). */
@@ -61,7 +55,11 @@ describe("Safeguard — the main hit prevents an ex/V attacker's damage", () => 
 
     // Bite would be a flat 30 (Mimikyu is Metal-weak, not Fire-weak), but the ex
     // gate nulls it to 0 and the event marks WHY it is 0.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      dealt: 0,
+      prevented: true,
+    });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -71,7 +69,7 @@ describe("Safeguard — the main hit prevents an ex/V attacker's damage", () => 
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 });
@@ -83,7 +81,7 @@ describe("Safeguard — the ex/V gate does NOT fire on other attackers", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p2", dealt: 30 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(30);
@@ -97,7 +95,7 @@ describe("Safeguard — the ex/V gate does NOT fire on other attackers", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ dealt: 30 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(30);

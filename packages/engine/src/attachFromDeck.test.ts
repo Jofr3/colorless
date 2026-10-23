@@ -18,6 +18,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -30,13 +31,6 @@ const FIRE_ENERGY = "fix-fire-energy";
 const DARK_BODY = "fix-dark-1";
 const PLAIN_BODY = "fix-basic-1";
 const STAGE1 = "fix-stage1";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -212,7 +206,7 @@ describe("Janine's Secret Art — the §9.2 poison clause", () => {
     const prompt = promptOf(played.state);
     const done = attach(played.state, [{ uid: prompt.candidates[0] as string, to: ACTIVE }]);
     expect(poisoned(done.state, "p1")).toBe(true);
-    const status = find(done.events, "STATUS_APPLIED");
+    const status = findEvent(done.events, "STATUS_APPLIED");
     expect(status?.status).toBe("poisoned");
     expect(status?.seat).toBe("p1");
     expect(done.state.phase.kind).toBe("turn:action");
@@ -230,7 +224,7 @@ describe("Janine's Secret Art — the §9.2 poison clause", () => {
     expect(energyOn(done.state, bench(0))).toHaveLength(1);
     expect(energyOn(done.state, bench(1))).toHaveLength(1);
     expect(poisoned(done.state, "p1")).toBe(false);
-    expect(find(done.events, "STATUS_APPLIED")).toBeUndefined();
+    expect(findEvent(done.events, "STATUS_APPLIED")).toBeUndefined();
   });
 
   it("does not poison on a DECLINE, and still shuffles the deck", () => {
@@ -547,7 +541,7 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
     const third = resumeProgram(wire.state, wire.cont, { kind: "cards", uids: [] }, events3);
     expect(third.kind).toBe("done");
     expect(poisoned(third.state, "p1")).toBe(true);
-    expect(find(events3, "STATUS_APPLIED")?.status).toBe("poisoned");
+    expect(findEvent(events3, "STATUS_APPLIED")?.status).toBe("poisoned");
   });
 
   it("and does NOT poison when the carried record's card went to the Bench", () => {

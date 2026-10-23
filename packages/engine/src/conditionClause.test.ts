@@ -7,7 +7,7 @@ import {
   deriveAttackEffect,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   CONDITION_CLAUSE_DECK,
   FIXTURE_POOL,
@@ -21,6 +21,7 @@ import {
   setConditions,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const FIERY_BREEZE =
@@ -49,13 +50,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function board(seed: number): GameState {
@@ -367,7 +361,7 @@ describe("Talonflame 'Fiery Breeze' — yourActiveDamaged, read off the ATTACKER
     // The condition is FALSE and the "+" is still simulated: `effectSimulated` /
     // `modifierSimulated` ride `scaling !== null`, not on the clause holding.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 70, dealt: 70 });
     // `scaled` is omitted at 0 — the indicator genuinely added nothing.
     expect(dealt?.scaled).toBeUndefined();
@@ -379,14 +373,14 @@ describe("Talonflame 'Fiery Breeze' — yourActiveDamaged, read off the ATTACKER
     const state = setDamage(talonflame(board(2), "p1"), "p1", 10);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
   });
 
   it("is the ATTACKER's side — damage on the DEFENDER's Active scores nothing", () => {
     const state = setDamage(talonflame(board(3), "p1"), "p2", 10);
     expect(state.players.p1.active?.damage).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 70, dealt: 70 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -396,16 +390,20 @@ describe("Talonflame 'Fiery Breeze' — yourActiveDamaged, read off the ATTACKER
     // a hardcoded "p1" would read P1's undamaged Talonflame here and pay 70.
     const clean = talonflame(boardP2(4), "p2");
     const cleanEvents = mustApply(clean, { type: "attack", seat: "p2", index: 1 }).events;
-    expect(find(cleanEvents, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
+    expect(findEvent(cleanEvents, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
 
     const hurt = setDamage(clean, "p2", 10);
     const hurtEvents = mustApply(hurt, { type: "attack", seat: "p2", index: 1 }).events;
-    expect(find(hurtEvents, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
+    expect(findEvent(hurtEvents, "DAMAGE_DEALT")).toMatchObject({
+      base: 70,
+      scaled: 90,
+      dealt: 160,
+    });
 
     // And damage on P2's OPPONENT (P1) still scores nothing, mirrored.
     const wrongSide = setDamage(clean, "p1", 10);
     const wrongEvents = mustApply(wrongSide, { type: "attack", seat: "p2", index: 1 }).events;
-    expect(find(wrongEvents, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
+    expect(findEvent(wrongEvents, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
   });
 });
 
@@ -417,12 +415,16 @@ describe("Darmanitan 'Damage Counterpunch' — the same clause at a DIFFERENT N"
     const clean = darmanitan(board(5), "p1");
     const cleanEvents = mustApply(clean, { type: "attack", seat: "p1", index: 0 }).events;
     expect(types(cleanEvents)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(cleanEvents, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 60 });
+    expect(findEvent(cleanEvents, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 60 });
 
     const hurt = setDamage(darmanitan(board(6), "p1"), "p1", 10);
     const hurtEvents = mustApply(hurt, { type: "attack", seat: "p1", index: 0 }).events;
     expect(types(hurtEvents)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(hurtEvents, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 60, dealt: 120 });
+    expect(findEvent(hurtEvents, "DAMAGE_DEALT")).toMatchObject({
+      base: 60,
+      scaled: 60,
+      dealt: 120,
+    });
   });
 });
 
@@ -436,7 +438,7 @@ describe("Tyranitar ex 'Lightning Rampage' — yourBenchDamaged, the family's on
     expect(state.players.p1.bench.every((p) => p.damage === 0)).toBe(true);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 150, dealt: 150 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -449,7 +451,7 @@ describe("Tyranitar ex 'Lightning Rampage' — yourBenchDamaged, the family's on
     expect(state.players.p1.bench.some((p) => p.damage === 0)).toBe(true); // not all of them
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 150, scaled: 100, dealt: 250 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 150, scaled: 100, dealt: 250 });
   });
 
   it("is BENCH-ONLY — damage on Tyranitar ex ITSELF does not satisfy it", () => {
@@ -460,7 +462,7 @@ describe("Tyranitar ex 'Lightning Rampage' — yourBenchDamaged, the family's on
     expect(state.players.p1.active?.damage).toBe(10);
     expect(state.players.p1.bench.every((p) => p.damage === 0)).toBe(true);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 150, dealt: 150 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -473,7 +475,7 @@ describe("Tyranitar ex 'Lightning Rampage' — yourBenchDamaged, the family's on
     expect(state.players.p1.bench).toEqual([]);
     expect(conditionHolds(state, "p1", { kind: "yourBenchDamaged" })).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 150, dealt: 150 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -483,7 +485,7 @@ describe("Tyranitar ex 'Lightning Rampage' — yourBenchDamaged, the family's on
     const state = setBenchDamage(tyranitarEx(board(11), "p1"), "p2", 0, 10);
     expect(state.players.p1.bench.every((p) => p.damage === 0)).toBe(true);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 150, dealt: 150 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -495,7 +497,7 @@ describe("Seviper sv01-128 'Venoshock' — opponentActivePoisoned", () => {
     expect(state.players.p2.active?.conditions.poisonDamage).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 60, dealt: 60 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -506,14 +508,14 @@ describe("Seviper sv01-128 'Venoshock' — opponentActivePoisoned", () => {
     const state = setConditions(seviper(board(13), "p1"), "p2", { poisonDamage: 10 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 120, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 120, dealt: 180 });
   });
 
   it("is armed by the GAME, not by a surgery — Spit Poison one turn, Venoshock the next", () => {
     let state = seviper(board(14), "p1");
     const poisonRun = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // Spit Poison deals nothing itself — the only damage in its events is §13.1's.
-    expect(find(poisonRun.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(poisonRun.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(poisonRun.events)).toContain("COUNTERS_PLACED");
     state = poisonRun.state;
     expect(state.players.p2.active?.conditions.poisonDamage).toBe(10);
@@ -525,7 +527,7 @@ describe("Seviper sv01-128 'Venoshock' — opponentActivePoisoned", () => {
 
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 120, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 120, dealt: 180 });
     // 20 + 180 against 200 HP — the bonus is what makes it lethal (60 alone would
     // have left the body on 80).
     expect(types(events)).toContain("KNOCKED_OUT");
@@ -537,7 +539,7 @@ describe("Seviper sv01-128 'Venoshock' — opponentActivePoisoned", () => {
     // its printed 60 on a board where Unseen Claw would fire.
     const state = setConditions(seviper(board(15), "p1"), "p2", { rotation: "asleep" });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 60, dealt: 60 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -548,7 +550,7 @@ describe("Sableye 'Unseen Claw' — opponentActiveHasSpecialCondition, ANY one o
     const state = sableye(board(16), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 20, dealt: 20 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -566,7 +568,7 @@ describe("Sableye 'Unseen Claw' — opponentActiveHasSpecialCondition, ANY one o
       const state = setConditions(sableye(board(17 + i), "p1"), "p2", conditions);
       const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 70, dealt: 90 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 70, dealt: 90 });
     }
   });
 
@@ -576,10 +578,10 @@ describe("Sableye 'Unseen Claw' — opponentActiveHasSpecialCondition, ANY one o
     expect(conditionHolds(asleep, "p1", { kind: "opponentActivePoisoned" })).toBe(false);
 
     const claw = mustApply(sableye(asleep, "p1"), { type: "attack", seat: "p1", index: 1 }).events;
-    expect(find(claw, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 70, dealt: 90 });
+    expect(findEvent(claw, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 70, dealt: 90 });
 
     const venom = mustApply(seviper(asleep, "p1"), { type: "attack", seat: "p1", index: 1 }).events;
-    const venomDealt = find(venom, "DAMAGE_DEALT");
+    const venomDealt = findEvent(venom, "DAMAGE_DEALT");
     expect(venomDealt).toMatchObject({ base: 60, dealt: 60 });
     expect(venomDealt?.scaled).toBeUndefined();
   });
@@ -594,7 +596,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
       10,
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 150,
       scaled: 100,
       weakness: { op: "multiply", amount: 2 },
@@ -607,7 +609,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
     // being doubled and nothing else.
     const state = setActiveFromDeck(tyranitarEx(board(22), "p1"), "p2", "sv02-030");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({
       base: 150,
       weakness: { op: "multiply", amount: 2 },
@@ -646,7 +648,7 @@ describe("ATTACK_EFFECT_SKIPPED never fires — in EITHER direction", () => {
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // And the two boards really are different boards — `scaled` present exactly
       // when the clause held, which is what makes the shared flag meaningful.
-      expect(find(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
+      expect(findEvent(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
     }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -9,16 +9,10 @@ import {
   handFromDeck,
   handUid,
   mustApply,
+  findEvent,
 } from "./testFixtures";
 
 const LARRY_IDS = ["sv08.5-115", "sv08.5-139"] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so a Supporter is legal (§7.2). */
@@ -312,7 +306,7 @@ describe("D336 — the three- and four-noun searchDeck", () => {
     expect(done.players.p1.hand.length).toBe(handBefore + 3);
     // `reveal: true` is the printed "reveal them", so all three are NAMED rather
     // than counted.
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.reveal).toBe(true);
     expect(new Set(searched?.uids)).toEqual(new Set([pokemon, supporter, energy]));
   });
@@ -440,7 +434,7 @@ describe("D336 — the three- and four-noun searchDeck", () => {
     expect(done.players.p1.hand.length).toBe(0);
     expect(done.players.p1.deck.length).toBe(deckBefore);
     // The trailing `shuffleDeck` fires on every path, decline included.
-    expect(find(events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(events, "SHUFFLE")).toBeDefined();
   });
 
   it("a card matching NO group cannot be taken, even under the total", () => {

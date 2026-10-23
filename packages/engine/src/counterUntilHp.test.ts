@@ -15,14 +15,8 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function placements(
   events: readonly GameEvent[],
@@ -410,7 +404,7 @@ describe("§4 — the maximum is the CONTINUOUS one and a Tool moves it", () => 
     // …and the remaining HP really is 50 against the EFFECTIVE maximum, which is the
     // reading the card prints; against the printed 200 it would be 0, i.e. a Knock Out.
     expect(BIG_HP + CHARM_HP - (theirActive(run.state)?.damage ?? 0)).toBe(50);
-    expect(find(run.events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(run.events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("the destination is read at the moment the op runs, on a body that already carries damage", () => {
@@ -507,7 +501,7 @@ describe("§5 — `its` binds PER BODY, and a shared amount is a killed build", 
     const { state, events } = attack(fielded(54), IDX.bench);
     expect(state.players.p2.bench).toHaveLength(0);
     expect(placements(events)).toHaveLength(0);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
   });
 });
 
@@ -587,7 +581,7 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
     const prizes = before.players.p1.prizes.length;
     const { state, events } = attack(before, IDX.shallow);
     expect(theirActive(state)?.damage).toBe(BIG_HP - 10);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(state.players.p1.prizes.length).toBe(prizes);
     expect(state.players.p2.active).not.toBeNull();
     // …and no `takePrizes` stage was staged for the attacker either, which is the other
@@ -600,7 +594,7 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
     // body is not swept by the attack epilogue either: it was never lethally damaged.
     const { state, events } = attack(setDamage(fielded(71), "p2", 195), IDX.shallow);
     expect(theirActive(state)?.damage).toBe(195);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(state.players.p2.active).not.toBeNull();
   });
 
@@ -655,7 +649,7 @@ describe("§8 — the prevention gate, per body", () => {
     const { state, events } = attack(fielded(80, { defender: "fix-unaware" }), IDX.deep);
     expect(placements(events)).toHaveLength(0);
     expect(theirActive(state)?.damage).toBe(0);
-    const row = find(events, "ATTACK_EFFECT_PREVENTED");
+    const row = findEvent(events, "ATTACK_EFFECT_PREVENTED");
     expect(row?.seat).toBe("p2");
   });
 
@@ -700,8 +694,8 @@ describe("§9 — a PLACED counter is flat, and the row says which mechanism pla
     const { state, events } = attack(fielded(90, { defender: "fix-lightning-weak" }), IDX.deep);
     expect(placements(events)[0]?.amount).toBe(WEAK_HP - 50);
     expect(theirActive(state)?.damage).toBe(WEAK_HP - 50);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("the amount need NOT be a multiple of ten, and the destination is hit on the nose", () => {

@@ -29,6 +29,7 @@ import {
   setActiveFromDeck,
   trimDeckTo,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -71,15 +72,6 @@ const SNIPE: EffectOp = {
   source: "attack",
   deals: true,
 };
-
-// ── boards ─────────────────────────────────────────────────────────────────────
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -216,7 +208,7 @@ describe("§3 — the count-2 pick on a real board: two DISTINCT bodies, §8.6-c
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 20, dealt: 20 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 20, dealt: 20 });
     expect(done.players.p2.active?.damage).toBe(20);
     for (const body of done.players.p2.bench) expect(body.damage).toBe(0);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -228,7 +220,7 @@ describe("§3 — the count-2 pick on a real board: two DISTINCT bodies, §8.6-c
       seat: "p1",
       index: 0,
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 20, dealt: 20 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 20, dealt: 20 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
@@ -472,7 +464,7 @@ describe("§5 — the printing end to end, at the index it is printed at", () =>
     const mine = mustApply(milled, { type: "endTurn", seat: "p2" }).state;
     expect(mine.players.p1.deck).toHaveLength(2);
     const { state: parked, events } = mustApply(mine, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (parked.phase.prompt.kind !== "choosePokemonMulti") throw new Error("expected multi");
     expect([parked.phase.prompt.min, parked.phase.prompt.max]).toEqual([2, 2]);

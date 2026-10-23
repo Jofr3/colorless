@@ -19,6 +19,7 @@ import {
   setDamage,
   types,
   walkProgram,
+  findEvent,
 } from "./testFixtures";
 
 const VENGEFUL_PUNCH =
@@ -32,13 +33,6 @@ const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C},
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
 const spread = { type: "attack", seat: "p1", index: 0 } as const;
 const SPIN_TURN = 8;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -150,14 +144,14 @@ describe("the KO condition — it pays on the Knock Out and on nothing less", ()
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1", // the seat that OWNS the damaged Pokémon — the attacker's
       amount: PUNCH_HP,
       source: "counterattack",
     });
     expect(attackerDamage(done)).toBe(PUNCH_HP); // 120 HP fix-attacker survives at 40
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: holder });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: holder });
     // A plain body — P1 takes its 1 Prize.
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
   });
@@ -168,7 +162,7 @@ describe("the KO condition — it pays on the Knock Out and on nothing less", ()
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
     expect(done.players.p2.active?.damage).toBe(30); // damaged, alive
     expect(types(events)).not.toContain("KNOCKED_OUT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
@@ -183,7 +177,7 @@ describe("the KO condition — it pays on the Knock Out and on nothing less", ()
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: HELMET_HP,
       source: "counterattack",
@@ -203,7 +197,7 @@ describe("the KO condition — it pays on the Knock Out and on nothing less", ()
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "STATUS_APPLIED")).toBeDefined(); // Yawn DID resolve
+    expect(findEvent(events, "STATUS_APPLIED")).toBeDefined(); // Yawn DID resolve
     expect(done.players.p2.active?.damage).toBe(100); // still one hit from lethal
   });
 });
@@ -225,9 +219,9 @@ describe("no 'in the Active Spot' clause — a BENCHED holder retaliates", () =>
     const { state: done, events } = mustApply(state, spread);
 
     // The snipe KO'd the BENCHED holder…
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
     // …and the recoil landed anyway, because no clause confines it to the Active.
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: PUNCH_HP,
       source: "counterattack",
@@ -418,7 +412,7 @@ describe("ORDER — the recoil is placed BEFORE the sweep reads the board", () =
 
     expect(all(events, "KNOCKED_OUT")).toHaveLength(2);
     expect(done.phase).toMatchObject({ kind: "gameOver" });
-    expect(find(events, "GAME_OVER")?.outcome).toMatchObject({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toMatchObject({
       result: "tie",
       reasons: { p1: "noPokemon", p2: "noPokemon" },
     });
@@ -434,7 +428,7 @@ describe("GUARD — 'by damage from an attack from your OPPONENT'S Pokémon'", (
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
 
     // The poison DID kill it (and says so in its own voice)…
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p2", source: "poison" });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p2", source: "poison" });
     expect(types(events)).toContain("KNOCKED_OUT");
     expect(recoils(events)).toEqual([]);
     expect(done.players.p1.active?.damage).toBe(0);
@@ -453,7 +447,7 @@ describe("GUARD — 'by damage from an attack from your OPPONENT'S Pokémon'", (
     expect(rows[0]).toMatchObject({ amount: HELMET_HP }); // …and NOT 20 + 40
     // The armed attacker really was Knocked Out — the antecedent's other half
     // held, so this case is about the possessive and nothing else.
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1", uid: attacker });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1", uid: attacker });
     expect(done.players.p2.active?.damage).toBe(30); // the holder survived its own hit
   });
 
@@ -526,7 +520,7 @@ describe("the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the
     });
 
     // The holder died to THIS attack's 10 (110 + 10 = 120 of 120)…
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     // …the switch happened: the body that ATTACKED is on P1's Bench now, and the
     // body standing in the spot is the one that was benched.
     expect(done.players.p1.active?.stack.at(-1)).toBe(benchUid);
@@ -593,7 +587,7 @@ describe("the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the
     // body here (the switch has not resolved yet), which is exactly why this case
     // asserts the DECLARED uid rather than reading the Active back.
     expect(attackerUid).toBe(
-      find(
+      findEvent(
         mustApply(state, { type: "attack", seat: "p1", index: SPIN_TURN }).events,
         "ATTACK_DECLARED",
       )?.uid,
@@ -627,8 +621,8 @@ describe("the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the
 
     const { events } = mustApply(state, bite);
 
-    expect(find(events, "COUNTERS_PLACED")?.uid).toBe(attacker);
-    expect(find(events, "ATTACK_DECLARED")?.uid).toBe(attacker);
+    expect(findEvent(events, "COUNTERS_PLACED")?.uid).toBe(attacker);
+    expect(findEvent(events, "ATTACK_DECLARED")?.uid).toBe(attacker);
   });
 });
 
@@ -717,7 +711,7 @@ describe("the blast radius, asserted as absences", () => {
     deepFreeze(state);
 
     const result = mustApply(state, bite);
-    expect(find(result.events, "ATTACK_DECLARED")).toBeDefined();
+    expect(findEvent(result.events, "ATTACK_DECLARED")).toBeDefined();
     expect(types(result.events)).not.toContain("ATTACK_FAILED");
   });
 

@@ -22,7 +22,7 @@ import {
 } from "./effects";
 import type { CardFilter, DamageCountSource } from "./effects";
 import { applyAction } from "./index";
-import type { EffectOp, GameEvent, GameState, Seat } from "./index";
+import type { EffectOp, GameState, Seat } from "./index";
 import { countPokemonInPlay } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -37,6 +37,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -105,13 +106,6 @@ const SPLITTERS = [
 const SEED = 1;
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function bare(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -166,7 +160,7 @@ function canonical(): GameState {
 }
 
 const dealt = (state: GameState, effect: string): number | undefined =>
-  find(swing(withEffect(state, effect)).events, "DAMAGE_DEALT")?.dealt;
+  findEvent(swing(withEffect(state, effect)).events, "DAMAGE_DEALT")?.dealt;
 
 describe("D519 §1 — the printed data, measured live over the legal column", () => {
   it("the sentence is the CORPUS's bytes at ONE printing, and so is its whole family", () => {
@@ -451,7 +445,7 @@ describe("D519 §3 — the fold on a board: the rider, the zone, the seat and th
     state = setBenchDamage(state, "p1", 4, 0);
     expect(countPokemonInPlay(state, "p1", { kind: "anyPokemon" }, true)).toBe(0);
     const { events } = swing(withEffect(state, PRINTED));
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     // …and the attack RESOLVED: it is not on the loud unread path.
     expect(events.map((e) => e.type)).not.toContain("ATTACK_EFFECT_SKIPPED");
     // …while the unnarrowed twin on that very board still reads six bodies.

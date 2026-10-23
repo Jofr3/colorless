@@ -12,6 +12,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // {C}, 30 — the ACTIVE hit
@@ -20,14 +21,7 @@ const yawn = { type: "attack", seat: "p1", index: 4 } as const; // Asleep — an
 const joust = { type: "attack", seat: "p1", index: 0 } as const; // Klefki — {C}, 10
 
 const PEBBLE_TOSS = 2; // 40 to 1 of your opponent's Pokémon
-const FEINT_ATTACK = 3; // 50 to 1, `ignoreWR` — the scope-observable arm
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const FEINT_ATTACK = 3;
 
 function types(events: GameEvent[]): string[] {
   return events.map((e) => e.type);
@@ -419,6 +413,6 @@ describe("the fixture pool and the deck", () => {
     const attacks = FIXTURE_POOL["fix-shellcracker"]?.attacks ?? [];
     expect(attacks[PEBBLE_TOSS]?.name).toBe("Pebble Toss");
     expect(attacks[FEINT_ATTACK]?.name).toBe("Feint Attack");
-    expect(find([], "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent([], "DAMAGE_DEALT")).toBeUndefined();
   });
 });

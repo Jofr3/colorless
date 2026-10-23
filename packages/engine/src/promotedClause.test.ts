@@ -8,7 +8,7 @@ import {
   deriveAttackRequirement,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   PROMOTED_CLAUSE_DECK,
@@ -24,6 +24,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -49,13 +50,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function promotedClause(per = 60): string {
@@ -445,8 +439,8 @@ describe("promotedTurn — the state itself", () => {
       uid: handUid(withCard, "p1", "sv01-194"),
     });
     expect(types(events)).toContain("TRAINER_PLAYED");
-    expect(find(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
-    expect(find(events, "POKEMON_SWITCHED")?.wasActive).toBe(wasActive);
+    expect(findEvent(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
+    expect(findEvent(events, "POKEMON_SWITCHED")?.wasActive).toBe(wasActive);
     expect(activeCardId(switched, "p1")).toBe("sv06.5-015");
     expect(switched.players.p1.active?.promotedTurn).toBe(switched.turn);
     expect(conditionHolds(switched, "p1", COND)).toBe(true);
@@ -473,7 +467,7 @@ describe("promotedTurn — the state itself", () => {
     // …and it is really the CLAUSE that goes cold, not just the predicate: the
     // gusted-out Revavroom attacks on its own turn for the printed base alone.
     const { events } = mustApply(p2Turn, { type: "attack", seat: "p2", index: FLASH_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -491,7 +485,7 @@ describe("promotedTurn — the state itself", () => {
       seat: "p1",
       index: FLASH_INDEX,
     });
-    expect(find(koEvents, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(koEvents, "DAMAGE_DEALT")?.dealt).toBe(20);
     expect(types(koEvents)).toContain("KNOCKED_OUT");
     const onPrizes = mustApply(parked, {
       type: "takePrizes",
@@ -507,7 +501,7 @@ describe("promotedTurn — the state itself", () => {
       seat: "p2",
       benchIndex: 0,
     });
-    expect(find(events, "POKEMON_PROMOTED")?.benchIndex).toBe(0);
+    expect(findEvent(events, "POKEMON_PROMOTED")?.benchIndex).toBe(0);
     expect(activeCardId(done, "p2")).toBe("sv06.5-015");
     // Stamped with the ATTACKER's turn, and the very same apply rolled the turn
     // over — so the fact is stale the instant its owner can act on it.
@@ -523,7 +517,7 @@ describe("promotedTurn — the state itself", () => {
       seat: "p2",
       index: FLASH_INDEX,
     });
-    expect(find(p2Events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(p2Events, "DAMAGE_DEALT")?.dealt).toBe(20);
     expect(types(p2Events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -559,7 +553,7 @@ describe("promotedTurn — the state itself", () => {
       seat: "p1",
       index: FLASH_INDEX,
     });
-    expect(find(attackEvents, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(attackEvents, "DAMAGE_DEALT")?.dealt).toBe(140);
   });
 });
 
@@ -568,7 +562,7 @@ describe("the board — the clause through a REAL attack", () => {
     const state = revavroomActive(board(11), "p1");
     expect(state.players.p1.active?.promotedTurn).toBeNull();
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: FLASH_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
     // The clause RESOLVED — a false condition is not a skipped effect.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -577,7 +571,7 @@ describe("the board — the clause through a REAL attack", () => {
     const retreated = retreatInto(revavroomBenched(board(11), "p1"), "p1", 0);
     expect(retreated.allowances.retreated).toBe(true);
     const { events } = mustApply(retreated, { type: "attack", seat: "p1", index: FLASH_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(140);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -586,7 +580,7 @@ describe("the board — the clause through a REAL attack", () => {
     // because the printed verb is "moved" and says nothing about how.
     const switched = playTrainer(revavroomBenched(board(11), "p1"), "p1", "sv01-194");
     const { events } = mustApply(switched, { type: "attack", seat: "p1", index: FLASH_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(140);
   });
 
   it("pays the OTHER printed amount off the SAME row — Golisopod's 20 + 90 = 110", () => {
@@ -600,7 +594,7 @@ describe("the board — the clause through a REAL attack", () => {
     expect(activeCardId(control, "p1")).toBe("swsh10.5-026");
     expect(control.players.p1.active?.promotedTurn).toBeNull();
     expect(
-      find(
+      findEvent(
         mustApply(control, { type: "attack", seat: "p1", index: IMPRESSION_INDEX }).events,
         "DAMAGE_DEALT",
       )?.dealt,
@@ -613,7 +607,7 @@ describe("the board — the clause through a REAL attack", () => {
       seat: "p1",
       index: IMPRESSION_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(110);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(110);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -630,7 +624,7 @@ describe("the board — the clause through a REAL attack", () => {
     expect(activeCardId(backAround, "p1")).toBe("sv06.5-015");
     expect(backAround.players.p1.active?.energy).toHaveLength(1); // the body survived the round trip
     const { events } = mustApply(backAround, { type: "attack", seat: "p1", index: FLASH_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("arms from EITHER seat — the member is seat-relative, not p1-relative", () => {
@@ -640,13 +634,17 @@ describe("the board — the clause through a REAL attack", () => {
         seat === "p1" ? board(11) : mustApply(board(11), { type: "endTurn", seat: "p1" }).state;
       const bare = revavroomActive(opened, seat);
       expect(
-        find(mustApply(bare, { type: "attack", seat, index: FLASH_INDEX }).events, "DAMAGE_DEALT")
-          ?.dealt,
+        findEvent(
+          mustApply(bare, { type: "attack", seat, index: FLASH_INDEX }).events,
+          "DAMAGE_DEALT",
+        )?.dealt,
       ).toBe(20);
       const armed = retreatInto(revavroomBenched(opened, seat), seat, 0);
       expect(
-        find(mustApply(armed, { type: "attack", seat, index: FLASH_INDEX }).events, "DAMAGE_DEALT")
-          ?.dealt,
+        findEvent(
+          mustApply(armed, { type: "attack", seat, index: FLASH_INDEX }).events,
+          "DAMAGE_DEALT",
+        )?.dealt,
       ).toBe(140);
     }
   });
@@ -656,7 +654,7 @@ describe("the board — the clause through a REAL attack", () => {
     expect(activeCardId(opened, "p2")).toBe("fix-lightning-weak-big");
     const control = revavroomActive(opened, "p1");
     expect(
-      find(
+      findEvent(
         mustApply(control, { type: "attack", seat: "p1", index: FLASH_INDEX }).events,
         "DAMAGE_DEALT",
       )?.dealt,
@@ -667,7 +665,7 @@ describe("the board — the clause through a REAL attack", () => {
       seat: "p1",
       index: FLASH_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(280);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(280);
     // 280 < 320, so nothing was Knocked Out and the damage is on the board where
     // the arithmetic can be read off it a second time.
     expect(after.players.p2.active?.damage).toBe(280);

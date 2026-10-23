@@ -15,6 +15,7 @@ import {
   setActiveFromDeck,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 
 const BOOSTED_EVOLUTION_TEXT =
@@ -129,12 +130,6 @@ function board(seed: number, first: Seat, seat: Seat, activeId: string, stage1 =
   state = clearBench(state, seat);
   state = benchFromDeck(state, seat, "fix-basic-1");
   return handFromDeck(state, seat, STAGE1, stage1);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function benchAt(state: GameState, seat: Seat, index: number): InPlayPokemon {

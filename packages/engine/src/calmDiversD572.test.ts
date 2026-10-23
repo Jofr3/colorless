@@ -22,6 +22,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  effectPrompt,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -621,12 +622,6 @@ const decline: GameAction = {
 } as GameAction;
 const attack = (index: number): GameAction => ({ type: "attack", seat: "p1", index }) as GameAction;
 
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
-
 /** p1's Munkidori (`MUNKIDORI[i]`) Active with one {D} and `own` damage, p2 `oppActive` + bench. */
 function brainBoard(
   own = 30,
@@ -721,7 +716,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
 
   it('Q1 FORCED (one damaged own body), Q2 ALWAYS PARKED even over a LONE opponent body — `upTo: 3`, `takeVerb: "move"`', () => {
     const { state } = run(brainBoard(), use("Adrena-Brain", ACTIVE));
-    const p = prompt(state);
+    const p = effectPrompt(state);
     expect(p).toEqual({
       kind: "choosePokemon",
       candidates: [{ seat: "p2", spot: { spot: "active" } }],
@@ -795,7 +790,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
     );
     start = damaged(start, "p1", "active", 10);
     const first = run(start, use("Adrena-Brain", ACTIVE)).state;
-    const q1 = prompt(first);
+    const q1 = effectPrompt(first);
     if (q1.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(q1.upTo).toBeUndefined();
     expect(q1.takeVerb).toBeUndefined();
@@ -804,7 +799,7 @@ describe('§2 — Munkidori "Adrena-Brain" (up to 3 counters, own → opponent)'
       { seat: "p1", spot: { spot: "bench", index: 0 } },
     ]);
     const second = run(first, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
-    const q2 = prompt(second);
+    const q2 = effectPrompt(second);
     if (q2.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(q2.candidates).toEqual([
       { seat: "p2", spot: { spot: "active" } },

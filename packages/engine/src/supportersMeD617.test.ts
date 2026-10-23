@@ -21,6 +21,7 @@ import {
   trainerCard,
   trimDeckTo,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const LADY = "me01-123";
@@ -331,11 +332,6 @@ function refusal(state: GameState, id: string): string {
   const result = applyAction(next, { type: "playTrainer", seat: "p1", uid });
   return result.ok ? "applied" : result.error.code;
 }
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
 const bench = (index: number) => ({ seat: "p1", spot: { spot: "bench", index } }) as const;
 const pickRef = (ref: unknown): GameAction =>
@@ -354,8 +350,8 @@ describe("D617 §3 — Pokémon Center Lady: heal 60, and the healed Pokémon re
     let state = sick(setDamage(board(PLAIN, [FILLER]), "p1", 100));
     state = setBenchDamage(state, "p1", 0, 50);
     const parked = play(state, LADY).state;
-    expect(prompt(parked).kind).toBe("choosePokemon");
-    expect(prompt(parked).note).toBe(
+    expect(effectPrompt(parked).kind).toBe("choosePokemon");
+    expect(effectPrompt(parked).note).toBe(
       "Heal which of your Pokémon? It also recovers from all Special Conditions.",
     );
     const { state: done, events } = mustApply(parked, pickRef(ACTIVE));
@@ -452,7 +448,7 @@ describe("D617 §4 — AZ's Tranquility: switch, then heal 80 from the demoted b
     let state = setDamage(board(BRUTE, [PLAIN, MEGA]), "p1", 120);
     state = setBenchDamage(state, "p1", 1, 100);
     const parked = play(state, AZ).state;
-    expect(prompt(parked).kind).toBe("choosePokemon");
+    expect(effectPrompt(parked).kind).toBe("choosePokemon");
     const { state: done } = mustApply(revived(parked), pickRef(bench(1)));
     expect(done.cardIdByUid[done.players.p1.active?.stack.at(-1) ?? ""]).toBe(MEGA);
     expect(done.players.p1.active?.damage).toBe(100);
@@ -493,7 +489,7 @@ describe("D617 §5 — Grimsley's Move: top 7, a {D} Pokémon onto the Bench, th
     const top7 = next.players.p1.deck.slice(0, 7);
     const below = next.players.p1.deck.slice(7);
     const parked = mustApply(next, { type: "playTrainer", seat: "p1", uid }).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(idsOf(parked, p.candidates)).toEqual([DARK, DARK]);
     expect(p.max).toBe(1);
@@ -530,7 +526,7 @@ describe("D617 §6 — Gwynn: discard up to 2 non-Rule-Box Pokémon, draw 3 per 
   it("only non-Rule-Box Pokémon are offered, up to 2; discarding 2 draws 6", () => {
     const state = gwynnBoard({ [PLAIN]: 1, [DARK]: 1, [BRUTE]: 1, [ITEM]: 1 });
     const parked = play(state, GWYNN).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(idsOf(parked, p.candidates).sort()).toEqual([DARK, PLAIN].sort());
     expect([p.min, p.max]).toEqual([0, 2]);
@@ -546,7 +542,7 @@ describe("D617 §6 — Gwynn: discard up to 2 non-Rule-Box Pokémon, draw 3 per 
   it("discarding 1 draws 3; declining draws 0 (after a JSON round trip)", () => {
     const state = gwynnBoard({ [PLAIN]: 2 });
     const parked = play(state, GWYNN).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(
       mustApply(revived(parked), pickCards([p.candidates[0] as string])).state.players.p1.hand,
@@ -569,7 +565,7 @@ describe("D617 §6 — Gwynn: discard up to 2 non-Rule-Box Pokémon, draw 3 per 
       seat: "p1",
       uid,
     }).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     const done = mustApply(parked, pickCards(p.candidates)).state;
     expect(done.players.p1.deck).toEqual([]);
@@ -593,7 +589,7 @@ describe("D617 §7 — Naveen: discard any number first, then draw until 5", () 
 
   it("the discard is uncapped: every card is offered and the whole hand may go; 3 kept of 4 → 1 discarded, 2 drawn", () => {
     const parked = play(naveenBoard(4), NAVEEN).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p.candidates).toHaveLength(4);
     expect([p.min, p.max]).toEqual([0, 4]);

@@ -19,14 +19,8 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -66,7 +60,7 @@ describe("onPlayToBench — Flamigo's Insta-Flock (§9)", () => {
     });
     // The bench play AND the trigger both landed in the one batch.
     expect(types(events)).toContain("POKEMON_BENCHED");
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Insta-Flock");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Insta-Flock");
     expect(types(events)).toContain("EFFECT_PENDING");
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -86,7 +80,7 @@ describe("onPlayToBench — Flamigo's Insta-Flock (§9)", () => {
       seat: "p1",
       choice: { kind: "cards", uids: pick },
     });
-    expect(find(e2, "DECK_SEARCHED")?.uids).toEqual(pick);
+    expect(findEvent(e2, "DECK_SEARCHED")?.uids).toEqual(pick);
     expect(done.players.p1.hand.length).toBe(handBefore + 2);
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -115,7 +109,7 @@ describe("onPlayToBench — Flamigo's Insta-Flock (§9)", () => {
     const { state: done, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
     // The Ability still triggered (auto-fired), the search found nothing, and
     // the trailing shuffle ran — no park, straight back to turn:action.
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Insta-Flock");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Insta-Flock");
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).toContain("SHUFFLE");
     expect(done.phase.kind).toBe("turn:action");
@@ -180,7 +174,7 @@ describe("onEvolve — Arboliva's Enriching Oil (§9)", () => {
       target: { spot: "active" },
     });
     expect(types(events)).toContain("POKEMON_EVOLVED");
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Enriching Oil");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Enriching Oil");
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
@@ -193,7 +187,7 @@ describe("onEvolve — Arboliva's Enriching Oil (§9)", () => {
       seat: "p1",
       choice: { kind: "pokemon", ref: benchRef },
     });
-    expect(find(e2, "HEALED")?.amount).toBe(30);
+    expect(findEvent(e2, "HEALED")?.amount).toBe(30);
     expect(done.players.p1.bench[0]?.damage).toBe(0);
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -210,9 +204,9 @@ describe("onEvolve — Arboliva's Enriching Oil (§9)", () => {
       uid,
       target: { spot: "active" },
     });
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Enriching Oil");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Enriching Oil");
     // Heal all → the carried 50 clears; no park.
-    expect(find(events, "HEALED")?.amount).toBe(50);
+    expect(findEvent(events, "HEALED")?.amount).toBe(50);
     expect(done.players.p1.active?.damage).toBe(0);
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -229,7 +223,7 @@ describe("betweenTurns — Garganacl's Blessed Salt (§9/§13)", () => {
     state = setBenchDamage(state, "p1", 0, 30);
     const benched = benchTopUid(state, "p1", 0);
     const { state: after, events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
     // One HEALED per healed Pokémon (Active + the benched one), 20 each.
     const heals = findAll(events, "HEALED").filter((h) => h.seat === "p1");
     expect(heals.map((h) => h.amount).sort()).toEqual([20, 20]);
@@ -243,7 +237,7 @@ describe("betweenTurns — Garganacl's Blessed Salt (§9/§13)", () => {
     state = setDamage(state, "p1", 50); // the fix-basic-1 Active is damaged
     state = benchFromDeck(state, "p1", "sv02-123"); // Garganacl benched
     const { state: after, events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
     expect(after.players.p1.active?.damage).toBe(30); // healed from the Bench
   });
 
@@ -252,7 +246,7 @@ describe("betweenTurns — Garganacl's Blessed Salt (§9/§13)", () => {
     state = setActiveFromDeck(state, "p1", "sv02-123");
     const { events } = mustApply(state, { type: "endTurn", seat: "p1" });
     // The Ability still triggered, but no Pokémon had damage to remove.
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
     expect(findAll(events, "HEALED").filter((h) => h.seat === "p1")).toHaveLength(0);
   });
 });
@@ -265,8 +259,8 @@ describe("betweenTurns — Trevenant's Forest Miasma (§9/§13)", () => {
     state = setActiveFromDeck(state, "p1", "sv03-012"); // Trevenant Active
     const oppUid = activeUid(state, "p2");
     const { state: after, events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Forest Miasma");
-    const counter = find(events, "COUNTERS_PLACED");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Forest Miasma");
+    const counter = findEvent(events, "COUNTERS_PLACED");
     expect(counter?.source).toBe("ability");
     expect(counter?.seat).toBe("p2");
     expect(counter?.uid).toBe(oppUid);
@@ -282,7 +276,7 @@ describe("betweenTurns — Trevenant's Forest Miasma (§9/§13)", () => {
     state = setActiveFromDeck(state, "p1", "sv03-012"); // Trevenant Active
     state = setActiveFromDeck(state, "p2", "sv03-174"); // Bouffalant (Bouffer) Active
     const { state: after, events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(10);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(10);
     expect(after.players.p2.active?.damage).toBe(10);
   });
 
@@ -301,7 +295,7 @@ describe("betweenTurns — Trevenant's Forest Miasma (§9/§13)", () => {
     state = setDamage(state, "p2", 20); // +10 counter = 30 = lethal
     const victimUid = activeUid(state, "p2");
     const { state: after, events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
     // The KO parks the Checkup on p1's prize pick (1 of 6 is a choice).
     expect(after.phase.kind).toBe("ko:takePrizes");
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");

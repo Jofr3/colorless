@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 const DAMAGE_BEAT =
@@ -30,13 +31,6 @@ const UNPRINTED_PENALTY =
   "This attack does 20 less damage for each damage counter on your opponent's Active Pokémon.";
 
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ATTACKERS = {
   glalie: { card: "fix-glalie", index: 0, energy: [{ id: "fix-water-energy", count: 1 }] }, // "Damage Beat" ({W}, "20×")
@@ -347,7 +341,7 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
     // base kept (folded like the additive twin) it would be 80 — one board tells the
     // two folds apart, on a count source both of them read.
     const { state: after, events } = swing(board("glalie", "fix-titan", 3), "glalie");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
     expect(after.players.p2.active?.damage).toBe(90); // the 30 it already had, plus 60
   });
 
@@ -356,7 +350,7 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
     // has 80 HP where Glalie has 120 — so a reader keyed on anything but the TEXT
     // passes one of these two and fails the other.
     const { events } = swing(board("flapple", "fix-titan", 3), "flapple");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
   });
 
   it("scales LINEARLY off the counter ladder — 1, 3 and 10 counters, one body", () => {
@@ -366,17 +360,18 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
       [10, 200],
     ] as const) {
       expect(
-        find(swing(board("glalie", "fix-titan", counters), "glalie").events, "DAMAGE_DEALT")?.dealt,
+        findEvent(swing(board("glalie", "fix-titan", counters), "glalie").events, "DAMAGE_DEALT")
+          ?.dealt,
       ).toBe(dealt);
     }
   });
 
   it("AT ZERO COUNTERS THERE IS NO `DAMAGE_DEALT` AT ALL — and that is CORRECT", () => {
     const { state: after, events } = swing(board("glalie", "fix-titan"), "glalie");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(after.players.p2.active?.damage).toBe(0);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     // The attack was USED: the turn passed to the opponent.
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
@@ -385,7 +380,7 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
     let state = board("glalie", "fix-titan");
     state = setDamage(state, "p1", 100); // 10 counters on the ATTACKER, 0 on the defender
     const { state: after, events } = swing(state, "glalie");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(after.players.p2.active?.damage).toBe(0);
     expect(after.players.p1.active?.damage).toBe(100);
   });
@@ -395,7 +390,7 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
     // on this member: the counters are on the body this attack is about to damage,
     // so a mid-pipeline re-read would see the 60 it just dealt and score 180.
     const { state: after, events } = swing(board("glalie", "fix-titan", 3), "glalie");
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(60);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(60);
     expect(after.players.p2.active?.damage).toBe(90);
   });
 
@@ -403,25 +398,25 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
     // "Speed Dive" has no `effect` key at all. A fold keyed on the CARD rather than
     // on the declared attack's text would turn this printed 70 into 20 × 3.
     const { events } = swing(board("flapple-dive", "fix-titan", 3), "flapple-dive");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("…and Glalie's index 1 keeps its OWN, DIFFERENT live mechanism intact", () => {
     const before = board("glalie-headbutt", "fix-titan", 3);
     expect(before.players.p1.active?.energy).toHaveLength(3);
     const { state: after, events } = swing(before, "glalie-headbutt");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 140, dealt: 140 });
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 140, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(after.phase.kind).toBe("effect:choose");
     expect(after.players.p1.active?.energy).toHaveLength(3);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("BOTH FOLDS ON ONE COUNT SOURCE, ONE COUNTER TOTAL, ONE BOARD", () => {
     const at5 = (attacker: Attacker) =>
-      find(swing(board(attacker, "fix-titan", 5), attacker).events, "DAMAGE_DEALT");
+      findEvent(swing(board(attacker, "fix-titan", 5), attacker).events, "DAMAGE_DEALT");
     expect(at5("glalie")).toMatchObject({ base: 0, scaled: 100, dealt: 100 });
     expect(at5("dedenne")).toMatchObject({ base: 30, scaled: 50, dealt: 80 });
     expect(at5("glalie")?.debuff).toBeUndefined();
@@ -436,15 +431,18 @@ describe("§4 — per × the DEFENDER's counters as the WHOLE damage", () => {
 describe("§5 — the fold lands BEFORE Weakness, and there is no base underneath it", () => {
   it("doubles the SCALED number, not a printed base that is not there", () => {
     const { state: after, events } = swing(board("glalie", "fix-water-weak", 3), "glalie");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 0, scaled: 60, dealt: 120 });
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(after.players.p2.active?.damage).toBe(150);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("…and the oracle is derived from the ROW's OWN fields", () => {
-    const row = find(swing(board("glalie", "fix-water-weak", 3), "glalie").events, "DAMAGE_DEALT");
+    const row = findEvent(
+      swing(board("glalie", "fix-water-weak", 3), "glalie").events,
+      "DAMAGE_DEALT",
+    );
     if (row === undefined) throw new Error("no damage row");
     const raw = row.base + (row.scaled ?? 0) + (row.bonus ?? 0);
     expect(row.weakness).not.toBeNull();
@@ -489,7 +487,7 @@ describe("§6 — the crumb, rendered under BOTH seats and READ", () => {
   it("AND THE PRINTED TEXT STOPS BEING FLAGGED — on both cards", () => {
     for (const attacker of ["glalie", "flapple"] as const) {
       expect(
-        find(swing(board(attacker, "fix-titan", 3), attacker).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(board(attacker, "fix-titan", 3), attacker).events, "ATTACK_EFFECT_SKIPPED"),
       ).toBeUndefined();
     }
   });
@@ -503,8 +501,8 @@ describe("§7 — the structural answers", () => {
   it("`MATCH_RECORD_VERSION` STAYS 26, and it is DRIVEN rather than reasoned", () => {
     const live = board("glalie", "fix-titan", 3);
     const persisted = JSON.parse(JSON.stringify(live)) as GameState;
-    const liveRow = find(swing(live, "glalie").events, "DAMAGE_DEALT");
-    const replayedRow = find(swing(persisted, "glalie").events, "DAMAGE_DEALT");
+    const liveRow = findEvent(swing(live, "glalie").events, "DAMAGE_DEALT");
+    const replayedRow = findEvent(swing(persisted, "glalie").events, "DAMAGE_DEALT");
     expect(replayedRow).toEqual(liveRow);
     expect(replayedRow).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
     const active = live.players.p1.active;
@@ -547,8 +545,11 @@ describe("§7 — the structural answers", () => {
   });
 
   it("…and the EVENT this fold emits is key-for-key a SHIPPED sentence's event", () => {
-    const mine = find(swing(board("glalie", "fix-titan", 3), "glalie").events, "DAMAGE_DEALT");
-    const shipped = find(swing(board("dedenne", "fix-titan", 3), "dedenne").events, "DAMAGE_DEALT");
+    const mine = findEvent(swing(board("glalie", "fix-titan", 3), "glalie").events, "DAMAGE_DEALT");
+    const shipped = findEvent(
+      swing(board("dedenne", "fix-titan", 3), "dedenne").events,
+      "DAMAGE_DEALT",
+    );
     if (mine === undefined || shipped === undefined) throw new Error("no damage row");
     expect(Object.keys(mine).sort()).toEqual(Object.keys(shipped).sort());
   });

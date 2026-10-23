@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ANY_ENERGY, applyAction, costMet, providedEnergy } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState } from "./index";
 import {
   SPECIAL_ENERGY_DECK,
   activeUid,
@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  activeOf,
 } from "./testFixtures";
 
 /** Setup then open P1's turn 2 (P2 went first, passed). */
@@ -25,12 +26,6 @@ function p1Turn2(seed: number): GameState {
     { first: "p2" },
   );
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active Pokémon`);
-  return active;
 }
 
 describe("costMet with wildcards (§6.4)", () => {

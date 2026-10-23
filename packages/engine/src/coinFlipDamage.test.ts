@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SURPRISE_ATTACK = "Flip a coin. If tails, this attack does nothing.";
@@ -44,13 +45,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function all<T extends GameEvent["type"]>(
@@ -450,7 +444,7 @@ describe("Litwick — the heads BONUS through a REAL attack, both faces", () => 
       const flip = flips[0];
       if (flip === undefined) throw new Error("Firebreathing did not flip");
       expect(flip.seat).toBe("p1"); // the ATTACKER flips, not the defender
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (flip.result === "heads") {
         sawHeads = true;
         // base 10 + the printed 10, into a body with no Weakness at all.
@@ -502,14 +496,14 @@ describe("Tarountula — the tails CANCEL through a REAL attack, both faces", ()
       if (flip.result === "heads") {
         sawHeads = true;
         // Heads on THIS member is the plain printed resolution — no bonus.
-        expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
-        expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+        expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+        expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
         expect(activeDamage(done, "p2")).toBe(30);
         expect(types(events)).not.toContain("ATTACK_FAILED");
       } else {
         sawTails = true;
         // NOTHING is exactly what happened, stated as a list of absences.
-        expect(find(events, "ATTACK_FAILED")).toEqual({
+        expect(findEvent(events, "ATTACK_FAILED")).toEqual({
           type: "ATTACK_FAILED",
           seat: "p1",
           uid,
@@ -545,9 +539,9 @@ describe("the fold order — the heads bonus lands BEFORE Weakness", () => {
         seat: "p1",
         index: FLIP_INDEX,
       });
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       expect(damage?.weakness).toEqual({ op: "multiply", amount: 2 });
-      if (find(events, "ATTACK_EFFECT_COIN_FLIP")?.result === "heads") {
+      if (findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result === "heads") {
         sawHeads = true;
         expect(damage?.dealt).toBe(40);
         expect(damage?.scaled).toBe(10);
@@ -576,7 +570,7 @@ describe("rngState — exactly ONE flip's worth is consumed", () => {
         index: FLIP_INDEX,
       });
       // The face the engine reported IS the face the seed owed.
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe(face);
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe(face);
       // …and the state advanced by exactly one step. Nothing else in a plain
       // attack (the §8.5 pipeline, the §8.1 sweep, the §5.3 turn end and its
       // draw) touches the rng, so this is a total account.
@@ -619,7 +613,7 @@ describe("effectSimulated / modifierSimulated — no loud row on EITHER face", (
       // Both cards flip off the SAME rngState here (same seed, same board), so one
       // face flag covers both — which is also why the two are stepped through
       // together rather than in separate loops.
-      if (find(litwick.events, "ATTACK_EFFECT_COIN_FLIP")?.result === "heads") sawHeads = true;
+      if (findEvent(litwick.events, "ATTACK_EFFECT_COIN_FLIP")?.result === "heads") sawHeads = true;
       else sawTails = true;
     }
     expect(sawHeads && sawTails).toBe(true);
@@ -655,7 +649,7 @@ describe("ATTACK_FAILED — the THREE reasons stay distinguishable", () => {
     for (let seed = 0; seed < SEEDS && rendered === null; seed++) {
       const state = tarountulaActive(board(seed), "p1");
       const { events } = mustApply(state, { type: "attack", seat: "p1", index: FLIP_INDEX });
-      if (find(events, "ATTACK_FAILED") === undefined) continue;
+      if (findEvent(events, "ATTACK_FAILED") === undefined) continue;
       const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:07" };
       rendered = logFromEvents(
         events.filter((e) => e.type === "ATTACK_EFFECT_COIN_FLIP" || e.type === "ATTACK_FAILED"),

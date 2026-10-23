@@ -13,7 +13,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import { applyAction, createGame, programFor, topCardOf } from "./index";
-import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -25,6 +25,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 /** The printed sentence, verbatim — the byte source for every case below. */
@@ -150,13 +151,6 @@ function emptyBench(by: Seat = "p1"): GameState {
 
 function swing(state: GameState, index: number, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index });
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** The parked `choosePokemon` prompt, narrowed — a state that is not parked fails
@@ -365,7 +359,7 @@ describe("§3 — the parked candidate list is the printed subgroup", () => {
     const { state: parked } = swing(mixed(), VOLT);
     const { state: done, events } = mustApply(parked, pick("p1", 2));
     expect(activeName(done, "p1")).toBe("Fixtricity");
-    expect(find(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
+    expect(findEvent(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
     expect(done.phase.kind).toBe("turn:action");
     // The §8.5 hit ran BEFORE the program, on the body that declared — so the
     // defender took 10 even though the attacker left the Active Spot.
@@ -403,7 +397,7 @@ describe("§4 — `parkOrForce`'s three arms, reached through the narrowing", ()
     const { state: done, events } = swing(oneMatch(), VOLT);
     expect(done.phase.kind).toBe("turn:action");
     expect(activeName(done, "p1")).toBe("fix-lightning-1");
-    expect(find(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
+    expect(findEvent(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
   });
 
   it("an EMPTY Bench also ends silently — `noMatch`'s control on the other axis", () => {

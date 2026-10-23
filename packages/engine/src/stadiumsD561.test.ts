@@ -18,6 +18,7 @@ import {
   trainerCard,
   types,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const ACADEMY = "sv06.5-054";
@@ -200,11 +201,6 @@ const cards = (uids: readonly string[], seat: Seat = "p1"): GameAction => ({
   seat,
   choice: { kind: "cards", uids: [...uids] },
 });
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
@@ -320,7 +316,7 @@ describe("D561 stadiums §3 — Academy at Night: a hand card on top of the deck
   it("two different cards in hand: the pick PARKS (mandatory 1), and the answer goes ON TOP of the deck", () => {
     const board = setHand(stadium(table(), ACADEMY), "p1", [ITEM_A, ITEM_B]);
     const { state: parked, events } = activate(board);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(p).toMatchObject({
       min: 1,

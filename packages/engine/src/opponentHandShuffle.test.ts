@@ -22,6 +22,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SENTENCE =
@@ -104,13 +105,6 @@ const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260922;
 
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({
@@ -323,7 +317,7 @@ describe("§3 — the park, its decider and its redaction", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(parked.phase.seat).toBe("p1");
     expect(parked.phase.answerer).toBe("p2");
-    expect(find(events, "EFFECT_PENDING")?.seat).toBe("p2");
+    expect(findEvent(events, "EFFECT_PENDING")?.seat).toBe("p2");
   });
 
   it("MANDATORY AND EXACT AT THREE, INTO THE DECK", () => {
@@ -431,7 +425,7 @@ describe("§4 — the picked cards land in the DECK and not in the discard", () 
     const { state: parked } = attack(ready(), SHUFFLE);
     const picked = parkedPrompt(parked).candidates.slice(0, 3);
     const { events } = answerWith(parked, "p2", picked);
-    const row = find(events, "FORCED_HAND_DISCARD");
+    const row = findEvent(events, "FORCED_HAND_DISCARD");
     expect(row?.seat).toBe("p2");
     expect(row?.to).toBe("deck");
     expect(row?.uids).toEqual([...picked]);
@@ -444,7 +438,7 @@ describe("§4 — the picked cards land in the DECK and not in the discard", () 
     const { state: parked } = attack(ready(), DISCARD_TWO);
     const picked = parkedPrompt(parked).candidates.slice(0, 2);
     const { state, events } = answerWith(parked, "p2", picked);
-    const row = find(events, "FORCED_HAND_DISCARD");
+    const row = findEvent(events, "FORCED_HAND_DISCARD");
     expect(row?.to).toBeUndefined();
     for (const uid of picked) {
       expect(state.players.p2.discard).toContain(uid);
@@ -462,7 +456,7 @@ describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
     // The tail ran, on the OPPONENT's deck, and nothing crossed a zone boundary but
     // the turn-end draw.
     expect(types(events)).toContain("SHUFFLE");
-    expect(find(events, "SHUFFLE")?.seat).toBe("p2");
+    expect(findEvent(events, "SHUFFLE")?.seat).toBe("p2");
     expect(state.players.p2.hand).toHaveLength(1);
     expect(state.players.p2.deck.length).toBe(start.players.p2.deck.length - 1);
     expect(state.players.p2.discard).toEqual(start.players.p2.discard);
@@ -483,7 +477,7 @@ describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
     // Three cards left the hand and the turn-end draw put one card back.
     expect(state.players.p2.hand).toHaveLength(1);
     expect(state.players.p2.deck.length).toBe(before.deck.length + 2);
-    expect(find(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
+    expect(findEvent(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
   });
 
   it("A HAND OF FEWER THAN 3 DOES WHAT IT CAN — into the DECK", () => {
@@ -491,8 +485,8 @@ describe("§5 — the §8.6 short boards, on the arm §4 cannot reach", () => {
     const hand = [...start.players.p2.hand];
     const { state, events } = attack(start, SHUFFLE);
     expect(state.phase.kind).toBe("turn:action");
-    expect(find(events, "FORCED_HAND_DISCARD")?.uids).toEqual(hand);
-    expect(find(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
+    expect(findEvent(events, "FORCED_HAND_DISCARD")?.uids).toEqual(hand);
+    expect(findEvent(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
     for (const uid of hand) {
       expect([...state.players.p2.deck, ...state.players.p2.hand], uid).toContain(uid);
       expect(state.players.p2.discard, uid).not.toContain(uid);
@@ -648,7 +642,7 @@ describe("§9 — the persisted op, over the serialized bytes", () => {
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     const picked = parkedPrompt(revived).candidates.slice(0, 3);
     const { state, events } = answerWith(revived, "p2", picked);
-    expect(find(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
+    expect(findEvent(events, "FORCED_HAND_DISCARD")?.to).toBe("deck");
     for (const uid of picked) expect(state.players.p2.deck).toContain(uid);
     expect(types(events)).toContain("SHUFFLE");
   });
@@ -664,7 +658,7 @@ describe("§9 — the persisted op, over the serialized bytes", () => {
     // not the record, and is re-derived from the op on resume.
     const picked = parkedPrompt(stripped).candidates.slice(0, 3);
     const { state, events } = answerWith(stripped, "p2", picked);
-    expect(find(events, "FORCED_HAND_DISCARD")?.to).toBeUndefined();
+    expect(findEvent(events, "FORCED_HAND_DISCARD")?.to).toBeUndefined();
     for (const uid of picked) {
       expect(state.players.p2.discard, uid).toContain(uid);
       expect(state.players.p2.deck, uid).not.toContain(uid);

@@ -15,6 +15,7 @@ import {
   setBenchDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
@@ -22,13 +23,6 @@ import {
 function p1Turn2(seed: number): GameState {
   const state = driveSetup(seed, { p1: KNOCKOUT_DECK, p2: KNOCKOUT_DECK }, { first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** P1 fix-sniper (energied to attack) vs a P2 board — the shared arrangement.
@@ -118,7 +112,7 @@ describe("bench Knock Outs via spread (§8.1, generalized off the Active)", () =
     const benched = benchTopUid(state, "p2", 0);
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    const ko = find(events, "KNOCKED_OUT");
+    const ko = findEvent(events, "KNOCKED_OUT");
     expect(ko).toMatchObject({ seat: "p2", uid: benched });
     expect(ko?.discarded).toContain(benched);
     expect(after.players.p2.discard).toContain(benched);
@@ -176,7 +170,7 @@ describe("bench Knock Outs via spread (§8.1, generalized off the Active)", () =
     state = setBenchDamage(state, "p2", 0, 10); // spread 20 → KO
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // The forced last-prize take auto-resolves and ends the game (§14.1).
-    expect(find(events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "prizesTaken",

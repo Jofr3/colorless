@@ -18,7 +18,7 @@ import {
   optionalCostBoostProgram,
 } from "./effects";
 import { conditionHolds, conditionNote } from "./interpreter";
-import type { BoardCondition, EffectOp, GameEvent, GameState, Seat } from "./index";
+import type { BoardCondition, EffectOp, GameState, Seat } from "./index";
 import {
   PURGING_STRIKE_DECK,
   attachFromDeck,
@@ -26,6 +26,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -99,13 +100,6 @@ const attack = (state: GameState, seat: Seat = "p1") =>
 
 const say = (state: GameState, yes: boolean) =>
   mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const SEEDS = [9001, 9013, 9029] as const;
 
@@ -304,7 +298,7 @@ describe("§3 — `yourHandNotEmpty`, and the EQUIVALENCE that licenses the conn
     expect(conditionHolds(state, "p1", HAND_NOT_EMPTY)).toBe(true);
     expect(state.players.p1.hand).toHaveLength(1);
     const done = say(attack(state).state, true);
-    expect(find(done.events, "HAND_DISCARDED")?.uids).toHaveLength(1);
+    expect(findEvent(done.events, "HAND_DISCARDED")?.uids).toHaveLength(1);
   });
 
   it("the note is a reject pill, and it is a LITERAL because the member is nullary", () => {
@@ -386,7 +380,7 @@ describe("§5 — the board: the hand reaches the DISCARD PILE, and the hit is 2
       expect(types(parked.events)).not.toContain("DAMAGE_DEALT");
       expect(types(parked.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       expect(parked.state.phase.kind).toBe("effect:choose");
-      expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+      expect(findEvent(parked.events, "EFFECT_PENDING")).toEqual({
         type: "EFFECT_PENDING",
         seat: "p1",
         note: PURGING,
@@ -396,13 +390,13 @@ describe("§5 — the board: the hand reaches the DISCARD PILE, and the hit is 2
       expect(done.state.players.p1.hand).toEqual([]);
       expect(done.state.players.p1.discard).toHaveLength(pileBefore + hand.length);
       for (const uid of hand) expect(done.state.players.p1.discard).toContain(uid);
-      expect(find(done.events, "HAND_DISCARDED")).toEqual({
+      expect(findEvent(done.events, "HAND_DISCARDED")).toEqual({
         type: "HAND_DISCARDED",
         seat: "p1",
         uids: [...hand],
       });
       // …and the boosted hit, ONCE.
-      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({
+      expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({
         seat: "p2",
         base: 240,
         dealt: 240,
@@ -420,7 +414,11 @@ describe("§5 — the board: the hand reaches the DISCARD PILE, and the hit is 2
     expect(done.state.players.p1.hand).toEqual(hand);
     expect(done.state.players.p1.discard).toHaveLength(pileBefore);
     expect(types(done.events)).not.toContain("HAND_DISCARDED");
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 120, dealt: 120 });
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      base: 120,
+      dealt: 120,
+    });
     expect(done.state.players.p2.active?.damage).toBe(120);
   });
 });
@@ -434,7 +432,11 @@ describe("§6 — the gate, driven from the REAL printing on an ORDINARY board",
     expect(types(done.events)).not.toContain("EFFECT_PENDING");
     expect(types(done.events)).not.toContain("HAND_DISCARDED");
     expect(types(done.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 120, dealt: 120 });
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      base: 120,
+      dealt: 120,
+    });
     expect(done.state.players.p2.active?.damage).toBe(120);
     // …and the CONTROL: the same board, the same seed, ONE card in hand — offered.
     const one = setHandSize(board(seed), "p1", 1);
@@ -449,9 +451,9 @@ describe("§6 — the gate, driven from the REAL printing on an ORDINARY board",
       // not *"all of them"*, so there is no proportionality anywhere in this reading.
       const before = setHandSize(board(seed), "p1", 1);
       const done = say(attack(before).state, true);
-      expect(find(done.events, "HAND_DISCARDED")?.uids).toHaveLength(1);
+      expect(findEvent(done.events, "HAND_DISCARDED")?.uids).toHaveLength(1);
       expect(done.state.players.p1.hand).toEqual([]);
-      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ base: 240, dealt: 240 });
+      expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ base: 240, dealt: 240 });
     },
   );
 });

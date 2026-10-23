@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   SELF_ENERGY_HAND_DECK,
   attachFromDeck,
@@ -26,6 +26,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const READERS: readonly ((t: string) => unknown)[] = [
@@ -188,13 +189,6 @@ describe("D405 §3 — the refusals, each pinned on ONE printed token this ancho
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function activeEnergy(state: GameState, seat: Seat): string[] {
   return [...(state.players[seat].active?.energy ?? [])];
 }
@@ -238,7 +232,7 @@ describe("D405 §4 — the FORCED board: one Energy, no prompt, and the card lan
 
   it("the event names the victim, the actor and the DESTINATION", () => {
     const { events } = mustApply(board(12, ["fix-energy"]), attack);
-    const row = find(events, "ENERGY_DISCARDED");
+    const row = findEvent(events, "ENERGY_DISCARDED");
     // The victim IS the actor here — `discardVictimSeat` returns the controller for
     // `yourActive`, which is what makes the printed "your hand" need no seat branch.
     expect(row).toMatchObject({ seat: "p1", actor: "p1", from: { spot: "active" }, to: "hand" });
@@ -249,7 +243,7 @@ describe("D405 §4 — the FORCED board: one Energy, no prompt, and the card lan
     // must survive §8.5 untouched. A base that ever came back 0 would mean a reader had
     // claimed a number this sentence never spends.
     const { state: done, events } = mustApply(board(13, ["fix-energy"]), attack);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 30 });
     expect(done.players.p2.active?.damage).toBe(30);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });

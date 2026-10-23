@@ -17,6 +17,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const EITHER_HEADS =
@@ -61,13 +62,6 @@ function all<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** The heads count off the EMITTED rows, so every assertion below is a claim about
@@ -377,7 +371,7 @@ describe("§5 — the board: `per × heads` with the base DROPPED, and the statu
       expect(done.players.p2.active?.damage).toBe(90 * heads);
       expect(rotationOf(done)).toBe(tails >= 2 ? "confused" : NO_ROTATION);
       if (heads === 0) {
-        expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+        expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
         expect(rotationOf(done)).toBe("confused");
       }
       // …and the turn still ends, because an attack that dealt nothing was USED.
@@ -417,7 +411,7 @@ describe("§5 — the board: `per × heads` with the base DROPPED, and the statu
       });
       const heads = headsIn(events);
       seen.add(heads);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
         continue;
@@ -453,7 +447,7 @@ describe("§6 — the §12 IMMUNITY gate, driven: a refused status must not sile
       expect(rotationOf(done)).toBe(NO_ROTATION);
       expect(types(events)).not.toContain("STATUS_APPLIED");
       expect(types(events).includes("STATUS_PREVENTED")).toBe(heads >= 1);
-      const prevented = find(events, "STATUS_PREVENTED");
+      const prevented = findEvent(events, "STATUS_PREVENTED");
       if (heads >= 1) {
         expect(prevented?.status).toBe("paralyzed");
         expect(prevented?.seat).toBe("p2");
@@ -477,7 +471,7 @@ describe("§6 — the §12 IMMUNITY gate, driven: a refused status must not sile
       seen.add(heads);
       expect(rotationOf(done)).toBe(NO_ROTATION);
       expect(types(events).includes("STATUS_PREVENTED")).toBe(heads === 0);
-      if (heads === 0) expect(find(events, "STATUS_PREVENTED")?.status).toBe("confused");
+      if (heads === 0) expect(findEvent(events, "STATUS_PREVENTED")?.status).toBe("confused");
     }
     expect([...seen].sort()).toEqual([0, 1, 2]);
   });

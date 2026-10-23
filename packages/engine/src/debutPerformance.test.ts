@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { firstTurnAttackBanned, passivesOf } from "./continuous";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction, createGame, programFor, redactGame } from "./index";
 import { isFirstTurnOf } from "./types";
 import {
@@ -15,6 +15,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 
 const DEBUT_PERFORMANCE_TEXT =
@@ -98,12 +99,6 @@ function board(seed: number, first: Seat, seat: Seat, activeId: string): GameSta
   state = clearBench(state, seat);
   state = benchFromDeck(state, seat, "fix-basic-1");
   return attachFromDeck(state, seat, "fix-psy-energy", 1);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function passTurns(state: GameState, count: number): GameState {

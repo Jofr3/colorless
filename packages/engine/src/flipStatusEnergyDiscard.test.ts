@@ -13,6 +13,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -45,13 +46,6 @@ const COMPOSED_BY_THE_SPLITTER =
 
 const W = "(?:Asleep|Burned|Confused|Paralyzed|Poisoned)";
 const SEEDS = 400;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 const types = (events: GameEvent[]) => events.map((e) => e.type);
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
 const hit = (re: RegExp) => legalAttackCorpus().filter(([, s]) => re.test(s));
@@ -84,7 +78,7 @@ function swing(state: GameState, index = 2, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index });
 }
 function flipOf(events: GameEvent[]): "heads" | "tails" {
-  const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+  const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
   if (flip === undefined) throw new Error("no coin flip");
   return flip.result;
 }
@@ -341,7 +335,7 @@ describe("§4 — heads and tails, inline and parked", () => {
     });
     expect(activeEnergy(state, "p2")).toHaveLength(2);
     // …and the printed damage landed anyway: the gate is over the EFFECT, not the attack.
-    expect(find(events, "DAMAGE_DEALT")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeDefined();
   });
 
   it("HEADS on a UNIFORM defender board resolves INLINE — no prompt, both consequents land", () => {
@@ -419,7 +413,7 @@ describe("§5 — the printed text stops being flagged, and the loud path still 
   it("the printed index reports no skipped effect any more, on either face", () => {
     for (const face of ["heads", "tails"] as const) {
       expect(
-        find(swing(board(firstSeed(face, true), true)).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(board(firstSeed(face, true), true)).events, "ATTACK_EFFECT_SKIPPED"),
       ).toBeUndefined();
     }
   });
@@ -429,7 +423,7 @@ describe("§5 — the printed text stops being flagged, and the loud path still 
     expect(STILL_LOUD).toEqual([]);
     for (const text of [...STILL_LOUD, RECORDED_REFUSAL]) {
       const doctored = withEffect(b, text);
-      expect(find(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
+      expect(findEvent(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
   });
 
@@ -437,7 +431,7 @@ describe("§5 — the printed text stops being flagged, and the loud path still 
     const b = board(firstSeed("heads", true), true);
     for (const text of CONSTRUCTED_MISSES) {
       const doctored = withEffect(b, text);
-      expect(find(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
+      expect(findEvent(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
   });
 });

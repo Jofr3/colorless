@@ -15,7 +15,7 @@ import {
 } from "./effects";
 import type { CardFilter } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, InPlayPokemon, Seat } from "./index";
 import {
   BENCH_NOUN_DECK,
   FIXTURE_POOL,
@@ -28,6 +28,8 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
+  activeOf,
 } from "./testFixtures";
 
 const BENCH_F_COUNTERS =
@@ -49,19 +51,6 @@ const SEED = 1;
 const FIGHTING: CardFilter = { kind: "typedPokemon", pokemonType: "Fighting" };
 const CHARJABUG: CardFilter = { kind: "byName", name: "Charjabug" };
 const DUSKULL: CardFilter = { kind: "byName", name: "Duskull" };
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const body = state.players[seat].active;
-  if (body === null) throw new Error(`${seat} has no Active`);
-  return body;
-}
 
 function bare(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
@@ -122,7 +111,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(state: GameState, index: number, seat: Seat = "p1"): number | undefined {
-  return find(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
 function benchCounters(state: GameState, seat: Seat, filter?: CardFilter): number {

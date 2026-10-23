@@ -15,6 +15,7 @@ import {
   setDamage,
   typedEnergy,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const GURDURR = "sv06-104";
@@ -202,13 +203,6 @@ const LEAF = { type: "attack", seat: "p1", index: 0 } as const;
 const YES = { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } } as const;
 const NO = { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: false } } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
 }
@@ -250,7 +244,7 @@ describe("§1 — THE CONTROL: a flat printed hit fires both §9 reactions", () 
         seed,
       });
       const { events } = must2(applyAction(state, PUNCH));
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 20 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 20 });
       expectBothReactions(events, "flat hit");
     });
   }
@@ -279,7 +273,7 @@ describe("§2 — D316's `optional` gate: BOTH arms are damage from an attack", 
       // The whole hit is inside the gate — nothing has landed yet.
       expect(count(parked.events, "DAMAGE_DEALT")).toBe(0);
       const done = must2(applyAction(parked.state, YES));
-      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 80 });
+      expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 80 });
       expectBothReactions(done.events, "optional YES");
     });
 
@@ -293,7 +287,7 @@ describe("§2 — D316's `optional` gate: BOTH arms are damage from an attack", 
       });
       const parked = must2(applyAction(state, SUPERPOWER));
       const done = must2(applyAction(parked.state, NO));
-      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 50 });
+      expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 50 });
       expectBothReactions(done.events, "optional NO");
     });
   }
@@ -316,7 +310,7 @@ describe("§3 — D317's `conditionGate`: both sides of the board condition", ()
     it(`the NO arm (140, a Basic defender) recoils AND Burns (seed ${seed})`, () => {
       const state = board({ attacker: OGERPON, energy: FIRE, count: 3, defender: ARMAROUGE, seed });
       const { events } = must2(applyAction(state, BLAZE));
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 140 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 140 });
       expectBothReactions(events, "conditionGate NO");
     });
 
@@ -325,7 +319,7 @@ describe("§3 — D317's `conditionGate`: both sides of the board condition", ()
       // half alone — which is exactly the half a Tool can grant to any body.
       const state = board({ attacker: OGERPON, energy: FIRE, count: 3, defender: EVOLVED, seed });
       const { events } = must2(applyAction(state, BLAZE));
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
       expect(recoil(events), "conditionGate YES: Rocky Helmet's recoil").toMatchObject({
         seat: "p1",
         amount: 20,
@@ -346,8 +340,8 @@ describe("§4 — D317's `coinFlipGate`: both faces of one flip", () => {
     });
     const { events } = must2(applyAction(state, LEAF));
     return {
-      face: find(events, "ATTACK_EFFECT_COIN_FLIP")?.result,
-      dealt: find(events, "DAMAGE_DEALT")?.dealt,
+      face: findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result,
+      dealt: findEvent(events, "DAMAGE_DEALT")?.dealt,
       events,
     };
   }
@@ -372,9 +366,9 @@ describe("§5 — 'even if this Pokémon is Knocked Out' survives the re-homing 
       let state = board({ attacker: OGERPON, energy: FIRE, count: 3, defender: ARMAROUGE, seed });
       state = setDamage(state, "p2", 380);
       const { events } = must2(applyAction(state, BLAZE));
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 140 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 140 });
       expectBothReactions(events, "lethal conditionGate NO");
-      expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+      expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
       const order = events.map((e) => e.type);
       expect(order.indexOf("STATUS_APPLIED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
     });
@@ -392,7 +386,7 @@ describe("§6 — the boundary: no damage, no reaction", () => {
       helmet: false,
     });
     const { events } = must2(applyAction(state, BLAZE));
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
     expect(recoil(events)).toBeUndefined();
     expect(burned(events)).toBe(false);
   });
@@ -429,7 +423,7 @@ describe("§6 (D456) — the INSTALLED half of the recoil, through this same fun
         "p2",
       );
       const { events } = must2(applyAction(state, BLAZE));
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: expected });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: expected });
       expect(recoil(events), label).toMatchObject({ seat: "p1", amount: expected + 20 });
       expect(
         events.filter((e) => e.type === "COUNTERS_PLACED" && e.source === "counterattack"),
@@ -451,7 +445,7 @@ describe("§6 (D456) — the INSTALLED half of the recoil, through this same fun
       },
     };
     const { events } = must2(applyAction(state, BLAZE));
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
     expect(recoil(events)).toMatchObject({ seat: "p1", amount: 50 + 20 });
   });
 });

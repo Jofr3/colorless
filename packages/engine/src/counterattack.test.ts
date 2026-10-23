@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
@@ -26,13 +27,6 @@ const RECOIL_CLAUSE = "damage counters on the Attacking Pokémon";
 /** Rocky Helmet's own contribution, read off the registry so a data change moves
     every expectation in this file at once. */
 const HELMET = (programFor("sv01-193")?.passive?.damageAttacker?.amount ?? 0) as number;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -106,8 +100,8 @@ describe("the §9 recoil row — the MECHANISM label, whatever card granted it",
   it("a TOOL's recoil (Rocky Helmet) is no longer called an Ability", () => {
     const { state: done, events } = fight(1, "fix-bigbody", "sv01-193");
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p1",
       uid: activeUid(done, "p1"),
@@ -121,7 +115,7 @@ describe("the §9 recoil row — the MECHANISM label, whatever card granted it",
     const quills = programFor("sv01-006")?.passive?.damageAttacker?.amount;
     const { state: done, events } = fight(2, "sv01-006");
 
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: quills,
       source: "counterattack",
@@ -241,7 +235,7 @@ describe("the guard, ASSERTED over the POOL rather than at one hand-picked site"
 describe("the VOICE — `seat` owns the DAMAGED Pokémon, which here is the ATTACKER", () => {
   it("files the row under the attacker's seat and uid, though the CAUSER is the defender", () => {
     const { state: done, events } = fight(4, "fix-bigbody", "sv01-193");
-    const placed = find(events, "COUNTERS_PLACED");
+    const placed = findEvent(events, "COUNTERS_PLACED");
     expect(placed?.seat).toBe("p1"); // the attacking player
     expect(placed?.uid).toBe(activeUid(done, "p1")); // …and their own Active
     expect(done.players.p2.active?.damage).toBe(30); // the holder took only the Bite

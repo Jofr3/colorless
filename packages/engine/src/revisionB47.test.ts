@@ -3,7 +3,14 @@ import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
-import { battler, completeSetup, deckOf, typedEnergy, mustApply as must } from "./testFixtures";
+import {
+  battler,
+  completeSetup,
+  deckOf,
+  typedEnergy,
+  mustApply as must,
+  effectPrompt,
+} from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
 const SONIC_RIPPER =
@@ -125,11 +132,6 @@ function render(events: readonly GameEvent[], state: GameState): string[] {
     entry.kind === "turn" ? [] : [entry.segments.map((s) => s.text).join("")],
   );
 }
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected a park, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -168,7 +170,7 @@ describe("B47 §1 — an attack that shuffles its own Energy into the deck says 
       // Answer every park the printed "You may … 1 of your opponent's Benched Pokémon" raises
       // with its first legal option (accept the shuffle, the first 3 Energy, the one Benched Filler).
       for (let guard = 0; step.state.phase.kind === "effect:choose" && guard < 5; guard++) {
-        const p = prompt(step.state);
+        const p = effectPrompt(step.state);
         const choice =
           p.kind === "chooseCards"
             ? { kind: "cards" as const, uids: p.candidates.slice(0, p.max) }

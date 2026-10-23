@@ -21,7 +21,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   DISCARD_SCALED_DECK,
   attachBenchFromDeck,
@@ -32,6 +32,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -479,17 +480,6 @@ describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. Two fixtures, one per quantifier arm.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     their first turn carries no §4 attack restriction. */
 function board(seed: number): GameState {
@@ -536,12 +526,12 @@ describe('D402 §4 — the `count: "all"` arm: the record filed with NOTHING par
     const { state: done, events } = mustApply(state, attack);
 
     expect(done.phase.kind).not.toBe("effect:choose");
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     expect(discarded).toMatchObject({ seat: "p1", actor: "p1", uids: before.slice(0, 3) });
     expect(activeEnergy(done, "p1")).toEqual(before.slice(3));
     expect(activeEnergy(done, "p1")).toHaveLength(2);
     // …and the damage the record feeds, dealt through the same §8.5 pipeline.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 150 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 150 });
     expect(done.players.p2.active?.damage).toBe(150);
     // The printed order, and nothing between the two ops.
     expect(types(events)).toEqual([
@@ -571,7 +561,7 @@ describe('D402 §4 — the `count: "all"` arm: the record filed with NOTHING par
   it("ONE {L} deals 50 — the count is what scales, not the board", () => {
     const state = fielded(3, "fix-allscale", { "fix-lightning-energy": 1, "fix-energy": 1 });
     const { state: done, events } = mustApply(state, attack);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(50);
     expect(activeEnergy(done, "p1")).toHaveLength(1);
   });
 });
@@ -629,7 +619,7 @@ describe("D402 §5 — the declinable arm, and the caption `energyNoun` grew for
       seat: "p1",
       choice: { kind: "discardEnergy", uids: picks.slice(0, 2) },
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(140);
     expect(activeEnergy(done, "p1")).toEqual([picks[2]]);
     state = done;
     expect(state.players.p2.active?.damage).toBe(140);

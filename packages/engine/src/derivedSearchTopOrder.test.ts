@@ -16,6 +16,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const CIPHER_A = "sv05-145";
@@ -99,13 +100,6 @@ function apply(
   const result = applyAction(state, action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return { state: result.state, events: result.events };
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -581,7 +575,7 @@ describe("§7 the log and the events — a count row, and no card is named", () 
   it("`DECK_SEARCHED` carries the new destination and no `reveal`", () => {
     const { parked, prompt } = playCipher(supporterBoard(11));
     const { events } = pick(parked, prompt.candidates.slice(4, 6));
-    const row = find(events, "DECK_SEARCHED");
+    const row = findEvent(events, "DECK_SEARCHED");
     expect(row?.dest).toBe("deckTop");
     expect(row?.reveal).toBeUndefined();
   });
@@ -601,12 +595,12 @@ describe("§7 the log and the events — a count row, and no card is named", () 
   it("the LOOK is announced when the window opens, not when the answer lands", () => {
     const { parked, prompt } = playCipher(supporterBoard(11));
     const { state: ordering, events: opened } = pick(parked, prompt.candidates.slice(4, 6));
-    const row = find(opened, "DECK_TOP_REORDERED");
+    const row = findEvent(opened, "DECK_TOP_REORDERED");
     expect(row?.count).toBe(2);
     expect(row?.seat).toBe("p1");
     expect(row?.actor).toBe("p1");
     const { events: answered } = order(ordering, [...orderPrompt(ordering).candidates].reverse());
-    expect(find(answered, "DECK_TOP_REORDERED")).toBeUndefined();
+    expect(findEvent(answered, "DECK_TOP_REORDERED")).toBeUndefined();
   });
 });
 

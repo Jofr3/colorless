@@ -28,6 +28,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -64,13 +65,6 @@ function effectDraw(events: GameEvent[], seat: Seat = "p1"): string[] {
   return events.flatMap((e) =>
     e.type === "CARDS_DRAWN" && e.seat === seat && e.reason === "effect" ? e.uids : [],
   );
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 describe("D516 §1 — the printed data, measured live over the legal column", () => {
@@ -334,7 +328,7 @@ describe("D516 §4 — the count is the OPPONENT'S hand size, and four rivals sa
     // keeps that honest is that a hand SIZE is already public — the count shows — and
     // this member reads `hand.length` and never a card. No event names an opponent uid.
     const { events } = mustApply(fielded(4), attack);
-    const shuffled = find(events, "HAND_SHUFFLED_INTO_DECK");
+    const shuffled = findEvent(events, "HAND_SHUFFLED_INTO_DECK");
     expect(shuffled?.seat).toBe("p1");
     expect(shuffled?.count).toBe(5);
     expect(events.filter((e) => e.type === "HAND_SHUFFLED_INTO_DECK")).toHaveLength(1);
@@ -356,11 +350,11 @@ describe("D516 §5 — the falsifiers, driven rather than argued", () => {
     expect(done.players.p1.hand).toEqual([]);
     for (const uid of oldHand) expect(done.players.p1.deck).toContain(uid);
     expect(types(events)).toContain("HAND_SHUFFLED_INTO_DECK");
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(5);
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(5);
     expect(effectDraw(events)).toEqual([]);
     expect(events.some((e) => e.type === "CARDS_DRAWN")).toBe(true);
     // …and the attack still RESOLVED: the effect is not skipped.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -380,7 +374,7 @@ describe("D516 §5 — the falsifiers, driven rather than argued", () => {
     const oldHand = [...state.players.p1.hand];
     const oldDeck = [...state.players.p1.deck];
     const { state: done, events } = mustApply(state, attack);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(types(events)).toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("HAND_SHUFFLED_INTO_DECK");
     expect(done.players.p1.hand).toEqual(oldHand);
@@ -400,7 +394,7 @@ describe("D516 §6 — the describer surfaces, checked rather than assumed", () 
   it("the LOG renders the draw from the EVENT's count, so the new kind needs no arm", () => {
     const events = mustApply(fielded(9), attack).events;
     expect(effectDraw(events)).toHaveLength(4);
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(5);
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(5);
   });
 });
 

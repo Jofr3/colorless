@@ -15,6 +15,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -49,20 +50,13 @@ function swing(
   return mustApply(state, { type: "attack", seat, index });
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function dealtAndHealed(events: GameEvent[]): {
   base: number | undefined;
   dealt: number | undefined;
   healed: number | undefined;
 } {
-  const damage = find(events, "DAMAGE_DEALT");
-  const healed = find(events, "HEALED");
+  const damage = findEvent(events, "DAMAGE_DEALT");
+  const healed = findEvent(events, "HEALED");
   return { base: damage?.base, dealt: damage?.dealt, healed: healed?.amount };
 }
 
@@ -290,7 +284,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
       seat: "p1",
       choice: { kind: "discardEnergy", uids: [chosen] },
     });
-    expect(find(healedLegacy.events, "HEALED")?.amount).toBe(30);
+    expect(findEvent(healedLegacy.events, "HEALED")?.amount).toBe(30);
   });
 });
 
@@ -358,7 +352,7 @@ describe("§5 — the clamp is the healer's own damage, and it is `healSelf`'s, 
   it("an UNDAMAGED healer whiffs SILENTLY — no HEALED row, and that is not a skipped effect", () => {
     const { state, events } = swing(board("fix-drainwall", 0), IDX.fifty);
     expect(dealtAndHealed(events).dealt).toBe(50);
-    expect(find(events, "HEALED")).toBeUndefined();
+    expect(findEvent(events, "HEALED")).toBeUndefined();
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(state.players.p1.active?.damage).toBe(0);
   });
@@ -384,11 +378,11 @@ describe("§5 — the clamp is the healer's own damage, and it is `healSelf`'s, 
 describe("§6 — every way the amount is zero, and each one is silent rather than loud", () => {
   it("PREVENTED damage means `dealt` is 0, so the heal is 0 and no HEALED row is emitted", () => {
     const { state, events } = swing(board("fix-imperviousshell", 150), IDX.twoHundred);
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage?.base).toBe(200);
     expect(damage?.prevented).toBe(true);
     expect(damage?.dealt).toBe(0);
-    expect(find(events, "HEALED")).toBeUndefined();
+    expect(findEvent(events, "HEALED")).toBeUndefined();
     expect(state.players.p1.active?.damage).toBe(150);
     const open = swing(board("fix-wall", 150), IDX.twoHundred);
     expect(dealtAndHealed(open.events).dealt).toBe(200);
@@ -400,8 +394,8 @@ describe("§6 — every way the amount is zero, and each one is silent rather th
     // `scaledBase + scaledTotal > 0` is false, `dealtToDefender` keeps its
     // initialiser, and "the same amount of damage you did" is correctly none.
     const { state, events } = swing(board("fix-drainwall", 150), IDX.noDamage);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "HEALED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "HEALED")).toBeUndefined();
     expect(state.players.p1.active?.damage).toBe(150);
     expect(state.players.p2.active?.damage).toBe(0);
   });
@@ -476,7 +470,7 @@ describe("§8 — both chairs, and a frozen board resolves", () => {
       const { dealt, healed } = dealtAndHealed(events);
       expect(dealt, seat).toBe(100);
       expect(healed, seat).toBe(100);
-      expect(find(events, "HEALED")?.seat, seat).toBe(seat);
+      expect(findEvent(events, "HEALED")?.seat, seat).toBe(seat);
       // the HEALER moved, and the DEFENDER took the damage — not the other way round
       expect(state.players[seat].active?.damage, seat).toBe(50);
       expect(state.players[other(seat)].active?.damage, seat).toBe(100);

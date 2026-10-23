@@ -14,6 +14,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const BURN_CONFUSE = "Your opponent's Active Pokémon is now Burned and Confused.";
@@ -52,13 +53,6 @@ const COLLISIONS = [
 ] as const;
 
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -476,7 +470,7 @@ describe("§3 — the rotation collision, refused at the reader", () => {
       withEffect(collided, "fix-ninetales", COLLISIONS[0]),
       "ninetales",
     );
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(COLLISIONS[0]);
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(COLLISIONS[0]);
     expect(all(events, "STATUS_APPLIED")).toEqual([]);
     expect(defenderConditions(state).rotation).toBe("none");
   });
@@ -507,7 +501,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       burned: true,
       confusionDamage: 30,
     });
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("BOTH SEATS — the same sentence read from p2 lands on p1's Active", () => {
@@ -558,7 +552,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       confusionDamage: 30,
     });
     expect(all(tailsEvents, "STATUS_APPLIED")).toEqual([]);
-    expect(find(tailsEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(tailsEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("order-independence where the model allows it: the pair is idempotent-safe", () => {
@@ -612,7 +606,7 @@ function flipBoard(attacker: Attacker, wantHeads: boolean): GameState {
     } catch {
       continue;
     }
-    const flip = find(swing(candidate, attacker).events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(swing(candidate, attacker).events, "ATTACK_EFFECT_COIN_FLIP");
     if (flip?.result === (wantHeads ? "heads" : "tails")) return candidate;
   }
   throw new Error(`no seed under 400 gives ${wantHeads ? "heads" : "tails"} for ${attacker}`);
@@ -658,8 +652,8 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
     expect(activeCardId(before)).toBe("fix-accelgor");
     expect(activeCardId(state)).not.toBe("fix-accelgor");
     // and the printed damage still landed
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 });
 
@@ -695,7 +689,7 @@ describe("§6 — a §11 effects block refuses the pair", () => {
     });
     // The DAMAGE half is refused by the other, silent gate — one sentence, two
     // mechanisms, and the counts do not borrow from each other.
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBe(true);
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBe(true);
   });
 
   it("the single-status sentence next door gets exactly ONE row — the control", () => {
@@ -711,7 +705,7 @@ describe("§6 — a §11 effects block refuses the pair", () => {
 
   it("a blocked pair is not a SKIPPED pair — the two loudnesses are different rows", () => {
     const { events } = swing(shielded(board("ninetales", "fix-titan")), "ninetales");
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 });
 
@@ -724,14 +718,14 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     for (const seat of ["p1", "p2"] as const) {
       for (const attacker of ["ninetales", "houndoom", "accelgor"] as const) {
         const b = board(attacker, "fix-titan", { by: seat, bench: attacker === "accelgor" });
-        expect(find(swing(b, attacker, seat).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+        expect(findEvent(swing(b, attacker, seat).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
       }
     }
   });
 
   it("…including on TAILS, where the gate fired and applied nothing", () => {
     expect(
-      find(swing(flipBoard("ekans", false), "ekans").events, "ATTACK_EFFECT_SKIPPED"),
+      findEvent(swing(flipBoard("ekans", false), "ekans").events, "ATTACK_EFFECT_SKIPPED"),
     ).toBeUndefined();
   });
 
@@ -744,7 +738,9 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
       LEFT_LOUD.recordedRefusal,
     ]) {
       const doctored = withEffect(b, "fix-ninetales", text);
-      expect(find(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
+      expect(findEvent(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(
+        text,
+      );
     }
   });
 });

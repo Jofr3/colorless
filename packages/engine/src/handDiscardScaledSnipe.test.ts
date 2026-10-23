@@ -22,6 +22,7 @@ import {
   mustApply,
   setActiveFromDeck,
   typedEnergy,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -226,12 +227,6 @@ const idsIn = (state: GameState, seat: Seat, zone: "hand" | "deck" | "discard"):
 
 function swing(state: GameState, index: number): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "attack", seat: "p1", index });
-}
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 const types_ = (events: GameEvent[]): string[] => events.map((e) => e.type);
 
@@ -661,7 +656,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
       uidsOf(parked, prompt.candidates, "d489-water", 1)[0] as string,
     ];
     const { state: paid, events: e1 } = answerCards(parked, picked);
-    expect(find(e1, "HAND_COST_PAID")).toMatchObject({ seat: "p1", to: "discard" });
+    expect(findEvent(e1, "HAND_COST_PAID")).toMatchObject({ seat: "p1", to: "discard" });
     // The cards left the hand for the pile, and the PRE-SEEDED pile is still under them.
     expect(idsIn(paid, "p1", "discard")).toEqual([
       "d489-en-d",
@@ -683,7 +678,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     const bench = snipe.candidates.find((r) => r.spot.spot !== "active");
     if (bench === undefined) throw new Error("no benched candidate");
     const { state: done, events: e2 } = answerBody(paid, bench);
-    expect(find(e2, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(e2, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       base: 120,
       weakness: null,
@@ -708,7 +703,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     const active = snipePrompt(paid).candidates.find((r) => r.spot.spot === "active");
     if (active === undefined) throw new Error("no Active candidate");
     const { state: done, events } = answerBody(paid, active);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 120, dealt: 240 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 120, dealt: 240 });
     expect(done.players.p2.active?.damage).toBe(240);
     expect(done.players.p2.bench[0]?.damage).toBe(0);
   });
@@ -720,7 +715,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
     const bench = snipePrompt(paid).candidates.find((r) => r.spot.spot !== "active");
     if (bench === undefined) throw new Error("no benched candidate");
     const { state: done, events } = answerBody(paid, bench);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
     expect(done.players.p2.bench[0]?.damage).toBe(180);
     expect(idsIn(done, "p1", "discard").filter((id) => ENERGY_IDS.has(id))).toHaveLength(5);
   });
@@ -745,7 +740,7 @@ describe("D489 §6 — the boards: two parks, one sentence", () => {
 
   it("a PLAIN attack on the same board is unaffected — the control for every zero above", () => {
     const { state: done, events } = swing(table(), PLAIN_CUFF);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 20 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 20 });
     expect(done.players.p2.active?.damage).toBe(20);
     expect(idsIn(done, "p1", "hand")).toHaveLength(7);
   });

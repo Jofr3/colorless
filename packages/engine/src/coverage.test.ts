@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   COVERAGE_DECK,
   activeUid,
@@ -14,14 +14,8 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first unrestricted turn (Supporters play, attacks are legal). */
@@ -45,7 +39,7 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
     const uid = handUid(state, "p1", "sv01-180");
     const handBefore = state.players.p1.hand.length;
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-    const drawn = find(events, "CARDS_DRAWN");
+    const drawn = findEvent(events, "CARDS_DRAWN");
     expect(drawn).toMatchObject({ seat: "p1", reason: "effect" });
     expect(drawn?.uids).toHaveLength(3);
     // Nemona left hand (−1) then drew 3 → net +2.
@@ -60,7 +54,7 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
       state = handFromDeck(state, "p1", "sv01-185", 1);
       const uid = handUid(state, "p1", "sv01-185");
       const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-      const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+      const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
       if (flip === undefined) throw new Error("Poké Ball did not flip");
       if (flip.result === "heads") {
         sawHeads = true;
@@ -92,7 +86,7 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
       const oppActiveBefore = activeUid(state, "p2");
       const oppBench0 = benchTopUid(state, "p2", 0);
       const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-      const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+      const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
       if (flip === undefined) throw new Error("Pokémon Catcher did not flip");
       if (flip.result === "heads") {
         sawHeads = true;
@@ -129,7 +123,7 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
     state = attachFromDeck(state, "p1", "fix-energy", 1); // pays Bite [C]
     state = setActiveFromDeck(state, "p2", "sv02-150"); // Copperajah ex Active (280 HP)
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 30, dealt: 0 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 30, dealt: 0 });
     expect(after.players.p2.active?.damage).toBe(0); // 30 − 30, floored
   });
 
@@ -139,7 +133,7 @@ describe("M5 coverage pass #1 — the 5 existing-op cards", () => {
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     state = setActiveFromDeck(state, "p2", "sv01-121"); // Stonjourner Active (140 HP)
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 20, dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 20, dealt: 10 });
     expect(after.players.p2.active?.damage).toBe(10); // 30 − 20
   });
 

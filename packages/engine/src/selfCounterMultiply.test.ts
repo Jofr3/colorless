@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
@@ -29,13 +30,6 @@ const RAGING_HORNS = "This attack does 10 more damage for each damage counter on
 const SWEEPING_TACKLE = "This attack does 20 less damage for each damage counter on this Pokémon.";
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ATTACKERS = {
   drifloon: { card: "sv01-089", index: 1, energy: [{ id: "fix-psychic-energy", count: 2 }] }, // "Balloon Blast" ({P}{P}, "30×")
@@ -349,7 +343,7 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     let state = board("drifloon", "fix-titan");
     state = setDamage(state, "p1", 30); // 3 damage counters
     const { state: after, events } = swing(state, "drifloon");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
     expect(after.players.p2.active?.damage).toBe(90);
   });
 
@@ -357,7 +351,7 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     let state = board("onix", "fix-titan");
     state = setDamage(state, "p1", 60); // 6 damage counters
     const { events } = swing(state, "onix");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 300, dealt: 300 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 300, dealt: 300 });
   });
 
   it("scales LINEARLY off the counter ladder — 1, 3 and 6 counters, one body", () => {
@@ -371,16 +365,16 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     ] as const) {
       let state = board("drifloon", "fix-titan");
       state = setDamage(state, "p1", damage);
-      expect(find(swing(state, "drifloon").events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
+      expect(findEvent(swing(state, "drifloon").events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
     }
   });
 
   it("AT ZERO COUNTERS THERE IS NO `DAMAGE_DEALT` AT ALL — and that is CORRECT", () => {
     const { state: after, events } = swing(board("drifloon", "fix-titan"), "drifloon");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
     expect(after.players.p2.active?.damage).toBe(0);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     // The attack was USED: the turn passed to the opponent.
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
   });
@@ -392,7 +386,7 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     let state = board("drifloon", "fix-titan");
     state = setDamage(state, "p2", 150);
     const { events } = swing(state, "drifloon");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(swing(state, "drifloon").state.players.p2.active?.damage).toBe(150);
   });
 
@@ -403,7 +397,7 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     let state = board("drifloon", "fix-titan");
     state = setDamage(state, "p1", 30);
     const { state: after, events } = swing(state, "drifloon");
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(90);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(90);
     expect(after.players.p1.active?.damage).toBe(30);
   });
 
@@ -413,19 +407,19 @@ describe("the fold — per × counters as the WHOLE damage, printed base dropped
     let state = board("drifloon-gust", "fix-titan");
     state = setDamage(state, "p1", 30);
     const { events } = swing(state, "drifloon-gust");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 10 });
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("…and Onix's index 0 keeps its OWN, DIFFERENT mechanism intact", () => {
     let state = board("onix-tomb", "fix-titan");
     state = setDamage(state, "p1", 60);
     const { state: after, events } = swing(state, "onix-tomb");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, dealt: 50 });
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(after.players.p2.active?.retreatBlocked).toBe(true);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 });
 
@@ -438,17 +432,17 @@ describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
     let state = board("drifloon", "fix-psychic-weak");
     state = setDamage(state, "p1", 30);
     const { state: after, events } = swing(state, "drifloon");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 0, scaled: 90, dealt: 180 });
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(after.players.p2.active?.damage).toBe(180);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("…and the oracle is derived from the ROW's OWN fields", () => {
     let state = board("drifloon", "fix-psychic-weak");
     state = setDamage(state, "p1", 30);
-    const row = find(swing(state, "drifloon").events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, "drifloon").events, "DAMAGE_DEALT");
     if (row === undefined) throw new Error("no damage row");
     const raw = row.base + (row.scaled ?? 0) + (row.bonus ?? 0);
     expect(row.weakness).not.toBeNull();
@@ -462,7 +456,7 @@ describe("the ORDER — the whole damage is folded BEFORE Weakness", () => {
     const at3 = (attacker: Attacker) => {
       let state = board(attacker, "fix-titan");
       state = setDamage(state, "p1", 30);
-      return find(swing(state, attacker).events, "DAMAGE_DEALT");
+      return findEvent(swing(state, attacker).events, "DAMAGE_DEALT");
     };
     expect(at3("rage")).toMatchObject({ base: 10, scaled: 30, dealt: 40 });
     expect(at3("drifloon")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
@@ -508,7 +502,7 @@ describe("VOICE — the crumb, rendered under BOTH seats and READ", () => {
     for (const attacker of ["drifloon", "onix"] as const) {
       let state = board(attacker, "fix-titan");
       state = setDamage(state, "p1", 30);
-      expect(find(swing(state, attacker).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(findEvent(swing(state, attacker).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     }
   });
 });

@@ -23,6 +23,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED_TWO =
@@ -78,13 +79,6 @@ function all<T extends GameEvent["type"]>(
   type: T,
 ): Extract<GameEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function headsIn(events: GameEvent[]): number {
@@ -427,7 +421,7 @@ describe("§5 — N heads is N sequential parks, driven end to end", () => {
     // ACTOR who caused it — the two differ here, unlike a self-discard.
     expect(done.players.p2.discard).toContain(water.uid);
     expect(done.players.p1.discard).not.toContain(water.uid);
-    const discarded = find(endEvents, "ENERGY_DISCARDED");
+    const discarded = findEvent(endEvents, "ENERGY_DISCARDED");
     expect(discarded?.seat).toBe("p2");
     expect(discarded?.actor).toBe("p1");
   });

@@ -35,6 +35,7 @@ import {
   toDeckTop,
   trainerCard,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const LANDED = [
@@ -831,13 +832,6 @@ const TRN_DECK = deckOf({
   "fix-energy": 3,
 });
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -1325,7 +1319,7 @@ describe("Sudden Shearing — driven through the real engine", () => {
     const ownDiscardBefore = state.players.p1.discard.length;
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p1",
       ability: "Sudden Shearing",
     });
@@ -1386,7 +1380,7 @@ describe("Scalding Steam / Calming Light / Dangerous Laser — the §12 writers"
   it("Scalding Steam BURNS the OPPONENT's Active, and leaves the controller's alone", () => {
     const state = deepFreeze(withActive(9, "fix-scaldingsteam"));
     const { state: done, events } = mustApply(state, useOn("Scalding Steam"));
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
     expect(done.players.p2.active?.conditions.burned).toBe(true);
     expect(done.players.p1.active?.conditions.burned).toBe(false);
     expect(done.players.p2.active?.conditions.rotation).toBe("none");
@@ -1395,7 +1389,7 @@ describe("Scalding Steam / Calming Light / Dangerous Laser — the §12 writers"
   it("Calming Light puts the OPPONENT's Active ASLEEP — the rotation slot, not the Burn flag", () => {
     const state = deepFreeze(withActive(10, "fix-calminglight"));
     const { state: done, events } = mustApply(state, useOn("Calming Light"));
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "asleep" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "asleep" });
     expect(done.players.p2.active?.conditions.rotation).toBe("asleep");
     expect(done.players.p2.active?.conditions.burned).toBe(false);
   });
@@ -1422,7 +1416,7 @@ describe("Insomnia — the §12 IMMUNITY, driven through a real attack", () => {
     state = clearBench(state, "p1");
     deepFreeze(state);
     const { state: done, events } = mustApply(state, yawn);
-    expect(find(events, "STATUS_PREVENTED")).toMatchObject({ seat: "p1", status: "asleep" });
+    expect(findEvent(events, "STATUS_PREVENTED")).toMatchObject({ seat: "p1", status: "asleep" });
     expect(done.players.p1.active?.conditions.rotation).toBe("none");
 
     // The non-vacuous control: the SAME attack on a body without the Ability.
@@ -1479,7 +1473,7 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
     const handBefore = state.players.p1.hand.length;
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Seething Spirit"));
-    expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
+    expect(findEvent(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
     expect(done.players.p1.discard).not.toContain(fromPile);
     expect(done.players.p1.hand).toHaveLength(handBefore);
     expect(done.players.p1.active?.energy).toContain(fromPile);
@@ -1500,7 +1494,7 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Charging Up"));
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
+    expect(findEvent(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
     expect(done.players.p1.active?.energy).toContain(fromPile);
     expect(done.players.p1.bench[0]?.energy).toHaveLength(0);
     // The PILE shrank and the hand did not — `source: "discard"`, not "hand".
@@ -1520,7 +1514,7 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     const fromPile = topOfPile(state);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Dynamotor"));
-    expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
+    expect(findEvent(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
     expect(done.players.p1.bench[0]?.energy).toContain(fromPile);
     expect(done.players.p1.active?.energy).toHaveLength(0);
   });
@@ -1655,7 +1649,7 @@ describe("Confectionary Gift — driven through the real engine", () => {
     state = setDamage(state, "p1", 100);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, useOn("Confectionary Gift"));
-    expect(find(events, "HEALED")?.amount).toBe(30);
+    expect(findEvent(events, "HEALED")?.amount).toBe(30);
     expect(done.players.p1.active?.damage).toBe(70);
   });
 });
@@ -1670,8 +1664,8 @@ describe("Reconstitute / Up-Tempo — the hand-cost rows", () => {
     expect(prompt.max).toBe(2);
     const picks = prompt.candidates.slice(0, 2) as string[];
     const { state: done, events } = chooseCards(parked, picks);
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual(picks);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual(picks);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
     for (const uid of picks) expect(done.players.p1.discard).toContain(uid);
     expect(done.players.p1.hand).toHaveLength(handBefore - 2 + 1);
   });
@@ -2069,8 +2063,8 @@ describe("Kofu — driven through the real engine", () => {
     expect(prompt.max).toBe(2);
     const picks = prompt.candidates.slice(0, 2) as string[];
     const { state: paidState, events: payEvents } = chooseCards(parked, picks);
-    expect(find(payEvents, "HAND_COST_PAID")?.uids).toEqual(picks);
-    expect(find(payEvents, "CARDS_DRAWN")).toBeUndefined();
+    expect(findEvent(payEvents, "HAND_COST_PAID")?.uids).toEqual(picks);
+    expect(findEvent(payEvents, "CARDS_DRAWN")).toBeUndefined();
     const order = orderPrompt(paidState);
     expect(order.candidates).toEqual(picks);
     expect(paidState.players.p1.deck.slice(-2)).toEqual(picks);
@@ -2079,7 +2073,7 @@ describe("Kofu — driven through the real engine", () => {
     const { state: done, events } = orderCards(paidState, reversed);
     expect(done.players.p1.deck.slice(-2)).toEqual(reversed);
     expect(done.players.p1.deck.slice(0, -2)).toEqual(paidState.players.p1.deck.slice(4, -2));
-    expect(find(payEvents, "DECK_TOP_REORDERED")).toEqual({
+    expect(findEvent(payEvents, "DECK_TOP_REORDERED")).toEqual({
       type: "DECK_TOP_REORDERED",
       seat: "p1",
       actor: "p1",
@@ -2088,7 +2082,7 @@ describe("Kofu — driven through the real engine", () => {
     });
     expect(events.filter((e) => e.type === "DECK_TOP_REORDERED")).toEqual([]);
     // …and the gate fired: +1 Kofu drawn from hand, −2 paid, +4 drawn.
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
     expect(done.players.p1.hand).toHaveLength(handBefore + 1 - 1 - 2 + 4 - 0);
     expect(done.players.p1.deck).toHaveLength(deckBefore - 1 + 2 - 4);
   });
@@ -2116,7 +2110,7 @@ describe("Kofu — driven through the real engine", () => {
     const played = mustApply(thin, { type: "playTrainer", seat: "p1", uid: kofu });
     // The payment took no answer — it never parked — and the cards are already
     // under the deck in hand order.
-    expect(find(played.events, "HAND_COST_PAID")?.uids).toEqual(spares);
+    expect(findEvent(played.events, "HAND_COST_PAID")?.uids).toEqual(spares);
     expect(played.state.players.p1.deck.slice(-2)).toEqual(spares);
     // …and the engine is nevertheless parked on the ORDERING, over exactly the
     // two cards that were just paid. This is the assertion the old program could
@@ -2128,7 +2122,7 @@ describe("Kofu — driven through the real engine", () => {
     const flipped = [...spares].reverse();
     const { state: done, events } = orderCards(played.state, flipped);
     expect(done.players.p1.deck.slice(-2)).toEqual(flipped);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
   });
 
   it("REFUSES the play when the hand cannot spare two OTHER cards — the printed parenthetical", () => {
@@ -2177,12 +2171,12 @@ describe("Maximum Belt — driven through the real engine", () => {
 
   it("adds 50 against a Pokémon ex and NOTHING against a body without the suffix", () => {
     const versusEx = mustApply(deepFreeze(belted(33, "fix-attacker-ex", "fix-maximumbelt")), bite);
-    expect(find(versusEx.events, "DAMAGE_DEALT")?.dealt).toBe(80);
+    expect(findEvent(versusEx.events, "DAMAGE_DEALT")?.dealt).toBe(80);
     const versusPlain = mustApply(deepFreeze(belted(34, "fix-bigbody", "fix-maximumbelt")), bite);
-    expect(find(versusPlain.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(versusPlain.events, "DAMAGE_DEALT")?.dealt).toBe(30);
     // The non-vacuous control: the same ex defender with no Tool at all.
     const noTool = mustApply(deepFreeze(belted(35, "fix-attacker-ex")), bite);
-    expect(find(noTool.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(noTool.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -2209,11 +2203,11 @@ describe("Binding Mochi — driven through the real engine", () => {
 
   it("adds 40 only while the HOLDER is Poisoned — the clause the board condition reads", () => {
     const poisoned = mustApply(deepFreeze(mochi(36, "holder")), bite);
-    expect(find(poisoned.events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(poisoned.events, "DAMAGE_DEALT")?.dealt).toBe(70);
     const clean = mustApply(deepFreeze(mochi(37, "none")), bite);
-    expect(find(clean.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(clean.events, "DAMAGE_DEALT")?.dealt).toBe(30);
     const wrongSide = mustApply(deepFreeze(mochi(38, "defender")), bite);
-    expect(find(wrongSide.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(wrongSide.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("a BENCHED holder contributes nothing — the fold reads the ATTACKER and no one else", () => {
@@ -2232,7 +2226,7 @@ describe("Binding Mochi — driven through the real engine", () => {
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
     state = clearBench(state, "p2");
     const { events } = mustApply(deepFreeze(state), bite);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -2323,7 +2317,7 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
       },
     };
     const { state: done, events } = mustApply(deepFreeze(withEnergy), bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
     expect(done.players.p1.active?.damage).toBe(20);
     // The non-vacuous control: the same board without the Energy attached.
     state = spiked(43);
@@ -2357,7 +2351,7 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
     // …and the FIRST printed clause: {C}, so Bite ({C}, 30) is payable off it
     // alone. A whiffed provision would fail the attack, not the assertion.
     const { events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -2816,7 +2810,7 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
     };
     const { state: done, events } = mustApply(emptied, useOn("Distorted Future"));
     expect(done.players.p2.hand).toHaveLength(3);
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(0);
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(0);
     // …and the controller still paid nothing on the empty-hand path either.
     expect(done.players.p1.hand).toEqual(state.players.p1.hand);
   });
@@ -2868,7 +2862,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
 
   /** The face this play actually landed, read off the log rather than off a seed. */
   function faceOf(events: GameEvent[]): "heads" | "tails" {
-    const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
     if (flip === undefined) throw new Error("no coin flip was emitted");
     return flip.result;
   }
@@ -3015,7 +3009,7 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
 
   /** The face this play actually landed, read off the log rather than off a seed. */
   function faceOf(events: GameEvent[]): "heads" | "tails" {
-    const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
     if (flip === undefined) throw new Error("no coin flip was emitted");
     return flip.result;
   }

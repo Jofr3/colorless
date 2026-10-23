@@ -17,6 +17,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** The printed sentence, byte-for-byte off BOTH local D1 rows (the database
@@ -30,13 +31,6 @@ const FLAME = 1;
 const YAWN = 2;
 
 const SEED = 21;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function must0(pokemon: InPlayPokemon | null): InPlayPokemon {
   if (pokemon === null) throw new Error("expected an Active Pokémon");
@@ -97,7 +91,7 @@ function barred(
     seat: "p1",
     choice: { kind: "attack", index },
   });
-  const row = find(events, "ATTACK_LOCKED");
+  const row = findEvent(events, "ATTACK_LOCKED");
   if (row === undefined) throw new Error(`the pick of index ${String(index)} barred nothing`);
   return { state, events, row, parked: opened.state };
 }
@@ -256,7 +250,7 @@ describe("the park — a new KIND of candidate, and `parkOrForce`'s three ending
     // prompt on the controller-answered side of `redactedPromptOf`'s gate.
     expect(phase.seat).toBe("p1");
     expect(phase.answerer).toBeUndefined();
-    expect(find(opened.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(opened.events, "DAMAGE_DEALT")?.dealt).toBe(30);
     // The turn has NOT ended: the epilogue is queued behind the park.
     expect(opened.state.turn).toBe(2);
   });
@@ -268,7 +262,7 @@ describe("the park — a new KIND of candidate, and `parkOrForce`'s three ending
       index: 0,
     });
     expect(opened.state.phase.kind).not.toBe("effect:choose");
-    expect(find(opened.events, "ATTACK_LOCKED")).toEqual({
+    expect(findEvent(opened.events, "ATTACK_LOCKED")).toEqual({
       type: "ATTACK_LOCKED",
       seat: "p2",
       uid: activeUid(opened.state, "p2"),
@@ -290,7 +284,7 @@ describe("the park — a new KIND of candidate, and `parkOrForce`'s three ending
     expect(opened.state.phase.kind).not.toBe("effect:choose");
     expect(types(opened.events)).not.toContain("ATTACK_LOCKED");
     expect(opened.state.players.p2.active?.lockedAttacks ?? []).toEqual([]);
-    expect(find(opened.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(opened.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("the wire cannot answer with an index the prompt did not offer", () => {
@@ -415,7 +409,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
       BITE,
       FLAME,
     ]);
-    expect(find(other.events, "ATTACK_LOCKED")?.attack).toBe("Flame");
+    expect(findEvent(other.events, "ATTACK_LOCKED")?.attack).toBe("Flame");
   });
 
   it("an OUT-OF-RANGE index writes nothing — the apply re-validates the board", () => {
@@ -438,7 +432,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
     const good: GameEvent[] = [];
     const ok = resumeProgram(result.state, result.cont, { kind: "attack", index: 1 }, good);
     expect(ok.state.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: 1 }]);
-    expect(find(good, "ATTACK_LOCKED")?.attack).toBe("Echo Chorus");
+    expect(findEvent(good, "ATTACK_LOCKED")?.attack).toBe("Echo Chorus");
   });
 });
 
@@ -576,7 +570,7 @@ describe("§11 — a shielded defender is not even ASKED", () => {
     const { state, events } = mustApply(shielded, { type: "attack", seat: "p1", index: 0 });
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(types(events)).toContain("ATTACK_EFFECT_PREVENTED");
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toEqual({
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toEqual({
       type: "ATTACK_EFFECT_PREVENTED",
       seat: "p2",
       uid: activeUid(shielded, "p2"),

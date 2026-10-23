@@ -29,6 +29,7 @@ import {
   setPrizes,
   types,
   walkProgram,
+  findEvent,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -40,13 +41,6 @@ const NARROW_TEXT =
 const HEADS_SEEDS = [2, 3, 6, 7, 16, 18, 20, 22, 23, 27, 28, 30, 34, 35, 38] as const;
 /** …and the complement, so the tails face is driven rather than assumed. */
 const TAILS_SEEDS = [1, 4, 5, 8, 9, 10, 11, 12, 13, 14] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -72,7 +66,7 @@ function installed(seed: number, installer: string): GameState {
     seat: "p1",
     index: 0,
   });
-  if (find(events, "ATTACK_BLOCK_APPLIED") === undefined) {
+  if (findEvent(events, "ATTACK_BLOCK_APPLIED") === undefined) {
     throw new Error(`seed ${seed} did not install a block on ${installer} (tails?)`);
   }
   return state;
@@ -191,7 +185,7 @@ describe("the gated PREVENT clause — installing it", () => {
     expect(state.turn).toBe(2);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(find(events, "ATTACK_BLOCK_APPLIED")).toEqual({
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")).toEqual({
       type: "ATTACK_BLOCK_APPLIED",
       seat: "p1",
       uid: installer,
@@ -217,14 +211,14 @@ describe("the gated PREVENT clause — installing it", () => {
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const order = types(events);
     expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ATTACK_BLOCK_APPLIED"));
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
     expect(done.players.p2.active?.damage).toBe(10);
   });
 
   it("the NARROW spelling installs `effects: false`, and prints no damage at all", () => {
     const state = armed(HEADS_SEEDS[0], "sv03-151");
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "ATTACK_BLOCK_APPLIED")?.effects).toBe(false);
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")?.effects).toBe(false);
     expect(done.players.p1.active?.attackBlock).toEqual({ turn: 3, effects: false });
     // No printed damage on "Defense Curl", so the install is the whole result.
     expect(types(events)).not.toContain("DAMAGE_DEALT");
@@ -238,11 +232,11 @@ describe("the gated PREVENT clause — installing it", () => {
         seat: "p1",
         index: 0,
       });
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
       expect(types(events)).not.toContain("ATTACK_BLOCK_APPLIED");
       expect(done.players.p1.active?.attackBlock).toBeNull();
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
     }
   });
 
@@ -260,7 +254,7 @@ describe("the gated PREVENT clause — installing it", () => {
         seat: "p1",
         index: 0,
       });
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
     }
     for (const seed of TAILS_SEEDS) {
       const { events } = mustApply(armed(seed, "sv03-004"), {
@@ -268,7 +262,7 @@ describe("the gated PREVENT clause — installing it", () => {
         seat: "p1",
         index: 0,
       });
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
     }
   });
 
@@ -291,7 +285,7 @@ describe("the gated PREVENT clause — the DAMAGE half (both spellings)", () => 
       deepFreeze(state);
       const { state: done, events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
 
-      const hit = find(events, "DAMAGE_DEALT");
+      const hit = findEvent(events, "DAMAGE_DEALT");
       expect(hit).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
       expect(hit?.weakness).toEqual({ op: "multiply", amount: 2 });
       expect(done.players.p1.active?.damage).toBe(0);
@@ -323,14 +317,14 @@ describe("the gated PREVENT clause — the DAMAGE half (both spellings)", () => 
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     // Turn 3 (the opponent's next turn): prevented.
     const blocked = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(blocked.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(blocked.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     // Turn 4 is P1's; they pass. Turn 5 is P2's again — and the stamp says 3.
     expect(blocked.state.turn).toBe(4);
     expect(blocked.state.players.p1.active?.attackBlock).toEqual({ turn: 3, effects: true });
     const p2Again = must(applyAction(blocked.state, { type: "endTurn", seat: "p1" }));
     expect(p2Again.turn).toBe(5);
     const { state: done, events } = mustApply(p2Again, { type: "attack", seat: "p2", index: 0 });
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ dealt: 60 }); // ×2 Fire weakness, unblocked
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(60);
@@ -376,7 +370,7 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
       2,
     );
     expect(types(wide.events)).not.toContain("STATUS_APPLIED");
-    expect(find(wide.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(wide.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p1" });
     expect(wide.state.players.p1.active?.conditions.rotation).toBe("none");
 
     const narrow = against(
@@ -386,7 +380,10 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
       { id: "fix-energy", count: 1 },
       2,
     );
-    expect(find(narrow.events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "asleep" });
+    expect(findEvent(narrow.events, "STATUS_APPLIED")).toMatchObject({
+      seat: "p1",
+      status: "asleep",
+    });
     expect(types(narrow.events)).not.toContain("ATTACK_EFFECT_PREVENTED");
     expect(narrow.state.players.p1.active?.conditions.rotation).toBe("asleep");
   });
@@ -400,16 +397,16 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
     expect(types(wide.events)).toContain("ATTACK_EFFECT_PREVENTED");
     expect(wide.state.players.p1.active?.retreatBlocked).toBe(false);
     // The attack's DAMAGE is refused by the other half of the same block.
-    expect(find(wide.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(wide.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
 
     const narrow = against("sv03-151", HEADS_SEEDS[7], "sv02-016", {
       id: "fix-grass-energy",
       count: 1,
     });
-    expect(find(narrow.events, "RETREAT_BLOCKED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(narrow.events, "RETREAT_BLOCKED")).toMatchObject({ seat: "p1" });
     expect(narrow.state.players.p1.active?.retreatBlocked).toBe(true);
     // …while the DAMAGE is still refused, because both spellings stop damage.
-    expect(find(narrow.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(narrow.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 
   it("refuses a placed damage COUNTER — the sharpest split, because it is NOT damage", () => {
@@ -425,7 +422,7 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
       id: "fix-psychic-energy",
       count: 2,
     });
-    expect(find(narrow.events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(narrow.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 70,
       source: "attack",
@@ -440,7 +437,7 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
       id: "fix-lightning-energy",
       count: 3,
     });
-    expect(find(wide.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(wide.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(types(wide.events)).not.toContain("ENERGY_DISCARDED");
     expect(types(wide.events)).toContain("ATTACK_EFFECT_PREVENTED");
     expect(wide.state.players.p1.active?.energy).toHaveLength(1);
@@ -452,7 +449,7 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
       id: "fix-lightning-energy",
       count: 3,
     });
-    expect(find(narrow.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(narrow.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(types(narrow.events)).toContain("ENERGY_DISCARDED");
     expect(narrow.state.players.p1.active?.energy).toHaveLength(0);
   });
@@ -465,7 +462,7 @@ describe("the gated PREVENT clause — the EFFECTS half, and the field that spli
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
     const order = types(events);
     expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
-    expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p2" });
     expect(done.phase.kind).toBe("ko:takePrizes");
   });
 });
@@ -491,8 +488,8 @@ describe("the gated PREVENT clause — what it does NOT block", () => {
     let state = installed(HEADS_SEEDS[3], "sv03-004");
     state = setActiveFromDeck(state, "p2", "sv03-012");
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p2" });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Forest Miasma" });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Forest Miasma" });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 10,
       source: "ability",
@@ -508,7 +505,7 @@ describe("the gated PREVENT clause — what it does NOT block", () => {
     let state = installed(HEADS_SEEDS[1], "sv03-004");
     state = setConditions(state, "p1", { poisonDamage: 10 });
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p2" });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", source: "poison" });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", source: "poison" });
     expect(done.players.p1.active?.damage).toBe(10);
   });
 
@@ -556,7 +553,7 @@ describe("the gated PREVENT clause — the early clears (an effect of an attack 
     next = setActiveFromDeck(next, "p2", "fix-sniper");
     next = attachFromDeck(next, "p2", "fix-energy", 1);
     const { state: hit, events } = mustApply(next, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
     expect(hit.players.p1.bench[benchIndex]?.damage).toBe(20);
   });
 
@@ -623,7 +620,7 @@ describe("the gated PREVENT clause — the early clears (an effect of an attack 
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     expect(state.turn).toBe(4);
     const again = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const flip = find(again.events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(again.events, "ATTACK_EFFECT_COIN_FLIP");
     if (flip?.result === "heads") {
       expect(again.state.players.p1.active?.attackBlock).toEqual({ turn: 5, effects: true });
     } else {
@@ -1261,7 +1258,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         expect(state.players.p1.hand.length).toBeGreaterThan(0);
         return state;
       },
-      landed: (r) => (find(r.events, "HAND_REVEALED")?.uids.length ?? 0) > 0,
+      landed: (r) => (findEvent(r.events, "HAND_REVEALED")?.uids.length ?? 0) > 0,
     },
     randomFromOpponentHand: {
       op: { op: "randomFromOpponentHand", to: "discard" },
@@ -1467,7 +1464,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       expect(PROBES[kind]?.landed(r), `${kind} landed under a live wide block`).toBe(false);
       expect(r.refused || r.nulled, `${kind} was silently inert, not blocked`).toBe(true);
       if (r.refused) {
-        expect(find(r.events, "ATTACK_EFFECT_PREVENTED")).toEqual({
+        expect(findEvent(r.events, "ATTACK_EFFECT_PREVENTED")).toEqual({
           type: "ATTACK_EFFECT_PREVENTED",
           seat: "p1",
           uid: activeUid(r.before, "p1"),

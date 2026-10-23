@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { phaseViewOf, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   COUNTERATTACKING_PINCER_DECK,
   attachFromDeck,
@@ -11,17 +11,11 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
-const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const yawn = { type: "attack", seat: "p1", index: 2 } as const;
 
 /** The Energy uids on `seat`'s Active, in attachment order. */
 function activeEnergy(state: GameState, seat: "p1" | "p2"): string[] {
@@ -67,9 +61,9 @@ describe("Counterattacking Pincer — the DEFENDER-side discard PARKS during the
     const { state: parked, events } = mustApply(state, bite);
 
     // The main hit first: 30 to Klawf ex (220 HP — survives), no Weakness on Bite.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
     // …then the reactive trigger fires on the DAMAGED defender (P2, Klawf ex)…
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       ability: "Counterattacking Pincer",
     });
@@ -93,7 +87,7 @@ describe("Counterattacking Pincer — the DEFENDER-side discard PARKS during the
       ),
     ).toBe(true);
     // The prompt is announced to the seat that must answer it — the DEFENDER.
-    expect(find(events, "EFFECT_PENDING")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "EFFECT_PENDING")).toMatchObject({ seat: "p2" });
   });
 
   it("projects the ATTACKER as active (owns the turn) and the DEFENDER as waiting", () => {
@@ -134,7 +128,7 @@ describe("Counterattacking Pincer — the DEFENDER-side discard PARKS during the
     });
 
     // The ATTACKER (P1) lost exactly the chosen Energy…
-    expect(find(events, "ENERGY_DISCARDED")).toMatchObject({ seat: "p1", uids: [chosen] });
+    expect(findEvent(events, "ENERGY_DISCARDED")).toMatchObject({ seat: "p1", uids: [chosen] });
     expect(activeEnergy(done, "p1")).toEqual([attackerEnergy[1]]); // the Fire one remains
     // …and the attack finished afterwards — the attackEpilogue behind the park
     // drained (finishAttack) and ended the attacker's turn.
@@ -156,7 +150,9 @@ describe("Counterattacking Pincer — 'even if this Pokémon is Knocked Out'", (
 
     const { state: parked, events } = mustApply(state, bite);
     // The reaction parked even though Klawf ex is lethally damaged.
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Counterattacking Pincer" });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
+      ability: "Counterattacking Pincer",
+    });
     expect(parked.phase.kind).toBe("effect:choose");
 
     const chosen = attackerEnergy[0] as string;
@@ -167,8 +163,8 @@ describe("Counterattacking Pincer — 'even if this Pokémon is Knocked Out'", (
     });
 
     // The discard landed BEFORE the KO sweep…
-    expect(find(resolved, "ENERGY_DISCARDED")).toMatchObject({ seat: "p1", uids: [chosen] });
-    expect(find(resolved, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: klawf });
+    expect(findEvent(resolved, "ENERGY_DISCARDED")).toMatchObject({ seat: "p1", uids: [chosen] });
+    expect(findEvent(resolved, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: klawf });
     const order = types(resolved);
     expect(order.indexOf("ENERGY_DISCARDED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 2 });
@@ -191,7 +187,7 @@ describe("Counterattacking Pincer — the read-site gate (only when actually dam
     // Both Energy are still on the attacker.
     expect([...activeEnergy(done, "p1")].sort()).toEqual([...attackerEnergy].sort());
     // Yawn DID resolve — the defender (P2) is the one that got a status (Asleep).
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2" });
   });
 });
 
@@ -208,13 +204,13 @@ describe("Counterattacking Pincer — a single Energy is a forced discard (no pa
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       ability: "Counterattacking Pincer",
     });
     // No park — resolved inline.
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "ENERGY_DISCARDED")).toMatchObject({ seat: "p1", uids: [only] });
+    expect(findEvent(events, "ENERGY_DISCARDED")).toMatchObject({ seat: "p1", uids: [only] });
     expect(activeEnergy(done, "p1")).toEqual([]);
     expect(types(events)).toContain("TURN_ENDED");
   });

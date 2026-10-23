@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   setConditions,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** The three printed sentences, byte-for-byte off the local D1 rows. */
@@ -35,13 +36,6 @@ const EVERYONE_DISCHARGE =
     Paralysis half has no choice (see `PARALYSIS NEEDS A COIN` below), and those
     cases pick their own seed off `flipCoin` rather than hoping. */
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -392,7 +386,7 @@ describe("BURN — Dachsbun refuses it, and the control on the same swing does n
     const { state, events } = swing(board("hotBite", "sv01-099"), "hotBite");
     expect(conditionsOf(state, "p2")?.burned).toBe(false);
     expect(types(events)).not.toContain("STATUS_APPLIED");
-    expect(find(events, "STATUS_PREVENTED")).toEqual({
+    expect(findEvent(events, "STATUS_PREVENTED")).toEqual({
       type: "STATUS_PREVENTED",
       seat: "p2",
       uid: activeUid(state, "p2"),
@@ -405,7 +399,7 @@ describe("BURN — Dachsbun refuses it, and the control on the same swing does n
     // case above passes on a build where Hot Bite never Burned anything.
     const { state, events } = swing(board("hotBite", "fix-bigbody"), "hotBite");
     expect(conditionsOf(state, "p2")?.burned).toBe(true);
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
     expect(types(events)).not.toContain("STATUS_PREVENTED");
   });
 
@@ -414,7 +408,7 @@ describe("BURN — Dachsbun refuses it, and the control on the same swing does n
     // does not fire here (Scovillain is GRASS, not {R}), so the 20 lands in full
     // and the refusal is visible as exactly one missing condition.
     const { state, events } = swing(board("hotBite", "sv01-099"), "hotBite");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20, prevented: undefined });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20, prevented: undefined });
     expect(state.players.p2.active?.damage).toBe(20);
   });
 
@@ -425,7 +419,7 @@ describe("BURN — Dachsbun refuses it, and the control on the same swing does n
     state = attachFromDeck(state, "p1", "fix-energy", 2);
     const attackerUid = activeUid(state, "p1");
     const done = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(done.events, "STATUS_PREVENTED")).toEqual({
+    expect(findEvent(done.events, "STATUS_PREVENTED")).toEqual({
       type: "STATUS_PREVENTED",
       seat: "p1",
       uid: attackerUid,
@@ -457,14 +451,14 @@ describe("NOT IMMUNE TO EVERYTHING — the per-condition claim, on one card", ()
   for (const { key, status, check } of landing) {
     it(`lands ${status} on Dachsbun, which is immune to Burn and to nothing else`, () => {
       const { state, events } = swing(board(key, "sv01-099"), key);
-      expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status });
+      expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status });
       expect(types(events)).not.toContain("STATUS_PREVENTED");
       expect(check(conditionsOf(state, "p2"))).toBeTruthy();
     });
 
     it(`lands ${status} on Pachirisu, which is immune to Paralysis and to nothing else`, () => {
       const { state, events } = swing(board(key, "sv01-068"), key);
-      expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status });
+      expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status });
       expect(types(events)).not.toContain("STATUS_PREVENTED");
       expect(check(conditionsOf(state, "p2"))).toBeTruthy();
     });
@@ -487,9 +481,12 @@ describe("PARALYSIS NEEDS A COIN, and the coin is the pool's doing", () => {
     for (const id of ["sv01-068", "sv01-208"] as const) {
       const seed = seedFlipping("heads", id);
       const { state, events } = swing(board("numbingBolt", id, { seed }), "numbingBolt");
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
       expect(conditionsOf(state, "p2")?.rotation).toBe("none");
-      expect(find(events, "STATUS_PREVENTED")).toMatchObject({ seat: "p2", status: "paralyzed" });
+      expect(findEvent(events, "STATUS_PREVENTED")).toMatchObject({
+        seat: "p2",
+        status: "paralyzed",
+      });
       expect(types(events)).not.toContain("STATUS_APPLIED");
     }
   });
@@ -497,15 +494,15 @@ describe("PARALYSIS NEEDS A COIN, and the coin is the pool's doing", () => {
   it("lands the same heads Paralysis on a body with no immunity — the control", () => {
     const seed = seedFlipping("heads", "fix-bigbody");
     const { state, events } = swing(board("numbingBolt", "fix-bigbody", { seed }), "numbingBolt");
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
     expect(conditionsOf(state, "p2")?.rotation).toBe("paralyzed");
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ status: "paralyzed" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ status: "paralyzed" });
   });
 
   it("says NOTHING on tails — the coin decided, not the immunity", () => {
     const seed = seedFlipping("tails", "sv01-068");
     const { state, events } = swing(board("numbingBolt", "sv01-068", { seed }), "numbingBolt");
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
     expect(conditionsOf(state, "p2")?.rotation).toBe("none");
     expect(types(events)).not.toContain("STATUS_PREVENTED");
     expect(types(events)).not.toContain("STATUS_APPLIED");
@@ -625,7 +622,7 @@ describe("the structural questions", () => {
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
     const done = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(done.events, "ATTACK_DECLARED")).toBeDefined();
+    expect(findEvent(done.events, "ATTACK_DECLARED")).toBeDefined();
   });
 
   it("§11: NOTHING OWED — this slice adds no op at all", () => {

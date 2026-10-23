@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
 import {
   applyAction,
   attackGateOf,
@@ -40,6 +40,7 @@ import {
   deepFreeze,
   setActiveFromDeck,
   must,
+  activeOf,
 } from "./testFixtures";
 
 const ANGELITE =
@@ -159,12 +160,6 @@ function board(seed: number, first: Seat, seat: Seat, activeId: string): GameSta
   state = clearBench(state, other);
   state = benchFromDeck(state, other, "fix-basic-1");
   return payBoth(state, seat);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function passTurns(state: GameState, count: number): GameState {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { seatPreWRDamageBonus } from "./continuous";
 import type { CardFilter } from "./effects";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./index";
 import {
   AURA_NARROWING_DECK,
@@ -13,6 +13,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const SUNNY_DAY_TEXT =
@@ -25,13 +26,6 @@ const METALLIC_SIGNAL_TEXT =
   "Once during your turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.";
 
 const SEED = 43;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup on P1's turn 3 (two passes past the §4 first-turn ban), both benches
     emptied and both Active spots normalised to the inert `fix-basic-1`, so every
@@ -61,7 +55,7 @@ function attacking(attacker: string, defender: string, ...benched: string[]): Ga
     in this cast prints a base of 50, so the delta from 50 IS the aura. */
 function dealt(state: GameState): number | undefined {
   const hit = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-  return find(hit.events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(hit.events, "DAMAGE_DEALT")?.dealt;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

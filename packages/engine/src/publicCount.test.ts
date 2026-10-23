@@ -7,7 +7,7 @@ import {
   deriveAttackEffect,
   programFor,
 } from "./index";
-import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
+import type { BoardCondition, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   PUBLIC_COUNT_DECK,
@@ -19,6 +19,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CURSED_SLUG =
@@ -46,13 +47,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function board(seed: number): GameState {
@@ -377,7 +371,7 @@ describe("Absol ex 'Cursed Slug' — their hand, 3 or fewer", () => {
     expect(state.players.p2.hand.length).toBe(7);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 100, dealt: 100 });
     expect(dealt?.scaled).toBeUndefined(); // `scaled` is omitted at 0
   });
@@ -390,7 +384,7 @@ describe("Absol ex 'Cursed Slug' — their hand, 3 or fewer", () => {
     ] as const) {
       const state = absol(setHandSize(board(2 + size), "p2", size), "p1");
       const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
     }
   });
 
@@ -401,13 +395,13 @@ describe("Absol ex 'Cursed Slug' — their hand, 3 or fewer", () => {
     expect(state.players.p1.hand.length).toBe(0);
     expect(state.players.p2.hand.length).toBe(7);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(100);
   });
 
   it("runs identically from the OTHER seat", () => {
     const state = absol(setHandSize(boardP2(10), "p1", 3), "p2");
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 120, dealt: 220 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 120, dealt: 220 });
   });
 
   it("ARMED BY THE GAME: P2 plays its hand down to 3 and Cursed Slug reads it", () => {
@@ -449,7 +443,7 @@ describe("Absol ex 'Cursed Slug' — their hand, 3 or fewer", () => {
     expect(attacker.players.p2.hand.length).toBe(3);
     const { events } = mustApply(attacker, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 120, dealt: 220 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 120, dealt: 220 });
   });
 });
 
@@ -462,14 +456,14 @@ describe("Bronzong 'Extrasensory' — the two hands, equal", () => {
     expect(state.players.p2.hand.length).toBe(7);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
   });
 
   it("one card of difference turns it off — in EITHER direction", () => {
     for (const seat of ["p1", "p2"] as const) {
       const state = bronzong(setHandSize(board(13), seat, 6), "p1");
       const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-      const dealt = find(events, "DAMAGE_DEALT");
+      const dealt = findEvent(events, "DAMAGE_DEALT");
       expect(dealt?.dealt).toBe(70);
       expect(dealt?.scaled).toBeUndefined();
     }
@@ -479,7 +473,7 @@ describe("Bronzong 'Extrasensory' — the two hands, equal", () => {
     let state = setHandSize(board(14), "p1", 3);
     state = bronzong(setHandSize(state, "p2", 3), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(160);
   });
 
   it("D372 — is the vocabulary's FIRST seat-symmetric member, and no longer its only one", () => {
@@ -494,7 +488,7 @@ describe("Bronzong 'Extrasensory' — the two hands, equal", () => {
     // which is itself the point: the clause reads a live count, not a setup fact.
     const state = bronzong(setHandSize(boardP2(15), "p2", 7), "p2");
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
   });
 });
 
@@ -504,7 +498,7 @@ describe("Krokorok 'Payback' — their Prizes, exactly 1", () => {
     expect(state.players.p2.prizes.length).toBe(6);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 30, dealt: 30 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -520,7 +514,7 @@ describe("Krokorok 'Payback' — their Prizes, exactly 1", () => {
     ] as const) {
       const state = krokorok(setPrizesRemaining(board(17 + prizes), "p2", prizes), "p1");
       const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
     }
   });
 
@@ -529,13 +523,13 @@ describe("Krokorok 'Payback' — their Prizes, exactly 1", () => {
     expect(state.players.p1.prizes.length).toBe(1);
     expect(state.players.p2.prizes.length).toBe(6);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("runs identically from the OTHER seat", () => {
     const state = krokorok(setPrizesRemaining(boardP2(22), "p1", 1), "p2");
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, scaled: 90, dealt: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, scaled: 90, dealt: 120 });
   });
 });
 
@@ -555,7 +549,7 @@ describe("Houndstone 'Two Four-ocious' — their Prizes, exactly 2 or 4", () => 
       const state = houndstone(setPrizesRemaining(board(23 + prizes), "p2", prizes), "p1");
       const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(dealt);
     }
   });
 
@@ -585,7 +579,7 @@ describe("Houndstone 'Two Four-ocious' — their Prizes, exactly 2 or 4", () => 
     state = pay(state, "p1", [["fix-psychic-energy", 3]]);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 120, dealt: 200 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 120, dealt: 200 });
   });
 });
 
@@ -594,7 +588,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
     let state = setActiveFromDeck(board(40), "p2", "fix-psychic-weak");
     state = houndstone(setPrizesRemaining(state, "p2", 2), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 80,
       scaled: 120,
       weakness: { op: "multiply", amount: 2 },
@@ -606,7 +600,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
   it("and the un-bonused control on the same matchup: 80 × 2 = 160", () => {
     const state = houndstone(setActiveFromDeck(board(41), "p2", "fix-psychic-weak"), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 80, weakness: { op: "multiply", amount: 2 }, dealt: 160 });
     expect(dealt?.scaled).toBeUndefined();
     // 160 through a 200 HP body leaves it alive, which the armed 400 does not.
@@ -635,7 +629,7 @@ describe("ATTACK_EFFECT_SKIPPED — never on the clause, ALWAYS on the unbuilt s
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // And the two boards really are different boards — `scaled` present exactly
       // when the clause held, which is what makes the shared flag meaningful.
-      expect(find(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
+      expect(findEvent(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
     }
   });
 
@@ -753,7 +747,7 @@ describe("the cluster is PURE — a frozen board is never mutated", () => {
   it("runs a whole armed attack off a frozen board", () => {
     const frozen = deepFreeze(houndstone(setPrizesRemaining(board(71), "p2", 2), "p1"));
     const { events } = mustApply(frozen, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(200);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(200);
     expect(frozen.players.p2.active?.damage).toBe(0);
   });
 });

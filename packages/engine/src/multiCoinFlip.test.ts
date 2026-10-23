@@ -22,6 +22,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const DOUBLE_HIT = "Flip 2 coins. This attack does 30 damage for each heads.";
@@ -46,13 +47,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function all<T extends GameEvent["type"]>(
@@ -553,7 +547,7 @@ describe("Tandemaus — TWO flips, THREE outcomes, and the base that must not le
       });
       const heads = headsIn(events);
       seen.add(heads);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
         continue;
@@ -589,7 +583,7 @@ describe("Meowth — THREE flips, FOUR outcomes, and a second N through the same
       seen.add(heads);
       expect(activeDamage(done, "p2")).toBe(20 * heads);
       expect(activeDamage(done, "p2")).not.toBe(20 * heads + 20);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
       } else {
@@ -701,7 +695,7 @@ describe("ZERO HEADS — a RESOLVED attack that dealt nothing, not a cancelled o
         expect(activeDamage(done, "p2")).toBe(before);
         expect(activeDamage(done, "p2")).toBe(0);
         expect(types(events)).not.toContain("ATTACK_FAILED");
-        expect(find(events, "ATTACK_FAILED")).toBeUndefined();
+        expect(findEvent(events, "ATTACK_FAILED")).toBeUndefined();
         // And the turn ended the ordinary way, through the same `finishAttack` every
         // resolved attack takes.
         expect(types(events)).toContain("TURN_ENDED");
@@ -727,7 +721,7 @@ describe("the fold order — the dropped base and the count land BEFORE Weakness
       });
       const heads = headsIn(events);
       seen.add(heads);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
         expect(activeDamage(done, "p2")).toBe(0);
@@ -811,12 +805,12 @@ describe("the D126 members still read the D126 sentences", () => {
       expect(after.rngState).toBe(expected);
       if (faces[0] === "heads") {
         sawHeads = true;
-        expect(find(events, "DAMAGE_DEALT")?.base).toBe(30);
-        expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+        expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(30);
+        expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
       } else {
         sawTails = true;
         // …and tails still CANCELS, which zero heads on a `perHeads` attack does not.
-        expect(find(events, "ATTACK_FAILED")?.reason).toBe("coinFlip");
+        expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("coinFlip");
         expect(types(events)).not.toContain("DAMAGE_DEALT");
         expect(types(events)).toContain("TURN_ENDED");
       }

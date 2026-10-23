@@ -16,6 +16,7 @@ import {
   setActiveFromDeck,
   setPrizes,
   trainerCard,
+  activeOf,
 } from "./testFixtures";
 
 /** The printed sentences, byte-for-byte. */
@@ -155,12 +156,6 @@ function board(): GameState {
 
 function active(state: GameState, seat: Seat, cardId: string): GameState {
   return clearBench(setActiveFromDeck(state, seat, cardId), seat);
-}
-
-function activeOf(state: GameState, seat: Seat) {
-  const spot = state.players[seat].active;
-  if (spot === null) throw new Error(`${seat} has no Active`);
-  return spot;
 }
 
 /** Put `count` bodies on `seat`'s bench, one at a time off the deck. */

@@ -17,6 +17,7 @@ import {
   setPrizes,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const GLADION = "me05-077";
@@ -381,11 +382,6 @@ function refusal(state: GameState, id: string): string {
   const result = applyAction(next, { type: "playTrainer", seat: "p1", uid });
   return result.ok ? "applied" : result.error.code;
 }
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const attack = (state: GameState, seat: Seat, index = 0) =>
   mustApply(state, { type: "attack", seat, index });
 const endTurn = (state: GameState, seat: Seat) =>
@@ -507,7 +503,7 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
 
   it("with a Bench it parks over every one of your bodies; the answer survives a JSON round trip", () => {
     const parked = acerola(PLAIN, [FILLER], RAIDER_EX).state;
-    const ask = prompt(parked);
+    const ask = effectPrompt(parked);
     expect(ask.kind).toBe("choosePokemon");
     expect(ask.note).toBe(
       "Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's Pokémon ex.",
@@ -809,7 +805,7 @@ describe("D621 §6 — Roxie's Performance: the opponent's Poisoned Pokémon can
 describe("D621 §7 — Dawn: a Basic, a Stage 1 and a Stage 2 Pokémon into the hand", () => {
   it("parks one search with three one-card groups; the three picks go to the hand, named", () => {
     const parked = play(board(PLAIN, []), DAWN).state;
-    const ask = prompt(parked);
+    const ask = effectPrompt(parked);
     if (ask.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${ask.kind}`);
     const deck = parked.players.p1.deck;
     const pick = (id: string) => deck.find((u) => parked.cardIdByUid[u] === id) as string;

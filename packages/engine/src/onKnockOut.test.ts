@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   ONKO_DECK,
   activeUid,
@@ -15,14 +15,8 @@ import {
   setDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function onkoBoard(seed: number, p2Active: string): GameState {
   let state = driveSetup(seed, { p1: ONKO_DECK, p2: ONKO_DECK }, { first: "p2" });
@@ -51,12 +45,12 @@ describe("Glimmora's Shattering Crystal — on-KO prize denial (§8.1)", () => {
     // The Ability fires as a CONSEQUENCE of the KO — both after it.
     expect(trigIdx).toBeGreaterThan(koIdx);
     expect(flipIdx).toBeGreaterThan(trigIdx);
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       uid: glimmora,
       ability: "Shattering Crystal",
     });
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({
       seat: "p2",
       uid: glimmora,
       ability: "Shattering Crystal",
@@ -70,14 +64,14 @@ describe("Glimmora's Shattering Crystal — on-KO prize denial (§8.1)", () => {
       const state = onkoBoard(seed, "sv02-126");
       const glimmora = activeUid(state, "p2");
       const { state: after, events } = mustApply(state, bite);
-      expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: glimmora });
-      const flip = find(events, "ABILITY_COIN_FLIP");
+      expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: glimmora });
+      const flip = findEvent(events, "ABILITY_COIN_FLIP");
       if (flip === undefined) throw new Error("Shattering Crystal did not flip");
 
       if (flip.result === "heads") {
         sawHeads = true;
         // No prize for Glimmora: PRIZE_PREVENTED, no prize owed, P1 keeps all 6.
-        expect(find(events, "PRIZE_PREVENTED")).toMatchObject({ seat: "p2", uid: glimmora });
+        expect(findEvent(events, "PRIZE_PREVENTED")).toMatchObject({ seat: "p2", uid: glimmora });
         expect(types(events)).not.toContain("PRIZES_OWED");
         expect(after.players.p1.prizes.length).toBe(6);
         expect(after.pending.some((s) => s.kind === "takePrizes")).toBe(false);
@@ -107,12 +101,12 @@ describe("Glimmora's Shattering Crystal — on-KO prize denial (§8.1)", () => {
     // P1 ends their turn → the Checkup ticks poison → Glimmora is Knocked Out →
     // Shattering Crystal fires inside that same between-turns sweep.
     const { events } = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: glimmora });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: glimmora });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       uid: glimmora,
       ability: "Shattering Crystal",
     });
-    expect(find(events, "ABILITY_COIN_FLIP")).toBeDefined();
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toBeDefined();
   });
 
   it("resolves BEFORE the §14 win check — heads can DENY a game-winning prize", () => {
@@ -122,11 +116,11 @@ describe("Glimmora's Shattering Crystal — on-KO prize denial (§8.1)", () => {
       let state = onkoBoard(seed, "sv02-126");
       state = setPrizes(state, "p1", 1);
       const { state: after, events } = mustApply(state, bite);
-      const flip = find(events, "ABILITY_COIN_FLIP");
+      const flip = findEvent(events, "ABILITY_COIN_FLIP");
       if (flip === undefined) throw new Error("Shattering Crystal did not flip");
       if (flip.result === "heads") {
         sawHeads = true;
-        expect(find(events, "PRIZE_PREVENTED")).toBeDefined();
+        expect(findEvent(events, "PRIZE_PREVENTED")).toBeDefined();
         expect(after.phase.kind).not.toBe("gameOver"); // prize denied → no win
         expect(after.players.p1.prizes.length).toBe(1); // still one from victory
       } else {
@@ -169,7 +163,7 @@ describe("on-KO parking — the resume-the-tail continuation (§8.1)", () => {
       seat: "p1",
       prizeIndices: [0],
     });
-    expect(find(e2, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(e2, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       uid: fixOnko,
       ability: "Last Wish",
@@ -203,7 +197,7 @@ describe("on-KO parking — the resume-the-tail continuation (§8.1)", () => {
       seat: "p2",
       choice: { kind: "cards", uids: pick },
     });
-    expect(find(e3, "DECK_SEARCHED")).toMatchObject({ seat: "p2", dest: "hand", uids: pick });
+    expect(findEvent(e3, "DECK_SEARCHED")).toMatchObject({ seat: "p2", dest: "hand", uids: pick });
     // The searched Basic landed in P2's hand (the turn-start draw on resume adds
     // another, so assert the specific card, not the count).
     expect(done.players.p2.hand).toContain(pick[0]);
@@ -237,7 +231,7 @@ describe("on-KO parking — the resume-the-tail continuation (§8.1)", () => {
     let state = onkoBoard(SEED, "fix-onko");
     state = setPrizes(state, "p1", 1);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(after.phase.kind).toBe("gameOver");
     if (after.phase.kind !== "gameOver") throw new Error("expected gameOver");
     expect(after.phase.outcome).toEqual({ result: "win", winner: "p1", reason: "prizesTaken" });
@@ -268,7 +262,7 @@ describe("on-KO triggers — non-regression and purity", () => {
   it("a KO of a Pokémon with NO on-KO Ability queues no koTrigger and fires no guard", () => {
     const state = onkoBoard(SEED, "fix-victim"); // 30 HP, no Ability
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     expect(types(events)).not.toContain("ABILITY_TRIGGERED");
     expect(types(events)).not.toContain("ABILITY_COIN_FLIP");
     expect(types(events)).not.toContain("PRIZE_PREVENTED");

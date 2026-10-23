@@ -23,6 +23,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 import type { BoostedAttack } from "./types";
 
@@ -129,13 +130,6 @@ const DECK = deckOf({
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260925;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -199,7 +193,8 @@ const pass = (state: GameState, seat: Seat): GameState =>
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, REV_UP);
-  if (find(events, "ATTACK_BOOSTED") === undefined) throw new Error("Rev Up installed nothing");
+  if (findEvent(events, "ATTACK_BOOSTED") === undefined)
+    throw new Error("Rev Up installed nothing");
   return { start, state, events };
 }
 
@@ -322,7 +317,7 @@ describe("§2 — the install writes `{ turn: T+2, attackIndex: null, amount }`"
   it("stamps the holder's own next turn, names NO attack on the row, writes no bar", () => {
     const { start, state, events } = installed();
     expect(start.turn).toBe(3);
-    expect(find(events, "ATTACK_BOOSTED")).toStrictEqual({
+    expect(findEvent(events, "ATTACK_BOOSTED")).toStrictEqual({
       type: "ATTACK_BOOSTED",
       seat: "p1",
       uid: activeUid(start, "p1"),
@@ -348,7 +343,7 @@ describe("§2 — the install writes `{ turn: T+2, attackIndex: null, amount }`"
     const { events } = installed();
     const order = events.map((e) => e.type);
     expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ATTACK_BOOSTED"));
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
   });
 });
 
@@ -372,18 +367,18 @@ describe("§3 — it pays every attack, in the holder's next turn only", () => {
     for (const i of [REV_UP, STRIKE, SWIPE, REST, PICK_OFF, SPRAY]) {
       expect(boostedAttackDamage(window, holder, i), `index ${i}`).toBe(BUFF);
     }
-    const strike = find(attack(window, STRIKE).events, "DAMAGE_DEALT");
+    const strike = findEvent(attack(window, STRIKE).events, "DAMAGE_DEALT");
     expect(strike?.base).toBe(50);
     expect(strike?.bonus).toBe(BUFF);
     expect(strike?.dealt).toBe(50 + BUFF);
-    const swipe = find(attack(window, SWIPE).events, "DAMAGE_DEALT");
+    const swipe = findEvent(attack(window, SWIPE).events, "DAMAGE_DEALT");
     expect(swipe?.dealt).toBe(20 + BUFF);
   });
 
   it("the unboosted control does the printed numbers on the same board", () => {
     const start = ready();
-    expect(find(attack(start, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
-    expect(find(attack(start, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(attack(start, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(attack(start, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("is not live at T+4 — the stamp stops answering, and the record is still there", () => {
@@ -392,12 +387,12 @@ describe("§3 — it pays every attack, in the holder's next turn only", () => {
     expect(later.turn).toBe(7);
     expect(later.players.p1.active?.boostedAttack?.attackIndex).toBeNull();
     expect(boostedAttackDamage(later, body(later.players.p1.active), STRIKE)).toBe(0);
-    expect(find(attack(later, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(attack(later, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
   });
 
   it("is PRE-W/R: (50 + 120) × 2 = 340 on a Weakness body, not 50 × 2 + 120", () => {
     const window = inWindow(installed({ defender: "d546-weak" }).state);
-    const row = find(attack(window, STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(window, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(row?.dealt).toBe((50 + BUFF) * 2);
   });
@@ -412,7 +407,7 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
     const window = inWindow(installed().state);
     const before = body(window.players.p2.active).damage;
     const { state, events } = attack(window, REST);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(body(state.players.p2.active).damage).toBe(before);
   });
 
@@ -445,7 +440,7 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
     });
-    const row = find(done.events, "DAMAGE_DEALT");
+    const row = findEvent(done.events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.bonus).toBe(BUFF);
     expect(row?.dealt).toBe(30 + BUFF);
@@ -462,7 +457,7 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
     });
-    expect(find(done.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(done.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -527,14 +522,14 @@ describe("§5 — `:76`: both Actives fall Asleep, and the holder may sleep thro
   it("the holder WAKES and pays +100 on both of its damage attacks", () => {
     const window = throughCheckups("none");
     expect(window.turn).toBe(5);
-    expect(find(attack(window, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + 100);
-    expect(find(attack(window, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + 100);
+    expect(findEvent(attack(window, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + 100);
+    expect(findEvent(attack(window, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + 100);
   });
 
   it("§11: the opponent's shield refuses ONLY the defender half — the holder still sleeps, the buff installs", () => {
     const start = attachFromDeck(ready({ attacker: "d546-lullaby" }), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, 0);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
     expect(all(events, "STATUS_APPLIED").map((e) => [e.seat, e.status])).toEqual([
       ["p1", "asleep"],
     ]);
@@ -602,7 +597,7 @@ describe("§6 — retreat, a forced switch, evolution and devolution each clear 
       target: { spot: "active" },
     });
     expect(state.players.p1.active?.boostedAttack).toBeNull();
-    expect(find(attack(state, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(attack(state, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
   });
 
   it("DEVOLVING (the opponent's `devolveEach`) sheds it", () => {
@@ -675,7 +670,7 @@ describe("§7 — null is an ADDRESS: it merges with itself and replaces a named
     s = runOne(s, [{ op: "preventAttackUse", attack: "Strike" }], []);
     const window = inWindow(pass(s, "p1"));
     expect(applyAction(window, { type: "attack", seat: "p1", index: STRIKE }).ok).toBe(false);
-    expect(find(attack(window, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + BUFF);
+    expect(findEvent(attack(window, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + BUFF);
   });
 
   it("a constructed `{ attack: null, base: true }` is REFUSED whole — no record, no row", () => {
@@ -707,7 +702,7 @@ describe("§8 — the row names no attack, under both seats, and never prints 'n
       text: "d546-buffer's attacks do 120 more damage next turn",
     });
     expect(rows.some((r) => r.text.includes("null"))).toBe(false);
-    const boosted = find(events, "ATTACK_BOOSTED");
+    const boosted = findEvent(events, "ATTACK_BOOSTED");
     expect(render(boosted === undefined ? [] : [{ ...boosted, seat: "p2" }], state)).toEqual([
       { who: "p2", text: "d546-buffer's attacks do 120 more damage next turn" },
     ]);
@@ -715,7 +710,7 @@ describe("§8 — the row names no attack, under both seats, and never prints 'n
 
   it("the NAMED and BASE-SET rows are unchanged — the branch keys on `attack === null` alone", () => {
     const { state, events } = installed();
-    const uid = find(events, "ATTACK_BOOSTED")?.uid ?? "";
+    const uid = findEvent(events, "ATTACK_BOOSTED")?.uid ?? "";
     expect(
       render([{ type: "ATTACK_BOOSTED", seat: "p1", uid, attack: "Strike", amount: 30 }], state),
     ).toEqual([{ who: "p1", text: "d546-buffer's Strike does 30 more damage next turn" }]);
@@ -738,8 +733,8 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
     const wire = JSON.stringify(window.players.p1.active?.boostedAttack);
     expect(wire).toBe(`{"turn":5,"attackIndex":null,"amount":${String(BUFF)}}`);
     const revived = withRawBoost(window, JSON.parse(wire) as BoostedAttack);
-    expect(find(attack(revived, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BUFF);
-    expect(find(attack(revived, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + BUFF);
+    expect(findEvent(attack(revived, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BUFF);
+    expect(findEvent(attack(revived, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20 + BUFF);
   });
 
   it("a v30 (numbered) record still means ONE attack", () => {
@@ -748,8 +743,8 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
       `{"turn":5,"attackIndex":${String(STRIKE)},"amount":30}`,
     ) as BoostedAttack;
     const legacy = withRawBoost(window, v30);
-    expect(find(attack(legacy, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + 30);
-    expect(find(attack(legacy, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(attack(legacy, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + 30);
+    expect(findEvent(attack(legacy, SWIPE).events, "DAMAGE_DEALT")?.dealt).toBe(20);
     expect(everyAttackBoostOf(legacy, body(legacy.players.p1.active))).toBe(0);
   });
 

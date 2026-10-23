@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { intoPlayOnlyViaOf, passivesOf, providedEnergy } from "./continuous";
 import { applyAction, attackCostAt, createGame, redactGame } from "./index";
-import type { GameAction, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, evolveAliasLicensed } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -15,6 +15,7 @@ import {
   trainerCard,
   must,
   mustApply as run,
+  activeOf,
 } from "./testFixtures";
 
 const NOIVERN = "sv09-128";
@@ -315,12 +316,6 @@ function energize(state: GameState, seat: Seat, count: number): GameState {
       },
     },
   };
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const spot = state.players[seat].active;
-  if (spot === null) throw new Error(`${seat} has no Active`);
-  return spot;
 }
 
 /** p1's turn 2: `attacker` Active with `energy` {C} against `defender`, both Benches empty. */

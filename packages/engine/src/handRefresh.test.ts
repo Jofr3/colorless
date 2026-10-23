@@ -9,14 +9,8 @@ import {
   handUid,
   mustApply,
   setPrizes,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -95,7 +89,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     state = handFromDeck(state, "p1", "sv01-198", 1);
     const uid = handUid(state, "p1", "sv01-198");
     const { events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-    const shuffled = find(events, "HAND_SHUFFLED_INTO_DECK");
+    const shuffled = findEvent(events, "HAND_SHUFFLED_INTO_DECK");
     expect(shuffled).toBeDefined();
     // The event carries a count, never the shuffled uids.
     expect(shuffled && "uids" in shuffled).toBe(false);
@@ -145,7 +139,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     // Discard Brassius (hand → handBefore-1), shuffle those in, draw (handBefore-1)+1
     // → the hand returns to handBefore.
     expect(handCount(after, "p1")).toBe(handBefore);
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ count: handBefore - 1 });
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ count: handBefore - 1 });
     const drawn = findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
     expect(drawn[0]?.uids).toHaveLength(handBefore);
   });
@@ -166,7 +160,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     // Then the turn ends: control folds to P2's turn (past the Checkup), exactly
     // like Koraidon's endsTurn — not back to P1's turn:action.
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
-    expect(find(events, "TURN_STARTED")).toBeDefined();
+    expect(findEvent(events, "TURN_STARTED")).toBeDefined();
   });
 
   // ── Iono — BOTH players' hands to the BOTTOM, draw their Prize count ─────
@@ -341,7 +335,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
 
     // Hand emptied (Youngster discarded), so count 0; the 2-card deck yields only
     // a 2-card short-draw (§14.3 deck-out is a turn-START rule, not here).
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ count: 0 });
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ count: 0 });
     expect(handCount(after, "p1")).toBe(2);
     expect(after.players.p1.deck).toHaveLength(0);
   });

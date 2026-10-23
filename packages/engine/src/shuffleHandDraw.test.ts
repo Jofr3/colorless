@@ -16,7 +16,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -29,6 +29,7 @@ import {
   setActiveFromDeck,
   trimDeckTo,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -67,13 +68,6 @@ const program = (count: number) => [
 ];
 
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §1 — the printed data, transcribed rather than recognised.
@@ -291,11 +285,14 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
     const state = fielded(2);
     const handCount = state.players.p1.hand.length;
     const { events } = mustApply(state, attack);
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ seat: "p1", count: handCount });
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({
+      seat: "p1",
+      count: handCount,
+    });
     expect(types(events)).not.toContain("HAND_DISCARDED");
     expect(types(events)).not.toContain("HAND_TO_BOTTOM_OF_DECK");
-    expect(find(events, "CARDS_DRAWN")).toMatchObject({ seat: "p1", reason: "effect" });
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(6);
+    expect(findEvent(events, "CARDS_DRAWN")).toMatchObject({ seat: "p1", reason: "effect" });
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(6);
   });
 
   it("the op runs at the attack's TAIL, after the damage, and the printed BASE is KEPT", () => {
@@ -310,7 +307,7 @@ describe("D479 §4 — WHICH PILE, read off UIDS because a count cannot see it",
       "TURN_STARTED",
       "CARDS_DRAWN",
     ]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(done.players.p2.active?.damage).toBe(30);
   });
 
@@ -354,7 +351,7 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
     expect(state.players.p1.hand).toEqual([]);
     const oldDeck = [...state.players.p1.deck];
     const { state: done, events } = mustApply(state, attack);
-    expect(find(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ seat: "p1", count: 0 });
+    expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ seat: "p1", count: 0 });
     expect(done.players.p1.hand).toHaveLength(6);
     expect(sorted([...done.players.p1.hand, ...done.players.p1.deck])).toEqual(sorted(oldDeck));
   });
@@ -365,7 +362,7 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
     const pile = [...state.players.p1.deck];
     expect(pile).toHaveLength(4);
     const { state: done, events } = mustApply(state, attack);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
     expect(sorted(done.players.p1.hand)).toEqual(sorted(pile));
     expect(done.players.p1.deck).toEqual([]);
     // §14.3's deck-out is checked at the DRAW, not here — so the board is NOT over.
@@ -379,7 +376,7 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
     const oldDeck = [...before.deck];
     const { state: done, events } = mustApply(state, attack);
     // The damage still lands — the attack RESOLVED; it is the EFFECT that is unread.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     // …and the engine says so out loud rather than resolving quietly.
     expect(types(events)).toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("HAND_SHUFFLED_INTO_DECK");

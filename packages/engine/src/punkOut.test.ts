@@ -22,6 +22,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  activeOf,
 } from "./testFixtures";
 
 const ABILITY_TEXT =
@@ -52,13 +53,6 @@ function board(seed: number): GameState {
     if (vInPlay(state, seat).length > 0) throw new Error(`seed ${seed} opened a V on ${seat}`);
   }
   return state;
-}
-
-/** `seat`'s Active — the holder every cost assertion below reads. */
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function justBenched(state: GameState, seat: Seat, cardId: string): InPlayPokemon {

@@ -15,6 +15,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const ELDEGOSS = "sv07-011";
@@ -88,13 +89,6 @@ function apply(
   const result = applyAction(state, action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return { state: result.state, events: [...result.events] };
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -332,7 +326,7 @@ describe("D314 §3 — the removal: both piles to the deck, and the TWO shuffles
 
   it("`POKEMON_RETURNED` names the deck and carries the WHOLE pile", () => {
     const { events } = apply(board({ under: 2, tool: true, energy: 2 }), BREEZY);
-    const returned = find(events, "POKEMON_RETURNED");
+    const returned = findEvent(events, "POKEMON_RETURNED");
     expect(returned?.dest).toBe("deck");
     expect(returned?.uids).toHaveLength(6);
     expect(returned).not.toHaveProperty("attachmentsTo");
@@ -409,7 +403,7 @@ describe("D314 §5 — the search, its two legal answers, and the tail behind it
       for (const uid of picked) expect(done.players.p1.hand, uid).toContain(uid);
       expect(done.players.p1.hand).toHaveLength(handBefore + 3);
       expect(done.players.p1.deck).toHaveLength(deckBefore - 3);
-      expect(find(events, "DECK_SEARCHED")).toBeDefined();
+      expect(findEvent(events, "DECK_SEARCHED")).toBeDefined();
       expect(events.map((e) => e.type)).toContain("SHUFFLE");
     });
   }
@@ -470,7 +464,7 @@ describe("D314 §6 — §8.1's promotion, queued only once the answer comes back
     const { state: done, events } = apply(parked, take(picked));
     expect(done.players.p1.hand).toHaveLength(handBefore + 3);
     expect(done.phase.kind).toBe("gameOver");
-    expect(find(events, "GAME_OVER")?.outcome).toMatchObject({ result: "win", winner: "p2" });
+    expect(findEvent(events, "GAME_OVER")?.outcome).toMatchObject({ result: "win", winner: "p2" });
   });
 
   it("THE CONTROL: the card's OTHER attack promotes nobody", () => {

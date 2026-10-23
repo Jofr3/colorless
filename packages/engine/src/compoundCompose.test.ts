@@ -4,7 +4,7 @@ import * as effects from "./effects";
 import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   COMPOUND_COMPOSE_DECK,
   FIXTURE_POOL,
@@ -15,6 +15,7 @@ import {
   setActiveFromDeck,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const PRIZE_THEN_DISCARD =
@@ -80,13 +81,6 @@ const readerNamed = (name: string): ((text: string) => unknown) =>
 
 const claimedByAny = (text: string): boolean =>
   EXPORTED_ATTACK_READERS.some((name) => readerNamed(name)(text) !== null);
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ops = (text: string): EffectOp[] | null => deriveAttackEffect(text);
 
@@ -452,10 +446,10 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
       index: PRIZE_DISCARD_INDEX,
     });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
     // The tail ran: one Energy off the attacker, into its own discard pile.
     expect(after.players.p1.active?.energy.length).toBe(2);
-    expect(find(events, "ENERGY_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "ENERGY_DISCARDED")).toBeDefined();
   });
 
   it("the recoil twin folds the same 100 and then hits ITSELF for 30", () => {
@@ -469,7 +463,7 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
       index: PRIZE_RECOIL_INDEX,
     });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
     expect(after.players.p1.active?.damage).toBe(30);
   });
 
@@ -490,7 +484,7 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
     state = setPrizes(state, "p2", 4); // 2 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 5 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
   });
 
   it("the status compound discards ALL Energy and then Paralyzes the defender", () => {
@@ -536,13 +530,13 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
       index: BURN_INDEX,
     });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
     expect(after.players.p2.active?.retreatBlocked).toBe(true);
     // …and the printed damage still landed, so the composition did not eat the §8.5
     // pipeline on its way past.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
-    expect(find(events, "RETREAT_BLOCKED")?.seat).toBe("p2");
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "RETREAT_BLOCKED")?.seat).toBe("p2");
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       source: "burn",
       amount: 20,
@@ -562,19 +556,19 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
     });
     const burned = burnedRun.state;
     const confused = confusedRun.state;
-    expect(find(burnedRun.events, "STATUS_APPLIED")).toMatchObject({
+    expect(findEvent(burnedRun.events, "STATUS_APPLIED")).toMatchObject({
       seat: "p2",
       status: "burned",
     });
-    expect(find(burnedRun.events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(burnedRun.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       source: "burn",
     });
-    expect(find(confusedRun.events, "STATUS_APPLIED")).toMatchObject({
+    expect(findEvent(confusedRun.events, "STATUS_APPLIED")).toMatchObject({
       seat: "p2",
       status: "confused",
     });
-    expect(find(confusedRun.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(confusedRun.events, "COUNTERS_PLACED")).toBeUndefined();
     expect(confused.players.p2.active?.conditions.rotation).toBe("confused");
     expect(confused.players.p2.active?.conditions.burned).toBe(false);
     expect(burned.players.p2.active?.conditions.rotation).toBe("none");
@@ -602,11 +596,11 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
       seat: "p1",
       index: UNREAD_TAIL_INDEX,
     });
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       attack: "Prize Riddle",
       damageModifier: "+",
     });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.scaled).toBeUndefined();
     expect(dealt?.dealt).toBe(40);
   });

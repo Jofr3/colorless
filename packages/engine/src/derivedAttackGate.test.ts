@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import { splitAttackGateClause, timingGateFromAttackText } from "./effects";
-import type { AttackTimingGate, GameState, InPlayPokemon, Seat } from "./index";
+import type { AttackTimingGate, GameState, Seat } from "./index";
 import { applyAction, attackGateOf, createGame, programFor } from "./index";
 import { attackTimingBlocked, firstTurnAttackBanned, redactGame } from "./index";
 import { registryCardIds } from "./registry";
@@ -19,6 +19,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 
 const BAN_TEXT =
@@ -185,12 +186,6 @@ function board(seed: number, first: Seat, seat: Seat, activeId: string, passes =
   state = clearBench(state, seat);
   state = benchFromDeck(state, seat, FILLER);
   return attachFromDeck(state, seat, ENERGY, 2);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function declare(state: GameState, seat: Seat, index: number): string {

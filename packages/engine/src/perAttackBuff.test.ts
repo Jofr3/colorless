@@ -22,6 +22,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const ECHOED_VOICE =
@@ -35,13 +36,6 @@ const ECHO_CHORUS_INDEX = 1;
 const ECHO_TAP_INDEX = 0;
 
 const SEED = 21;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:14" };
@@ -84,7 +78,7 @@ function boosted(booster: string, index: number, water?: number) {
     seat: "p1",
     index,
   });
-  const row = find(events, "ATTACK_BOOSTED");
+  const row = findEvent(events, "ATTACK_BOOSTED");
   if (row === undefined) throw new Error(`${booster} idx ${String(index)} boosted nothing`);
   return { state, events, row };
 }
@@ -141,7 +135,7 @@ describe("the printed datum — re-queried, not inherited", () => {
     expect(
       deriveAttackEffect(FIXTURE_POOL["fix-curly-booster"]?.attacks?.[1]?.effect ?? ""),
     ).toEqual([{ op: "boostAttack", attack: "Slip 'n' Roll", amount: 100 }]);
-    expect(find(events, "ATTACK_BOOSTED")?.attack).toBe("Slip ’n’ Roll");
+    expect(findEvent(events, "ATTACK_BOOSTED")?.attack).toBe("Slip ’n’ Roll");
   });
 
   it("the anchor refuses the whole neighbourhood, and each refusal is a warrant", () => {
@@ -200,7 +194,7 @@ describe("the install — the address is resolved once, by the helper D154 wrote
       seat: "p1",
       index: ECHOED_VOICE_INDEX,
     });
-    expect(find(events, "ATTACK_BOOSTED")).toEqual({
+    expect(findEvent(events, "ATTACK_BOOSTED")).toEqual({
       type: "ATTACK_BOOSTED",
       seat: "p1",
       uid,
@@ -262,7 +256,7 @@ describe("the install — the address is resolved once, by the helper D154 wrote
       [{ op: "boostAttack", attack: "Echoed Voice", amount: 150 }],
       bigger,
     );
-    expect(find(bigger, "ATTACK_BOOSTED")?.amount).toBe(150);
+    expect(findEvent(bigger, "ATTACK_BOOSTED")?.amount).toBe(150);
     expect(merged.players.p1.active?.boostedAttack?.amount).toBe(150);
     // …and a SMALLER one changes nothing and says nothing, which is the half of
     // `Math.max` a `?:` would get wrong in the direction nobody looks at.
@@ -341,7 +335,7 @@ describe("the bonus is addressed to ONE index", () => {
       seat: "p1",
       index: ECHO_CHORUS_INDEX,
     });
-    const paid = find(boostedHit.events, "DAMAGE_DEALT");
+    const paid = findEvent(boostedHit.events, "DAMAGE_DEALT");
     expect(paid?.base).toBe(100);
     expect(paid?.bonus).toBe(100);
     expect(paid?.dealt).toBe(200);
@@ -349,7 +343,7 @@ describe("the bonus is addressed to ONE index", () => {
     // …the SIBLING, on the same body inside the same window, from a board that is
     // byte-identical up to the declaration.
     const plainHit = mustApply(window, { type: "attack", seat: "p1", index: ECHO_TAP_INDEX });
-    const unpaid = find(plainHit.events, "DAMAGE_DEALT");
+    const unpaid = findEvent(plainHit.events, "DAMAGE_DEALT");
     expect(unpaid?.base).toBe(20);
     expect(unpaid?.bonus).toBeUndefined();
     expect(unpaid?.dealt).toBe(20);
@@ -378,7 +372,7 @@ describe("the bonus is addressed to ONE index", () => {
     // …and the BOOSTED one resolves, at +100. A single shared field could produce
     // at most one of these two lines.
     const paid = mustApply(window, { type: "attack", seat: "p1", index: ECHO_CHORUS_INDEX });
-    expect(find(paid.events, "DAMAGE_DEALT")?.dealt).toBe(200);
+    expect(findEvent(paid.events, "DAMAGE_DEALT")?.dealt).toBe(200);
   });
 });
 
@@ -387,7 +381,7 @@ describe("it lands BEFORE Weakness and Resistance — driven both ways", () => {
     let state = ready("sv03-052", 4);
     state = setActiveFromDeck(state, "p2", "sv02-037");
     const unboosted = mustApply(state, { type: "attack", seat: "p1", index: ECHOED_VOICE_INDEX });
-    const first = find(unboosted.events, "DAMAGE_DEALT");
+    const first = findEvent(unboosted.events, "DAMAGE_DEALT");
     expect(first?.bonus).toBeUndefined();
     expect(first?.dealt).toBe(240);
     // …and it SURVIVES, which is what makes the boosted swing below a change of
@@ -398,7 +392,7 @@ describe("it lands BEFORE Weakness and Resistance — driven both ways", () => {
     let armed = setActiveFromDeck(window, "p2", "sv02-037");
     armed = attachFromDeck(armed, "p1", "fix-water-energy", 0);
     const hit = mustApply(armed, { type: "attack", seat: "p1", index: ECHOED_VOICE_INDEX });
-    const row = find(hit.events, "DAMAGE_DEALT");
+    const row = findEvent(hit.events, "DAMAGE_DEALT");
     expect(row?.base).toBe(120);
     expect(row?.bonus).toBe(100);
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -431,7 +425,7 @@ describe("it lands BEFORE Weakness and Resistance — driven both ways", () => {
       seat: "p1",
       index: ECHOED_VOICE_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(220);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(220);
     expect(types(events)).toContain("KNOCKED_OUT");
     expect(after.players.p2.active?.damage ?? 340).toBe(340);
   });
@@ -441,11 +435,11 @@ describe("it lands BEFORE Weakness and Resistance — driven both ways", () => {
     state = attachToolFromDeck(state, "p1", "active", "sv01-197"); // Vitality Band: +10 pre-W/R
     const installed = mustApply(state, { type: "attack", seat: "p1", index: ECHOED_VOICE_INDEX });
     // The install turn: the Tool alone.
-    expect(find(installed.events, "DAMAGE_DEALT")?.bonus).toBe(10);
+    expect(findEvent(installed.events, "DAMAGE_DEALT")?.bonus).toBe(10);
 
     const window = inWindow(installed.state);
     const { events } = mustApply(window, { type: "attack", seat: "p1", index: ECHOED_VOICE_INDEX });
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.bonus).toBe(110);
     expect(row?.dealt).toBe(230);
     // …and the log prints the SUM in one crumb, which is the reader-facing half of
@@ -462,7 +456,7 @@ describe("it lands BEFORE Weakness and Resistance — driven both ways", () => {
     const window = inWindow(must(applyAction(armed, { type: "endTurn", seat: "p1" })));
 
     const free = mustApply(window, { type: "attack", seat: "p1", index: 0 });
-    expect(find(free.events, "DAMAGE_DEALT")?.bonus).toBe(130);
+    expect(findEvent(free.events, "DAMAGE_DEALT")?.bonus).toBe(130);
 
     // DAMAGED: Cursed Land's `requiresDamage` gate is met, the printed Ability is
     // suppressed, and the INSTALLED half is untouched. A fold would have lost both.
@@ -471,7 +465,7 @@ describe("it lands BEFORE Weakness and Resistance — driven both ways", () => {
       seat: "p1",
       index: 0,
     });
-    expect(find(locked.events, "DAMAGE_DEALT")?.bonus).toBe(100);
+    expect(findEvent(locked.events, "DAMAGE_DEALT")?.bonus).toBe(100);
   });
 });
 
@@ -484,7 +478,7 @@ describe("the row renders under the seat that owns the boosted Pokémon", () => 
       text: "Seismitoad's Echoed Voice does 100 more damage next turn",
     });
 
-    const installed = find(events, "ATTACK_BOOSTED");
+    const installed = findEvent(events, "ATTACK_BOOSTED");
     expect(installed).toBeDefined();
     expect(render(installed === undefined ? [] : [{ ...installed, seat: "p2" }], state)).toEqual([
       { who: "p2", text: "Seismitoad's Echoed Voice does 100 more damage next turn" },
@@ -524,8 +518,8 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
     // …and the evolved body's only attack pays nothing extra, which is the half a
     // surviving record would have got wrong invisibly.
     const { events } = mustApply(evolved, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.bonus).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(events, "DAMAGE_DEALT")?.bonus).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(40);
   });
 
   it("RETREATING inside the window sheds it — the holder's own route", () => {

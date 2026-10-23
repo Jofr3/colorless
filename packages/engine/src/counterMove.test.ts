@@ -21,6 +21,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSE =
@@ -45,13 +46,6 @@ const RSQUO = "\u2019";
 /** U+00A0, likewise an escape. Byte-different from an ASCII space and INVISIBLE in
     a diff, which is exactly why the case names it instead of carrying it. */
 const NBSP = "\u00a0";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -319,11 +313,11 @@ describe("end to end — the park, and the two halves of one move", () => {
     const { state: parked, events } = declare(state, TAIL_SWAP_INDEX);
 
     expect(types(events)).toContain("EFFECT_PENDING");
-    expect(find(events, "EFFECT_PENDING")?.seat).toBe("p1");
+    expect(findEvent(events, "EFFECT_PENDING")?.seat).toBe("p1");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides
     expect(parked.phase.resumeTail).toBe(true);
-    expect(parked.phase.cont.ctx.sourceUid).toBe(find(events, "ATTACK_DECLARED")?.uid);
+    expect(parked.phase.cont.ctx.sourceUid).toBe(findEvent(events, "ATTACK_DECLARED")?.uid);
 
     // THE CANDIDATE SET IS THE BENCH AND NOTHING ELSE — the printed word "Benched",
     // and the attacker is standing right there with two Energy on it.
@@ -342,8 +336,8 @@ describe("end to end — the park, and the two halves of one move", () => {
       {
         kind: "attackEpilogue",
         seat: "p1",
-        uid: find(events, "ATTACK_DECLARED")?.uid,
-        attack: find(events, "ATTACK_DECLARED")?.attack,
+        uid: findEvent(events, "ATTACK_DECLARED")?.uid,
+        attack: findEvent(events, "ATTACK_DECLARED")?.attack,
       },
     ]);
     expect(parked.players.p1.bench[0]?.damage).toBe(BENCH_HURT);
@@ -408,13 +402,13 @@ describe("end to end — the park, and the two halves of one move", () => {
       "TURN_STARTED",
       "CARDS_DRAWN",
     ]);
-    expect(find(events, "HEALED")).toEqual({
+    expect(findEvent(events, "HEALED")).toEqual({
       type: "HEALED",
       seat: "p1",
       uid: source,
       amount: BENCH_HURT,
     });
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p2",
       uid: defender,
@@ -529,7 +523,7 @@ describe("the destination half — a MOVED counter is not attack damage", () => 
     expect(FIXTURE_POOL["sv02-093"]?.types).toEqual(["Psychic"]);
 
     const { state: done, events } = declare(state, TAIL_SWAP_INDEX);
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p2",
       uid: defender,
@@ -555,13 +549,13 @@ describe("the destination half — a MOVED counter is not attack damage", () => 
     const defender = activeUid(state, "p1");
     const { state: done, events } = declare(state, TAIL_SWAP_INDEX, "p2");
 
-    expect(find(events, "HEALED")).toEqual({
+    expect(findEvent(events, "HEALED")).toEqual({
       type: "HEALED",
       seat: "p2",
       uid: source,
       amount: BENCH_HURT,
     });
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p1",
       uid: defender,
@@ -589,10 +583,10 @@ describe("the KNOCK OUT the move can cause — the epilogue sweep, from both end
     const { state: done, events } = mustApply(parked, pick(P1_BENCH_0));
 
     expect(DEFENDER_NEARLY_DEAD + BENCH_HURT).toBeGreaterThanOrEqual(TITAN_HP);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: defender });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: defender });
     const order = types(events);
     expect(order).toEqual(["HEALED", "COUNTERS_PLACED", "KNOCKED_OUT", "PRIZES_OWED"]);
-    expect(find(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
+    expect(findEvent(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     // …and the turn has NOT ended: the prize pick and the opponent's promotion are
     // both still in front of §5.3's tail, which is exactly the queue `resumeTail`
@@ -615,7 +609,7 @@ describe("the KNOCK OUT the move can cause — the epilogue sweep, from both end
       "KNOCKED_OUT",
       "PRIZES_OWED",
     ]);
-    expect(find(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
+    expect(findEvent(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     // The source body is still at zero on the far side of a KO sweep — the removal
     // half is not undone by the board changing under it.

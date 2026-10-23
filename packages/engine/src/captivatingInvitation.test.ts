@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { flipCoin } from "./rng";
 import { programFor } from "./registry";
 import {
@@ -15,6 +15,7 @@ import {
   handUid,
   mustApply,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const FLORGES = "sv06-088";
@@ -106,13 +107,6 @@ function offered(state: GameState): Set<string> {
   return new Set(cardsPrompt(state).candidates.map((uid) => state.cardIdByUid[uid] as string));
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // §1 — THE REGISTRY ROWS ARE THE PRINTED BYTES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -198,7 +192,7 @@ describe("D330 §2 — the coin-gated gust, and the body the Confusion lands on"
     const benched = done.players.p2.bench.find((p) => topOf(p) === incumbent);
     expect(benched?.conditions.rotation ?? "none").toBe("none");
 
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({
       seat: "p2",
       uid: invitee,
       status: "confused",

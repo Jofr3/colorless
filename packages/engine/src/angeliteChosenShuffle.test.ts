@@ -11,7 +11,7 @@ import {
 } from "./effects";
 import { applyAction, attackGateOf, createGame } from "./index";
 import { programFor, registryCardIds } from "./registry";
-import type { GameEvent, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
+import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { shuffle } from "./rng";
 import {
   FIXTURE_POOL,
@@ -22,6 +22,7 @@ import {
   setActiveFromDeck,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 import { stackUids } from "./types";
 
@@ -272,12 +273,6 @@ function parkedPrompt(state: GameState) {
   const prompt = state.phase.prompt;
   if (prompt.kind !== "choosePokemonMulti") throw new Error(`wrong prompt: ${prompt.kind}`);
   return prompt;
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const body = state.players[seat].active;
-  if (body === null) throw new Error(`${seat} has no Active`);
-  return body;
 }
 
 /** Wind the clock until it is `seat`'s turn again, ending turns and nothing else. */

@@ -13,14 +13,8 @@ import {
   handToDeck,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 
@@ -56,7 +50,7 @@ function useAttach(
     abilityName,
   });
   if (first.state.phase.kind !== "effect:choose") {
-    return { state: first.state, uid: find(first.events, "ENERGY_ATTACHED")?.uid }; // forced
+    return { state: first.state, uid: findEvent(first.events, "ENERGY_ATTACHED")?.uid }; // forced
   }
   const atTarget =
     first.state.phase.prompt.kind === "choosePokemon"
@@ -68,7 +62,7 @@ function useAttach(
       : first;
   const res = answerEnergyPick(atTarget.state);
   const events = [...atTarget.events, ...res.events];
-  return { state: res.state, uid: find(events, "ENERGY_ATTACHED")?.uid };
+  return { state: res.state, uid: findEvent(events, "ENERGY_ATTACHED")?.uid };
 }
 
 describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
@@ -95,7 +89,7 @@ describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
       choice: { kind: "pokemon", ref: ACTIVE_REF },
     });
     const { state: done, events } = answerEnergyPick(targeted.state);
-    const attached = find(events, "ENERGY_ATTACHED");
+    const attached = findEvent(events, "ENERGY_ATTACHED");
     expect(attached).toMatchObject({ seat: "p1" });
     const uid = attached?.uid;
     if (uid === undefined) throw new Error("no ENERGY_ATTACHED");

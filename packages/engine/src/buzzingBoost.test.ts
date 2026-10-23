@@ -1,12 +1,20 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { topUid } from "./cards";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { redactGame } from "./redact";
 import { programFor, registryCardIds } from "./registry";
-import { FIXTURE_POOL, battler, deckOf, typedEnergy, must, firstBasicInHand } from "./testFixtures";
+import {
+  FIXTURE_POOL,
+  battler,
+  deckOf,
+  typedEnergy,
+  must,
+  firstBasicInHand,
+  findEvent,
+} from "./testFixtures";
 import { makeInPlay } from "./types";
 
 const YANMEGA = "sv10-003";
@@ -102,13 +110,6 @@ function reject(state: GameState, action: Parameters<typeof applyAction>[1]) {
   const result = applyAction(state, action);
   if (result.ok) throw new Error(`${action.type} was expected to be rejected`);
   return result.error;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -323,7 +324,7 @@ describe("D347 §3 — the Ability, driven end to end", () => {
       expect(done.state.cardIdByUid[uid]).toBe(ENERGY_G);
     }
     // "Then, shuffle your deck" — the trailing op really ran.
-    expect(find(done.events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(done.events, "SHUFFLE")).toBeDefined();
     expect(grassInDeck(done.state, "p1")).toBe(before - 3);
     expect(done.state.phase.kind).toBe("turn:action");
   });
@@ -352,7 +353,7 @@ describe("D347 §3 — the Ability, driven end to end", () => {
       choice: { kind: "attachCards", assignments: [] },
     });
     expect(done.state.players.p1.active?.energy).toHaveLength(0);
-    expect(find(done.events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(done.events, "SHUFFLE")).toBeDefined();
     expect(done.state.phase.kind).toBe("turn:action");
   });
 

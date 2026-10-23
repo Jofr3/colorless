@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   ABILITY_DECK,
   TRAINER_DECK,
@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** Setup then open P1's turn 2: with P2 going first, ending P2's turn 1 puts P1
@@ -26,13 +27,6 @@ import {
 function p1Turn2(seed: number, decks: { p1: string[]; p2: string[] }): GameState {
   const state = driveSetup(seed, decks, { first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 const both = { p1: TRAINER_DECK, p2: TRAINER_DECK };
@@ -46,7 +40,7 @@ describe("playTrainer — Supporters (§7.2)", () => {
     const { state: next, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
     expect(types(events)).toContain("TRAINER_PLAYED");
     expect(types(events)).toContain("HAND_DISCARDED");
-    const drawn = find(events, "CARDS_DRAWN");
+    const drawn = findEvent(events, "CARDS_DRAWN");
     expect(drawn?.reason).toBe("effect");
     expect(drawn?.uids).toHaveLength(7);
     expect(next.players.p1.hand).toHaveLength(7);
@@ -129,7 +123,7 @@ describe("Nest Ball — search deck → Bench, then shuffle (§15.E)", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [pick] },
     });
-    const searched = find(e2, "DECK_SEARCHED");
+    const searched = findEvent(e2, "DECK_SEARCHED");
     expect(searched?.dest).toBe("bench");
     expect(searched?.uids).toEqual([pick]);
     expect(types(e2)).toContain("SHUFFLE");
@@ -157,7 +151,7 @@ describe("Energy Search — search deck → hand (§15.E)", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [pick] },
     });
-    expect(find(done ? events : events, "DECK_SEARCHED")?.dest).toBe("hand");
+    expect(findEvent(done ? events : events, "DECK_SEARCHED")?.dest).toBe("hand");
     expect(done.players.p1.hand).toContain(pick);
     expect(done.players.p1.hand.length).toBe(handBefore + 1);
   });
@@ -192,7 +186,7 @@ describe("Boss's Orders — gust the opponent's Active (§15.G)", () => {
       seat: "p1",
       choice: { kind: "pokemon", ref: chosen },
     });
-    const switched = find(e2, "POKEMON_SWITCHED");
+    const switched = findEvent(e2, "POKEMON_SWITCHED");
     expect(switched?.seat).toBe("p2");
     expect(switched?.nowActive).toBe(chosenUid);
     expect(activeUid(done, "p2")).toBe(chosenUid);
@@ -219,7 +213,7 @@ describe("Boss's Orders — gust the opponent's Active (§15.G)", () => {
     const target = benchTopUid(state, "p2", 0);
     const { state: done, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
     expect(done.phase.kind).toBe("turn:action"); // no park — forced
-    expect(find(events, "POKEMON_SWITCHED")?.nowActive).toBe(target);
+    expect(findEvent(events, "POKEMON_SWITCHED")?.nowActive).toBe(target);
     expect(activeUid(done, "p2")).toBe(target);
   });
 });
@@ -246,8 +240,8 @@ describe("Switch — swap your own Active (§15.G)", () => {
     const wasActive = activeUid(state, "p1");
     const target = benchTopUid(state, "p1", 0);
     const { state: done, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-    expect(find(done ? events : events, "POKEMON_SWITCHED")?.nowActive).toBe(target);
-    const cleared = find(events, "STATUS_CLEARED");
+    expect(findEvent(done ? events : events, "POKEMON_SWITCHED")?.nowActive).toBe(target);
+    const cleared = findEvent(events, "STATUS_CLEARED");
     expect(cleared?.reason).toBe("benched");
     expect(cleared?.statuses).toContain("asleep");
     expect(activeUid(done, "p1")).toBe(target);
@@ -271,7 +265,7 @@ describe("Potion — heal a chosen Pokémon (§15.B)", () => {
     // Only the Active in play → forced target, no park.
     const { state: done, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "HEALED")?.amount).toBe(30);
+    expect(findEvent(events, "HEALED")?.amount).toBe(30);
     expect(done.players.p1.active?.damage).toBe(20);
   });
 
@@ -308,7 +302,7 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
       target: { spot: "active" },
       abilityName: "Shivery Chill",
     });
-    expect(find(e1, "ABILITY_USED")?.ability).toBe("Shivery Chill");
+    expect(findEvent(e1, "ABILITY_USED")?.ability).toBe("Shivery Chill");
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected park");
     const prompt = parked.phase.prompt;
@@ -325,7 +319,7 @@ describe("Abilities — activated (Chien-Pao ex, Shivery Chill §9)", () => {
       seat: "p1",
       choice: { kind: "cards", uids: pick },
     });
-    expect(find(e2, "DECK_SEARCHED")?.uids).toEqual(pick);
+    expect(findEvent(e2, "DECK_SEARCHED")?.uids).toEqual(pick);
     expect(done.players.p1.hand.length).toBe(handBefore + 2);
     expect(done.phase.kind).toBe("turn:action"); // abilities do NOT end the turn
     // Once per turn — a second use is rejected.
@@ -376,7 +370,7 @@ describe("Abilities — passive (Bouffalant, Bouffer §15.B)", () => {
     state = setActiveFromDeck(state, "p2", "sv03-174");
     state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 }); // Bite [C] 30
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
     expect(dealt?.reduction).toBe(20);
     expect(dealt?.dealt).toBe(10);

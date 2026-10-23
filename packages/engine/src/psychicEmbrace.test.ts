@@ -13,14 +13,8 @@ import {
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const EMBRACE = {
@@ -56,8 +50,8 @@ describe("Gardevoir ex — Psychic Embrace (the attachEnergyFrom riders)", () =>
     const r1 = useEmbrace(state, ACTIVE_REF);
     expect(r1.state.players.p1.active?.energy.length).toBe(1);
     expect(r1.state.players.p1.active?.damage).toBe(20); // the 2 counters
-    expect(find(r1.events, "ENERGY_ATTACHED")).toMatchObject({ seat: "p1" });
-    expect(find(r1.events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(r1.events, "ENERGY_ATTACHED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(r1.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       uid: gardUid,
       amount: 20,

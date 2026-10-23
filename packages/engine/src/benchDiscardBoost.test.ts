@@ -18,7 +18,7 @@ import {
   discardScaledBoostProgram,
 } from "./effects";
 import type { AttackDiscardScaledBoost } from "./effects";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   BENCH_BOOST_DECK,
   attachBenchFromDeck,
@@ -29,6 +29,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -280,17 +281,6 @@ describe("D403 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. Two fixtures, one per printed filter.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1 goes second, so their
     first turn carries no §4 attack restriction. */
 function board(seed: number): GameState {
@@ -373,7 +363,7 @@ describe("D403 §4 — the Bench-only zone, and the caption it forced", () => {
       seat: "p1",
       choice: { kind: "discardEnergy", uids: bench },
     });
-    expect(find(events, "ENERGY_DISCARDED")).toMatchObject({
+    expect(findEvent(events, "ENERGY_DISCARDED")).toMatchObject({
       seat: "p1",
       actor: "p1",
       uids: bench,
@@ -403,7 +393,7 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
         seat: "p1",
         choice: { kind: "discardEnergy", uids: bench.slice(0, take) },
       });
-      expect(find(events, "DAMAGE_DEALT")?.dealt, `${take} discarded`).toBe(dealt);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt, `${take} discarded`).toBe(dealt);
       expect(done.players.p2.active?.damage, `${take} discarded`).toBe(dealt);
       expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
     }
@@ -424,7 +414,7 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
       seat: "p1",
       choice: { kind: "discardEnergy", uids: bench },
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(140);
     expect(done.players.p2.active?.damage).toBe(140);
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
   });
@@ -443,7 +433,7 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
       seat: "p1",
       choice: { kind: "discardEnergy", uids: [] },
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
     expect(done.players.p2.active?.damage).toBe(20);
   });
 
@@ -456,7 +446,7 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
     const { state: done, events } = mustApply(state, attack);
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(types(events)).not.toContain("ENERGY_DISCARDED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(50);
     // …and the flag stays down on the inline path too, where the whole attack is one
     // action and the two event lists the rung above has to keep apart are the same one.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -474,7 +464,7 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
       seat: "p1",
       choice: { kind: "discardEnergy", uids: bench.slice(0, 1) },
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120);
     expect(done.players.p2.active?.damage).toBe(120);
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   BUG_CATCHING_DECK,
@@ -10,6 +10,7 @@ import {
   handUid,
   mustApply,
   toDeckTop,
+  findEvent,
 } from "./testFixtures";
 
 const BUG_CATCHING_IDS = ["sv06-143", "sv08.5-102"] as const;
@@ -19,13 +20,6 @@ function deckAt(state: GameState, index: number): string {
   const uid = state.players.p1.deck[index];
   if (uid === undefined) throw new Error(`p1 deck has no card at index ${index}`);
   return uid;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function board(seed: number): GameState {
@@ -163,7 +157,7 @@ describe("D333 — Bug Catching Set, a flat cap over a two-member union", () => 
       expect(done.players.p1.hand).toContain(uid);
       expect(done.players.p1.deck).not.toContain(uid);
     }
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       uids: bothPokemon,
       reveal: true,

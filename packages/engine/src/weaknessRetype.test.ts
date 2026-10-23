@@ -25,6 +25,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 import type { WeaknessRetype } from "./types";
 
@@ -120,13 +121,6 @@ const DECK = deckOf({
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260928;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
   if (pokemon === null || pokemon === undefined) throw new Error("expected a Pokémon");
   return pokemon;
@@ -184,7 +178,8 @@ const pass = (state: GameState, seat: Seat): GameState =>
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, MARK);
-  if (find(events, "WEAKNESS_RETYPED") === undefined) throw new Error("Mark installed nothing");
+  if (findEvent(events, "WEAKNESS_RETYPED") === undefined)
+    throw new Error("Mark installed nothing");
   return { start, state, events };
 }
 
@@ -213,7 +208,7 @@ function render(events: GameEvent[], state: GameState): { who: string; text: str
   );
 }
 
-const dealt = (events: GameEvent[]): number | undefined => find(events, "DAMAGE_DEALT")?.dealt;
+const dealt = (events: GameEvent[]): number | undefined => findEvent(events, "DAMAGE_DEALT")?.dealt;
 
 type Reader = (text: string) => unknown;
 function claimants(text: string): string[] {
@@ -290,7 +285,7 @@ describe("§2 — the install writes `{ turn: T+2, type }` on the DEFENDER, and 
 
   it("WEAKNESS_RETYPED is filed under the HOLDER, and the row reads in its voice", () => {
     const { state, events } = installed();
-    const row = find(events, "WEAKNESS_RETYPED");
+    const row = findEvent(events, "WEAKNESS_RETYPED");
     expect(row).toEqual({
       type: "WEAKNESS_RETYPED",
       seat: "p2",
@@ -512,8 +507,8 @@ describe("§6 — a §11 shield refuses the install", () => {
   it("Mist Energy on the Defending Pokémon: refused, announced, nothing written", () => {
     const start = attachFromDeck(ready(), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, MARK);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
-    expect(find(events, "WEAKNESS_RETYPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "WEAKNESS_RETYPED")).toBeUndefined();
     expect(body(state.players.p2.active).weaknessRetype).toBeNull();
   });
 });

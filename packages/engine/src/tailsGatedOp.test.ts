@@ -18,6 +18,7 @@ import {
   setConditions,
   types,
   walkProgram,
+  findEvent,
 } from "./testFixtures";
 
 const TAILS_TEXT = "Flip a coin. If tails, during your next turn, this Pokémon can't attack.";
@@ -36,13 +37,6 @@ const INSTALLERS = [
   { id: "sv01-157", index: 1, damage: 130, attack: "Leg Stomp" },
   { id: "sv02-130", index: 0, damage: 200, attack: "Needle Bone" },
 ] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function armed(seed: number, installer: string): GameState {
   let state = must(
@@ -68,7 +62,7 @@ function installed(seed: number, installer: string, index: number): GameState {
     seat: "p1",
     index,
   });
-  if (find(events, "ATTACK_LOCKED") === undefined) {
+  if (findEvent(events, "ATTACK_LOCKED") === undefined) {
     throw new Error(`seed ${seed} did not lock ${installer} (heads?)`);
   }
   if (state.turn !== 3) throw new Error(`expected P2's turn 3, got ${state.turn}`);
@@ -91,7 +85,7 @@ function refusal(state: GameState, seat: Seat, index: number): string {
 /** The face this declaration's ONE coin came up. Throws when there was no flip —
     a gate that stopped flipping would otherwise read as a permanent heads. */
 function faceOf(events: GameEvent[]): "heads" | "tails" {
-  const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+  const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
   if (flip === undefined) throw new Error("no ATTACK_EFFECT_COIN_FLIP row");
   return flip.result;
 }
@@ -256,7 +250,7 @@ describe("the tails gate — the seed table, pinned", () => {
     const { state: done, events } = mustApply(bare, { type: "attack", seat: "p1", index: 1 });
     expect(done.rngState).toBe(bare.rngState);
     expect(types(events)).not.toContain("ATTACK_EFFECT_COIN_FLIP");
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
   });
 });
 
@@ -269,14 +263,14 @@ describe("the tails gate — installing it, on BOTH faces", () => {
       const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index });
 
       expect(faceOf(events)).toBe("tails");
-      expect(find(events, "ATTACK_LOCKED")).toEqual({
+      expect(findEvent(events, "ATTACK_LOCKED")).toEqual({
         type: "ATTACK_LOCKED",
         seat: "p1",
         uid: installer,
       });
       expect(done.players.p1.active?.attackLockedTurn).toBe(4);
       expect(done.turn).toBe(3);
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(damage);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(damage);
       // Attacker-relative: nothing on the opponent's board carries a lock.
       expect(done.players.p2.active?.attackLockedTurn).toBeNull();
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -293,7 +287,7 @@ describe("the tails gate — installing it, on BOTH faces", () => {
       expect(faceOf(events)).toBe("heads");
       expect(types(events)).not.toContain("ATTACK_LOCKED");
       expect(done.players.p1.active?.attackLockedTurn).toBeNull();
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(damage);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(damage);
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     }
   });
@@ -310,7 +304,7 @@ describe("the tails gate — installing it, on BOTH faces", () => {
     expect(types(events)).not.toContain("ATTACK_EFFECT_COIN_FLIP");
     expect(types(events)).not.toContain("ATTACK_LOCKED");
     expect(done.players.p1.active?.attackLockedTurn).toBeNull();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(50);
   });
 
   it("reads correctly in the LOG — the coin row and the cost row, in that order", () => {
@@ -396,7 +390,7 @@ describe("the tails gate — the WINDOW, driven across the turn boundary on both
     expect(refusal(state, "p1", 1)).toBe("ok");
     expect(refusal(state, "p1", 0)).toBe("ok");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(130);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(130);
     expect(faceOf(events)).toBeTruthy();
   });
 
@@ -408,7 +402,7 @@ describe("the tails gate — the WINDOW, driven across the turn boundary on both
     expect(state.turn).toBe(6);
     expect(state.players.p1.active?.attackLockedTurn).toBe(4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(200);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(200);
     // …and the fresh flip decides the NEXT window on its own, whichever way it
     // fell: the two declarations are independent coins.
     expect(faceOf(events)).toBeTruthy();

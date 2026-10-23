@@ -17,6 +17,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 /** Iron Valiant `sv05-080` "Calculation" — sentence (i), the OWN-deck arm. */
@@ -125,13 +126,6 @@ const DECK = deckOf({
 });
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -373,14 +367,14 @@ describe("§3 the degenerate windows — no decision, no park, but the LOOK is a
     const state = seededOpp(13, 1);
     const { state: done, events } = attack(state);
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "DECK_TOP_REORDERED")?.count).toBe(1);
+    expect(findEvent(events, "DECK_TOP_REORDERED")?.count).toBe(1);
   });
 
   it("an EMPTY deck does not park and still announces a look of 0", () => {
     const state = seededOpp(17, 0);
     const { state: done, events } = attack(state);
     expect(done.phase.kind).not.toBe("effect:choose");
-    const row = find(events, "DECK_TOP_REORDERED");
+    const row = findEvent(events, "DECK_TOP_REORDERED");
     expect(row?.count).toBe(0);
   });
 
@@ -389,7 +383,7 @@ describe("§3 the degenerate windows — no decision, no park, but the LOOK is a
     // five would be a claim about cards nobody saw — `lookAtTopN`'s whiff branch
     // guards on `top.length` for the same reason, and this is that rule transferred.
     const { events } = attack(seededOpp(19, 2));
-    expect(find(events, "DECK_TOP_REORDERED")?.count).toBe(2);
+    expect(findEvent(events, "DECK_TOP_REORDERED")?.count).toBe(2);
   });
 
   it("a 2-card window DOES park — two is the smallest real decision", () => {
@@ -577,19 +571,19 @@ describe("§6 redaction — the deck's OWNER must not learn their own top", () =
 describe("§7 the event and its log row — count-only, and the voice follows the actor", () => {
   it("`seat` is the DECK'S OWNER and `actor` is the looker, on the opponent arm", () => {
     const { events } = attack(seededOpp(103, 5));
-    const row = find(events, "DECK_TOP_REORDERED");
+    const row = findEvent(events, "DECK_TOP_REORDERED");
     expect(row).toEqual({ type: "DECK_TOP_REORDERED", seat: "p2", actor: "p1", count: 5 });
   });
 
   it("on the own-deck arm the two seats coincide", () => {
     const { events } = attack(seededOwn(107));
-    const row = find(events, "DECK_TOP_REORDERED");
+    const row = findEvent(events, "DECK_TOP_REORDERED");
     expect(row).toEqual({ type: "DECK_TOP_REORDERED", seat: "p1", actor: "p1", count: 4 });
   });
 
   it("the row names NO card — the whole confidentiality rule in one assertion", () => {
     const { state: parked, events } = attack(seededOpp(109, 5));
-    const row = find(events, "DECK_TOP_REORDERED");
+    const row = findEvent(events, "DECK_TOP_REORDERED");
     if (row === undefined) throw new Error("no row");
     const serialized = JSON.stringify(row);
     for (const uid of parkedPrompt(parked).candidates) {

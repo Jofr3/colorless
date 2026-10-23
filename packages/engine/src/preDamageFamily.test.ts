@@ -18,6 +18,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -74,15 +75,8 @@ function swing(
   return mustApply(state, { type: "attack", seat, index });
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function dealt(events: GameEvent[]): number | undefined {
-  return find(events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(events, "DAMAGE_DEALT")?.dealt;
 }
 
 /** The §9 counterattack total this swing put back on the attacker. Non-zero only when
@@ -305,8 +299,8 @@ describe("§3 — row 71 takes the Tool AND the Special Energy, and leaves the B
 
   it("TWO EVENTS AND NOT ONE: the Tool row and the Energy row, in printed noun order", () => {
     const { state, events } = swing(armedDefender(), IDX.purge);
-    const tools = find(events, "TOOLS_DISCARDED");
-    const energy = find(events, "ENERGY_DISCARDED");
+    const tools = findEvent(events, "TOOLS_DISCARDED");
+    const energy = findEvent(events, "ENERGY_DISCARDED");
     expect(tools?.seat).toBe("p2");
     expect(tools?.actor).toBe("p1");
     expect(energy?.seat).toBe("p2");
@@ -327,8 +321,8 @@ describe("§3 — row 71 takes the Tool AND the Special Energy, and leaves the B
     let onlyEnergy = board();
     onlyEnergy = attachFromDeck(onlyEnergy, "p2", THERAPEUTIC, 1);
     const { state, events } = swing(onlyEnergy, IDX.purge);
-    expect(find(events, "TOOLS_DISCARDED")).toBeUndefined();
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toHaveLength(1);
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeUndefined();
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toHaveLength(1);
     expect(state.players.p2.active?.energy).toEqual([]);
   });
 
@@ -384,7 +378,7 @@ describe("§4 — row 72 strips *this Pokémon*, and cancels when it cannot", ()
     const armed = banded();
     const bandUid = attachedUid(armed, "p1", BAND);
     const { state, events } = swing(armed, IDX.shed);
-    const row = find(events, "TOOLS_DISCARDED");
+    const row = findEvent(events, "TOOLS_DISCARDED");
     expect(row?.seat).toBe("p1");
     expect(row?.actor).toBe("p1");
     expect(row?.uids).toEqual([bandUid]);
@@ -396,16 +390,16 @@ describe("§4 — row 72 strips *this Pokémon*, and cancels when it cannot", ()
   it("THE CANCEL: no Tool on this Pokémon and the attack does NOTHING", () => {
     const bare = board();
     const { state, events } = swing(bare, IDX.shed);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(state.players.p2.active?.damage).toBe(0);
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("preDamage");
-    expect(find(events, "TOOLS_DISCARDED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("preDamage");
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeUndefined();
   });
 
   it("…and the TURN STILL ENDS, because a cancelled attack is an attack that was USED", () => {
     const bare = board();
     const { state, events } = swing(bare, IDX.shed);
-    expect(find(events, "TURN_ENDED")).toBeDefined();
+    expect(findEvent(events, "TURN_ENDED")).toBeDefined();
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(state.turn).toBe(3);
     expect(state.players.p1.active?.usedAttack).toEqual({ name: "Shed Gear", turn: 2 });
@@ -414,11 +408,11 @@ describe("§4 — row 72 strips *this Pokémon*, and cancels when it cannot", ()
   it("…and §8.1 STILL SWEEPS on the cancelled path, with the control that says so", () => {
     const lethal = setDamage(board(), "p2", 300);
     const cancelled = swing(lethal, IDX.shed);
-    expect(find(cancelled.events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(cancelled.events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(cancelled.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(cancelled.events, "KNOCKED_OUT")).toBeDefined();
     // THE CONTROL: on a board that is NOT lethal the same cancelled swing files no KO,
     // so the rung above is about the sweep and not about "this path always emits one".
-    expect(find(swing(board(), IDX.shed).events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(swing(board(), IDX.shed).events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("the log row names the ACT, not a condition that was never printed", () => {
@@ -439,7 +433,7 @@ describe("§4 — row 72 strips *this Pokémon*, and cancels when it cannot", ()
     const { state, events } = swing(both, IDX.shed);
     expect(state.players.p1.active?.tools).toEqual([]);
     expect(state.players.p2.active?.tools).toHaveLength(1);
-    expect(find(events, "TOOLS_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(events, "TOOLS_DISCARDED")?.seat).toBe("p1");
     // …and the defender's Chestplate is therefore STILL subtracting: 110 − 10 − 30.
     expect(dealt(events)).toBe(70);
   });
@@ -450,8 +444,8 @@ describe("§5 — row 74 Paralyzes only when a Tool was actually discarded", () 
     let tooled = board();
     tooled = attachToolFromDeck(tooled, "p2", "active", CHESTPLATE);
     const { state, events } = swing(tooled, IDX.lock);
-    expect(find(events, "TOOLS_DISCARDED")).toBeDefined();
-    expect(find(events, "STATUS_APPLIED")?.status).toBe("paralyzed");
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "STATUS_APPLIED")?.status).toBe("paralyzed");
     expect(state.players.p2.active?.conditions.rotation).toBe("paralyzed");
     expect(dealt(events)).toBe(100);
     const kinds = events.map((e) => e.type);
@@ -462,9 +456,9 @@ describe("§5 — row 74 Paralyzes only when a Tool was actually discarded", () 
   it("THE CONTROL: no Tool to discard and there is NO Paralysis at all", () => {
     const bare = board();
     const { state, events } = swing(bare, IDX.lock);
-    expect(find(events, "TOOLS_DISCARDED")).toBeUndefined();
-    expect(find(events, "STATUS_APPLIED")).toBeUndefined();
-    expect(find(events, "STATUS_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeUndefined();
+    expect(findEvent(events, "STATUS_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "STATUS_PREVENTED")).toBeUndefined();
     expect(state.players.p2.active?.conditions.rotation).toBe("none");
     // …and the damage is identical either way, so the difference really is the status.
     expect(dealt(events)).toBe(100);
@@ -474,8 +468,8 @@ describe("§5 — row 74 Paralyzes only when a Tool was actually discarded", () 
     let energyOnly = board();
     energyOnly = attachFromDeck(energyOnly, "p2", THERAPEUTIC, 1);
     const { state, events } = swing(energyOnly, IDX.lock);
-    expect(find(events, "ENERGY_DISCARDED")).toBeUndefined();
-    expect(find(events, "STATUS_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "ENERGY_DISCARDED")).toBeUndefined();
+    expect(findEvent(events, "STATUS_APPLIED")).toBeUndefined();
     expect(state.players.p2.active?.conditions.rotation).toBe("none");
   });
 
@@ -484,9 +478,9 @@ describe("§5 — row 74 Paralyzes only when a Tool was actually discarded", () 
     immune = attachToolFromDeck(immune, "p2", "active", CHESTPLATE);
     immune = attachFromDeck(immune, "p2", THERAPEUTIC, 1);
     const { state, events } = swing(immune, IDX.lock);
-    expect(find(events, "TOOLS_DISCARDED")).toBeDefined();
-    expect(find(events, "STATUS_PREVENTED")?.status).toBe("paralyzed");
-    expect(find(events, "STATUS_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "STATUS_PREVENTED")?.status).toBe("paralyzed");
+    expect(findEvent(events, "STATUS_APPLIED")).toBeUndefined();
     expect(state.players.p2.active?.conditions.rotation).toBe("none");
     // …and the damage still moved, so the refusal is about the CONDITION and not about
     // the act: the Chestplate is gone either way.
@@ -497,8 +491,8 @@ describe("§5 — row 74 Paralyzes only when a Tool was actually discarded", () 
     let tooled = board();
     tooled = attachToolFromDeck(tooled, "p2", "active", CHESTPLATE);
     const { state, events } = swing(tooled, IDX.pry);
-    expect(find(events, "TOOLS_DISCARDED")).toBeDefined();
-    expect(find(events, "STATUS_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "STATUS_APPLIED")).toBeUndefined();
     expect(state.players.p2.active?.conditions.rotation).toBe("none");
   });
 });
@@ -511,9 +505,9 @@ describe("§6 — both seats: *your opponent's* and *this Pokémon* are relative
   it("p2 attacking: row 71 strips p1's Active, row 74 Paralyzes p1's Active", () => {
     const mirrored = armedDefender("p2");
     const purge = swing(mirrored, IDX.purge, "p2");
-    expect(find(purge.events, "TOOLS_DISCARDED")?.seat).toBe("p1");
-    expect(find(purge.events, "TOOLS_DISCARDED")?.actor).toBe("p2");
-    expect(find(purge.events, "ENERGY_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(purge.events, "TOOLS_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(purge.events, "TOOLS_DISCARDED")?.actor).toBe("p2");
+    expect(findEvent(purge.events, "ENERGY_DISCARDED")?.seat).toBe("p1");
     expect(purge.state.players.p1.active?.tools).toEqual([]);
     expect(purge.state.players.p1.active?.energy).toHaveLength(1); // the BASIC survived
     expect(dealt(purge.events)).toBe(100);
@@ -532,15 +526,15 @@ describe("§6 — both seats: *your opponent's* and *this Pokémon* are relative
     const shed = swing(armed, IDX.shed, "p2");
     expect(shed.state.players.p2.active?.tools).toEqual([]);
     expect(shed.state.players.p1.active?.tools).toHaveLength(1);
-    expect(find(shed.events, "TOOLS_DISCARDED")?.seat).toBe("p2");
-    expect(find(shed.events, "TOOLS_DISCARDED")?.actor).toBe("p2");
+    expect(findEvent(shed.events, "TOOLS_DISCARDED")?.seat).toBe("p2");
+    expect(findEvent(shed.events, "TOOLS_DISCARDED")?.actor).toBe("p2");
 
     // …and the cancel is seat-relative too: p1's Tool is no help to p2's sentence.
     let onlyOpponent = board("p2");
     onlyOpponent = attachToolFromDeck(onlyOpponent, "p1", "active", BAND);
     const cancelled = swing(onlyOpponent, IDX.shed, "p2");
-    expect(find(cancelled.events, "ATTACK_FAILED")?.reason).toBe("preDamage");
-    expect(find(cancelled.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(cancelled.events, "ATTACK_FAILED")?.reason).toBe("preDamage");
+    expect(findEvent(cancelled.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(cancelled.state.players.p1.active?.tools).toHaveLength(1);
   });
 });
@@ -555,20 +549,20 @@ describe("§7 — ATTACK_EFFECT_SKIPPED, both directions", () => {
     const bare = board();
     for (const index of [IDX.purge, IDX.shed, IDX.lock]) {
       expect(
-        find(swing(armed, index).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(armed, index).events, "ATTACK_EFFECT_SKIPPED"),
         String(index),
       ).toBeUndefined();
       // …including the boards where the act did NOTHING, so "simulated" is a property
       // of the SENTENCE and not of whether anything happened — the cancelled swing too.
       expect(
-        find(swing(bare, index).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(bare, index).events, "ATTACK_EFFECT_SKIPPED"),
         String(index),
       ).toBeUndefined();
     }
   });
 
   it("THE ATTRIBUTION CONTROL — index 5's unread sentence IS still reported", () => {
-    const skipped = find(swing(board(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(swing(board(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(LOUD_SENTENCE);
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
     expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
@@ -591,9 +585,9 @@ describe("§8 — the result channel, and the property it did not cost", () => {
   it("`cancelled` DRIVEN BOTH WAYS through row 72's branch", () => {
     let armed = board();
     armed = attachToolFromDeck(armed, "p1", "active", BAND);
-    expect(find(swing(armed, IDX.shed).events, "ATTACK_FAILED")).toBeUndefined();
+    expect(findEvent(swing(armed, IDX.shed).events, "ATTACK_FAILED")).toBeUndefined();
     expect(dealt(swing(armed, IDX.shed).events)).toBe(100);
-    expect(find(swing(board(), IDX.shed).events, "ATTACK_FAILED")?.reason).toBe("preDamage");
+    expect(findEvent(swing(board(), IDX.shed).events, "ATTACK_FAILED")?.reason).toBe("preDamage");
     expect(dealt(swing(board(), IDX.shed).events)).toBeUndefined();
   });
 

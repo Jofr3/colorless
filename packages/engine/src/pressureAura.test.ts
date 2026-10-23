@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setPrizes,
+  findEvent,
 } from "./testFixtures";
 
 const PRESSURE =
@@ -29,13 +30,6 @@ const GROWL =
   "During your opponent's next turn, the Defending Pokémon's attacks do 20 less damage (before applying Weakness and Resistance).";
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -234,7 +228,7 @@ describe("opposingAttackDebuff — the cross-board scan", () => {
 describe("the four damage sites — 20 off every one", () => {
   it("attack.ts main hit: Pika Bolt 30 into Entei lands 10, and the row REPORTS the 20", () => {
     const { events } = swing(board("sv02-062", "sv03-030"), "sv02-062");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.base).toBe(30);
@@ -247,7 +241,7 @@ describe("the four damage sites — 20 off every one", () => {
     // The one board in the pool where the two placements of the subtraction give
     // different numbers off a printed card. (30 − 20) × 2 = 20; 30 × 2 − 20 = 40.
     const { events } = swing(board("sv01-048", "sv03-030"), "sv01-048");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -273,7 +267,7 @@ describe("the four damage sites — 20 off every one", () => {
     state = benchFromDeck(state, "p2", "fix-titan");
     state = setPrizes(state, "p2", 4); // 2 taken → Bramble is 80
     const { events } = swing(state, "fix-bramble");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.base).toBe(80);
@@ -284,7 +278,7 @@ describe("the four damage sites — 20 off every one", () => {
 
   it("interpreter snipeActive: Linear Attack's 20 into Entei clamps to 0", () => {
     const { events } = swing(clearBench(board("sv01-069", "sv03-030"), "p2"), "sv01-069");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.base).toBe(20);
@@ -295,7 +289,7 @@ describe("the four damage sites — 20 off every one", () => {
   it("`ignoreWR` NULLS THE AURA AT snipeActive AND ONLY THERE", () => {
     const state = clearBench(board("fix-feint", "sv03-030"), "p2");
     const { events } = swing(state, "fix-feint");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.debuff).toBeUndefined();
@@ -303,8 +297,8 @@ describe("the four damage sites — 20 off every one", () => {
     // The control: the same attacker under a STAMP keeps paying it, so "nulled" is
     // a statement about the AURA and not about this site reading nothing at all.
     const stamped = swing(withDebuff(state, "p1", 20), "fix-feint");
-    expect(find(stamped.events, "DAMAGE_DEALT")?.debuff).toBe(20);
-    expect(find(stamped.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(stamped.events, "DAMAGE_DEALT")?.debuff).toBe(20);
+    expect(findEvent(stamped.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("…but NOT at placeSnipe's bench arm, where the source is a DIFFERENT body", () => {
@@ -325,7 +319,7 @@ describe("the four damage sites — 20 off every one", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [pick] },
     });
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.debuff).toBe(AMOUNT);
     expect(row?.dealt).toBe(30);
     expect(benchTopUid(parked, "p2", 0)).toBe(row?.uid);
@@ -333,7 +327,7 @@ describe("the four damage sites — 20 off every one", () => {
 
   it("Entei's OWN attack is untouched — the aura is one-directional", () => {
     const { events } = swing(board("sv03-030", "fix-titan"), "sv03-030", "p1");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.base).toBe(60); // no {R} in PRESSURE_DECK, so "60+" is a flat 60
@@ -350,7 +344,7 @@ describe("summation with D149's stamp, and the §9 pair", () => {
   it("SUMS: a stamped 20 plus the aura's 20 takes 40 off one hit", () => {
     const state = withDebuff(board("sv02-127", "sv03-030"), "p1", 20);
     const { events } = swing(state, "sv02-127");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.debuff).toBe(40);
@@ -374,7 +368,7 @@ describe("summation with D149's stamp, and the §9 pair", () => {
     // …and driven end to end: 150 − 20 (stamp only), where the unlocked board took
     // 40 off. The stamp survives the very lock that killed the aura.
     const { events } = swing(locked, "sv02-127");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.debuff).toBe(20);
@@ -384,7 +378,7 @@ describe("summation with D149's stamp, and the §9 pair", () => {
   it("the lock is the ONLY difference — the same board with no stamp reads 0", () => {
     const locked = withDamage(board("sv02-127", "sv03-030"), "p2", 10);
     const { events } = swing(locked, "sv02-127");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toBeDefined();
     if (row === undefined) return;
     expect(row.debuff).toBeUndefined();
@@ -408,7 +402,7 @@ describe("the log — rendered and READ, not copied", () => {
       )
       .join("\n");
     expect(rendered).toContain("weakened −20");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.seat).toBe("p2");
   });
 });

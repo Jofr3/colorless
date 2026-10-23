@@ -32,6 +32,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -91,13 +92,6 @@ function other(seat: Seat): Seat {
 
 const attack = (state: GameState, seat: Seat = "p1") =>
   mustApply(state, { type: "attack", seat, index: 0 });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function potion(
   state: GameState,
@@ -214,7 +208,7 @@ describe("§3 — the board: the REAL printing, healed and unhealed", () => {
   it.each(SEEDS)("seed %i — an unhealed Maractus deals the printed 20", (seed) => {
     const state = ready(seed);
     const { state: after, events } = attack(state);
-    expect(find(events, "DAMAGE_DEALT")?.damage).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.damage).toBe(20);
     expect(after.players.p2.active?.damage).toBe(20);
     // …and the stamp really is absent rather than merely unequal.
     expect(state.players.p1.active?.healedTurn).toBeNull();
@@ -228,20 +222,20 @@ describe("§3 — the board: the REAL printing, healed and unhealed", () => {
     let state = setDamage(ready(seed), "p1", 50);
     const healed = potion(state, "p1");
     state = healed.state;
-    expect(find(healed.events, "HEALED")?.amount).toBe(30);
+    expect(findEvent(healed.events, "HEALED")?.amount).toBe(30);
     expect(state.players.p1.active?.damage).toBe(20);
     expect(state.players.p1.active?.healedTurn).toBe(state.turn);
     expect(conditionHolds(state, "p1", HEALED)).toBe(true);
     const { events } = attack(state);
-    expect(find(events, "DAMAGE_DEALT")?.damage).toBe(120);
+    expect(findEvent(events, "DAMAGE_DEALT")?.damage).toBe(120);
   });
 
   it.each(SEEDS)("seed %i — the two arms differ by exactly the printed 100", (seed) => {
     const base = ready(seed);
-    const cold = find(attack(base).events, "DAMAGE_DEALT")?.damage ?? 0;
+    const cold = findEvent(attack(base).events, "DAMAGE_DEALT")?.damage ?? 0;
     const warm =
-      find(attack(potion(setDamage(base, "p1", 50), "p1").state).events, "DAMAGE_DEALT")?.damage ??
-      0;
+      findEvent(attack(potion(setDamage(base, "p1", 50), "p1").state).events, "DAMAGE_DEALT")
+        ?.damage ?? 0;
     expect(warm - cold).toBe(100);
     expect([cold, warm]).toEqual([20, 120]);
   });
@@ -254,10 +248,10 @@ describe("§4 — a WHIFF is not a heal, and the board is ordinary", () => {
       const state = ready(seed);
       expect(state.players.p1.active?.damage).toBe(0);
       const played = potion(state, "p1");
-      expect(find(played.events, "HEALED")).toBeUndefined();
+      expect(findEvent(played.events, "HEALED")).toBeUndefined();
       expect(played.state.players.p1.active?.healedTurn).toBeNull();
       expect(conditionHolds(played.state, "p1", HEALED)).toBe(false);
-      expect(find(attack(played.state).events, "DAMAGE_DEALT")?.damage).toBe(20);
+      expect(findEvent(attack(played.state).events, "DAMAGE_DEALT")?.damage).toBe(20);
     },
   );
 });
@@ -269,7 +263,7 @@ describe("§5 — the SUBJECT is 'this Pokémon', not the seat", () => {
     const benchRef: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
     const healed = potion(state, "p1", benchRef);
     state = healed.state;
-    expect(find(healed.events, "HEALED")?.uid).toBe(benchTopUid(state, "p1", 0));
+    expect(findEvent(healed.events, "HEALED")?.uid).toBe(benchTopUid(state, "p1", 0));
     expect(state.players.p1.bench[0]?.healedTurn).toBe(state.turn);
     // …the ACTIVE is untouched on both the field and the clause…
     expect(state.players.p1.active?.healedTurn).toBeNull();
@@ -281,7 +275,7 @@ describe("§5 — the SUBJECT is 'this Pokémon', not the seat", () => {
       state.players.p1.bench.some((b) => b.healedTurn === state.turn);
     expect(perSeatReading).toBe(true);
     expect(perSeatReading).not.toBe(conditionHolds(state, "p1", HEALED));
-    expect(find(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
+    expect(findEvent(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
   });
 
   it.each(SEEDS)(
@@ -325,7 +319,7 @@ describe("§6 — the CLOCK: a turn STAMP expires by arithmetic, with no boundar
     expect(state.turn).toBeGreaterThan(healedOn);
     expect(state.players.p1.active?.healedTurn).toBe(healedOn);
     expect(conditionHolds(state, "p1", HEALED)).toBe(false);
-    expect(find(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
+    expect(findEvent(attack(state).events, "DAMAGE_DEALT")?.damage).toBe(20);
   });
 });
 
@@ -337,7 +331,7 @@ describe("§7 — the SEAT: the arm reads the ASKER's Active, on a board that ca
     state = potion(state, "p2").state;
     expect(conditionHolds(state, "p2", HEALED)).toBe(true);
     expect(conditionHolds(state, "p1", HEALED)).toBe(false);
-    expect(find(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(120);
+    expect(findEvent(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(120);
   });
 
   it.each(SEEDS)(
@@ -360,7 +354,7 @@ describe("§7 — the SEAT: the arm reads the ASKER's Active, on a board that ca
       expect(state.turn).toBeGreaterThan(p1Turn);
       expect(state.players.p2.active?.healedTurn).toBe(p1Turn);
       expect(conditionHolds(state, "p2", HEALED)).toBe(false);
-      expect(find(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(20);
+      expect(findEvent(attack(state, "p2").events, "DAMAGE_DEALT")?.damage).toBe(20);
     },
   );
 });

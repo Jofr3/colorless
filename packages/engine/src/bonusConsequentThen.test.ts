@@ -37,6 +37,7 @@ import {
   walkProgram,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const MELTER_TEXT =
@@ -187,13 +188,6 @@ function board(opts: { attacker: string; stadium?: Seat | null; seed?: number })
 }
 
 const MELTER = { type: "attack", seat: "p1", index: 1 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
@@ -447,13 +441,13 @@ describe("D382 §5 — CHI-YU ON A REAL BOARD: both arms, and the zone", () => {
       const { state: done, events } = apply(start, MELTER);
       // ONE hit, at base + bonus. Two hits would be two rows and §8.5 twice.
       expect(count(events, "DAMAGE_DEALT")).toBe(1);
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 120 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 120 });
       expect(done.players.p2.active?.damage).toBe(120);
       // …and the printed consequent ran: the zone is empty and the card is in its
       // OWNER's discard pile, which is the half a constructed `state.stadium` could
       // never have shown.
       expect(done.stadium).toBeNull();
-      const discarded = find(events, "STADIUM_DISCARDED");
+      const discarded = findEvent(events, "STADIUM_DISCARDED");
       expect(discarded).toMatchObject({ seat: "p2" });
       expect(done.players.p2.discard).toContain(discarded?.uid);
     });
@@ -463,7 +457,7 @@ describe("D382 §5 — CHI-YU ON A REAL BOARD: both arms, and the zone", () => {
       expect(start.stadium).toBeNull();
       const { state: done, events } = apply(start, MELTER);
       expect(count(events, "DAMAGE_DEALT")).toBe(1);
-      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 60 });
+      expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 60 });
       expect(done.players.p2.active?.damage).toBe(60);
       expect(count(events, "STADIUM_DISCARDED")).toBe(0);
       expect(done.stadium).toBeNull();
@@ -474,9 +468,9 @@ describe("D382 §5 — CHI-YU ON A REAL BOARD: both arms, and the zone", () => {
     const start = board({ attacker: CHIYU, stadium: "p1" });
     expect(start.stadium).toMatchObject({ owner: "p1" });
     const { state: done, events } = apply(start, MELTER);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 120 });
     expect(done.stadium).toBeNull();
-    expect(find(events, "STADIUM_DISCARDED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "STADIUM_DISCARDED")).toMatchObject({ seat: "p1" });
   });
 
   it("the attack still ends the turn [ D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] on the DECLINE arm — nothing here is a cancellation", () => {
@@ -496,12 +490,12 @@ describe("D382 §6 — the LOUD path closed: the sentence and its '+' are both s
 
   it("the ATTRIBUTION CONTROL — the SAME antecedent and join with an unread tail IS flagged", () => {
     const { events } = apply(board({ attacker: UNREAD, stadium: "p2" }), MELTER);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       effect: UNREAD_TEXT,
       damageModifier: "+",
     });
     // …and the printed base landed the ordinary way, because nothing claimed it.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 60 });
     // …and the Stadium is still standing, because the consequent never ran.
     expect(count(events, "STADIUM_DISCARDED")).toBe(0);
   });

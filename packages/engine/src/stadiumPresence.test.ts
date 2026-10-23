@@ -20,7 +20,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
+import type { BoardCondition, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
   STADIUM_PRESENCE_DECK,
@@ -31,6 +31,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -140,13 +141,6 @@ const earthenPower = (state: GameState, seat: Seat = "p1"): GameState =>
     ["fix-psychic-energy", 1],
     ["fix-energy", 2],
   ]);
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the bigger half", () => {
   it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
@@ -400,7 +394,7 @@ describe("§4 — the BONUS consequent on a board: 70 → 140, with Palossand as
     // `effectSimulated` / `modifierSimulated` ride `scaling !== null`, not on the
     // clause holding, so a false clause is still a SIMULATED outcome.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 70, dealt: 70 });
     // `scaled` is omitted at 0 — the clause genuinely added nothing.
     expect(dealt?.scaled).toBeUndefined();
@@ -413,20 +407,20 @@ describe("§4 — the BONUS consequent on a board: 70 → 140, with Palossand as
       index: 0,
     });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 70, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 70, dealt: 140 });
   });
 
   it("adds it off the OPPONENT's Stadium too — and Palossand's +80 does NOT, on the same board", () => {
     const base = board(79, "p2");
     expect(base.stadium?.owner).toBe("p2");
     const boosted = mustApply(mountainDrop(base), { type: "attack", seat: "p1", index: 0 });
-    expect(find(boosted.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(boosted.events, "DAMAGE_DEALT")).toMatchObject({
       base: 70,
       scaled: 70,
       dealt: 140,
     });
     const control = mustApply(earthenPower(base), { type: "attack", seat: "p1", index: 1 });
-    const controlHit = find(control.events, "DAMAGE_DEALT");
+    const controlHit = findEvent(control.events, "DAMAGE_DEALT");
     expect(controlHit).toMatchObject({ base: 80, dealt: 80 });
     expect(controlHit?.scaled).toBeUndefined();
     // Neither is flagged: both sentences are read, they just answer differently.
@@ -442,7 +436,7 @@ describe("§4 — the BONUS consequent on a board: 70 → 140, with Palossand as
     });
     // P1 owns the Stadium and P2 is attacking, so this is the mirror of the case
     // above: presence holds, and it holds for the seat that did not play it.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 70, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 70, dealt: 140 });
   });
 });
 
@@ -452,7 +446,7 @@ describe("§5 — the CANCEL consequent on a board: the zone is the gate", () =>
     expect(state.stadium).toBeNull();
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).toContain("ATTACK_FAILED");
-    expect(find(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -464,7 +458,7 @@ describe("§5 — the CANCEL consequent on a board: the zone is the gate", () =>
       index: 0,
     });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -474,7 +468,7 @@ describe("§5 — the CANCEL consequent on a board: the zone is the gate", () =>
     expect(conditionHolds(base, "p1", OWNED)).toBe(false);
     const { events } = mustApply(assaultLanding(base), { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
   });
 
   it("cancels and resolves identically from the FAR SEAT", () => {
@@ -483,14 +477,14 @@ describe("§5 — the CANCEL consequent on a board: the zone is the gate", () =>
       seat: "p2",
       index: 0,
     });
-    expect(find(empty.events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(empty.events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     const occupied = mustApply(assaultLanding(boardP2(85, "p1"), "p2"), {
       type: "attack",
       seat: "p2",
       index: 0,
     });
     expect(types(occupied.events)).not.toContain("ATTACK_FAILED");
-    expect(find(occupied.events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
+    expect(findEvent(occupied.events, "DAMAGE_DEALT")).toMatchObject({ base: 70, dealt: 70 });
   });
 });
 

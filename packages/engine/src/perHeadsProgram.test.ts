@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   trimDeckTo,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const UNDERSEA_TUNNEL =
@@ -61,13 +62,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function all<T extends GameEvent["type"]>(
@@ -885,8 +879,8 @@ describe("Wugtrio — the PRINTED count: 3 flips, one op per heads, 3 cards each
     expect(done.rngState).toBe(before);
     expect(all(events, "DECK_TOP_DISCARDED")).toHaveLength(0);
     expect(done.players.p2.discard).toEqual(state.players.p2.discard);
-    expect(find(events, "DAMAGE_DEALT")?.base).toBe(30);
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(30);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -1099,7 +1093,7 @@ describe("the CLAMP — a deck shallower than the printed number", () => {
       index: TUNNEL_INDEX,
     });
     const order = types(events);
-    const over = find(events, "GAME_OVER");
+    const over = findEvent(events, "GAME_OVER");
     expect(over?.outcome).toEqual({ result: "win", winner: "p1", reason: "deckOut" });
     // THE ORDER IS THE ASSERTION.
     expect(order.indexOf("DECK_TOP_DISCARDED")).toBeLessThan(order.indexOf("TURN_ENDED"));
@@ -1124,7 +1118,7 @@ describe("the CLAMP — a deck shallower than the printed number", () => {
     expect(done.players.p2.discard).toEqual(state.players.p2.discard);
     const order = types(events);
     expect(order.indexOf("TURN_STARTED")).toBeLessThan(order.indexOf("GAME_OVER"));
-    expect(find(events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "deckOut",

@@ -16,7 +16,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   HAND_DRAW_DECK,
@@ -28,6 +28,7 @@ import {
   setActiveFromDeck,
   trimDeckTo,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -163,17 +164,6 @@ describe("D404 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE BOARD. One fixture, and the deck is the instrument.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1 goes second, so their
     first turn carries no §4 attack restriction. */
 function board(seed: number): GameState {
@@ -215,8 +205,8 @@ describe("D404 §4 — the printed ORDER, read off UIDS because a count cannot s
 
     const { state: done, events } = mustApply(state, attack);
 
-    expect(find(events, "HAND_DISCARDED")).toMatchObject({ seat: "p1", uids: oldHand });
-    expect(find(events, "CARDS_DRAWN")).toMatchObject({
+    expect(findEvent(events, "HAND_DISCARDED")).toMatchObject({ seat: "p1", uids: oldHand });
+    expect(findEvent(events, "CARDS_DRAWN")).toMatchObject({
       seat: "p1",
       uids: topSix,
       reason: "effect",
@@ -250,7 +240,7 @@ describe("D404 §4 — the printed ORDER, read off UIDS because a count cannot s
   it("the printed BASE is KEPT — neither op is a `damageDefender`", () => {
     const state = fielded(3);
     const { state: done, events } = mustApply(state, attack);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(done.players.p2.active?.damage).toBe(30);
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
   });
@@ -274,7 +264,11 @@ describe("D404 §5 — FALSIFIER 1: the draw on a SHORT deck costs no rule", () 
     const top = [...state.players.p1.deck];
     expect(top).toHaveLength(2);
     const { state: done, events } = mustApply(state, attack);
-    expect(find(events, "CARDS_DRAWN")).toMatchObject({ seat: "p1", uids: top, reason: "effect" });
+    expect(findEvent(events, "CARDS_DRAWN")).toMatchObject({
+      seat: "p1",
+      uids: top,
+      reason: "effect",
+    });
     expect(done.players.p1.hand).toEqual(top);
     expect(done.players.p1.deck).toEqual([]);
   });
@@ -297,7 +291,7 @@ describe("D404 §5 — FALSIFIER 1: the draw on a SHORT deck costs no rule", () 
     expect(attacked.phase.kind).not.toBe("gameOver");
 
     const { state: done, events: later } = mustApply(attacked, { type: "endTurn", seat: "p2" });
-    expect(find(later, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(later, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p2",
       reason: "deckOut",
@@ -318,11 +312,11 @@ describe("D404 §6 — FALSIFIER 2: the discard from a TOP-LEVEL attack arm", ()
     const { state: done, events } = mustApply(state, attack);
 
     expect(types(events)).not.toContain("HAND_DISCARDED");
-    expect(find(events, "CARDS_DRAWN")).toMatchObject({ uids: topSix, reason: "effect" });
+    expect(findEvent(events, "CARDS_DRAWN")).toMatchObject({ uids: topSix, reason: "effect" });
     expect(done.players.p1.hand).toEqual(topSix);
     // …and the attack is still a 30-damage attack, which is what a program that had
     // refused itself on the empty hand would have deleted.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("nothing PARKS — the whole sentence resolves inside the `attack` action", () => {

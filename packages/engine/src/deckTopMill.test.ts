@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   trimDeckTo,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -77,13 +78,6 @@ const RSQUO = "\u2019";
 /** U+00A0, likewise an escape. Byte-different from an ASCII space and INVISIBLE in
     a diff, which is exactly why the case names it instead of carrying it. */
 const NBSP = "\u00a0";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -346,7 +340,7 @@ describe("the OPPONENT reading, end to end — Skwovet 'Nicked Nibble'", () => {
     // that must NOT move. A `whose` read the wrong way round passes every count
     // assertion above and fails exactly here.
     expect(done.players.p1.deck).toEqual(ownDeckBefore);
-    expect(find(events, "DECK_TOP_DISCARDED")?.seat).toBe("p2");
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.seat).toBe("p2");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(done.players.p2.active?.damage).toBe(0);
@@ -366,7 +360,7 @@ describe("the OPPONENT reading, end to end — Skwovet 'Nicked Nibble'", () => {
       index: NIBBLE_INDEX,
     });
     expect(milledUids(events)).toEqual(victimDeck.slice(0, NIBBLE_MILL));
-    expect(find(events, "DECK_TOP_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.seat).toBe("p1");
     expect(done.players.p2.deck).toEqual(state.players.p2.deck);
   });
 
@@ -413,7 +407,7 @@ describe("the OWN reading, end to end — Gyarados 'Wild Splash'", () => {
     ]);
     expect(done.players.p2.deck).toEqual(victimDeckBefore.slice(TURN_START_DRAW));
     expect(done.players.p2.discard).toEqual(state.players.p2.discard);
-    expect(find(events, "DECK_TOP_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.seat).toBe("p1");
     // And the printed damage still lands: fix-titan has no Weakness or Resistance, so
     // 230 arrives unmodified and does not KO its 340 HP.
     expect(done.players.p2.active?.damage).toBe(SPLASH_DAMAGE);
@@ -473,7 +467,7 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
     });
     expect(milledUids(events)).toEqual(deckBefore);
     expect(done.players.p1.deck).toEqual([]);
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(3);
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(3);
   });
 
   it("mills an ALREADY-EMPTY deck silently — no row, no throw", () => {
@@ -496,7 +490,7 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
       index: NIBBLE_INDEX,
     });
     const order = types(events);
-    expect(find(events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "deckOut",
@@ -521,7 +515,7 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
     expect(attacked.phase.kind).not.toBe("gameOver");
     // P2 takes their turn and passes. NOW P1 must draw and cannot.
     const { state: done, events: later } = mustApply(attacked, { type: "endTurn", seat: "p2" });
-    expect(find(later, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(later, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p2",
       reason: "deckOut",

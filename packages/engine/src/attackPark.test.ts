@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   ATTACK_PARK_DECK,
   activeUid,
@@ -14,14 +14,8 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so attacking is legal (§4). */
@@ -118,13 +112,13 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
 
     // Damage landed FIRST (§8 printed order), then the effect asked its question.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120);
     expect(types(events)).toContain("EFFECT_PENDING");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides
     expect(parked.phase.resumeTail).toBe(true);
     // The attacker is the program's "this Pokémon" — the context names it by uid.
-    expect(parked.phase.cont.ctx.sourceUid).toBe(find(events, "ATTACK_DECLARED")?.uid);
+    expect(parked.phase.cont.ctx.sourceUid).toBe(findEvent(events, "ATTACK_DECLARED")?.uid);
     if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
     expect(parked.phase.prompt.note).toBe("Discard an Energy from this Pokémon.");
     expect(parked.phase.prompt.scope).toEqual({ kind: "total", count: 1 });
@@ -133,8 +127,8 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       {
         kind: "attackEpilogue",
         seat: "p1",
-        uid: find(events, "ATTACK_DECLARED")?.uid,
-        attack: find(events, "ATTACK_DECLARED")?.attack,
+        uid: findEvent(events, "ATTACK_DECLARED")?.uid,
+        attack: findEvent(events, "ATTACK_DECLARED")?.attack,
       },
     ]);
     expect(types(events)).not.toContain("TURN_ENDED");
@@ -163,7 +157,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(activeEnergy(done, "p1")).not.toContain(pick);
     expect(done.players.p1.discard).toContain(pick);
     expect(done.players.p2.discard).not.toContain(pick);
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     expect(discarded?.seat).toBe("p1"); // the victim…
     expect(discarded?.actor).toBe("p1"); // …is also the actor, for a self-discard
     expect(discarded?.from).toEqual({ spot: "active" });
@@ -273,7 +267,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     // The three Active {R} are interchangeable and the Bench is out of scope, so
     // there is nothing left to ask.
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     expect(discarded?.from).toEqual({ spot: "active" });
     // The benched Energy is exactly where it was.
     expect(done.players.p1.bench[0]?.energy).toEqual(benched);
@@ -342,7 +336,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     expect(activeEnergy(done, "p1")).toEqual([]);
     expect(done.players.p1.discard).toHaveLength(3);
     // ONE event carrying all three uids — one per affected Pokémon, not per card.
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     expect(discarded?.uids).toHaveLength(3);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });

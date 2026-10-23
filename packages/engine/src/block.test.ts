@@ -7,7 +7,7 @@ import {
   programFor,
   redactGame,
 } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   BLOCK_DECK,
   FIXTURE_POOL,
@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  activeOf,
 } from "./testFixtures";
 
 const ABILITY_TEXT =
@@ -29,13 +30,6 @@ function board(seed: number, p1Body = "fix-retreat2"): GameState {
   let state = driveSetup(seed, { p1: BLOCK_DECK, p2: BLOCK_DECK }, { first: "p1" });
   state = setActiveFromDeck(state, "p1", p1Body);
   return setActiveFromDeck(state, "p2", "fix-bigbody");
-}
-
-/** `seat`'s Active — the end of the aura every assertion below reads. */
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 /** The retreat P1's Active could otherwise pay: every attached {C}, promoting the

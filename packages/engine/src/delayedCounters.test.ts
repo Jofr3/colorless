@@ -24,6 +24,7 @@ import {
   setConditions,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 import { koByEffectMarker, scheduledEffectDue, withActive } from "./types";
 
@@ -106,13 +107,6 @@ const DOOM_DECK = deckOf({
   "fix-titan": 6,
   "fix-energy": 16,
 });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -320,7 +314,7 @@ describe("§3 — the schedule lands on the DEFENDING Pokémon with the opponent
     expect(scheduled).toEqual({ turn: 3, kind: "counters", amount: 90 });
     // …and the INSTALLER's own body carries nothing: bare means the defender.
     expect(body(state.players.p1.active).scheduledEffect).toBeNull();
-    const row = find(events, "EFFECT_SCHEDULED");
+    const row = findEvent(events, "EFFECT_SCHEDULED");
     expect(row).toEqual({
       type: "EFFECT_SCHEDULED",
       seat: "p2",
@@ -356,7 +350,7 @@ describe("§3 — the schedule lands on the DEFENDING Pokémon with the opponent
     expect(count(install("p1", DOOM).events, "ATTACK_EFFECT_SKIPPED")).toBe(0);
     const skipped = install("p1", NEAR_MISS);
     expect(count(skipped.events, "ATTACK_EFFECT_SKIPPED")).toBe(1);
-    expect(find(skipped.events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(NEAR_MISS_TEXT);
+    expect(findEvent(skipped.events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(NEAR_MISS_TEXT);
     expect(body(skipped.state.players.p2.active).scheduledEffect).toBeNull();
   });
 });
@@ -503,10 +497,10 @@ describe("§6 — 90 counters onto a 90 HP body, between turns", () => {
 
   it("the body is Knocked Out by the Checkup's own sweep — no new KO machinery", () => {
     const { victim, fired } = killed();
-    expect(find(fired.events, "KNOCKED_OUT")?.seat).toBe(victim);
+    expect(findEvent(fired.events, "KNOCKED_OUT")?.seat).toBe(victim);
     expect(count(fired.events, "KNOCKED_OUT")).toBe(1);
     // The prize pick is OWED to the installer and PARKS — six prizes, one to take.
-    expect(find(fired.events, "PRIZES_OWED")).toEqual({
+    expect(findEvent(fired.events, "PRIZES_OWED")).toEqual({
       type: "PRIZES_OWED",
       seat: "p1",
       count: 1,
@@ -521,10 +515,10 @@ describe("§6 — 90 counters onto a 90 HP body, between turns", () => {
       seat: "p1",
       prizeIndices: [0],
     });
-    expect(find(taken.events, "PRIZES_TAKEN")?.seat).toBe("p1");
+    expect(findEvent(taken.events, "PRIZES_TAKEN")?.seat).toBe("p1");
     expect(taken.state.players.p1.prizes).toHaveLength(5);
     // The lone benched `fix-titan` is a FORCED promotion and auto-resolves.
-    expect(find(taken.events, "POKEMON_PROMOTED")?.seat).toBe(victim);
+    expect(findEvent(taken.events, "POKEMON_PROMOTED")?.seat).toBe(victim);
     expect(taken.state.players[victim].bench).toHaveLength(0);
     expect(taken.state.cardIdByUid[baseUid(taken.state.players[victim].active)]).toBe("fix-titan");
     // …and the game moves on to the installer's turn, the Checkup having finished.
@@ -545,7 +539,7 @@ describe("§6 — 90 counters onto a 90 HP body, between turns", () => {
     expect(fired.state.lastKoTurn[victim]).toBeNull();
 
     const byPoison = poisonKoOnInstallersTurn();
-    expect(find(byPoison.events, "KNOCKED_OUT")?.seat).toBe("p2");
+    expect(findEvent(byPoison.events, "KNOCKED_OUT")?.seat).toBe("p2");
     expect(byPoison.state.lastKoTurn.p2).toBe(2);
     expect(byPoison.state.lastKoMarks.p2).toHaveLength(1);
     expect(byPoison.state.lastKoMarks.p2[0]?.byAttack).toBe(false);
@@ -709,8 +703,8 @@ describe("§7 — the schedule DIES WITH THE BODY: four §10 literals plus the K
   it("5. KNOCKED OUT before it fires — the schedule dies, and the PROMOTED body does not inherit it", () => {
     const pre = setConditions(setDamage(armed("p1"), "p2", 80), "p2", { poisonDamage: 10 });
     const attacked = mustApply(pre, { type: "attack", seat: "p1", index: DELAY });
-    expect(find(attacked.events, "EFFECT_SCHEDULED")?.scheduled.turn).toBe(3);
-    expect(find(attacked.events, "KNOCKED_OUT")?.seat).toBe("p2");
+    expect(findEvent(attacked.events, "EFFECT_SCHEDULED")?.scheduled.turn).toBe(3);
+    expect(findEvent(attacked.events, "KNOCKED_OUT")?.seat).toBe("p2");
     const taken = mustApply(attacked.state, {
       type: "takePrizes",
       seat: "p1",
@@ -1002,7 +996,7 @@ describe("§12 — a discard takes NO Prize and a Knock Out takes ONE, on one ax
 
     // The KNOCK OUT: §8.1 in full, and the prize pick PARKS for the installer.
     expect(count(doomed.events, "KNOCKED_OUT")).toBe(1);
-    expect(find(doomed.events, "PRIZES_OWED")).toEqual({
+    expect(findEvent(doomed.events, "PRIZES_OWED")).toEqual({
       type: "PRIZES_OWED",
       seat: "p1",
       count: 1,
@@ -1072,7 +1066,7 @@ describe("§13 — the body and all attached cards, to their OWNER's discard pil
     const { state, events } = install("p1", DISCARD);
     expect(body(state.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: "discard" });
     expect(body(state.players.p1.active).scheduledEffect).toBeNull();
-    expect(find(events, "EFFECT_SCHEDULED")).toEqual({
+    expect(findEvent(events, "EFFECT_SCHEDULED")).toEqual({
       type: "EFFECT_SCHEDULED",
       seat: "p2",
       uid: baseUid(state.players.p2.active),
@@ -1088,7 +1082,7 @@ describe("§13 — the body and all attached cards, to their OWNER's discard pil
       // that Checkup runs at turn 2, which is the off-by-one this shape invites.
       expect(installed.state.players[victim].active).not.toBeNull();
       const fired = endVictimTurn(installed.state, victim);
-      expect(find(fired.events, "POKEMON_RETURNED")).toEqual({
+      expect(findEvent(fired.events, "POKEMON_RETURNED")).toEqual({
         type: "POKEMON_RETURNED",
         seat: victim,
         uid: baseUid(installed.state.players[victim].active),
@@ -1134,17 +1128,17 @@ describe("§13 — the body and all attached cards, to their OWNER's discard pil
     expect(back.turn).toBe(5);
     const fired = mustApply(back, { type: "endTurn", seat: "p2" });
 
-    expect(find(fired.events, "POKEMON_RETURNED")?.uids).toEqual(expected);
+    expect(findEvent(fired.events, "POKEMON_RETURNED")?.uids).toEqual(expected);
     expect(fired.state.players.p2.discard.slice(-expected.length)).toEqual(expected);
     for (const uid of expected) expect(fired.state.players.p1.discard).not.toContain(uid);
-    expect(fired.state.cardIdByUid[find(fired.events, "POKEMON_RETURNED")?.uid ?? ""]).toBe(
+    expect(fired.state.cardIdByUid[findEvent(fired.events, "POKEMON_RETURNED")?.uid ?? ""]).toBe(
       "fix-doomed-s1",
     );
   });
 
   it("the emptied Active Spot is refilled BEFORE the next turn starts", () => {
     const fired = endVictimTurn(install("p1", DISCARD).state, "p2");
-    expect(find(fired.events, "POKEMON_PROMOTED")?.seat).toBe("p2");
+    expect(findEvent(fired.events, "POKEMON_PROMOTED")?.seat).toBe("p2");
     expect(fired.state.players.p2.active).not.toBeNull();
     expect(fired.state.cardIdByUid[baseUid(fired.state.players.p2.active)]).toBe("fix-titan");
     expect(fired.state.players.p2.bench).toHaveLength(0);
@@ -1160,7 +1154,7 @@ describe("§13 — the body and all attached cards, to their OWNER's discard pil
     const noBench = clearBench(armed("p1"), "p2");
     const installed = mustApply(noBench, { type: "attack", seat: "p1", index: DISCARD }).state;
     const fired = mustApply(installed, { type: "endTurn", seat: "p2" });
-    expect(find(fired.events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(fired.events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "noPokemon",
@@ -1232,7 +1226,7 @@ describe("§14 — §8.1 in full, Prize included, and the cause re-derived", () 
     const { state, events } = install("p1", DOOM);
     expect(body(state.players.p2.active).scheduledEffect).toEqual({ turn: 3, kind: "knockOut" });
     expect(body(state.players.p1.active).scheduledEffect).toBeNull();
-    expect(find(events, "EFFECT_SCHEDULED")).toEqual({
+    expect(findEvent(events, "EFFECT_SCHEDULED")).toEqual({
       type: "EFFECT_SCHEDULED",
       seat: "p2",
       uid: baseUid(state.players.p2.active),
@@ -1246,7 +1240,7 @@ describe("§14 — §8.1 in full, Prize included, and the cause re-derived", () 
       const installed = install(installer, DOOM);
       expect(installed.state.players[victim].active).not.toBeNull();
       const fired = endVictimTurn(installed.state, victim);
-      expect(find(fired.events, "KNOCKED_OUT")?.seat).toBe(victim);
+      expect(findEvent(fired.events, "KNOCKED_OUT")?.seat).toBe(victim);
       expect(fired.state.phase).toEqual({ kind: "ko:takePrizes", seat: installer, count: 1 });
       const taken = mustApply(fired.state, {
         type: "takePrizes",
@@ -1325,7 +1319,7 @@ describe("§14 — §8.1 in full, Prize included, and the cause re-derived", () 
     expect(fired.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     const taken = mustApply(fired.state, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
     expect(taken.state.players.p1.prizes).toHaveLength(5);
-    expect(find(taken.events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(taken.events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "noPokemon",

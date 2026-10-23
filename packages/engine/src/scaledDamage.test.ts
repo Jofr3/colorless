@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, deriveAttackDamageBonus, deriveAttackDamageMultiplier } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   MULTIPLY_DAMAGE_DECK,
   SCALED_DAMAGE_DECK,
@@ -13,14 +13,8 @@ import {
   setDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first turn with no §4 attack restriction. */
@@ -260,13 +254,13 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 3 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
   });
 
   it("omits `scaled` at 0 damage counters — the clause added nothing", () => {
     const state = matchup(2, { attacker: "fix-attacker", defender: "fix-wall", energy: 1 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 3 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.scaled).toBeUndefined();
     expect(dealt?.dealt).toBe(10); // base only
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -282,7 +276,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 30, dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 30, dealt: 50 });
   });
 
   it("folds the scaling BEFORE weakness — (base + scaled) is what doubles", () => {
@@ -296,7 +290,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
       damage: 10,
     });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 3 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 10,
       scaled: 10,
       weakness: { op: "multiply", amount: 2 },
@@ -313,7 +307,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 4 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
   });
 
   it("simulates Charizard ex 'Burning Darkness' — 30 per Prize the opponent has taken", () => {
@@ -324,7 +318,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     state = setPrizes(state, "p2", 4); // 2 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 60, dealt: 240 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 60, dealt: 240 });
   });
 
   it("scales off the OPPONENT's Prizes, and by the CAPTURED per (not a literal 10)", () => {
@@ -334,7 +328,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     let state = matchup(9, { attacker: "sv03-125", defender: "sv03-125", energy: 2 });
     state = setPrizes(state, "p2", 2); // 4 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 120, dealt: 300 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 120, dealt: 300 });
   });
 
   it("omits `scaled` when the opponent has taken no Prizes", () => {
@@ -342,7 +336,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     // is absent and base 180 lands alone (the bonus/reduction omit-at-0 pattern).
     const state = matchup(10, { attacker: "sv03-125", defender: "sv03-125", energy: 2 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.scaled).toBeUndefined();
     expect(dealt?.dealt).toBe(180);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -353,7 +347,7 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
     state = setPrizes(state, "p2", 4); // 2 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 5 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 40, scaled: 100, dealt: 140 });
   });
 
   it("never mutates the state it was given (purity)", () => {
@@ -377,11 +371,11 @@ describe("the discrimination — an unsimulated '+' (Pachirisu) stays skipped", 
       energyId: "fix-lightning-energy",
     });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       attack: "Everyone Discharge",
       damageModifier: "+",
     });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 10, dealt: 10 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -389,8 +383,8 @@ describe("the discrimination — an unsimulated '+' (Pachirisu) stays skipped", 
   it("hands the role over cleanly — Entei's SAME board now folds instead of skipping", () => {
     const state = matchup(6, { attacker: "sv03-030", defender: "fix-bigbody", energy: 3 });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 60, dealt: 120 });
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 60, dealt: 120 });
   });
 });
 
@@ -422,7 +416,7 @@ describe("the '×'/multiply family — per × count as the whole damage (base dr
     state = setPrizes(state, "p2", 4); // 2 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 120, dealt: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 120, dealt: 120 });
   });
 
   it("drops the printed base — 0 taken Prizes does 0 damage, no DAMAGE_DEALT", () => {
@@ -436,7 +430,7 @@ describe("the '×'/multiply family — per × count as the whole damage (base dr
     });
     // p2 keeps all 6 Prizes → 0 taken.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -451,7 +445,7 @@ describe("the '×'/multiply family — per × count as the whole damage (base dr
     state = setPrizes(state, "p2", 4); // 2 taken
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 140, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 140, dealt: 140 });
   });
 
   it("never mutates the state it was given (purity)", () => {

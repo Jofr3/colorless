@@ -18,14 +18,8 @@ import {
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -570,8 +564,8 @@ describe("Team Rocket's Wobbuffet 'Rocket Mirror' — the 2 legal printings", ()
     // "whatever was on the Bench" reads 110 on the defender.
     expect(done.players.p1.bench[1]?.damage).toBe(OTHER_HURT);
     expect(done.players.p2.active?.damage).toBe(HURT);
-    expect(find(events, "HEALED")?.amount).toBe(HURT);
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(HURT);
+    expect(findEvent(events, "HEALED")?.amount).toBe(HURT);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(HURT);
   });
 
   it("WIRE SAFETY — a crafted frame naming a non-subgroup body is REFUSED", () => {
@@ -607,7 +601,7 @@ describe("Team Rocket's Wobbuffet 'Rocket Mirror' — the 2 legal printings", ()
     });
     // Three damaged benched bodies, ONE of them in the subgroup → no prompt.
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(HURT);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(HURT);
     expect(done.players.p1.bench[1]?.damage).toBe(0);
   });
 

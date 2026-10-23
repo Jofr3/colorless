@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BLAZE_BLITZ_BAR = "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot.";
@@ -31,13 +32,6 @@ const HEAT_BLAST = 0;
 /** ONE seed for the whole suite; the board it produces is asserted by `ready`
     rather than assumed. */
 const SEED = 21;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function must0(pokemon: InPlayPokemon | null): InPlayPokemon {
   if (pokemon === null) throw new Error("expected an Active Pokémon");
@@ -92,7 +86,7 @@ function ready(seat: Seat = "p1"): GameState {
     nothing. Returns the OTHER seat's turn 3. */
 function barred(seat: Seat = "p1"): { state: GameState; events: GameEvent[]; row: GameEvent } {
   const { state, events } = mustApply(ready(seat), { type: "attack", seat, index: BLAZE_BLITZ });
-  const row = find(events, "ATTACK_LOCKED");
+  const row = findEvent(events, "ATTACK_LOCKED");
   if (row === undefined) throw new Error(`${seat} barred nothing`);
   return { state, events, row };
 }
@@ -246,7 +240,7 @@ describe("§3 — the install writes an entry with NO window", () => {
       seat: "p1",
       index: BLAZE_BLITZ,
     });
-    expect(find(events, "ATTACK_LOCKED")).toEqual({
+    expect(findEvent(events, "ATTACK_LOCKED")).toEqual({
       type: "ATTACK_LOCKED",
       seat: "p1",
       uid,
@@ -262,7 +256,7 @@ describe("§3 — the install writes an entry with NO window", () => {
     expect(state.players.p1.active?.attackLockedTurn).toBeNull();
     // The printed 260 landed and the 340 HP victim survived it, so every window
     // below opens on a live board rather than on a Knock Out.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(260);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(260);
   });
 
   it("the ROW ORDER is the printed order — the damage, then the drawback", () => {
@@ -276,7 +270,7 @@ describe("§3 — the install writes an entry with NO window", () => {
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     const sibling = mustApply(ready(), { type: "attack", seat: "p1", index: HEAT_BLAST });
     expect(types(sibling.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(sibling.events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(sibling.events, "DAMAGE_DEALT")?.dealt).toBe(60);
   });
 
   it("never PARKS and consumes no rng — the seed-free claim, made directly", () => {

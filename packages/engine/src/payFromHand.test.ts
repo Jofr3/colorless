@@ -13,16 +13,10 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SEED = 20260721;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
@@ -177,7 +171,7 @@ describe("payFromHand — the printed cost PARKS, and it is mandatory", () => {
       seat: "p1",
       choice: { kind: "cards", uids: paid },
     });
-    const cost = find(events, "HAND_COST_PAID");
+    const cost = findEvent(events, "HAND_COST_PAID");
     expect(cost?.uids).toEqual(paid);
     for (const uid of paid) {
       expect(next.players.p1.hand).not.toContain(uid);
@@ -205,7 +199,7 @@ describe("payFromHand — the printed cost PARKS, and it is mandatory", () => {
       seat: "p1",
       uid: handUid(state, "p1", ULTRA_BALL),
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual(others);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual(others);
     expect(next.players.p1.hand.filter((u) => others.includes(u))).toHaveLength(0);
     // It went straight on to the search's own park — the cost asked nothing.
     if (next.phase.kind !== "effect:choose") throw new Error("expected the search to park");
@@ -233,7 +227,7 @@ describe("payFromHand — the printed cost PARKS, and it is mandatory", () => {
       seat: "p1",
       uid: handUid(state, "p1", ULTRA_BALL),
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toHaveLength(2);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toHaveLength(2);
     // One Grass Energy is still in hand — the collapse decides WHAT IS ASKED, it
     // never decides how many are spent.
     expect(next.players.p1.hand).toHaveLength(1);
@@ -271,7 +265,7 @@ describe("payFromHand — the play GATE is the card's own printed rule", () => {
       seat: "p1",
       uid: handUid(state, "p1", ULTRA_BALL),
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toHaveLength(2);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toHaveLength(2);
   });
 
   it("refuses Ultra Ball as the ONLY card in hand", () => {
@@ -311,7 +305,7 @@ describe("payFromHand — the play GATE is the card's own printed rule", () => {
       seat: "p1",
       uid: handUid(ok, "p1", EARTHEN_VESSEL),
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([itemUid]);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([itemUid]);
     if (next.phase.kind !== "effect:choose") throw new Error("expected the search to park");
     const prompt = next.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -342,8 +336,8 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
       target: { spot: "bench", index: 0 },
       abilityName: "Rumbling Engine",
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([energyUid]);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(2);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([energyUid]);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(2);
     expect(next.players.p1.hand).toHaveLength(6);
     expect(next.players.p1.discard).toContain(energyUid);
     // Order within the batch: ABILITY_USED, the payment, then the draw.
@@ -409,7 +403,7 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
       target: { spot: "bench", index: 0 },
       abilityName: "Rumbling Engine",
     });
-    expect(find(events, "HAND_COST_PAID")).toBeDefined();
+    expect(findEvent(events, "HAND_COST_PAID")).toBeDefined();
   });
 
   it("Tinkaton's UNFILTERED cost offers the whole hand, then draws 3", () => {
@@ -436,7 +430,7 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [pick] },
     });
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
     // 3 − 1 paid + 3 drawn.
     expect(next.players.p1.hand).toHaveLength(5);
     expect(next.phase.kind).toBe("turn:action");
@@ -467,7 +461,7 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
       target: { spot: "bench", index: 0 },
       abilityName: "Gather Materials",
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([only]);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([only]);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(next.players.p1.hand).toHaveLength(3);
   });
@@ -514,9 +508,9 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
     });
     // The {W} pays; the {G} beside it is a near-miss the typed filter refuses,
     // which is also why this asked nothing.
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([waterUid]);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([waterUid]);
     expect(next.players.p1.hand).toEqual([handUid(state, "p1", "fix-grass-energy")]);
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(20);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(20);
   });
 
   it("refuses Radiant Blastoise holding only the WRONG basic type", () => {
@@ -550,9 +544,9 @@ describe("payFromHand — the ABILITY wording, and the order it fixes", () => {
       abilityName: "Bouquet Magic",
     });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "HAND_COST_PAID")?.uids).toHaveLength(1);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toHaveLength(1);
     expect(next.players.p1.hand).toHaveLength(2);
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(30);
   });
 
   it("checks NO_LEGAL_TARGET before the cost — the gate ORDER, actually pinned", () => {
@@ -624,7 +618,7 @@ describe("payFromHand — the apply's wire guards and purity", () => {
       { seat: "p1" },
       events,
     );
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
     expect(next.players.p1.discard.filter((u) => u === uid)).toHaveLength(1);
     expect(census(next, "p1")).toEqual(before);
   });

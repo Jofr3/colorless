@@ -25,6 +25,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -93,13 +94,6 @@ const DEVOLVE_DECK = deckOf({
   "fix-fire-energy": 2,
   "fix-neo-upper-energy": 2,
 });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -374,7 +368,7 @@ describe("§3 — a Stage 1 devolves to its Basic", () => {
     expect(idOf(state, after.stack[0] as string)).toBe("fix-dev-basic");
     expect(after.stack[0]).toBe(stack[0]); // the SAME physical card, not a new one
 
-    const row = find(events, "POKEMON_DEVOLVED");
+    const row = findEvent(events, "POKEMON_DEVOLVED");
     expect(row).toEqual({
       type: "POKEMON_DEVOLVED",
       seat: "p2", // the OWNER
@@ -439,7 +433,7 @@ describe("§5 — devolving Knocks Out with NO damage dealt", () => {
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(boardEvents(events)).toEqual([
       "ATTACK_DECLARED",
       "POKEMON_DEVOLVED",
@@ -491,7 +485,7 @@ describe("§5 — devolving Knocks Out with NO damage dealt", () => {
     // The same hazard one rung down the chain, so the claim is about the mechanism
     // rather than about one pair of numbers.
     const lethal = strike(armed(6, { stages: 1, damage: 70 }), "p1", CALL);
-    expect(find(lethal.events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(lethal.events, "KNOCKED_OUT")).toBeDefined();
     const alive = strike(armed(6, { stages: 1, damage: 50 }), "p1", CALL);
     expect(types(alive.events)).not.toContain("KNOCKED_OUT");
     expect(alive.state.players.p2.active?.damage).toBe(50);
@@ -502,7 +496,7 @@ describe("§5 — devolving Knocks Out with NO damage dealt", () => {
     // benched bodies exactly as it reaches the Active.
     const before = armed(7, { stages: 0, benchStages: 1, benchDamage: 70 });
     const { state, events } = strike(before, "p1", CALL);
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(types(events)).not.toContain("PROMOTION_REQUIRED");
     expect(state.players.p2.active).not.toBeNull();
   });
@@ -535,7 +529,7 @@ describe("§6 — a devolve Knock Out is NOT 'by damage', and an already-lethal 
     const before = armed(10, { stages: 2, damage: 100, tool: "sv03-197" });
     expect(before.players.p2.active?.tools).toHaveLength(1); // the Tool is really on
     const { state, events } = strike(before, "p1", CALL);
-    expect(find(events, "KNOCKED_OUT")).toBeDefined(); // the KO really happened…
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined(); // the KO really happened…
     expect(types(events)).not.toContain("COUNTERS_PLACED"); // …and paid nothing
     expect(state.players.p1.active?.damage).toBe(0);
   });
@@ -543,8 +537,8 @@ describe("§6 — a devolve Knock Out is NOT 'by damage', and an already-lethal 
   it("…and still pays its 40 when the SAME holder dies to the attack's damage", () => {
     const before = armed(11, { stages: 2, damage: 20, tool: "sv03-197" });
     const { state, events } = strike(before, "p1", BLOW);
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: PUNCH_HP,
       source: "counterattack",
@@ -567,7 +561,7 @@ describe("§6 — a devolve Knock Out is NOT 'by damage', and an already-lethal 
       },
     };
     const { events } = strike(seeded, "p1", BLOW);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: PUNCH_HP });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: PUNCH_HP });
   });
 });
 
@@ -635,7 +629,7 @@ describe("§7 — the carry-over set, decided field by field", () => {
   it("the Special Condition clear is ANNOUNCED with reason 'devolved'", () => {
     const { before } = loaded(13);
     const { state, events } = strike(before, "p1", CALL);
-    const cleared = find(events, "STATUS_CLEARED");
+    const cleared = findEvent(events, "STATUS_CLEARED");
     expect(cleared).toMatchObject({
       seat: "p2",
       reason: "devolved",
@@ -756,12 +750,12 @@ describe("§8 — 'each of your opponent's evolved Pokémon'", () => {
     const { state, events } = strike(before, "p1", CALL);
     // The opponent's Active devolved…
     expect(count(events, "POKEMON_DEVOLVED")).toBe(1);
-    expect(find(events, "POKEMON_DEVOLVED")?.seat).toBe("p2");
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.seat).toBe("p2");
     // …and the attacker's own Stage 1 is untouched, in every zone.
     expect(body(state.players.p1.bench[0]).stack).toEqual(own.stack);
     expect(library(state, "p1")).not.toContain(own.stack[1]);
     expect(count(events, "SHUFFLE")).toBe(1);
-    expect(find(events, "SHUFFLE")?.seat).toBe("p2");
+    expect(findEvent(events, "SHUFFLE")?.seat).toBe("p2");
   });
 
   it("BOTH SEATS — p2 attacking p1 devolves p1's board and shuffles p1's deck", () => {
@@ -769,8 +763,8 @@ describe("§8 — 'each of your opponent's evolved Pokémon'", () => {
     const stack = body(before.players.p1.active).stack;
     expect(stack).toHaveLength(3);
     const { state, events } = strike(before, "p2", CALL);
-    expect(find(events, "POKEMON_DEVOLVED")).toMatchObject({ seat: "p1", actor: "p2" });
-    expect(find(events, "SHUFFLE")).toEqual({ type: "SHUFFLE", seat: "p1" });
+    expect(findEvent(events, "POKEMON_DEVOLVED")).toMatchObject({ seat: "p1", actor: "p2" });
+    expect(findEvent(events, "SHUFFLE")).toEqual({ type: "SHUFFLE", seat: "p1" });
     expect(state.players.p1.deck).toContain(stack[2]);
     expect(state.players.p2.deck).not.toContain(stack[2]);
     expect(body(state.players.p1.active).stack).toHaveLength(2);
@@ -790,7 +784,7 @@ describe("§9 — the card goes into the OWNER's deck and the deck is shuffled",
     expect(state.players.p2.deck).toHaveLength(deckBefore + 1);
     expect(state.players.p2.deck).toContain(stack[2]);
     expect(state.players.p1.deck).toEqual(before.players.p1.deck);
-    expect(find(events, "SHUFFLE")).toEqual({ type: "SHUFFLE", seat: "p2" });
+    expect(findEvent(events, "SHUFFLE")).toEqual({ type: "SHUFFLE", seat: "p2" });
     // The shuffle really happened: `rngState` moved, and the order is NOT the old
     // deck with the card appended (which is what a build that skipped `shuffle`
     // and just pushed would produce — and no length assertion could see).
@@ -825,12 +819,12 @@ describe("§10 — `ATTACK_EFFECT_SKIPPED`, both directions", () => {
   it("corpus row 87 — the family's OTHER sentence — is NO LONGER loud", () => {
     const { events } = strike(armed(20, { stages: 1 }), "p1", HAND);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
   });
 
   it("THE REPLACEMENT LOUD-PATH WITNESS — corpus row 346 is still LOUD ( D575: row 346 is BUILT; the witness is Walking Wake `sv06-063` now)", () => {
     const { events } = strike(armed(20, { stages: 1 }), "p1", WIN);
-    const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(WITNESS);
   });
 
@@ -881,7 +875,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
       seat: "p1",
       choice: { kind: "discardEnergy", uids: [chosen as string] },
     });
-    expect(find(drained.events, "POKEMON_DEVOLVED")).toBeDefined();
+    expect(findEvent(drained.events, "POKEMON_DEVOLVED")).toBeDefined();
     expect(body(drained.state.players.p2.active).stack).toHaveLength(1);
   });
 
@@ -931,7 +925,7 @@ describe("§13 — a Mist Energy holder is skipped, and the rest still devolve",
 
     const { state, events } = strike(before, "p1", CALL);
     expect(count(events, "ATTACK_EFFECT_PREVENTED")).toBe(1);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
     expect(body(state.players.p2.bench[0]).stack).toHaveLength(2); // untouched
   });
 
@@ -950,7 +944,7 @@ describe("§13 — a Mist Energy holder is skipped, and the rest still devolve",
     const before = armed(24, { stages: 1, benchStages: 1, shieldBench: true });
     const { state, events } = strike(before, "p1", CALL);
     expect(count(events, "POKEMON_DEVOLVED")).toBe(1);
-    expect(find(events, "POKEMON_DEVOLVED")?.seat).toBe("p2");
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.seat).toBe("p2");
     expect(body(state.players.p2.active).stack).toHaveLength(1);
   });
 });

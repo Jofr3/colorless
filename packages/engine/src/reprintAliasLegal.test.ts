@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG_MANIFEST as M } from "./catalogManifest";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   ALWAYS_ON_REDUCTION_DECK,
@@ -20,6 +20,7 @@ import {
   handUid,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const ALIASES = [
@@ -99,13 +100,6 @@ const SKIPPED_ZERO_LEGAL = [
     ids: ["sv04.5-167", "svp-020"],
   },
 ] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // fix-attacker Bite [C] 30
 
@@ -402,7 +396,7 @@ describe("the inherited programs still run end to end (the twins, through the en
     const state = fight(openOn(2, COVERAGE_DECK), "sv02-150");
     deepFreeze(state);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 30, dealt: 0 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 30, dealt: 0 });
     expect(after.players.p2.active?.damage).toBe(0);
   });
 
@@ -410,7 +404,7 @@ describe("the inherited programs still run end to end (the twins, through the en
     const state = fight(openOn(3, COVERAGE_DECK), "sv01-121");
     deepFreeze(state);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 20, dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 20, dealt: 10 });
     expect(after.players.p2.active?.damage).toBe(10);
   });
 
@@ -418,8 +412,8 @@ describe("the inherited programs still run end to end (the twins, through the en
     const state = fight(openOn(1, COUNTERATTACK_DECK), "sv01-005");
     deepFreeze(state);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
     expect(after.players.p1.active?.damage).toBe(30);
   });
 
@@ -427,11 +421,11 @@ describe("the inherited programs still run end to end (the twins, through the en
     const state = fight(openOn(1, SCORCHING_ARMOR_DECK), "sv03-044");
     deepFreeze(state);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       ability: "Scorching Armor",
     });
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
     expect(after.players.p1.active?.conditions.burned).toBe(true);
   });
 
@@ -441,7 +435,7 @@ describe("the inherited programs still run end to end (the twins, through the en
     state = benchFromDeck(state, "p2", "sv02-113"); // Hariyama on the BENCH — the aura is seat-wide
     deepFreeze(state);
     const { events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 10, dealt: 20 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, reduction: 10, dealt: 20 });
   });
 
   it("drawCards 3 — the Supporter draws exactly three", () => {
@@ -451,7 +445,7 @@ describe("the inherited programs still run end to end (the twins, through the en
     const before = state.players.p1.hand.length;
     deepFreeze(state);
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
     expect(after.players.p1.hand.length).toBe(before - 1 + 3); // −1 played, +3 drawn
   });
 

@@ -12,14 +12,8 @@ import {
   mustApply,
   setBenchDamage,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -166,7 +160,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [ACTIVE] },
     });
-    expect(find(events, "HEALED")?.amount).toBe(50);
+    expect(findEvent(events, "HEALED")?.amount).toBe(50);
     expect(done.players.p1.active?.damage).toBe(40);
   });
 
@@ -245,7 +239,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
         seat: "p1",
         choice: { kind: "pokemonMulti", refs: [BENCH_0] },
       });
-      expect(find(events, "HEALED")?.amount).toBe(50);
+      expect(findEvent(events, "HEALED")?.amount).toBe(50);
       expect(done.players.p1.bench[0]?.damage).toBe(10);
     }
   });
@@ -262,7 +256,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemon", ref: BENCH_0 },
     });
-    expect(find(events, "HEALED")?.amount).toBe(30);
+    expect(findEvent(events, "HEALED")?.amount).toBe(30);
     expect(done.players.p1.bench[0]?.damage).toBe(30);
   });
 });

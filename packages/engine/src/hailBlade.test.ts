@@ -12,19 +12,13 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const HAIL_BLADE_TEXT =
   "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -146,13 +140,13 @@ describe("Hail Blade — 60 damage for each card discarded in this way", () => {
 
     // The discard is a SELF discard: victim and actor are the same seat, unlike
     // the hammer family where they are opposite.
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     expect(discarded).toMatchObject({ seat: "p1", actor: "p1", uids: picks });
     expect(discarded?.from).toEqual({ spot: "active" });
     expect(activeEnergy(done, "p1")).toEqual([]);
     for (const uid of picks) expect(done.players.p1.discard).toContain(uid);
     // …and only then the damage the count feeds: 60 × 3, through snipeActive.
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", base: 180, dealt: 180, damage: 180 });
     expect(damage?.weakness).toBeNull(); // fix-bigbody is neutral to {W}
     expect(done.players.p2.active?.damage).toBe(180);
@@ -181,7 +175,7 @@ describe("Hail Blade — 60 damage for each card discarded in this way", () => {
       choice: { kind: "discardEnergy", uids: [picks[0] as string] }, // …one taken
     });
 
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(60);
     expect(done.players.p2.active?.damage).toBe(60);
     expect(activeEnergy(done, "p1")).toHaveLength(3); // the other three stay attached
   });
@@ -257,7 +251,7 @@ describe("Hail Blade — the whole own board is fuel", () => {
     expect(discarded[0]?.from).toEqual({ spot: "bench", index: benchIndex });
     expect(done.players.p1.bench[benchIndex]?.energy).toEqual([]);
     expect(activeEnergy(done, "p1")).toEqual(activeWater); // the cost is not spent
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120); // 60 × 2
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120); // 60 × 2
   });
 });
 
@@ -276,7 +270,7 @@ describe("Hail Blade — genuine attack damage, not flat counters (§8.5)", () =
       choice: { kind: "discardEnergy", uids: [picks[0] as string] },
     });
 
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", base: 60, dealt: 120 });
     expect(damage?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(done.players.p2.active?.damage).toBe(120); // 200 HP — survives, no KO
@@ -299,8 +293,8 @@ describe("Hail Blade — genuine attack damage, not flat counters (§8.5)", () =
       choice: { kind: "discardEnergy", uids: picks },
     });
 
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: koed });
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: koed });
     // "ex" is a 2-Prize rule box (§8.1), and the Prizes are taken before the
     // promotion refills the board.
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 2 });

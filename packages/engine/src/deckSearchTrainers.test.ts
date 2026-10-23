@@ -21,6 +21,7 @@ import {
   typedEnergy,
   types,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const HILDA_TEXT =
@@ -274,13 +275,6 @@ function pickOf(state: GameState, id: string, n = 1): string[] {
     .slice(0, n);
   if (got.length < n) throw new Error(`fewer than ${n} ${id} on offer`);
   return got;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 const ctx = (state: GameState): LogContext => ({
@@ -577,7 +571,7 @@ describe("D554 §3 — Hilda and Colress's Tenacity: one of each noun, declinabl
     const picks = [...pickOf(state, STAGE2), ...pickOf(state, SPECIAL)];
     const { state: after, events } = mustApply(state, resolve(picks));
     for (const u of picks) expect(after.players.p1.hand).toContain(u);
-    expect(find(events, "DECK_SEARCHED")).toEqual({
+    expect(findEvent(events, "DECK_SEARCHED")).toEqual({
       type: "DECK_SEARCHED",
       seat: "p1",
       dest: "hand",
@@ -609,7 +603,7 @@ describe("D554 §3 — Hilda and Colress's Tenacity: one of each noun, declinabl
     expect(one.state.phase.kind).toBe("turn:action");
     const none = mustApply(state, resolve([]));
     expect(none.state.players.p1.hand).toEqual(state.players.p1.hand);
-    expect(find(none.events, "SHUFFLE")?.seat).toBe("p1");
+    expect(findEvent(none.events, "SHUFFLE")?.seat).toBe("p1");
   });
 
   it("Colress's Tenacity offers Stadiums and Energy — never a Tool, an Item or a Pokémon", () => {
@@ -631,7 +625,7 @@ describe("D554 §3 — Hilda and Colress's Tenacity: one of each noun, declinabl
       "BAD_EFFECT_CHOICE",
     );
     const done = mustApply(state, resolve([...pickOf(state, STADIUM), ...pickOf(state, WATER)]));
-    expect(find(done.events, "DECK_SEARCHED")?.reveal).toBe(true);
+    expect(findEvent(done.events, "DECK_SEARCHED")?.reveal).toBe(true);
   });
 });
 
@@ -665,7 +659,7 @@ describe("D554 §4 — Cyrano and Hyper Aroma: the narrowed Pokémon nouns", () 
     const picks = prompt.candidates.slice(0, 3);
     expect(picks.length).toBeGreaterThan(1);
     const { events } = mustApply(state, resolve(picks));
-    expect(find(events, "DECK_SEARCHED")?.uids).toEqual(picks);
+    expect(findEvent(events, "DECK_SEARCHED")?.uids).toEqual(picks);
   });
 });
 
@@ -732,7 +726,7 @@ describe("D554 §6 — Energy Search Pro: any number, one per type", () => {
     const picks = [...pickOf(state, FIRE), ...pickOf(state, WATER)];
     const { state: after, events } = mustApply(state, resolve(picks));
     for (const u of picks) expect(after.players.p1.hand).toContain(u);
-    expect(find(events, "DECK_SEARCHED")?.reveal).toBe(true);
+    expect(findEvent(events, "DECK_SEARCHED")?.reveal).toBe(true);
   });
 });
 
@@ -759,7 +753,7 @@ describe("D554 §7 — Precious Trolley: any number of Basics, clamped to the Be
     const picks = [...pickOf(state, EX), ...pickOf(state, V)];
     const { state: after, events } = mustApply(state, resolve(picks));
     expect(after.players.p1.bench).toHaveLength(5);
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.dest).toBe("bench");
     expect(searched !== undefined && "reveal" in searched).toBe(false);
   });
@@ -796,9 +790,9 @@ describe("D554 §8 — Boxed Order: the first trainerEndsTurn program that PARKS
     const picks = [...pickOf(state, ITEM), ...pickOf(state, TR_ITEM)];
     const { state: after, events } = mustApply(state, resolve(picks));
     for (const u of picks) expect(after.players.p1.hand).toContain(u);
-    expect(find(events, "DECK_SEARCHED")?.reveal).toBe(true);
+    expect(findEvent(events, "DECK_SEARCHED")?.reveal).toBe(true);
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
-    expect(find(events, "TURN_STARTED")?.seat).toBe("p2");
+    expect(findEvent(events, "TURN_STARTED")?.seat).toBe("p2");
     const order = types(events);
     expect(order.indexOf("SHUFFLE")).toBeLessThan(order.indexOf("TURN_STARTED"));
   });
@@ -807,16 +801,16 @@ describe("D554 §8 — Boxed Order: the first trainerEndsTurn program that PARKS
     const { state } = play(BOXED[0]);
     const { state: after, events } = mustApply(state, resolve([]));
     expect(after.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
-    expect(find(events, "SHUFFLE")?.seat).toBe("p1");
+    expect(findEvent(events, "SHUFFLE")?.seat).toBe("p1");
   });
 
   it("a deck with NO Item never parks — and the turn still ends", () => {
     const prep = (s: GameState) => stripDeck(s, (id) => POOL[id]?.trainerType === "Item");
     const { state, events } = play(BOXED[0], prep);
     expect(state.phase).toMatchObject({ kind: "turn:action", seat: "p2" });
-    expect(find(events, "DECK_SEARCHED")).toBeUndefined();
-    expect(find(events, "EFFECT_PENDING")).toBeUndefined();
-    expect(find(events, "TURN_STARTED")?.seat).toBe("p2");
+    expect(findEvent(events, "DECK_SEARCHED")).toBeUndefined();
+    expect(findEvent(events, "EFFECT_PENDING")).toBeUndefined();
+    expect(findEvent(events, "TURN_STARTED")?.seat).toBe("p2");
   });
 
   it("a SERIALIZED park round-trips with endsTurn, and the resumed answer still ends the turn", () => {
@@ -867,12 +861,12 @@ describe("D554 §9 — Cassiopeia: only as the last card in hand, and the row st
     const picks = [...pickOf(state, EX), ...pickOf(state, SPECIAL)];
     const { state: after, events } = mustApply(state, resolve(picks));
     expect(after.players.p1.hand).toEqual(picks);
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched).toEqual({ type: "DECK_SEARCHED", seat: "p1", dest: "hand", uids: picks });
     const row = searchRow(after, events);
     expect(row).toBe("searched their deck — put 2 cards in hand");
     expect(row).not.toContain("D554 Beast ex");
-    expect(find(events, "SHUFFLE")?.seat).toBe("p1");
+    expect(findEvent(events, "SHUFFLE")?.seat).toBe("p1");
   });
 });
 

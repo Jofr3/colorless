@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SLASHING_STEEL = "During your next turn, this Pokémon can't use Slashing Steel.";
@@ -34,13 +35,6 @@ const PECK_INDEX = 0;
 const COMBUSTION_BLAST_INDEX = 0;
 
 const SEED = 13;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:14" };
@@ -82,7 +76,7 @@ function barred(barrer: string, index: number, energy?: { id: string; count: num
     seat: "p1",
     index,
   });
-  const row = find(events, "ATTACK_LOCKED");
+  const row = findEvent(events, "ATTACK_LOCKED");
   if (row === undefined) throw new Error(`${barrer} idx ${String(index)} barred nothing`);
   return { state, events, row };
 }
@@ -239,7 +233,7 @@ describe("the install — the address is resolved once, at the site that owns th
       seat: "p1",
       index: SLASHING_STEEL_INDEX,
     });
-    expect(find(events, "ATTACK_LOCKED")).toEqual({
+    expect(findEvent(events, "ATTACK_LOCKED")).toEqual({
       type: "ATTACK_LOCKED",
       seat: "p1",
       uid,
@@ -485,7 +479,7 @@ describe("the bar is on the ATTACK — the claim D143's field could not make", (
     );
     const { events } = mustApply(window, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -502,7 +496,7 @@ describe("one body carries BOTH locks on ONE turn — why the record is not shar
     const { state: locked, events } = mustApply(p2, { type: "attack", seat: "p2", index: 0 });
     // The whole-Pokémon lock landed on P1's Greedent ex, and the per-attack record
     // it was already carrying is untouched beside it.
-    expect(find(events, "ATTACK_LOCKED")?.seat).toBe("p1");
+    expect(findEvent(events, "ATTACK_LOCKED")?.seat).toBe("p1");
     expect(locked.players.p1.active?.attackLockedTurn).toBe(4);
     expect(locked.players.p1.active?.lockedAttacks).toEqual([{ turn: 4, attackIndex: 1 }]);
     expect(locked.turn).toBe(4);
@@ -518,7 +512,7 @@ describe("one body carries BOTH locks on ONE turn — why the record is not shar
     expect(render([state.row], state.state)).toEqual([
       { who: "p1", text: "Greedent ex can't use Slip 'n' Roll next turn" },
     ]);
-    const whole = find(events, "ATTACK_LOCKED");
+    const whole = findEvent(events, "ATTACK_LOCKED");
     expect(whole).toBeDefined();
     expect(render(whole === undefined ? [] : [whole], locked)).toEqual([
       { who: "p1", text: "Greedent ex can't attack next turn" },
@@ -690,7 +684,7 @@ function radiantBarred(): { state: GameState; events: GameEvent[]; row: GameEven
     seat: "p1",
     index: COMBUSTION_BLAST_INDEX,
   });
-  const row = find(events, "ATTACK_LOCKED");
+  const row = findEvent(events, "ATTACK_LOCKED");
   if (row === undefined) throw new Error("Radiant Charizard barred nothing");
   return { state, events, row };
 }
@@ -788,7 +782,7 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
     expect(state.players.p1.active?.attackLockedTurn).toBeNull();
     // The printed 250 landed and fix-titan's 340 survived it, so the window opens
     // on a live board rather than on a KO.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(250);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(250);
     const window = inWindow(state);
     expect(window.turn).toBe(4);
     expect(lockedAttackIndexes(window, must0(window.players.p1.active))).toEqual([

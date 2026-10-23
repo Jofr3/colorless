@@ -13,17 +13,11 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // fix-attacker Bite — {C}, 30
-const hailBlade = { type: "attack", seat: "p1", index: 0 } as const; // Chien-Pao ex — the parked discard
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const hailBlade = { type: "attack", seat: "p1", index: 0 } as const;
 
 function board(seed: number): GameState {
   const state = driveSetup(
@@ -85,7 +79,7 @@ describe("Blooming Garden — the §8.5 main hit (attack.ts)", () => {
     const state = fireMatchup(1);
     deepFreeze(state);
     const { events } = mustApply(state, bite);
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(dealt?.dealt).toBe(60);
   });
@@ -98,7 +92,7 @@ describe("Blooming Garden — the §8.5 main hit (attack.ts)", () => {
     state = benchFromDeck(state, "p2", "sv01-093");
     deepFreeze(state);
     const { state: done, events } = mustApply(state, bite);
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.weakness).toBeNull();
     expect(dealt?.dealt).toBe(30);
     expect(types(events)).not.toContain("KNOCKED_OUT");
@@ -112,7 +106,7 @@ describe("Blooming Garden — the §8.5 main hit (attack.ts)", () => {
     let state = fireMatchup(6);
     state = benchFromDeck(state, "p1", "sv01-093");
     const { events } = mustApply(state, bite);
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(dealt?.dealt).toBe(60);
   });
@@ -122,7 +116,7 @@ describe("Blooming Garden — the snipe hit (interpreter.ts snipeActive, Hail Bl
   it("with no aura, Hail Blade doubles off fix-water-weak's ×2 Water — 60 × 2 = 120", () => {
     const { state: parked } = mustApply(hailMatchup(10), hailBlade);
     const { events } = discardOne(parked);
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(dealt?.dealt).toBe(120);
   });
@@ -134,7 +128,7 @@ describe("Blooming Garden — the snipe hit (interpreter.ts snipeActive, Hail Bl
     state = benchFromDeck(state, "p2", "sv01-093");
     const { state: parked } = mustApply(state, hailBlade);
     const { events } = discardOne(parked);
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.weakness).toBeNull();
     expect(dealt?.dealt).toBe(60);
   });

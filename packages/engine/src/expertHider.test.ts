@@ -14,6 +14,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const crush = { type: "attack", seat: "p1", index: 0 } as const; // 200 flat
@@ -68,13 +69,6 @@ function benchIndexOf(state: GameState, cardId: string): number {
   const i = state.players.p2.bench.findIndex((p) => cardIdAt(state, p) === cardId);
   if (i < 0) throw new Error(`no benched ${cardId}`);
   return i;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function findAll<T extends GameEvent["type"]>(
@@ -301,19 +295,19 @@ describe("read site 1/4 — attack.ts's main hit", () => {
   it("HEADS prevents the whole 200; the benched control takes it", () => {
     const state = withRng(holderActive("fix-experthider"), HEADS);
     const { state: done, events } = mustApply(state, crush);
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({
       ability: "Expert Hider",
       result: "heads",
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
   it("TAILS lets the whole 200 through", () => {
     const state = withRng(holderActive("fix-experthider"), TAILS);
     const { state: done, events } = mustApply(state, crush);
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "tails" });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 200, prevented: undefined });
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "tails" });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 200, prevented: undefined });
     expect(done.players.p2.active?.damage).toBe(200);
   });
 
@@ -329,7 +323,7 @@ describe("read site 1/4 — attack.ts's main hit", () => {
     const armed = withRng(holderActiveWith("fix-adrenapheromone", "fix-dark-energy"), HEADS);
     const bare = withRng(holderActiveWith("fix-adrenapheromone", "fix-energy"), HEADS);
     const hit = mustApply(armed, crush);
-    expect(find(hit.events, "ABILITY_COIN_FLIP")).toMatchObject({
+    expect(findEvent(hit.events, "ABILITY_COIN_FLIP")).toMatchObject({
       ability: "Adrena-Pheromone",
       result: "heads",
     });
@@ -415,28 +409,28 @@ describe("read sites 3/4 and 4/4 — the two snipe arms", () => {
   it("placeSnipe: HEADS shields the benched pick", () => {
     const state = withRng(holderBenched("fix-experthider"), HEADS);
     const { state: done, events } = snipeAt(state, BOULDER_TOSS, "fix-experthider");
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "heads" });
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "heads" });
     expect(onBench(done, "fix-experthider")?.damage).toBe(0);
   });
 
   it("placeSnipe: TAILS lets the 200 land on the benched pick", () => {
     const state = withRng(holderBenched("fix-experthider"), TAILS);
     const { state: done, events } = snipeAt(state, BOULDER_TOSS, "fix-experthider");
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "tails" });
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "tails" });
     expect(onBench(done, "fix-experthider")?.damage).toBe(200);
   });
 
   it("snipeActive: HEADS shields the Active pick", () => {
     const state = withRng(holderActive("fix-experthider"), HEADS);
     const { state: done, events } = snipeAt(state, BOULDER_TOSS, "active");
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "heads" });
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "heads" });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
   it("snipeActive: TAILS lets the 200 land on the Active pick", () => {
     const state = withRng(holderActive("fix-experthider"), TAILS);
     const { state: done, events } = snipeAt(state, BOULDER_TOSS, "active");
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "tails" });
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ result: "tails" });
     expect(done.players.p2.active?.damage).toBe(200);
   });
 
@@ -470,7 +464,7 @@ describe("what this field deliberately does NOT reach", () => {
   it("an attack's EFFECT still lands on a holder (no effects half)", () => {
     const state = withRng(holderActive("fix-experthider"), HEADS);
     const { events } = mustApply(state, yawn);
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "asleep" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "asleep" });
   });
 
   // …and the effect-only attack draws NO coin, because it does no damage. The same

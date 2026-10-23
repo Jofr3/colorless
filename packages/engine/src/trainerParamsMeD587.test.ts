@@ -19,6 +19,7 @@ import {
   setDamage,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 /** [me ids, twin id, card name, me text, twin text, edits]. Each edit is [twin phrase, me
@@ -430,12 +431,6 @@ function refused(state: GameState, id: string): void {
   const uid = staged.players.p1.hand.find((u) => idOf(staged, u) === id) as string;
   expectErr(staged, { type: "playTrainer", seat: "p1", uid }, "NO_LEGAL_TARGET");
 }
-
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const bench = (index: number) => ({ seat: "p1", spot: { spot: "bench", index } }) as const;
 const pick = (seat: Seat, ref: unknown): GameAction =>
   ({ type: "resolveEffect", seat, choice: { kind: "pokemon", ref } }) as GameAction;
@@ -454,7 +449,7 @@ describe("D587 §3 — Wondrous Patch: a Basic {P} Energy from the discard to 1 
 
   it("offers the Benched {P} bodies only (not the {P} Active, not the {M}), attaches the {P} card", () => {
     const parked = play(patchBoard(), PATCH).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.candidates).toEqual([bench(0), bench(2)]);
     const done = mustApply(parked, pick("p1", bench(2))).state;
@@ -481,7 +476,7 @@ describe("D587 §4 — Philippe: up to 2 Basic {M} Energy from the discard to 1 
 
   it("offers the {M} bodies (Active and Bench) at the printed ceiling, puts TWO {M} on the one chosen", () => {
     const parked = play(philippeBoard(), PHILIPPE).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.candidates).toEqual([{ seat: "p1", spot: { spot: "active" } }, bench(1)]);
     expect(p.upTo).toBe(2);
@@ -523,7 +518,7 @@ describe("D587 §5 — Jacinthe: heal 150 from 1 of your {P} Pokémon", () => {
     state = setDamage(state, "p1", 160);
     state = setBenchDamage(setBenchDamage(state, "p1", 0, 50), "p1", 1, 30);
     const parked = play(state, JACINTHE).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.candidates).toEqual([{ seat: "p1", spot: { spot: "active" } }, bench(1)]);
     expect(p.note).toBe("Heal which of your Psychic Pokémon?");
@@ -545,7 +540,7 @@ describe("D587 §6 — Firebreather: up to 7 Basic {R} Energy from the deck to t
   it("offers only Basic {R} Energy at a ceiling of 7, takes 7, reveals and shuffles", () => {
     const state = board(FILLER, []);
     const { state: parked } = play(state, FIREBREATHER);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 0, max: 7, dest: "hand" });
     expect(new Set(ids(parked, p.candidates))).toEqual(new Set(["fix-fire-energy"]));
@@ -563,7 +558,7 @@ describe("D587 §6 — Firebreather: up to 7 Basic {R} Energy from the deck to t
 describe("D587 §7 — Fighting Gong: a Basic {F} Energy card or a Basic {F} Pokémon", () => {
   it("offers Basic {F} Energy and Basic {F} Pokémon only (not the Stage 1 {F}, not the {P}), one of them", () => {
     const { state: parked } = play(board(FILLER, []), GONG);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 0, max: 1, dest: "hand" });
     // Carbink is a printed Basic {F} Pokémon too.
@@ -588,7 +583,7 @@ describe("D587 §8 — Tarragon: up to 4 {F} Pokémon and Basic {F} Energy from 
     ] as const)
       state = discardFromDeck(state, "p1", id, n);
     const parked = play(state, TARRAGON).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 0, max: 4, dest: "hand" });
     expect(new Set(ids(parked, p.candidates))).toEqual(
@@ -609,7 +604,7 @@ describe("D587 §8 — Tarragon: up to 4 {F} Pokémon and Basic {F} Energy from 
 describe("D587 §9 — Poké Pad: a Pokémon that doesn't have a Rule Box", () => {
   it("offers every Pokémon of any stage but the ex, one of them", () => {
     const { state: parked } = play(board(FILLER, []), PAD);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 0, max: 1, dest: "hand" });
     const offered = new Set(ids(parked, p.candidates));
@@ -631,7 +626,7 @@ describe("D587 §10 — Energy Swatter: an Energy card from the opponent's revea
   it("reveals the hand, offers its Energy cards only, captions the printed sentence, bottoms the pick", () => {
     const { state: parked, events } = play(swatBoard(), SWATTER);
     expect(events.some((e) => e.type === "HAND_REVEALED")).toBe(true);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 1, max: 1 });
     expect(p.note).toBe(text(SWATTER));

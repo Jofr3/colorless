@@ -3,7 +3,7 @@ import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./c
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
 import { effectiveAttackCost } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   EXTRA_ENERGY_DECK,
   attachFromDeck,
@@ -14,6 +14,7 @@ import {
   handFromDeck,
   mustApply,
   setActiveFromDeck,
+  activeOf,
 } from "./testFixtures";
 
 const CLAUSE =
@@ -64,12 +65,6 @@ function damageDealt(state: GameState, seat: Seat = "p1"): number {
     | { damage?: number }
     | undefined;
   return dealt?.damage ?? 0;
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const body = state.players[seat].active;
-  if (body === null) throw new Error(`${seat} has no Active Pokémon`);
-  return body;
 }
 
 /** The printed cost of the Active's attack 0, and the cost §8.2 actually charges. */

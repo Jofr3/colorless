@@ -16,6 +16,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -168,13 +169,6 @@ function loadBench0(state: GameState): GameState {
   };
 }
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 describe("D311 §1 — the print, the population, and the registry row that maps it", () => {
   it("the fixture carries the printed sentence VERBATIM, on BOTH printings", () => {
@@ -245,13 +239,13 @@ describe("D311 §2 — the BENCH case: the body and everything on it go into the
         expect(after.players.p1.discard).not.toContain(uid);
       }
 
-      const returned = find(events, "POKEMON_RETURNED");
+      const returned = findEvent(events, "POKEMON_RETURNED");
       expect(returned?.seat).toBe("p1");
       expect(returned?.actor).toBe("p1");
       expect(returned?.dest).toBe("deck");
       expect(returned?.uid).toBe(body.stack[body.stack.length - 1]);
       expect([...(returned?.uids ?? [])].sort()).toEqual([...carried].sort());
-      expect(find(events, "SHUFFLE")?.seat).toBe("p1");
+      expect(findEvent(events, "SHUFFLE")?.seat).toBe("p1");
     });
   }
 
@@ -262,7 +256,7 @@ describe("D311 §2 — the BENCH case: the body and everything on it go into the
     expect(after.players.p1.active?.stack[0]).toBe(activeUid);
     expect(after.pending).toEqual([]);
     expect(after.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(find(events, "PROMOTION_REQUIRED")).toBeUndefined();
+    expect(findEvent(events, "PROMOTION_REQUIRED")).toBeUndefined();
   });
 
   it("the BENCH COMPACTS — the body behind it slides down, §8.1's no-gap rule", () => {
@@ -292,7 +286,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
     const { state: after, events } = apply(before, USE_ACTIVE);
     expect(after.players.p1.active).toBeNull();
     expect(after.phase).toEqual({ kind: "ko:promote", seat: "p1" });
-    expect(find(events, "PROMOTION_REQUIRED")?.seat).toBe("p1");
+    expect(findEvent(events, "PROMOTION_REQUIRED")?.seat).toBe("p1");
     // EXACTLY ONE promotion is owed — the seam must not stack a second stage.
     // The stage stays at the queue head while the phase asks for the pick; the
     // `resumeTurn` behind it is what hands p1's turn back afterwards.
@@ -315,7 +309,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
     expect(after.players.p1.active?.stack[0]).toBe(only);
     expect(after.players.p1.bench).toHaveLength(0);
     expect(after.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(find(events, "PROMOTION_REQUIRED")).toBeUndefined();
+    expect(findEvent(events, "PROMOTION_REQUIRED")).toBeUndefined();
   });
 
   it("a Bench of NONE is the §14.2 LOSS, and it costs no code at all", () => {
@@ -349,7 +343,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
       ...(result.state.phase.kind === "ko:promote" ? [result.state.phase] : []),
     ];
     expect(promotes).toHaveLength(1);
-    expect(find(events, "KNOCKED_OUT")?.seat).toBe("p1");
+    expect(findEvent(events, "KNOCKED_OUT")?.seat).toBe("p1");
   });
 });
 
@@ -361,15 +355,15 @@ describe("D311 §4 — the printed 'in this way', which is not decoration", () =
     const { state: after, events } = apply(before, USE_BENCH);
     expect(after.players.p1.bench).toHaveLength(1);
     expect(after.players.p1.bench[0]?.stack[0]).toBe(body);
-    expect(find(events, "POKEMON_RETURNED")).toBeUndefined();
-    expect(find(events, "CARDS_DRAWN")).toBeUndefined();
+    expect(findEvent(events, "POKEMON_RETURNED")).toBeUndefined();
+    expect(findEvent(events, "CARDS_DRAWN")).toBeUndefined();
   });
 
   it("a ONE-card deck SHORT-DRAWS and the body still goes — 'any cards', not 'three cards'", () => {
     const before = deckOfSize(benched(), 1);
     const hand = before.players.p1.hand.length;
     const { state: after, events } = apply(before, USE_BENCH);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
     expect(after.players.p1.hand.length).toBe(hand + 1);
     expect(after.players.p1.bench).toHaveLength(0);
     // The one card drawn left, the one-card body came back: net +1 in the deck.
@@ -381,7 +375,7 @@ describe("D311 §4 — the printed 'in this way', which is not decoration", () =
     const { state: after, events } = apply(before, USE_ACTIVE);
     expect(after.players.p1.active).not.toBeNull();
     expect(after.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(find(events, "PROMOTION_REQUIRED")).toBeUndefined();
+    expect(findEvent(events, "PROMOTION_REQUIRED")).toBeUndefined();
   });
 });
 

@@ -24,6 +24,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const CAGE_TEXT =
@@ -320,11 +321,6 @@ const damages = (state: GameState, seat: Seat) => [
   state.players[seat].active?.damage ?? -1,
   ...state.players[seat].bench.map((b) => b.damage),
 ];
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const pick = (ref: PokemonRef, take?: number): GameAction => ({
   type: "resolveEffect",
   seat: "p1",
@@ -415,7 +411,7 @@ describe("D618 §2 — Battle Cage on an attack: no counters land on a Benched P
     let board = setBenchDamage(table([MOVER, FILLER], [FILLER, FILLER]), "p1", 0, 40);
     board = caged(board);
     const { state: parked } = swing(board);
-    expect(prompt(parked).kind).toBe("choosePokemon");
+    expect(effectPrompt(parked).kind).toBe("choosePokemon");
     const { state, events } = mustApply(parked, pick(benchRef("p2", 0)));
     expect(damages(state, "p1")).toEqual([0, 40]);
     expect(damages(state, "p2")).toEqual([0, 0]);
@@ -439,7 +435,7 @@ describe("D618 §2 — Battle Cage on an attack: no counters land on a Benched P
     expect(parked.phase.kind).not.toBe("effect:choose");
     expect(damages(parked, "p2")).toEqual([30, 0, 0]);
     const { state: open } = swing(board);
-    expect(prompt(open).kind).toBe("choosePokemon");
+    expect(effectPrompt(open).kind).toBe("choosePokemon");
   });
 
   it("a Benched body damaged on the Bench may still move ONTO the Active", () => {
@@ -593,7 +589,7 @@ describe("D618 §5 — Mystery Garden: discard an Energy card, draw until the ha
   it("a Special Energy is an Energy card; two different Energy park the pick, and the parked use round-trips JSON", () => {
     const board = setHand(garden(table([PSY, PSY, PSY, PSY], [FILLER])), "p1", [SPECIAL, P_ENERGY]);
     const { state: parked } = use(board);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 1, max: 1 });
     const special = board.players.p1.hand[0] as string;

@@ -18,7 +18,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { BoardCondition, GameState, InPlayPokemon, Seat } from "./index";
+import type { BoardCondition, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -32,6 +32,7 @@ import {
   handUid,
   mustApply,
   setActiveFromDeck,
+  activeOf,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -131,12 +132,6 @@ function damageDealt(state: GameState): number {
     | { damage?: number }
     | undefined;
   return dealt?.damage ?? 0;
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function printedCostOf(state: GameState, seat: Seat): number {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   DAMAGE_ATTACKER_DECK,
   attachFromDeck,
@@ -12,17 +12,11 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
-const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const yawn = { type: "attack", seat: "p1", index: 2 } as const;
 
 /** Setup then open P1's turn (P2 went first and passed) — P1 is the attacker. */
 function board(seed: number): GameState {
@@ -67,11 +61,11 @@ describe("Counterattack Quills — 3 counters on the attacker when damaged (§9)
     const { state: done, events } = mustApply(state, bite);
 
     // The main hit first: 30 to Cacnea, no W/R (fixture has no weakness).
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
     expect(done.players.p2.active?.damage).toBe(30); // 60 HP — survives, no KO
 
-    const recoil = find(events, "COUNTERS_PLACED");
+    const recoil = findEvent(events, "COUNTERS_PLACED");
     expect(recoil).toMatchObject({ seat: "p1", amount: 30, source: "counterattack" });
     expect(attackerDamage(done)).toBe(30); // 120 HP attacker — survives
 
@@ -89,7 +83,7 @@ describe("Counterattack Quills — 3 counters on the attacker when damaged (§9)
 
   it("Cacturne (sv01-006): the same 30 recoil off the shared program", () => {
     const { state: done, events } = mustApply(fight(2, "sv01-006"), bite);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
     expect(attackerDamage(done)).toBe(30);
   });
 });
@@ -106,10 +100,10 @@ describe("Counterattack Quills — 'even if this Pokémon is Knocked Out'", () =
     const { state: done, events } = mustApply(state, bite);
 
     // The recoil landed…
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
     expect(attackerDamage(done)).toBe(30);
     // …and the defender was Knocked Out all the same (COUNTERS_PLACED before it).
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: cacnea });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: cacnea });
     const order = types(events);
     expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
     // A plain body — P1 takes its 1 Prize.
@@ -127,8 +121,8 @@ describe("Counterattack Quills — 'even if this Pokémon is Knocked Out'", () =
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
-    const ko = find(events, "KNOCKED_OUT");
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 30 });
+    const ko = findEvent(events, "KNOCKED_OUT");
     expect(ko).toMatchObject({ seat: "p1", uid: attacker }); // the attacker itself
     expect(done.players.p2.active?.damage).toBe(30); // Cacnea (60 HP) survived the 30
     // The KO'd side is P1, so its opponent P2 takes the Prize (§8.1).
@@ -147,7 +141,7 @@ describe("damageAttacker — the read-site gate (only when actually damaged / Ac
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "STATUS_APPLIED")).toBeDefined(); // Yawn DID resolve (Asleep)
+    expect(findEvent(events, "STATUS_APPLIED")).toBeDefined(); // Yawn DID resolve (Asleep)
   });
 });
 
@@ -158,7 +152,7 @@ describe("Custom Trap — Stunfisk's recoil is gated on a Pokémon Tool", () => 
     const state = fight(6, "sv03-112");
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(attackerDamage(done)).toBe(0);
   });
@@ -187,7 +181,7 @@ describe("Custom Trap — Stunfisk's recoil is gated on a Pokémon Tool", () => 
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 50,
       source: "counterattack",

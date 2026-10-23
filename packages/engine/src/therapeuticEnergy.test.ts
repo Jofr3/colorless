@@ -28,6 +28,7 @@ import {
   setActiveFromDeck,
   setConditions,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -43,13 +44,6 @@ const NAMED: StatusName[] = ["asleep", "confused", "paralyzed"];
 const UNNAMED: StatusName[] = ["burned", "poisoned"];
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -491,11 +485,14 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
   it("refuses ASLEEP, with a control on the identical declaration", () => {
     const immune = swing(boardWithEnergy("hypnosis", "fix-bigbody"), "hypnosis");
     expect(conditionsOf(immune.state, "p2")?.rotation).toBe("none");
-    expect(find(immune.events, "STATUS_PREVENTED")).toMatchObject({ status: "asleep" });
+    expect(findEvent(immune.events, "STATUS_PREVENTED")).toMatchObject({ status: "asleep" });
     expect(types(immune.events)).not.toContain("STATUS_APPLIED");
 
     const control = swing(board("hypnosis", "fix-bigbody"), "hypnosis");
-    expect(find(control.events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "asleep" });
+    expect(findEvent(control.events, "STATUS_APPLIED")).toMatchObject({
+      seat: "p2",
+      status: "asleep",
+    });
     expect(types(control.events)).not.toContain("STATUS_PREVENTED");
     // …and the Checkup really did run on the control and NOT on the immune board,
     // which is the same fact stated where it cannot be mistaken for a coincidence.
@@ -506,7 +503,7 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
   it("refuses CONFUSED, with a control on the identical declaration", () => {
     const immune = swing(boardWithEnergy("confuseRay", "fix-bigbody"), "confuseRay");
     expect(conditionsOf(immune.state, "p2")?.rotation).toBe("none");
-    expect(find(immune.events, "STATUS_PREVENTED")).toMatchObject({ status: "confused" });
+    expect(findEvent(immune.events, "STATUS_PREVENTED")).toMatchObject({ status: "confused" });
 
     const control = swing(board("confuseRay", "fix-bigbody"), "confuseRay");
     expect(conditionsOf(control.state, "p2")?.rotation).toBe("confused");
@@ -518,9 +515,9 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
       attachFromDeck(board("numbingBolt", "fix-bigbody", { seed }), "p2", "sv02-193", 1),
       "numbingBolt",
     );
-    expect(find(immune.events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+    expect(findEvent(immune.events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
     expect(conditionsOf(immune.state, "p2")?.rotation).toBe("none");
-    expect(find(immune.events, "STATUS_PREVENTED")).toMatchObject({ status: "paralyzed" });
+    expect(findEvent(immune.events, "STATUS_PREVENTED")).toMatchObject({ status: "paralyzed" });
 
     const control = swing(board("numbingBolt", "fix-bigbody", { seed }), "numbingBolt");
     expect(conditionsOf(control.state, "p2")?.rotation).toBe("paralyzed");
@@ -531,7 +528,7 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
 
   it("still takes BURNED — a condition this card does NOT name", () => {
     const { events } = swing(boardWithEnergy("hotBite", "fix-bigbody"), "hotBite");
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ status: "burned" });
     expect(findAll(events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(1);
     expect(types(events)).not.toContain("STATUS_PREVENTED");
   });
@@ -539,7 +536,7 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
   it("still takes POISONED — the other unnamed condition", () => {
     const { state, events } = swing(boardWithEnergy("toxic", "fix-bigbody"), "toxic");
     expect((conditionsOf(state, "p2")?.poisonDamage ?? 0) > 0).toBe(true);
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ status: "poisoned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ status: "poisoned" });
     expect(types(events)).not.toContain("STATUS_PREVENTED");
   });
 
@@ -591,7 +588,7 @@ describe("THE RECOVERY — a condition already present, cleared by a continuous 
       target: { spot: "active" },
     });
     expect(done.state.players.p1.active?.conditions.rotation).toBe("none");
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p1",
       statuses: ["paralyzed"],
       reason: "recovered",
@@ -628,7 +625,7 @@ describe("THE RECOVERY — a condition already present, cleared by a continuous 
         target: { spot: "active" },
       });
       expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
-      expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+      expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
         statuses: [rotation],
         reason: "recovered",
       });
@@ -650,7 +647,7 @@ describe("THE RECOVERY — a condition already present, cleared by a continuous 
       poisonDamage: 10,
       confusionDamage: 30,
     });
-    expect(find(done.events, "STATUS_CLEARED")?.statuses).toEqual(["asleep"]);
+    expect(findEvent(done.events, "STATUS_CLEARED")?.statuses).toEqual(["asleep"]);
   });
 
   it("an IMMUNITY WITHOUT a RECOVERY clause clears NOTHING — the two fields are two rules", () => {
@@ -720,7 +717,7 @@ describe("the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadium`, is 
     let state = myTurnWith();
     state = setConditions(state, "p2", { rotation: "confused" });
     const done = attachFromHand(state, "sv02-193", ACTIVE);
-    expect(find(done.events, "STATUS_CLEARED")?.reason).toBe("recovered");
+    expect(findEvent(done.events, "STATUS_CLEARED")?.reason).toBe("recovered");
   });
 
   it("MOMENT 2 — the completion of any effect PROGRAM (flow.ts settleProgram)", () => {
@@ -746,7 +743,7 @@ describe("the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadium`, is 
     });
     expect(done.state.players.p2.active?.energy).toContain(energyUid);
     expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p2",
       statuses: ["paralyzed"],
       reason: "recovered",
@@ -767,7 +764,7 @@ describe("the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadium`, is 
     });
     expect(types(done.events)).toContain("TOOL_ATTACHED");
     expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p2",
       statuses: ["confused"],
       reason: "recovered",
@@ -785,7 +782,7 @@ describe("the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadium`, is 
     const done = mustApply(build(true), { type: "endTurn", seat: "p2" });
     expect(types(done.events)).toContain("ABILITY_TRIGGERED");
     expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
-    expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p2",
       statuses: ["confused"],
       reason: "recovered",
@@ -964,8 +961,8 @@ describe("the structural questions", () => {
     let state = board("hotBite", "fix-bigbody", { by: "p2" });
     state = attachFromDeck(state, "p2", "sv02-193", 1);
     const done = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(done.events, "ATTACK_DECLARED")).toBeDefined();
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
+    expect(findEvent(done.events, "ATTACK_DECLARED")).toBeDefined();
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
   });
 
   it("§11: NOTHING OWED — this slice adds no op at all", () => {
@@ -986,7 +983,7 @@ describe("the structural questions", () => {
     let state = myTurnWith();
     state = setConditions(state, "p2", { rotation: "confused" });
     const done = attachFromHand(state, "sv02-193", ACTIVE);
-    const cleared = find(done.events, "STATUS_CLEARED");
+    const cleared = findEvent(done.events, "STATUS_CLEARED");
     expect(cleared?.reason).toBe("recovered");
     expect(["benched", "evolved", "wokeUp", "burnCured", "paralysisEnded"]).not.toContain(
       cleared?.reason,

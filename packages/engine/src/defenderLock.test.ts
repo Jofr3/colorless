@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setConditions,
+  findEvent,
 } from "./testFixtures";
 
 const EISCUE_TEXT =
@@ -35,13 +36,6 @@ const DISCARD_HALF_ONLY = "Discard an Energy from this Pokémon.";
 const SEED = 11;
 
 const INSTALL_INDEX = 0;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function countOf<T extends GameEvent["type"]>(events: GameEvent[], type: T): number {
   return events.filter((e) => e.type === type).length;
@@ -119,7 +113,7 @@ function installed(installer: Installer, victim: Victim, spare = false): GameSta
     next = resolved.state;
     rows = [...rows, ...resolved.events];
   }
-  if (find(rows, "ATTACK_LOCKED") === undefined) {
+  if (findEvent(rows, "ATTACK_LOCKED") === undefined) {
     throw new Error(`${installer} installed no lock`);
   }
   if (next.turn !== 3) throw new Error(`expected P2's turn 3, got ${next.turn}`);
@@ -318,7 +312,7 @@ describe("the opponent-side lock — the window is `state.turn + 1`", () => {
     expect(state.players.p2.active?.attackLockedTurn).toBe(3);
     expect(attackLocked(state, state.players.p2.active as InPlayPokemon)).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("refuses BOTH of the victim's attacks — the lock is on the POKÉMON", () => {
@@ -352,7 +346,7 @@ describe("the opponent-side lock — it installs BEHIND a park", () => {
     const state = armed("sv03-042", "sv03-134", true);
     const first = mustApply(state, { type: "attack", seat: "p1", index: INSTALL_INDEX });
     expect(first.state.phase.kind).toBe("effect:choose");
-    expect(find(first.events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(first.events, "ATTACK_LOCKED")).toBeUndefined();
     expect(first.state.players.p2.active?.attackLockedTurn).toBeNull();
     const energyUid = first.state.players.p1.active?.energy[0];
     if (energyUid === undefined) throw new Error("parked with no Energy to discard");
@@ -380,7 +374,7 @@ describe("the opponent-side lock — it installs BEHIND a park", () => {
       index: INSTALL_INDEX,
     });
     expect(after.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
     expect(after.players.p2.active?.attackLockedTurn).toBe(3);
   });
 
@@ -414,8 +408,8 @@ describe("Evil Claw's class gate — both answers, one printed line of play apar
       seat: "p1",
       index: INSTALL_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
     expect(after.players.p2.active?.attackLockedTurn).toBe(3);
   });
 
@@ -439,16 +433,16 @@ describe("Evil Claw's class gate — both answers, one printed line of play apar
       seat: "p1",
       index: INSTALL_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
-    expect(find(events, "ATTACK_LOCKED")).toBeUndefined();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     expect(after.players.p2.active?.attackLockedTurn).toBeNull();
     // …and the un-locked body attacks on its own next turn, so "no lock" is a
     // fact about the board rather than about an absent event.
     let free = attachFromDeck(after, "p2", "fix-water-energy", 1);
     expect(free.turn).toBe(5);
     const swing = mustApply(free, { type: "attack", seat: "p2", index: 0 });
-    expect(find(swing.events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(swing.events, "DAMAGE_DEALT")?.dealt).toBe(40);
     free = swing.state;
     expect(free.players.p1.active?.attackLockedTurn).toBeNull();
   });
@@ -479,7 +473,7 @@ describe("Evil Claw's class gate — both answers, one printed line of play apar
     }
     expect(next.cardIdByUid[activeUid(next, "p2")]).toBe("sv01-048");
     const { events } = mustApply(next, { type: "attack", seat: "p1", index: INSTALL_INDEX });
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
   });
 });
 
@@ -570,7 +564,7 @@ describe("the opponent-side lock — §10 ends it, and every route is the VICTIM
     expect(held.players.p2.active?.attackLockedTurn).toBeNull();
     held = attachFromDeck(held, "p2", "fix-water-energy", 1);
     const { events } = mustApply(held, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(40);
   });
 
   it("RETREATING clears it, and a Switch brings the body back able to attack", () => {
@@ -610,7 +604,7 @@ describe("the opponent-side lock — §10 ends it, and every route is the VICTIM
     expect(back.players.p2.active?.attackLockedTurn).toBeNull();
     back = attachFromDeck(back, "p2", "fix-water-energy", 2);
     const { events } = mustApply(back, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("the INSTALLER cannot reach any of the three routes inside the window", () => {
@@ -671,12 +665,12 @@ describe("the opponent-side lock — a §11 effects block REFUSES it", () => {
       seat: "p1",
       index: INSTALL_INDEX,
     });
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
-    expect(find(events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeUndefined();
     expect(state.players.p2.active?.attackLockedTurn).toBeNull();
     // …and the damage half was nulled by the same block, which is what makes this
     // one block and not two rules that happen to agree.
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBe(true);
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBe(true);
   });
 
   it("a NARROW block nulls the damage and lets the lock through", () => {
@@ -698,9 +692,9 @@ describe("the opponent-side lock — a §11 effects block REFUSES it", () => {
       seat: "p1",
       index: INSTALL_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBe(true);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBe(true);
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
     expect(after.players.p2.active?.attackLockedTurn).toBe(3);
   });
 
@@ -713,7 +707,7 @@ describe("the opponent-side lock — a §11 effects block REFUSES it", () => {
       index: INSTALL_INDEX,
     });
     expect(state.players.p1.active?.energy.length).toBe(energyBefore - 1);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
     expect(state.players.p2.active?.attackLockedTurn).toBeNull();
   });
 });
@@ -729,13 +723,13 @@ describe("the opponent-side lock — two installs on one body", () => {
     expect(state.turn).toBe(3);
     const selfLock = mustApply(state, { type: "attack", seat: "p2", index: 1 });
     expect(selfLock.state.players.p2.active?.attackLockedTurn).toBe(5);
-    expect(find(selfLock.events, "ATTACK_LOCKED")?.seat).toBe("p2");
+    expect(findEvent(selfLock.events, "ATTACK_LOCKED")?.seat).toBe("p2");
     let next = selfLock.state;
     expect(next.turn).toBe(4);
     const second = mustApply(next, { type: "attack", seat: "p1", index: INSTALL_INDEX });
     next = second.state;
     expect(next.players.p2.active?.attackLockedTurn).toBe(5);
-    expect(find(second.events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(second.events, "ATTACK_LOCKED")).toBeUndefined();
     expect(refusal(next, "p2", 0)).toBe("ATTACK_PREVENTED");
     expect(refusal(next, "p2", 1)).toBe("ATTACK_PREVENTED");
   });
@@ -768,7 +762,7 @@ describe("the opponent-side lock — one row, read in sequence from both seats",
       seat: "p1",
       index: INSTALL_INDEX,
     });
-    const row = find(events, "ATTACK_LOCKED");
+    const row = findEvent(events, "ATTACK_LOCKED");
     expect(row?.seat).toBe("p2");
     expect(row?.uid).toBe(activeUid(state, "p2"));
     const rendered = renderedLock(events, after);
@@ -784,7 +778,7 @@ describe("the opponent-side lock — one row, read in sequence from both seats",
     state = attachFromDeck(state, "p2", "fix-water-energy", 2);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p2", index: 1 });
-    const row = find(events, "ATTACK_LOCKED");
+    const row = findEvent(events, "ATTACK_LOCKED");
     expect(row?.seat).toBe("p2");
     const rendered = renderedLock(events, after);
     expect(rendered?.who).toBe("p2");

@@ -7,6 +7,7 @@ import type {
   GameAction,
   GameEvent,
   GameState,
+  InPlayPokemon,
   Seat,
   SpecialConditions,
 } from "./index";
@@ -10192,6 +10193,28 @@ export function mustCreate(
 export function must(result: ApplyResult): GameState {
   if (!result.ok) throw new Error(`expected ok, got ${result.error.code}: ${result.error.message}`);
   return result.state;
+}
+
+/** The first event of `type`, narrowed to that event. */
+export function findEvent<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }> | undefined {
+  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
+}
+
+export function activeOf(state: GameState, seat: Seat): InPlayPokemon {
+  const active = state.players[seat].active;
+  if (active === null) throw new Error(`${seat} has no Active Pokémon`);
+  return active;
+}
+
+/** The pending effect prompt; throws unless the game is parked on one. */
+export function effectPrompt(state: GameState) {
+  if (state.phase.kind !== "effect:choose") {
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  }
+  return state.phase.prompt;
 }
 
 /** applyAction that throws on rejection and hands back state + events. */

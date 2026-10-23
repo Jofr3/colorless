@@ -20,7 +20,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
+import type { BoardCondition, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
   EXACT_HAND_SIZE_DECK,
@@ -30,6 +30,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -128,13 +129,6 @@ const trioCheehoo = (state: GameState, seat: Seat = "p1"): GameState =>
 /** Absol ex's body, paid {D}{D}{D} — the WRONG-SEAT control. */
 const cursedSlug = (state: GameState, seat: Seat = "p1"): GameState =>
   fielded(state, seat, "sv03-135", [["fix-dark-energy", 3]]);
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", () => {
   it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
@@ -393,7 +387,7 @@ describe("§4 — on a board: 2 / 3 / 4 cards in hand, and 120 lands on exactly 
     const state = setHandSize(trioCheehoo(board(96)), "p1", 2);
     expect(state.players.p1.hand).toHaveLength(2);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -406,7 +400,7 @@ describe("§4 — on a board: 2 / 3 / 4 cards in hand, and 120 lands on exactly 
     expect(state.players.p1.active?.energy).toEqual([]);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 120, dealt: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 120, dealt: 120 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -414,7 +408,7 @@ describe("§4 — on a board: 2 / 3 / 4 cards in hand, and 120 lands on exactly 
     const state = setHandSize(trioCheehoo(board(98)), "p1", 4);
     expect(state.players.p1.hand).toHaveLength(4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -423,10 +417,10 @@ describe("§4 — on a board: 2 / 3 / 4 cards in hand, and 120 lands on exactly 
     let base = setHandSize(board(99), "p1", 4);
     base = setHandSize(base, "p2", 3);
     const cancelled = mustApply(trioCheehoo(base), { type: "attack", seat: "p1", index: 0 });
-    expect(find(cancelled.events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(cancelled.events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     expect(types(cancelled.events)).not.toContain("DAMAGE_DEALT");
     const control = mustApply(cursedSlug(base), { type: "attack", seat: "p1", index: 1 });
-    expect(find(control.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(control.events, "DAMAGE_DEALT")).toMatchObject({
       base: 100,
       scaled: 120,
       dealt: 220,
@@ -439,12 +433,12 @@ describe("§4 — on a board: 2 / 3 / 4 cards in hand, and 120 lands on exactly 
   it("cancels and resolves identically from the FAR SEAT", () => {
     const short = setHandSize(trioCheehoo(boardP2(100), "p2"), "p2", 2);
     const cancelled = mustApply(short, { type: "attack", seat: "p2", index: 0 });
-    expect(find(cancelled.events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(cancelled.events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     const exact = setHandSize(trioCheehoo(boardP2(101), "p2"), "p2", 3);
     expect(exact.players.p1.hand.length).not.toBe(3);
     const { events } = mustApply(exact, { type: "attack", seat: "p2", index: 0 });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 120, dealt: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 120, dealt: 120 });
   });
 });
 
@@ -479,7 +473,7 @@ describe("§5 — ARMED BY THE GAME: the hand played down to three, with no surg
     expect(state.players.p1.hand.length).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 120, dealt: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 120, dealt: 120 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -497,7 +491,7 @@ describe("§5 — ARMED BY THE GAME: the hand played down to three, with no surg
     }
     expect(state.players.p1.hand.length).toBe(4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
     expect(types(events)).not.toContain("DAMAGE_DEALT");
   });
 });

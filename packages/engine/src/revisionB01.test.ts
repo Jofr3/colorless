@@ -17,6 +17,7 @@ import {
   toDeckTop,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const JUDGE_IDS = ["sv01-176", "sv04.5-228", "sv10-167", "sv10-222", "me03-076"] as const;
@@ -149,11 +150,6 @@ function play(state: GameState, id: string): { state: GameState; events: GameEve
   const { state: next, uid } = staged(state, id);
   return mustApply(next, { type: "playTrainer", seat: "p1", uid });
 }
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const bench = (index: number, seat: Seat = "p1") =>
   ({ seat, spot: { spot: "bench", index } }) as const;
 const pick = (ref: unknown, take?: number): GameAction =>
@@ -219,12 +215,12 @@ describe("B01 §2 — Rosa's Encouragement: the player picks WHICH Basic Energy 
 
   it("after the Stage 2 is picked, asks which 2 of the 4 mixed Basic Energy go on it, and attaches those", () => {
     const parked = play(rosaBoard(), ROSA).state;
-    const target = prompt(parked);
+    const target = effectPrompt(parked);
     expect(target).toMatchObject({ kind: "choosePokemon", candidates: [bench(1)], upTo: 2 });
     const choosing = mustApply(parked, pick(bench(1))).state;
     // The board has not moved yet: the Energy is still in the discard.
     expect(choosing.players.p1.bench[1]?.energy).toEqual([]);
-    const p = prompt(choosing);
+    const p = effectPrompt(choosing);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 2, max: 2, dest: "attach" });
     // Every Basic Energy card in the pile, in pile order (Rosa herself is not one).
@@ -249,7 +245,7 @@ describe("B01 §2 — Rosa's Encouragement: the player picks WHICH Basic Energy 
   it("a take of 1 asks for exactly 1 card; a pick outside the pile or of the wrong size is refused", () => {
     const parked = play(rosaBoard(), ROSA).state;
     const choosing = mustApply(parked, pick(bench(1), 1)).state;
-    const p = prompt(choosing);
+    const p = effectPrompt(choosing);
     expect(p).toMatchObject({ kind: "chooseCards", min: 1, max: 1, dest: "attach" });
     const water = inDiscard(choosing, "fix-water-energy");
     expect(applyAction(choosing, cards([])).ok).toBe(false);
@@ -307,7 +303,7 @@ describe("B01 §2 — Rosa's Encouragement: the player picks WHICH Basic Energy 
       1,
     );
     const parked = play(state, PP_UP).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 1, max: 1, dest: "attach" });
     expect(ids(parked, p.candidates)).toEqual(["fix-fire-energy", "fix-water-energy"]);
@@ -345,7 +341,7 @@ describe("B01 §3 — Grimsley's Move: a full Bench is offered nothing", () => {
     const state = grimsleyBoard(4);
     const dark = state.players.p1.deck[0] as string;
     const parked = play(state, GRIMSLEY).state;
-    expect(prompt(parked)).toMatchObject({
+    expect(effectPrompt(parked)).toMatchObject({
       kind: "chooseCards",
       candidates: [dark],
       max: 1,

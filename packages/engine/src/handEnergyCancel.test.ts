@@ -13,7 +13,7 @@ import {
 } from "./effects";
 import type { BoardCondition, EffectOp } from "./effects";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
   FIXTURE_POOL,
@@ -29,6 +29,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -110,13 +111,6 @@ const DECK = deckOf({
 });
 
 const SEEDS = [5231, 5233, 5237] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -347,7 +341,7 @@ describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 i
       const result = attack(before);
       const state = result.state;
 
-      expect(find(result.events, "ATTACK_FAILED")).toEqual({
+      expect(findEvent(result.events, "ATTACK_FAILED")).toEqual({
         type: "ATTACK_FAILED",
         seat: "p1",
         uid,
@@ -382,9 +376,9 @@ describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 i
       const state = result.state;
 
       expect(types(result.events)).not.toContain("ATTACK_FAILED");
-      expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(30);
-      expect(find(result.events, "HAND_COST_PAID")?.uids).toHaveLength(count);
-      expect(find(result.events, "HAND_COST_PAID")?.to).toBe("discard");
+      expect(findEvent(result.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+      expect(findEvent(result.events, "HAND_COST_PAID")?.uids).toHaveLength(count);
+      expect(findEvent(result.events, "HAND_COST_PAID")?.to).toBe("discard");
       expect(grassIn(state, "p1", "hand")).toBe(0);
       expect(grassIn(state, "p1", "discard")).toBe(count);
       expect(state.players.p1.active?.energy).toHaveLength(1);
@@ -406,7 +400,7 @@ describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 i
       // 8 in hand against a printed 6: `handCostCandidates` collapses interchangeable
       // copies to `count`, so there is no decision and the park is never reached.
       const result = attack(board(seed, KO6_ID, 8));
-      expect(find(result.events, "HAND_COST_PAID")?.uids).toHaveLength(6);
+      expect(findEvent(result.events, "HAND_COST_PAID")?.uids).toHaveLength(6);
       expect(grassIn(result.state, "p1", "hand")).toBe(2);
       expect(grassIn(result.state, "p1", "discard")).toBe(6);
       expect(result.state.phase.kind).not.toBe("effect:choose");
@@ -418,8 +412,10 @@ describe("§3 — REAL BOARDS: the cancel fires, the payable case pays, and 30 i
     const result = attack(board(seed, UNMAPPED_ID, 0));
     expect(types(result.events)).not.toContain("ATTACK_FAILED");
     expect(types(result.events)).not.toContain("HAND_COST_PAID");
-    expect(find(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({ effect: UNMAPPED_TEXT });
-    expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+      effect: UNMAPPED_TEXT,
+    });
+    expect(findEvent(result.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it.each(SEEDS)("seed %i — the MEMBER, read off the same board it gates", (seed) => {

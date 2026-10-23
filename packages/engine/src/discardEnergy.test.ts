@@ -13,14 +13,8 @@ import {
   handUid,
   mustApply,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -80,7 +74,7 @@ describe("M5 op-slice — discardEnergy", () => {
     expect(done.players.p1.discard).not.toContain(energyUid);
     // …and it lands on TOP of that pile (appended), the pile being ordered.
     expect(done.players.p2.discard.at(-1)).toBe(energyUid);
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     // `seat` is the VICTIM, `actor` the controller whose card did it — opposite
     // seats for a hammer, the SAME seat for the self-discard attack cost.
     expect(discarded).toMatchObject({ seat: "p2", actor: "p1", uids: [energyUid] });
@@ -153,7 +147,7 @@ describe("M5 op-slice — discardEnergy", () => {
     expect(benchEnergy(done, "p2", 0)).toEqual([]);
     expect(activeEnergy(done, "p2")).toEqual([onActive]);
     expect(done.players.p2.discard).toContain(onBench);
-    expect(find(events, "ENERGY_DISCARDED")?.from).toEqual({ spot: "bench", index: 0 });
+    expect(findEvent(events, "ENERGY_DISCARDED")?.from).toEqual({ spot: "bench", index: 0 });
 
     // A SECOND hammer (Items are unbounded) now has one candidate left — forced —
     // and the pile stays a pile: the newer card goes ON TOP of the older one.
@@ -259,7 +253,7 @@ describe("M5 op-slice — discardEnergy", () => {
       let state = board(seed);
       state = attachFromDeck(state, "p2", "fix-energy", 1);
       const { state: after, events } = playFromHand(state, "sv01-168");
-      const face = find(events, "ATTACK_EFFECT_COIN_FLIP")?.result as string;
+      const face = findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result as string;
       faces.set(face, {
         discarded: findAll(events, "ENERGY_DISCARDED").length,
         energyLeft: activeEnergy(after, "p2").length,

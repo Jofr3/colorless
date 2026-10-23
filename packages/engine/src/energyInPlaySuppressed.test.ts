@@ -13,7 +13,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import { applyAction, createGame, logFromEvents } from "./index";
-import type { BoardCondition, GameEvent, GameState } from "./index";
+import type { BoardCondition, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
   completeSetup,
@@ -26,6 +26,7 @@ import {
   setActiveFromDeck,
   typedEnergy,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -73,13 +74,6 @@ const DECK = deckOf({
 });
 
 const SEEDS = [4940, 4941, 4943] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** `benchCounterSuppressed.test.ts`'s `localSetup`, verbatim in shape: `driveSetup`
     builds its game through `mustCreate`, which reads `FIXTURE_POOL`, so a local pool
@@ -318,7 +312,7 @@ describe("§4 — the anchor's TIGHT tail buys what a LOOSE one would, and loose
 describe("§5 — the board, and every wrong reading answers a different number", () => {
   it.each(SEEDS)("the printed answer is 140 on seed %i", (seed) => {
     const result = swing(board(seed));
-    const dealt = find(result.events, "DAMAGE_DEALT");
+    const dealt = findEvent(result.events, "DAMAGE_DEALT");
     // 100 printed + 70 scaled = 170, Weakness SUPPRESSED, Resistance −30 applied.
     expect(dealt?.dealt).toBe(140);
     expect(dealt?.scaled).toBe(70);
@@ -349,7 +343,7 @@ describe("§5 — the board, and every wrong reading answers a different number"
     // suppression still fires — 100 − 30. Without this board the suite could not tell
     // "the bonus applied" from "the reader answered a constant".
     const result = swing(board(SEEDS[0], { benchDark: false }));
-    const dealt = find(result.events, "DAMAGE_DEALT");
+    const dealt = findEvent(result.events, "DAMAGE_DEALT");
     expect(dealt?.dealt).toBe(70);
     expect(dealt?.scaled).toBeUndefined();
     expect(dealt?.weakness).toBeNull();
@@ -359,7 +353,7 @@ describe("§5 — the board, and every wrong reading answers a different number"
     const state = board(SEEDS[0], { benchDark: false, opponentEnergy: 5 });
     expect(countEnergyInPlay(state, "p1", null)).toBe(2);
     expect(countEnergyInPlay(state, "p2", null)).toBe(5);
-    const dealt = find(swing(state).events, "DAMAGE_DEALT");
+    const dealt = findEvent(swing(state).events, "DAMAGE_DEALT");
     expect(dealt?.dealt).toBe(70);
   });
 });

@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -390,13 +391,6 @@ function deck(state: GameState): readonly string[] {
   return state.players.p1.deck;
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function effectDrawn(events: GameEvent[]): number | undefined {
   const drawn = events.find(
     (e) => e.type === "CARDS_DRAWN" && e.seat === "p1" && e.reason === "effect",
@@ -410,7 +404,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
     // §8 printed order: the damage lands FIRST, then the effect asks.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(types(events)).toContain("EFFECT_PENDING");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     // The whole prompt: a kind and the printed sentence, byte for byte off the
@@ -427,8 +421,8 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
       {
         kind: "attackEpilogue",
         seat: "p1",
-        uid: find(events, "ATTACK_DECLARED")?.uid,
-        attack: find(events, "ATTACK_DECLARED")?.attack,
+        uid: findEvent(events, "ATTACK_DECLARED")?.uid,
+        attack: findEvent(events, "ATTACK_DECLARED")?.attack,
       },
     ]);
     expect(types(events)).not.toContain("TURN_ENDED");
@@ -474,7 +468,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
     // The branch left no trace in the log — the only draw is P2's turn-start one.
     expect(types(events)).toEqual(["TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
     expect(effectDrawn(events)).toBeUndefined();
-    expect(find(events, "CARDS_DRAWN")?.seat).toBe("p2");
+    expect(findEvent(events, "CARDS_DRAWN")?.seat).toBe("p2");
     // …and the attack was USED: the turn ended, the queue drained, P2 is up.
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(done.pending).toEqual([]);
@@ -544,7 +538,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
   it("the SECOND attack on the same body carries no effect — the program follows the index", () => {
     const state = matchup(11, "fix-may-return", "fix-bigbody");
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });

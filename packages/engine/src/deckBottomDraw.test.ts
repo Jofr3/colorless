@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BOTTOM = "Draw 3 cards from the bottom of your deck.";
@@ -167,12 +168,6 @@ const idsIn = (state: GameState, seat: Seat, zone: "hand" | "deck" | "discard"):
 
 function swing(state: GameState, index: number): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "attack", seat: "p1", index });
-}
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 const effectDraws = (events: GameEvent[]): GameEvent[] =>
@@ -385,7 +380,7 @@ describe("D487 §6 — the printed sentence on a real board", () => {
     expect(idsIn(state, "p1", "hand")).toEqual([...handBefore, ...BOTTOM_THREE]);
     expect(idsIn(state, "p1", "deck")).toEqual([...TOP_THREE, "d487-c4", "d487-c5"]);
     // …and the EVENT names them, in the same order, so the log and the zone agree.
-    const drawn = find(events, "CARDS_DRAWN");
+    const drawn = findEvent(events, "CARDS_DRAWN");
     expect(drawn?.seat).toBe("p1");
     expect(drawn?.uids.map((uid) => idOf(uid, state))).toEqual([...BOTTOM_THREE]);
     expect(drawn?.reason).toBe("effect");
@@ -579,7 +574,7 @@ describe("D487 §9 — an empty deck, and three silences that are not the same s
     // …and index 3's sentence, which NO reader claims, still reports itself as unread on
     // the same body and the same board. Two silences told apart in one board.
     const loud = swing(table([]), LOUD_INDEX);
-    const skipped = find(loud.events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(loud.events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(LOUD);
     expect(resolvedByAnyReader(LOUD)).toBe(false);
   });
@@ -594,7 +589,7 @@ describe("D487 §9 — an empty deck, and three silences that are not the same s
   it("a deck SHALLOWER than the count short-draws what is there, off the same cut", () => {
     const { state, events } = swing(table(BOARD_DECK.slice(0, 2)), BOTTOM_DEAL);
     expect(idsIn(state, "p1", "deck")).toEqual([]);
-    const drawn = find(events, "CARDS_DRAWN");
+    const drawn = findEvent(events, "CARDS_DRAWN");
     expect(drawn?.uids).toHaveLength(2);
   });
 });

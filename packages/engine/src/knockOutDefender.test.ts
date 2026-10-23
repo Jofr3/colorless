@@ -24,6 +24,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 import {
   koByEffectMarker,
@@ -124,13 +125,6 @@ const OPPONENT_SPECIAL = {
 } as const;
 
 const BY_ATTACK = { kind: "yourPokemonKoedOnOpponentsLastTurn", byAttack: true } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat, deck: string[] = KO_DEFENDER_DECK): GameState {
   const created = createGame({
@@ -357,7 +351,7 @@ describe("§2 the Knock Out — Prize, discard, KNOCKED_OUT, promotion", () => {
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
 
     // The Prize is PROMPTED rather than taken: a plain body is worth one.
@@ -421,15 +415,15 @@ describe("§2 the Knock Out — Prize, discard, KNOCKED_OUT, promotion", () => {
     const before = armed(4);
     const victim = activeUid(before, "p2");
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
   });
 
   it("a Stage 1 Active dies to the ORDINARY attack — the gate is about the OP, not the body", () => {
     const before = armed(5, "fix-kod-stage1");
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
   });
 });
@@ -501,7 +495,7 @@ describe("§4 Vengeful Punch — an effect Knock Out pays no recoil", () => {
       index: BASIC_BREAKER,
     });
 
-    expect(find(events, "KNOCKED_OUT")).toBeDefined(); // the KO really happened…
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined(); // the KO really happened…
     expect(types(events)).not.toContain("COUNTERS_PLACED"); // …and paid nothing
     expect(state.players.p1.active?.damage).toBe(0);
   });
@@ -510,8 +504,8 @@ describe("§4 Vengeful Punch — an effect Knock Out pays no recoil", () => {
     const before = armed(10, "fix-kod-victim", { tool: "sv03-197" });
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE });
 
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1", // the seat that OWNS the damaged body — the ATTACKER's
       amount: PUNCH_HP,
       source: "counterattack",
@@ -526,7 +520,7 @@ describe("§4 Vengeful Punch — an effect Knock Out pays no recoil", () => {
     const board = armed(11, "fix-kod-victim", { tool: "sv03-197" });
     const before = staleMarked(board, "p2", board.turn - 1);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: PUNCH_HP });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: PUNCH_HP });
     expect(state.players.p1.active?.damage).toBe(PUNCH_HP);
   });
 
@@ -618,7 +612,7 @@ function installWide(seed: number): { state: GameState; events: GameEvent[] } {
 
 function shielded(seed: number): GameState {
   const installed = installWide(seed);
-  if (find(installed.events, "ATTACK_BLOCK_APPLIED") === undefined) {
+  if (findEvent(installed.events, "ATTACK_BLOCK_APPLIED") === undefined) {
     throw new Error(`seed ${seed} did not install a wide block (tails?)`);
   }
   let next = clearBench(installed.state, "p2");
@@ -634,7 +628,8 @@ describe("§6 §11 — a 'prevent all effects of attacks done to this Pokémon' 
   it("the HEADS seed table is measured, not inherited", () => {
     const measured: number[] = [];
     for (let seed = 1; seed <= 24; seed += 1) {
-      if (find(installWide(seed).events, "ATTACK_BLOCK_APPLIED") !== undefined) measured.push(seed);
+      if (findEvent(installWide(seed).events, "ATTACK_BLOCK_APPLIED") !== undefined)
+        measured.push(seed);
     }
     expect(measured).toEqual([...WIDE_HEADS_SEEDS]);
     expect(WIDE_HEADS_SEEDS.length).toBeGreaterThan(0);
@@ -653,7 +648,7 @@ describe("§6 §11 — a 'prevent all effects of attacks done to this Pokémon' 
       index: BASIC_BREAKER,
     });
 
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toEqual({
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toEqual({
       type: "ATTACK_EFFECT_PREVENTED",
       seat: "p2",
       uid: survivor,
@@ -684,7 +679,7 @@ describe("§6 §11 — a 'prevent all effects of attacks done to this Pokémon' 
       },
     };
     const { events } = mustApply(bare, { type: "attack", seat: "p1", index: BASIC_BREAKER });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
   });
 });
@@ -800,7 +795,7 @@ describe("§7.2 the member on a real board — the gate, both directions", () =>
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     const settled = settle(state);
@@ -855,8 +850,8 @@ describe("§7.2 the member on a real board — the gate, both directions", () =>
       seat: "p1",
       index: SPECIAL_PLAIN_BITE,
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
   });
 });

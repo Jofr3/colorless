@@ -11,17 +11,11 @@ import {
   mustApply,
   toDeckTop,
   trimDeckTo,
+  findEvent,
 } from "./testFixtures";
 
 function types(events: readonly GameEvent[]): string[] {
   return events.map((e) => e.type);
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 const deckAt = (state: GameState, index: number): string => {
@@ -192,7 +186,7 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
       expect(done.players.p1.discard).not.toContain(uid);
     }
     expect(done.players.p1.discard.slice(discardBefore)).toEqual(leftovers);
-    expect(find(events, "DECK_TOP_DISCARDED")).toEqual({
+    expect(findEvent(events, "DECK_TOP_DISCARDED")).toEqual({
       type: "DECK_TOP_DISCARDED",
       seat: "p1",
       actor: "p1",
@@ -214,7 +208,7 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
       seat: "p1",
       choice: { kind: "cards", uids: taken },
     });
-    expect(find(events, "DECK_TOP_REVEALED")).toEqual({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toEqual({
       type: "DECK_TOP_REVEALED",
       seat: "p1",
       uids: taken,
@@ -306,7 +300,7 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
       seat: "p1",
       choice: { kind: "cards", uids: [window[0] as string, window[2] as string] },
     });
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toEqual([window[1]]);
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toEqual([window[1]]);
     expect(done.players.p1.deck).toHaveLength(0);
   });
 

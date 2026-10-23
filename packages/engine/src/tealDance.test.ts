@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   battler,
@@ -16,6 +16,7 @@ import {
   setActiveFromDeck,
   benchFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const TEAL_DANCE_IDS = [
@@ -67,13 +68,6 @@ const useTealDanceFromBench = {
   target: { spot: "bench", index: 0 },
   abilityName: "Teal Dance",
 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** `driveSetup` against the LOCAL pool — `testFixtures.ts`'s own closes over
     `FIXTURE_POOL`, and `createGame` takes its `cardPool` as a PARAMETER, which is
@@ -189,7 +183,7 @@ describe("Teal Dance — driven through the real engine", () => {
     const { state: after, events } = mustApply(state, useTealDance);
     // No prompt: one target, so `parkOrForce` forces it.
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_ATTACHED")).toMatchObject({
+    expect(findEvent(events, "ENERGY_ATTACHED")).toMatchObject({
       seat: "p1",
       uid: grass,
       target: { spot: "active" },
@@ -212,7 +206,7 @@ describe("Teal Dance — driven through the real engine", () => {
 
     const { state: after, events } = mustApply(state, useTealDanceFromBench);
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_ATTACHED")).toMatchObject({
+    expect(findEvent(events, "ENERGY_ATTACHED")).toMatchObject({
       seat: "p1",
       uid: grass,
       target: { spot: "bench", index: 0 },
@@ -229,7 +223,7 @@ describe("Teal Dance — driven through the real engine", () => {
     deepFreeze(state);
 
     const { state: after, events } = mustApply(state, useTealDance);
-    const drawn = find(events, "CARDS_DRAWN");
+    const drawn = findEvent(events, "CARDS_DRAWN");
     expect(drawn?.uids).toHaveLength(1);
     // ORDER, not merely presence: the draw is the attach's consequent, and a
     // program that drew first would read the slot before anything filed it.

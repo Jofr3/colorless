@@ -10,7 +10,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import { applyAction, createGame, logFromEvents } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   attachFromDeck,
   battler,
@@ -23,6 +23,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -69,13 +70,6 @@ const DECK = deckOf({
 });
 
 const SEEDS = [4930, 4931, 4933] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** `autoHeal.test.ts`'s `localSetup`, verbatim in shape: `driveSetup` builds its game
     through `mustCreate`, which reads `FIXTURE_POOL`, so a local pool needs its own
@@ -316,13 +310,13 @@ describe("§4 — the PAIRING GATE: the two readers cannot half-build a sentence
 describe("§5 — the BOARD: the fold, the zone, the filter and the §8.5 step", () => {
   it("the printed answer is 90, and it is the same from every seed", () => {
     for (const seed of SEEDS) {
-      const dealt = find(swing(board(seed)).events, "DAMAGE_DEALT")?.dealt;
+      const dealt = findEvent(swing(board(seed)).events, "DAMAGE_DEALT")?.dealt;
       expect(dealt, `seed ${seed}`).toBe(90);
     }
   });
 
   it("the row reports WHICH §8.5 steps ran — Weakness NULLED, Resistance APPLIED", () => {
-    const row = find(swing(board(SEEDS[0])).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(board(SEEDS[0])).events, "DAMAGE_DEALT");
     expect(row).toMatchObject({
       base: 0,
       scaled: 120,

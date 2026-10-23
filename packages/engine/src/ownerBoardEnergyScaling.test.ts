@@ -9,7 +9,7 @@ import {
   deriveAttackEffect,
 } from "./effects";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachBenchFromDeck,
@@ -22,6 +22,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,13 +147,6 @@ const PLAIN = 3;
 
 const SEED = 7;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -264,7 +258,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(state: GameState, index: number, seat: Seat = "p1"): number | undefined {
-  return find(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
 describe("§1 — the sentence, its corpus row, and the fixtures that print it", () => {
@@ -660,7 +654,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
 
   it("DIRECTION 2 — a v29 record round-trips and the NEXT swing reads the same", () => {
     const first = swing(mixed(), IONO);
-    expect(find(first.events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(first.events, "DAMAGE_DEALT")?.dealt).toBe(70);
     const saved = JSON.parse(JSON.stringify(first.state)) as GameState;
     expect(saved).toEqual(first.state);
     // …and the parsed record is a LIVE board: hand the turn back and swing the same
@@ -668,7 +662,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
     // an Iono's body, so the SAME clause reads a bigger board and says so.
     const returned = mustApply(saved, { type: "endTurn", seat: "p2" }).state;
     const grown = attachBenchFromDeck(returned, "p1", 0, "fix-lightning-energy", 1);
-    expect(find(swing(grown, IONO).events, "DAMAGE_DEALT")?.dealt).toBe(10 + 20 * 4);
+    expect(findEvent(swing(grown, IONO).events, "DAMAGE_DEALT")?.dealt).toBe(10 + 20 * 4);
   });
 });
 

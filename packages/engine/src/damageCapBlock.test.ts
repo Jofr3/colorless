@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { attackBlockOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
   DAMAGE_CAP_BLOCK_DECK,
@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** The two printed sentences, byte for byte off the catalog. */
@@ -29,13 +30,6 @@ const UNCAPPED_TEXT =
     below by an unchanged `rngState` across an install. */
 const SEED = 11;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** P2 opens and passes, so P1's turn 2 carries no §4 attack restriction. */
 function armed(installer: string): GameState {
   let state = must(
@@ -50,7 +44,7 @@ function armed(installer: string): GameState {
 
 function installed(index: 0 | 1 = 0, installer = "fix-carapace"): GameState {
   const { state, events } = mustApply(armed(installer), { type: "attack", seat: "p1", index });
-  if (find(events, "ATTACK_BLOCK_APPLIED") === undefined) {
+  if (findEvent(events, "ATTACK_BLOCK_APPLIED") === undefined) {
     throw new Error(`${installer} index ${index} did not install a block`);
   }
   return state;
@@ -135,7 +129,7 @@ describe("the damage cap — installing it", () => {
     expect(done.rngState).toBe(before.rngState);
     expect(types(events)).not.toContain("ATTACK_EFFECT_COIN_FLIP");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "ATTACK_BLOCK_APPLIED")).toEqual({
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")).toEqual({
       type: "ATTACK_BLOCK_APPLIED",
       seat: "p1",
       uid: installer,
@@ -185,13 +179,17 @@ describe("the damage cap — the truth table, driven off bodies", () => {
     const state = installed();
     deepFreeze(state);
     const { state: done, events } = swing(state, "fix-colorless-brawler");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p1",
+      dealt: 0,
+      prevented: true,
+    });
     expect(done.players.p1.active?.damage).toBe(0);
   });
 
   it("lets an attack ONE STEP over the cap through in FULL", () => {
     const { state: done, events } = swing(installed(), "fix-heavy");
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 70 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(70);
@@ -201,7 +199,7 @@ describe("the damage cap — the truth table, driven off bodies", () => {
 
   it("reads the POST-WEAKNESS number and not the printed base", () => {
     const { state: done, events } = swing(installed(), "fix-attacker");
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 60, weakness: { op: "multiply", amount: 2 } });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(60);
@@ -212,13 +210,17 @@ describe("the damage cap — the truth table, driven off bodies", () => {
     // indexes against ONE attacker. This is what makes the case above a statement
     // about the CAP rather than about the board.
     const { state: done, events } = swing(installed(1), "fix-attacker");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p1",
+      dealt: 0,
+      prevented: true,
+    });
     expect(done.players.p1.active?.damage).toBe(0);
   });
 
   it("reads the POST-REDUCTION number too — the flagged half of the reading", () => {
     const { state: done, events } = swing(installed(0, "fix-carapace-tough"), "fix-heavy");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p1",
       dealt: 0,
       prevented: true,
@@ -229,7 +231,11 @@ describe("the damage cap — the truth table, driven off bodies", () => {
 
   it("…and the reduction ALONE does not block, so the cap is doing the work", () => {
     const { events } = swing(installed(1, "fix-carapace-tough"), "fix-heavy");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p1",
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("stays out of the way when the block's window has passed", () => {
@@ -237,7 +243,7 @@ describe("the damage cap — the truth table, driven off bodies", () => {
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
     const { events } = swing(state, "fix-colorless-brawler");
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 40 });
     expect(hit?.prevented).toBeUndefined();
   });
@@ -272,7 +278,7 @@ describe("the damage cap — the read is TOTAL, and the merge NARROWS", () => {
     expect(done.players.p1.active?.attackBlock?.maxDamage).toBeUndefined();
     // …and it really is uncapped: Slam's 70 is now refused.
     const { events } = swing(done, "fix-heavy");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 
   it("an UNCAPPED block plus a capped install stays uncapped", () => {

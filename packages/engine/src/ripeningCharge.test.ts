@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   battler,
@@ -18,6 +18,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const RIPENING_IDS = ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"] as const;
@@ -59,13 +60,6 @@ const useRipeningFromBench = {
   target: { spot: "bench", index: 0 },
   abilityName: "Ripening Charge",
 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** `driveSetup` against the LOCAL pool — `testFixtures.ts`'s own closes over
     `FIXTURE_POOL`, and `createGame` takes its `cardPool` as a PARAMETER, which is
@@ -207,7 +201,7 @@ describe("Ripening Charge — driven through the real engine", () => {
     const { state: after, events } = pick(parked, BENCH_0_REF);
 
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_ATTACHED")).toMatchObject({
+    expect(findEvent(events, "ENERGY_ATTACHED")).toMatchObject({
       seat: "p1",
       uid: grass,
       target: { spot: "bench", index: 0 },
@@ -241,7 +235,7 @@ describe("Ripening Charge — driven through the real engine", () => {
     const { state: parked } = mustApply(state, useRipening);
     const { state: after, events } = pick(parked, ACTIVE_REF);
     expect(after.players.p1.active?.damage).toBe(20);
-    expect(find(events, "HEALED")).toMatchObject({ seat: "p1", amount: 30 });
+    expect(findEvent(events, "HEALED")).toMatchObject({ seat: "p1", amount: 30 });
 
     // …and the clamp on the other side: 10 damage heals 10, not 30 into negative.
     let low = twoBodyBoard(4);
@@ -251,7 +245,7 @@ describe("Ripening Charge — driven through the real engine", () => {
       ACTIVE_REF,
     );
     expect(lowAfter.players.p1.active?.damage).toBe(0);
-    expect(find(lowEvents, "HEALED")).toMatchObject({ amount: 10 });
+    expect(findEvent(lowEvents, "HEALED")).toMatchObject({ amount: 10 });
   });
 
   it("still ATTACHES to an UNDAMAGED body, and emits no HEALED — the attach is not conditional on the heal", () => {
@@ -264,7 +258,7 @@ describe("Ripening Charge — driven through the real engine", () => {
     const { state: parked } = mustApply(state, useRipening);
     const { state: after, events } = pick(parked, ACTIVE_REF);
     expect(after.players.p1.active?.energy).toHaveLength(1);
-    expect(find(events, "HEALED")).toBeUndefined();
+    expect(findEvent(events, "HEALED")).toBeUndefined();
   });
 
   it("the heal comes AFTER the attach — 'in this way' is an order, not a coincidence", () => {
@@ -289,7 +283,7 @@ describe("Ripening Charge — driven through the real engine", () => {
 
     const { state: parked } = mustApply(state, useRipeningFromBench);
     const { state: after, events } = pick(parked, ACTIVE_REF);
-    expect(find(events, "ENERGY_ATTACHED")).toMatchObject({
+    expect(findEvent(events, "ENERGY_ATTACHED")).toMatchObject({
       uid: grass,
       target: { spot: "active" },
     });

@@ -33,6 +33,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setConditions,
+  findEvent,
 } from "./testFixtures";
 import type { SpecialConditions } from "./types";
 import { presentStatuses } from "./types";
@@ -85,13 +86,6 @@ const SPLITTERS = [
 
 const SEED = 11;
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const types = (events: GameEvent[]) => events.map((e) => e.type);
 
@@ -302,7 +296,7 @@ describe("D518 §2 — the reading, the arm, and the indicator sibling it does N
 describe("D518 §3 — the tally on a board: 0, 1, 2, 3 — and `confusionDamage` is not one", () => {
   it("a CLEAN defender is 0, and 0 emits NO `DAMAGE_DEALT` AT ALL", () => {
     const { events, state } = swing(armed({}));
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(state.players.p2.active?.damage).toBe(0);
     // …and the attack RESOLVED: it is not on the loud unread path.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -311,22 +305,24 @@ describe("D518 §3 — the tally on a board: 0, 1, 2, 3 — and `confusionDamage
   it("THE TRAP — Confused with a RAISED `confusionDamage` counts ONE, not two", () => {
     const raised = armed({ rotation: "confused", confusionDamage: 80 });
     expect(raised.players.p2.active?.conditions.confusionDamage).toBe(80);
-    expect(find(swing(raised).events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(swing(raised).events, "DAMAGE_DEALT")?.dealt).toBe(100);
     // …and the raised amount really is on the board rather than silently normalised,
     // so the rung cannot pass because the surgery did not take.
     const plain = armed({ rotation: "confused" });
     expect(plain.players.p2.active?.conditions.confusionDamage).not.toBe(80);
-    expect(find(swing(plain).events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(swing(plain).events, "DAMAGE_DEALT")?.dealt).toBe(100);
   });
 
   it("the ROTATION is EXCLUSIVE, so three of the five §12 words share one unit", () => {
     // Asleep, Paralyzed and Confused are ONE slot: each is 1 on its own and no board can
     // hold two of them. Burn and Poison are independent flags and stack with it.
     for (const rotation of ["asleep", "paralyzed", "confused"] as const) {
-      expect(find(swing(armed({ rotation })).events, "DAMAGE_DEALT")?.dealt, rotation).toBe(100);
+      expect(findEvent(swing(armed({ rotation })).events, "DAMAGE_DEALT")?.dealt, rotation).toBe(
+        100,
+      );
     }
-    expect(find(swing(armed({ burned: true })).events, "DAMAGE_DEALT")?.dealt).toBe(100);
-    expect(find(swing(armed({ poisonDamage: 10 })).events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(swing(armed({ burned: true })).events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(swing(armed({ poisonDamage: 10 })).events, "DAMAGE_DEALT")?.dealt).toBe(100);
   });
 
   it("the whole condition space, swept — every case, its count and its HP", () => {
@@ -336,7 +332,7 @@ describe("D518 §3 — the tally on a board: 0, 1, 2, 3 — and `confusionDamage
       const state = armed(conditions);
       const active = state.players.p2.active;
       if (active === null) throw new Error("no defender");
-      const dealt = find(swing(state).events, "DAMAGE_DEALT")?.dealt ?? 0;
+      const dealt = findEvent(swing(state).events, "DAMAGE_DEALT")?.dealt ?? 0;
       return [label, presentStatuses(active.conditions).length, dealt, expected] as const;
     });
     for (const [label, counted, dealt, expected] of table) {
@@ -352,8 +348,8 @@ describe("D518 §3 — the tally on a board: 0, 1, 2, 3 — and `confusionDamage
     const all = { burned: true, rotation: "confused", poisonDamage: 10 } as const;
     const mine = setConditions(withEffect(board(31), PRINTED), "p2", all);
     const theirs = setConditions(withEffect(board(31), INDICATOR), "p2", all);
-    expect(find(swing(mine).events, "DAMAGE_DEALT")?.dealt).toBe(300);
-    expect(find(swing(theirs).events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(swing(mine).events, "DAMAGE_DEALT")?.dealt).toBe(300);
+    expect(findEvent(swing(theirs).events, "DAMAGE_DEALT")?.dealt).toBe(120);
   });
 
   it("an HONEST IN-GAME board: `Triple Bloom` arms all three, and the fold reads the board", () => {
@@ -364,7 +360,7 @@ describe("D518 §3 — the tally on a board: 0, 1, 2, 3 — and `confusionDamage
     if (active === null) throw new Error("no defender");
     const armedCount = presentStatuses(active.conditions).length;
     expect(armedCount).toBeGreaterThanOrEqual(2);
-    expect(find(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(armedCount * 100);
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(armedCount * 100);
   });
 });
 
@@ -500,7 +496,7 @@ describe("D518 §5 — predicate ⟺ count ≥ 1, by construction rather than by
     expect(conditionHolds(state, "p2", { kind: "opponentActiveHasSpecialCondition" })).toBe(false);
     expect(conditionsOf(state, "p2")).toBe(3);
     expect(conditionsOf(state, "p1")).toBe(0);
-    expect(find(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(300);
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(300);
   });
 });
 

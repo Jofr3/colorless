@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, deriveAttackDamageBonus, deriveAttackDamageMultiplier } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   FIXTURE_POOL,
   RETREAT_SCALING_DECK,
@@ -13,19 +13,13 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const ADDITIVE_TEXT =
   "This attack does 30 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.";
 const MULTIPLY_TEXT =
   "This attack does 50 damage for each {C} in your opponent's Active Pokémon's Retreat Cost.";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first turn with no §4 attack restriction. */
@@ -123,7 +117,7 @@ describe("the additive arm — Heracross sv01-002 'Superpowered Throw' (10+)", (
     });
     const { events, state: after } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // retreat 2 → 10 + 30 × 2.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 60, dealt: 70 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 60, dealt: 70 });
     expect(after.players.p2.active?.damage).toBe(70);
     // Both the "+" marker and the sentence are simulated now.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -138,8 +132,8 @@ describe("the additive arm — Heracross sv01-002 'Superpowered Throw' (10+)", (
     });
     const { events, state: after } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // `scaled` is present only when the clause actually added HP.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 10 });
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(after.players.p2.active?.damage).toBe(10);
   });
 
@@ -152,8 +146,8 @@ describe("the additive arm — Heracross sv01-002 'Superpowered Throw' (10+)", (
     });
     // Horn Attack — a plain 90, no effect text, no "+" marker.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 90 });
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 90 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 });
@@ -168,7 +162,7 @@ describe("the multiply arm — Stoutland sv03-172 'Chomp Chomp Panic' (50×)", (
     });
     const { events, state: after } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // retreat 2 → 50 × 2, and base 0 — the printed "50×" IS the per-unit.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 100, dealt: 100 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 100, dealt: 100 });
     expect(after.players.p2.active?.damage).toBe(100);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -202,7 +196,7 @@ describe("the readers see the MODIFIED cost — the one-derivation-point payoff"
       "sv01-167",
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 30, dealt: 40 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 30, dealt: 40 });
   });
 
   it("reads Calamitous Wasteland's surcharge (retreat 2 → 3, so 70 → 100)", () => {
@@ -216,7 +210,7 @@ describe("the readers see the MODIFIED cost — the one-derivation-point payoff"
       "sv02-175",
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 90, dealt: 100 });
   });
 
   it("reads the surcharge's {F} EXEMPTION too — a Fighting defender stays at 1", () => {
@@ -231,7 +225,7 @@ describe("the readers see the MODIFIED cost — the one-derivation-point payoff"
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // Not 3 — the Stadium exempts {F}, so the reader sees the printed 1.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 30, dealt: 40 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 30, dealt: 40 });
   });
 
   it("multiplies through the surcharge as well (50 × 3 = 150)", () => {
@@ -245,7 +239,7 @@ describe("the readers see the MODIFIED cost — the one-derivation-point payoff"
       "sv02-175",
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 150, dealt: 150 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 150, dealt: 150 });
   });
 
   it("is a pure read — declaring the attack never mutates the frozen input", () => {

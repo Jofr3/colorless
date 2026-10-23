@@ -23,6 +23,7 @@ import {
   setDamage,
   trainerCard,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BBT = [
@@ -145,13 +146,6 @@ const DECK = deckOf({
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260925;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -342,7 +336,7 @@ describe("§2 — the install: one entry on the bag, one row, no park, no rng", 
     const { start, uid, state, events } = played();
     expect(start.allowances.sideAttackBonuses).toEqual([]);
     expect(types(events)).toEqual(["TRAINER_PLAYED", "SIDE_ATTACKS_BOOSTED"]);
-    expect(find(events, "SIDE_ATTACKS_BOOSTED")).toStrictEqual({
+    expect(findEvent(events, "SIDE_ATTACKS_BOOSTED")).toStrictEqual({
       type: "SIDE_ATTACKS_BOOSTED",
       seat: "p1",
       amount: BONUS,
@@ -363,9 +357,9 @@ describe("§2 — the install: one entry on the bag, one row, no park, no rng", 
 
   it("R1 — with NO ex Active it still PLAYS and installs; the bonus simply never matches", () => {
     const { state, events } = played({ defender: "d556-wall" });
-    expect(find(events, "SIDE_ATTACKS_BOOSTED")).toBeDefined();
+    expect(findEvent(events, "SIDE_ATTACKS_BOOSTED")).toBeDefined();
     expect(state.allowances.sideAttackBonuses).toHaveLength(1);
-    const row = find(attack(state, STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(state, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(50);
     expect(row?.bonus).toBeUndefined();
   });
@@ -374,28 +368,28 @@ describe("§2 — the install: one entry on the bag, one row, no park, no rng", 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§3 — the main hit: +40 on an Active ex, before Weakness and Resistance", () => {
   it("Strike does 50 + 40 = 90 to an Active ex, reported in `bonus`", () => {
-    const row = find(attack(played().state, STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(played().state, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(50);
     expect(row?.bonus).toBe(BONUS);
     expect(row?.dealt).toBe(50 + BONUS);
   });
 
   it("the UNPLAYED control on the same board does the printed 50", () => {
-    const row = find(attack(ready(), STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(ready(), STRIKE).events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(50);
     expect(row?.bonus).toBeUndefined();
   });
 
   it("a non-ex Active gets 0 — and so does a Pokémon V (the print names ex alone)", () => {
     for (const defender of ["d556-wall", "d556-wall-v"]) {
-      const row = find(attack(played({ defender }).state, STRIKE).events, "DAMAGE_DEALT");
+      const row = findEvent(attack(played({ defender }).state, STRIKE).events, "DAMAGE_DEALT");
       expect(row?.dealt, defender).toBe(50);
       expect(row?.bonus, defender).toBeUndefined();
     }
   });
 
   it("PRE-W/R: (50 + 40) × 2 = 180 on a Weakness ex, not 50 × 2 + 40", () => {
-    const row = find(
+    const row = findEvent(
       attack(played({ defender: "d556-weak-ex" }).state, STRIKE).events,
       "DAMAGE_DEALT",
     );
@@ -404,7 +398,7 @@ describe("§3 — the main hit: +40 on an Active ex, before Weakness and Resista
   });
 
   it("PRE-W/R: (50 + 40) − 30 = 60 on a Resistance ex, not 50 − 30 + 40", () => {
-    const row = find(
+    const row = findEvent(
       attack(played({ defender: "d556-resist-ex" }).state, STRIKE).events,
       "DAMAGE_DEALT",
     );
@@ -417,7 +411,7 @@ describe("§4 — the snipe site pays it; the Bench and a no-damage attack never
   it("a chosen snipe landing on the ACTIVE ex (`snipeActive`) does 30 + 40 = 70", () => {
     const parked = attack(played({ p2Bench: 1 }).state, PICK_OFF).state;
     expect(parked.phase.kind).toBe("effect:choose");
-    const row = find(pickActive(parked).events, "DAMAGE_DEALT");
+    const row = findEvent(pickActive(parked).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.bonus).toBe(BONUS);
     expect(row?.dealt).toBe(30 + BONUS);
@@ -444,7 +438,7 @@ describe("§4 — the snipe site pays it; the Bench and a no-damage attack never
   it("a NO-DAMAGE attack gets nothing — no DAMAGE_DEALT row at all (Vitality Band's rule)", () => {
     const window = played().state;
     const { state, events } = attack(window, REST);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(body(state.players.p2.active).damage).toBe(0);
   });
 });
@@ -463,7 +457,7 @@ describe('§5 — "your Pokémon" is the SIDE: a body brought in after the play 
     }).state;
     expect(state.cardIdByUid[activeUid(state, "p1")]).toBe("d556-relief");
     state = attachFromDeck(state, "p1", "fix-energy", 1);
-    const row = find(attack(state, STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(state, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(50 + BONUS);
   });
 });
@@ -481,7 +475,7 @@ describe('§6 — "during this turn": the next `startTurn` wipes it', () => {
 
   it("the NEXT turn's Strike does the printed 50 — the bonus did not survive the boundary", () => {
     const back = pass(pass(played().state, "p1"), "p2");
-    const row = find(attack(back, STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(back, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(50);
     expect(row?.bonus).toBeUndefined();
   });
@@ -494,7 +488,7 @@ describe("§7 — a §9 Ability lock does NOT reach it (a Trainer installation i
     // opponent's DAMAGED non-ex Pokémon: damage the attacker and it is in the set.
     const state = setDamage(played({ defender: "sv02-127" }).state, "p1", 10);
     expect(disabledAbilityUids(state).has(activeUid(state, "p1"))).toBe(true);
-    const row = find(attack(state, STRIKE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(state, STRIKE).events, "DAMAGE_DEALT");
     expect(row?.bonus).toBe(BONUS);
     expect(row?.dealt).toBe(50 + BONUS);
   });
@@ -519,7 +513,7 @@ describe("§8 — the seat guard, and sources SUMMED", () => {
     state = activeFrom(state, "p1", "d556-bench-ex");
     const events: GameEvent[] = [];
     const after = runAs(state, "p2", [{ op: "damageNewActive", amount: 30 }], events);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(body(after.players.p1.active).damage).toBe(30);
   });
 
@@ -539,7 +533,7 @@ describe("§8 — the seat guard, and sources SUMMED", () => {
       [],
     );
     expect(state.allowances.sideAttackBonuses).toHaveLength(3);
-    expect(find(attack(state, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS + BONUS);
+    expect(findEvent(attack(state, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS + BONUS);
   });
 });
 
@@ -550,7 +544,7 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     const wire = JSON.stringify(state.allowances.sideAttackBonuses);
     expect(wire).toBe('[{"amount":40,"target":{"kind":"suffixPokemon","suffix":"ex"}}]');
     const revived = JSON.parse(JSON.stringify(state)) as GameState;
-    expect(find(attack(revived, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
+    expect(findEvent(attack(revived, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
   });
 
   it("(i) A v34 ROLLBACK reading a v35 record mid-turn drops the +40 — NOT inert, so the version is owed", () => {
@@ -563,8 +557,8 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
       allowances: { ...v35.allowances, sideAttackBonuses: [] },
     };
     expect(asRollbackReadsIt.allowances.supporterPlayed).toBe(true);
-    expect(find(attack(asRollbackReadsIt, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
-    expect(find(attack(v35, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
+    expect(findEvent(attack(asRollbackReadsIt, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(attack(v35, STRIKE).events, "DAMAGE_DEALT")?.dealt).toBe(50 + BONUS);
   });
 
   it("(ii) A v35 engine reading a v34 bag (no key) THROWS on the turn owner's damaging attack and on the play — D326", () => {

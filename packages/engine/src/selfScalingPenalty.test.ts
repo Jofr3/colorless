@@ -23,6 +23,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
@@ -33,13 +34,6 @@ const RAGING_HORNS = "This attack does 10 more damage for each damage counter on
 const BALLOON_BLAST = "This attack does 30 damage for each damage counter on this Pokémon.";
 
 const SEED = 5;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ATTACKERS = {
   cetitan: {
@@ -283,8 +277,8 @@ describe("the fold — the printed base is KEPT and `per × counters` comes off 
     // "200-" parses to base 200 with a "-" marker, and at zero counters the attack
     // really does its printed number — which is what makes the marker a marker.
     const { state, events } = swing(board("cetitan", "fix-titan"), "cetitan");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, dealt: 200 });
-    expect(find(events, "DAMAGE_DEALT")?.debuff).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, dealt: 200 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.debuff).toBeUndefined();
     expect(state.players.p2.active?.damage).toBe(200);
   });
 
@@ -292,14 +286,14 @@ describe("the fold — the printed base is KEPT and `per × counters` comes off 
     let state = board("cetitan", "fix-titan");
     state = setDamage(state, "p1", 30); // 3 damage counters
     const { events } = swing(state, "cetitan");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 60, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 60, dealt: 140 });
   });
 
   it("…and 10 PER COUNTER for Skeledirge ex, off ONE regex", () => {
     let state = board("skeledirge", "fix-titan");
     state = setDamage(state, "p1", 100); // 10 damage counters
     const { events } = swing(state, "skeledirge");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 270, debuff: 100, dealt: 170 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 270, debuff: 100, dealt: 170 });
   });
 
   it("counts the ATTACKER's counters, never the defender's", () => {
@@ -309,8 +303,8 @@ describe("the fold — the printed base is KEPT and `per × counters` comes off 
     let state = board("cetitan", "fix-titan");
     state = setDamage(state, "p2", 150);
     const { events } = swing(state, "cetitan");
-    expect(find(events, "DAMAGE_DEALT")?.debuff).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(200);
+    expect(findEvent(events, "DAMAGE_DEALT")?.debuff).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(200);
   });
 
   it("reads the counters at DECLARATION, so a body healed to zero pays nothing", () => {
@@ -331,22 +325,22 @@ describe("the fold — the printed base is KEPT and `per × counters` comes off 
     let state = board("cetitan-hammer", "fix-titan");
     state = setDamage(state, "p1", 30);
     const { events } = swing(state, "cetitan-hammer");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, dealt: 50 });
-    expect(find(events, "DAMAGE_DEALT")?.debuff).toBeUndefined();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.debuff).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("the SIGN-FLIPPED TWIN still ADDS, on the same board and the same count", () => {
     let state = board("rage", "fix-titan");
     state = setDamage(state, "p1", 30);
-    expect(find(swing(state, "rage").events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(swing(state, "rage").events, "DAMAGE_DEALT")).toMatchObject({
       base: 10,
       scaled: 30,
       dealt: 40,
     });
     let fury = board("fury", "fix-titan");
     fury = setDamage(fury, "p1", 30);
-    const furyRow = find(swing(fury, "fury").events, "DAMAGE_DEALT");
+    const furyRow = findEvent(swing(fury, "fury").events, "DAMAGE_DEALT");
     expect(furyRow).toMatchObject({ base: 0, scaled: 60, dealt: 60 });
     expect(furyRow?.debuff).toBeUndefined();
   });
@@ -361,7 +355,7 @@ describe("the clamp — inherited, taken over the WHOLE pre-W/R sum", () => {
     let state = board("cetitan", "fix-titan");
     state = setDamage(state, "p1", 100); // 10 counters × 20 = 200
     const { events } = swing(state, "cetitan");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 200, debuff: 200, dealt: 0 });
     expect(row?.prevented).toBeUndefined();
   });
@@ -371,8 +365,8 @@ describe("the clamp — inherited, taken over the WHOLE pre-W/R sum", () => {
     state = setDamage(state, "p1", 150);
     state = attachToolFromDeck(state, "p1", "active", "sv01-197");
     const { events } = swing(state, "cetitan");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 300, dealt: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.bonus).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 300, dealt: 0 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.bonus).toBe(10);
   });
 });
 
@@ -385,17 +379,17 @@ describe("the ORDER — BEFORE Weakness, and the oracle is re-driven from the ro
     let state = board("cetitan", "sv02-037");
     state = setDamage(state, "p1", 30);
     const { state: after, events } = swing(state, "cetitan");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 200, debuff: 60, dealt: 280 });
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(after.players.p2.active?.damage).toBe(280);
-    expect(find(events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeUndefined();
   });
 
   it("…and the oracle is derived from the ROW's OWN fields, in both placements", () => {
     let state = board("cetitan", "sv02-037");
     state = setDamage(state, "p1", 30);
-    const row = find(swing(state, "cetitan").events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, "cetitan").events, "DAMAGE_DEALT");
     if (row === undefined) throw new Error("no damage row");
     const weakness: DamageModifier | null = row.weakness;
     const raw = row.base + (row.scaled ?? 0) + (row.bonus ?? 0);
@@ -411,7 +405,7 @@ describe("the ORDER — BEFORE Weakness, and the oracle is re-driven from the ro
     state = setDamage(state, "p1", 30);
     state = attachToolFromDeck(state, "p1", "active", "sv01-197");
     const { events } = swing(state, "cetitan");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 200,
       bonus: 10,
       debuff: 60,
@@ -429,20 +423,20 @@ describe("`debuff` — the third source on a field that already summed two", () 
     let state = board("cetitan", "sv03-030");
     state = setDamage(state, "p1", 30);
     const { events } = swing(state, "cetitan");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 80, dealt: 240 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 80, dealt: 240 });
   });
 
   it("…with BOTH halves of that sum separated on their own boards", () => {
     // Pressure alone: 20. The penalty alone: 60. Neither control can be produced by
     // an implementation that reported only one of the two sources.
-    const pressureOnly = find(
+    const pressureOnly = findEvent(
       swing(board("cetitan", "sv03-030"), "cetitan").events,
       "DAMAGE_DEALT",
     );
     expect(pressureOnly).toMatchObject({ debuff: 20, dealt: 360 });
     let penaltyOnly = board("cetitan", "fix-titan");
     penaltyOnly = setDamage(penaltyOnly, "p1", 30);
-    expect(find(swing(penaltyOnly, "cetitan").events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(swing(penaltyOnly, "cetitan").events, "DAMAGE_DEALT")).toMatchObject({
       debuff: 60,
     });
   });
@@ -458,7 +452,7 @@ describe("§9 and `ignoreWR` — where this printing sits on both axes", () => {
     state = setDamage(state, "p1", 30);
     expect(disabledAbilityUids(state).has(activeUid(state, "p1"))).toBe(true);
     const { events } = swing(state, "cetitan");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 60, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 200, debuff: 60, dealt: 140 });
   });
 
   it("`ignoreWR` cannot reach it either, and the reason is STRUCTURAL", () => {
@@ -500,7 +494,7 @@ describe("VOICE — the crumb, rendered under BOTH seats and READ", () => {
     for (const attacker of ["cetitan", "skeledirge"] as const) {
       let state = board(attacker, "fix-titan");
       state = setDamage(state, "p1", 30);
-      expect(find(swing(state, attacker).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(findEvent(swing(state, attacker).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     }
   });
 });

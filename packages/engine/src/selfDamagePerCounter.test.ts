@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -40,13 +41,6 @@ const CONSTRUCTED_MISSES = [
   // the subject changed: "This attack" is a different sentence family entirely
   "This attack does 10 damage to itself for each damage counter on it.",
 ] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 const types = (events: GameEvent[]) => events.map((e) => e.type);
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
 
@@ -148,20 +142,26 @@ describe("§3 — the recoil scales off the attacker's own counters", () => {
     // §12: one counter is 10 HP. 30 damage on the body is 3 counters, so the printed 10
     // becomes 30 — and the attacker ends at 30 + 30 = 60.
     const three = swing(board(1, 30), IDX.scaled);
-    expect(find(three.events, "COUNTERS_PLACED")).toMatchObject({ amount: 30, source: "self" });
+    expect(findEvent(three.events, "COUNTERS_PLACED")).toMatchObject({
+      amount: 30,
+      source: "self",
+    });
     expect(three.state.players.p1.active?.damage).toBe(60);
     // A second, different multiplier so "30" cannot be a hard-coded number: 7 counters → 70,
     // and 70 + 70 = 140 on a 200 HP body, which still does not KO.
     const seven = swing(board(2, 70), IDX.scaled);
-    expect(find(seven.events, "COUNTERS_PLACED")).toMatchObject({ amount: 70, source: "self" });
+    expect(findEvent(seven.events, "COUNTERS_PLACED")).toMatchObject({
+      amount: 70,
+      source: "self",
+    });
     expect(seven.state.players.p1.active?.damage).toBe(140);
   });
 
   it("THE LOSS DIRECTION — an UNDAMAGED attacker takes NO recoil and emits NO event", () => {
     const { state, events } = swing(board(3, 0), IDX.scaled);
     expect(state.players.p1.active?.damage).toBe(0);
-    expect(find(events, "COUNTERS_PLACED")).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
     expect(state.players.p2.active?.damage).toBe(20);
   });
 
@@ -170,7 +170,7 @@ describe("§3 — the recoil scales off the attacker's own counters", () => {
     // this rung "the recoil was 30" is equally consistent with a build that scales EVERY
     // recoil, and with one that reads the amount off the body's damage directly.
     const { state, events } = swing(board(4, 30), IDX.flat);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 10, source: "self" });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 10, source: "self" });
     expect(state.players.p1.active?.damage).toBe(40);
   });
 
@@ -179,7 +179,7 @@ describe("§3 — the recoil scales off the attacker's own counters", () => {
     // arithmetic `scaledAttackDamage`'s `damageCountersOnSelf` arm does. A fold written as
     // `damage / 10` reads 2.5 here and places 25; a fold written as `damage` places 250.
     const { state, events } = swing(board(5, 25), IDX.scaled);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "self" });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "self" });
     expect(state.players.p1.active?.damage).toBe(45);
   });
 
@@ -194,9 +194,9 @@ describe("§3 — the recoil scales off the attacker's own counters", () => {
   it("the recoil is OUTSIDE the §8.5 pipeline — COUNTERS_PLACED, not DAMAGE_DEALT", () => {
     const { events } = swing(board(7, 30), IDX.scaled);
     expect(types(events)).toContain("COUNTERS_PLACED");
-    const self = find(events, "COUNTERS_PLACED");
+    const self = findEvent(events, "COUNTERS_PLACED");
     expect(self?.seat).toBe("p1");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
     // …and the recoil's 30 never appears as dealt damage anywhere.
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
   });

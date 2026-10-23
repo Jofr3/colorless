@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BASIC_TEXT =
@@ -30,13 +31,6 @@ const UNFILTERED_TEXT =
     would be describing a shuffle rather than a rule (contrast
     `preventBlock.test.ts`, whose every board is reached by sweeping for a face). */
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -62,7 +56,7 @@ function installed(installer: string, energy = 2): GameState {
     seat: "p1",
     index: 0,
   });
-  if (find(events, "ATTACK_BLOCK_APPLIED") === undefined) {
+  if (findEvent(events, "ATTACK_BLOCK_APPLIED") === undefined) {
     throw new Error(`${installer} did not install a block`);
   }
   return state;
@@ -227,7 +221,7 @@ describe("the attacker-CLASS filter — installing it", () => {
     expect(state.turn).toBe(2);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(find(events, "ATTACK_BLOCK_APPLIED")).toEqual({
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")).toEqual({
       type: "ATTACK_BLOCK_APPLIED",
       seat: "p1",
       uid: installer,
@@ -260,7 +254,7 @@ describe("the attacker-CLASS filter — installing it", () => {
       });
       const order = types(events);
       expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ATTACK_BLOCK_APPLIED"));
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(printed);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(printed);
       expect(done.players.p1.active?.attackBlock?.fromClass).toEqual(BASIC_CLASS);
     }
   });
@@ -274,7 +268,7 @@ describe("the attacker-CLASS filter — installing it", () => {
     expect(types(events)).not.toContain("ATTACK_BLOCK_APPLIED");
     expect(done.players.p1.active?.attackBlock).toBeNull();
     // …and index 1 really did resolve: 180 landed and its own self-discard ran.
-    expect(find(done ? [] : [], "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(done ? [] : [], "DAMAGE_DEALT")).toBeUndefined();
     expect(types(events)).toContain("ENERGY_DISCARDED");
   });
 
@@ -310,7 +304,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
       const state = installed(installer);
       deepFreeze(state);
       const { state: done, events } = swing(state, "fix-attacker", { id: "fix-energy", count: 1 });
-      const hit = find(events, "DAMAGE_DEALT");
+      const hit = findEvent(events, "DAMAGE_DEALT");
       expect(hit).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
       expect(done.players.p1.active?.damage).toBe(0);
     }
@@ -318,7 +312,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
 
   it("a NON-Basic attacker lands in FULL — and the two installers prove it to each other", () => {
     const intoNoivern = swing(installed("sv02-153"), "sv01-150", { id: "fix-energy", count: 3 }, 1);
-    const bigHit = find(intoNoivern.events, "DAMAGE_DEALT");
+    const bigHit = findEvent(intoNoivern.events, "DAMAGE_DEALT");
     expect(bigHit).toMatchObject({ seat: "p1", dealt: 180 });
     expect(bigHit?.prevented).toBeUndefined();
     expect(intoNoivern.state.players.p1.active?.damage).toBe(180);
@@ -331,7 +325,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
     });
 
     const intoStaraptor = swing(installed("sv01-150"), "sv02-153", { id: "fix-energy", count: 2 });
-    const hit = find(intoStaraptor.events, "DAMAGE_DEALT");
+    const hit = findEvent(intoStaraptor.events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 70 });
     expect(hit?.prevented).toBeUndefined();
     expect(intoStaraptor.state.players.p1.active?.damage).toBe(70);
@@ -342,7 +336,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
       id: "fix-lightning-energy",
       count: 3,
     });
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
     expect(hit?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(hit?.base).toBe(70);
@@ -367,13 +361,13 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
   it("expires by arithmetic — the SAME Basic attacker lands in full a turn later", () => {
     let state = installed("sv01-150");
     const blocked = swing(state, "fix-attacker", { id: "fix-energy", count: 1 });
-    expect(find(blocked.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(blocked.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     // Turn 4 is P1's; they pass. Turn 5 is P2's again — and the stamp says 3.
     expect(blocked.state.turn).toBe(4);
     state = must(applyAction(blocked.state, { type: "endTurn", seat: "p1" }));
     expect(state.turn).toBe(5);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ dealt: 30 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(30);
@@ -393,7 +387,7 @@ describe("the attacker-CLASS filter — it is the NARROW reading, so effects go 
       id: "fix-lightning-energy",
       count: 3,
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(types(events)).toContain("ENERGY_DISCARDED");
     expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
     expect(done.players.p1.active?.energy).toHaveLength(1);
@@ -404,7 +398,7 @@ describe("the attacker-CLASS filter — it is the NARROW reading, so effects go 
       id: "fix-psychic-energy",
       count: 2,
     });
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 70,
       source: "attack",
@@ -420,9 +414,9 @@ describe("the attacker-CLASS filter — it is the NARROW reading, so effects go 
       { id: "fix-energy", count: 1 },
       2,
     );
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "asleep" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "asleep" });
     expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
-    const woke = find(events, "CHECKUP_COIN_FLIP");
+    const woke = findEvent(events, "CHECKUP_COIN_FLIP");
     expect(done.players.p1.active?.conditions.rotation).toBe(
       woke?.result === "heads" ? "none" : "asleep",
     );
@@ -452,11 +446,14 @@ describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarde
     const base = wideFiltered(installed("sv01-150"));
     const matched = swing(base, "sv02-097", { id: "fix-psychic-energy", count: 2 });
     expect(types(matched.events)).not.toContain("COUNTERS_PLACED");
-    expect(find(matched.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(matched.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p1" });
     expect(matched.state.players.p1.active?.damage).toBe(0);
 
     const unmatched = swing(base, "sv03-098", { id: "fix-psychic-energy", count: 1 }, 1);
-    expect(find(unmatched.events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 50 });
+    expect(findEvent(unmatched.events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p1",
+      amount: 50,
+    });
     expect(types(unmatched.events)).not.toContain("ATTACK_EFFECT_PREVENTED");
     expect(unmatched.state.players.p1.active?.damage).toBe(50);
   });
@@ -490,7 +487,7 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
     next = setActiveFromDeck(next, "p2", "fix-sniper");
     next = attachFromDeck(next, "p2", "fix-energy", 1);
     const { state: hit, events } = mustApply(next, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
     expect(hit.players.p1.bench[benchIndex]?.damage).toBe(20);
   });
 
@@ -542,6 +539,6 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
     expect(done.players.p1.active?.attackBlock?.fromClass).toBeUndefined();
     // …and it is really unfiltered now: a NON-Basic attacker is refused.
     const { events: swung } = swing(done, "sv02-153", { id: "fix-energy", count: 2 });
-    expect(find(swung, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(swung, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 });

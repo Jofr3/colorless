@@ -20,6 +20,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -90,13 +91,6 @@ const REAL_NEAR_MISSES = [
 ] as const;
 
 const NBSP = "\u00a0";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -459,13 +453,13 @@ describe("end to end — Nacli 'Salt Coating' (heal 20, ANY zone, NO printed dam
     const { state: parked, events } = declare(state, SALT_COATING_INDEX);
 
     expect(types(events)).toContain("EFFECT_PENDING");
-    expect(find(events, "EFFECT_PENDING")?.seat).toBe("p1");
+    expect(findEvent(events, "EFFECT_PENDING")?.seat).toBe("p1");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides
     expect(parked.phase.resumeTail).toBe(true);
     // The attacker is the program's "this Pokémon" — the context names it by uid,
     // even though nothing in this op reads it. (It would matter to a rider.)
-    expect(parked.phase.cont.ctx.sourceUid).toBe(find(events, "ATTACK_DECLARED")?.uid);
+    expect(parked.phase.cont.ctx.sourceUid).toBe(findEvent(events, "ATTACK_DECLARED")?.uid);
 
     const prompt = choosePrompt(parked);
     expect(prompt.candidates).toEqual([ACTIVE_REF, BENCH_0, BENCH_1]);
@@ -480,8 +474,8 @@ describe("end to end — Nacli 'Salt Coating' (heal 20, ANY zone, NO printed dam
       {
         kind: "attackEpilogue",
         seat: "p1",
-        uid: find(events, "ATTACK_DECLARED")?.uid,
-        attack: find(events, "ATTACK_DECLARED")?.attack,
+        uid: findEvent(events, "ATTACK_DECLARED")?.uid,
+        attack: findEvent(events, "ATTACK_DECLARED")?.attack,
       },
     ]);
     expect(parked.players.p1.active?.damage).toBe(ATTACKER_HURT);
@@ -566,7 +560,7 @@ describe("end to end — Nacli 'Salt Coating' (heal 20, ANY zone, NO printed dam
       "TURN_STARTED",
       "CARDS_DRAWN",
     ]);
-    expect(find(events, "HEALED")).toEqual({
+    expect(findEvent(events, "HEALED")).toEqual({
       type: "HEALED",
       seat: "p1",
       uid: attackerUid,
@@ -731,7 +725,7 @@ describe("end to end — Tropius 'Fresh-Picked Fruit' (heal 60, BENCH only)", ()
 
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
-    expect(find(events, "HEALED")).toEqual({
+    expect(findEvent(events, "HEALED")).toEqual({
       type: "HEALED",
       seat: "p1",
       uid: target,

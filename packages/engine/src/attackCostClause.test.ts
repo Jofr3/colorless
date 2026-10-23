@@ -18,7 +18,7 @@ import {
   createGame,
   redactGame,
 } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { providedEnergy } from "./continuous";
 import {
@@ -35,6 +35,7 @@ import {
   setConditions,
   setDamage,
   types,
+  activeOf,
 } from "./testFixtures";
 
 const ALT = "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
@@ -186,12 +187,6 @@ function withLeagueHq(state: GameState): GameState {
   const next = handFromDeck(state, "p1", "sv03-192", 1);
   return mustApply(next, { type: "playTrainer", seat: "p1", uid: handUid(next, "p1", "sv03-192") })
     .state;
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const spot = state.players[seat].active;
-  if (spot === null) throw new Error(`${seat} has no Active`);
-  return spot;
 }
 
 /** What the §8.2 gate charges P1's Active at `index`, through the exported seam. */

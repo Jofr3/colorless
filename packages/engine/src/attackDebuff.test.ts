@@ -23,6 +23,7 @@ import {
   setPrizes,
   types,
   walkProgram,
+  findEvent,
 } from "./testFixtures";
 
 /** Sentence ONE at each printed amount — the majority spelling (3 of 5). */
@@ -39,13 +40,6 @@ const AFTER_WR =
   "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).";
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -140,7 +134,7 @@ function installed(
     seat: "p1",
     index: spec.index,
   });
-  const row = find(events, "ATTACK_DEBUFF_APPLIED");
+  const row = findEvent(events, "ATTACK_DEBUFF_APPLIED");
   if (row === undefined) throw new Error(`${installer} did not install a debuff`);
   if (row.amount !== spec.amount) throw new Error(`${installer} installed ${String(row.amount)}`);
   return state;
@@ -400,7 +394,7 @@ describe("the attacker-side debuff — installing it", () => {
     expect(state.turn).toBe(2);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(find(events, "ATTACK_DEBUFF_APPLIED")).toEqual({
+    expect(findEvent(events, "ATTACK_DEBUFF_APPLIED")).toEqual({
       type: "ATTACK_DEBUFF_APPLIED",
       seat: "p2",
       uid: victim,
@@ -428,12 +422,12 @@ describe("the attacker-side debuff — installing it", () => {
         seat: "p1",
         index: spec.index,
       });
-      expect(find(events, "ATTACK_DEBUFF_APPLIED")?.amount, id).toBe(spec.amount);
+      expect(findEvent(events, "ATTACK_DEBUFF_APPLIED")?.amount, id).toBe(spec.amount);
       expect(done.players.p2.active?.attackDamageDebuff, id).toEqual({
         turn: 3,
         amount: spec.amount,
       });
-      const hit = find(events, "DAMAGE_DEALT");
+      const hit = findEvent(events, "DAMAGE_DEALT");
       expect(hit?.dealt ?? 0, id).toBe(spec.hit);
       if (spec.hit > 0) {
         expect(types(events).indexOf("DAMAGE_DEALT")).toBeLessThan(
@@ -452,7 +446,7 @@ describe("the attacker-side debuff — installing it", () => {
     });
     expect(types(biteEvents)).not.toContain("ATTACK_DEBUFF_APPLIED");
     expect(bite.players.p2.active?.attackDamageDebuff).toBeNull();
-    expect(find(biteEvents, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(biteEvents, "DAMAGE_DEALT")?.dealt).toBe(50);
     // …and Pikachu installs at INDEX 0, so its index-1 "Pika Bolt" (30) must not.
     const { state: bolt, events: boltEvents } = mustApply(
       attachFromDeck(armed("sv02-062", "fix-titan"), "p1", "fix-lightning-energy", 1),
@@ -487,7 +481,7 @@ describe("the attacker-side debuff — the §8.5 ORDERING the parenthetical pins
     expect(state.players.p2.active?.damage).toBe(100); // Snarl landed
     const installer = activeUid(state, "p1");
     const { state: done, events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.uid).toBe(installer);
     expect(row?.base).toBe(120);
     expect(row?.debuff).toBe(100);
@@ -508,7 +502,7 @@ describe("the attacker-side debuff — the §8.5 ORDERING the parenthetical pins
       { id: "fix-energy", count: 1 },
     ]);
     const { events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.debuff).toBe(20);
     expect(row?.dealt).toBe(20);
@@ -525,7 +519,7 @@ describe("the attacker-side debuff — the §8.5 ORDERING the parenthetical pins
     ]);
     state = benchFromDeck(state, "p1", "sv01-093");
     const { events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.debuff).toBe(20);
     expect(row?.weakness).toBeNull();
@@ -565,7 +559,7 @@ describe("the attacker-side debuff — the §8.5 ORDERING the parenthetical pins
       { id: "fix-energy", count: 1 },
     ]);
     const { state: done, events } = swingBack(state, 0);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.debuff).toBe(100);
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -603,7 +597,7 @@ describe("the attacker-side debuff — the §8.5 ORDERING the parenthetical pins
     // Surf (30) clamped to 0 by the 100 → NOTHING happened to the holder, so the
     // Helmet says nothing either.
     const clamped = swingBack(helmeted(), 0);
-    expect(find(clamped.events, "DAMAGE_DEALT")?.dealt).toBe(0);
+    expect(findEvent(clamped.events, "DAMAGE_DEALT")?.dealt).toBe(0);
     expect(types(clamped.events)).not.toContain("COUNTERS_PLACED");
     expect(types(clamped.events)).not.toContain("KNOCKED_OUT");
     expect(clamped.state.players.p1.active?.damage).toBe(0);
@@ -614,8 +608,8 @@ describe("the attacker-side debuff — the §8.5 ORDERING the parenthetical pins
     // board, same Tool, same debuff, and the only difference is whether `dealt` was
     // positive.
     const through = swingBack(helmeted(), 1);
-    expect(find(through.events, "DAMAGE_DEALT")?.dealt).toBe(40);
-    expect(find(through.events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(through.events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(through.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       amount: 20,
       source: "counterattack",
@@ -630,7 +624,7 @@ describe("the attacker-side debuff — the four READ SITES", () => {
       { id: "fix-energy", count: 1 },
     ]);
     const { events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.debuff).toBe(20);
     expect(row?.dealt).toBe(20);
     if (row !== undefined) expectBeforeWR(row);
@@ -640,7 +634,7 @@ describe("the attacker-side debuff — the four READ SITES", () => {
     let state = installed("swsh10.5-061", "sv01-069", [{ id: "fix-energy", count: 1 }]);
     state = clearBench(state, "p1"); // one candidate → no park
     const { events } = swingBack(state, 0);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(20);
     expect(row?.debuff).toBe(20);
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -704,7 +698,7 @@ describe("the attacker-side debuff — meeting D147's reduction on one exchange"
     ]);
     state = withReduction(state, "p1", "active", 20);
     const { events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.debuff).toBe(20);
     expect(row?.reduction).toBe(20);
@@ -732,7 +726,7 @@ describe("the attacker-side debuff — meeting D147's reduction on one exchange"
     expect(state.players.p2.active?.damageReduction).toEqual({ turn: 3, amount: 50 });
     // The debuffed body's own attack is cut by 20 (its debuff) and NOT by 50.
     const { events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.debuff).toBe(20);
     expect(row?.reduction).toBeUndefined(); // the reduction is on the ATTACKER, not the target
     expect(row?.dealt).toBe(20);
@@ -757,7 +751,7 @@ describe("the attacker-side debuff — the LIFETIME", () => {
     expect(state.turn).toBe(5);
     // On turn 5 the SAME attacker hits for the undebuffed number: 30 × 2 = 60.
     const { events } = swingBack(state, 1);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.debuff).toBeUndefined();
     expect(row?.dealt).toBe(60);
   });
@@ -790,7 +784,7 @@ describe("the attacker-side debuff — the LIFETIME", () => {
     let next = attachFromDeck(retreated, "p2", "fix-water-energy", 1);
     next = attachFromDeck(next, "p2", "fix-energy", 1);
     const { events } = mustApply(next, { type: "attack", seat: "p2", index: 0 });
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.debuff).toBeUndefined();
     expect(row?.dealt).toBe(30); // Surf 30, Pidove is Colorless-neutral to Water
   });
@@ -838,7 +832,7 @@ describe("the attacker-side debuff — the LIFETIME", () => {
     // ×2 WATER, so 80 rather than the max(0, 40 − 100) = 0 the debuff would have made.
     const armedEvo = attachFromDeck(done, "p2", "fix-water-energy", 1);
     const { events: hit } = mustApply(armedEvo, { type: "attack", seat: "p2", index: 0 });
-    const row = find(hit, "DAMAGE_DEALT");
+    const row = findEvent(hit, "DAMAGE_DEALT");
     expect(row?.debuff).toBeUndefined();
     expect(row?.dealt).toBe(80);
   });
@@ -874,7 +868,7 @@ describe("the attacker-side debuff — the LIFETIME", () => {
     let state = withDebuff(armed("sv06.5-008", "sv01-048"), "p2", 50, 3);
     let done = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(done.state.players.p2.active?.attackDamageDebuff).toEqual({ turn: 3, amount: 100 });
-    expect(find(done.events, "ATTACK_DEBUFF_APPLIED")?.amount).toBe(100);
+    expect(findEvent(done.events, "ATTACK_DEBUFF_APPLIED")?.amount).toBe(100);
     state = withDebuff(armed("swsh10.5-061", "sv01-048"), "p2", 100, 3);
     done = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(done.state.players.p2.active?.attackDamageDebuff).toEqual({ turn: 3, amount: 100 });
@@ -893,8 +887,8 @@ describe("the attacker-side debuff — the §11 block REFUSES it", () => {
     expect(types(events)).not.toContain("ATTACK_DEBUFF_APPLIED");
     expect(done.players.p2.active?.attackDamageDebuff).toBeNull();
     // The DAMAGE half is nulled by the same block, on its own field.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
   });
 
   it("…and an EXPIRED block does not refuse it", () => {

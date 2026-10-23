@@ -20,6 +20,7 @@ import {
   setDamage,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const PRISM_TEXT =
@@ -195,11 +196,6 @@ const cards = (uids: readonly string[]): GameAction => ({
   seat: "p1",
   choice: { kind: "cards", uids: [...uids] },
 });
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 const idOf = (state: GameState, uid: string | undefined) =>
@@ -292,7 +288,7 @@ describe("D606 §2 — Prism Tower: discard 2 from the hand, draw 1", () => {
   it("three cards in hand: the pick of exactly 2 parks, both go to the discard, one card is drawn", () => {
     const board = setHand(stadium(table(FILLER), PRISM[0]), "p1", [ITEM_A, ITEM_B, ITEM_A]);
     const { state: parked } = use(board);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 2, max: 2 });
     const [a, b, c] = board.players.p1.hand as [string, string, string];
@@ -340,7 +336,7 @@ describe("D606 §3 — Surfing Beach: the Active {W} switches with a Benched {W}
   it("two Benched {W}: the pick parks over those two only", () => {
     const board = stadium(table(WATER, [WATER_B, FILLER, WATER]), SURF[0]);
     const { state: parked } = use(board);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.candidates).toEqual([
       { seat: "p1", spot: { spot: "bench", index: 0 } },
@@ -411,7 +407,7 @@ describe("D606 §5 — Lumiose City: a Basic from the deck to the Bench, and the
     const { state: parked, events: opened } = use(board);
     expect(of(opened, "STADIUM_ABILITY_ACTIVATED")).toHaveLength(1);
     expect(parked.phase.kind === "effect:choose" && parked.phase.endsTurn).toBe(true);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p.max).toBe(1);
     const pick = p.candidates.find((u) => idOf(parked, u) === WATER) as string;

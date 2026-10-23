@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
 import { deriveAttackCopy } from "./effects";
-import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { GameState, PokemonRef, Seat } from "./index";
 // `attachEnergyTargets` is not re-exported from index.ts (it is an engine-internal
 // read site cardplay.ts imports directly); the attach test files reach it the same
 // way, which is what lets this suite drive THE GATE rather than only its effects.
@@ -23,14 +23,8 @@ import {
   setActiveFromDeck,
   specialEnergy,
   trainerCard,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const IN_PLAY_TARGET_CENSUS = [
   {
@@ -366,7 +360,7 @@ describe("Iono's Bellibolt ex — 'Electric Streamer' (5 legal printings)", () =
       seat: "p1",
       choice: { kind: "pokemon", ref },
     });
-    expect(find(events, "ENERGY_ATTACHED")).toBeDefined();
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeDefined();
     expect(once.players.p1.bench[0]?.energy).toHaveLength(1);
     // "As often as you like": the allowance is never consumed.
     const { state: twiceParked } = mustApply(once, {
@@ -416,7 +410,7 @@ describe("Iono's Bellibolt ex — 'Electric Streamer' (5 legal printings)", () =
     });
     // Only Bellibolt itself is an Iono's Pokémon → forced, no prompt.
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_ATTACHED")).toBeDefined();
+    expect(findEvent(events, "ENERGY_ATTACHED")).toBeDefined();
     expect(done.players.p1.active?.energy).toHaveLength(1);
   });
 
@@ -465,7 +459,7 @@ describe("N's PP Up sv09-153 — the discard source + `benchOnly` + the rider", 
       seat: "p1",
       choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } },
     });
-    const attached = find(events, "ENERGY_ATTACHED");
+    const attached = findEvent(events, "ENERGY_ATTACHED");
     expect(attached).toBeDefined();
     expect(done.players.p1.bench[0]?.energy).toHaveLength(1);
     // One Energy left the discard; the played Item arrived there.
@@ -510,7 +504,7 @@ describe("Marnie's Grimmsnarl ex sv10-136 — 'Punk Up' on `attachFromDeck`", ()
       uid: handUid(state, "p1", "fix-punkup"),
       target: { spot: "active" },
     });
-    expect(find(events, "POKEMON_EVOLVED")).toBeDefined();
+    expect(findEvent(events, "POKEMON_EVOLVED")).toBeDefined();
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "attachCards") throw new Error("expected attachCards");

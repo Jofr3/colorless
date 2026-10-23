@@ -33,6 +33,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  effectPrompt,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -508,12 +509,6 @@ const pickOpp = (spot: Spot, take?: number): GameAction =>
   answer({ kind: "pokemon", ref: p2Ref(spot), ...(take === undefined ? {} : { take }) });
 const decline = answer({ kind: "pokemon" });
 
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
-
 const oppActiveDamage = (state: GameState): number => bodyAt(state, "p2", "active").damage;
 
 /** A seat's bodies in play (the Active and the Bench) — what a counter move or a copy could touch. */
@@ -690,14 +685,14 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
       expect(parked.state.rngState).not.toBe(before.rngState);
       expect([...parked.state.players.p2.deck].sort()).toEqual([...before.players.p2.deck].sort());
       expect(all(parked.events, "ATTACK_DECLARED")[0]).not.toHaveProperty("as");
-      expect(prompt(parked.state)).toMatchObject({ kind: "confirm" });
+      expect(effectPrompt(parked.state)).toMatchObject({ kind: "confirm" });
       expect(parked.state.phase).toMatchObject({ kind: "effect:choose", resumeTail: true });
       expect(parked.state.pending).toEqual([
         { kind: "attackEpilogue", seat: "p1", uid: expect.any(String), attack: "Haughty Order" },
       ]);
       const second = run(parked.state, yes);
       expect(types(second.events)).toEqual(["EFFECT_PENDING"]);
-      expect(prompt(second.state)).toEqual({
+      expect(effectPrompt(second.state)).toEqual({
         kind: "chooseAttack",
         candidates: [
           { index: 0, name: "Poke (D574 Target)" },
@@ -750,7 +745,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
 
   it("exactly ONE pair: the confirm, then the pair is taken with no chooseAttack", () => {
     const parked = run(stackTop(armed(PERSIAN), "p2", [SOLO], 9), declare(PERSIAN));
-    expect(prompt(parked.state)).toMatchObject({ kind: "confirm" });
+    expect(effectPrompt(parked.state)).toMatchObject({ kind: "confirm" });
     const { state, events } = run(parked.state, yes);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(all(events, "ATTACK_COPY_RESOLVED")[0]).toMatchObject({ as: "Smash" });
@@ -763,7 +758,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
       declare(PERSIAN),
     );
     const second = run(parked.state, yes);
-    expect(prompt(second.state)).toMatchObject({
+    expect(effectPrompt(second.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [
         { index: 0, name: "Cruel Slash (Team Rocket's Persian ex)" },
@@ -775,7 +770,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
   it("two copies of one card collapse to one row per attack (D42)", () => {
     const parked = run(stackTop(armed(PERSIAN), "p2", [TARGET, SOLO, TARGET], 7), declare(PERSIAN));
     const second = run(parked.state, yes);
-    expect(prompt(second.state)).toMatchObject({
+    expect(effectPrompt(second.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [
         { name: "Poke (D574 Target)" },
@@ -791,7 +786,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
       declare(PERSIAN),
     );
     const second = run(parked.state, yes);
-    const shown = prompt(second.state);
+    const shown = effectPrompt(second.state);
     expect(shown).toMatchObject({
       kind: "chooseAttack",
       candidates: [
@@ -816,7 +811,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
       8,
     );
     const second = chain(laterBoard, [declare(PERSIAN), yes]);
-    expect(prompt(second.state)).toMatchObject({
+    expect(effectPrompt(second.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [{ name: "Gated Count (D574 Gated)" }, { name: "Smash (D574 Solo)" }],
     });
@@ -851,7 +846,7 @@ describe('D574 §2 — Haughty Order: reveal 10, shuffle at once (R-HO1), "You m
     };
     const parked = run(trimmed, declare(PERSIAN));
     expect(all(parked.events, "DECK_TOP_REVEALED")[0]?.uids).toHaveLength(3);
-    expect(prompt(parked.state)).toMatchObject({ kind: "confirm" });
+    expect(effectPrompt(parked.state)).toMatchObject({ kind: "confirm" });
     const empty: GameState = {
       ...trimmed,
       players: {
@@ -1076,7 +1071,7 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
       "DECK_TOP_DISCARDED",
       "EFFECT_PENDING",
     ]);
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [
         { index: 0, name: "Poke (D574 Target)" },
@@ -1130,13 +1125,13 @@ describe("D574 §3 — Seek Inspiration: mill 1, no Rule Box, then the copy (for
       30,
     );
     const parked = run(board, declare(SLOWKING));
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [{ name: "Claw Slash (Sableye)" }, { name: "Damage Collection (Sableye)" }],
     });
     const loop = run(parked.state, pickAttack(1));
     expect(all(loop.events, "ATTACK_COPY_RESOLVED")[0]).toMatchObject({ as: "Damage Collection" });
-    expect(prompt(loop.state)).toMatchObject({
+    expect(effectPrompt(loop.state)).toMatchObject({
       kind: "choosePokemon",
       upTo: 3,
       takeVerb: "move",
@@ -1174,7 +1169,7 @@ describe("D574 §4 — Malamar Colluding Tentacles (a registry row, R-MA1)", () 
 
   it("played, TWO Benched bodies: the gust parks, the pick takes the 120", () => {
     const parked = run(playedXerosic(armed(MALAMAR, [], FILLER, [SOLO, TARGET])), declare(MALAMAR));
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "choosePokemon",
       candidates: [p2Ref(0), p2Ref(1)],
     });
@@ -1227,7 +1222,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
       declare(SABLEYE),
     );
     // The undamaged body is not a source; the budget is every counter on their Bench (5).
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "choosePokemon",
       upTo: 5,
       takeVerb: "move",
@@ -1243,7 +1238,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     ]);
     expect(oppActiveDamage(round.state)).toBe(20);
     expect(bodyAt(round.state, "p2", 0).damage).toBe(10);
-    expect(prompt(round.state)).toMatchObject({
+    expect(effectPrompt(round.state)).toMatchObject({
       kind: "choosePokemon",
       upTo: 3,
       candidates: [p2Ref(0), p2Ref(2)],
@@ -1289,7 +1284,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     );
     const r1 = run(parked.state, pickOpp(0, 3));
     expect(oppActiveDamage(r1.state)).toBe(10);
-    expect(prompt(r1.state)).toMatchObject({ upTo: 2, candidates: [p2Ref(1)] });
+    expect(effectPrompt(r1.state)).toMatchObject({ upTo: 2, candidates: [p2Ref(1)] });
   });
 
   it("Sableye: no damaged Benched body — no question at all", () => {
@@ -1318,21 +1313,21 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
       types(parked.events).indexOf("EFFECT_PENDING"),
     );
     expect(bodyAt(parked.state, "p2", "active").conditions.rotation).toBe("confused");
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "choosePokemon",
       upTo: 4,
       candidates: [p2Ref("active"), p2Ref(0)],
     });
     const q2 = run(parked.state, pickOpp("active", 2));
-    expect(prompt(q2.state)).toMatchObject({
+    expect(effectPrompt(q2.state)).toMatchObject({
       kind: "choosePokemon",
       candidates: [p2Ref(0), p2Ref(1)],
     });
-    expect(prompt(q2.state)).not.toHaveProperty("upTo");
+    expect(effectPrompt(q2.state)).not.toHaveProperty("upTo");
     const r1 = run(q2.state, pickOpp(1));
     expect(oppActiveDamage(r1.state)).toBe(10);
     expect(bodyAt(r1.state, "p2", 1).damage).toBe(20);
-    expect(prompt(r1.state)).toMatchObject({ upTo: 2 });
+    expect(effectPrompt(r1.state)).toMatchObject({ upTo: 2 });
     const { state } = run(r1.state, decline);
     expect(turnPassed(state)).toBe(true);
   });
@@ -1340,11 +1335,14 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
   it("R-AK1 — the LOOP BOUND stops an A → B → A cycle: two counters, two rounds, then no third question", () => {
     const board = damaged(armed(ALAKAZAM, [], FILLER, [SOLO]), "p2", "active", 20);
     const parked = run(board, declare(ALAKAZAM));
-    expect(prompt(parked.state)).toMatchObject({ upTo: 2, candidates: [p2Ref("active")] });
+    expect(effectPrompt(parked.state)).toMatchObject({ upTo: 2, candidates: [p2Ref("active")] });
     // Round 1: Active → the one other body (forced).
     const r1 = run(parked.state, pickOpp("active", 1));
     expect(bodyAt(r1.state, "p2", 0).damage).toBe(10);
-    expect(prompt(r1.state)).toMatchObject({ upTo: 1, candidates: [p2Ref("active"), p2Ref(0)] });
+    expect(effectPrompt(r1.state)).toMatchObject({
+      upTo: 1,
+      candidates: [p2Ref("active"), p2Ref(0)],
+    });
     // Round 2: back again.
     const r2 = run(r1.state, pickOpp(0, 1));
     expect(oppActiveDamage(r2.state)).toBe(20);
@@ -1363,7 +1361,7 @@ describe("D574 §5 — Sableye and Alakazam: the opponent-to-opponent loop (R-SB
     );
     const parked = run(board, declare(ALAKAZAM));
     expect(all(parked.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
-    expect(prompt(parked.state)).toMatchObject({ candidates: [p2Ref("active")] });
+    expect(effectPrompt(parked.state)).toMatchObject({ candidates: [p2Ref("active")] });
     const r1 = run(parked.state, pickOpp("active", 1));
     expect(bodyAt(r1.state, "p2", 1).damage).toBe(10);
     expect(bodyAt(r1.state, "p2", 0).damage).toBe(30);

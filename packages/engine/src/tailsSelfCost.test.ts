@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const DISCARD_TEXT = "Flip a coin. If tails, discard all Energy from this Pokémon.";
@@ -36,13 +37,6 @@ const DISCARDERS = [
   { id: "sv03-054", index: 1, damage: 170, attack: "Frost Purge", typed: "fix-water-energy" },
 ] as const;
 const RECOILER = { id: "sv03-183", index: 1, damage: 160, attack: "High-Impact Kick" } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function armed(
   seed: number,
@@ -76,7 +70,7 @@ function armed(
 /** The face this declaration's ONE coin came up. Throws when there was no flip —
     a gate that stopped flipping would otherwise read as a permanent heads. */
 function faceOf(events: GameEvent[]): "heads" | "tails" {
-  const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+  const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
   if (flip === undefined) throw new Error("no ATTACK_EFFECT_COIN_FLIP row");
   return flip.result;
 }
@@ -363,7 +357,7 @@ describe("the DISCARD — `Flip a coin. If tails, discard all Energy from this P
 
       expect(faceOf(events), id).toBe("tails");
       expect(done.players.p1.active?.energy, id).toEqual([]);
-      const discarded = find(events, "ENERGY_DISCARDED");
+      const discarded = findEvent(events, "ENERGY_DISCARDED");
       expect(discarded?.uids, id).toHaveLength(4);
       expect(discarded, id).toMatchObject({ seat: "p1", actor: "p1", host: attacker });
       // All four cards really reached the discard pile, not just the attachment.
@@ -371,7 +365,7 @@ describe("the DISCARD — `Flip a coin. If tails, discard all Energy from this P
       // THE PRINTED DAMAGE LANDS ANYWAY — the coin gates the drawback and nothing
       // else, which is exactly why the defender's side of the board cannot tell
       // the two faces apart.
-      expect(find(events, "DAMAGE_DEALT")?.dealt, id).toBe(damage);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt, id).toBe(damage);
       expect(types(events), id).not.toContain("ATTACK_EFFECT_SKIPPED");
     }
   });
@@ -383,7 +377,7 @@ describe("the DISCARD — `Flip a coin. If tails, discard all Energy from this P
       expect(faceOf(events), id).toBe("heads");
       expect(types(events), id).not.toContain("ENERGY_DISCARDED");
       expect(done.players.p1.active?.energy, id).toHaveLength(4);
-      expect(find(events, "DAMAGE_DEALT")?.dealt, id).toBe(damage);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt, id).toBe(damage);
       expect(types(events), id).not.toContain("ATTACK_EFFECT_SKIPPED");
     }
   });
@@ -405,14 +399,14 @@ describe("the DISCARD — `Flip a coin. If tails, discard all Energy from this P
   it("PAYS THE COST EVEN WHEN THE MAIN HIT DEALT ZERO — the §11 prevention board", () => {
     const state = armed(TAILS_SEEDS[3] as number, "sv02-063", { defender: "sv02-097" });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.prevented).toBe(true);
     expect(dealt?.dealt).toBe(0);
     // Mimikyu is 70 HP and the printed 220 would have swept it off the board, so
     // the prevention is visible rather than asserted.
     expect(types(events)).not.toContain("KNOCKED_OUT");
     expect(faceOf(events)).toBe("tails");
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
     expect(done.players.p1.active?.energy).toEqual([]);
   });
 
@@ -456,7 +450,7 @@ describe("the DISCARD — `Flip a coin. If tails, discard all Energy from this P
     expect(types(events)).not.toContain("ATTACK_EFFECT_COIN_FLIP");
     expect(types(events)).not.toContain("ENERGY_DISCARDED");
     expect(done.players.p1.active?.energy).toHaveLength(4);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("reads correctly in the LOG — the coin row, then the cost row, in the payer's voice", () => {
@@ -496,7 +490,7 @@ describe("the RECOIL — `Flip a coin. If tails, this Pokémon also does 60 dama
     });
 
     expect(faceOf(events)).toBe("tails");
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p1",
       uid: attacker,
@@ -513,7 +507,7 @@ describe("the RECOIL — `Flip a coin. If tails, this Pokémon also does 60 dama
       "ATTACK_EFFECT_COIN_FLIP",
       "COUNTERS_PLACED",
     ]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(RECOILER.damage);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(RECOILER.damage);
     expect(types(events)).not.toContain("KNOCKED_OUT");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -529,7 +523,7 @@ describe("the RECOIL — `Flip a coin. If tails, this Pokémon also does 60 dama
     expect(faceOf(events)).toBe("heads");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(done.players.p1.active?.damage).toBe(0);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(RECOILER.damage);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(RECOILER.damage);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -539,15 +533,15 @@ describe("the RECOIL — `Flip a coin. If tails, this Pokémon also does 60 dama
       seat: "p1",
       index: RECOILER.index,
     });
-    expect(find(neutral.events, "DAMAGE_DEALT")?.dealt).toBe(160);
-    expect(find(neutral.events, "COUNTERS_PLACED")?.amount).toBe(60);
+    expect(findEvent(neutral.events, "DAMAGE_DEALT")?.dealt).toBe(160);
+    expect(findEvent(neutral.events, "COUNTERS_PLACED")?.amount).toBe(60);
     const doubled = mustApply(
       armed(TAILS_SEEDS[6] as number, RECOILER.id, { defender: "fix-colorless-weak-big" }),
       { type: "attack", seat: "p1", index: RECOILER.index },
     );
     // fix-colorless-weak-big is ×2 Colorless against a Colorless attacker: 320.
-    expect(find(doubled.events, "DAMAGE_DEALT")?.dealt).toBe(320);
-    expect(find(doubled.events, "COUNTERS_PLACED")?.amount).toBe(60);
+    expect(findEvent(doubled.events, "DAMAGE_DEALT")?.dealt).toBe(320);
+    expect(findEvent(doubled.events, "COUNTERS_PLACED")?.amount).toBe(60);
   });
 
   it("SELF-KNOCKS-OUT a primed body, prizes it to the DEFENDER, and does not end the turn early", () => {
@@ -560,7 +554,7 @@ describe("the RECOIL — `Flip a coin. If tails, this Pokémon also does 60 dama
     });
 
     expect(faceOf(events)).toBe("tails");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1", uid: attacker });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1", uid: attacker });
     expect(after.players.p1.discard).toContain(attacker);
     // Oinkologne carries no rule box, so it is worth exactly ONE Prize — and the
     // turn does NOT end here: the KO interrupts with its own queue behind it.
@@ -610,7 +604,7 @@ describe("the RECOIL — `Flip a coin. If tails, this Pokémon also does 60 dama
     expect(types(events)).not.toContain("ATTACK_EFFECT_COIN_FLIP");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(done.players.p1.active?.damage).toBe(0);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(done.players.p2.active?.conditions.rotation).toBe("confused");
   });
 

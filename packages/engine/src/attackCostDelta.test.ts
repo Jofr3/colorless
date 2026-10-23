@@ -9,7 +9,7 @@ import {
   stadiumEffectsOf,
 } from "./continuous";
 import { applyAction, programFor, redactGame } from "./index";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -25,6 +25,7 @@ import {
   setActiveFromDeck,
   setDamage,
   setPrizes,
+  activeOf,
 } from "./testFixtures";
 
 /** The printed sentences, byte-for-byte off the fielded rows. */
@@ -64,12 +65,6 @@ function board(): GameState {
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   state = active(state, "p1", "fix-titan");
   return active(state, "p2", "fix-titan");
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const spot = state.players[seat].active;
-  if (spot === null) throw new Error(`${seat} has no Active`);
-  return spot;
 }
 
 /** Play `cardId` from P1's deck into the shared Stadium zone (§7.3). */

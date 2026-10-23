@@ -37,6 +37,7 @@ import {
   walkProgram,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const POLIWRATH_TEXT =
@@ -267,13 +268,6 @@ const LARIAT = { type: "attack", seat: "p1", index: 0 } as const;
 const YES = { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } } as const;
 const NO = { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: false } } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
 }
@@ -462,7 +456,10 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
       expect(parked.phase.kind).toBe("effect:choose");
       // The note is the WHOLE printed sentence — the player is agreeing to the
       // drawback as much as to the damage.
-      expect(find(events, "EFFECT_PENDING")).toMatchObject({ seat: "p1", note: POLIWRATH_TEXT });
+      expect(findEvent(events, "EFFECT_PENDING")).toMatchObject({
+        seat: "p1",
+        note: POLIWRATH_TEXT,
+      });
     });
   }
 
@@ -472,10 +469,10 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
     );
     const { state: done, events } = apply(parked, YES);
     expect(count(events, "DAMAGE_DEALT")).toBe(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 240, base: 240 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 240, base: 240 });
     expect(done.players.p2.active?.damage).toBe(240);
     // …and the printed consequent ran: the attacker left the board.
-    expect(find(events, "POKEMON_RETURNED")).toMatchObject({ seat: "p1", dest: "deck" });
+    expect(findEvent(events, "POKEMON_RETURNED")).toMatchObject({ seat: "p1", dest: "deck" });
   });
 
   it("a NO deals the printed BASE — the arm that did not exist before D316", () => {
@@ -484,7 +481,7 @@ describe("D316 §3 — THE PARK, and the two answers that are both damage", () =
     );
     const { state: done, events } = apply(parked, NO);
     expect(count(events, "DAMAGE_DEALT")).toBe(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 120, base: 120 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 120, base: 120 });
     expect(done.players.p2.active?.damage).toBe(120);
     // …and the consequent did NOT run: the attacker is standing, still fuelled.
     expect(done.cardIdByUid[done.players.p1.active?.stack.at(-1) ?? ""]).toBe(POLIWRATH);
@@ -529,12 +526,12 @@ describe("D316 §4 — the LOUD path closed: the sentence and its '+' are both s
       seat: "p1",
       index: 0,
     });
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
       effect: UNREAD_TEXT,
       damageModifier: "+",
     });
     // …and the printed base landed the ordinary way, because nothing claimed it.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
   });
 });
 
@@ -552,7 +549,7 @@ describe("D316 §5 — §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD DIFFE
     );
     const { state: done, events } = apply(parked, YES);
     expect(count(events, "DAMAGE_DEALT")).toBe(1);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       dealt: 210,
       resistance: { op: "subtract", amount: 30 },
     });
@@ -582,7 +579,7 @@ describe("D316 §5 — §8.5 APPLIED ONCE, ON A BOARD WHERE TWO HITS WOULD DIFFE
       ),
     );
     const { state: done, events } = apply(parked, YES);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       dealt: 480,
       weakness: { op: "multiply", amount: 2 },
     });
@@ -624,7 +621,7 @@ describe("D316 §6 — the other two consequents, on their own real boards", () 
     // The attacker's own spot is empty and §8.1 owes p1 a promotion before the
     // turn hands over — the epilogue sweeping BOTH seats, reached here through a
     // confirm answer rather than through a registry program.
-    expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p2", count: 1 });
+    expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p2", count: 1 });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
     expect(events.map((e) => e.type)).toEqual([
       "DAMAGE_DEALT",

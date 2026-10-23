@@ -17,6 +17,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SWITCH_SENTENCE =
@@ -33,13 +34,6 @@ const RAPID_VERNIER_IDS = [
   "sv05-213",
   "sv08.5-176",
 ] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -155,7 +149,7 @@ describe("D244 §2 — 'you may switch it with your Active Pokémon'", () => {
   it("fires on the bench play and parks on a CONFIRM, not on a bench pick", () => {
     const { state, events } = playTrigger(board(8));
     expect(types(events)).toContain("POKEMON_BENCHED");
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Rapid Vernier");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Rapid Vernier");
     expect(state.phase.kind).toBe("effect:choose");
     const prompt = confirmPrompt(state);
     expect(prompt.kind).toBe("confirm");
@@ -176,7 +170,7 @@ describe("D244 §2 — 'you may switch it with your Active Pokémon'", () => {
     });
     // The just-played Iron Leaves is Active; the old Active went to the Bench.
     expect(activeUid(done, "p1")).toBe(uid);
-    expect(find(events, "POKEMON_SWITCHED")?.nowActive).toBe(uid);
+    expect(findEvent(events, "POKEMON_SWITCHED")?.nowActive).toBe(uid);
     expect(done.players.p1.bench.length).toBe(3);
     expect(done.cardIdByUid[benchTopUid(done, "p1", 2)]).toBe("fix-plain-body");
   });
@@ -393,7 +387,7 @@ describe("D244 §4 — Meowscarada's 'Showtime' and the programPlayable gate", (
     const { state: done, events } = mustApply(state, use(0));
     expect(done.phase.kind).toBe("turn:action");
     expect(activeUid(done, "p1")).toBe(benched);
-    expect(find(events, "POKEMON_SWITCHED")?.nowActive).toBe(benched);
+    expect(findEvent(events, "POKEMON_SWITCHED")?.nowActive).toBe(benched);
   });
 
   it("an ACTIVE Meowscarada is REFUSED — the printed 'if this Pokémon is on your Bench'", () => {

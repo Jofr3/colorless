@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -30,13 +31,6 @@ const L_ENERGY_ALT = "fix-lightning-energy-alt";
 
 const ELECTROGENESIS_NOTE =
   "Search your deck for a Basic Lightning Energy card and attach it to this Pokémon.";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -166,14 +160,14 @@ describe("Pawmot's Electrogenesis — the printed 'this Pokémon'", () => {
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const before = census(state, "p1");
     const { state: parked, events } = useElectrogenesis(state, 0);
-    expect(find(events, "ABILITY_USED")?.ability).toBe("Electrogenesis");
+    expect(findEvent(events, "ABILITY_USED")?.ability).toBe("Electrogenesis");
     const prompt = promptOf(parked);
     expect(prompt.targets).toEqual([bench(0)]);
     expect(prompt.note).toBe(ELECTROGENESIS_NOTE);
     expect(prompt.max).toBe(1);
 
     const done = attach(parked, [{ uid: prompt.candidates[0] as string, to: bench(0) }]);
-    const attached = find(done.events, "ENERGY_ATTACHED");
+    const attached = findEvent(done.events, "ENERGY_ATTACHED");
     expect(attached?.target).toEqual({ spot: "bench", index: 0 });
     expect(attached?.seat).toBe("p1");
     const side = done.state.players.p1;

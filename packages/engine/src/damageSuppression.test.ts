@@ -19,7 +19,7 @@ import {
   splitAttackRequirementClause,
 } from "./effects";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   DAMAGE_SUPPRESSION_DECK,
   FIXTURE_POOL,
@@ -32,6 +32,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 /** The four printed attack sentences, char-for-char off the D1 rows. */
@@ -68,13 +69,6 @@ const SEED = 5;
 const IDX = { effects: 0, resistance: 1, wrEffects: 2, wr: 3, control: 4 } as const;
 /** The index-5 PROBE — the same clause on a printed `60+`, which no real card has. */
 const PROBE = 5;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(attacker: string, defender: string): GameState {
   let state = must(
@@ -125,11 +119,11 @@ function withInstalledDebuff(state: GameState, amount: number): GameState {
 }
 
 function dealt(state: GameState, index: number): number | null {
-  return find(swing(state, index).events, "DAMAGE_DEALT")?.dealt ?? null;
+  return findEvent(swing(state, index).events, "DAMAGE_DEALT")?.dealt ?? null;
 }
 
 function row(state: GameState, index: number) {
-  return find(swing(state, index).events, "DAMAGE_DEALT");
+  return findEvent(swing(state, index).events, "DAMAGE_DEALT");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -566,7 +560,7 @@ describe("the authored fixtures", () => {
   });
 
   it("the index-5 PROBE stays LOUD: the clause explains no `+` MODIFIER", () => {
-    const skipped = find(
+    const skipped = findEvent(
       swing(board("fix-suppressor", "fix-bigbody"), PROBE).events,
       "ATTACK_EFFECT_SKIPPED",
     );
@@ -580,10 +574,16 @@ describe("the authored fixtures", () => {
   it("emit NO ATTACK_EFFECT_SKIPPED — all five declarations are simulated", () => {
     const state = board("fix-suppressor", "fix-suppresswall");
     for (const index of Object.values(IDX)) {
-      expect(find(swing(state, index).events, "ATTACK_EFFECT_SKIPPED"), `${index}`).toBeUndefined();
+      expect(
+        findEvent(swing(state, index).events, "ATTACK_EFFECT_SKIPPED"),
+        `${index}`,
+      ).toBeUndefined();
     }
     expect(
-      find(swing(board("fix-azureseas", "fix-suppresswall"), 0).events, "ATTACK_EFFECT_SKIPPED"),
+      findEvent(
+        swing(board("fix-azureseas", "fix-suppresswall"), 0).events,
+        "ATTACK_EFFECT_SKIPPED",
+      ),
     ).toBeUndefined();
   });
 });

@@ -11,14 +11,8 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -146,7 +140,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     deepFreeze(state);
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides, not the victim
     expect(parked.phase.resumeTail).toBe(true);
@@ -173,7 +167,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     expect(activeEnergy(done, "p2")).toHaveLength(1);
     expect(done.players.p2.discard).toContain(pick);
     expect(done.players.p1.discard).not.toContain(pick);
-    const discarded = find(resolved, "ENERGY_DISCARDED");
+    const discarded = findEvent(resolved, "ENERGY_DISCARDED");
     expect(discarded?.seat).toBe("p2");
     expect(discarded?.actor).toBe("p1");
     // …and only then the §5.3 tail the epilogue was holding.
@@ -208,7 +202,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       seat: "p1",
       index: 0,
     });
-    expect(find(bareEvents, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(bareEvents, "DAMAGE_DEALT")?.dealt).toBe(70);
     expect(types(bareEvents)).not.toContain("ENERGY_DISCARDED");
     expect(types(bareEvents)).toContain("TURN_ENDED");
     expect(whiffed.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -271,7 +265,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
         [{ id: "fix-special", count: 1 }],
       );
       const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-      const face = find(events, "ATTACK_EFFECT_COIN_FLIP")?.result as string;
+      const face = findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result as string;
       faces.set(face, {
         discarded: findAll(events, "ENERGY_DISCARDED").length,
         energyLeft: activeEnergy(after, "p2").length,
@@ -296,15 +290,15 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
         ],
       );
       const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-      if (find(events, "ATTACK_EFFECT_COIN_FLIP")?.result !== "heads") continue;
+      if (findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result !== "heads") continue;
       parkedSomewhere = true;
       expect(after.phase.kind).toBe("effect:choose");
       expect(after.pending).toEqual([
         {
           kind: "attackEpilogue",
           seat: "p1",
-          uid: find(events, "ATTACK_DECLARED")?.uid,
-          attack: find(events, "ATTACK_DECLARED")?.attack,
+          uid: findEvent(events, "ATTACK_DECLARED")?.uid,
+          attack: findEvent(events, "ATTACK_DECLARED")?.attack,
         },
       ]);
     }
@@ -366,7 +360,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     const before = activeEnergy(forced, "p1");
     const { state: after, events } = mustApply(forced, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toEqual(before.slice(0, 3));
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toEqual(before.slice(0, 3));
     expect(activeEnergy(after, "p1")).toEqual([before[3]]);
     expect(after.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -382,7 +376,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     const before = activeEnergy(state, "p1");
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toEqual(before);
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toEqual(before);
     expect(activeEnergy(after, "p1")).toEqual([]);
     expect(after.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });

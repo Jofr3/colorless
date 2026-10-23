@@ -13,6 +13,7 @@ import {
   setActiveFromDeck,
   toDeckTop,
   types,
+  findEvent,
 } from "./testFixtures";
 
 interface Clause {
@@ -146,13 +147,6 @@ function ready(seed: number, bench: readonly string[] = []): GameState {
   state = clearBench(state, "p2");
   state = benchFromDeck(state, "p2", "fix-basic-1");
   return state;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function cardsPrompt(state: GameState) {
@@ -308,7 +302,7 @@ describe("Summoning Gate — the look that BENCHES", () => {
       "fix-duskull",
     ]);
     for (const uid of picks) expect(done.players.p1.deck).not.toContain(uid);
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       dest: "bench",
       uids: picks,
@@ -350,7 +344,7 @@ describe("Summoning Gate — the look that BENCHES", () => {
     state = toDeckTop(state, "p1", "fix-energy", 8);
     const { state: after, events } = attack(state, SUMMONING_GATE);
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       dest: "bench",
       uids: [],
@@ -410,7 +404,7 @@ describe("Dig It Up — the look that DISCARDS, and the decline that used to be 
     const { state: done, events } = resolveCards(parked, [top]);
     expect(done.players.p1.discard).toEqual([...pileBefore, top]);
     expect(done.players.p1.deck).not.toContain(top);
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       dest: "discard",
       uids: [top],
@@ -429,7 +423,7 @@ describe("Dig It Up — the look that DISCARDS, and the decline that used to be 
     const { state: done, events } = resolveCards(parked, []); // the printed "you may", declined
 
     expect(done.players.p1.deck[0]).toBe(top);
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       dest: "discard",
       uids: [],

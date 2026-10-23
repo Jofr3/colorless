@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {
@@ -16,6 +16,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const CROBAT_PRINTED =
@@ -134,13 +135,6 @@ const DECK = deckOf({
 });
 
 const SEEDS = [4241, 4253] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -335,7 +329,7 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
     const parked = must(applyAction(split(), ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
-    expect(find(result.events, "SHUFFLE")).toBeUndefined();
+    expect(findEvent(result.events, "SHUFFLE")).toBeUndefined();
   });
 
   it("the event names the BODY's zone in `dest` and the attachments' in `attachmentsTo`", () => {
@@ -344,7 +338,7 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
     const parked = must(applyAction(state, ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
-    const returned = find(result.events, "POKEMON_RETURNED");
+    const returned = findEvent(result.events, "POKEMON_RETURNED");
     expect(returned?.dest).toBe("hand");
     expect(returned?.uid).toBe(body?.stack[body.stack.length - 1]);
     // `uids` stays the WHOLE pile (the KNOCKED_OUT precedent) — six cards.
@@ -383,7 +377,7 @@ describe("D313 §2 — THE SPLIT, driven on the only board where the two piles d
     const parked = must(applyAction(state, ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
-    const returned = find(result.events, "POKEMON_RETURNED");
+    const returned = findEvent(result.events, "POKEMON_RETURNED");
     expect(returned?.attachmentsTo?.uids).toHaveLength(2);
     expect(result.state.players.p1.discard).toHaveLength(2);
     expect(
@@ -412,7 +406,7 @@ describe("D313 §3 — the two UNSPLIT destinations, which are the split's contr
     if (!result.ok) throw new Error("attack failed");
     for (const uid of attached) expect(result.state.players.p1.hand, uid).toContain(uid);
     expect(result.state.players.p1.discard).toHaveLength(0);
-    const returned = find(result.events, "POKEMON_RETURNED");
+    const returned = findEvent(result.events, "POKEMON_RETURNED");
     expect(returned?.dest).toBe("hand");
     expect(returned?.attachmentsTo).toBeUndefined();
   });
@@ -426,10 +420,10 @@ describe("D313 §3 — the two UNSPLIT destinations, which are the split's contr
     if (!result.ok) throw new Error("attack failed");
     for (const uid of whole) expect(result.state.players.p1.discard, uid).toContain(uid);
     expect(result.state.players.p1.discard).toHaveLength(6);
-    const returned = find(result.events, "POKEMON_RETURNED");
+    const returned = findEvent(result.events, "POKEMON_RETURNED");
     expect(returned?.dest).toBe("discard");
     expect(returned?.attachmentsTo).toBeUndefined();
-    expect(find(result.events, "SHUFFLE")).toBeUndefined();
+    expect(findEvent(result.events, "SHUFFLE")).toBeUndefined();
   });
 
   it("a self-DISCARD is not a Knock Out — nobody takes a prize", () => {
@@ -437,8 +431,8 @@ describe("D313 §3 — the two UNSPLIT destinations, which are the split's contr
     const prizesBefore = state.players.p2.prizes.length;
     const result = applyAction(state, SHATTER);
     if (!result.ok) throw new Error("attack failed");
-    expect(find(result.events, "KNOCKED_OUT")).toBeUndefined();
-    expect(find(result.events, "PRIZES_OWED")).toBeUndefined();
+    expect(findEvent(result.events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(result.events, "PRIZES_OWED")).toBeUndefined();
     expect(result.state.players.p2.prizes).toHaveLength(prizesBefore);
   });
 
@@ -511,7 +505,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
     const after = must(applyAction(parked, YES));
     expect(after.phase.kind).toBe("ko:promote");
     expect(after.players.p1.active).toBeNull();
-    expect(find([], "TURN_ENDED")).toBeUndefined();
+    expect(findEvent([], "TURN_ENDED")).toBeUndefined();
   });
 
   it("a Bench of ONE auto-resolves — no prompt, the turn just ends", () => {
@@ -521,7 +515,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
     if (!result.ok) throw new Error("attack failed");
     expect(result.state.players.p1.active?.stack[0]).toBe(benched);
     expect(result.state.players.p1.bench).toHaveLength(0);
-    expect(find(result.events, "POKEMON_PROMOTED")?.uid).toBe(benched);
+    expect(findEvent(result.events, "POKEMON_PROMOTED")?.uid).toBe(benched);
   });
 
   it("an EMPTY Bench is the §14.2 loss, and it falls out with no new code", () => {
@@ -529,7 +523,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
     const result = applyAction(state, SHATTER);
     if (!result.ok) throw new Error("attack failed");
     expect(result.state.phase.kind).toBe("gameOver");
-    const outcome = find(result.events, "GAME_OVER")?.outcome;
+    const outcome = findEvent(result.events, "GAME_OVER")?.outcome;
     expect(outcome?.result).toBe("win");
     expect(outcome?.result === "win" ? outcome.winner : null).toBe("p2");
   });
@@ -539,7 +533,7 @@ describe("D313 §5 — the §8.1 promotion at the attack site, on the two NEW zo
     const parked = must(applyAction(state, ASSASSIN));
     const result = applyAction(parked, YES);
     if (!result.ok) throw new Error("resolve failed");
-    expect(find(result.events, "TURN_ENDED")).toBeUndefined();
+    expect(findEvent(result.events, "TURN_ENDED")).toBeUndefined();
     expect(result.state.phase.kind).toBe("ko:promote");
   });
 });
@@ -574,10 +568,10 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
     for (const uid of whole) expect(result.state.players.p1.deck, uid).toContain(uid);
     expect(result.state.players.p1.discard).toHaveLength(0);
     for (const uid of whole) expect(result.state.players.p1.hand, uid).not.toContain(uid);
-    const returned = find(result.events, "POKEMON_RETURNED");
+    const returned = findEvent(result.events, "POKEMON_RETURNED");
     expect(returned?.dest).toBe("deck");
     expect(returned?.attachmentsTo).toBeUndefined();
-    expect(find(result.events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(result.events, "SHUFFLE")).toBeDefined();
   });
 
   it("the ATTRIBUTION CONTROL: the same board with the D313 spelling splits instead", () => {
@@ -587,7 +581,7 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
     if (!result.ok) throw new Error("resolve failed");
     expect(result.state.players.p1.deck).toHaveLength(state.players.p1.deck.length);
     expect(result.state.players.p1.discard).toHaveLength(3);
-    expect(find(result.events, "POKEMON_RETURNED")?.dest).toBe("hand");
+    expect(findEvent(result.events, "POKEMON_RETURNED")?.dest).toBe("hand");
   });
 
   it("every registry `returnSelf` spells its `dest` — the optionality is the WIRE's, not the author's", () => {

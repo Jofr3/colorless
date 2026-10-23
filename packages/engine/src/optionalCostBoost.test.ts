@@ -17,7 +17,7 @@ import {
   deriveAttackRequirement,
   optionalCostBoostProgram,
 } from "./effects";
-import type { EffectOp, GameEvent, GameState, Seat } from "./index";
+import type { EffectOp, GameState, Seat } from "./index";
 import {
   OPTIONAL_COST_BOOST_DECK,
   attachFromDeck,
@@ -27,6 +27,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -96,13 +97,6 @@ const attack = (state: GameState, seat: Seat = "p1") =>
 
 const say = (state: GameState, yes: boolean) =>
   mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const SEEDS = [7001, 7013, 7027] as const;
 
@@ -395,7 +389,7 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
     expect(stadium.owner).toBe("p2");
     const parked = attack(before);
     expect(parked.state.phase.kind).toBe("effect:choose");
-    expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+    expect(findEvent(parked.events, "EFFECT_PENDING")).toEqual({
       type: "EFFECT_PENDING",
       seat: "p1",
       note: CETITAN,
@@ -409,8 +403,8 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
       stadium.uid,
     ]);
     expect(done.state.players.p1.discard).toEqual(parked.state.players.p1.discard);
-    expect(find(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
+    expect(findEvent(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
     expect(types(done.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -426,7 +420,7 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
 
       const done = say(attack(before).state, true);
       expect(done.state.stadium).toBeNull();
-      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
+      expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 280 });
       const after = done.state.players.p2.active;
       if (after === null) throw new Error("expected P2's Active");
       expect(after.damage).toBe(280);
@@ -444,7 +438,7 @@ describe("§4 — the board: the printed ORDER, on the one Stadium that can see 
       if (stadium === null) throw new Error("expected P2's Stadium in the zone");
       const done = say(attack(before).state, false);
       expect(done.state.stadium).toEqual(stadium);
-      expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0 });
+      expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0 });
       const after = done.state.players.p2.active;
       if (after === null) throw new Error("expected P2's Active");
       expect(after.damage).toBe(0);
@@ -462,7 +456,7 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
     expect(done.state.players.p2.discard).not.toContain(stadium.uid);
     expect(types(done.events)).not.toContain("STADIUM_DISCARDED");
     // …and the rung a dropped `optional.otherwise` reddens on.
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
   });
 
   it.each(SEEDS)(
@@ -477,7 +471,7 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
       expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // The gate refuses the QUESTION, never the attack — the rung a dropped
       // `conditionGate.otherwise` reddens on.
-      expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
+      expect(findEvent(result.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 140 });
     },
   );
 

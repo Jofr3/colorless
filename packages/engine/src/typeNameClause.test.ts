@@ -9,7 +9,7 @@ import {
   deriveAttackEffect,
   programFor,
 } from "./index";
-import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
+import type { BoardCondition, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   TYPE_NAME_DECK,
@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const WONDER_FLASH =
@@ -39,13 +40,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function typeClause(token: string, per = 50): string {
@@ -364,7 +358,7 @@ describe("Sylveon 'Wonder Flash' — their Active is a Dragon", () => {
     const state = sylveon(board(1), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     expect(dealt?.scaled).toBeUndefined(); // `scaled` is omitted at 0
     expect(types(events)).not.toContain("KNOCKED_OUT"); // 90 through 200 HP
@@ -376,7 +370,7 @@ describe("Sylveon 'Wonder Flash' — their Active is a Dragon", () => {
     const state = sylveon(setActiveFromDeck(board(2), "p2", "sv03-161"), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 90,
       scaled: 90,
       weakness: null,
@@ -389,7 +383,7 @@ describe("Sylveon 'Wonder Flash' — their Active is a Dragon", () => {
   it("runs identically from the OTHER seat", () => {
     const state = sylveon(setActiveFromDeck(boardP2(3), "p1", "sv03-161"), "p2");
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
   it("reads the DEFENDER's type, not the attacker's — a Dragon on your own side scores nothing", () => {
@@ -397,14 +391,14 @@ describe("Sylveon 'Wonder Flash' — their Active is a Dragon", () => {
     // puts a Dragon on its OWN bench and swings into the Colorless control.
     const state = benchFromDeck(sylveon(board(4), "p1"), "p1", "sv03-161");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
   });
 
   it("reads the ACTIVE Spot, not the whole board — a benched Dragon scores nothing", () => {
     const state = sylveon(benchFromDeck(board(5), "p2", "sv03-161"), "p1");
     expect(state.players.p2.bench.length).toBe(1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
   });
 });
 
@@ -416,7 +410,7 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
     expect(state.players.p1.bench.length).toBe(1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 70, dealt: 70 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -425,7 +419,7 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
     const state = benchFromDeck(falinks(board(11), "p1"), "p1", "sv02-119");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
   });
 
   it("BENCH ONLY: the attacking Falinks does not count ITSELF", () => {
@@ -438,7 +432,7 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
     ).toBe(false);
     expect(conditionHolds(state, "p1", { kind: "yourBenchHasNamed", name: "Falinks" })).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("a differently-NAMED benched body scores nothing", () => {
@@ -447,7 +441,7 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
     const state = benchFromDeck(falinks(board(13), "p1"), "p1", "sv03-161");
     expect(state.players.p1.bench.length).toBe(2);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("is SEAT-ASYMMETRIC: a Falinks on the OPPONENT's Bench scores nothing", () => {
@@ -458,13 +452,13 @@ describe("Falinks 'Reckless Charge Together' — a Falinks on YOUR Bench", () =>
       ),
     ).toBe(true);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(70);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(70);
   });
 
   it("runs identically from the OTHER seat", () => {
     const state = benchFromDeck(falinks(boardP2(15), "p2"), "p2", "sv02-119");
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 70, scaled: 90, dealt: 160 });
   });
 });
 
@@ -473,7 +467,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
     let state = setActiveFromDeck(board(20), "p2", "fix-fighting-weak");
     state = benchFromDeck(falinks(state, "p1"), "p1", "sv02-119");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 70,
       scaled: 90,
       weakness: { op: "multiply", amount: 2 },
@@ -485,7 +479,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
   it("and the un-bonused control on the same matchup: 70 × 2 = 140", () => {
     const state = falinks(setActiveFromDeck(board(21), "p2", "fix-fighting-weak"), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 70, weakness: { op: "multiply", amount: 2 }, dealt: 140 });
     expect(dealt?.scaled).toBeUndefined();
     // 140 through a 200 HP body leaves it alive, which the armed 320 does not.
@@ -506,7 +500,7 @@ describe("ATTACK_EFFECT_SKIPPED — never on either clause, ALWAYS on the unbuil
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // And the two boards really are different boards — `scaled` present exactly
       // when the clause held, which is what makes the shared flag meaningful.
-      expect(find(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
+      expect(findEvent(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
     }
   });
 
@@ -538,7 +532,7 @@ describe("ATTACK_EFFECT_SKIPPED — never on either clause, ALWAYS on the unbuil
     const state = falinks(board(36), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 });
 
@@ -691,7 +685,7 @@ describe("the pair is PURE — a frozen board is never mutated", () => {
   it("runs a whole armed attack off a frozen board", () => {
     const frozen = deepFreeze(benchFromDeck(falinks(board(51), "p1"), "p1", "sv02-119"));
     const { events } = mustApply(frozen, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(160);
     expect(frozen.players.p2.active?.damage).toBe(0);
   });
 });

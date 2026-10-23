@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
 } from "./effects";
 import { applyAction, conditionHolds, conditionNote } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
   FIXTURE_POOL,
@@ -31,6 +31,8 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
+  activeOf,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,13 +66,6 @@ const DECK = deckOf({
   "fix-basic-1": 10,
 });
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** `by` is about to attack. The FOE opens and passes, so the attacking seat carries no
     §4 first-turn restriction; both Benches are cleared, because a body the setup
     shuffle happened to seat would move the ZONE misreading's number silently. */
@@ -101,12 +96,6 @@ function mixedBoard(): GameState {
 
 function swing(state: GameState, index: number, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index });
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 /** The rendered log, flattened to `{ who, text }` — the neighbouring suites' shape. */
@@ -214,13 +203,15 @@ describe("D500 §2 — a card CATEGORY, driven apart from every provision readin
   });
 
   it("the SWING deals 160, and not any of the other six numbers × 40", () => {
-    const row = find(swing(mixedBoard(), SELF.basic).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(mixedBoard(), SELF.basic).events, "DAMAGE_DEALT");
     // The `×` fold DROPS the printed base, so 160 is the fold and nothing else.
     expect(row?.base).toBe(0);
     expect(row?.scaled).toBe(160);
     expect(row?.dealt).toBe(160);
     for (const wrong of [200, 40, 120, 280, 0, 80]) expect(row?.dealt).not.toBe(wrong);
-    expect(find(swing(mixedBoard(), SELF.basic).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(
+      findEvent(swing(mixedBoard(), SELF.basic).events, "ATTACK_EFFECT_SKIPPED"),
+    ).toBeUndefined();
   });
 
   it("THE WILDCARD: `providesEnergyType` answers TRUE for a type no card provides", () => {
@@ -257,12 +248,12 @@ describe("D500 §2 — a card CATEGORY, driven apart from every provision readin
   it("the SIBLING indices on the same board, so the three foldings are told apart", () => {
     const state = mixedBoard();
     // index 2 is UNFILTERED at 30× → 5 × 30 = 150.
-    expect(find(swing(state, SELF.overflow).events, "DAMAGE_DEALT")?.scaled).toBe(150);
+    expect(findEvent(swing(state, SELF.overflow).events, "DAMAGE_DEALT")?.scaled).toBe(150);
     // index 4 is `Special` at 70× → 1 × 70 = 70.
-    expect(find(swing(state, SELF.special).events, "DAMAGE_DEALT")?.scaled).toBe(70);
+    expect(findEvent(swing(state, SELF.special).events, "DAMAGE_DEALT")?.scaled).toBe(70);
     // index 3 is the new one at 40× → 4 × 40 = 160. Three indices, one body, three
     // numbers, and no two of them are reachable from one reading of the noun.
-    expect(find(swing(state, SELF.basic).events, "DAMAGE_DEALT")?.scaled).toBe(160);
+    expect(findEvent(swing(state, SELF.basic).events, "DAMAGE_DEALT")?.scaled).toBe(160);
   });
 });
 

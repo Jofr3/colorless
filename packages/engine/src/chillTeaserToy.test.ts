@@ -17,6 +17,7 @@ import {
   handFromDeck,
   handUid,
   mustApply,
+  findEvent,
 } from "./testFixtures";
 
 const CHILL_DECK = deckOf({
@@ -55,13 +56,6 @@ function mustPlay(state: GameState, seat: Seat, cardId: string) {
 
 function activeEnergy(state: GameState, seat: Seat): string[] {
   return [...(state.players[seat].active?.energy ?? [])];
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function logText(state: GameState, events: readonly GameEvent[]): string {
@@ -220,7 +214,7 @@ describe("the attribution control — `fix-hammer` on the SAME board still uses 
     let state = turnTwo(SEEDS[0]);
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const { events } = mustPlay(state, "p1", "fix-hammer");
-    const row = find(events, "ENERGY_DISCARDED");
+    const row = findEvent(events, "ENERGY_DISCARDED");
     expect(row).toBeDefined();
     expect(Object.keys(row as object).sort()).toEqual([
       "actor",
@@ -439,7 +433,7 @@ describe("the event and the log row", () => {
     state = attachFromDeck(state, "p2", "fix-energy", 1);
     const uid = activeEnergy(state, "p2")[0] as string;
     const { events } = mustPlay(state, "p1", "fix-chillteaser");
-    const row = find(events, "ENERGY_DISCARDED");
+    const row = findEvent(events, "ENERGY_DISCARDED");
     expect(row?.to).toBe("hand");
     expect(row?.seat).toBe("p2");
     expect(row?.actor).toBe("p1");

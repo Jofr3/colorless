@@ -13,6 +13,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -48,13 +49,6 @@ const NBSP = "\u00a0";
 
 const RSQUO = "\u2019";
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -66,7 +60,7 @@ function all<T extends GameEvent["type"]>(
     taken at all, which is a distinct failure from either face and is asserted as
     such wherever it matters. */
 function face(events: GameEvent[]): CoinFace | undefined {
-  return find(events, "ATTACK_EFFECT_COIN_FLIP")?.result;
+  return findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result;
 }
 
 /** Both fixtures print the gated sentence FIRST and an effect-less control second.
@@ -390,7 +384,7 @@ describe("end to end — Fuecoco 'Spacing Out' (gated heal 30, NO printed damage
       });
       expect(done.rngState).not.toBe(state.rngState);
       expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(1);
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.seat).toBe("p1");
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.seat).toBe("p1");
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // No printed damage on either face — the heal is the whole declaration.
       expect(types(events)).not.toContain("DAMAGE_DEALT");
@@ -449,7 +443,7 @@ describe("end to end — Fuecoco 'Spacing Out' (gated heal 30, NO printed damage
       });
       faces.set(face(events) as CoinFace, {
         damage: done.players.p2.active?.damage,
-        seat: find(events, "ATTACK_EFFECT_COIN_FLIP")?.seat,
+        seat: findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.seat,
       });
     }
     expect(faces.get("heads")).toEqual({ damage: ATTACKER_HURT - SPACING_OUT_HEAL, seat: "p2" });
@@ -539,9 +533,9 @@ describe("end to end — Wiglett 'Dig a Little' (gated mill 1, NO printed damage
       expect(done.players.p1.deck).toEqual(ownDeckBefore);
       expect(done.players.p1.discard).toEqual(ownDiscardBefore);
       if (face(events) === "heads") {
-        expect(find(events, "DECK_TOP_DISCARDED")?.seat).toBe("p2");
+        expect(findEvent(events, "DECK_TOP_DISCARDED")?.seat).toBe("p2");
       }
-      expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.seat).toBe("p1");
+      expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.seat).toBe("p1");
       expect(types(events)).not.toContain("DAMAGE_DEALT");
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       expect(done.players.p2.active?.damage).toBe(0);
@@ -562,7 +556,7 @@ describe("end to end — Wiglett 'Dig a Little' (gated mill 1, NO printed damage
       });
       faces.set(face(events) as CoinFace, {
         rows: all(events, "DECK_TOP_DISCARDED").length,
-        victimSeat: find(events, "DECK_TOP_DISCARDED")?.seat,
+        victimSeat: findEvent(events, "DECK_TOP_DISCARDED")?.seat,
       });
       expect(done.players.p2.deck).toEqual(ownDeckBefore);
     }

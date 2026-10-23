@@ -14,19 +14,13 @@ import {
   handUid,
   mustApply,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SEED = 20260722;
 
 const MIRIAM = "sv01-179";
 const SER = "sv02-189";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Every uid the seat holds anywhere, sorted. Both cards move cards BETWEEN
     hidden and public zones twice in one play, which is where a duplicate or a
@@ -151,7 +145,7 @@ describe("Superior Energy Retrieval — the cost that must not refund itself", (
     const { state: done, events } = resolve(parked, taken);
     expect(done.phase.kind).toBe("turn:action");
     // The two Water Energy came back to hand; the two Fire Energy stayed paid.
-    expect(find(events, "DISCARD_RETRIEVED")?.uids).toEqual(taken);
+    expect(findEvent(events, "DISCARD_RETRIEVED")?.uids).toEqual(taken);
     for (const uid of taken) expect(done.players.p1.hand).toContain(uid);
     for (const uid of paid) expect(done.players.p1.discard).toContain(uid);
     expect(census(done, "p1")).toEqual(before);
@@ -166,7 +160,7 @@ describe("Superior Energy Retrieval — the cost that must not refund itself", (
     );
     const { state: parked, events } = play(state, SER);
     // One reduction: the cost paid without a prompt, the retrieval parked.
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual(paid);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual(paid);
     const prompt = chooseCardsPrompt(parked);
     for (const uid of paid) expect(prompt.candidates).not.toContain(uid);
     expect(prompt.candidates).toHaveLength(1);
@@ -292,7 +286,7 @@ describe("the record itself", () => {
     const events: GameEvent[] = [];
     const result = runProgram(state, program, { seat: "p1" }, events);
     if (result.kind !== "done") throw new Error("expected done");
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
   });
 
   it("a gate reads its OWN slot, not any recording", () => {
@@ -320,7 +314,7 @@ describe("the record itself", () => {
     const result = runProgram(state, program, { seat: "p1" }, events);
     expect(result.kind).toBe("done");
     expect(types(events)).toEqual(["HAND_COST_PAID", "CARDS_DRAWN"]);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
   });
 });
 
@@ -427,7 +421,7 @@ describe("the record ACROSS a park — the claim the shipped cards never exercis
     const r2 = resumeProgram(r1.state, r1.cont, { kind: "cards", uids: take }, events);
     if (r2.kind !== "done") throw new Error("expected done");
     // The gate fired off a record made two ops and one park earlier.
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
   });
 
   it("seeding from the continuation COPIES it — a resume never writes into stored state", () => {

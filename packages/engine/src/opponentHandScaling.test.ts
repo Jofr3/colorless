@@ -40,6 +40,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const REVEAL_TRAINER_SCALE =
@@ -92,13 +93,6 @@ const FOE_HAND = [
 
 const OWN_HAND = ["fix-stadium", "fix-energy", "fix-energy", "fix-basic-1"] as const;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** Rebuild `seat`'s HAND outright — every dealt card back into the deck, then exactly
     `ids` dealt off it (`opponentHandFamily.test.ts`'s `withHand`, which this file
     needs for the same reason: the hand is the zone under test at BOTH seats). */
@@ -139,7 +133,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(state: GameState, index: number, seat: Seat = "p1"): number | undefined {
-  return find(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
@@ -467,7 +461,7 @@ describe("§4 — the fold: two attacks, two numbers, one board", () => {
     expect(dealt(state, HAND_READ)).toBeUndefined();
     expect(dealt(state, HAND_COUNT_IDX)).toBeUndefined();
     const out = swing(state, HAND_READ);
-    expect(find(out.events, "HAND_REVEALED")?.uids).toEqual([]);
+    expect(findEvent(out.events, "HAND_REVEALED")?.uids).toEqual([]);
   });
 
   it("BOTH HALVES OF ROW 675 RESOLVE, and dropping either is observable", () => {
@@ -476,13 +470,13 @@ describe("§4 — the fold: two attacks, two numbers, one board", () => {
     // and reveals. Only the real build does both.
     const state = board();
     const out = swing(state, HAND_READ);
-    expect(find(out.events, "DAMAGE_DEALT")?.dealt).toBe(250);
-    expect(find(out.events, "HAND_REVEALED")?.seat).toBe("p2");
-    expect(find(out.events, "HAND_REVEALED")?.uids).toEqual(state.players.p2.hand);
+    expect(findEvent(out.events, "DAMAGE_DEALT")?.dealt).toBe(250);
+    expect(findEvent(out.events, "HAND_REVEALED")?.seat).toBe("p2");
+    expect(findEvent(out.events, "HAND_REVEALED")?.uids).toEqual(state.players.p2.hand);
     // …and the CONTROL: the sentence with no printed reveal files no reveal.
     const bare = swing(state, HAND_COUNT_IDX);
-    expect(find(bare.events, "DAMAGE_DEALT")?.dealt).toBe(210);
-    expect(find(bare.events, "HAND_REVEALED")).toBeUndefined();
+    expect(findEvent(bare.events, "DAMAGE_DEALT")?.dealt).toBe(210);
+    expect(findEvent(bare.events, "HAND_REVEALED")).toBeUndefined();
   });
 
   it("THE REVEAL RUNS AFTER THE DAMAGE, AND THAT IS A DECISION (D426)", () => {
@@ -493,8 +487,8 @@ describe("§4 — the fold: two attacks, two numbers, one board", () => {
     expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("HAND_REVEALED"));
     // …and the hand the fold counted is the hand the reveal named, byte for byte, which
     // is the property that makes the order unobservable in the numbers.
-    expect(find(out.events, "HAND_REVEALED")?.uids).toHaveLength(7);
-    expect(find(out.events, "DAMAGE_DEALT")?.dealt).toBe(250);
+    expect(findEvent(out.events, "HAND_REVEALED")?.uids).toHaveLength(7);
+    expect(findEvent(out.events, "DAMAGE_DEALT")?.dealt).toBe(250);
   });
 });
 
@@ -510,7 +504,7 @@ describe('§5 — `bottomFromOpponentHand.dest: "discard"`', () => {
     const state = board();
     const before = [...state.players.p2.hand];
     const { state: parked, events } = swing(deepFreeze(state), SNATCH);
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual(before);
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual(before);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the pick park");
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -540,17 +534,17 @@ describe('§5 — `bottomFromOpponentHand.dest: "discard"`', () => {
     const kept = state.players.p2.hand.filter((u) => resolved.state.players.p2.hand.includes(u));
     expect(kept).toHaveLength(6);
     expect(state.players.p2.hand.filter((u) => !kept.includes(u))).toEqual([uid]);
-    const row = find(resolved.events, "CARD_DISCARDED_FROM_HAND");
+    const row = findEvent(resolved.events, "CARD_DISCARDED_FROM_HAND");
     expect(row).toEqual({ type: "CARD_DISCARDED_FROM_HAND", seat: "p2", uid, actor: "p1" });
-    expect(find(resolved.events, "HAND_REVEALED")).toBeUndefined();
+    expect(findEvent(resolved.events, "HAND_REVEALED")).toBeUndefined();
   });
 
   it("ONE interchangeable class resolves INLINE — the M1 no-choice rule", () => {
     const state = withHand(board(), "p2", ["fix-item", "fix-item"]);
     const { state: done, events } = swing(deepFreeze(state), SNATCH);
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "HAND_REVEALED")?.uids).toHaveLength(2);
-    const row = find(events, "CARD_DISCARDED_FROM_HAND");
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toHaveLength(2);
+    const row = findEvent(events, "CARD_DISCARDED_FROM_HAND");
     expect(row?.seat).toBe("p2");
     expect(row?.actor).toBe("p1");
     // One of the two left the hand (the turn-start draw replaces it — see the rung above
@@ -563,15 +557,15 @@ describe('§5 — `bottomFromOpponentHand.dest: "discard"`', () => {
     const state = withHand(board(), "p2", []);
     const { state: done, events } = swing(deepFreeze(state), SNATCH);
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual([]);
-    expect(find(events, "CARD_DISCARDED_FROM_HAND")).toBeUndefined();
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual([]);
+    expect(findEvent(events, "CARD_DISCARDED_FROM_HAND")).toBeUndefined();
     expect(done.players.p2.discard).toHaveLength(2);
   });
 
   it("the LOG says CHOSE, which is what tells it from the RANDOM twin", () => {
     const state = withHand(board(), "p2", ["fix-item", "fix-item"]);
     const { state: done, events } = swing(deepFreeze(state), SNATCH);
-    expect(find(events, "CARD_DISCARDED_FROM_HAND")?.uid).toBeDefined();
+    expect(findEvent(events, "CARD_DISCARDED_FROM_HAND")?.uid).toBeDefined();
     expect(rowText(done, events, "chose")).toBe("chose fix-item from Tide's hand and discarded it");
     const ctx: LogContext = { names: NAMES, state: done, elapsed: formatElapsed(0) };
     const row = logFromEvents(events, ctx).find(

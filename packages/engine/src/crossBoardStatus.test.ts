@@ -27,6 +27,7 @@ import {
   setActiveFromDeck,
   setConditions,
   types,
+  findEvent,
 } from "./testFixtures";
 import type { SpecialConditions } from "./types";
 import { presentStatuses } from "./types";
@@ -132,13 +133,6 @@ const mindcrush = (state: GameState, seat: Seat = "p1"): GameState =>
 /** Centiskorch's body, paid `{R}{R}` — enough for "Singe" or "Charring Breath". */
 const charbreath = (state: GameState, seat: Seat = "p1"): GameState =>
   fielded(state, seat, "fix-charbreath", [["fix-fire-energy", 2]]);
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Every `CHECKUP_COIN_FLIP` in a batch, as `seat:status:result` strings. §13.2's cure
     flip is what makes an in-game Burn board seed-dependent, so it is READ rather than
@@ -384,7 +378,7 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     expect(state.players.p2.active?.conditions.burned).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 10, dealt: 10 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -393,14 +387,14 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     const state = setConditions(roastheat(board(31)), "p2", { burned: true });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
   });
 
   it("is armed by the GAME — Singe one turn, Roasting Heat the next, with the CURE FLIPS read", () => {
     let state = charbreath(board(5));
     const singe = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // Singe deals nothing itself — the only damage in its batch is §13.2's.
-    expect(find(singe.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(singe.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(singe.events)).toContain("STATUS_APPLIED");
     expect(flips(singe.events)).toEqual(["p2:burned:tails"]);
     state = singe.state;
@@ -418,7 +412,7 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     // ON THE OTHER SIDE OF THE TABLE, so nothing about moving YOUR Active touches it.
     const { events } = mustApply(roastheat(state), { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
   });
 
   it("THE DISARM, and it is the GAME's: a HEADS cure flip puts the bonus back to 10", () => {
@@ -434,7 +428,7 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     // …and with the Burn gone there is no second tick and no second flip.
     expect(state.players.p2.active?.damage).toBe(20);
     const { events } = mustApply(roastheat(state), { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 10, dealt: 10 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -443,11 +437,11 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     // The same member, read through `ATTACK_REQUIREMENT_CLAUSES`. A cancelled attack
     // is an attack that was USED: no damage, and the turn still ends.
     const clean = mustApply(charbreath(board(32)), { type: "attack", seat: "p1", index: 1 });
-    expect(find(clean.events, "ATTACK_FAILED")).toMatchObject({
+    expect(findEvent(clean.events, "ATTACK_FAILED")).toMatchObject({
       seat: "p1",
       reason: "requirement",
     });
-    expect(find(clean.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(clean.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(clean.events)).toContain("TURN_ENDED");
     expect(types(clean.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
 
@@ -456,8 +450,8 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
       seat: "p1",
       index: 1,
     });
-    expect(find(burned.events, "ATTACK_FAILED")).toBeUndefined();
-    expect(find(burned.events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
+    expect(findEvent(burned.events, "ATTACK_FAILED")).toBeUndefined();
+    expect(findEvent(burned.events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
   });
 
   it("and the cancel reads BURN specifically — Confusion does not unlock it", () => {
@@ -469,8 +463,8 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
       anyStatus: true,
     });
     const { events } = mustApply(confused, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_FAILED")).toMatchObject({ reason: "requirement" });
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
   });
 });
 
@@ -480,7 +474,7 @@ describe("§4 — CONFUSED: armed by the card itself, disarmed by §11's retreat
     expect(state.players.p2.active?.conditions.rotation).toBe("none");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -489,13 +483,13 @@ describe("§4 — CONFUSED: armed by the card itself, disarmed by §11's retreat
     const state = setConditions(mindcrush(board(35)), "p2", { rotation: "confused" });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
   it("is armed by the CARD ITSELF — Perplex one turn, Mental Crush the next, and NO cure flip", () => {
     let state = mindcrush(board(36));
     const perplex = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(perplex.events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
+    expect(findEvent(perplex.events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
     expect(types(perplex.events)).toContain("STATUS_APPLIED");
     expect(flips(perplex.events)).toEqual([]);
     state = perplex.state;
@@ -507,7 +501,7 @@ describe("§4 — CONFUSED: armed by the card itself, disarmed by §11's retreat
     expect(state.players.p2.active?.conditions.rotation).toBe("confused");
 
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
     // 20 + 180 against fix-bigbody's 200 — the bonus is what makes it lethal (90 alone
     // would have left the body on 90).
     expect(types(events)).toContain("KNOCKED_OUT");
@@ -530,7 +524,7 @@ describe("§4 — CONFUSED: armed by the card itself, disarmed by §11's retreat
       promoteBenchIndex: 0,
     });
     expect(types(retreated.events)).toContain("RETREATED");
-    expect(find(retreated.events, "STATUS_CLEARED")).toMatchObject({
+    expect(findEvent(retreated.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p2",
       statuses: ["confused"],
     });
@@ -540,7 +534,7 @@ describe("§4 — CONFUSED: armed by the card itself, disarmed by §11's retreat
 
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -612,9 +606,9 @@ describe("§5 — the §12 cluster: four rows, one board, and the NESTING swept"
     // number twice.
     const both = setConditions(board(42), "p2", { burned: true, rotation: "confused" });
     const roast = mustApply(roastheat(both), { type: "attack", seat: "p1", index: 0 }).events;
-    expect(find(roast, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
+    expect(findEvent(roast, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
     const crush = mustApply(mindcrush(both), { type: "attack", seat: "p1", index: 1 }).events;
-    expect(find(crush, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(crush, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
   it("a BURNED defender does NOT pay the Confused bonus, and vice versa", () => {
@@ -622,7 +616,7 @@ describe("§5 — the §12 cluster: four rows, one board, and the NESTING swept"
     // exactly one status, each read by the attack that names the OTHER one.
     const burnedOnly = setConditions(board(43), "p2", { burned: true });
     const crush = mustApply(mindcrush(burnedOnly), { type: "attack", seat: "p1", index: 1 }).events;
-    const crushDealt = find(crush, "DAMAGE_DEALT");
+    const crushDealt = findEvent(crush, "DAMAGE_DEALT");
     expect(crushDealt).toMatchObject({ base: 90, dealt: 90 });
     expect(crushDealt?.scaled).toBeUndefined();
 
@@ -632,7 +626,7 @@ describe("§5 — the §12 cluster: four rows, one board, and the NESTING swept"
       seat: "p1",
       index: 0,
     }).events;
-    const roastDealt = find(roast, "DAMAGE_DEALT");
+    const roastDealt = findEvent(roast, "DAMAGE_DEALT");
     expect(roastDealt).toMatchObject({ base: 10, dealt: 10 });
     expect(roastDealt?.scaled).toBeUndefined();
   });
@@ -662,7 +656,7 @@ describe("§6 — the SEAT axis: cross-board, per seat, and FALSE with no Active
       seat: "p2",
       index: 0,
     }).events;
-    expect(find(roast, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
+    expect(findEvent(roast, "DAMAGE_DEALT")).toMatchObject({ base: 10, scaled: 40, dealt: 50 });
 
     const confused = setConditions(boardP2(48), "p1", { rotation: "confused" });
     const crush = mustApply(mindcrush(confused, "p2"), {
@@ -670,7 +664,7 @@ describe("§6 — the SEAT axis: cross-board, per seat, and FALSE with no Active
       seat: "p2",
       index: 1,
     }).events;
-    expect(find(crush, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(crush, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
   it("an EMPTY Active Spot answers FALSE rather than throwing — for both members", () => {

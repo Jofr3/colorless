@@ -29,6 +29,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSE = "Put 2 damage counters on 1 of your opponent's Benched Pokémon.";
@@ -89,13 +90,6 @@ const P1_ACTIVE: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 const P2_ACTIVE: PokemonRef = { seat: "p2", spot: { spot: "active" } };
 const P2_BENCH_0: PokemonRef = { seat: "p2", spot: { spot: "bench", index: 0 } };
 const P2_BENCH_1: PokemonRef = { seat: "p2", spot: { spot: "bench", index: 1 } };
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -480,7 +474,7 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
     const { state: parked, events } = declare(state);
 
     expect(types(events)).toEqual(["ATTACK_DECLARED", "DAMAGE_DEALT", "EFFECT_PENDING"]);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       uid: defender,
       base: LAND_SCOOP_DAMAGE,
@@ -554,7 +548,7 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
       "TURN_STARTED",
       "CARDS_DRAWN",
     ]);
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p2",
       uid: only,
@@ -572,7 +566,7 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(LAND_SCOOP_DAMAGE);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(LAND_SCOOP_DAMAGE);
     expect(done.players.p2.active?.damage).toBe(LAND_SCOOP_DAMAGE);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -590,13 +584,13 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
       { seat: "p1", spot: { spot: "bench", index: 0 } },
       { seat: "p1", spot: { spot: "bench", index: 1 } },
     ]);
-    expect(find(events, "DAMAGE_DEALT")?.seat).toBe("p1");
+    expect(findEvent(events, "DAMAGE_DEALT")?.seat).toBe("p1");
     const chosen = benchTopUid(parked, "p1", 1);
     const { state: done, events: resolved } = mustApply(
       parked,
       pick({ seat: "p1", spot: { spot: "bench", index: 1 } }, "p2"),
     );
-    expect(find(resolved, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(resolved, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p1",
       uid: chosen,
@@ -667,7 +661,7 @@ describe("the placement is FLAT — three benched modifiers it must skip", () =>
     expect(FIXTURE_POOL["sv02-127"]?.types).toEqual(["Fighting"]);
 
     const { state: done, events } = declare(state);
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(LAND_SCOOP_HP);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(LAND_SCOOP_HP);
     expect(done.players.p2.bench[0]?.damage).toBe(LAND_SCOOP_HP);
     expect(done.players.p2.bench[0]?.damage).not.toBe(LAND_SCOOP_HP * 2);
     // The 200 HP body survives every reading a wrong build could produce, so this
@@ -698,7 +692,7 @@ describe("the placement is FLAT — three benched modifiers it must skip", () =>
     const guarded = benchTopUid(state, "p2", 0);
 
     const { state: done, events } = declare(state);
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p2",
       uid: guarded,
@@ -724,11 +718,15 @@ describe("the KNOCK OUTs it can cause — the epilogue sweep, behind the park", 
 
     const { state: after, events: resolved } = mustApply(parked, pick(P2_BENCH_0));
     expect(types(resolved)).toEqual(["COUNTERS_PLACED", "KNOCKED_OUT", "PRIZES_OWED"]);
-    expect(find(resolved, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: doomed });
+    expect(findEvent(resolved, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: doomed });
     // THE PRIZE IS OWED TO THE ATTACKER — the seat that declared, not the seat that
     // owns the Knocked Out body. fix-titan carries no rule box, so it is exactly
     // one, and WHICH prize card is a decision, so the resolution stops here.
-    expect(find(resolved, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
+    expect(findEvent(resolved, "PRIZES_OWED")).toEqual({
+      type: "PRIZES_OWED",
+      seat: "p1",
+      count: 1,
+    });
     expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     expect(types(resolved)).not.toContain("TURN_ENDED");
     // …and taking the prize drains the rest of the tail.
@@ -761,7 +759,7 @@ describe("the KNOCK OUTs it can cause — the epilogue sweep, behind the park", 
 
     const { state: parked, events } = declare(state);
     // The Defender is already lethally hit, and the KO still waits for the pick.
-    expect(find(events, "DAMAGE_DEALT")?.damage).toBe(TITAN_HP);
+    expect(findEvent(events, "DAMAGE_DEALT")?.damage).toBe(TITAN_HP);
     expect(types(events)).not.toContain("KNOCKED_OUT");
 
     const { state: after, events: resolved } = mustApply(parked, pick(P2_BENCH_1));

@@ -15,6 +15,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SCALED_PILE_TWIN =
@@ -75,13 +76,6 @@ const DEFENDER_NEARLY_DEAD = 280;
     build could produce (140 doubled, 40 resisted, 70 flat) — so those two cases
     measure the AMOUNT and never a promotion. */
 const FLAT_DEFENDER_HP = 200;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -467,7 +461,7 @@ describe("end to end — the placement, at two counts and from both seats", () =
     const defender = activeUid(state, "p1");
     const { state: done, events } = declare(state, GHOST_EYE_INDEX, "p2");
 
-    expect(find(events, "COUNTERS_PLACED")).toEqual({
+    expect(findEvent(events, "COUNTERS_PLACED")).toEqual({
       type: "COUNTERS_PLACED",
       seat: "p1",
       uid: defender,
@@ -498,7 +492,7 @@ describe("the placement is FLAT — from BOTH sides of §8.5", () => {
     expect(FIXTURE_POOL["sv02-097"]?.types).toEqual(["Psychic"]);
 
     const { state: done, events } = declare(state, GHOST_EYE_INDEX);
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(GHOST_EYE_HP);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(GHOST_EYE_HP);
     expect(done.players.p2.active?.damage).toBe(GHOST_EYE_HP);
     expect(done.players.p2.active?.damage).not.toBe(GHOST_EYE_HP * 2);
     expect(types(events)).not.toContain("DAMAGE_DEALT");
@@ -518,7 +512,7 @@ describe("the placement is FLAT — from BOTH sides of §8.5", () => {
     expect(FIXTURE_POOL["fix-psychic-resist-big"]?.weaknesses).toBeNull();
 
     const { state: done, events } = declare(state, GHOST_EYE_INDEX);
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(GHOST_EYE_HP);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(GHOST_EYE_HP);
     expect(done.players.p2.active?.damage).toBe(GHOST_EYE_HP);
     expect(done.players.p2.active?.damage).not.toBe(GHOST_EYE_HP - 30);
     expect(types(events)).not.toContain("DAMAGE_DEALT");
@@ -541,8 +535,8 @@ describe("the KNOCK OUT it can cause — the epilogue sweep, with no park in fro
       "KNOCKED_OUT",
       "PRIZES_OWED",
     ]);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: defender });
-    expect(find(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: defender });
+    expect(findEvent(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     // …and the turn has NOT ended: the prize pick and the opponent's promotion are
     // both still in front of §5.3's tail.

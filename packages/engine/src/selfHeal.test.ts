@@ -12,6 +12,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -55,13 +56,6 @@ const REAL_NEAR_MISSES = [
 const UNMAPPED_NEAR_MISSES = [REAL_NEAR_MISSES[4], REAL_NEAR_MISSES[6]] as const;
 
 const NBSP = "\u00a0";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -285,7 +279,7 @@ describe("end to end — Ceruledge 'Life Sucker' (heal 30, WITH a printed 50)", 
       index: LIFE_SUCKER_INDEX,
     });
     expect(done.players.p1.active?.damage).toBe(HURT - LIFE_SUCKER_HEAL);
-    const healed = find(events, "HEALED");
+    const healed = findEvent(events, "HEALED");
     expect(healed).toEqual({
       type: "HEALED",
       seat: "p1",
@@ -294,11 +288,11 @@ describe("end to end — Ceruledge 'Life Sucker' (heal 30, WITH a printed 50)", 
     });
     expect(done.players.p2.active?.damage).toBe(LIFE_SUCKER_DAMAGE);
     expect(all(events, "HEALED")).toHaveLength(1);
-    expect(find(events, "HEALED")?.seat).not.toBe("p2");
+    expect(findEvent(events, "HEALED")?.seat).not.toBe("p2");
     // Simulated, not skipped — and the printed damage landed, so the sentence and
     // the number are both live on one declaration.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: LIFE_SUCKER_DAMAGE });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: LIFE_SUCKER_DAMAGE });
     expect(types(events)).not.toContain("KNOCKED_OUT");
   });
 
@@ -315,7 +309,7 @@ describe("end to end — Ceruledge 'Life Sucker' (heal 30, WITH a printed 50)", 
       seat: "p2",
       index: LIFE_SUCKER_INDEX,
     });
-    expect(find(events, "HEALED")).toEqual({
+    expect(findEvent(events, "HEALED")).toEqual({
       type: "HEALED",
       seat: "p2",
       uid: attacker,
@@ -333,7 +327,7 @@ describe("end to end — Ceruledge 'Life Sucker' (heal 30, WITH a printed 50)", 
       index: LIFE_SUCKER_INDEX,
     });
     expect(done.players.p1.active?.damage).toBe(0);
-    expect(find(events, "HEALED")?.amount).toBe(BARELY_HURT);
+    expect(findEvent(events, "HEALED")?.amount).toBe(BARELY_HURT);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -364,7 +358,7 @@ describe("end to end — Natu 'Nap' (heal 20, NO printed damage)", () => {
       index: NAP_INDEX,
     });
     expect(done.players.p1.active?.damage).toBe(NATU_HURT - NAP_HEAL);
-    expect(find(events, "HEALED")).toEqual({
+    expect(findEvent(events, "HEALED")).toEqual({
       type: "HEALED",
       seat: "p1",
       uid: attacker,

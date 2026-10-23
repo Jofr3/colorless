@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
 import { applyAction, attackGateOf, createGame, programFor, redactGame } from "./index";
 import { attackTimingBlocked, attackTimingNote } from "./index";
 import {
@@ -32,6 +32,7 @@ import {
   setActiveFromDeck,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 
 const ROLLOUT_GATE =
@@ -155,12 +156,6 @@ function board(seed: number, first: Seat, seat: Seat, activeId: string): GameSta
   state = clearBench(state, other);
   state = benchFromDeck(state, other, "fix-basic-1");
   return attachFromDeck(state, seat, "fix-energy", 2);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function passTurns(state: GameState, count: number): GameState {

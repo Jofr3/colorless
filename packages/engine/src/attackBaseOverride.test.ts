@@ -29,6 +29,7 @@ import {
   setConditions,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 import type { BoostedAttack } from "./types";
 
@@ -123,13 +124,6 @@ const FANG_DECK = deckOf({
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260924;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function must0(pokemon: InPlayPokemon | null): InPlayPokemon {
   if (pokemon === null) throw new Error("expected an Active Pokémon");
   return pokemon;
@@ -185,7 +179,7 @@ const attack = (state: GameState, index: number, seat: Seat = "p1") =>
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, CHARGE);
-  const row = find(events, "ATTACK_BOOSTED");
+  const row = findEvent(events, "ATTACK_BOOSTED");
   if (row === undefined) throw new Error("Fang Charge installed nothing");
   return { start, state, events, row };
 }
@@ -394,7 +388,7 @@ describe("§3 — Hyper Fang does 240 instead of its printed 80, and §8.5 runs 
   it("does 240 on the next own turn, and DAMAGE_DEALT.base reads 240", () => {
     const window = inWindow(installed().state);
     const { state, events } = attack(window, FANG);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(240);
     expect(row?.bonus).toBeUndefined();
     expect(row?.dealt).toBe(240);
@@ -403,13 +397,13 @@ describe("§3 — Hyper Fang does 240 instead of its printed 80, and §8.5 runs 
 
   it("the unboosted control does the PRINTED 80 on the same board", () => {
     const { events } = attack(ready(), FANG);
-    expect(find(events, "DAMAGE_DEALT")?.base).toBe(PRINTED_FANG);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
+    expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(PRINTED_FANG);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
   });
 
   it("under ×2 Weakness it is 480 — the override THEN W/R, not 80 × 2 replaced", () => {
     const window = inWindow(installed({ defender: "d544-weak" }).state);
-    const row = find(attack(window, FANG).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(window, FANG).events, "DAMAGE_DEALT");
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(row?.base).toBe(240);
     expect(row?.dealt).toBe(480);
@@ -417,7 +411,7 @@ describe("§3 — Hyper Fang does 240 instead of its printed 80, and §8.5 runs 
 
   it("with Resistance it is 210", () => {
     const window = inWindow(installed({ defender: "d544-resist" }).state);
-    const row = find(attack(window, FANG).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(window, FANG).events, "DAMAGE_DEALT");
     expect(row?.resistance).toEqual({ op: "subtract", amount: 30 });
     expect(row?.dealt).toBe(210);
   });
@@ -425,8 +419,8 @@ describe("§3 — Hyper Fang does 240 instead of its printed 80, and §8.5 runs 
   it("an ADDITIVE pre-W/R term (Vitality Band) lands ON TOP of 240", () => {
     const start = attachToolFromDeck(ready(), "p1", "active", "sv01-197");
     const install = attack(start, CHARGE);
-    expect(find(install.events, "ATTACK_BOOSTED")?.base).toBe(true);
-    const row = find(attack(inWindow(install.state), FANG).events, "DAMAGE_DEALT");
+    expect(findEvent(install.events, "ATTACK_BOOSTED")?.base).toBe(true);
+    const row = findEvent(attack(inWindow(install.state), FANG).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(240);
     expect(row?.bonus).toBe(10);
     expect(row?.dealt).toBe(250);
@@ -435,15 +429,15 @@ describe("§3 — Hyper Fang does 240 instead of its printed 80, and §8.5 runs 
   it("an additive term AND Weakness: (240 + 10) × 2 = 500", () => {
     const start = attachToolFromDeck(ready({ defender: "d544-weak" }), "p1", "active", "sv01-197");
     const window = inWindow(attack(start, CHARGE).state);
-    expect(find(attack(window, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(500);
+    expect(findEvent(attack(window, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(500);
   });
 
   it("the '+'-marker variant: the override is the base the scaling reading ADDS TO", () => {
     const control = attack(setDamage(ready({ attacker: "d544-fang-plus" }), "p1", 30), FANG);
-    expect(find(control.events, "DAMAGE_DEALT")?.dealt).toBe(80 + 30);
+    expect(findEvent(control.events, "DAMAGE_DEALT")?.dealt).toBe(80 + 30);
 
     const window = inWindow(installed({ attacker: "d544-fang-plus" }).state);
-    const row = find(attack(setDamage(window, "p1", 30), FANG).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(setDamage(window, "p1", 30), FANG).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(240);
     expect(row?.dealt).toBe(240 + 30);
   });
@@ -467,13 +461,13 @@ describe("§4 — the window is the holder's own next turn, on ONE index", () =>
     expect(later.turn).toBe(7);
     expect(later.players.p1.active?.boostedAttack?.base).toBe(240);
     expect(boostedAttackBase(later, must0(later.players.p1.active), FANG)).toBeNull();
-    expect(find(attack(later, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
+    expect(findEvent(attack(later, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
   });
 
   it("does not move a DIFFERENT attack on the same body in the same window", () => {
     const window = inWindow(installed().state);
     expect(boostedAttackBase(window, must0(window.players.p1.active), NIBBLE)).toBeNull();
-    const row = find(attack(window, NIBBLE).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(window, NIBBLE).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(20);
     expect(row?.dealt).toBe(20);
   });
@@ -530,7 +524,7 @@ describe("§5 — retreat, a forced switch and evolution each clear it", () => {
     });
     expect(evolved.players.p1.active?.boostedAttack).toBeNull();
     // Same index, same name on the new card: a surviving record would pay 240 here.
-    const row = find(attack(evolved, FANG).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(evolved, FANG).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(PRINTED_FANG);
     expect(row?.dealt).toBe(PRINTED_FANG);
   });
@@ -551,11 +545,11 @@ describe("§6 — an INSTALLATION, not an Ability; a self-install, not an effect
     );
     const window = inWindow(must(applyAction(armed, { type: "endTurn", seat: "p1" })));
     // UNDAMAGED: the Ability is live — the control that the aura is what moves.
-    const free = find(attack(window, 0).events, "DAMAGE_DEALT");
+    const free = findEvent(attack(window, 0).events, "DAMAGE_DEALT");
     expect(free?.base).toBe(240);
     expect(free?.bonus).toBe(30);
     // DAMAGED: the printed Ability is suppressed; the override is untouched.
-    const locked = find(attack(setDamage(window, "p1", 10), 0).events, "DAMAGE_DEALT");
+    const locked = findEvent(attack(setDamage(window, "p1", 10), 0).events, "DAMAGE_DEALT");
     expect(locked?.base).toBe(240);
     expect(locked?.bonus).toBeUndefined();
   });
@@ -567,9 +561,11 @@ describe("§6 — an INSTALLATION, not an Ability; a self-install, not an effect
       "fix-mist-energy",
     );
     const install = attack(start, CHARGE);
-    expect(find(install.events, "ATTACK_BOOSTED")?.base).toBe(true);
-    expect(find(install.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
-    expect(find(attack(inWindow(install.state), FANG).events, "DAMAGE_DEALT")?.dealt).toBe(240);
+    expect(findEvent(install.events, "ATTACK_BOOSTED")?.base).toBe(true);
+    expect(findEvent(install.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(attack(inWindow(install.state), FANG).events, "DAMAGE_DEALT")?.dealt).toBe(
+      240,
+    );
   });
 });
 
@@ -588,16 +584,16 @@ describe("§7 — a confused holder: tails pays nothing, heads pays 240", () => 
   it("TAILS: the attack does not resolve, so the override deals nothing", () => {
     const window = setConditions(inWindow(installed().state), "p1", { rotation: "confused" });
     const { state, events } = attack(withFace(window, "tails"), FANG);
-    expect(find(events, "CONFUSION_CHECK")?.result).toBe("tails");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "CONFUSION_CHECK")?.result).toBe("tails");
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(state.players.p2.active?.damage).toBe(10); // the install turn's Fang Charge only
   });
 
   it("HEADS: the attack resolves at 240", () => {
     const window = setConditions(inWindow(installed().state), "p1", { rotation: "confused" });
     const { events } = attack(withFace(window, "heads"), FANG);
-    expect(find(events, "CONFUSION_CHECK")?.result).toBe("heads");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(240);
+    expect(findEvent(events, "CONFUSION_CHECK")?.result).toBe("heads");
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(240);
   });
 });
 
@@ -613,7 +609,7 @@ describe("§8 — the row says BASE DAMAGE, under both seats, and never 'more da
     expect(rows.some((r) => r.text.includes("more damage"))).toBe(false);
 
     // The same event under the OTHER seat — seat-independent wording.
-    const boosted = find(events, "ATTACK_BOOSTED");
+    const boosted = findEvent(events, "ATTACK_BOOSTED");
     expect(render(boosted === undefined ? [] : [{ ...boosted, seat: "p2" }], state)).toEqual([
       { who: "p2", text: "d544-fang's Hyper Fang's base damage is 240 next turn" },
     ]);
@@ -621,7 +617,7 @@ describe("§8 — the row says BASE DAMAGE, under both seats, and never 'more da
 
   it("the ADDITIVE row is unchanged — the branch keys on the rider alone", () => {
     const { state, events } = installed();
-    const boosted = find(events, "ATTACK_BOOSTED");
+    const boosted = findEvent(events, "ATTACK_BOOSTED");
     if (boosted === undefined) throw new Error("no row");
     const additive: GameEvent = {
       type: "ATTACK_BOOSTED",
@@ -682,7 +678,7 @@ describe("§9 — a second install on the SAME address merges FIELDWISE by max",
     expect(types(events)).toEqual(["ATTACK_BOOSTED", "ATTACK_BOOSTED"]);
     // The constructed COMPOSITE pays both: 240 + 30 on the window's hit.
     const window = inWindow(must(applyAction(s, { type: "endTurn", seat: "p1" })));
-    const row = find(attack(window, FANG).events, "DAMAGE_DEALT");
+    const row = findEvent(attack(window, FANG).events, "DAMAGE_DEALT");
     expect(row?.base).toBe(240);
     expect(row?.bonus).toBe(30);
     expect(row?.dealt).toBe(270);
@@ -696,7 +692,7 @@ describe("§9 — a second install on the SAME address merges FIELDWISE by max",
     expect(s.players.p1.active?.boostedAttack?.base).toBe(240);
     const loud: GameEvent[] = [];
     s = runOne(s, [{ ...BASE, amount: 300 }], loud);
-    expect(find(loud, "ATTACK_BOOSTED")?.amount).toBe(300);
+    expect(findEvent(loud, "ATTACK_BOOSTED")?.amount).toBe(300);
     expect(s.players.p1.active?.boostedAttack).toStrictEqual({
       turn: 5,
       attackIndex: FANG,
@@ -729,14 +725,14 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
     const legacy = withRawBoost(window, v30);
     expect(boostedAttackBase(legacy, must0(legacy.players.p1.active), FANG)).toBeNull();
     expect(boostedAttackDamage(legacy, must0(legacy.players.p1.active), FANG)).toBe(30);
-    expect(find(attack(legacy, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG + 30);
+    expect(findEvent(attack(legacy, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG + 30);
 
     // DIRECTION 2 — FORWARD: the bytes this deploy writes, round-tripped.
     const wire = JSON.stringify(window.players.p1.active?.boostedAttack);
     expect(wire).toBe(`{"turn":5,"attackIndex":${String(FANG)},"amount":0,"base":240}`);
     const revived = withRawBoost(window, JSON.parse(wire) as BoostedAttack);
     expect(boostedAttackBase(revived, must0(revived.players.p1.active), FANG)).toBe(240);
-    expect(find(attack(revived, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(240);
+    expect(findEvent(attack(revived, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(240);
 
     // DIRECTION 3 — LOSS: a build that drops `base` leaves `{turn, attackIndex,
     // amount: 0}` — INERT (+0, printed base), not corrupting.
@@ -747,7 +743,7 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
     const degraded = withRawBoost(window, lost);
     expect(boostedAttackBase(degraded, must0(degraded.players.p1.active), FANG)).toBeNull();
     expect(boostedAttackDamage(degraded, must0(degraded.players.p1.active), FANG)).toBe(0);
-    expect(find(attack(degraded, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
+    expect(findEvent(attack(degraded, FANG).events, "DAMAGE_DEALT")?.dealt).toBe(PRINTED_FANG);
   });
 
   it("…and that residue is UNAUTHORABLE by the surviving path — every producer measured", () => {

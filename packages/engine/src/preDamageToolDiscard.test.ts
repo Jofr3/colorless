@@ -17,6 +17,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
@@ -62,15 +63,8 @@ function swing(
   return mustApply(state, { type: "attack", seat, index });
 }
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((event) => event.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function dealt(events: GameEvent[]): number | undefined {
-  return find(events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(events, "DAMAGE_DEALT")?.dealt;
 }
 
 /** The rendered log, flattened to `{ who, text }`. */
@@ -235,7 +229,7 @@ describe("§3 — the number MOVES, which is the whole claim", () => {
     expect(state.players.p2.active?.tools).toEqual([]);
     expect(state.players.p2.discard).toContain(toolUid);
     expect(state.players.p1.discard).not.toContain(toolUid);
-    const row = find(events, "TOOLS_DISCARDED");
+    const row = findEvent(events, "TOOLS_DISCARDED");
     expect(row?.seat).toBe("p2");
     expect(row?.actor).toBe("p1");
     expect(row?.uids).toEqual([toolUid]);
@@ -267,8 +261,8 @@ describe("§3 — the number MOVES, which is the whole claim", () => {
     const { state, events } = swing(mirrored, IDX.pry100, "p2");
     expect(dealt(events)).toBe(100);
     expect(state.players.p1.active?.tools).toEqual([]);
-    expect(find(events, "TOOLS_DISCARDED")?.seat).toBe("p1");
-    expect(find(events, "TOOLS_DISCARDED")?.actor).toBe("p2");
+    expect(findEvent(events, "TOOLS_DISCARDED")?.seat).toBe("p1");
+    expect(findEvent(events, "TOOLS_DISCARDED")?.actor).toBe("p2");
     // …and the ATTACKER's own Tools are untouched, which is the other half of "your
     // opponent's": give p2's attacker a Tool and it survives its own attack.
     const armed = attachToolFromDeck(mirrored, "p2", "active", CHESTPLATE);
@@ -285,17 +279,17 @@ describe("§4 — discarding a Bravery Charm decides the Knock Out", () => {
     const charmed = board("fix-charmwall", CHARM);
     const control = swing(charmed, IDX.plain120);
     expect(dealt(control.events)).toBe(120);
-    expect(find(control.events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(control.events, "KNOCKED_OUT")).toBeUndefined();
     expect(control.state.players.p2.active?.damage).toBe(120);
 
     const subject = swing(charmed, IDX.pry120);
     expect(dealt(subject.events)).toBe(120);
-    expect(find(subject.events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(subject.events, "KNOCKED_OUT")).toBeDefined();
     // …and the dying stack takes the discarded Tool's uid with it exactly ONCE: the
     // pre-damage discard already moved it, so the KO's `discarded` list must not name
     // it again (a Tool cannot be in the pile twice).
     const toolUid = charmed.players.p2.active?.tools[0] ?? "";
-    expect(find(subject.events, "KNOCKED_OUT")?.discarded).not.toContain(toolUid);
+    expect(findEvent(subject.events, "KNOCKED_OUT")?.discarded).not.toContain(toolUid);
     expect(subject.state.players.p2.discard.filter((u) => u === toolUid)).toHaveLength(1);
   });
 
@@ -303,8 +297,8 @@ describe("§4 — discarding a Bravery Charm decides the Knock Out", () => {
     // Without this the rung above proves only "120 KOs a 100 HP body", which was
     // already true and says nothing about the discard.
     const bare = board("fix-charmwall", null);
-    expect(find(swing(bare, IDX.plain120).events, "KNOCKED_OUT")).toBeDefined();
-    expect(find(swing(bare, IDX.pry120).events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(swing(bare, IDX.plain120).events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(swing(bare, IDX.pry120).events, "KNOCKED_OUT")).toBeDefined();
   });
 });
 
@@ -319,7 +313,7 @@ describe("§5 — a silent no-op is silent, and an irrelevant Tool is still disc
     const subject = swing(bare, IDX.pry100);
     expect(dealt(control.events)).toBe(100);
     expect(dealt(subject.events)).toBe(100);
-    expect(find(subject.events, "TOOLS_DISCARDED")).toBeUndefined();
+    expect(findEvent(subject.events, "TOOLS_DISCARDED")).toBeUndefined();
     expect(subject.events.filter((e) => e.type === "TOOLS_DISCARDED")).toEqual([]);
     // …and the state is `===`-identical through the pre-damage seam: the no-op does
     // not rebuild the side.
@@ -331,7 +325,7 @@ describe("§5 — a silent no-op is silent, and an irrelevant Tool is still disc
     expect(dealt(swing(banded, IDX.plain100).events)).toBe(100);
     const { state, events } = swing(banded, IDX.pry100);
     expect(dealt(events)).toBe(100);
-    expect(find(events, "TOOLS_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeDefined();
     expect(state.players.p2.active?.tools).toEqual([]);
   });
 
@@ -340,7 +334,7 @@ describe("§5 — a silent no-op is silent, and an irrelevant Tool is still disc
     two = attachToolFromDeck(two, "p2", "active", CHARM);
     expect(two.players.p2.active?.tools).toHaveLength(2);
     const { state, events } = swing(two, IDX.pry100);
-    expect(find(events, "TOOLS_DISCARDED")?.uids).toHaveLength(2);
+    expect(findEvent(events, "TOOLS_DISCARDED")?.uids).toHaveLength(2);
     expect(state.players.p2.active?.tools).toEqual([]);
     expect(state.players.p2.discard).toHaveLength(2);
     expect(events.filter((e) => e.type === "TOOLS_DISCARDED")).toHaveLength(1);
@@ -354,17 +348,17 @@ describe("§5 — a silent no-op is silent, and an irrelevant Tool is still disc
 describe("§6 — ATTACK_EFFECT_SKIPPED, both directions", () => {
   it("the pre-damage indices are NOT reported as skipped", () => {
     const withTool = board("fix-chestwall", CHESTPLATE);
-    expect(find(swing(withTool, IDX.pry100).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(swing(withTool, IDX.pry120).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(swing(withTool, IDX.pry100).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(swing(withTool, IDX.pry120).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     // …and on a board with nothing to discard either, so "simulated" is a property of
     // the SENTENCE and not of whether the act did anything.
     const bare = board("fix-chestwall", null);
-    expect(find(swing(bare, IDX.pry100).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(swing(bare, IDX.pry100).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("the ATTRIBUTION CONTROL — index 4's unread sentence IS still reported", () => {
     const bare = board("fix-chestwall", null);
-    const skipped = find(swing(bare, IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(swing(bare, IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(LOUD_SENTENCE);
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
     expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
@@ -375,8 +369,8 @@ describe("§6 — ATTACK_EFFECT_SKIPPED, both directions", () => {
   it("Klefki's REAL printing is off the loud path too, and its 10 still lands", () => {
     const withTool = board("fix-chestwall", CHESTPLATE, "p1", "sv01-096");
     const { state, events } = swing(withTool, 0);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(events, "TOOLS_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeDefined();
     expect(dealt(events)).toBe(10);
     expect(state.players.p2.active?.tools).toEqual([]);
   });
@@ -486,7 +480,7 @@ describe("§9 — purity and the version", () => {
     const { state, events } = swing(frozen, IDX.pry100);
     expect(frozen.players.p2.active?.tools).toHaveLength(1);
     expect(state.players.p2.active?.tools).toEqual([]);
-    expect(find(events, "TOOLS_DISCARDED")).toBeDefined();
+    expect(findEvent(events, "TOOLS_DISCARDED")).toBeDefined();
     // The reader is pure too — same input, equal output, and it does not memoise a
     // mutable object across calls.
     const first = deriveAttackPreDamage(SENTENCE);

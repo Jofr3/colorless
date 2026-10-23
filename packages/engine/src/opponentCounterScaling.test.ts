@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
@@ -44,13 +45,6 @@ const DAMAGE_BEAT =
   "This attack does 20 damage for each damage counter on your opponent's Active Pokémon.";
 
 const SEED = 5;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const ATTACKERS = {
   dedenne: {
@@ -384,7 +378,7 @@ describe("the fold — the printed base is KEPT and `per × counters` is added t
       ["ursaluna", 100],
     ] as const) {
       const { state, events } = swing(board(attacker, "fix-titan"), attacker);
-      const row = find(events, "DAMAGE_DEALT");
+      const row = findEvent(events, "DAMAGE_DEALT");
       expect(row, attacker).toMatchObject({ base, dealt: base });
       expect(row?.scaled, attacker).toBeUndefined();
       expect(state.players.p2.active?.damage, attacker).toBe(base);
@@ -393,22 +387,22 @@ describe("the fold — the printed base is KEPT and `per × counters` is added t
 
   it("adds 10 PER COUNTER for Dedenne…", () => {
     const { events } = swing(damaged("dedenne", "fix-titan", 3), "dedenne");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, scaled: 30, dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, scaled: 30, dealt: 60 });
   });
 
   it("…the SAME 10 for Espeon, off the SAME sentence on a different card…", () => {
     const { events } = swing(damaged("espeon", "fix-titan", 3), "espeon");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, scaled: 30, dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, scaled: 30, dealt: 60 });
   });
 
   it("…and 30 PER COUNTER for Bloodmoon Ursaluna, off ONE regex", () => {
     const { events } = swing(damaged("ursaluna", "fix-titan", 3), "ursaluna");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 90, dealt: 190 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 90, dealt: 190 });
   });
 
   it("scales LINEARLY, and the oracle is re-derived from the row's own fields", () => {
     for (const counters of [0, 1, 2, 5, 6]) {
-      const row = find(
+      const row = findEvent(
         swing(damaged("ursaluna", "fix-titan", counters), "ursaluna").events,
         "DAMAGE_DEALT",
       );
@@ -422,8 +416,8 @@ describe("the fold — the printed base is KEPT and `per × counters` is added t
     let state = board("ursaluna", "fix-titan");
     state = setDamage(state, "p1", 90);
     const { events } = swing(state, "ursaluna");
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(100);
   });
 
   it("…and BOTH bodies damaged still scores only the DEFENDER's", () => {
@@ -431,7 +425,7 @@ describe("the fold — the printed base is KEPT and `per × counters` is added t
     // would be 270, the sum would be 360, the right answer is 90.
     let state = damaged("ursaluna", "fix-titan", 3);
     state = setDamage(state, "p1", 90);
-    expect(find(swing(state, "ursaluna").events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(swing(state, "ursaluna").events, "DAMAGE_DEALT")).toMatchObject({
       base: 100,
       scaled: 90,
       dealt: 190,
@@ -440,11 +434,11 @@ describe("the fold — the printed base is KEPT and `per × counters` is added t
 
   it("READS THE COUNT AT DECLARATION — this attack cannot bootstrap its own bonus", () => {
     const { state, events } = swing(board("dedenne", "fix-titan"), "dedenne");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
     expect(state.players.p2.active?.damage).toBe(30);
     // …and the very next declaration against that same total does score it.
     expect(
-      find(swing(damaged("dedenne", "fix-titan", 3), "dedenne").events, "DAMAGE_DEALT")?.dealt,
+      findEvent(swing(damaged("dedenne", "fix-titan", 3), "dedenne").events, "DAMAGE_DEALT")?.dealt,
     ).toBe(60);
   });
 
@@ -452,18 +446,18 @@ describe("the fold — the printed base is KEPT and `per × counters` is added t
     // Espeon's "Psy Bolt" is a plain 60 with a coin-flip status rider. A fold keyed
     // on the CARD rather than on the declared attack's text would add 30 to it.
     const { events } = swing(damaged("espeon-bolt", "fix-titan", 3), "espeon-bolt");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 60, dealt: 60 });
     expect(row?.scaled).toBeUndefined();
     // …and its own printed text is still simulated, so nothing went loud either.
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("runs identically from the OTHER seat", () => {
     // Nothing in the arm is p1-shaped: `defenderSeat` is the attacker's opposite,
     // and a hard-coded seat would look right on exactly one of these two.
     const { events } = swing(damaged("ursaluna", "fix-titan", 3, "p2"), "ursaluna", "p2");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 90, dealt: 190 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 90, dealt: 190 });
   });
 });
 
@@ -482,7 +476,7 @@ describe("the null-Active branch — total rather than covering a case", () => {
     // The control, so the case above is refused for the reason claimed and not
     // because the board was broken by the surgery.
     expect(
-      find(swing(damaged("ursaluna", "fix-titan", 3), "ursaluna").events, "DAMAGE_DEALT"),
+      findEvent(swing(damaged("ursaluna", "fix-titan", 3), "ursaluna").events, "DAMAGE_DEALT"),
     ).toMatchObject({ base: 100, scaled: 90, dealt: 190 });
   });
 });
@@ -494,17 +488,20 @@ describe("the null-Active branch — total rather than covering a case", () => {
 describe("the ORDER — BEFORE Weakness, and the KO moves with the number", () => {
   it("adds before the ×2, and the right order KOs a body the reversed one does not", () => {
     const { state, events } = swing(damaged("ursaluna", "sv03-066", 2), "ursaluna");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ base: 100, scaled: 60, dealt: 320 });
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(state.players.p2.active).toBeNull();
   });
 
   it("…and the oracle is derived from the ROW's OWN fields, in both placements", () => {
     // One counter fewer, so the body survives and the two placements are two live
     // numbers rather than a KO and a number.
-    const row = find(swing(damaged("ursaluna", "sv03-066", 1), "ursaluna").events, "DAMAGE_DEALT");
+    const row = findEvent(
+      swing(damaged("ursaluna", "sv03-066", 1), "ursaluna").events,
+      "DAMAGE_DEALT",
+    );
     if (row === undefined) throw new Error("no damage row");
     const weakness: DamageModifier | null = row.weakness;
     const before = applyDamageModifier(row.base + (row.scaled ?? 0), weakness);
@@ -515,14 +512,17 @@ describe("the ORDER — BEFORE Weakness, and the KO moves with the number", () =
   });
 
   it("a RESISTANCE cannot witness the order, and the board says so instead", () => {
-    const clean = find(swing(board("ursaluna", "sv03-086"), "ursaluna").events, "DAMAGE_DEALT");
+    const clean = findEvent(
+      swing(board("ursaluna", "sv03-086"), "ursaluna").events,
+      "DAMAGE_DEALT",
+    );
     expect(clean).toMatchObject({ base: 100, dealt: 70 });
     expect(clean?.scaled).toBeUndefined();
     expect(clean?.resistance).toEqual({ op: "subtract", amount: 30 });
 
     const { state, events } = swing(damaged("ursaluna", "sv03-086", 1), "ursaluna");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 30, dealt: 100 });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, scaled: 30, dealt: 100 });
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(state.players.p2.active).toBeNull();
   });
 });
@@ -555,11 +555,11 @@ describe("VOICE — the existing `scaled` crumb, rendered under BOTH seats and R
   it("AND THE PRINTED TEXT STOPS BEING FLAGGED — all three printings, both terms", () => {
     for (const attacker of ["dedenne", "espeon", "ursaluna"] as const) {
       const { events } = swing(damaged(attacker, "fix-titan", 3), attacker);
-      expect(find(events, "ATTACK_EFFECT_SKIPPED"), attacker).toBeUndefined();
+      expect(findEvent(events, "ATTACK_EFFECT_SKIPPED"), attacker).toBeUndefined();
     }
     for (const attacker of ["dedenne", "espeon", "ursaluna"] as const) {
       expect(
-        find(swing(board(attacker, "fix-titan"), attacker).events, "ATTACK_EFFECT_SKIPPED"),
+        findEvent(swing(board(attacker, "fix-titan"), attacker).events, "ATTACK_EFFECT_SKIPPED"),
         attacker,
       ).toBeUndefined();
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { attackCostAt } from "./attack";
 import { effectiveAttackCost, passivesOf, selfAttackCostDiscount } from "./continuous";
-import type { GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction, conditionNote, programFor, redactGame } from "./index";
 import { attackBarredByAbility, conditionHolds, countOwnerPokemonInPlay } from "./interpreter";
 import {
@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setPrizes,
+  activeOf,
 } from "./testFixtures";
 
 const POWER_SAVER_TEXT =
@@ -30,12 +31,6 @@ function board(): GameState {
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   state = clearBench(setActiveFromDeck(state, "p1", "fix-basic-1"), "p1");
   return clearBench(setActiveFromDeck(state, "p2", "fix-basic-1"), "p2");
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const spot = state.players[seat].active;
-  if (spot === null) throw new Error(`${seat} has no Active`);
-  return spot;
 }
 
 /** P1's Active is the gate holder; `benched` further prefixed bodies beside it. */

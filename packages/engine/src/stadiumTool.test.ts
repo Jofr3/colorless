@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, effectiveMaxHp, effectiveRetreatCost, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   CHOICE_DECK,
   DEFIANCE_DECK,
@@ -18,6 +18,7 @@ import {
   setDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** Setup then open P1's turn 2 (P2 went first, passed) — no §4 restrictions
@@ -25,13 +26,6 @@ import {
 function p1Turn2(seed: number): GameState {
   const state = driveSetup(seed, { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK }, { first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 describe("playTrainer — Stadiums (§7.3)", () => {
@@ -44,7 +38,7 @@ describe("playTrainer — Stadiums (§7.3)", () => {
     expect(next.players.p1.hand).not.toContain(uid);
     expect(next.players.p1.discard).not.toContain(uid);
     expect(next.allowances.stadiumPlayed).toBe(true);
-    const played = find(events, "TRAINER_PLAYED");
+    const played = findEvent(events, "TRAINER_PLAYED");
     expect(played?.trainerType).toBe("Stadium");
     // Playing a Stadium is not an attack — the turn continues.
     expect(next.phase.kind).toBe("turn:action");
@@ -99,7 +93,7 @@ describe("playTrainer — Stadiums (§7.3)", () => {
     expect(next.stadium).toEqual({ uid: leagueHq, owner: "p2" });
     expect(next.players.p1.discard).toContain(beachCourt);
     expect(next.players.p2.discard).not.toContain(beachCourt);
-    const discarded = find(events, "STADIUM_DISCARDED");
+    const discarded = findEvent(events, "STADIUM_DISCARDED");
     expect(discarded).toEqual({
       type: "STADIUM_DISCARDED",
       seat: "p1",
@@ -131,7 +125,7 @@ describe("Beach Court — Basic retreat discount (continuous, both players)", ()
       discardEnergy: [],
       promoteBenchIndex: 0,
     });
-    expect(find(events, "RETREATED")?.discardedEnergy).toEqual([]);
+    expect(findEvent(events, "RETREATED")?.discardedEnergy).toEqual([]);
     // The discount is CONTINUOUS and SHARED: the opponent's Basic also
     // retreats free on their own turn.
     let p2State = must(applyAction(afterRetreat, { type: "endTurn", seat: "p1" }));
@@ -176,7 +170,7 @@ describe("Pokémon League Headquarters — Basic attack-cost surcharge", () => {
     expectErr(state, { type: "attack", seat: "p1", index: 0 }, "ATTACK_COST_UNMET");
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 });
 
@@ -196,7 +190,7 @@ describe("attachTool (§7.4)", () => {
     expect(next.players.p1.active?.tools).toEqual([band]);
     expect(next.players.p1.hand).not.toContain(band);
     expect(next.allowances.energyAttached).toBe(false);
-    expect(find(events, "TOOL_ATTACHED")).toEqual({
+    expect(findEvent(events, "TOOL_ATTACHED")).toEqual({
       type: "TOOL_ATTACHED",
       seat: "p1",
       uid: band,
@@ -294,7 +288,7 @@ describe("Vitality Band — +10 damage before Weakness/Resistance", () => {
     );
     // Plain wall: 30 + 10 = 40.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
     expect(dealt?.bonus).toBe(10);
     expect(dealt?.dealt).toBe(40);
@@ -311,7 +305,7 @@ describe("Vitality Band — +10 damage before Weakness/Resistance", () => {
       applyAction(state, { type: "attachTool", seat: "p1", uid: band, target: { spot: "active" } }),
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     // A wrong after-W/R bonus would read 30 × 2 + 10 = 70.
     expect(dealt?.dealt).toBe(80);
   });
@@ -351,7 +345,7 @@ describe("Defiance Band — a CONDITIONAL +30 before W/R (D40's third consumer)"
   it("adds 30 while the holder is BEHIND on prizes (P1 6 vs P2 4)", () => {
     const state = armed("fix-wall", 4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
     expect(dealt?.bonus).toBe(30); // 30 + 30 = 60
     expect(dealt?.dealt).toBe(60);
@@ -360,7 +354,7 @@ describe("Defiance Band — a CONDITIONAL +30 before W/R (D40's third consumer)"
   it("adds NOTHING when the prize counts are level (the condition is strict)", () => {
     const state = armed("fix-wall", 6);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
     expect(dealt?.bonus).toBeUndefined();
     expect(dealt?.dealt).toBe(30);
@@ -369,7 +363,7 @@ describe("Defiance Band — a CONDITIONAL +30 before W/R (D40's third consumer)"
   it("(30 + 30) × 2 = 120 against a Fire-weak defender — the before-W/R pin", () => {
     const state = armed("fix-weak", 4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     // A wrong after-W/R bonus would read 30 × 2 + 30 = 90.
     expect(dealt?.dealt).toBe(120);
   });
@@ -408,7 +402,7 @@ describe("Choice Belt — a TARGET-gated +30 before W/R (the DEFENDER's suffix)"
 
   it("adds 30 against a defending Pokémon V", () => {
     const { events } = mustApply(armed("fix-pokemon-v"), { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
     expect(dealt?.bonus).toBe(30); // 30 + 30 = 60
     expect(dealt?.dealt).toBe(60);
@@ -416,7 +410,7 @@ describe("Choice Belt — a TARGET-gated +30 before W/R (the DEFENDER's suffix)"
 
   it("adds NOTHING against a plain Pokémon — the gate reads the DEFENDER, not the holder", () => {
     const { events } = mustApply(armed("fix-wall"), { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.base).toBe(30);
     expect(dealt?.bonus).toBeUndefined();
     expect(dealt?.dealt).toBe(30);
@@ -430,7 +424,7 @@ describe("Choice Belt — a TARGET-gated +30 before W/R (the DEFENDER's suffix)"
       seat: "p1",
       index: 0,
     });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt?.bonus).toBeUndefined();
     expect(dealt?.dealt).toBe(30);
   });
@@ -441,7 +435,7 @@ describe("Choice Belt — a TARGET-gated +30 before W/R (the DEFENDER's suffix)"
       seat: "p1",
       index: 0,
     });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     // A wrong after-W/R fold would read 30 × 2 + 30 = 90.
     expect(dealt?.dealt).toBe(120);
   });
@@ -549,7 +543,7 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     // Evolved to fix-stage1 (90 HP), the carried 90 damage is now lethal → the
     // Pokémon is Knocked Out and leaves the bench, its whole stack (the charm
     // included) to p1's discard.
-    const ko = find(events, "KNOCKED_OUT");
+    const ko = findEvent(events, "KNOCKED_OUT");
     expect(ko).toMatchObject({ seat: "p1", uid: stage1 });
     expect(ko?.discarded).toContain(charm);
     expect(after.players.p1.discard).toContain(charm);
@@ -588,7 +582,7 @@ describe("Bravery Charm — +50 HP while the holder's top card is a Basic", () =
     const victim = activeUid(state, "p2");
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const ko = find(events, "KNOCKED_OUT");
+    const ko = findEvent(events, "KNOCKED_OUT");
     expect(ko?.discarded).toContain(charm);
     expect(ko?.discarded).toContain(victim);
     expect(after.players.p2.discard).toContain(charm);

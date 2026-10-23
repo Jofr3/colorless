@@ -21,6 +21,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  effectPrompt,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -455,12 +456,6 @@ function render(events: GameEvent[], state: GameState): string[] {
 const attack = (seat: Seat, index: number): GameAction =>
   ({ type: "attack", seat, index }) as GameAction;
 
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
-
 /** The p2 hand surgery for p2's own turn: the hand becomes EXACTLY `ids`. */
 const p2Hand = (state: GameState, ids: readonly string[]): GameState => setHand(state, "p2", ids);
 const handUidOf = (state: GameState, seat: Seat, id: string): string => {
@@ -627,7 +622,7 @@ describe("D575 §3 — Miraidon: every Future Pokémon, from Pokémon ex, while 
     const events = [...played.events];
     // Two benched candidates, so the pick PARKS — asserted, not assumed (an `if` here would let a
     // board that never asked skip the whole gust).
-    expect(prompt(state).kind).toBe("choosePokemon");
+    expect(effectPrompt(state).kind).toBe("choosePokemon");
     const picked = run(state, {
       type: "resolveEffect",
       seat: "p2",
@@ -908,7 +903,7 @@ describe("D575 §5 — Hypno: attaching from hand to the Defending Pokémon ends
       abilityName: "Energy Carnival",
     } as GameAction).state;
     // Two targets (the Active and Quaquaval): the pick parks; take the marked Active.
-    expect(prompt(state).kind).toBe("choosePokemon");
+    expect(effectPrompt(state).kind).toBe("choosePokemon");
     const { state: after, events } = run(state, {
       type: "resolveEffect",
       seat: "p2",
@@ -1026,7 +1021,7 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
 
   it("two or more face-down: the attacker picks a SLOT, blind, on the shipped `choosePrize` park", () => {
     const { state } = run(eyes(), attack("p1", 0));
-    expect(prompt(state)).toEqual({
+    expect(effectPrompt(state)).toEqual({
       kind: "choosePrize",
       indices: [0, 1, 2, 3, 4, 5],
       note: "Choose 1 of your opponent's face-down Prize cards to look at.",
@@ -1045,7 +1040,7 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
       choice: { kind: "prize", index: 2 },
     } as GameAction);
     state = answered.state;
-    expect(prompt(state)).toEqual({
+    expect(effectPrompt(state)).toEqual({
       kind: "orderCards",
       candidates: [prizeUid],
       note: "You looked at this face-down Prize card. Put it back face down.",
@@ -1086,7 +1081,7 @@ describe("D575 §6 — Blipbug: look at 1 of the opponent's face-down Prize card
 
   it("one face-down Prize: no blind question — straight to the look; zero: a silent no-op", () => {
     const one = run(eyes(1), attack("p1", 0));
-    expect(prompt(one.state).kind).toBe("orderCards");
+    expect(effectPrompt(one.state).kind).toBe("orderCards");
     expect(all(one.events, "PRIZE_LOOKED_AT")).toHaveLength(1);
     const none = run(eyes(0), attack("p1", 0));
     expect(all(none.events, "PRIZE_LOOKED_AT")).toEqual([]);

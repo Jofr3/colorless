@@ -18,6 +18,7 @@ import {
   typedEnergy,
   types,
   must,
+  findEvent,
 } from "./testFixtures";
 
 const MAMMOTH_TEXT =
@@ -211,13 +212,6 @@ function answer(state: GameState, uids: readonly string[]) {
   });
 }
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 const ctx = (state: GameState): LogContext => ({
   names: { p1: "Ember", p2: "Tide" },
   state,
@@ -345,7 +339,7 @@ for (const t of TEXTS) {
       const { state: after, events } = answer(parked, [pick]);
       expect(after.players.p1.hand).toContain(pick);
       expect(after.players.p1.deck).not.toContain(pick);
-      expect(find(events, "DECK_SEARCHED")).toEqual({
+      expect(findEvent(events, "DECK_SEARCHED")).toEqual({
         type: "DECK_SEARCHED",
         seat: "p1",
         dest: "hand",
@@ -365,7 +359,7 @@ for (const t of TEXTS) {
       const parked = mustApply(before, use(t.name)).state;
       const { state: after, events } = answer(parked, []);
       expect(after.players.p1.hand).toEqual(parked.players.p1.hand);
-      expect(find(events, "SHUFFLE")?.seat).toBe("p1");
+      expect(findEvent(events, "SHUFFLE")?.seat).toBe("p1");
       expect(after.phase.kind).toBe("turn:action");
     });
 

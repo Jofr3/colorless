@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cardOfUid, hasRuleBox, isBasicPokemon } from "./cards";
 import { applyAction } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   STADIUM_ABILITY_DECK,
   basicPokemon,
@@ -16,6 +16,7 @@ import {
   mustApply,
   trainerCard,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const both = { p1: STADIUM_ABILITY_DECK, p2: STADIUM_ABILITY_DECK };
@@ -32,13 +33,6 @@ function withStadium(state: GameState, seat: Seat, cardId: string): GameState {
   const next = handFromDeck(state, seat, cardId, 1);
   const uid = handUid(next, seat, cardId);
   return must(applyAction(next, { type: "playTrainer", seat, uid }));
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function cardIdOf(state: GameState, uid: string): string {
@@ -103,7 +97,7 @@ describe("useStadiumAbility — framework (§7.3)", () => {
     expect(state.stadium?.owner).toBe("p1");
     expect(state.allowances.stadiumAbilityUsed).toBe(false);
     const { state: p2Parked, events } = mustApply(state, { type: "useStadiumAbility", seat: "p2" });
-    expect(find(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
+    expect(findEvent(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
       seat: "p2",
       stadium: "Town Store",
     });
@@ -116,7 +110,7 @@ describe("Artazon — search a no-Rule-Box Basic → Bench", () => {
     const state = withStadium(p1Turn2(2), "p1", "sv02-171");
     const benchBefore = state.players.p1.bench.length;
     const { state: parked, events } = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
-    expect(find(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
+    expect(findEvent(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
       seat: "p1",
       stadium: "Artazon",
     });
@@ -147,7 +141,7 @@ describe("Artazon — search a no-Rule-Box Basic → Bench", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [pick] },
     });
-    const searched = find(e2, "DECK_SEARCHED");
+    const searched = findEvent(e2, "DECK_SEARCHED");
     expect(searched?.dest).toBe("bench");
     expect(searched?.uids).toEqual([pick]);
     expect(types(e2)).toContain("SHUFFLE");
@@ -167,11 +161,11 @@ describe("Mesagoza — coin-gated search a Pokémon → hand", () => {
       const { state: after, events } = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
       // The activation is "used" the moment it is declared, before the coin.
       expect(after.allowances.stadiumAbilityUsed).toBe(true);
-      expect(find(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
+      expect(findEvent(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
         seat: "p1",
         stadium: "Mesagoza",
       });
-      const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+      const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
       if (flip === undefined) throw new Error("Mesagoza did not flip");
       if (flip.result === "heads") {
         sawHeads = true;
@@ -201,7 +195,7 @@ describe("Town Store — search a Pokémon Tool → hand", () => {
     const state = withStadium(p1Turn2(3), "p1", "sv03-196");
     const handBefore = state.players.p1.hand.length;
     const { state: parked, events } = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
-    expect(find(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
+    expect(findEvent(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({
       seat: "p1",
       stadium: "Town Store",
     });
@@ -220,7 +214,7 @@ describe("Town Store — search a Pokémon Tool → hand", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [pick] },
     });
-    expect(find(e2, "DECK_SEARCHED")?.dest).toBe("hand");
+    expect(findEvent(e2, "DECK_SEARCHED")?.dest).toBe("hand");
     expect(types(e2)).toContain("SHUFFLE");
     expect(done.players.p1.hand).toContain(pick);
     expect(done.players.p1.hand.length).toBe(handBefore + 1);

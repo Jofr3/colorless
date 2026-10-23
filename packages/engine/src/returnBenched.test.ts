@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
 import type { EffectOp } from "./effects";
-import type { GameEvent } from "./events";
 import { applyAction, createGame, programFor, topUid } from "./index";
 import type { GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
@@ -20,6 +19,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 import { otherSeat } from "./types";
 
@@ -165,13 +165,6 @@ function swing(state: GameState, index: number) {
   return result;
 }
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. THE ANCHOR — four printed spellings, and the neighbourhood it refuses.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -306,7 +299,7 @@ describe("D299 §3 — the body and everything on it leave the board together", 
       choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } },
     });
     const after = answered.state;
-    const returned = find(answered.events, "POKEMON_RETURNED");
+    const returned = findEvent(answered.events, "POKEMON_RETURNED");
     expect(returned?.seat).toBe("p1");
     expect(returned?.actor).toBe("p1");
     expect(returned?.dest).toBe("deck");
@@ -316,7 +309,7 @@ describe("D299 §3 — the body and everything on it leave the board together", 
     // the body that was at index 1.
     expect(after.players.p1.bench).toHaveLength(1);
     expect(topUid(after.players.p1.bench[0] as NonNullable<typeof target>)).toBe(survivorUid);
-    expect(find(answered.events, "SHUFFLE")?.seat).toBe("p1");
+    expect(findEvent(answered.events, "SHUFFLE")?.seat).toBe("p1");
   });
 
   it("SWOOBAT: the same body into the OWN HAND, and NO shuffle", () => {
@@ -337,9 +330,9 @@ describe("D299 §3 — the body and everything on it leave the board together", 
       seat: "p1",
       choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 0 } } },
     });
-    expect(find(answered.events, "POKEMON_RETURNED")?.dest).toBe("hand");
+    expect(findEvent(answered.events, "POKEMON_RETURNED")?.dest).toBe("hand");
     for (const uid of whole) expect(answered.state.players.p1.hand).toContain(uid);
-    expect(find(answered.events, "SHUFFLE")).toBeUndefined();
+    expect(findEvent(answered.events, "SHUFFLE")).toBeUndefined();
     // …and the deck did not receive it either, which is the other half of the same
     // claim (a build that shuffled into the deck AND appended to the hand would
     // satisfy the line above).
@@ -355,13 +348,13 @@ describe("D299 §3 — the body and everything on it leave the board together", 
     const uid = topUid(victim) as string;
     const { state: after, events } = swing(state, 0);
     expect(after.pending).toHaveLength(0);
-    const returned = find(events, "POKEMON_RETURNED");
+    const returned = findEvent(events, "POKEMON_RETURNED");
     expect(returned?.seat).toBe("p2");
     expect(returned?.actor).toBe("p1");
     expect(returned?.uids).toEqual([uid]);
     expect(after.players.p2.bench).toHaveLength(0);
     expect(after.players.p2.deck).toContain(uid);
-    expect(find(events, "SHUFFLE")?.seat).toBe("p2");
+    expect(findEvent(events, "SHUFFLE")?.seat).toBe("p2");
     // p1's own board is untouched — the possessive is doing the work.
     expect(after.players.p1.bench).toHaveLength(1);
   });
@@ -372,9 +365,9 @@ describe("D299 §3 — the body and everything on it leave the board together", 
     // effect the engine could not read, and the loud path must not claim it.
     const state = board(SEEDS[2], "sv06-010", 1, 0);
     const { state: after, events } = swing(state, 0);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(events, "POKEMON_RETURNED")).toBeUndefined();
-    expect(find(events, "SHUFFLE")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "POKEMON_RETURNED")).toBeUndefined();
+    expect(findEvent(events, "SHUFFLE")).toBeUndefined();
     expect(after.pending).toHaveLength(0);
     expect(after.players.p2.bench).toHaveLength(0);
   });
@@ -384,10 +377,10 @@ describe("D299 §3 — the body and everything on it leave the board together", 
     for (const seed of SEEDS) {
       const state = board(seed, "sv06.5-022", 1, 1, "p2", 3);
       const { state: after, events } = swing(state, 0);
-      const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+      const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
       if (flip === undefined) throw new Error("no coin flip");
       faces.set(flip.result, {
-        returned: find(events, "POKEMON_RETURNED") !== undefined,
+        returned: findEvent(events, "POKEMON_RETURNED") !== undefined,
         bench: after.players.p2.bench.length,
       });
     }

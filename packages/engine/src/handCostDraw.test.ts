@@ -34,6 +34,7 @@ import {
   itemTrainer,
   types,
   must,
+  findEvent,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -322,13 +323,6 @@ function fielded(seed: number, attacker: string): GameState {
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
-}
-
 /** THE ZONE TRIPLE this file reads every wrong implementation off. */
 function zones(state: GameState): [hand: number, discard: number, deck: number] {
   const side = state.players.p1;
@@ -427,7 +421,7 @@ describe("D473 §3 — the discriminating board: EIGHT readings, EIGHT different
 
     const { state: done, events } = mustStep(state, attack);
     // The park is answered below; the pre-park events already name the payment.
-    const paid = find(events, "HAND_COST_PAID");
+    const paid = findEvent(events, "HAND_COST_PAID");
     expect(paid).toBeUndefined(); // …because a 4-card hand PARKS. §5 owns that path.
     const phase = done.phase;
     if (phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -437,8 +431,12 @@ describe("D473 §3 — the discriminating board: EIGHT readings, EIGHT different
       seat: "p1",
       choice: { kind: "cards", uids: [chosen] },
     });
-    expect(find(rest, "HAND_COST_PAID")).toMatchObject({ seat: "p1", uids: [chosen] });
-    expect(find(rest, "CARDS_DRAWN")).toMatchObject({ seat: "p1", uids: topTwo, reason: "effect" });
+    expect(findEvent(rest, "HAND_COST_PAID")).toMatchObject({ seat: "p1", uids: [chosen] });
+    expect(findEvent(rest, "CARDS_DRAWN")).toMatchObject({
+      seat: "p1",
+      uids: topTwo,
+      reason: "effect",
+    });
     // The discarded card is the OLD hand's, and NEITHER drawn card is in the discard.
     expect(settled.players.p1.discard).toEqual([chosen]);
     for (const uid of topTwo) expect(settled.players.p1.discard).not.toContain(uid);
@@ -454,7 +452,7 @@ describe("D473 §3 — the discriminating board: EIGHT readings, EIGHT different
     // the base would silently delete a 30-damage attack.
     const state = handOf(fielded(3, DRAWER), 1);
     const { state: done, events } = mustStep(state, attack);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(done.players.p2.active?.damage).toBe(30);
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
   });
@@ -467,8 +465,8 @@ describe("D473 §4 — the ZERO-MATCH board, with the controls that say WHY it i
     const deckBefore = state.players.p1.deck.length;
     const { state: done, events } = mustStep(state, attack);
     expect(zones(done)).toEqual([0, 0, deckBefore]);
-    expect(find(events, "CARDS_DRAWN")?.reason).not.toBe("effect");
-    expect(find(events, "HAND_COST_PAID")).toBeUndefined();
+    expect(findEvent(events, "CARDS_DRAWN")?.reason).not.toBe("effect");
+    expect(findEvent(events, "HAND_COST_PAID")).toBeUndefined();
     // …and the CONTROL that says the silence is the PRINTED one: the same board with
     // ONE card in hand pays it and draws two.
     const one = handOf(fielded(4, DRAWER), 1);
@@ -497,8 +495,8 @@ describe("D473 §4 — the ZERO-MATCH board, with the controls that say WHY it i
     // the whole thing resolves inline.
     const state = handOf(fielded(6, DRAWER3), 1);
     const { state: done, events } = mustStep(state, attack);
-    expect(find(events, "CARDS_DRAWN")).toMatchObject({ seat: "p1", reason: "effect" });
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
+    expect(findEvent(events, "CARDS_DRAWN")).toMatchObject({ seat: "p1", reason: "effect" });
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
     expect(zones(done)[0]).toBe(3);
   });
 });

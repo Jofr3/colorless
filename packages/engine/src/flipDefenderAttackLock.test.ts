@@ -16,6 +16,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -35,13 +36,6 @@ const SIBLING_INDEX = 1;
     so a refusal on this body is never an Energy shortfall wearing the lock's face. */
 const VICTIM_FREE_INDEX = 2;
 const SEEDS = 400;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function refusal(state: GameState, seat: Seat, index: number): string {
   const result = applyAction(state, { type: "attack", seat, index });
@@ -90,7 +84,7 @@ function flipBoard(wantHeads: boolean, effect: string = PRINTED): GameState {
     } catch {
       continue;
     }
-    const flip = find(swing(candidate).events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(swing(candidate).events, "ATTACK_EFFECT_COIN_FLIP");
     if (flip?.result === (wantHeads ? "heads" : "tails")) return candidate;
   }
   throw new Error(`no seed under ${SEEDS} gives ${wantHeads ? "heads" : "tails"}`);
@@ -106,7 +100,8 @@ function bareSeed(): number {
     } catch {
       continue;
     }
-    if (find(swing(candidate).events, "ATTACK_EFFECT_COIN_FLIP")?.result === "heads") return seed;
+    if (findEvent(swing(candidate).events, "ATTACK_EFFECT_COIN_FLIP")?.result === "heads")
+      return seed;
   }
   throw new Error("no heads seed");
 }
@@ -302,10 +297,10 @@ describe("§2 — the 2² lattice, and why it warrants a whole-sentence anchor",
 describe("§3 — the winning face installs the lock", () => {
   it("files the coin row and the lock row, in printed order, on the DEFENDER", () => {
     const { state, events } = swing(flipBoard(true));
-    const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
     expect(flip?.result).toBe("heads");
     expect(flip?.seat).toBe("p1");
-    const lock = find(events, "ATTACK_LOCKED");
+    const lock = findEvent(events, "ATTACK_LOCKED");
     // The lock is filed against the VICTIM's seat and the victim's body — the
     // event's `seat`/`uid` are the LOCKED body's, not the actor's.
     expect(lock?.seat).toBe("p2");
@@ -359,8 +354,8 @@ describe("§3 — the winning face installs the lock", () => {
 describe("§4 — the losing face installs nothing, and is not a skipped effect", () => {
   it("no lock, no `ATTACK_LOCKED`, and the victim attacks freely", () => {
     const { state, events } = swing(flipBoard(false));
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
-    expect(find(events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeUndefined();
     expect(state.players.p2.active?.attackLockedTurn).toBeNull();
     expect(attackLocked(state, state.players.p2.active as InPlayPokemon)).toBe(false);
     expect(refusal(state, "p2", VICTIM_FREE_INDEX)).toBe("ok");
@@ -369,7 +364,7 @@ describe("§4 — the losing face installs nothing, and is not a skipped effect"
   it("a TAILS is a RESOLVED attack, not a skipped effect (D134's reading)", () => {
     const { state, events } = swing(flipBoard(false));
     expect(events.filter((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(state.turn).toBe(3);
     expect(rendered(state, events)).toContainEqual({
       who: "p1",
@@ -380,8 +375,8 @@ describe("§4 — the losing face installs nothing, and is not a skipped effect"
   it("the UNGATED sibling on the same body still locks unconditionally", () => {
     const tailsBoard = flipBoard(false);
     const { state, events } = swing(tailsBoard, SIBLING_INDEX);
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")).toBeUndefined();
-    expect(find(events, "ATTACK_LOCKED")?.seat).toBe("p2");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_LOCKED")?.seat).toBe("p2");
     expect(state.players.p2.active?.attackLockedTurn).toBe(tailsBoard.turn + 1);
   });
 });

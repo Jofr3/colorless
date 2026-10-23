@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   SCORCHING_ARMOR_DECK,
   attachFromDeck,
@@ -10,17 +10,11 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
-const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const yawn = { type: "attack", seat: "p1", index: 2 } as const;
 
 /** Setup then open P1's turn (P2 went first and passed) — P1 is the attacker. */
 function board(seed: number): GameState {
@@ -63,16 +57,16 @@ describe("Scorching Armor — Burn the attacker when damaged (§9)", () => {
 
     // The main hit first: 30 to Armarouge (120 HP — survives, no KO), Colorless
     // Bite so no Weakness engaged.
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
 
     // …then the trigger fires on the DAMAGED defender (P2, Armarouge)…
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       ability: "Scorching Armor",
     });
     // …Burning the ATTACKER's Active (P1) — otherSeat of the program's seat.
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
 
     // Order: DAMAGE_DEALT → ABILITY_TRIGGERED → STATUS_APPLIED, the reaction
     // folded immediately behind the damage it reacts to.
@@ -92,11 +86,11 @@ describe("Scorching Armor — 'even if this Pokémon is Knocked Out'", () => {
     const { state: done, events } = mustApply(state, bite);
 
     // The trigger fired and Burned the attacker…
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Scorching Armor" });
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Scorching Armor" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
     expect(done.players.p1.active?.conditions.burned).toBe(true); // pre-Checkup, still set
     // …and Armarouge was Knocked Out all the same (the Burn landed before it).
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: armarouge });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: armarouge });
     const order = types(events);
     expect(order.indexOf("STATUS_APPLIED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
     // A plain body — P1 takes its 1 Prize.
@@ -120,6 +114,6 @@ describe("Scorching Armor — the read-site gate (only when actually damaged)", 
     ).toBeUndefined();
     expect(done.players.p1.active?.conditions.burned).toBeFalsy();
     // Yawn DID resolve — the defender (P2) is the one that got a status (Asleep).
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2" });
   });
 });

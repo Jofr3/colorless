@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, effectiveRetreatCost, programFor } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -15,6 +15,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const LANDED = [
@@ -179,13 +180,6 @@ const useTrade = {
   abilityName: "Trade",
 } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** `driveSetup`, against the LOCAL pool — the one thing `testFixtures.ts` cannot
     do for us, because it closes over `FIXTURE_POOL`. Same script: choose first,
     settle compensation, place actives, ready both. */
@@ -292,14 +286,14 @@ describe("Poison Point — driven through the real engine", () => {
     const state = fight(1, "fix-poisonpoint");
     deepFreeze(state);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       ability: "Poison Point",
     });
     // POISONED, not Burned — the one token that separates this from sv03-044,
     // and the only thing a copy-paste of Scorching Armor would get wrong.
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "poisoned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "poisoned" });
     expect(after.players.p1.active?.conditions.poisonDamage).toBeGreaterThan(0);
     expect(after.players.p1.active?.conditions.burned).toBe(false);
     // Order: the reaction folds immediately behind the damage it reacts to.
@@ -324,7 +318,7 @@ describe("Poison Point — driven through the real engine", () => {
     state = benchFromDeck(state, "p2", "fix-poisonpoint");
     deepFreeze(state);
     const { state: after, events } = mustApply(state, bite);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
     expect(
       events.find((e) => e.type === "ABILITY_TRIGGERED" && e.ability === "Poison Point"),
     ).toBeUndefined();
@@ -351,9 +345,9 @@ describe("Trade — driven through the real engine", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [pick] },
     });
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([pick]);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([pick]);
     // TWO, not Tinkaton's three — the one number a copied program gets wrong.
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(2);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(2);
     expect(done.players.p1.discard).toContain(pick);
     expect(done.players.p1.hand).toHaveLength(handBefore - 1 + 2);
   });

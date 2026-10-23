@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -74,13 +75,6 @@ const OPP_HAND = ["fix-item", "fix-tool", "fix-gatedsup", "fix-stadium", "fix-en
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(attacker: Seat, seed: number): GameState {
   const opponent = other(attacker);
@@ -308,8 +302,8 @@ describe("§3 — the answerer is the OPPONENT, not the actor", () => {
     expect(parked.phase.answerer).toBe("p2"); // …but the hand's owner answers
     // The announcement rides the same seat, off `result.decider` rather than off
     // the controller (flow.ts).
-    expect(find(events, "EFFECT_PENDING")?.seat).toBe("p2");
-    expect(find(events, "EFFECT_PENDING")?.note).toBe("Discard 2 cards from your hand.");
+    expect(findEvent(events, "EFFECT_PENDING")?.seat).toBe("p2");
+    expect(findEvent(events, "EFFECT_PENDING")?.note).toBe("Discard 2 cards from your hand.");
   });
 
   it("the caption is in the ANSWERER's VOICE, not the printed sentence", () => {
@@ -506,7 +500,7 @@ describe("§5 — which cards moved, out of whose hand, into whose pile", () => 
       choice: { kind: "cards", uids: picked },
     });
     // The event names the OWNER and the cards, in the order they were answered.
-    expect(find(events, "FORCED_HAND_DISCARD")).toEqual({
+    expect(findEvent(events, "FORCED_HAND_DISCARD")).toEqual({
       type: "FORCED_HAND_DISCARD",
       seat: "p2",
       uids: picked,
@@ -554,7 +548,7 @@ describe("§5 — which cards moved, out of whose hand, into whose pile", () => 
         seat: victim,
         choice: { kind: "cards", uids: picked },
       });
-      expect(find(events, "FORCED_HAND_DISCARD")?.seat, attacker).toBe(victim);
+      expect(findEvent(events, "FORCED_HAND_DISCARD")?.seat, attacker).toBe(victim);
       expect(done.players[victim].discard, attacker).toEqual(picked);
       expect(done.players[attacker].discard, attacker).toEqual([]);
     }
@@ -574,7 +568,7 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
       const attackerHand = [...state.players[attacker].hand];
       const { state: done, events } = attack(state, HAND_PURGE, attacker);
       expect(done.phase.kind, attacker).not.toBe("effect:choose");
-      expect(find(events, "FORCED_HAND_DISCARD"), attacker).toEqual({
+      expect(findEvent(events, "FORCED_HAND_DISCARD"), attacker).toEqual({
         type: "FORCED_HAND_DISCARD",
         seat: victim,
         uids: hand,
@@ -589,7 +583,7 @@ describe("§6 — fewer than N, exactly N, and the empty hand", () => {
     const state = ready(["fix-stadium"]);
     const held = state.players.p2.hand[0] as string;
     const { state: done, events } = attack(deepFreeze(state), HAND_PURGE);
-    expect(find(events, "FORCED_HAND_DISCARD")?.uids).toEqual([held]);
+    expect(findEvent(events, "FORCED_HAND_DISCARD")?.uids).toEqual([held]);
     expect(done.players.p2.discard).toEqual([held]);
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");

@@ -20,14 +20,8 @@ import {
   setActiveFromDeck,
   toDeckTop,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
@@ -166,7 +160,7 @@ describe("D225 — driven through real programs, the clause is the only differen
   it("Energy Search NAMES the Basic Energy it found (printed 'reveal it')", () => {
     const start = p1Turn2(1, { p1: TRAINER_DECK, p2: TRAINER_DECK });
     const { state, events, picked } = playAndTake(start, "sv01-172", 1);
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.dest).toBe("hand");
     expect(searched?.reveal).toBe(true);
     expect(searchRow(state, events)).toBe(
@@ -178,7 +172,7 @@ describe("D225 — driven through real programs, the clause is the only differen
   it('Nest Ball stays a count — same op, `dest: "bench"`, no printed reveal', () => {
     const start = p1Turn2(1, { p1: TRAINER_DECK, p2: TRAINER_DECK });
     const { state, events, picked } = playAndTake(start, "sv01-181", 1);
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.dest).toBe("bench");
     expect(searched).not.toHaveProperty("reveal");
     expect(searchRow(state, events)).toBe("searched their deck — benched 1 Pokémon");
@@ -189,7 +183,7 @@ describe("D225 — driven through real programs, the clause is the only differen
     let start = p1Turn2(1, { p1: LOOK_AT_TOP_DECK, p2: LOOK_AT_TOP_DECK });
     start = toDeckTop(start, "p1", "fix-basic-1", 2);
     const { state, events, picked } = playAndTake(start, "sv02-183", 1);
-    const revealed = find(events, "DECK_TOP_REVEALED");
+    const revealed = findEvent(events, "DECK_TOP_REVEALED");
     expect(revealed?.reveal).toBe(true);
     expect(searchRow(state, events)).toBe(
       `looked at the top of their deck — revealed ${nameOf(state, picked[0] as string)} and put it in hand`,
@@ -222,7 +216,7 @@ describe("D225 — a to-hand search with NO printed reveal, driven, still says n
       choice: { kind: "cards", uids: pick },
     });
 
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.dest).toBe("hand");
     expect(searched).not.toHaveProperty("reveal");
     expect(Object.keys(searched ?? {}).sort()).toEqual(["dest", "seat", "type", "uids"]);

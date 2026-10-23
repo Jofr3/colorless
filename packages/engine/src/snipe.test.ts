@@ -16,14 +16,8 @@ import {
   setBenchDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -59,7 +53,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
     });
     // The bench play AND the auto-fired trigger land in the one batch.
     expect(types(events)).toContain("POKEMON_BENCHED");
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
     expect(types(events)).toContain("EFFECT_PENDING");
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
@@ -103,7 +97,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       seat: "p1",
       uid,
     });
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
     expect(parked.phase.kind).toBe("effect:choose");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
@@ -149,7 +143,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
     const uid = handUid(state, "p1", "sv01-118");
     const { state: done, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
     // The Ability still triggered (auto-fire), but there was nothing to snipe.
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Flying Entry");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.phase.kind).toBe("turn:action");
@@ -175,7 +169,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: prompt.candidates },
     });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
     // The KOing player (p1, the actor) parks on their prize pick (1 of 6).
     expect(after.phase.kind).toBe("ko:takePrizes");
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
@@ -212,7 +206,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       choice: { kind: "pokemonMulti", refs: prompt.candidates },
     });
     // The lone prize is forced, so the whole KO auto-resolves into a win.
-    const over = find(events, "GAME_OVER");
+    const over = findEvent(events, "GAME_OVER");
     expect(over?.outcome).toEqual({ result: "win", winner: "p1", reason: "prizesTaken" });
     expect(after.phase.kind).toBe("gameOver");
   });
@@ -346,8 +340,8 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       target: { spot: "active" },
       abilityName: "Bouquet Magic",
     });
-    expect(find(events, "ABILITY_USED")?.ability).toBe("Bouquet Magic");
-    const paid = find(events, "HAND_COST_PAID");
+    expect(findEvent(events, "ABILITY_USED")?.ability).toBe("Bouquet Magic");
+    const paid = findEvent(events, "HAND_COST_PAID");
     expect(paid?.uids).toEqual([grassUid]);
     // The Energy left hand for the discard pile.
     expect(parked.players.p1.hand).not.toContain(grassUid);
@@ -363,7 +357,7 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(e2, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(findEvent(e2, "COUNTERS_PLACED")?.amount).toBe(30);
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p2.bench.filter((p) => p.damage === 30)).toHaveLength(1);
   });
@@ -382,11 +376,11 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
     // Names the card, not just the count: the FILTER is what this pins (a Basic
     // {G} Energy was paid, not merely "something"), which is what the removed
     // ABILITY_COST_PAID.energyType assertion used to carry.
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([
       handUid(state, "p1", "fix-grass-energy"),
     ]);
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(30);
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p2.bench[0]?.damage).toBe(30);
   });
@@ -448,7 +442,7 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(20);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(20);
     expect(done.players.p2.bench.filter((p) => p.damage === 20)).toHaveLength(1);
   });
 
@@ -505,7 +499,7 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       target: { spot: "bench", index: 0 },
       abilityName: "Bouquet Magic",
     });
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(30);
     expect(done.phase.kind).toBe("turn:action");
   });
 
@@ -521,7 +515,7 @@ describe("Meowscarada's Bouquet Magic — the activated snipe with a cost (§9)"
       target: { spot: "active" },
       abilityName: "Bouquet Magic",
     });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
     expect(after.phase.kind).toBe("ko:takePrizes");
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
     expect(after.phase.seat).toBe("p1");

@@ -19,6 +19,7 @@ import {
   setConditions,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const OH_NO_YOU_DONT =
@@ -35,14 +36,7 @@ const REDUCED_PRIZES = 1;
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
-const spread = { type: "attack", seat: "p1", index: 0 } as const; // Spread Shot — 30 + 20/bench
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const spread = { type: "attack", seat: "p1", index: 0 } as const;
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -212,13 +206,13 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: holder });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: holder });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2", // the KO'd side — the Ability's OWNER
       uid: holder,
       ability: "Oh No You Don't",
     });
-    expect(find(events, "PRIZE_REDUCED")).toEqual({
+    expect(findEvent(events, "PRIZE_REDUCED")).toEqual({
       type: "PRIZE_REDUCED",
       seat: "p2",
       uid: holder,
@@ -240,8 +234,8 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
     const { state: done, events } = mustApply(state, bite);
 
     expect(types(events)).toContain("KNOCKED_OUT");
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
-    expect(find(events, "ABILITY_TRIGGERED")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toBeUndefined();
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: MUNKIDORI_PRIZES });
   });
 
@@ -255,7 +249,7 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: MUNKIDORI_PRIZES });
   });
 
@@ -271,7 +265,7 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
 
     const { state: done, events } = mustApply(state, spread);
 
-    expect(find(events, "PRIZE_REDUCED")).toMatchObject({ seat: "p2", count: REDUCED_PRIZES });
+    expect(findEvent(events, "PRIZE_REDUCED")).toMatchObject({ seat: "p2", count: REDUCED_PRIZES });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: REDUCED_PRIZES });
   });
 
@@ -288,8 +282,11 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
 
     // The Active (200 HP fix-bigbody) survives its 30; only the bench body dies.
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
-    expect(find(events, "PRIZE_REDUCED")).toMatchObject({ uid: benched, count: REDUCED_PRIZES });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
+    expect(findEvent(events, "PRIZE_REDUCED")).toMatchObject({
+      uid: benched,
+      count: REDUCED_PRIZES,
+    });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: REDUCED_PRIZES });
   });
 
@@ -300,7 +297,7 @@ describe("the reduction — 2 Prizes become 1 when every clause holds", () => {
     const { state: done, events } = mustApply(state, bite);
 
     expect(types(events)).not.toContain("KNOCKED_OUT");
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
     expect(done.players.p1.prizes).toHaveLength(6);
   });
 });
@@ -314,10 +311,10 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
 
     // The poison DID kill it, in its own voice…
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p2", source: "poison" });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p2", source: "poison" });
     expect(types(events)).toContain("KNOCKED_OUT");
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
-    expect(find(events, "ABILITY_TRIGGERED")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toBeUndefined();
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: MUNKIDORI_PRIZES });
   });
 
@@ -329,10 +326,10 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
 
     expect(types(events)).toContain("KNOCKED_OUT");
-    expect(find(events, "ABILITY_COIN_FLIP")).toMatchObject({ ability: "Shattering Crystal" });
+    expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ ability: "Shattering Crystal" });
     // Whichever way the flip lands, the OTHER field never spoke.
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
-    const prevented = find(events, "PRIZE_PREVENTED") !== undefined;
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
+    const prevented = findEvent(events, "PRIZE_PREVENTED") !== undefined;
     expect(done.phase).toEqual(
       prevented
         ? { kind: "ko:promote", seat: "p2" }
@@ -350,8 +347,8 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
 
     const { state: done, events } = mustApply(state, spread);
 
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1" });
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
     // The prizes for a self-KO go to the DEFENDER, at face value.
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: MUNKIDORI_PRIZES });
   });
@@ -370,7 +367,7 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
       seat: "p1",
       uid: hand,
     });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Flying Entry" });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({ ability: "Flying Entry" });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "choosePokemonMulti") throw new Error("expected choosePokemonMulti");
@@ -383,7 +380,7 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
 
     // The Ability DID Knock the Munkidori ex Out…
     expect(types(e2)).toContain("KNOCKED_OUT");
-    expect(find(e2, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(e2, "PRIZE_REDUCED")).toBeUndefined();
     const counts = done.pending
       .filter((s) => s.kind === "takePrizes")
       .map((s) => (s as { count: number }).count);
@@ -399,7 +396,7 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
     const { events } = mustApply(state, yawn);
 
     expect(types(events)).not.toContain("KNOCKED_OUT");
-    expect(find(events, "PRIZE_REDUCED")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
   });
 });
 
@@ -420,7 +417,7 @@ describe("ORDER — the batch is one instant, and the plan is made before it", (
     // BOTH bench bodies die (190 HP Pecharunt ex at 180 + 20; 210 at 200 + 20).
     expect(all(events, "KNOCKED_OUT")).toHaveLength(2);
     // …and the Munkidori ex's Prize is still cut.
-    expect(find(events, "PRIZE_REDUCED")).toMatchObject({ count: REDUCED_PRIZES });
+    expect(findEvent(events, "PRIZE_REDUCED")).toMatchObject({ count: REDUCED_PRIZES });
     // TWO prize stages, in ref order: the Munkidori ex's REDUCED 1 and the
     // Pecharunt ex's untouched 2. The second is the control — a batch-wide (as
     // opposed to per-body) reduction would have cut it as well.
@@ -468,7 +465,7 @@ describe("ORDER — the batch is one instant, and the plan is made before it", (
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "PRIZE_REDUCED")).toMatchObject({ count: REDUCED_PRIZES });
+    expect(findEvent(events, "PRIZE_REDUCED")).toMatchObject({ count: REDUCED_PRIZES });
     expect(done.phase.kind === "ko:takePrizes" || done.phase.kind === "gameOver").toBe(true);
   });
 });
@@ -591,7 +588,7 @@ describe("the structural questions — answered, not asserted", () => {
     const { state: done, events } = mustApply(state, bite);
 
     expect(types(events)).toContain("KNOCKED_OUT");
-    expect(find(events, "PRIZE_REDUCED")).toMatchObject({ by: 1, count: 0 });
+    expect(findEvent(events, "PRIZE_REDUCED")).toMatchObject({ by: 1, count: 0 });
     expect(done.pending.filter((s) => s.kind === "takePrizes")).toEqual([]);
     expect(done.players.p1.prizes).toHaveLength(6);
   });

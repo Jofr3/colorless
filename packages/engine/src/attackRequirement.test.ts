@@ -25,6 +25,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const JUSTICE_KICK =
@@ -49,13 +50,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** Justice Kick is Palafin's SECOND attack — "Jet Punch" (30, with its own
@@ -517,7 +511,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
       index: KICK_INDEX,
     });
     // The event is the confusion path's, with the OTHER reason.
-    expect(find(events, "ATTACK_FAILED")).toEqual({
+    expect(findEvent(events, "ATTACK_FAILED")).toEqual({
       type: "ATTACK_FAILED",
       seat: "p1",
       uid,
@@ -551,7 +545,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
       index: KICK_INDEX,
     });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(210);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(210);
     // 210 < 320, so nothing was Knocked Out and the number can be read off the
     // board a second time — which is the whole reason the deck carries this body.
     expect(activeDamage(done, "p2")).toBe(210);
@@ -567,7 +561,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
     const switched = playTrainer(benched.state, "p1", "sv01-194");
     expect(activeCardId(switched, "p1")).toBe("sv03-062");
     const { events } = mustApply(switched, { type: "attack", seat: "p1", index: KICK_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(210);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(210);
     expect(types(events)).not.toContain("ATTACK_FAILED");
   });
 
@@ -586,7 +580,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
     expect(activeCardId(backAround, "p1")).toBe("sv03-062");
     expect(backAround.players.p1.active?.energy).toHaveLength(2); // the {W}{W} survived
     const { events } = mustApply(backAround, { type: "attack", seat: "p1", index: KICK_INDEX });
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("requirement");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
   });
 
@@ -602,7 +596,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
       seat: "p1",
       index: CLAW_INDEX,
     });
-    expect(find(koEvents, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(koEvents, "DAMAGE_DEALT")?.dealt).toBe(100);
     expect(types(koEvents)).toContain("KNOCKED_OUT");
     const onPrizes = mustApply(parked, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;
     expect(onPrizes.phase).toEqual({ kind: "ko:promote", seat: "p2" });
@@ -627,7 +621,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
       seat: "p2",
       index: KICK_INDEX,
     });
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("requirement");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(activeDamage(after, "p1")).toBe(0);
   });
@@ -659,7 +653,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
     // The {W}{W} rode up the stack with it (§10), so the requirement pays through
     // a REAL attack on the evolution.
     const { events } = mustApply(evolved, { type: "attack", seat: "p1", index: KICK_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(210);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(210);
     expect(types(events)).not.toContain("ATTACK_FAILED");
   });
 
@@ -686,7 +680,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
         seat: attacker,
         index: KICK_INDEX,
       });
-      expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
+      expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("requirement");
       expect(types(events)).not.toContain("DAMAGE_DEALT");
       expect(activeDamage(done, defender)).toBe(0);
     }
@@ -704,7 +698,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
       seat: "p1",
       index: FANG_INDEX,
     });
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("requirement");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     // NO BOOTSTRAP: still zero, so the clause is as false after the attack as
     // before it.
@@ -721,7 +715,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
       seat: "p1",
       index: CLAW_INDEX,
     });
-    expect(find(clawEvents, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(clawEvents, "DAMAGE_DEALT")?.dealt).toBe(100);
     expect(afterClaw.players.p2.active?.damage).toBe(100);
     const backAround = mustApply(afterClaw, { type: "endTurn", seat: "p2" }).state;
     expect(backAround.turn).toBe(4);
@@ -733,7 +727,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
       index: FANG_INDEX,
     });
     expect(types(events)).not.toContain("ATTACK_FAILED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
     expect(activeDamage(done, "p2")).toBe(190);
     expect(types(events)).not.toContain("KNOCKED_OUT");
   });
@@ -746,7 +740,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
     expect(conditionHolds(state, "p1", DAMAGED)).toBe(false); // p1 asks about p2
     expect(conditionHolds(state, "p2", DAMAGED)).toBe(true); // p2 asks about p1
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: FANG_INDEX });
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("requirement");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
   });
 
@@ -758,7 +752,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
       const withDefender = bigDefender(opened, defender);
       const bare = lycanrocActive(withDefender, attacker);
       expect(
-        find(
+        findEvent(
           mustApply(bare, { type: "attack", seat: attacker, index: FANG_INDEX }).events,
           "ATTACK_FAILED",
         )?.reason,
@@ -768,7 +762,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
       const armed = setDamage(bare, defender, 30);
       const { events } = mustApply(armed, { type: "attack", seat: attacker, index: FANG_INDEX });
       expect(types(events)).not.toContain("ATTACK_FAILED");
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
     }
   });
 
@@ -788,7 +782,7 @@ describe("Lycanroc — the damage requirement, read BEFORE the damage", () => {
     });
     expect(types(events)).not.toContain("ATTACK_FAILED");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(100);
     expect(activeDamage(done, "p2")).toBe(100);
   });
 });
@@ -845,7 +839,7 @@ describe("ATTACK_FAILED — the two reasons stay distinguishable", () => {
     const state = palafinActive(bigDefender(board(11), "p2"), "p1");
     const uid = activeUid(state, "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_INDEX });
-    const failed = find(events, "ATTACK_FAILED");
+    const failed = findEvent(events, "ATTACK_FAILED");
     if (failed === undefined) throw new Error("expected the attack to be cancelled");
     const ctx: LogContext = {
       names: { p1: "Ember", p2: "Tide" },
@@ -879,7 +873,7 @@ describe("ATTACK_FAILED — the two reasons stay distinguishable", () => {
     // pair above is not two strings in a test file.
     const state = palafinActive(bigDefender(board(11), "p2"), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_INDEX });
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("requirement");
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("requirement");
     expect(types(events)).not.toContain("CONFUSION_CHECK");
     expect(state.players.p1.active?.conditions.rotation).toBe("none");
   });

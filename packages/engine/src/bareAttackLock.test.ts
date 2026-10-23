@@ -15,6 +15,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const DEFENDER_BARE = "During your opponent's next turn, the Defending Pokémon can't attack.";
@@ -41,13 +42,6 @@ const DEF_PLURAL_INDEX = 1;
     a refusal on this body is never an Energy shortfall wearing the lock's face. */
 const VICTIM_PAID_INDEX = 0;
 const VICTIM_FREE_INDEX = 2;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** The engine's rejection code for an attack declaration, or `"ok"`. */
 function refusal(state: GameState, seat: Seat, index: number): string {
@@ -84,7 +78,7 @@ function installed(
     seat: "p1",
     index,
   });
-  if (find(events, "ATTACK_LOCKED") === undefined) {
+  if (findEvent(events, "ATTACK_LOCKED") === undefined) {
     throw new Error(`${installer} index ${index} installed no lock`);
   }
   if (state.turn !== 3) throw new Error(`expected P2's turn 3, got ${state.turn}`);
@@ -213,7 +207,7 @@ describe("§3 — the mis-read sentence, and why nothing in the repo could see i
       events2,
     );
     if (fixed.kind !== "done") throw new Error(`expected done, got ${fixed.kind}`);
-    expect(find(events2, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events2, "ATTACK_LOCKED")).toBeDefined();
     expect(fixed.state.players.p1.active?.attackLockedTurn).toBe(before.turn + 2);
   });
 });
@@ -243,7 +237,7 @@ describe("§4 — the SELF-side plural, driven across a real turn boundary", () 
     expect(state.players.p1.active?.attackLockedTurn).toBe(4);
     expect(attackLocked(state, state.players.p1.active as InPlayPokemon)).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: SELF_SIBLING_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("the turn IN BETWEEN is untouched — a `+ 1` stamp would bar the wrong seat", () => {
@@ -288,7 +282,7 @@ describe("§4b — the OPPONENT-side lock, in BOTH printed verbs", () => {
     expect(state.turn).toBe(5);
     expect(attackLocked(state, state.players.p2.active as InPlayPokemon)).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p2", index: VICTIM_FREE_INDEX });
-    expect(find(events, "ATTACK_DECLARED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_DECLARED")).toBeDefined();
   });
 
   it("the printed damage still lands — the rider is a rider", () => {
@@ -297,8 +291,8 @@ describe("§4b — the OPPONENT-side lock, in BOTH printed verbs", () => {
       seat: "p1",
       index: DEF_BARE_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
-    expect(find(events, "ATTACK_LOCKED")?.seat).toBe("p2");
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "ATTACK_LOCKED")?.seat).toBe("p2");
   });
 });
 

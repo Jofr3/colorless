@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, deriveAttackEffect, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   PSY_PURGE_DECK,
   attachFromDeck,
@@ -10,6 +10,7 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const PSY_PURGE_TEXT =
@@ -17,13 +18,6 @@ const PSY_PURGE_TEXT =
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 const starRaid = { type: "attack", seat: "p1", index: 1 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     their first turn carries no §4 attack restriction. */
@@ -132,13 +126,13 @@ describe("Psy Purge — 90 damage for each card discarded in this way", () => {
     });
 
     // A SELF discard: victim and actor the same seat (contrast the hammer family).
-    const discarded = find(events, "ENERGY_DISCARDED");
+    const discarded = findEvent(events, "ENERGY_DISCARDED");
     expect(discarded).toMatchObject({ seat: "p1", actor: "p1", uids: picks });
     for (const uid of picks) expect(done.players.p1.discard).toContain(uid);
     expect(activeEnergy(done, "p1")).toHaveLength(2); // 5 attached − 3 discarded
 
     // …then the damage the count feeds: 90 × 3, through snipeActive.
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", base: 270, dealt: 270, damage: 270 });
     expect(damage?.weakness).toBeNull(); // a VSTAR is neutral to {P} (weak to {D})
     expect(done.players.p2.active?.damage).toBe(270); // 280 HP — survives, no KO
@@ -164,7 +158,7 @@ describe("Psy Purge — 90 damage for each card discarded in this way", () => {
       choice: { kind: "discardEnergy", uids: [picks[0] as string] },
     });
 
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
     expect(done.players.p2.active?.damage).toBe(90);
     expect(activeEnergy(done, "p1")).toHaveLength(3); // the other three stay attached
   });
@@ -215,7 +209,7 @@ describe("Psy Purge — the multi-attack card: index 1 is a DIFFERENT attack", (
     expect(done.phase.kind).not.toBe("effect:choose"); // Psy Purge's park did NOT bind
     expect(types(events)).not.toContain("ENERGY_DISCARDED");
     expect(types(events)).not.toContain("DAMAGE_DEALT");
-    const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.attack).toBe("Star Raid");
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -236,7 +230,7 @@ describe("Psy Purge — genuine attack damage, not flat counters (§8.5)", () =>
       choice: { kind: "discardEnergy", uids: [picks[0] as string] },
     });
 
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", base: 90, dealt: 180 });
     expect(damage?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(done.players.p2.active?.damage).toBe(180); // 200 HP — survives, no KO
@@ -257,8 +251,8 @@ describe("Psy Purge — genuine attack damage, not flat counters (§8.5)", () =>
       choice: { kind: "discardEnergy", uids: picks },
     });
 
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(270);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: koed });
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(270);
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: koed });
     expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 2 });
   });
 });

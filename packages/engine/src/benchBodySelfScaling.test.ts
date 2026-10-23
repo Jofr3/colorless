@@ -18,7 +18,7 @@ import {
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction, createGame, programFor, redactGame, topUid } from "./index";
 import {
   FIXTURE_POOL,
@@ -32,6 +32,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 // ── the printed sentences, byte-for-byte off the D1 ─────────────────────────
@@ -187,13 +188,6 @@ const DECK = deckOf({
 });
 
 const SEEDS = [5171, 5179] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -441,10 +435,10 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
     expect(splitAttackGateClause(NEAR_MISS_TEXT)).toBeNull();
     const state = board(SEEDS[0], "p1", "p1", NEAR_MISS_TWIN, 3);
     const { events } = swing(state, "p1", 0);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     // …and the engine SAYS SO, with the WHOLE printed compound in the report and
     // the unexplained "×" beside it.
-    const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
+    const skipped = findEvent(events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(NEAR_MISS_TEXT);
     expect(skipped?.damageModifier).toBe("×");
   });
@@ -467,8 +461,8 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
     expect(refusedReal.ok).toBe(false);
     expect(refusedReal.ok === false && refusedReal.error.code).toBe("ATTACK_PREVENTED");
     const { events } = swing(board(SEEDS[0], "p1", "p1", UNGATED_TWIN, 3), "p1", 0);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("…while the GATED printing of that same sentence resolves it", () => {
@@ -477,8 +471,8 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
     expect(programFor("sv07-128")?.attackGate?.[0]).toBeDefined();
     const state = board(SEEDS[0], "p1", "p1", "sv07-128", 3);
     const { events } = swing(state, "p1", 0);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 });
 
@@ -490,15 +484,15 @@ describe("D282 §5 — the count, driven", () => {
   it("3 MINE / 1 THEIRS: the answer is 3 × 30, not 1 × 30 and not 4 × 30", () => {
     for (const seed of SEEDS) {
       const state = board(seed, "p1", "p1", "sv07-128", 3, 1);
-      expect(find(swing(state, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(90);
+      expect(findEvent(swing(state, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(90);
     }
   });
 
   it("the `×` fold DROPS the printed base — an empty Bench deals nothing at all", () => {
     const state = board(SEEDS[0], "p1", "p1", "sv07-128", 0);
     const { events } = swing(state, "p1", 0);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("counts BODIES and never the counters on them", () => {
@@ -511,20 +505,20 @@ describe("D282 §5 — the count, driven", () => {
       },
     };
     const clean = board(SEEDS[0], "p1", "p1", "sv07-128", 2);
-    expect(find(swing(hurt, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(60);
-    expect(find(swing(clean, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(swing(hurt, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(swing(clean, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(60);
   });
 
   it("the ADDITIVE fold KEEPS the printed base: 60 + 2 × 20 = 100 (Tapu Koko ex)", () => {
     const state = board(SEEDS[0], "p1", "p1", "sv09-051", 2, 3);
     const { events } = swing(state, "p1", 0);
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(40);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(40);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(100);
   });
 
   it("…and the un-gated `×` printing reads the same member: 3 × 20 (Dipplin)", () => {
     const state = board(SEEDS[1], "p1", "p1", "sv06-018", 3, 2);
-    expect(find(swing(state, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(swing(state, "p1", 0).events, "DAMAGE_DEALT")?.dealt).toBe(60);
   });
 });
 
@@ -547,15 +541,15 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
     const state = board(SEEDS[0], "p1", "p1", "sv06-009", 1, 0, 0);
     expect(state.turn).toBe(1);
     const { state: after, events } = swing(state, "p1", 0);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     expect(after.pending).not.toBeNull();
   });
 
   it("D299 — ILLUMISE's body is READ NOW, and the split is still what delivers it", () => {
     const empty = board(SEEDS[0], "p2", "p1", "sv06-010", 1, 0, 1);
     const { state: afterEmpty, events: emptyEvents } = swing(empty, "p1", 0);
-    expect(find(emptyEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    expect(find(emptyEvents, "POKEMON_RETURNED")).toBeUndefined();
+    expect(findEvent(emptyEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(emptyEvents, "POKEMON_RETURNED")).toBeUndefined();
     expect(afterEmpty.players.p2.bench).toHaveLength(0);
     // `pending` is the PROMPT list and an empty array is "nothing to answer" —
     // the same shape §4's ungated twin asserts non-empty one describe up.
@@ -566,8 +560,8 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
     const one = board(SEEDS[0], "p2", "p1", "sv06-010", 1, 1, 1);
     const benchedUid = topUid(one.players.p2.bench[0] as InPlayPokemon) as string;
     const { state: after, events } = swing(one, "p1", 0);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-    const returned = find(events, "POKEMON_RETURNED");
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    const returned = findEvent(events, "POKEMON_RETURNED");
     expect(returned?.seat).toBe("p2");
     expect(returned?.actor).toBe("p1");
     expect(returned?.dest).toBe("deck");

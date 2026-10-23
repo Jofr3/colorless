@@ -30,6 +30,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  effectPrompt,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -608,12 +609,6 @@ const pickBench = (index: number): GameAction =>
     choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index } } },
   }) as GameAction;
 
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
-
 /** The damage the p2 Active carries (the attack's main hit, every board here starts it at 0). */
 const oppActiveDamage = (state: GameState): number => bodyAt(state, "p2", "active").damage;
 
@@ -744,7 +739,7 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
     it(`${id} ${c.name}: 2 candidates — PARKS chooseAttack over the opponent's attacks, then resolves the pick`, () => {
       const parked = run(armed(id, [], TARGET), declare(id));
       expect(parked.events.map((e) => e.type)).toEqual(["EFFECT_PENDING"]);
-      expect(prompt(parked.state)).toMatchObject({
+      expect(effectPrompt(parked.state)).toMatchObject({
         kind: "chooseAttack",
         candidates: [
           { index: 0, name: "Poke" },
@@ -781,7 +776,7 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
   });
   it(`${MIMIKYU} Gemstone Mimicry: 2 candidates (Tera Wugtrio ex) — parks, then the pick resolves`, () => {
     const parked = run(armed(MIMIKYU, [], WUGTRIO), declare(MIMIKYU));
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [
         { index: 0, name: "Tricolor Pump" },
@@ -844,7 +839,7 @@ describe("D573 §2 — every printing on a board with 0, 1 and 2+ candidates", (
     });
     it(`${id} Night Joker: 2 candidates on one body — chooseAttack on THAT body (sourceRef), then the pick`, () => {
       const parked = run(armed(id, [ZORUA, N_TWO], SOLO), declare(id));
-      expect(prompt(parked.state)).toMatchObject({
+      expect(effectPrompt(parked.state)).toMatchObject({
         kind: "chooseAttack",
         candidates: [
           { index: 0, name: "Gear Hit" },
@@ -870,7 +865,7 @@ describe("D573 §3 — the four substitution sites, each with a board that tells
   it("SITE 4 — a copied REGISTRY-authored attack runs the SOURCE card's program (Great Tusk Land Collapse mills 1)", () => {
     expect(programFor(GREAT_TUSK)?.attack?.[0]).toBeDefined();
     const parked = run(armed(ZOROARK[0], [], GREAT_TUSK), declare(ZOROARK[0]));
-    expect(prompt(parked.state)).toMatchObject({ kind: "chooseAttack" });
+    expect(effectPrompt(parked.state)).toMatchObject({ kind: "chooseAttack" });
     const deckBefore = parked.state.players.p2.deck.length;
     const discardBefore = parked.state.players.p2.discard.length;
     const { state, events } = run(parked.state, pickAttack(0));
@@ -1021,7 +1016,7 @@ describe("D573 §3b — R-CP4: a copied timing clause BINDS THE COPIER (looked u
       later(armed(NIGHT_JOKER_IDS[0], [N_GATED], SOLO)),
       declare(NIGHT_JOKER_IDS[0]),
     );
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [
         { index: 0, name: "Gated Count" },
@@ -1181,7 +1176,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
       armed(NIGHT_JOKER_IDS[0], [ZORUA, N_ONE, NIGHT_JOKER_IDS[1], N_TWO], SOLO),
       declare(NIGHT_JOKER_IDS[0]),
     );
-    expect(prompt(parked.state)).toMatchObject({
+    expect(effectPrompt(parked.state)).toMatchObject({
       kind: "choosePokemon",
       candidates: [
         { seat: "p1", spot: { spot: "bench", index: 1 } },
@@ -1193,7 +1188,7 @@ describe("D573 §4 — the bounds and the empty readings", () => {
     expect(refused(parked.state, pickBench(2)).code).toBe("BAD_EFFECT_CHOICE");
     const second = run(parked.state, pickBench(3));
     expect(types(second.events)).toEqual(["EFFECT_PENDING"]);
-    expect(prompt(second.state)).toMatchObject({
+    expect(effectPrompt(second.state)).toMatchObject({
       kind: "chooseAttack",
       candidates: [{ index: 0 }, { index: 1 }],
     });

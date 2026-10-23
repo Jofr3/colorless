@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { POKEMON_TYPE_BY_CODE, deriveAttackEffect } from "./effects";
 import type { EffectOp, PokemonType } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
   TYPED_CLASS_BLOCK_DECK,
@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** The printed sentence, byte for byte. */
@@ -30,13 +31,6 @@ const PLAIN_CLASS = { stage: "basic" } as const;
     below by an unchanged `rngState` across an install. */
 const SEED = 7;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 /** P2 opens and passes, so P1's turn 2 carries no §4 attack restriction. */
 function armed(): GameState {
   let state = must(
@@ -51,7 +45,7 @@ function armed(): GameState {
 
 function installed(index: 0 | 1 = 0): GameState {
   const { state, events } = mustApply(armed(), { type: "attack", seat: "p1", index });
-  if (find(events, "ATTACK_BLOCK_APPLIED") === undefined) {
+  if (findEvent(events, "ATTACK_BLOCK_APPLIED") === undefined) {
     throw new Error(`fix-crown index ${index} did not install a block`);
   }
   return state;
@@ -184,7 +178,7 @@ describe("the typed attacker class — installing it", () => {
     expect(done.rngState).toBe(before.rngState);
     expect(types(events)).not.toContain("ATTACK_EFFECT_COIN_FLIP");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "ATTACK_BLOCK_APPLIED")).toEqual({
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")).toEqual({
       type: "ATTACK_BLOCK_APPLIED",
       seat: "p1",
       uid: installer,
@@ -233,13 +227,17 @@ describe("the typed attacker class — the truth table, driven off bodies", () =
     const state = installed();
     deepFreeze(state);
     const { state: done, events } = swing(state, "fix-attacker");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p1",
+      dealt: 0,
+      prevented: true,
+    });
     expect(done.players.p1.active?.damage).toBe(0);
   });
 
   it("lets a COLORLESS Basic through in FULL — the case the slice exists for", () => {
     const { state: done, events } = swing(installed(), "fix-colorless-brawler");
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 40 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(40);
@@ -249,7 +247,7 @@ describe("the typed attacker class — the truth table, driven off bodies", () =
 
   it("excludes a DUAL-typed body — `includes`, not `types[0]`", () => {
     const { state: done, events } = swing(installed(), "fix-dual-colorless");
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 50 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(50);
@@ -257,7 +255,7 @@ describe("the typed attacker class — the truth table, driven off bodies", () =
 
   it("still bites on the STAGE — the conjunction is really a conjunction", () => {
     const { state: done, events } = swing(installed(), "fix-stage1-brawler");
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 70 });
     expect(hit?.prevented).toBeUndefined();
     expect(done.players.p1.active?.damage).toBe(70);
@@ -265,7 +263,7 @@ describe("the typed attacker class — the truth table, driven off bodies", () =
 
   it("cannot block its own MIRROR — Terapagos ex is a Colorless Basic", () => {
     const { events } = swing(installed(), "fix-crown", 2);
-    const hit = find(events, "DAMAGE_DEALT");
+    const hit = findEvent(events, "DAMAGE_DEALT");
     expect(hit).toMatchObject({ seat: "p1", dealt: 60 });
     expect(hit?.prevented).toBeUndefined();
   });
@@ -275,7 +273,11 @@ describe("the typed attacker class — the truth table, driven off bodies", () =
     // indexes. This is the assertion that makes every "lands in full" case above a
     // statement about the EXCLUSION rather than about the board.
     const { state: done, events } = swing(installed(1), "fix-colorless-brawler");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p1",
+      dealt: 0,
+      prevented: true,
+    });
     expect(done.players.p1.active?.damage).toBe(0);
   });
 });
@@ -311,7 +313,7 @@ describe("the typed attacker class — the merge is STRUCTURAL", () => {
     expect(types(events)).not.toContain("ATTACK_BLOCK_APPLIED");
     // The filter is really still there: a Colorless Basic walks through.
     const { events: swung } = swing(done, "fix-colorless-brawler");
-    expect(find(swung, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(swung, "DAMAGE_DEALT")?.prevented).toBeUndefined();
   });
 
   it("widens to UNFILTERED when the two classes DISAGREE on the exclusion alone", () => {
@@ -322,9 +324,9 @@ describe("the typed attacker class — the merge is STRUCTURAL", () => {
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(done.players.p1.active?.attackBlock).toEqual({ turn: 3, effects: false });
     expect(done.players.p1.active?.attackBlock?.fromClass).toBeUndefined();
-    expect(find(events, "ATTACK_BLOCK_APPLIED")?.fromClass).toBeUndefined();
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")?.fromClass).toBeUndefined();
     // …and unfiltered means unfiltered: the Colorless Basic is now refused too.
     const { events: swung } = swing(done, "fix-colorless-brawler");
-    expect(find(swung, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(swung, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 });

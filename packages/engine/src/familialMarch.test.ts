@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -14,6 +14,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const MAUSHOLD = "sv08-158";
@@ -107,13 +108,6 @@ const DECK = deckOf({
 });
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -395,7 +389,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
     const { parked } = attack(state);
     const picks = deckUids(parked, MAUSHOLD_BODY).slice(0, 1);
     const { events } = mustResolve(parked, picks);
-    expect(find(events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(events, "SHUFFLE")).toBeDefined();
   });
 
   it("the benched cards LEAVE the deck — every uid stays in exactly one zone", () => {

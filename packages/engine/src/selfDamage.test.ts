@@ -15,14 +15,8 @@ import {
   setDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     turn 2 is their first turn with no §4 attack restriction. */
@@ -102,8 +96,8 @@ describe("Blazing Shout — the recoil lands (§8, outside the W/R pipeline)", (
 
     // The recoil is SIMULATED, not flagged as skipped.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(190);
-    const recoil = find(events, "COUNTERS_PLACED");
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(190);
+    const recoil = findEvent(events, "COUNTERS_PLACED");
     expect(recoil).toMatchObject({ seat: "p1", uid: skeledirge, amount: 30, source: "self" });
     // Main damage lands BEFORE the recoil (§8 printed order — the effect program
     // runs after the numeric damage).
@@ -132,7 +126,7 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
       index: BLAZING_SHOUT.index,
     });
 
-    const ko = find(events, "KNOCKED_OUT");
+    const ko = findEvent(events, "KNOCKED_OUT");
     expect(ko).toMatchObject({ seat: "p1", uid: skeledirge });
     expect(after.players.p1.discard).toContain(skeledirge);
     // The prize is owed to the DEFENDER (p2) — the opponent of the KO'd side,
@@ -212,7 +206,7 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
     // no prize is taken, since neither win outranks the other. Both sides win by
     // the SAME reason (their last prize), which is what makes it a tie.
     expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
-    expect(find(events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "tie",
       reasons: { p1: "prizesTaken", p2: "prizesTaken" },
     });
@@ -236,7 +230,7 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
       seat: "p2",
       prizeIndices: [0],
     });
-    expect(find(events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p2",
       reason: "noPokemon",

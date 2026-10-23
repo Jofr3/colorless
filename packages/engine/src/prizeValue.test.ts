@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   PRIZE_DECK,
   activeUid,
@@ -11,6 +11,7 @@ import {
   setActiveFromDeck,
   setDamage,
   setPrizes,
+  findEvent,
 } from "./testFixtures";
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
@@ -18,13 +19,6 @@ import {
 function p1Turn2(seed: number): GameState {
   const state = driveSetup(seed, { p1: PRIZE_DECK, p2: PRIZE_DECK }, { first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** P1 fix-attacker (energied for Bite [C] 30) vs a P2 Active of `activeId`,
@@ -46,7 +40,7 @@ describe("prizeValueOf — the Prizes a KO owes (§8.1)", () => {
     const koedV = activeUid(state, "p2");
     const { state: after, events } = mustApply(state, attack);
 
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: koedV });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: koedV });
     // §8.1 — the prize is taken before the promotion refills the board.
     expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 2 });
     expect(after.pending.map((s) => s.kind)).toEqual([
@@ -78,7 +72,7 @@ describe("prizeValueOf — the Prizes a KO owes (§8.1)", () => {
     let state = biteVs(4, "fix-pokemon-v", 210);
     state = setPrizes(state, "p1", 1);
     const { state: after, events } = mustApply(state, attack);
-    expect(find(events, "GAME_OVER")?.outcome).toEqual({
+    expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "prizesTaken",

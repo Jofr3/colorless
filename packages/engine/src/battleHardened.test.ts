@@ -11,6 +11,7 @@ import {
   handUids,
   mustApply,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BATTLE_HARDENED_IDS = ["sv06.5-025", "sv08.5-054"] as const;
@@ -24,13 +25,6 @@ const DECK = deckOf({
   "fix-fighting-energy": 16, // {F} — the type the sentence names
   "fix-energy": 20, // Colorless Basic Energy — the type it must REFUSE
 });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(seed: number): GameState {
   const setup = driveSetup(
@@ -183,7 +177,7 @@ describe("D250 — Battle-Hardened fires on the bench play (§9)", () => {
     const { state: done, events } = benchAndAnswer(state);
     // The bench play AND the trigger landed in the one batch.
     expect(types(events)).toContain("POKEMON_BENCHED");
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Battle-Hardened");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Battle-Hardened");
     expect(done.phase.kind).toBe("turn:action");
     const index = benchBefore;
     expect(done.players.p1.bench[index]?.stack.map((u) => done.cardIdByUid[u])).toEqual([
@@ -277,7 +271,7 @@ describe("D250 — Battle-Hardened fires on the bench play (§9)", () => {
       uid,
     });
     // It STILL triggered — the whiff is inside the op, not at the timing.
-    expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Battle-Hardened");
+    expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Battle-Hardened");
     expect(types(events)).not.toContain("ENERGY_ATTACHED");
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.phase.kind).toBe("turn:action");

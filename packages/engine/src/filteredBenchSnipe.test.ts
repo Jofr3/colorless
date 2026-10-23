@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -48,13 +49,6 @@ const IDLE = 2;
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -299,7 +293,7 @@ describe("§3 — THE EMPTY FILTERED SET, against the board that would have park
     const state = board(1, "p1", UNDAMAGED);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: PICKY });
     // The main hit landed (§8 printed order, before the program).
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 30, dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 30, dealt: 30 });
     expect(done.players.p2.active?.damage).toBe(30);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
@@ -525,7 +519,7 @@ describe("§7 — Weakness is genuinely not applied, the far seat, and the loud 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(weakEvents, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(weakEvents, "DAMAGE_DEALT")).toMatchObject({
       base: 60,
       weakness: null,
       resistance: null,
@@ -537,7 +531,7 @@ describe("§7 — Weakness is genuinely not applied, the far seat, and the loud 
   it("THE ATTRIBUTION CONTROL: the SAME ×2 body in the ACTIVE spot takes DOUBLE", () => {
     const state = board(11, "p1", [], "fix-drainweak");
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: PICKY });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 30,
       weakness: { op: "multiply", amount: 2 },
       dealt: 60,

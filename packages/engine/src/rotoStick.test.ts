@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { deriveAttackEffect } from "./effects";
 import { programFor } from "./registry";
 import {
@@ -10,6 +10,7 @@ import {
   handUid,
   mustApply,
   toDeckTop,
+  findEvent,
 } from "./testFixtures";
 
 /** The uid of the deck card at `index` (0 = top) in p1's deck. */
@@ -17,13 +18,6 @@ function deckAt(state: GameState, index: number): string {
   const uid = state.players.p1.deck[index];
   if (uid === undefined) throw new Error(`p1 deck has no card at index ${index}`);
   return uid;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
@@ -131,7 +125,7 @@ describe("D333 — Roto-Stick, the unbounded lookAtTopN window", () => {
       expect(done.players.p1.deck).not.toContain(uid);
     }
     // The printed "reveal", forwarded onto the event exactly as Great Ball's is.
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({
       seat: "p1",
       uids: both,
       reveal: true,
@@ -147,7 +141,7 @@ describe("D333 — Roto-Stick, the unbounded lookAtTopN window", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [] },
     });
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1", uids: [] });
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1", uids: [] });
     expect(done.phase.kind).toBe("turn:action");
   });
 

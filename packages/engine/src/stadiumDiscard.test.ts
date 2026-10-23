@@ -22,7 +22,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { EffectOp, GameEvent, GameState, Seat } from "./index";
+import type { EffectOp, GameState, Seat } from "./index";
 import {
   STADIUM_DISCARD_DECK,
   attachFromDeck,
@@ -32,6 +32,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -116,13 +117,6 @@ const knockOver = (state: GameState, seat: Seat = "p1"): GameState =>
 
 const attack = (state: GameState, seat: Seat = "p1") =>
   mustApply(state, { type: "attack", seat, index: 0 });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const SEEDS = [9001, 9013, 9029] as const;
 
@@ -261,7 +255,7 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
       ...before.players.p1.active,
       usedAttack: { name: "Blazing Destruction", turn: before.turn },
     });
-    expect(find(result.events, "STADIUM_DISCARDED")).toEqual({
+    expect(findEvent(result.events, "STADIUM_DISCARDED")).toEqual({
       type: "STADIUM_DISCARDED",
       seat: "p2",
       uid: stadium.uid,
@@ -300,7 +294,7 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
       expect(state.stadium).toBeNull();
       expect(state.players.p1.discard).toContain(stadium.uid);
       expect(state.players.p2.discard).toHaveLength(p2Discard);
-      expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
+      expect(findEvent(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
     },
   );
 
@@ -317,7 +311,7 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
       expect(result.state.stadium).toBeNull();
       // P2 attacked; the Stadium is P1's; it goes to P1's pile.
       expect(result.state.players.p1.discard).toContain(stadium.uid);
-      expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
+      expect(findEvent(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
     },
   );
 });
@@ -349,14 +343,14 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
       if (stadium === null) throw new Error("expected P2's Stadium in the zone");
       const parked = attack(state);
       expect(parked.state.phase.kind).toBe("effect:choose");
-      expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+      expect(findEvent(parked.events, "EFFECT_PENDING")).toEqual({
         type: "EFFECT_PENDING",
         seat: "p1",
         note: MAY,
       });
       // …and the printed 30 has already landed: the confirm is about the discard, not
       // about the attack.
-      expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+      expect(findEvent(parked.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
 
       const done = mustApply(parked.state, {
         type: "resolveEffect",
@@ -366,7 +360,7 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
       state = done.state;
       expect(state.stadium).toBeNull();
       expect(state.players.p2.discard).toContain(stadium.uid);
-      expect(find(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
+      expect(findEvent(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
     },
   );
 
@@ -399,7 +393,7 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
       expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
       // The attack still resolves its printed 30 — the gate refuses the question, not
       // the attack.
-      expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+      expect(findEvent(result.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
     },
   );
 });
@@ -455,7 +449,7 @@ describe("§6 — what this slice did NOT buy", () => {
 
   it("bought no new event, no new prompt and no second Stadium zone", () => {
     const attacked = attack(blazingDestruction(board(SEEDS[0], "p2")));
-    const row = find(attacked.events, "STADIUM_DISCARDED");
+    const row = findEvent(attacked.events, "STADIUM_DISCARDED");
     if (row === undefined) throw new Error("expected the discard row");
     expect(Object.keys(row).sort()).toEqual(["cause", "seat", "type", "uid"]);
     expect(row.cause).toBe("effect");

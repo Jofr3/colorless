@@ -23,6 +23,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 import { type SideAttackLock, makeInPlay } from "./types";
 
@@ -79,13 +80,6 @@ const DECK = deckOf({
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260951;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
   if (pokemon === null || pokemon === undefined) throw new Error("expected a Pokémon");
@@ -183,7 +177,8 @@ function attachOne(state: GameState, seat: Seat): GameState {
 function sealed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, SEAL);
-  if (find(events, "SIDE_ATTACKS_LOCKED") === undefined) throw new Error("Seal installed nothing");
+  if (findEvent(events, "SIDE_ATTACKS_LOCKED") === undefined)
+    throw new Error("Seal installed nothing");
   return { start, victim: state, window: pass(state, "p2"), events };
 }
 
@@ -191,7 +186,8 @@ function sealed(opts: Parameters<typeof ready>[0] = {}) {
 function drained(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, DRAIN);
-  if (find(events, "SIDE_ATTACKS_LOCKED") === undefined) throw new Error("Drain installed nothing");
+  if (findEvent(events, "SIDE_ATTACKS_LOCKED") === undefined)
+    throw new Error("Drain installed nothing");
   return { start, window: state, events };
 }
 
@@ -274,7 +270,7 @@ describe("§2 — the installs write ONE record on the named SIDE, with the side
     expect(start.turn).toBe(3);
     expect(victim.players.p1.sideAttackLock).toStrictEqual({ turn: 5, maxEnergy: null });
     expect(victim.players.p2.sideAttackLock).toBeNull();
-    expect(find(events, "SIDE_ATTACKS_LOCKED")).toEqual({
+    expect(findEvent(events, "SIDE_ATTACKS_LOCKED")).toEqual({
       type: "SIDE_ATTACKS_LOCKED",
       seat: "p1",
       maxEnergy: null,
@@ -286,7 +282,7 @@ describe("§2 — the installs write ONE record on the named SIDE, with the side
     expect(window.turn).toBe(4);
     expect(window.players.p2.sideAttackLock).toStrictEqual({ turn: 4, maxEnergy: 2 });
     expect(window.players.p1.sideAttackLock).toBeNull();
-    expect(find(events, "SIDE_ATTACKS_LOCKED")).toEqual({
+    expect(findEvent(events, "SIDE_ATTACKS_LOCKED")).toEqual({
       type: "SIDE_ATTACKS_LOCKED",
       seat: "p2",
       maxEnergy: 2,
@@ -432,7 +428,7 @@ describe("§6 — same seat, same window: null dominates, else the larger cap", 
   it("PLAYED: P1's :169 (turn 3) then P2's :170 (turn 4) both land on P1 for turn 5 — P1 stays fully locked", () => {
     const { victim } = sealed({ p1Energy: 3, p2Energy: 1 });
     const { state, events } = attack(victim, DRAIN, "p2");
-    expect(find(events, "SIDE_ATTACKS_LOCKED")).toBeUndefined();
+    expect(findEvent(events, "SIDE_ATTACKS_LOCKED")).toBeUndefined();
     expect(state.players.p1.sideAttackLock).toStrictEqual({ turn: 5, maxEnergy: null });
     // P1's 3-Energy Active would be FREE under `:170` alone — `null` must dominate.
     expect(body(state.players.p1.active).energy).toHaveLength(3);
@@ -490,7 +486,7 @@ describe("§7 — R5: a §11 shield on the Active does NOT refuse the side lock"
   it("Mist Energy on P2's Active: the lock lands, and no refusal row is filed", () => {
     const start = attachFromDeck(ready(), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, DRAIN);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     expect(state.players.p2.sideAttackLock).toStrictEqual({ turn: 4, maxEnergy: 2 });
     expect(refusal(state, "p2", JAB)).toBe("ATTACK_PREVENTED");
   });

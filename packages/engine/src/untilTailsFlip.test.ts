@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const RELENTLESS_FLAMES =
@@ -56,13 +57,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function all<T extends GameEvent["type"]>(
@@ -588,7 +582,7 @@ describe("the two `For each heads` sentences — one BUILT at D463, one never pr
       // The attack WAS declared.
       expect(types(events)).toContain("ATTACK_DECLARED");
       // …and it is no longer on the loud path at all.
-      expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       const [expectedFaces, expectedRng] = flipUntilTails(before, MAX_UNTIL_TAILS_FLIPS);
       const announced = all(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
@@ -602,9 +596,9 @@ describe("the two `For each heads` sentences — one BUILT at D463, one never pr
       expect(types(events)).not.toContain("ENERGY_DISCARDED");
       // The printed 50 lands unmodified (fix-titan has neither Weakness nor
       // Resistance), and the turn ends the ordinary way.
-      expect(find(events, "DAMAGE_DEALT")?.base).toBe(50);
-      expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
-      expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+      expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(50);
+      expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+      expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(50);
       expect(activeDamage(done, "p2")).toBe(50);
       expect(types(events)).not.toContain("ATTACK_FAILED");
       expect(types(events)).not.toContain("KNOCKED_OUT");
@@ -753,7 +747,7 @@ describe("Growlithe — the MULTIPLY form: one row per face, and the base that m
       expect(activeDamage(done, "p2")).toBe(30 * heads);
       // The total the printed base WOULD have produced, named as an absence.
       expect(activeDamage(done, "p2")).not.toBe(30 * heads + 30);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
         expect(activeDamage(done, "p2")).toBe(0);
@@ -813,10 +807,10 @@ describe("Growlithe — the MULTIPLY form: one row per face, and the base that m
     });
     expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
     expect(done.rngState).toBe(before);
-    expect(find(events, "DAMAGE_DEALT")?.base).toBe(40);
+    expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(40);
     // `scaled` is "present only when it applied", so its ABSENCE is the claim:
     // nothing was folded in front of Weakness at all.
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(activeDamage(done, "p2")).toBe(40);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -838,7 +832,7 @@ describe("Bouffalant — the ADDITIVE form: the printed base is KEPT", () => {
       seen.add(heads);
       expect(faces.length).toBeGreaterThanOrEqual(1);
       expect(faces[faces.length - 1]).toBe("tails");
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       // THE PRINTED BASE IS KEPT — the assertion the whole member exists for.
       expect(damage?.base).toBe(50);
       expect(damage?.dealt).toBe(50 + 30 * heads);
@@ -862,7 +856,7 @@ describe("Bouffalant — the ADDITIVE form: the printed base is KEPT", () => {
           index: FLIP_INDEX,
         });
         expect(facesIn(growlithe.events)).toEqual(["tails"]);
-        expect(find(growlithe.events, "DAMAGE_DEALT")).toBeUndefined();
+        expect(findEvent(growlithe.events, "DAMAGE_DEALT")).toBeUndefined();
         expect(activeDamage(growlithe.state, "p2")).toBe(0);
       } else {
         // On every other outcome the bonus arrives through `scaled`, the same pre-W/R

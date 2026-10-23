@@ -20,6 +20,7 @@ import {
   typedEnergy,
   must,
   mustApply as run,
+  effectPrompt,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -440,12 +441,6 @@ const pick = (ref: {
 const cards = (uids: string[], seat: Seat = "p1"): GameAction =>
   ({ type: "resolveEffect", seat, choice: { kind: "cards", uids } }) as GameAction;
 
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
-
 /** p1 plays the Item/Supporter `id` from a hand that holds exactly it. */
 function playFromHand(state: GameState, id: string): { state: GameState; events: GameEvent[] } {
   const before = setHand(state, "p1", [id]);
@@ -719,7 +714,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
     const state = damaged(damaged(table(ORBEETLE[0], [FILLER, TR_MON]), "p1", 0, 50), "p1", 1, 20);
     const { state: after } = run(state, use("Rocket Brain", ACTIVE));
     // One damaged TR body (the Fixmon on Bench 1) — forced; two destinations — parked.
-    const p = prompt(after);
+    const p = effectPrompt(after);
     if (p.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(p.note).toBe("Move the damage counter onto which of your Pokémon?");
     expect(p.candidates).toEqual([
@@ -747,7 +742,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
       20,
     );
     const first = run(state, use("Rocket Brain", ACTIVE)).state;
-    const p1 = prompt(first);
+    const p1 = effectPrompt(first);
     if (p1.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(p1.note).toBe(
       "Move 1 damage counter off which of your Team Rocket's Pokémon? You will then choose where it goes.",
@@ -757,7 +752,7 @@ describe('§3 — Team Rocket\'s Orbeetle "Rocket Brain" (one counter, own → o
       { seat: "p1", spot: { spot: "bench", index: 0 } },
     ]);
     const second = run(first, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
-    const p2 = prompt(second);
+    const p2 = effectPrompt(second);
     if (p2.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     // "another of your Pokémon": the source is never a destination.
     expect(p2.candidates).toEqual([
@@ -834,7 +829,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
       UNSIMULATED_TOOL,
     );
     const { state } = played(board);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(p.dest).toBe("attach");
     expect(p.min).toBe(0);
@@ -848,7 +843,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
   it("the answer attaches the Tool to the Farfetch'd, files TOOL_ATTACHED and then shuffles", () => {
     const board = ensureInDeck(table(FILLER), "p1", VITALITY_BAND);
     const { state, uid } = played(board);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     const band = p.candidates.find((u) => state.cardIdByUid[u] === VITALITY_BAND) as string;
     const { state: after, events } = run(state, cards([band]));
@@ -913,7 +908,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
       }).code,
     ).toBe("HAND_PLAY_BLOCKED");
     const { state } = played(board);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     const band = p.candidates[0] as string;
     const { state: after } = run(state, cards([band]));
@@ -1092,7 +1087,7 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     const before = heroBoard();
     const { state } = playFromHand(before, SCRAMBLE);
     // The switch pick is forced (one benched body); the Energy move parks (up to "any").
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p.kind !== "moveEnergy") throw new Error(`expected moveEnergy, got ${p.kind}`);
     const water = bodyAt(state, "p1", 0).energy;
     expect(state.cardIdByUid[top(bodyAt(state, "p1", 0))]).toBe(PALAFIN_EX[1]);
@@ -1163,7 +1158,7 @@ describe("§6 — the bytes: `MATCH_RECORD_VERSION` holds at 36 (D125 widenings,
     }).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
     expect(revived).toEqual(parked);
-    const p = prompt(revived);
+    const p = effectPrompt(revived);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
     const band = p.candidates.find((u) => revived.cardIdByUid[u] === VITALITY_BAND) as string;
     const done = run(revived, cards([band])).state;

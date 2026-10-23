@@ -7,7 +7,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackEffect,
 } from "./effects";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction, programFor } from "./index";
 import {
   FIXTURE_POOL,
@@ -20,6 +20,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const TOOL_COUNT =
@@ -46,13 +47,6 @@ const BOARD_WIDE_ENERGY =
   "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.";
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
@@ -282,7 +276,7 @@ describe("§3 — countToolsInPlay, and the four ways the evaluator could be wro
 describe("§4 — the `×` fold on a live board", () => {
   it("deals 30 × the Tools on the ATTACKER's own board", () => {
     const { events } = swing(canonical());
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
   });
 
   it("the PRINTED BASE IS DROPPED: a Tool-less board deals nothing and emits NO DAMAGE_DEALT", () => {
@@ -290,7 +284,7 @@ describe("§4 — the `×` fold on a live board", () => {
     // here — and would be green on every other rung in this file. `base: 0` above is
     // the same claim from the other side.
     const { events } = swing(board());
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(events.some((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toBe(false);
   });
 
@@ -300,14 +294,14 @@ describe("§4 — the `×` fold on a live board", () => {
     // damage at all.
     const state = dress(board(), "p2", 3, [2]);
     expect(countToolsInPlay(state, "p2")).toBe(5);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("the BENCH counts: Tools behind the Active are not invisible", () => {
     // The Active-only reading — `yourActiveHasToolAttached`'s zone, one abstraction
     // down — deals nothing here; the truth is 60.
     const state = dress(board(), "p1", 0, [1, 1]);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ scaled: 60, dealt: 60 });
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ scaled: 60, dealt: 60 });
   });
 
   it("BODIES are not the resource: two benched Pokémon wearing nothing deal nothing", () => {
@@ -315,7 +309,7 @@ describe("§4 — the `×` fold on a live board", () => {
     // reads it as 0.
     const state = dress(board(), "p1", 0, [0, 0]);
     expect(state.players.p1.bench).toHaveLength(2);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("the count is READ AT DECLARATION and scales linearly across the whole range", () => {
@@ -330,7 +324,7 @@ describe("§4 — the `×` fold on a live board", () => {
       [2, [2, 1], 150],
     ] as const) {
       const state = dress(board(), "p1", activeTools, benchTools);
-      expect(find(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(expected);
+      expect(findEvent(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(expected);
     }
   });
 
@@ -338,7 +332,7 @@ describe("§4 — the `×` fold on a live board", () => {
     // The evaluator takes `attackerSeat`, so the same board mirrored gives the same
     // number. A hard-coded "p1" would pass every rung above and fail here.
     const { events } = swing(canonical("p2"), "p2");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 0, scaled: 90, dealt: 90 });
   });
 });
 

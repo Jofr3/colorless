@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { attackGateOf, attackTimingBlocked, firstTurnAttackBanned } from "./index";
 import { applyAction, createGame, programFor, redactGame } from "./index";
 import { registryCardIds } from "./registry";
-import type { BoardCondition, GameState, InPlayPokemon, Seat } from "./index";
+import type { BoardCondition, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -17,6 +17,7 @@ import {
   walkProgram,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 
 const BAN_TEXT =
@@ -178,12 +179,6 @@ function board(seed: number, first: Seat, seat: Seat, activeId: string): GameSta
   state = clearBench(state, seat);
   state = benchFromDeck(state, seat, "fix-basic-1");
   return attachFromDeck(state, seat, "fix-gate-energy", 2);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function passTurns(state: GameState, count: number): GameState {

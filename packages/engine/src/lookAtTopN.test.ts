@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   LOOK_AT_TOP_DECK,
   deepFreeze,
@@ -11,14 +11,8 @@ import {
   mustApply,
   toDeckTop,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** The uid of the deck card at `index` (0 = top) in `seat`'s deck. */
 function deckAt(state: GameState, seat: "p1" | "p2", index: number): string {
@@ -77,8 +71,8 @@ describe("M5 op-slice — lookAtTopN", () => {
       choice: { kind: "cards", uids: [topA] },
     });
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1" });
-    expect(find(events, "DECK_TOP_REVEALED")?.uids).toEqual([topA]);
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "DECK_TOP_REVEALED")?.uids).toEqual([topA]);
     // The pick moved deck → hand; the other looked-at cards stay in the deck…
     expect(done.players.p1.hand).toContain(topA);
     expect(done.players.p1.hand.length).toBe(handBefore + 1);
@@ -118,7 +112,7 @@ describe("M5 op-slice — lookAtTopN", () => {
       seat: "p1",
       choice: { kind: "cards", uids: [supporter] },
     });
-    expect(find(events, "DECK_TOP_REVEALED")?.uids).toEqual([supporter]);
+    expect(findEvent(events, "DECK_TOP_REVEALED")?.uids).toEqual([supporter]);
     expect(done.players.p1.hand).toContain(supporter);
     expect(done.players.p1.deck).toContain(pokemonInWindow);
     expect(types(events)).toContain("SHUFFLE");
@@ -162,7 +156,7 @@ describe("M5 op-slice — lookAtTopN", () => {
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
     expect(after.phase.kind).toBe("turn:action");
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    const looked = find(events, "DECK_TOP_REVEALED");
+    const looked = findEvent(events, "DECK_TOP_REVEALED");
     expect(looked).toMatchObject({ seat: "p1", uids: [] });
     expect(looked?.dest).toBeUndefined();
     expect(types(events)).toContain("SHUFFLE");
@@ -193,7 +187,7 @@ describe("M5 op-slice — lookAtTopN", () => {
       choice: { kind: "cards", uids: [] }, // …but the player declines
     });
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1", uids: [] });
+    expect(findEvent(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1", uids: [] });
     expect(types(events)).toContain("SHUFFLE"); // the trailing shuffleDeck still fires
     expect(done.players.p1.deck).toContain(topA); // the candidate stays in the deck
   });

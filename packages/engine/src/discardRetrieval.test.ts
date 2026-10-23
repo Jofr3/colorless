@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   DISCARD_RETRIEVAL_DECK,
   deepFreeze,
@@ -11,14 +11,8 @@ import {
   handUid,
   mustApply,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** A uid of `cardId` sitting in `seat`'s discard pile (the first, when several). */
 function discardUid(state: GameState, seat: "p1" | "p2", cardId: string): string {
@@ -92,8 +86,8 @@ describe("M5 op-slice — discardPileRetrieval", () => {
       choice: { kind: "cards", uids: [fire, water] },
     });
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "DISCARD_RETRIEVED")).toMatchObject({ seat: "p1", dest: "hand" });
-    expect(find(events, "DISCARD_RETRIEVED")?.uids).toHaveLength(2);
+    expect(findEvent(events, "DISCARD_RETRIEVED")).toMatchObject({ seat: "p1", dest: "hand" });
+    expect(findEvent(events, "DISCARD_RETRIEVED")?.uids).toHaveLength(2);
     // The two picks moved discard → hand; the excluded cards stay put.
     expect(done.players.p1.hand).toContain(fire);
     expect(done.players.p1.hand).toContain(water);
@@ -138,7 +132,7 @@ describe("M5 op-slice — discardPileRetrieval", () => {
       choice: { kind: "cards", uids: supporters },
     });
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "DISCARD_RETRIEVED")).toMatchObject({ seat: "p1", dest: "deck" });
+    expect(findEvent(events, "DISCARD_RETRIEVED")).toMatchObject({ seat: "p1", dest: "deck" });
     // The Supporters are back in the deck (and out of the discard); the trailing
     // shuffleDeck op fired.
     expect(types(events)).toContain("SHUFFLE");

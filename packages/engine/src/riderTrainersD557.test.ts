@@ -26,6 +26,7 @@ import {
   trainerCard,
   types,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const MORTY = ["sv05-155", "sv05-201", "sv05-211"] as const;
@@ -245,11 +246,6 @@ const cards = (uids: readonly string[], seat: Seat = "p1"): GameAction => ({
   seat,
   choice: { kind: "cards", uids: [...uids] },
 });
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 function render(events: readonly GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
   return logFromEvents([...events], ctx).flatMap((entry) =>
@@ -478,7 +474,7 @@ describe("D557 §3 — Xerosic's Machinations: the OWNER discards DOWN TO 3", ()
 
   it("a hand of 7 PARKS a mandatory pick of exactly 4, answered by the OWNER", () => {
     const { state } = play(withOppHand(7), XEROSIC[0]);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect([p.min, p.max]).toEqual([4, 4]);
     expect(p.candidates).toEqual(state.players.p2.hand);
@@ -497,7 +493,7 @@ describe("D557 §3 — Xerosic's Machinations: the OWNER discards DOWN TO 3", ()
   });
 
   it("a hand of 4 takes exactly 1", () => {
-    const p = prompt(play(withOppHand(4), XEROSIC[0]).state);
+    const p = effectPrompt(play(withOppHand(4), XEROSIC[0]).state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect([p.min, p.max]).toEqual([1, 1]);
   });
@@ -719,7 +715,7 @@ describe("D557 §6 — Megaton Blower: three sweeps, no question, refused only w
 describe("D557 §7 — Brilliant Blender: up to 5 cards to the DISCARD PILE, then the shuffle", () => {
   it('parks an up-to-5 pick over the WHOLE deck with `dest: "discard"` and the printed caption', () => {
     const { state } = play(table(), BLENDER);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect([p.min, p.max, p.dest]).toEqual([0, 5, "discard"]);
     expect(p.candidates).toEqual(state.players.p1.deck);
@@ -766,7 +762,7 @@ describe("D557 §8 — TM Machine: `toolNameContaining`, a TOOL whose name holds
     let board = table();
     for (const id of [TM_A, TM_B]) board = ensureInDeck(board, "p1", id);
     const { state } = play(board, TM_MACHINE);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(new Set(p.candidates.map((u) => idOf(state, u)))).toEqual(new Set([TM_A, TM_B]));
     expect(p.candidates).toHaveLength(3);
@@ -805,7 +801,7 @@ describe("D557 §9 — Dusk Ball: the BOTTOM 7, never the top", () => {
 
   it("a Pokémon at the BOTTOM is offered, with the bottom caption", () => {
     const { state } = deckWithPokemonAt("bottom");
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(p.candidates).toHaveLength(1);
     expect(p.note).toBe(
@@ -825,7 +821,7 @@ describe("D557 §9 — Dusk Ball: the BOTTOM 7, never the top", () => {
 
   it("taking it puts it in hand, reveals it, and shuffles", () => {
     const parked = deckWithPokemonAt("bottom").state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p?.kind !== "chooseCards") throw new Error("expected chooseCards");
     const { state, events } = mustApply(parked, cards(p.candidates));
     expect(state.players.p1.hand).toEqual(p.candidates);
@@ -848,7 +844,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
 
   it("the offer walks BOTH boards (yours first), each Tool paired with its OWN seat's body; the caption is the print", () => {
     const { state } = play(tooled(), SCRAPPER);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
     expect(p.discardable.map((d) => [d.from.seat, d.from.spot.spot, idOf(state, d.uid)])).toEqual([
       ["p1", "active", TOOL],
@@ -862,7 +858,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
 
   it("the opponent's SHIELDED Active is not offered; YOUR OWN shielded Active is — your own Tools are never shielded", () => {
     const { state, events } = play(tooled({ ownShielded: true }), SCRAPPER);
-    const p = prompt(state);
+    const p = effectPrompt(state);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
     const offered = p.discardable.map((d) => `${d.from.seat}:${d.from.spot.spot}`);
     expect(offered).toContain("p1:active");
@@ -872,7 +868,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
 
   it("a pick spanning BOTH boards sends each Tool to ITS OWNER's pile, one row per host under the victim's seat", () => {
     const parked = play(tooled(), SCRAPPER).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
     const { state, events } = mustApply(parked, {
       type: "resolveEffect",
@@ -910,7 +906,7 @@ describe("D557 §10 — Tool Scrapper: up to 2 Tools off EITHER side", () => {
   it("`MATCH_RECORD_VERSION` holds: the parked op round-trips through JSON and resolves identically", () => {
     const parked = play(tooled(), SCRAPPER).state;
     const revived = JSON.parse(JSON.stringify(parked)) as GameState;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p?.kind !== "discardTools") throw new Error("expected discardTools");
     const answer: GameAction = {
       type: "resolveEffect",

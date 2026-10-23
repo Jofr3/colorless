@@ -6,7 +6,7 @@ import {
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   CONDITIONAL_DAMAGE_DECK,
   FIXTURE_POOL,
@@ -20,14 +20,8 @@ import {
   setDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 const EARTHEN_POWER = "If you have a Stadium in play, this attack does 80 more damage.";
 const REVENGEFUL_STORM =
@@ -240,7 +234,7 @@ describe("Palossand 'Earthen Power' — yourStadiumInPlay, read for the ATTACKER
     // The condition is FALSE and the "+" is still simulated: `effectSimulated` /
     // `modifierSimulated` both ride `scaling !== null`, not on the clause holding.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 80, dealt: 80 });
     // `scaled` is omitted at 0 — the clause genuinely added nothing.
     expect(dealt?.scaled).toBeUndefined();
@@ -253,7 +247,7 @@ describe("Palossand 'Earthen Power' — yourStadiumInPlay, read for the ATTACKER
     expect(state.stadium?.owner).toBe("p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 80, dealt: 160 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 80, dealt: 160 });
   });
 
   it("is OWNERSHIP, not presence — the OPPONENT's Beach Court in the shared zone does not count", () => {
@@ -275,7 +269,7 @@ describe("Palossand 'Earthen Power' — yourStadiumInPlay, read for the ATTACKER
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     // Back to the printed 80 — and still not flagged.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 80, dealt: 80 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -296,7 +290,7 @@ describe("Gyarados 'Revengeful Storm' — morePrizesThanOpponent, the §14 comeb
     expect(state.players.p1.prizes.length).toBe(state.players.p2.prizes.length);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, dealt: 80 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, dealt: 80 });
   });
 
   it("adds 100 once the ATTACKER is ahead on prizes REMAINING (behind on prizes taken)", () => {
@@ -305,14 +299,14 @@ describe("Gyarados 'Revengeful Storm' — morePrizesThanOpponent, the §14 comeb
     const state = setPrizes(revengefulStorm(board(5)), "p2", 4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 100, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 100, dealt: 180 });
   });
 
   it("is the ATTACKER's seat, not the defender's — the asymmetry, run backwards", () => {
     const state = setPrizes(revengefulStorm(board(5)), "p1", 4);
     expect(conditionHolds(state, "p2", { kind: "morePrizesThanOpponent" })).toBe(true);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, dealt: 80 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, dealt: 80 });
   });
 });
 
@@ -334,12 +328,12 @@ describe("Gyarados ex 'Tyrannical Tail' — opponentActiveDamaged, read at DECLA
     expect(state.players.p2.active?.damage).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 180, dealt: 180 });
     expect(dealt?.scaled).toBeUndefined();
     // And the defender really did end up damaged — the state the SECOND attack of
     // a real game would read, which is the only way this bonus is ever earned.
-    expect(find(events, "DAMAGE_DEALT")?.damage).toBe(180);
+    expect(findEvent(events, "DAMAGE_DEALT")?.damage).toBe(180);
   });
 
   it("vs an ALREADY damaged Active it adds the whole 180 → 360", () => {
@@ -347,7 +341,7 @@ describe("Gyarados ex 'Tyrannical Tail' — opponentActiveDamaged, read at DECLA
     const state = setDamage(tyrannicalTail(board(7)), "p2", 10);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 180, dealt: 360 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, scaled: 180, dealt: 360 });
   });
 
   it("reads the OPPONENT's Active — damage on the ATTACKER's own body scores nothing", () => {
@@ -355,7 +349,7 @@ describe("Gyarados ex 'Tyrannical Tail' — opponentActiveDamaged, read at DECLA
     const state = setDamage(tyrannicalTail(board(8)), "p1", 10);
     expect(state.players.p2.active?.damage).toBe(0);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 180, dealt: 180 });
   });
 });
 
@@ -375,7 +369,7 @@ describe("Seviper 'Cross-Cut' — opponentActiveIsEvolution, the D105 reading", 
     const state = crossCut(board(9));
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 50, dealt: 50 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -384,13 +378,13 @@ describe("Seviper 'Cross-Cut' — opponentActiveIsEvolution, the D105 reading", 
     const state = setActiveFromDeck(crossCut(board(10)), "p2", "sv02-043");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, scaled: 50, dealt: 100 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, scaled: 50, dealt: 100 });
   });
 
   it("folds the bonus BEFORE §8.5 Weakness — (base + scaled) is what doubles", () => {
     const state = setActiveFromDeck(crossCut(board(11)), "p2", "sv02-096");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 50,
       scaled: 50,
       weakness: { op: "multiply", amount: 2 },

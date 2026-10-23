@@ -13,19 +13,13 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SEED = 20260721;
 
 const DENDRA = "sv02-179";
 const SKWOVET = "sv01-151";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
@@ -150,13 +144,13 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
     // PAID FIRST, THEN DRAWN: the hand was 3 after the play, 2 after the payment,
     // so the draw is THREE — paying afterwards would have drawn two and ended at
     // 4. That off-by-one is the whole reason the cost is the program's first op.
-    const cost = find(events, "HAND_COST_PAID");
+    const cost = findEvent(events, "HAND_COST_PAID");
     expect(cost?.uids).toEqual([paid]);
     expect(cost?.to).toBe("deckBottom");
     // The PAYER — the field a per-seat event filter keys on beside `to`, and the
     // one no assertion in the repo had ever read.
     expect(cost?.seat).toBe("p1");
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
     expect(types(events).indexOf("HAND_COST_PAID")).toBeLessThan(
       types(events).indexOf("CARDS_DRAWN"),
     );
@@ -209,7 +203,7 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
       uid: handUid(state, "p1", DENDRA),
     });
     expect(done.phase.kind).toBe("turn:action");
-    const cost = find(events, "HAND_COST_PAID");
+    const cost = findEvent(events, "HAND_COST_PAID");
     expect(cost?.uids).toHaveLength(1);
     expect(cost?.to).toBe("deckBottom");
     expect(done.players.p1.hand).toHaveLength(5);
@@ -258,7 +252,7 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
     });
     // Hand was 2 after the play, 1 after paying; the draw wants 4 and the deck
     // holds 3 (2 + the payment), so it short-draws the lot, payment included.
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(3);
     expect(done.players.p1.deck).toHaveLength(0);
     expect(done.players.p1.hand).toContain(paid);
     expect(done.players.p1.hand).toHaveLength(4);
@@ -317,8 +311,8 @@ describe("Dendra — the payment that goes UNDER THE DECK", () => {
     });
     // One candidate = no question: paid inline, then drawn to 5.
     expect(done.phase.kind).toBe("turn:action");
-    expect(find(events, "HAND_COST_PAID")?.to).toBe("deckBottom");
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(5);
+    expect(findEvent(events, "HAND_COST_PAID")?.to).toBe("deckBottom");
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(5);
     expect(done.players.p1.hand).toHaveLength(5);
   });
 });
@@ -357,7 +351,7 @@ describe("the deckBottom apply's wire guards", () => {
       { seat: "p1" },
       events,
     );
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
+    expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
     expect(next.players.p1.deck.filter((u) => u === uid)).toHaveLength(1);
     expect(next.players.p1.deck.at(-1)).toBe(uid);
     expect(census(next, "p1")).toEqual(before);
@@ -420,8 +414,8 @@ describe("Skwovet 'Nest Stash' — the same destination, the WHOLE hand", () => 
     const before = census(state, "p1");
     const deckBefore = [...state.players.p1.deck];
     const { state: done, events } = mustApply(state, NEST_STASH);
-    expect(find(events, "HAND_TO_BOTTOM_OF_DECK")?.count).toBe(3);
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
+    expect(findEvent(events, "HAND_TO_BOTTOM_OF_DECK")?.count).toBe(3);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(1);
     // The card drawn is the deck's ORIGINAL top card: the hand went underneath,
     // so nothing about the next draws changed. (That is `toBottom`'s entire
     // reason for existing, and it is what separates this from Youngster.)
@@ -454,7 +448,7 @@ describe("Skwovet 'Nest Stash' — the same destination, the WHOLE hand", () => 
       target: { spot: "bench", index: 0 },
       abilityName: "Nest Stash",
     });
-    expect(find(events, "HAND_TO_BOTTOM_OF_DECK")?.count).toBe(1); // the card just drawn
+    expect(findEvent(events, "HAND_TO_BOTTOM_OF_DECK")?.count).toBe(1); // the card just drawn
     expect(twice.players.p1.hand).toHaveLength(1);
   });
 
@@ -475,7 +469,7 @@ describe("Skwovet 'Nest Stash' — the same destination, the WHOLE hand", () => 
       abilityName: "Nest Stash",
     });
     // The hand it puts under the deck is the one AFTER the Skwovet left it.
-    expect(find(events, "HAND_TO_BOTTOM_OF_DECK")?.count).toBe(2);
+    expect(findEvent(events, "HAND_TO_BOTTOM_OF_DECK")?.count).toBe(2);
     expect(done.players.p1.hand).toHaveLength(1);
   });
 

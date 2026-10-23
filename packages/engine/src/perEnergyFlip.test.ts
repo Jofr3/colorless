@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CONCENTRATED_FIRE =
@@ -53,13 +54,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function all<T extends GameEvent["type"]>(
@@ -716,7 +710,7 @@ describe("Torkoal — the TYPED count is not the ENERGY count, on a board where 
       );
       const heads = headsIn(events);
       seen.add(heads);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
         continue;
@@ -752,7 +746,7 @@ describe("Torkoal — the TYPED count is not the ENERGY count, on a board where 
       // two points — only the 0-heads outcome cannot be faked, and the sweep reaches it.
       expect(activeDamage(done, "p2")).toBe(80 * heads);
       expect(activeDamage(done, "p2")).not.toBe(80 * heads + 80);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
       } else {
@@ -775,11 +769,11 @@ describe("Torkoal — the TYPED count is not the ENERGY count, on a board where 
       index: FLAT_INDEX,
     });
     expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
-    expect(find(events, "DAMAGE_DEALT")?.base).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.base).toBe(30);
     // `scaled` is "present only when it applied", so its ABSENCE is the claim: nothing
     // was folded in front of Weakness at all, where the flip attack's whole number
     // arrives through that field.
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBeUndefined();
     expect(activeDamage(done, "p2")).toBe(30);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -863,7 +857,7 @@ describe("ZERO COUNT — zero FLIPS, which is not zero HEADS", () => {
       // BUT IT WAS NOT CANCELLED — no ATTACK_FAILED of any reason. This is the
       // assertion that separates a zero count from `cancelOnTails`.
       expect(types(events)).not.toContain("ATTACK_FAILED");
-      expect(find(events, "ATTACK_FAILED")).toBeUndefined();
+      expect(findEvent(events, "ATTACK_FAILED")).toBeUndefined();
       // …and the turn ended the ordinary way, through the same `finishAttack` every
       // resolved attack takes.
       expect(types(events)).toContain("TURN_ENDED");
@@ -1018,7 +1012,7 @@ describe("the fold order — the board-counted flips land BEFORE Weakness", () =
       expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(1);
       const heads = headsIn(events);
       seen.add(heads);
-      const damage = find(events, "DAMAGE_DEALT");
+      const damage = findEvent(events, "DAMAGE_DEALT");
       if (heads === 0) {
         expect(damage).toBeUndefined();
         expect(activeDamage(done, "p2")).toBe(0);

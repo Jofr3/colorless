@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, deriveAttackEffect } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   COVETOUS_IVY_DECK,
   attachFromDeck,
@@ -12,14 +12,8 @@ import {
   setActiveFromDeck,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so attacking is legal (§4). P2 starts with only its Active;
@@ -119,7 +113,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     });
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // No main damage (Covetous Ivy has no `damage` field), and the effect asks WHICH.
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.seat).toBe("p1");
@@ -139,7 +133,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
     expect(types(e2)).not.toContain("COUNTERS_PLACED");
-    expect(find(e2, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(e2, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       base: 120,
       weakness: null,
@@ -163,7 +157,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 180, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 180, dealt: 180 });
     expect(done.players.p2.bench[0]?.damage).toBe(180);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -178,7 +172,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
       remaining: 4,
     });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, dealt: 80 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, dealt: 80 });
     expect(done.players.p2.bench[0]?.damage).toBe(80);
   });
 
@@ -193,7 +187,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(done.players.p2.bench.every((p) => p.damage === 0)).toBe(true);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -202,7 +196,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     const state = covetous(5, { attacker: "sv02-027", energy: 3, benched: [], remaining: 4 });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
@@ -217,7 +211,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     });
     const victimUid = benchTopUid(state, "p2", 0);
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
+    expect(findEvent(events, "KNOCKED_OUT")?.uid).toBe(victimUid);
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
     expect(after.phase.seat).toBe("p1");
     const { state: done } = mustApply(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
@@ -234,7 +228,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
       remaining: 5, // 1 taken → 60
     });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 60,
       weakness: null,
       resistance: null,

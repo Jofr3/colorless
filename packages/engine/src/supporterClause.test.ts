@@ -7,7 +7,7 @@ import {
   deriveAttackEffect,
   programFor,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   SUPPORTER_CLAUSE_DECK,
@@ -19,6 +19,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BUDDY_BOLT =
@@ -34,13 +35,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function supporterClause(per = 80): string {
@@ -250,7 +244,7 @@ describe("the board — Buddy Bolt through a real attack", () => {
     const state = pikachu(board(11), "p1");
     expect(state.allowances.supporterPlayed).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: BUDDY_BOLT_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     // The clause RESOLVED — a false condition is not a skipped effect.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
@@ -269,7 +263,7 @@ describe("the board — Buddy Bolt through a real attack", () => {
       seat: "p1",
       index: BUDDY_BOLT_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(60);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -287,7 +281,7 @@ describe("the board — Buddy Bolt through a real attack", () => {
       seat: "p1",
       index: BUDDY_BOLT_INDEX,
     });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("reads YOUR turn — the OPPONENT's Supporter on THEIR turn arms nothing", () => {
@@ -299,7 +293,7 @@ describe("the board — Buddy Bolt through a real attack", () => {
     expect(state.allowances.supporterPlayed).toBe(true);
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: BUDDY_BOLT_INDEX });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("arms from EITHER seat — the member is seat-relative, not p1-relative", () => {
@@ -307,14 +301,14 @@ describe("the board — Buddy Bolt through a real attack", () => {
       const opened = seat === "p1" ? board(11) : boardP2(11);
       const bare = pikachu(opened, seat);
       expect(
-        find(
+        findEvent(
           mustApply(bare, { type: "attack", seat, index: BUDDY_BOLT_INDEX }).events,
           "DAMAGE_DEALT",
         )?.dealt,
       ).toBe(30);
       const armed = playNemona(bare, seat);
       expect(
-        find(
+        findEvent(
           mustApply(armed, { type: "attack", seat, index: BUDDY_BOLT_INDEX }).events,
           "DAMAGE_DEALT",
         )?.dealt,
@@ -329,14 +323,14 @@ describe("the board — Buddy Bolt through a real attack", () => {
     const opened = setActiveFromDeck(board(11), "p2", "fix-lightning-weak");
     const control = pikachu(opened, "p1");
     expect(
-      find(
+      findEvent(
         mustApply(control, { type: "attack", seat: "p1", index: BUDDY_BOLT_INDEX }).events,
         "DAMAGE_DEALT",
       )?.dealt,
     ).toBe(60);
     const armed = playNemona(control, "p1");
     expect(
-      find(
+      findEvent(
         mustApply(armed, { type: "attack", seat: "p1", index: BUDDY_BOLT_INDEX }).events,
         "DAMAGE_DEALT",
       )?.dealt,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, disabledAbilityUids, programFor } from "./index";
 import { registryCardIds } from "./registry";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { redactGame } from "./redact";
 import {
   ABILITY_LOCK_DECK,
@@ -18,16 +18,10 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const attack0 = { type: "attack", seat: "p1", index: 0 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(seed: number): GameState {
   const state = driveSetup(seed, { p1: ABILITY_LOCK_DECK, p2: ABILITY_LOCK_DECK }, { first: "p2" });
@@ -285,14 +279,16 @@ describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
 
     const { events } = mustApply(state, attack0);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
 
     // Joust's own baseline, so "10" above is the FULL printed number and not a
     // reduced one that happens to land on it.
     let plain = setActiveFromDeck(board(35), "p1", "sv01-096");
     plain = attachFromDeck(plain, "p1", "fix-energy", 1);
     plain = setActiveFromDeck(plain, "p2", "fix-bigbody"); // no passive at all
-    expect(find(mustApply(plain, attack0).events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(mustApply(plain, attack0).events, "DAMAGE_DEALT")).toMatchObject({
+      dealt: 10,
+    });
   });
 
   it("…while the SAME Bouffalant takes 20 off an attacker with no lock in play", () => {
@@ -302,12 +298,14 @@ describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
 
     const { events } = mustApply(state, attack0);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
 
     let plain = setActiveFromDeck(board(35), "p1", "fix-attacker");
     plain = attachFromDeck(plain, "p1", "fix-energy", 1);
     plain = setActiveFromDeck(plain, "p2", "fix-bigbody");
-    expect(find(mustApply(plain, attack0).events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(mustApply(plain, attack0).events, "DAMAGE_DEALT")).toMatchObject({
+      dealt: 30,
+    });
   });
 
   it("leaves a locked Pokémon's attached TOOL working (a Tool is not an Ability)", () => {
@@ -331,7 +329,7 @@ describe("the PASSIVE read site (continuous.ts passivesOf)", () => {
     const { events } = mustApply(state, attack0);
 
     // Bite's 30 + Vitality Band's 10: the attacker is locked, its Tool is not.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 40 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 40 });
   });
 });
 
@@ -343,7 +341,7 @@ describe("the TRIGGERED read site (triggers.ts triggersOf)", () => {
 
     const { state: done, events } = mustApply(state, attack0);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 10 });
     // …and the reaction never fires.
     expect(types(events)).not.toContain("ABILITY_TRIGGERED");
     expect(done.players.p1.active?.conditions.burned).toBeFalsy();
@@ -356,12 +354,12 @@ describe("the TRIGGERED read site (triggers.ts triggersOf)", () => {
 
     const { events } = mustApply(state, attack0);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
-    expect(find(events, "ABILITY_TRIGGERED")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toMatchObject({
       seat: "p2",
       ability: "Scorching Armor",
     });
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p1", status: "burned" });
   });
 });
 

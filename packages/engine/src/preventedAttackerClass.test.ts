@@ -3,7 +3,7 @@ import { isExOrV, preventsAttackerClass } from "./cards";
 import { passivesOf } from "./continuous";
 import { programFor } from "./index";
 import type { Card } from "@colorless/schema";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   FIXTURE_POOL,
   PREVENTED_CLASS_DECK,
@@ -13,6 +13,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const;
@@ -23,13 +24,6 @@ const EX_SENTENCE =
   "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex.";
 const BASIC_EX_SENTENCE =
   "Prevent all damage done to this Pokémon by attacks from your opponent's Basic Pokémon ex.";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup, then field `holderId` in P2's ACTIVE spot and hand the turn to P1, who
     fields `attackerId` with one {C} attached (the main-hit path). */
@@ -192,7 +186,7 @@ describe("the main hit (attack.ts, read site 1 of 4)", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -202,7 +196,7 @@ describe("the main hit (attack.ts, read site 1 of 4)", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -210,9 +204,9 @@ describe("the main hit (attack.ts, read site 1 of 4)", () => {
     const through = mustApply(fightMain("fix-armortail", "fix-exstage1"), bite);
     const stopped = mustApply(fightMain("fix-safeguardex", "fix-exstage1"), bite);
 
-    expect(find(through.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(through.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
     expect(through.state.players.p2.active?.damage).toBe(30);
-    expect(find(stopped.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(stopped.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(stopped.state.players.p2.active?.damage).toBe(0);
   });
 
@@ -297,7 +291,7 @@ describe("the snipe arms (interpreter.ts, read sites 3 and 4 of 4)", () => {
 
     const { state: done, events } = snipeAt(state, 2, "active", "fix-armortail");
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -338,7 +332,7 @@ describe("§9 — the holder's aura is an Ability and a lock must silence it", (
 
     const { state: done, events } = mustApply(state, joust);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
     expect(done.players.p2.active?.damage).toBe(10);
   });
 });

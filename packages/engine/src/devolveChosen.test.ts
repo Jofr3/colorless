@@ -24,6 +24,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -79,13 +80,6 @@ const CHOSEN_DECK = deckOf({
   "fix-energy": 16,
   "sv03-197": 4,
 });
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -456,7 +450,7 @@ describe("§3 — a lone evolved body is FORCED, with no prompt at all", () => {
     const before = armed(13, { stages: 1, attacker: "p2" });
     const top = must0(body(before.players.p1.active).stack.slice(-1));
     const { state, events } = strike(before, "p2", PICK);
-    const devolved = find(events, "POKEMON_DEVOLVED");
+    const devolved = findEvent(events, "POKEMON_DEVOLVED");
     expect(devolved?.seat).toBe("p1");
     expect(devolved?.actor).toBe("p2");
     expect(state.players.p1.hand).toContain(top);
@@ -486,7 +480,7 @@ describe("§4 — two candidates PARK, and the answer really moves the board", (
     expect(body(state.players.p2.bench[0]).stack).toHaveLength(2);
     expect(state.players.p2.hand).toContain(activeTop);
     expect(all(events, "POKEMON_DEVOLVED")).toHaveLength(1);
-    expect(find(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
     expect(types(events)).not.toContain("SHUFFLE");
   });
 
@@ -691,9 +685,9 @@ describe("§8 — a Mist Energy holder is not OFFERED, and the rest still devolv
     // `parkOrForce` FORCES it. That is the observable shape of a FILTER rather than a
     // guard: the op still ran, on the body that was not shielded.
     expect(state.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
     expect(all(events, "POKEMON_DEVOLVED")).toHaveLength(1);
-    expect(find(events, "POKEMON_DEVOLVED")?.seat).toBe("p2");
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.seat).toBe("p2");
     expect(body(state.players.p2.bench[0]).stack).toHaveLength(2);
     expect(body(state.players.p2.active).stack).toHaveLength(1);
   });
@@ -705,7 +699,7 @@ describe("§8 — a Mist Energy holder is not OFFERED, and the rest still devolv
       PICK,
     );
     expect(state.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toBeDefined();
     expect(body(state.players.p2.active).stack).toHaveLength(2);
     expect(body(state.players.p2.bench[0]).stack).toHaveLength(1);
   });
@@ -789,7 +783,7 @@ describe("§10 — the persisted `pendingOp`, over the serialized bytes", () => 
     expect(bytes).toContain('"devolveChosen"');
     const revived = JSON.parse(bytes) as GameState;
     const { state, events } = answer(revived, "p1", BENCH0);
-    expect(find(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
     expect(body(state.players.p2.bench[0]).stack).toHaveLength(1);
     expect(body(state.players.p2.active).stack).toHaveLength(2);
   });
@@ -862,7 +856,7 @@ describe("§11 — the log row names the HAND, and the sweep's row still does no
     expect(rendered).toHaveLength(1);
     expect(rendered[0]).toBe("p1|devolved Gary's d540-s1 → d540-basic");
     expect(rendered[0]).not.toContain("hand");
-    expect(find(events, "POKEMON_DEVOLVED")?.zone).toBeUndefined();
+    expect(findEvent(events, "POKEMON_DEVOLVED")?.zone).toBeUndefined();
   });
 
   it("the §12 Special Condition clear is announced with reason 'devolved'", () => {
@@ -883,7 +877,7 @@ describe("§11 — the log row names the HAND, and the sweep's row still does no
       },
     };
     const { events } = strike(asleep, "p1", PICK);
-    const cleared = find(events, "STATUS_CLEARED");
+    const cleared = findEvent(events, "STATUS_CLEARED");
     expect(cleared?.reason).toBe("devolved");
     expect(cleared?.statuses).toContain("asleep");
   });
@@ -918,7 +912,7 @@ describe("§12 — the op is a pure reduction", () => {
     const { state: waiting, events: hit } = strike(before, "p1", BLOW);
     // The damage step runs BEFORE the program parks, so the 60 is already on the board
     // while the prompt is open.
-    expect(find(hit, "DAMAGE_DEALT")?.damage).toBe(60);
+    expect(findEvent(hit, "DAMAGE_DEALT")?.damage).toBe(60);
     expect(body(waiting.players.p2.active).damage).toBe(60);
     const { state } = answer(waiting, "p1", ACTIVE);
     // 90 HP Stage 1 → 60 HP Basic with 60 on it: lethal the instant the stack shortens.

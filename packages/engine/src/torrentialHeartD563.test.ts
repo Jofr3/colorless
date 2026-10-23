@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   must,
   mustApply as run,
+  findEvent,
 } from "./testFixtures";
 import { topUid } from "./cards";
 import { type InPlayPokemon, evolveOnto } from "./types";
@@ -220,10 +221,6 @@ function body(p: InPlayPokemon | null | undefined): InPlayPokemon {
   return p;
 }
 
-function find<T extends GameEvent["type"]>(events: GameEvent[], type: T) {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
-}
-
 const useActive = (state: GameState) =>
   run(state, {
     type: "useAbility",
@@ -281,7 +278,7 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
   it("places 50 on THIS body, filed as an ABILITY placement", () => {
     const start = table({});
     const { state, events } = useActive(start);
-    const placed = find(events, "COUNTERS_PLACED");
+    const placed = findEvent(events, "COUNTERS_PLACED");
     expect(placed).toMatchObject({ seat: "p1", amount: 50, source: "ability" });
     expect(placed?.uid).toBe(topUid(body(start.players.p1.active)));
     expect(body(state.players.p1.active).damage).toBe(50);
@@ -303,14 +300,14 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
   it("the main hit pays +120 BEFORE Weakness: (160 + 120) × 2 = 560", () => {
     const { state } = useActive(table({}));
     const { events } = attack(state);
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 160, bonus: 120, dealt: 560 });
   });
 
   it("the control: without the Ability the same hit is 160 × 2 = 320 and no counters land", () => {
     const { events } = attack(table({}));
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 160, dealt: 320 });
-    expect(find(events, "DAMAGE_DEALT")?.bonus).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 160, dealt: 320 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.bonus).toBeUndefined();
   });
 
   it("the row says THIS turn, under both seats, and never 'next turn' or 'null'", () => {
@@ -321,7 +318,7 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
       text: "Feraligatr's attacks do 120 more damage this turn",
     });
     expect(rows.some((r) => r.text.includes("next turn") || r.text.includes("null"))).toBe(false);
-    const boosted = find(events, "ATTACK_BOOSTED");
+    const boosted = findEvent(events, "ATTACK_BOOSTED");
     expect(boosted).toMatchObject({ attack: null, amount: 120, thisTurn: true });
     expect(render(boosted === undefined ? [] : [{ ...boosted, seat: "p2" }], state)).toEqual([
       { who: "p2", text: "Feraligatr's attacks do 120 more damage this turn" },
@@ -330,7 +327,7 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
 
   it("a NAMED this-turn row (no printing writes one) would name its attack and still say 'this turn'", () => {
     const { state, events } = useActive(table({}));
-    const boosted = find(events, "ATTACK_BOOSTED");
+    const boosted = findEvent(events, "ATTACK_BOOSTED");
     if (boosted === undefined) throw new Error("no row");
     expect(render([{ ...boosted, attack: "Giant Wave" }], state)).toEqual([
       { who: "p1", text: "Feraligatr's Giant Wave does 120 more damage this turn" },
@@ -339,7 +336,7 @@ describe("§2 — used on the ACTIVE: 5 counters on itself, +120 this turn befor
 
   it("the D546 next-turn install still says 'next turn' — the branch keys on `thisTurn` alone", () => {
     const { state, events } = useActive(table({}));
-    const boosted = find(events, "ATTACK_BOOSTED");
+    const boosted = findEvent(events, "ATTACK_BOOSTED");
     if (boosted === undefined) throw new Error("no row");
     const { thisTurn: _dropped, ...nextTurn } = boosted;
     expect(render([nextTurn], state)).toEqual([
@@ -361,8 +358,8 @@ describe("§3 — used from the BENCH: the counters and the record land on the B
     expect(benched.boostedAttack).toEqual({ turn: start.turn, attackIndex: null, amount: 120 });
     expect(body(state.players.p1.active).damage).toBe(0);
     expect(body(state.players.p1.active).boostedAttack).toBeNull();
-    expect(find(events, "ATTACK_BOOSTED")?.uid).toBe(topUid(benched));
-    expect(find(events, "COUNTERS_PLACED")?.uid).toBe(topUid(benched));
+    expect(findEvent(events, "ATTACK_BOOSTED")?.uid).toBe(topUid(benched));
+    expect(findEvent(events, "COUNTERS_PLACED")?.uid).toBe(topUid(benched));
   });
 
   it("promoted by a RETREAT the same turn, it still pays: Bench → Active does not clear", () => {
@@ -379,7 +376,7 @@ describe("§3 — used from the BENCH: the counters and the record land on the B
       attackIndex: null,
       amount: 120,
     });
-    expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(attack(state).events, "DAMAGE_DEALT")).toMatchObject({
       base: 160,
       bonus: 120,
       dealt: 560,
@@ -430,7 +427,10 @@ describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, a
     state = run(state, { type: "endTurn", seat: "p1" }).state;
     state = run(state, { type: "endTurn", seat: "p2" }).state;
     expect(boostedAttackDamage(state, body(state.players.p1.active), 0)).toBe(0);
-    expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 160, dealt: 320 });
+    expect(findEvent(attack(state).events, "DAMAGE_DEALT")).toMatchObject({
+      base: 160,
+      dealt: 320,
+    });
   });
 
   it("LOCK-IMMUNE ONCE INSTALLED: a Flutter Mane Active after the use does not stop the +120", () => {
@@ -439,7 +439,10 @@ describe("§4 — R-TH: the record SHEDS when switched out, EXPIRES next turn, a
       setActiveFromDeck(ensureInDeck(state, "p2", FLUTTER_MANE), "p2", FLUTTER_MANE),
       "p2",
     );
-    expect(find(attack(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 160, bonus: 120 });
+    expect(findEvent(attack(state).events, "DAMAGE_DEALT")).toMatchObject({
+      base: 160,
+      bonus: 120,
+    });
   });
 
   it("…but a lock BEFORE the use refuses the Ability itself (the control)", () => {
@@ -546,7 +549,7 @@ describe('§6 — the riders: `on`/`holder: "source"` find the body by uid; abse
       amount: 120,
     });
     expect(body(state.players.p1.bench[0]).boostedAttack).toBeNull();
-    expect(find(events, "ATTACK_BOOSTED")?.thisTurn).toBeUndefined();
+    expect(findEvent(events, "ATTACK_BOOSTED")?.thisTurn).toBeUndefined();
   });
 
   it("a source that has LEFT the board: both riders whiff silently (no row, no write)", () => {
@@ -609,7 +612,7 @@ describe("§7 — `snipeActive` pays the record through `everyAttackBoostOf`; th
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
     });
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, bonus: 120 });
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, bonus: 120 });
   });
 
   it("the SHARED SLOT: a use over a live NAMED next-turn record replaces it (per-address, D155)", () => {
@@ -671,7 +674,10 @@ describe("§8 — `MATCH_RECORD_VERSION` holds at 35: the record Torrential Hear
     const { state } = useActive(table({}));
     const revived = JSON.parse(JSON.stringify(state)) as GameState;
     expect(revived).toEqual(state);
-    expect(find(attack(revived).events, "DAMAGE_DEALT")).toMatchObject({ bonus: 120, dealt: 560 });
+    expect(findEvent(attack(revived).events, "DAMAGE_DEALT")).toMatchObject({
+      bonus: 120,
+      dealt: 560,
+    });
   });
 
   it("ROLLBACK — the 0.446 readers are unchanged: they pay a this-turn stamp as they pay any live one", () => {

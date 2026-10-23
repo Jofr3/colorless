@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const RAISED =
@@ -307,13 +308,6 @@ function must0(body: InPlayPokemon | null): InPlayPokemon {
   return body;
 }
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
-}
-
 function confuseThenSwing(index: number, seed: number) {
   const start = table(seed);
   const inflicted = mustApply(start, { type: "attack", seat: "p1", index });
@@ -350,8 +344,8 @@ describe("§4 — `SpecialConditions.confusionDamage` on a real board", () => {
   it("the STATUS_APPLIED row carries the amount, and the BARE one carries the default", () => {
     const raised = mustApply(table(), { type: "attack", seat: "p1", index: RAISE });
     const plain = mustApply(table(), { type: "attack", seat: "p1", index: PLAIN });
-    expect(find(raised.events, "STATUS_APPLIED")?.confusionDamage).toBe(80);
-    expect(find(plain.events, "STATUS_APPLIED")?.confusionDamage).toBe(30);
+    expect(findEvent(raised.events, "STATUS_APPLIED")?.confusionDamage).toBe(80);
+    expect(findEvent(plain.events, "STATUS_APPLIED")?.confusionDamage).toBe(30);
   });
 
   it("a CURE puts the amount back — the clear-rung's silent aftermath (D434)", () => {
@@ -406,7 +400,7 @@ describe("§5 — the missed flip, and the two numbers it can answer", () => {
       if (!inflicted.ok) continue;
       const swung = applyAction(inflicted.state, { type: "attack", seat: "p2", index: 0 });
       if (!swung.ok) continue;
-      if (find(swung.events, "CONFUSION_CHECK")?.result === "tails") return seed;
+      if (findEvent(swung.events, "CONFUSION_CHECK")?.result === "tails") return seed;
     }
     throw new Error(`no tails seed for index ${index}`);
   }
@@ -416,13 +410,13 @@ describe("§5 — the missed flip, and the two numbers it can answer", () => {
     const pSeed = tailsSeed(PLAIN);
     const r = confuseThenSwing(RAISE, rSeed);
     const p = confuseThenSwing(PLAIN, pSeed);
-    expect(find(r.swung.events, "CONFUSION_CHECK")?.result).toBe("tails");
-    expect(find(p.swung.events, "CONFUSION_CHECK")?.result).toBe("tails");
+    expect(findEvent(r.swung.events, "CONFUSION_CHECK")?.result).toBe("tails");
+    expect(findEvent(p.swung.events, "CONFUSION_CHECK")?.result).toBe("tails");
 
     // The EVENT…
-    expect(find(r.swung.events, "COUNTERS_PLACED")?.amount).toBe(80);
-    expect(find(p.swung.events, "COUNTERS_PLACED")?.amount).toBe(30);
-    expect(find(r.swung.events, "COUNTERS_PLACED")?.source).toBe("confusion");
+    expect(findEvent(r.swung.events, "COUNTERS_PLACED")?.amount).toBe(80);
+    expect(findEvent(p.swung.events, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(findEvent(r.swung.events, "COUNTERS_PLACED")?.source).toBe("confusion");
 
     expect(must0(r.swung.state.players.p2.active).damage).toBe(80);
     expect(must0(p.swung.state.players.p2.active).damage).toBe(30);
@@ -439,13 +433,13 @@ describe("§5 — the missed flip, and the two numbers it can answer", () => {
         if (!inflicted.ok) continue;
         const swung = applyAction(inflicted.state, { type: "attack", seat: "p2", index: 0 });
         if (!swung.ok) continue;
-        if (find(swung.events, "CONFUSION_CHECK")?.result === "heads") return seed;
+        if (findEvent(swung.events, "CONFUSION_CHECK")?.result === "heads") return seed;
       }
       throw new Error("no heads seed");
     }
     const r = confuseThenSwing(RAISE, headsSeed(RAISE));
-    expect(find(r.swung.events, "CONFUSION_CHECK")?.result).toBe("heads");
-    expect(find(r.swung.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(r.swung.events, "CONFUSION_CHECK")?.result).toBe("heads");
+    expect(findEvent(r.swung.events, "COUNTERS_PLACED")).toBeUndefined();
     expect(must0(r.swung.state.players.p2.active).damage).toBe(0);
   });
 
@@ -454,13 +448,13 @@ describe("§5 — the missed flip, and the two numbers it can answer", () => {
     // the 80/30 split is what the suite reads, not a Knock Out that would make both
     // builds look alike on the zone counts.
     const r = confuseThenSwing(RAISE, tailsSeed(RAISE));
-    expect(find(r.swung.events, "KNOCKED_OUT")).toBeUndefined();
+    expect(findEvent(r.swung.events, "KNOCKED_OUT")).toBeUndefined();
     expect(must0(r.swung.state.players.p2.active).damage).toBe(80);
   });
 
   it("the ATTACK_FAILED row still names the reason and carries NO number", () => {
     const r = confuseThenSwing(RAISE, tailsSeed(RAISE));
-    expect(find(r.swung.events, "ATTACK_FAILED")?.reason).toBe("confusion");
+    expect(findEvent(r.swung.events, "ATTACK_FAILED")?.reason).toBe("confusion");
   });
 });
 
@@ -479,7 +473,7 @@ describe("§6 — what `log.ts` says when the confusion number changes", () => {
         const inf = applyAction(start, { type: "attack", seat: "p1", index: RAISE });
         if (!inf.ok) continue;
         const sw = applyAction(inf.state, { type: "attack", seat: "p2", index: 0 });
-        if (sw.ok && find(sw.events, "CONFUSION_CHECK")?.result === "tails") return s;
+        if (sw.ok && findEvent(sw.events, "CONFUSION_CHECK")?.result === "tails") return s;
       }
       throw new Error("no tails seed");
     })();
@@ -508,7 +502,7 @@ describe("§6 — what `log.ts` says when the confusion number changes", () => {
           const inf = applyAction(start, { type: "attack", seat: "p1", index: RAISE });
           if (!inf.ok) continue;
           const sw = applyAction(inf.state, { type: "attack", seat: "p2", index: 0 });
-          if (sw.ok && find(sw.events, "CONFUSION_CHECK")?.result === "tails") return s;
+          if (sw.ok && findEvent(sw.events, "CONFUSION_CHECK")?.result === "tails") return s;
         }
         throw new Error("no tails seed");
       })(),
@@ -555,8 +549,8 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       if (!inf.ok) continue;
       const round = JSON.parse(JSON.stringify(inf.state)) as GameState;
       const sw = applyAction(round, { type: "attack", seat: "p2", index: 0 });
-      if (sw.ok && find(sw.events, "CONFUSION_CHECK")?.result === "tails") {
-        expect(find(sw.events, "COUNTERS_PLACED")?.amount).toBe(80);
+      if (sw.ok && findEvent(sw.events, "CONFUSION_CHECK")?.result === "tails") {
+        expect(findEvent(sw.events, "COUNTERS_PLACED")?.amount).toBe(80);
         expect(must0(sw.state.players.p2.active).damage).toBe(80);
         seed = s;
         break;
@@ -577,7 +571,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       if (!inf.ok) continue;
       const round = JSON.parse(JSON.stringify(inf.state)) as GameState;
       const probe = applyAction(round, { type: "attack", seat: "p2", index: 0 });
-      if (probe.ok && find(probe.events, "CONFUSION_CHECK")?.result === "tails") {
+      if (probe.ok && findEvent(probe.events, "CONFUSION_CHECK")?.result === "tails") {
         legacy = round;
         legacySeed = s;
         break;
@@ -595,8 +589,8 @@ describe("§7 — the bump, and the corruption it refuses", () => {
     expect("confusionDamage" in body).toBe(false);
 
     const swung = mustApply(legacy, { type: "attack", seat: "p2", index: 0 });
-    expect(find(swung.events, "CONFUSION_CHECK")?.result).toBe("tails");
-    const dealt = find(swung.events, "COUNTERS_PLACED")?.amount;
+    expect(findEvent(swung.events, "CONFUSION_CHECK")?.result).toBe("tails");
+    const dealt = findEvent(swung.events, "COUNTERS_PLACED")?.amount;
     expect(dealt).toBeUndefined();
     expect(dealt).not.toBe(80);
     expect(dealt).not.toBe(30);

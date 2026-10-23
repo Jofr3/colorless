@@ -21,6 +21,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
@@ -31,13 +32,6 @@ const ARM_THRUST_PRACTICE =
   "All of your Pokémon take 10 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance).";
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -249,8 +243,8 @@ describe("Rock Chestplate — the HOLDER's type gate, folded inside passivesOf",
     const { events } = swing(state, "fix-attacker");
     // Flame 60, no Weakness (Hariyama is ×2 Psychic), 30 from the Tool + 10 from
     // Hariyama's own seat-wide aura.
-    expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(40);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.reduction).toBe(40);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(20);
   });
 
   it("MISSES a holder of another type — on a PRINTED card, not a synthetic one", () => {
@@ -264,8 +258,8 @@ describe("Rock Chestplate — the HOLDER's type gate, folded inside passivesOf",
     expect(passivesOf(state, active).damageReductionAfterWR).toBe(0);
     const { events } = swing(state, "fix-attacker");
     // 60 × 2 (Forretress is ×2 Fire) − 10 = 110.
-    expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(10);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(110);
+    expect(findEvent(events, "DAMAGE_DEALT")?.reduction).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(110);
   });
 
   it("SUMS over sources rather than taking the last — two Tools on one holder", () => {
@@ -323,8 +317,8 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     if (active === null) throw new Error("no Active");
     expect(seatDamageReduction(state, active, "all", "p1")).toBe(20);
     const { events } = swing(state, "fix-attacker");
-    expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(20);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(events, "DAMAGE_DEALT")?.reduction).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(40);
   });
 
   it("is OWN-SIDE ONLY — no aura reaches across the table", () => {
@@ -336,7 +330,7 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     const active = state.players.p2.active;
     if (active === null) throw new Error("no Active");
     expect(seatDamageReduction(state, active, "all", "p1")).toBe(0);
-    expect(find(swing(state, "fix-attacker").events, "DAMAGE_DEALT")?.dealt).toBe(60);
+    expect(findEvent(swing(state, "fix-attacker").events, "DAMAGE_DEALT")?.dealt).toBe(60);
   });
 
   it("…and the OWN-SIDE early return is UNREACHABLE-as-a-difference, asserted not assumed", () => {
@@ -382,8 +376,8 @@ describe("the four damage sites — each driven by its own printed attack", () =
   it("attack.ts's MAIN HIT", () => {
     const state = board("fix-attacker", "sv02-113");
     const { events } = swing(state, "fix-attacker");
-    expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(10);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(events, "DAMAGE_DEALT")?.reduction).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(50);
   });
 
   it("spreadDamage — the BENCH, reachable off a printed card for the FIRST time", () => {
@@ -402,8 +396,8 @@ describe("the four damage sites — each driven by its own printed attack", () =
     // which is the cheapest way to reach `snipeActive` with no prompt in the way.
     const alone = board("sv01-069", "sv02-113");
     const { events } = swing(alone, "sv01-069");
-    expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(10);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.reduction).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
     // …and the same declaration aimed at the BENCH is `placeSnipe`'s damage arm.
     let state = board("sv01-069", "fix-bigbody");
     state = benchFromDeck(state, "p2", "sv02-113");
@@ -419,7 +413,7 @@ describe("the four damage sites — each driven by its own printed attack", () =
     state = attachToolFromDeck(state, "p2", "active", "sv01-192");
     state = withInstalledReduction(state, "p2", 50);
     const { events } = swing(state, "fix-attacker");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.reduction).toBe(90);
     expect(row?.dealt).toBe(0);
     expect(row?.prevented).toBeUndefined();
@@ -458,7 +452,7 @@ describe("the printed parenthetical — `after applying Weakness and Resistance`
   it("the two new sources sit at D147's STEP, and a Weakness makes it observable", () => {
     let state = board("fix-attacker", "sv01-139");
     state = benchFromDeck(state, "p2", "sv02-113");
-    const row = find(swing(state, "fix-attacker").events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, "fix-attacker").events, "DAMAGE_DEALT");
     if (row === undefined) throw new Error("no damage row");
     expect(row.dealt).toBe(110);
     expect(pipeline(row, "printed")).toBe(row.dealt);
@@ -469,7 +463,7 @@ describe("the printed parenthetical — `after applying Weakness and Resistance`
   it("…and the Tool's 30 answers the same way, on the same body", () => {
     let state = board("fix-attacker", "sv02-113");
     state = attachToolFromDeck(state, "p2", "active", "sv01-192");
-    const row = find(swing(state, "fix-attacker").events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, "fix-attacker").events, "DAMAGE_DEALT");
     if (row === undefined) throw new Error("no damage row");
     expect(row.weakness).toBeNull();
     expect(row.dealt).toBe(20);
@@ -552,22 +546,22 @@ describe("§9 — the lock silences the ABILITY and cannot reach the TOOL", () =
 
     const unlocked = swing(base, "sv02-127");
     // Tool 30 + own aura 10 = 40 → 110 dealt.
-    expect(find(unlocked.events, "DAMAGE_DEALT")?.reduction).toBe(40);
-    expect(find(unlocked.events, "DAMAGE_DEALT")?.dealt).toBe(110);
+    expect(findEvent(unlocked.events, "DAMAGE_DEALT")?.reduction).toBe(40);
+    expect(findEvent(unlocked.events, "DAMAGE_DEALT")?.dealt).toBe(110);
 
     const locked = swing(setDamage(base, "p2", 10), "sv02-127");
     // The Ability is silenced; the Tool is not an Ability and keeps paying.
-    expect(find(locked.events, "DAMAGE_DEALT")?.reduction).toBe(30);
-    expect(find(locked.events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(locked.events, "DAMAGE_DEALT")?.reduction).toBe(30);
+    expect(findEvent(locked.events, "DAMAGE_DEALT")?.dealt).toBe(120);
   });
 
   it("locks a BENCHED source too — the aura's reachability follows the SOURCE", () => {
     let state = board("sv02-127", "fix-titan");
     state = benchFromDeck(state, "p2", "sv02-113");
     const at = benchedIndex(state, "p2", "sv02-113");
-    expect(find(swing(state, "sv02-127").events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(swing(state, "sv02-127").events, "DAMAGE_DEALT")?.dealt).toBe(140);
     const damaged = setBenchDamage(state, "p2", at, 10);
-    expect(find(swing(damaged, "sv02-127").events, "DAMAGE_DEALT")?.dealt).toBe(150);
+    expect(findEvent(swing(damaged, "sv02-127").events, "DAMAGE_DEALT")?.dealt).toBe(150);
   });
 });
 

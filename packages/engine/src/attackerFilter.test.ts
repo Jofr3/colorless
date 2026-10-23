@@ -24,6 +24,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 /** The four printed sentences, byte-for-byte off the local D1 rows. */
@@ -37,13 +38,6 @@ const NEUTRALIZATION_ZONE =
   "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.";
 
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -275,7 +269,7 @@ describe("preventsAttackerType — the predicate", () => {
 describe("the type filter at the four damage sites", () => {
   it("main hit: a FIRE Bite into Dachsbun is nulled; a LIGHTNING one is not", () => {
     const matched = swing(board("fix-attacker", "sv01-099"), "fix-attacker");
-    expect(find(matched.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(matched.events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       dealt: 0,
       prevented: true,
@@ -285,23 +279,23 @@ describe("the type filter at the four damage sites", () => {
     // The NEGATIVE case is a printed card rather than a bespoke fixture: Pikachu
     // ex is Lightning, so Dachsbun's {R} clause declines and its own 30 lands.
     const missed = swing(board("sv02-063", "sv01-099"), "sv02-063");
-    const row = find(missed.events, "DAMAGE_DEALT");
+    const row = findEvent(missed.events, "DAMAGE_DEALT");
     expect(row).toMatchObject({ dealt: 30 });
     expect(row?.prevented).toBeUndefined();
   });
 
   it("…AND THE TWO PRINTINGS ARE EACH OTHER'S NEGATIVE CASE", () => {
     const matched = swing(board("sv02-063", "sv03-078"), "sv02-063");
-    expect(find(matched.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(matched.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
 
     const missed = swing(board("fix-attacker", "sv03-078"), "fix-attacker");
-    expect(find(missed.events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
-    expect(find(missed.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(missed.events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(missed.events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
   it("the REPRINT behaves identically — the program is keyed by id", () => {
     const { events } = swing(board("sv02-063", "sv03-201"), "sv02-063");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 
   it("spreadDamage: it protects a BENCHED holder too (no Active-Spot clause)", () => {
@@ -324,7 +318,11 @@ describe("the type filter at the four damage sites", () => {
     // P2's Bench is emptied so the count-1 `opponentAny` pick auto-takes the
     // Active rather than parking (anyTargetSnipe.test.ts's idiom).
     const { events } = swing(clearBench(board("sv01-069", "sv03-078"), "p2"), "sv01-069");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      base: 20,
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("placeSnipe `deals` arm: a benched Bellibolt is nulled, a benched Dachsbun is not", () => {
@@ -345,7 +343,7 @@ describe("the type filter at the four damage sites", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [pick] },
     });
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.uid).toBe(benchTopUid(parked, "p2", 0));
     expect(row).toMatchObject({ dealt: 0, prevented: true });
   });
@@ -412,7 +410,7 @@ describe("benchShieldedFromDamage — the same-seat cross-body scan", () => {
     const titanUid = state.players.p2.bench[0]?.stack.at(-1);
     const { state: done, events } = swing(state, "fix-sniper");
     // The main hit lands in full — Adverse Weather says nothing about its holder.
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30 });
     expect(done.players.p2.active?.damage).toBe(30);
     // …and the 20 splash is nulled.
     expect(rowFor(events, titanUid)).toMatchObject({ dealt: 0, prevented: true });
@@ -454,7 +452,7 @@ describe("benchShieldedFromDamage — the same-seat cross-body scan", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [pick] },
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 });
 
@@ -474,34 +472,34 @@ describe("Neutralization Zone — the Stadium", () => {
   it("main hit: an ex's Bite into a no-Rule-Box body is nulled", () => {
     const state = withStadium(board("fix-attacker-ex-bite", "fix-bigbody"));
     const { state: done, events } = swing(state, "fix-attacker-ex-bite");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
   it("…and WITHOUT the Stadium the identical swing lands its 30", () => {
     const { events } = swing(board("fix-attacker-ex-bite", "fix-bigbody"), "fix-attacker-ex-bite");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
   });
 
   it("TARGET filter: a defender WITH a Rule Box is not protected", () => {
     const state = withStadium(board("fix-attacker-ex-bite", "sv02-063"));
     const { events } = swing(state, "fix-attacker-ex-bite");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
   });
 
   it("ATTACKER filter: a plain attacker is let through", () => {
     const state = withStadium(board("fix-attacker", "fix-bigbody"));
     const { events } = swing(state, "fix-attacker");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
   });
 
   it("A VMAX ATTACKER IS LET THROUGH — the board that separates the two predicates", () => {
     const state = withStadium(board("fix-attacker-vmax", "fix-bigbody"));
     const { events } = swing(state, "fix-attacker-vmax");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
     // …and the scan says so directly, so the verdict is not an accident of the 30.
     const target = state.players.p2.active;
     if (target === null) throw new Error("board");
@@ -512,7 +510,11 @@ describe("Neutralization Zone — the Stadium", () => {
   it("IT PROTECTS BOTH BOARDS — AND STOPS THE SEAT THAT PLAYED IT", () => {
     const state = withStadium(board("fix-attacker-ex-bite", "fix-bigbody", "p2"), "p2");
     const { events } = swing(state, "fix-attacker-ex-bite", "p2");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p1",
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("spreadDamage: one swing, both verdicts on one Bench", () => {
@@ -534,7 +536,11 @@ describe("Neutralization Zone — the Stadium", () => {
   it("snipeActive: Fezandipiti ex's Cruel Arrow into a no-Rule-Box Active is nulled", () => {
     const state = withStadium(clearBench(board("sv06.5-038", "fix-bigbody"), "p2"));
     const { events } = swing(state, "sv06.5-038");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 100, dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      base: 100,
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("placeSnipe `deals` arm: the same attacker's benched pick is nulled too", () => {
@@ -558,7 +564,7 @@ describe("Neutralization Zone — the Stadium", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [pick] },
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 });
 
@@ -574,7 +580,7 @@ describe("`ignoreWR` — the one clause that tells the three mechanisms apart", 
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "sv03-078");
     const { events } = pickBench(state);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.prevented).toBeUndefined();
     expect(row?.dealt).toBe(50);
   });
@@ -587,7 +593,7 @@ describe("`ignoreWR` — the one clause that tells the three mechanisms apart", 
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "sv03-078");
     const { events } = pickBench(state);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 
   it("OFF-TARGET: the same Feint Attack is STOPPED DEAD by Thundurus's shield", () => {
@@ -595,7 +601,7 @@ describe("`ignoreWR` — the one clause that tells the three mechanisms apart", 
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "fix-titan");
     const { events } = pickBench(state);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
   });
 
   it("OFF-TARGET: and so is it by the Stadium, at snipeActive", () => {
@@ -606,7 +612,7 @@ describe("`ignoreWR` — the one clause that tells the three mechanisms apart", 
     expect(stadiumPreventsDamage(state, target, FIXTURE_POOL["sv06.5-038"])).toBe(true);
     // …and driven: Feint Attack's own 50 lands, because its attacker has no rule box.
     const { events } = swing(state, "fix-feint");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 50 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 50 });
   });
 
   /** Declare the `opponentAny` attack and take the pick at P2's bench[0]. */
@@ -648,14 +654,18 @@ describe("THE §9 PAIR — a lock silences the ABILITIES and leaves the STADIUM 
     // The §9 NEGATIVE, driven: the same lock cannot reach a Stadium, so Land
     // Scoop's 150 is still nulled on a body with no Rule Box.
     const { events } = swing(locked, "sv02-127");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 150, dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      base: 150,
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("the Stadium is the ONLY difference — remove it and the locked body takes 150", () => {
     // The control that stops the case above passing for the wrong reason.
     const locked = withDamage(board("sv02-127", "sv01-099"), "p2", 10);
     const { events } = swing(locked, "sv02-127");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.prevented).toBeUndefined();
     expect(row?.dealt).toBe(150);
   });
@@ -713,7 +723,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
 
   it("the row is filed under the ATTACKER's seat, and the wording is true there", () => {
     const { state, events } = swing(board("fix-attacker", "sv01-099"), "fix-attacker");
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.seat).toBe("p2");
     expect(render(state, events, { p1: "Ember", p2: "Wren" })).toContain(
       "p1: dealt 0 damage to Dachsbun · prevented",
@@ -723,7 +733,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
   it("…and it reads identically with the seats swapped", () => {
     const state = withStadium(board("fix-attacker-ex-bite", "fix-bigbody", "p2"), "p2");
     const swung = swing(state, "fix-attacker-ex-bite", "p2");
-    expect(find(swung.events, "DAMAGE_DEALT")?.seat).toBe("p1");
+    expect(findEvent(swung.events, "DAMAGE_DEALT")?.seat).toBe("p1");
     expect(render(swung.state, swung.events, { p1: "Ember", p2: "Wren" })).toContain(
       "p2: dealt 0 damage to fix-bigbody · prevented",
     );

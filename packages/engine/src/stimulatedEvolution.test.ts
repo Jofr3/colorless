@@ -14,6 +14,7 @@ import {
   setActiveFromDeck,
   must,
   firstBasicInHand,
+  activeOf,
 } from "./testFixtures";
 
 const STIMULATED_TEXT_KARRABLAST =
@@ -171,12 +172,6 @@ function board(
   state = clearBench(state, seat);
   for (const id of bench) state = benchFromDeck(state, seat, id);
   return handFromDeck(state, seat, stage1, stage1Count);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const active = state.players[seat].active;
-  if (active === null) throw new Error(`${seat} has no Active`);
-  return active;
 }
 
 function benchAt(state: GameState, seat: Seat, index: number): InPlayPokemon {

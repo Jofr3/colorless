@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { passivesOf, seatPreWRDamageBonus } from "./continuous";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState } from "./index";
 import { applyAction, programFor, redactGame } from "./index";
 import { attackerPreWRBonus } from "./interpreter";
 import {
@@ -12,6 +12,8 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
+  activeOf,
 } from "./testFixtures";
 
 const REGAL_CHEER_TEXT =
@@ -22,13 +24,6 @@ const EXTRA_HELPINGS_TEXT =
   "Attacks used by your Hop's Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). The effect of Extra Helpings doesn't stack.";
 
 const SEED = 43;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(): GameState {
   let state = driveSetup(SEED, { p1: SEAT_AURA_DECK, p2: SEAT_AURA_DECK }, { first: "p1" });
@@ -50,14 +45,8 @@ function attackingWith(attacker: string, ...benched: string[]): GameState {
     in this cast prints a base of 50, so the delta from 50 IS the aura. */
 function dealt(state: GameState): { base?: number; bonus?: number; dealt?: number } {
   const hit = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-  const event = find(hit.events, "DAMAGE_DEALT");
+  const event = findEvent(hit.events, "DAMAGE_DEALT");
   return { base: event?.base, bonus: event?.bonus, dealt: event?.dealt };
-}
-
-function activeOf(state: GameState, seat: Seat) {
-  const spot = state.players[seat].active;
-  if (spot === null) throw new Error(`${seat} has no Active`);
-  return spot;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

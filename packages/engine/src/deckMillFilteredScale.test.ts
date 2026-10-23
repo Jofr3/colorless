@@ -22,6 +22,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const MILL_ENERGY =
@@ -258,12 +259,6 @@ const idsIn = (state: GameState, seat: Seat, zone: "hand" | "deck" | "discard"):
 
 function swing(state: GameState, index: number): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "attack", seat: "p1", index });
-}
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 const countOf = <T extends GameEvent["type"]>(events: GameEvent[], type: T): number =>
   events.filter((e) => e.type === type).length;
@@ -618,7 +613,7 @@ describe("D488 §6 — BOARD A on a real board: the Energy noun, and the pile th
     expect(idsIn(state, "p1", "discard")).toEqual([...ENERGY_PILE]);
     const { state: done, events } = swing(state, ENERGY_SWING);
 
-    const milled = find(events, "DECK_TOP_DISCARDED");
+    const milled = findEvent(events, "DECK_TOP_DISCARDED");
     expect(milled).toMatchObject({ seat: "p1", actor: "p1" });
     expect(milled?.uids).toHaveLength(3);
     expect(idsIn(done, "p1", "deck")).toEqual([...ENERGY_DECK.slice(3)]);
@@ -626,7 +621,7 @@ describe("D488 §6 — BOARD A on a real board: the Energy noun, and the pile th
 
     // THE DAMAGE — 80 × 1. Every rival reading of §5 is a different number on this
     // board, so this single assertion refuses five of them at once.
-    const damage = find(events, "DAMAGE_DEALT");
+    const damage = findEvent(events, "DAMAGE_DEALT");
     expect(damage).toMatchObject({ seat: "p2", dealt: 80 });
     expect(damage?.weakness).toBeNull();
     expect(done.players.p2.active?.damage).toBe(80);
@@ -649,7 +644,7 @@ describe("D488 §6 — BOARD A on a real board: the Energy noun, and the pile th
     const { state: done, events } = swing(state, ENERGY_SWING);
 
     // ① THE MILL RAN — three cards left the deck and are in the pile.
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(3);
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(3);
     expect(idsIn(done, "p1", "deck")).toEqual([...ZERO_DECK.slice(3)]);
     expect(idsIn(done, "p1", "discard")).toEqual([...ENERGY_PILE, ...ZERO_DECK.slice(0, 3)]);
     // ② THE EFFECT WAS SIMULATED — no coverage flag, so the silence is a RESULT.
@@ -665,7 +660,7 @@ describe("D488 §6 — BOARD A on a real board: the Energy noun, and the pile th
     // …and the same swing on a board with ONE Energy on top deals 80, so the zero is
     // not this attack being dead.
     const live = swing(table([...ENERGY_DECK], ENERGY_PILE), ENERGY_SWING);
-    expect(find(live.events, "DAMAGE_DEALT")?.dealt).toBe(80);
+    expect(findEvent(live.events, "DAMAGE_DEALT")?.dealt).toBe(80);
   });
 
   it("a SHORT deck mills what it has, and the count follows the board not the print", () => {
@@ -674,9 +669,9 @@ describe("D488 §6 — BOARD A on a real board: the Energy noun, and the pile th
     // scaled off the printed number would deal 240 here.
     const shallow = ["d488-water-1", "d488-water-2"] as const;
     const { state: done, events } = swing(table(shallow, ENERGY_PILE), ENERGY_SWING);
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(2);
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(2);
     expect(idsIn(done, "p1", "deck")).toEqual([]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(160);
     // Milling to zero does NOT end the game — §14.3 deck-out is a turn-START rule, so
     // the attacker loses at their NEXT draw and not one instant earlier.
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -697,14 +692,14 @@ describe("D488 §7 — BOARD B: the OWNER-PREFIXED noun, and the wrong owner bes
     const state = table(MISTY_DECK, MISTY_PILE);
     const { state: done, events } = swing(state, MISTY_SWING);
 
-    expect(find(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(7);
+    expect(findEvent(events, "DECK_TOP_DISCARDED")?.uids).toHaveLength(7);
     expect(idsIn(done, "p1", "deck")).toEqual([...MISTY_DECK.slice(7)]);
     expect(idsIn(done, "p1", "discard")).toEqual([...MISTY_PILE, ...MISTY_DECK.slice(0, 7)]);
 
     // 140 = 70 × 2. On this board every one of §5's eight readings is a DIFFERENT
     // number, so this assertion refuses all seven rivals at once — including both
     // wrong-noun readings, which board A could not separate.
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(140);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(140);
     expect(countOf(events, "DAMAGE_DEALT")).toBe(1);
     expect(done.players.p2.active?.damage).toBe(140);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -853,7 +848,7 @@ describe("D488 §11 — the LOUD control, and the neighbours that must not have 
     expect(types(events)).not.toContain("DECK_TOP_DISCARDED");
     expect(idsIn(done, "p1", "deck")).toEqual([...ENERGY_DECK]);
     expect(idsIn(done, "p1", "discard")).toEqual([...ENERGY_PILE]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
   });
 
   it("the bare MILL sentence is unchanged — it neither records nor scales", () => {

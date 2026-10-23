@@ -14,14 +14,8 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function placements(
   events: readonly GameEvent[],
@@ -395,7 +389,7 @@ describe("§4 — arm 23d walks both boards and the noun decides who is on it", 
     expect(after.players.p1.active?.damage).toBe(0);
     expect(after.players.p2.active?.damage).toBe(0);
     // the turn still ends on the attack — a whiffed effect is not a refused attack
-    expect(find(events, "ATTACK_DECLARED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_DECLARED")).toBeDefined();
   });
 
   it("the placement is FLAT — a ×2 Weakness does not double it", () => {
@@ -478,22 +472,22 @@ describe("§6 — arm 23f narrows to bodies that already carry damage", () => {
 describe("§7 — the prevention gate, asked PER BODY", () => {
   it("the EFFECTS shield REFUSES the placement — and the DAMAGE shield does not", () => {
     const shielded = attack(fielded(60, { defender: "fix-unaware" }), IDX.board);
-    expect(find(shielded.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(shielded.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
     expect(placements(shielded.events)).toHaveLength(0);
     expect(shielded.state.players.p2.active?.damage).toBe(0);
     const shieldedControl = attack(fielded(60, { defender: "fix-unaware" }), IDX.plain);
-    expect(find(shieldedControl.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
+    expect(findEvent(shieldedControl.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
     expect(shieldedControl.state.players.p2.active?.damage).toBe(20);
 
     // `sv03-078` Bellibolt — "Prevent all damage done to this Pokémon by attacks from
     // your opponent's {L} Pokémon." The attacker is {L}, so the clause is ARMED: it
     // prevents the control outright and must not touch the placement.
     const damageShield = attack(fielded(61, { defender: "sv03-078" }), IDX.board);
-    expect(find(damageShield.events, "COUNTERS_PLACED")).toMatchObject({ amount: 20 });
-    expect(find(damageShield.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(damageShield.events, "COUNTERS_PLACED")).toMatchObject({ amount: 20 });
+    expect(findEvent(damageShield.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     expect(damageShield.state.players.p2.active?.damage).toBe(20);
     const damageShieldControl = attack(fielded(61, { defender: "sv03-078" }), IDX.plain);
-    expect(find(damageShieldControl.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(damageShieldControl.events, "DAMAGE_DEALT")).toMatchObject({
       prevented: true,
       dealt: 0,
     });
@@ -540,8 +534,8 @@ describe("§8 — a lethal placement Knocks Out and pays a Prize to the other se
     let state = fielded(70, { theirs: ["fix-bigbody"] });
     state = setDamage(state, "p2", 180); // 200 HP at 180 → 20 is exactly lethal
     const { state: after, events } = attack(state, IDX.board);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
-    expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
     // …and the benched body's own placement is not swallowed by the KO
     expect(after.players.p2.bench[0]?.damage).toBe(20);
     expect(after.phase.kind).toBe("ko:takePrizes");
@@ -551,8 +545,8 @@ describe("§8 — a lethal placement Knocks Out and pays a Prize to the other se
     let state = fielded(71, { mine: ["fix-idlebody"], defender: "fix-bigbody" });
     state = setBenchDamage(state, "p1", 0, 140); // 200 HP at 140 → 60 is exactly lethal
     const { events } = attack(state, IDX.ability);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1" });
-    expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p2", count: 1 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p2", count: 1 });
     // the defender carries no printed Ability, so it is NOT in the fold and this board
     // has exactly one Knock Out — a two-sided batch would make the seat above ambiguous.
     expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(1);
@@ -563,7 +557,7 @@ describe("§8 — a lethal placement Knocks Out and pays a Prize to the other se
     state = attachToolFromDeck(state, "p2", "active", "sv03-197");
     state = setDamage(state, "p2", 180);
     const { state: after, events } = attack(state, IDX.board);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     expect(after.players.p1.active?.damage).toBe(40); // 4 counters, back onto the attacker
   });
 });

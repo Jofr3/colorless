@@ -22,6 +22,7 @@ import {
   specialEnergy,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const RED_CARD = "me04-082";
@@ -369,11 +370,6 @@ function refusal(state: GameState, id: string): string {
   const result = applyAction(next, { type: "playTrainer", seat: "p1", uid });
   return result.ok ? "applied" : result.error.code;
 }
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const bench = (index: number) => ({ seat: "p1", spot: { spot: "bench", index } }) as const;
 const pickRef = (ref: unknown): GameAction =>
   ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } }) as GameAction;
@@ -501,8 +497,8 @@ describe("D625 §5 — Wally's Compassion: heal all from a Mega ex; if it healed
       2,
     );
     const parked = play(start, WALLY).state;
-    expect(prompt(parked)).toMatchObject({ kind: "choosePokemon" });
-    expect(String((prompt(parked) as { note?: string }).note)).toContain(
+    expect(effectPrompt(parked)).toMatchObject({ kind: "choosePokemon" });
+    expect(String((effectPrompt(parked) as { note?: string }).note)).toContain(
       "all its Energy goes into your hand",
     );
     const done = must(applyAction(revived(parked), pickRef(bench(0))));
@@ -551,7 +547,7 @@ describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branc
     start = attachToolFromDeck(start, "p2", "active", "fix-tool");
     start = attachBenchFromDeck(start, "p2", 0, SPECIAL, 1);
     const first = play(start, BLOWTORCH).state;
-    expect(prompt(first)).toMatchObject({
+    expect(effectPrompt(first)).toMatchObject({
       kind: "confirm",
       labels: {
         yes: "Discard a Pokémon Tool",
@@ -559,7 +555,7 @@ describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branc
       },
     });
     const second = must(applyAction(revived(first), confirm(false)));
-    expect(prompt(second)).toMatchObject({
+    expect(effectPrompt(second)).toMatchObject({
       kind: "confirm",
       labels: { yes: "Discard a Special Energy", no: "Discard the Stadium" },
     });
@@ -573,7 +569,7 @@ describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branc
     let start = withStadium(handFromDeck(board(PLAIN), "p1", "fix-fire-energy", 1), "p2");
     start = attachToolFromDeck(start, "p2", "active", "fix-tool");
     const first = play(start, BLOWTORCH).state;
-    expect(prompt(first)).toMatchObject({
+    expect(effectPrompt(first)).toMatchObject({
       labels: { yes: "Discard a Pokémon Tool", no: "Discard the Stadium" },
     });
     const done = must(applyAction(first, confirm(false)));
@@ -589,7 +585,7 @@ describe("D625 §6 — Blowtorch: a Basic {R} paid, then 1 of the targeted branc
       "fix-tool",
     );
     const parked = play(start, BLOWTORCH).state;
-    expect(prompt(parked)).toMatchObject({ kind: "discardTools" });
+    expect(effectPrompt(parked)).toMatchObject({ kind: "discardTools" });
     const done = must(
       applyAction(parked, {
         type: "resolveEffect",
@@ -610,9 +606,9 @@ describe("D625 §7 — Great Haul Net: up to 3 {W} Pokémon and up to 3 Basic {W
     const mons = pile.filter((u) => start.cardIdByUid[u] === WATER_MON);
     const energy = pile.filter((u) => start.cardIdByUid[u] === "fix-water-energy");
     const first = play(start, HAUL_NET);
-    expect(prompt(first.state)).toMatchObject({ kind: "chooseCards", min: 0, max: 3 });
+    expect(effectPrompt(first.state)).toMatchObject({ kind: "chooseCards", min: 0, max: 3 });
     const second = mustApply(first.state, pickCards(mons));
-    expect(prompt(second.state)).toMatchObject({ kind: "chooseCards", min: 0, max: 3 });
+    expect(effectPrompt(second.state)).toMatchObject({ kind: "chooseCards", min: 0, max: 3 });
     const done = mustApply(second.state, pickCards(energy.slice(0, 1)));
     expect(idsOf(done.state, done.state.players.p1.discard).sort()).toEqual(
       [DARK, "fix-water-energy", HAUL_NET].sort(),
@@ -678,7 +674,7 @@ describe("D625 §8 — Strange Timepiece: devolve your evolved {P} Pokémon; it 
     const start = stackOnActive(stackOnActive(board(PSY), "p1", PSY_S1), "p1", PSY_S2);
     const [, s1, s2] = start.players.p1.active?.stack ?? [];
     const parked = play(start, TIMEPIECE).state;
-    expect(prompt(parked)).toMatchObject({
+    expect(effectPrompt(parked)).toMatchObject({
       kind: "confirm",
       labels: { yes: "1 Evolution card", no: "2 Evolution cards" },
     });
@@ -705,7 +701,7 @@ describe("D625 §8 — Strange Timepiece: devolve your evolved {P} Pokémon; it 
   it("two evolved {P} bodies park the pick; the Benched one is devolved, the Active untouched", () => {
     const start = stackOnBench(stackOnActive(board(PSY, [PSY]), "p1", PSY_S1), 0, PSY_S1);
     const parked = play(start, TIMEPIECE).state;
-    expect(prompt(parked)).toMatchObject({ kind: "choosePokemon" });
+    expect(effectPrompt(parked)).toMatchObject({ kind: "choosePokemon" });
     const done = must(applyAction(revived(parked), pickRef(bench(0))));
     expect(done.players.p1.bench[0]?.stack).toHaveLength(1);
     expect(done.players.p1.bench[0]?.turnPlayed).toBe(done.turn);

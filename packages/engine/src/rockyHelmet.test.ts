@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   ROCKY_HELMET_DECK,
   attachFromDeck,
@@ -12,17 +12,11 @@ import {
   setActiveFromDeck,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
-const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const yawn = { type: "attack", seat: "p1", index: 2 } as const;
 
 function attackerDamage(state: GameState): number | undefined {
   return state.players.p1.active?.damage;
@@ -75,10 +69,10 @@ describe("Rocky Helmet — 2 counters on the attacker when the holder is damaged
     const { state: done, events } = mustApply(state, bite);
 
     // The main hit: 30 to the holder (200 HP fix-bigbody — survives, no W/R).
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 30, damage: 30 });
     expect(done.players.p2.active?.damage).toBe(30);
 
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 20,
       source: "counterattack",
@@ -107,7 +101,7 @@ describe("Rocky Helmet — the recoil is the TOOL's, not the body's", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
     expect(types(events)).not.toContain("COUNTERS_PLACED");
     expect(attackerDamage(done)).toBe(0);
   });
@@ -125,10 +119,10 @@ describe("Rocky Helmet — 'even if it is Knocked Out'", () => {
     const { state: done, events } = mustApply(state, bite);
 
     // The recoil landed…
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 20 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ seat: "p1", amount: 20 });
     expect(attackerDamage(done)).toBe(20);
     // …and the holder was Knocked Out all the same (COUNTERS_PLACED before it).
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: holder });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: holder });
     const order = types(events);
     expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
     // A plain body — P1 takes its 1 Prize.
@@ -147,6 +141,6 @@ describe("Rocky Helmet — the read-site gate (only when actually damaged)", () 
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "STATUS_APPLIED")).toBeDefined(); // Yawn DID resolve (Asleep)
+    expect(findEvent(events, "STATUS_APPLIED")).toBeDefined(); // Yawn DID resolve (Asleep)
   });
 });

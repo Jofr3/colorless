@@ -21,14 +21,8 @@ import {
   setBenchDamage,
   setConditions,
   trainerCard,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 // ── The printed sentences, as bytes ──────────────────────────────────────────
 
@@ -261,7 +255,7 @@ describe("Surfer sv08-187/-235 — `switchActive.recordAs` + §9.2, and nothing 
       uid: staged.uid,
     });
     const { state: done, events } = mustApply(parked, pick("p1", P1_BENCH(0)));
-    const switched = find(events, "POKEMON_SWITCHED");
+    const switched = findEvent(events, "POKEMON_SWITCHED");
     expect(switched?.seat).toBe("p1");
     expect(activeName(done, "p1")).toBe("Team Rocket's Nidorino");
     expect(done.players.p1.hand).toHaveLength(5);
@@ -370,7 +364,7 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
       uid: staged.uid,
     });
     const { state: gustParked, events: first } = mustApply(parked, pick("p1", P1_BENCH(0)));
-    expect(find(first, "POKEMON_SWITCHED")?.seat).toBe("p1");
+    expect(findEvent(first, "POKEMON_SWITCHED")?.seat).toBe("p1");
     expect(activeName(gustParked, "p1")).toBe("Team Rocket's Nidorino");
     expect(gustParked.phase.kind).toBe("effect:choose");
     expect(parkedRecord(gustParked).moved).toEqual([gustParked.players.p1.active?.stack[0]]);
@@ -379,7 +373,7 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
       "Pikachu",
     ]);
     const { state: done, events: second } = mustApply(gustParked, pick("p1", P2_BENCH(0)));
-    expect(find(second, "POKEMON_SWITCHED")?.seat).toBe("p2");
+    expect(findEvent(second, "POKEMON_SWITCHED")?.seat).toBe("p2");
     expect(activeName(done, "p2")).toBe("Pikachu");
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -400,8 +394,8 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     });
     const { state: gustParked, events } = mustApply(parked, pick("p1", P1_BENCH(0)));
     // BOTH rows really are emitted — otherwise this asserts nothing.
-    expect(find(events, "POKEMON_SWITCHED")).toBeDefined();
-    expect(find(events, "STATUS_CLEARED")).toBeDefined();
+    expect(findEvent(events, "POKEMON_SWITCHED")).toBeDefined();
+    expect(findEvent(events, "STATUS_CLEARED")).toBeDefined();
     expect(parkedRecord(gustParked).moved).toEqual([gustParked.players.p1.active?.stack[0]]);
     // …and §12's own rule still holds through the new helper: the body that left
     // the Active Spot lost its conditions.
@@ -474,7 +468,7 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     // The own switch auto-resolved (one candidate) and the program ran straight
     // on into the gate and the gust — so the FIRST park a player sees is the
     // opponent's Bench, which is the narrowing doing real work on the dialog.
-    expect(find(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
+    expect(findEvent(events, "POKEMON_SWITCHED")?.seat).toBe("p1");
     expect(activeName(gustParked, "p1")).toBe("Team Rocket's Nidorino");
     expect(refNames(gustParked, choosePrompt(gustParked).candidates).sort()).toEqual([
       "Iono's Bellibolt",
@@ -522,7 +516,7 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
       "Pikachu",
     ]);
     const { state: ownParked, events: first } = mustApply(parked, pick("p1", P2_BENCH(0)));
-    expect(find(first, "POKEMON_SWITCHED")?.seat).toBe("p2");
+    expect(findEvent(first, "POKEMON_SWITCHED")?.seat).toBe("p2");
     expect(activeName(ownParked, "p2")).toBe("Pikachu");
     expect(ownParked.phase.kind).toBe("effect:choose");
     expect(parkedRecord(ownParked).moved).toEqual([ownParked.players.p2.active?.stack[0]]);
@@ -532,7 +526,7 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
       "Team Rocket's Nidorino",
     ]);
     const { state: done, events: second } = mustApply(ownParked, pick("p1", P1_BENCH(0)));
-    expect(find(second, "POKEMON_SWITCHED")?.seat).toBe("p1");
+    expect(findEvent(second, "POKEMON_SWITCHED")?.seat).toBe("p1");
     expect(activeName(done, "p1")).toBe("Team Rocket's Nidorino");
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -563,7 +557,7 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
       seat: "p1",
       uid: staged.uid,
     });
-    expect(find(events, "POKEMON_SWITCHED")?.seat).toBe("p2");
+    expect(findEvent(events, "POKEMON_SWITCHED")?.seat).toBe("p2");
     expect(activeName(ownParked, "p2")).toBe("Pikachu");
     expect(parkedRecord(ownParked).moved).toEqual([ownParked.players.p2.active?.stack[0]]);
     // The consequent's own park — proof the gate read the forced filing.

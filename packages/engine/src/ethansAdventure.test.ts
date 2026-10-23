@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
   ETHANS_ADVENTURE_DECK,
@@ -9,14 +9,8 @@ import {
   handFromDeck,
   handUid,
   mustApply,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(seed: number): GameState {
   const state = driveSetup(
@@ -189,7 +183,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
       expect(done.players.p1.hand).toContain(uid);
       expect(done.players.p1.deck).not.toContain(uid);
     }
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.reveal).toBe(true);
     expect(new Set(searched?.uids)).toEqual(new Set([a, b, c]));
   });
@@ -312,7 +306,7 @@ describe("D337 — Ethan's Adventure, a flat cap over an owner-prefixed union", 
       seat: "p1",
       choice: { kind: "cards", uids: [a] },
     });
-    expect(find(events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(events, "SHUFFLE")).toBeDefined();
   });
 
   it("the Supporter itself is in the DISCARD once the row resolves", () => {

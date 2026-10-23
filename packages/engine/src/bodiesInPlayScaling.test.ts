@@ -20,7 +20,7 @@ import {
 } from "./effects";
 import type { CardFilter } from "./effects";
 import { programFor } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction } from "./index";
 import { countOwnerPokemonInPlay, countPokemonInPlay } from "./interpreter";
 import { matchesFilter, topCardOf } from "./cards";
@@ -35,6 +35,8 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  activeOf,
+  findEvent,
 } from "./testFixtures";
 
 const ANY_BODIES = "This attack does 20 damage for each of your Pokémon in play.";
@@ -83,19 +85,6 @@ const FILTERS: readonly CardFilter[] = [
 
 function units(rows: readonly (readonly [number, string])[]): number {
   return rows.reduce((sum, [n]) => sum + n, 0);
-}
-
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const body = state.players[seat].active;
-  if (body === null) throw new Error(`${seat} has no Active`);
-  return body;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function bare(by: Seat = "p1"): GameState {
@@ -200,7 +189,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(state: GameState, index: number, seat: Seat = "p1"): number | undefined {
-  return find(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -792,7 +781,7 @@ describe("§4 — the fold: five attacks, five numbers, one board", () => {
 
   it("the MULTIPLY fold DROPS the printed base and the ADDITIVE one KEEPS it", () => {
     const state = canonical();
-    const rows = [0, 1, 2, 3, 4].map((i) => find(swing(state, i).events, "DAMAGE_DEALT"));
+    const rows = [0, 1, 2, 3, 4].map((i) => findEvent(swing(state, i).events, "DAMAGE_DEALT"));
     expect(rows.map((r) => r?.base)).toEqual([0, 0, 0, 0, 40]);
     expect(rows.map((r) => r?.scaled)).toEqual([120, 40, 30, 90, 160]);
   });
@@ -807,8 +796,8 @@ describe("§4 — the fold: five attacks, five numbers, one board", () => {
     expect(dealt(state, 2)).toBe(30);
     expect(dealt(state, 4)).toBe(80);
     // …and the two it does NOT match are the printed floor, below.
-    expect(find(swing(state, 1).events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(swing(state, 3).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state, 1).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state, 3).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("the BENCH ALONE still scores — the count is not the Active's alone either", () => {
@@ -821,16 +810,16 @@ describe("§4 — the fold: five attacks, five numbers, one board", () => {
     const state = benched(bare(), "p1", ["fix-benchfiller"]);
     expect(countPokemonInPlay(state, "p1", { kind: "typedPokemon", pokemonType: "Grass" })).toBe(0);
     const after = swing(state, 3);
-    expect(find(after.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(after.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(activeOf(after.state, "p2").damage).toBe(0);
-    expect(find(after.events, "ATTACK_DECLARED")).toBeDefined();
+    expect(findEvent(after.events, "ATTACK_DECLARED")).toBeDefined();
   });
 
   it("the ADDITIVE fold KEEPS its base — and its zero is UNREACHABLE, stated", () => {
     const state = bare();
     expect(countPokemonInPlay(state, "p1", { kind: "evolutionPokemon" })).toBe(1);
     expect(dealt(state, 4)).toBe(80);
-    const row = find(swing(state, 4).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, 4).events, "DAMAGE_DEALT");
     expect([row?.base, row?.scaled]).toEqual([40, 40]);
     // …and the zero IS driven, on the function, off a board with no Evolution in
     // play at all — which is what proves the arm floors rather than throws.
@@ -1309,8 +1298,8 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
       [stage2Board(), 0, "p1"],
     ] as const) {
       const { events } = mustApply(state, { type: "attack", seat, index });
-      expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
-      expect(find(events, "DAMAGE_DEALT")).toBeDefined();
+      expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(findEvent(events, "DAMAGE_DEALT")).toBeDefined();
     }
     expect(resolvedByAnyReader(FUTURE_BODIES)).toBe(false);
   });

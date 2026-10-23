@@ -16,6 +16,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const KIT = "sv08-171";
@@ -73,13 +74,6 @@ function apply(
   const result = applyAction(state, action);
   if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
   return { state: result.state, events: result.events };
-}
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function localSetup(seed: number, first: Seat): GameState {
@@ -213,7 +207,7 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
     // Everything under the window untouched, which is the half a shuffle would
     // destroy and the half this arm is FOR.
     expect(deck.slice(3)).toEqual(start.deck.slice(3));
-    expect(find(done.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
+    expect(findEvent(done.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
   });
 
   it("THE EMPTY ORDERING TAKES THE PRINTED ALTERNATIVE: the top 3 go UNDER the deck", () => {
@@ -267,11 +261,11 @@ describe("D344 — Deduction Kit sv08-171: the printed `or` on the ordering prom
       seat: "p1",
       choice: { kind: "orderCards", uids: [] },
     });
-    const row = find(done.events, "DECK_TOP_TO_BOTTOM");
+    const row = findEvent(done.events, "DECK_TOP_TO_BOTTOM");
     expect(row).toEqual({ type: "DECK_TOP_TO_BOTTOM", seat: "p1", count: 3 });
-    expect(find(done.events, "SHUFFLE")).toBeUndefined();
+    expect(findEvent(done.events, "SHUFFLE")).toBeUndefined();
     // The look was still announced by the park, on the earlier action.
-    expect(find(start.events, "DECK_TOP_REORDERED")).toEqual({
+    expect(findEvent(start.events, "DECK_TOP_REORDERED")).toEqual({
       type: "DECK_TOP_REORDERED",
       seat: "p1",
       actor: "p1",
@@ -371,8 +365,8 @@ describe("D344 — the degenerate decks, and why the M1 guard needed no second a
     const played = apply(staged, { type: "playTrainer", seat: "p1", uid: withHand.uid });
     expect(played.state.phase.kind).not.toBe("effect:choose");
     expect(played.state.players.p1.deck).toEqual(one);
-    expect(find(played.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
-    expect(find(played.events, "DECK_TOP_REORDERED")?.count).toBe(1);
+    expect(findEvent(played.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
+    expect(findEvent(played.events, "DECK_TOP_REORDERED")?.count).toBe(1);
   });
 
   it("a deck of TWO parks a two-card window and both arms are real", () => {
@@ -394,7 +388,7 @@ describe("D344 — the degenerate decks, and why the M1 guard needed no second a
       seat: "p1",
       choice: { kind: "orderCards", uids: [] },
     });
-    expect(find(done.events, "DECK_TOP_TO_BOTTOM")?.count).toBe(2);
+    expect(findEvent(done.events, "DECK_TOP_TO_BOTTOM")?.count).toBe(2);
     expect([...done.state.players.p1.deck].sort()).toEqual([...two].sort());
   });
 
@@ -404,7 +398,7 @@ describe("D344 — the degenerate decks, and why the M1 guard needed no second a
     const played = apply(staged, { type: "playTrainer", seat: "p1", uid: withHand.uid });
     expect(played.state.phase.kind).not.toBe("effect:choose");
     expect(played.state.players.p1.deck).toEqual([]);
-    expect(find(played.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
+    expect(findEvent(played.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
   });
 });
 

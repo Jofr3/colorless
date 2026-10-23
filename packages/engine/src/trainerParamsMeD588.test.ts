@@ -23,6 +23,7 @@ import {
   toDeckTop,
   trainerCard,
   must,
+  effectPrompt,
 } from "./testFixtures";
 
 const CANARI = "me02.5-185";
@@ -310,12 +311,6 @@ function refused(
   const { state: next, uid } = staged(state, id);
   expectErr(next, { type: "playTrainer", seat: "p1", uid }, code);
 }
-
-function prompt(state: GameState) {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt;
-}
 const ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
 const bench = (index: number, seat: Seat = "p1") =>
   ({ seat, spot: { spot: "bench", index } }) as const;
@@ -348,13 +343,13 @@ describe("D588 §3 — Canari: discard another card, then up to 4 {L} Pokémon f
     );
     const cost = withCost.players.p1.hand[0] as string;
     const { state: parked } = play(withCost, CANARI);
-    const pay = prompt(parked);
+    const pay = effectPrompt(parked);
     if (pay.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${pay.kind}`);
     expect(pay).toMatchObject({ min: 1, max: 1 });
     expect([...pay.candidates].sort()).toEqual([...withCost.players.p1.hand].sort());
     const searching = mustApply(parked, cards([cost])).state;
     expect(searching.players.p1.discard).toContain(cost);
-    const p = prompt(searching);
+    const p = effectPrompt(searching);
     if (p.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${p.kind}`);
     expect(p).toMatchObject({ min: 0, max: 4, dest: "hand" });
     expect(new Set(ids(searching, p.candidates))).toEqual(new Set([MON_L, MON_L2]));
@@ -394,7 +389,7 @@ describe("D588 §5 — Misty's Vitality: up to 4 Basic {W} onto ONE body, then t
   it("offers Basic {W} Energy only at a ceiling of 4, all onto one body, and passes the turn", () => {
     const { state: parked } = play(board(MON_W, [BASIC]), MISTY);
     expect(parked.phase.kind === "effect:choose" && parked.phase.endsTurn).toBe(true);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "attachCards") throw new Error(`expected attachCards, got ${p.kind}`);
     expect(p).toMatchObject({ max: 4, oneTarget: true });
     expect(new Set(ids(parked, p.candidates))).toEqual(new Set(["fix-water-energy"]));
@@ -410,7 +405,7 @@ describe("D588 §5 — Misty's Vitality: up to 4 Basic {W} onto ONE body, then t
 
   it('"to 1 of your Pokémon": a split over two bodies is refused', () => {
     const { state: parked } = play(board(MON_W, [BASIC]), MISTY);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "attachCards") throw new Error(`expected attachCards, got ${p.kind}`);
     const [a, b] = p.candidates as [string, string];
     expect(
@@ -435,13 +430,18 @@ describe("D588 §6 — Rosa's Encouragement: behind on Prizes, up to 2 Basic Ene
 
   it("offers the Stage 2 body only, captions the stage word, and puts up to 2 Basic Energy on it", () => {
     const parked = play(rosaBoard(), ROSA).state;
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.candidates).toEqual([bench(1)]);
     expect(p.upTo).toBe(2);
     expect(p.note).toBe("Attach up to 2 Energy to which of your Stage 2 Pokémon?");
     const asked = mustApply(parked, pick(bench(1))).state;
-    expect(prompt(asked)).toMatchObject({ kind: "chooseCards", min: 2, max: 2, dest: "attach" });
+    expect(effectPrompt(asked)).toMatchObject({
+      kind: "chooseCards",
+      min: 2,
+      max: 2,
+      dest: "attach",
+    });
     const waters = asked.players.p1.discard.filter((u) => idOf(asked, u) === "fix-water-energy");
     const done = mustApply(asked, cards(waters)).state;
     expect(done.players.p1.bench[1]?.energy).toEqual(waters);
@@ -449,7 +449,7 @@ describe("D588 §6 — Rosa's Encouragement: behind on Prizes, up to 2 Basic Ene
       1,
     );
     const askedOne = mustApply(parked, pick(bench(1), 1)).state;
-    expect(prompt(askedOne)).toMatchObject({ kind: "chooseCards", min: 1, max: 1 });
+    expect(effectPrompt(askedOne)).toMatchObject({ kind: "chooseCards", min: 1, max: 1 });
     const one = mustApply(askedOne, cards(waters.slice(0, 1))).state;
     expect(one.players.p1.bench[1]?.energy).toHaveLength(1);
   });
@@ -516,7 +516,7 @@ describe("D588 §8 — Waitress: look at the top 6, attach a Basic Energy to 1 o
     state = toDeckTop(state, "p1", "fix-fire-energy", 2);
     const window = state.players.p1.deck.slice(0, 6);
     const { state: parked } = play(state, WAITRESS);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     if (p.kind !== "attachCards") throw new Error(`expected attachCards, got ${p.kind}`);
     expect(p.max).toBe(1);
     expect(p.candidates).toEqual(window.filter((u) => idOf(state, u) === "fix-fire-energy"));
@@ -555,7 +555,7 @@ describe("D588 §10 — Lumiose Galette: heal 20 and remove a Special Condition 
     state = setConditions(state, "p1", { burned: true, poisonDamage: 10 });
     const parked = play(state, GALETTE).state;
     expect(parked.players.p1.active?.damage).toBe(0);
-    const p = prompt(parked);
+    const p = effectPrompt(parked);
     expect(p.note).toBe("Your Active Pokémon recovers from a Special Condition. Which one?");
     const done = mustApply(parked, {
       type: "resolveEffect",
@@ -571,7 +571,7 @@ describe("D588 §11 — `stage2Only` reads the printed stage word, not the chain
   it("a Stage 1 and a Basic are never offered; every Stage 2 on the board is", () => {
     let state = board(S2, [S1, S2, BASIC]);
     state = setPrizes(discardFromDeck(state, "p1", "fix-fire-energy", 2), "p2", 4);
-    const p = prompt(play(state, ROSA).state);
+    const p = effectPrompt(play(state, ROSA).state);
     if (p.kind !== "choosePokemon") throw new Error(`expected choosePokemon, got ${p.kind}`);
     expect(p.candidates).toEqual([ACTIVE, bench(1)]);
   });

@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -14,6 +14,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const HEATMOR = "sv10.5w-019";
@@ -110,13 +111,6 @@ const DECK = deckOf({
 });
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -360,7 +354,7 @@ describe("D338 — Heatmor 'Licking Catch', a flat cap over a TYPED union", () =
     const state = board(15);
     const { parked } = attack(state);
     const { events } = mustResolve(parked, []);
-    expect(find(events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(events, "SHUFFLE")).toBeDefined();
   });
 
   // ── §4 THE CAPTION — `retrieveNoun`'s FOURTH WITNESS ON THIS JOIN ─────────
@@ -395,7 +389,7 @@ describe("D338 — Heatmor 'Licking Catch', a flat cap over a TYPED union", () =
     const { parked } = attack(state);
     const picks = deckUids(parked, FIRE_BASIC).slice(0, 2);
     const { events } = mustResolve(parked, picks);
-    const searched = find(events, "DECK_SEARCHED");
+    const searched = findEvent(events, "DECK_SEARCHED");
     expect(searched?.reveal).toBe(true);
     expect(searched?.dest).toBe("hand");
   });
@@ -415,7 +409,7 @@ describe("D338 — Heatmor 'Licking Catch', a flat cap over a TYPED union", () =
     const state = board(21);
     const { parked } = attack(state);
     const { events } = mustResolve(parked, deckUids(parked, FIRE_ENERGY).slice(0, 1));
-    expect(find(events, "SHUFFLE")).toBeDefined();
+    expect(findEvent(events, "SHUFFLE")).toBeDefined();
   });
 
   it("the attack deals NO damage — the print carries no damage on index 0", () => {

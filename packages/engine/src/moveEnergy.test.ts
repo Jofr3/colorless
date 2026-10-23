@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   MOVE_ENERGY_DECK,
   attachBenchFromDeck,
@@ -13,14 +13,8 @@ import {
   handUid,
   mustApply,
   types,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn (so a Supporter, Poppy, is legal). */
@@ -78,7 +72,7 @@ describe("M5 op-slice — moveEnergy", () => {
     // The Energy left the Active and landed on the benched Pokémon (one card, moved).
     expect(activeEnergy(done, "p1")).not.toContain(energyUid);
     expect(benchEnergy(done, "p1", 0)).toContain(energyUid);
-    const moved = find(events, "ENERGY_MOVED");
+    const moved = findEvent(events, "ENERGY_MOVED");
     expect(moved).toMatchObject({ seat: "p1", uids: [energyUid] });
     expect(moved?.from).toEqual({ spot: "active" });
     expect(moved?.to).toEqual({ spot: "bench", index: 0 });
@@ -104,8 +98,8 @@ describe("M5 op-slice — moveEnergy", () => {
     });
     expect(benchEnergy(done, "p1", 0)).not.toContain(energyUid);
     expect(activeEnergy(done, "p1")).toContain(energyUid);
-    expect(find(events, "ENERGY_MOVED")?.from).toEqual({ spot: "bench", index: 0 });
-    expect(find(events, "ENERGY_MOVED")?.to).toEqual({ spot: "active" });
+    expect(findEvent(events, "ENERGY_MOVED")?.from).toEqual({ spot: "bench", index: 0 });
+    expect(findEvent(events, "ENERGY_MOVED")?.to).toEqual({ spot: "active" });
   });
 
   it("moves Bench → Bench (two distinct bench indices in play at once)", () => {
@@ -129,7 +123,7 @@ describe("M5 op-slice — moveEnergy", () => {
     });
     expect(benchEnergy(done, "p1", 1)).not.toContain(energyUid); // left the source bench slot
     expect(benchEnergy(done, "p1", 0)).toContain(energyUid); // landed on the destination bench slot
-    const moved = find(events, "ENERGY_MOVED");
+    const moved = findEvent(events, "ENERGY_MOVED");
     expect(moved?.from).toEqual({ spot: "bench", index: 1 });
     expect(moved?.to).toEqual({ spot: "bench", index: 0 });
   });
@@ -325,7 +319,7 @@ describe("M5 op-slice — moveEnergy", () => {
     });
     expect(activeEnergy(done, "p1")).toHaveLength(0);
     expect(benchEnergy(done, "p1", 0)).toEqual(expect.arrayContaining(energies));
-    expect(find(events, "ENERGY_MOVED")?.uids).toEqual(energies);
+    expect(findEvent(events, "ENERGY_MOVED")?.uids).toEqual(energies);
   });
 
   it("Poppy may move fewer than max (1 of 2)", () => {

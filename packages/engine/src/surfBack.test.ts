@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -16,6 +16,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED = "You may shuffle this Pokémon and all attached cards into your deck.";
@@ -164,13 +165,6 @@ const SURF_BACK = { type: "attack", seat: "p1", index: 1 } as const;
 const YES = { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } } as const;
 const NO = { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: false } } as const;
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 describe("D312 §1 — the print, the index-precision, and the `optional` that IS printed", () => {
   it("the fixture carries both printed sentences VERBATIM", () => {
@@ -222,7 +216,7 @@ describe("D312 §2 — the decision: the attack lands FIRST, then the printed 'y
 
       expect(parked.players.p2.active?.damage).toBe(100);
       expect(parked.phase.kind).toBe("effect:choose");
-      expect(find(events, "EFFECT_PENDING")).toMatchObject({ seat: "p1", note: PRINTED });
+      expect(findEvent(events, "EFFECT_PENDING")).toMatchObject({ seat: "p1", note: PRINTED });
 
       const { state: done } = apply(parked, NO);
       // Declined: the attacker is standing, with everything still attached.
@@ -247,7 +241,7 @@ describe("D312 §2 — the decision: the attack lands FIRST, then the printed 'y
     const deck = new Set(done.players.p1.deck);
     for (const uid of stack) expect(deck.has(uid), uid).toBe(true);
     expect(done.players.p1.deck.length).toBeGreaterThanOrEqual(deckBefore + 5);
-    const returned = find(events, "POKEMON_RETURNED");
+    const returned = findEvent(events, "POKEMON_RETURNED");
     expect(returned).toMatchObject({ seat: "p1", actor: "p1", dest: "deck" });
     expect(new Set(returned?.uids ?? [])).toEqual(new Set(stack));
   });
@@ -273,7 +267,7 @@ describe("D312 §3 — THE SEAM AT ITS SECOND SITE, and the ORDER that makes it 
       YES,
     );
     expect(done.phase).toEqual({ kind: "ko:promote", seat: "p1" });
-    expect(find(events, "PROMOTION_REQUIRED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "PROMOTION_REQUIRED")).toMatchObject({ seat: "p1" });
     expect(events.map((e) => e.type)).not.toContain("TURN_ENDED");
     expect(done.pending.some((s) => s.kind === "endTurn")).toBe(true);
 
@@ -302,7 +296,7 @@ describe("D312 §3 — THE SEAM AT ITS SECOND SITE, and the ORDER that makes it 
       YES,
     );
     expect(done.phase.kind).toBe("gameOver");
-    expect(find(events, "GAME_OVER")?.outcome).toMatchObject({ result: "win", winner: "p2" });
+    expect(findEvent(events, "GAME_OVER")?.outcome).toMatchObject({ result: "win", winner: "p2" });
   });
 
   it("THE BOTH-SEATS BOARD: the defender is KO'd and the attacker removes ITSELF", () => {
@@ -311,7 +305,7 @@ describe("D312 §3 — THE SEAM AT ITS SECOND SITE, and the ORDER that makes it 
       YES,
     );
     // The Wall (90 HP) died to the 100.
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     // EXACTLY ONE promotion per seat, and both are present.
     const promotes = done.pending.filter((s) => s.kind === "promote");
     expect(promotes.filter((s) => s.seat === "p1")).toHaveLength(1);
@@ -367,7 +361,7 @@ describe("D312 §4 — THE FALSIFIED DOC CLAIM, DRIVEN", () => {
     const { state: done, events } = apply(parked, YES);
 
     // The antecedent HELD — the holder really was Knocked Out by this attack.
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     const recoils = events.filter(
       (e) => e.type === "COUNTERS_PLACED" && e.source === "counterattack",
     );
@@ -381,7 +375,7 @@ describe("D312 §4 — THE FALSIFIED DOC CLAIM, DRIVEN", () => {
     const parked = must(applyAction(state, SURF_BACK));
     const { state: done, events } = apply(parked, NO);
 
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     const recoils = events.filter(
       (e) => e.type === "COUNTERS_PLACED" && e.source === "counterattack",
     );

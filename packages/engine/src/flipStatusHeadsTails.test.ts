@@ -15,6 +15,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -51,13 +52,6 @@ const HEADS_COLLISIONS = [
 const W = "(?:Asleep|Burned|Confused|Paralyzed|Poisoned)";
 const SUBJ = "your opponent['’]s Active Pokémon";
 const SEEDS = 400;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -126,7 +120,7 @@ function flipBoard(wantHeads: boolean, opts: { by?: Seat; effect?: string } = {}
     } catch {
       continue;
     }
-    const flip = find(swing(candidate, opts.by ?? "p1").events, "ATTACK_EFFECT_COIN_FLIP");
+    const flip = findEvent(swing(candidate, opts.by ?? "p1").events, "ATTACK_EFFECT_COIN_FLIP");
     if (flip?.result === (wantHeads ? "heads" : "tails")) return candidate;
   }
   throw new Error(`no seed under ${SEEDS} gives ${wantHeads ? "heads" : "tails"}`);
@@ -410,7 +404,7 @@ describe("§3 — the two-branch coin family, measured over all 640 rows", () =>
 describe("§4 — both outcomes land, asserted on the FIELDS", () => {
   it("HEADS lands Paralyzed AND Poisoned — two statuses, not one", () => {
     const { state, events } = swing(flipBoard(true));
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
     expect(defenderConditions(state)).toEqual({
       rotation: "paralyzed",
       poisonDamage: 10,
@@ -422,7 +416,7 @@ describe("§4 — both outcomes land, asserted on the FIELDS", () => {
 
   it("TAILS lands Confused — the branch this slice exists for", () => {
     const { state, events } = swing(flipBoard(false));
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
     expect(defenderConditions(state)).toEqual({
       rotation: "confused",
       poisonDamage: 0,
@@ -430,7 +424,7 @@ describe("§4 — both outcomes land, asserted on the FIELDS", () => {
       confusionDamage: 30,
     });
     expect(all(events, "STATUS_APPLIED").map((e) => e.status)).toEqual(["confused"]);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("THE SWAP IS OBSERVABLE, AND THAT IS WHY THE TWO ARMS DIFFER OBSERVABLY", () => {
@@ -440,8 +434,8 @@ describe("§4 — both outcomes land, asserted on the FIELDS", () => {
     expect([onHeads.rotation, onTails.rotation]).toEqual(["paralyzed", "confused"]);
     expect([onHeads.poisonDamage > 0, onTails.poisonDamage > 0]).toEqual([true, false]);
     expect([
-      find(swing(flipBoard(true)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
-      find(swing(flipBoard(false)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
+      findEvent(swing(flipBoard(true)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
+      findEvent(swing(flipBoard(false)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
     ]).toEqual(["heads", "tails"]);
   });
 
@@ -547,7 +541,9 @@ describe("§5 — what this anchor refuses, and what it still admits", () => {
 
   it("…and the loud path still works — the attribution control, RE-POINTED", () => {
     const doctored = board(11, { effect: DATA_BLOCKED_LOUD });
-    expect(find(swing(doctored).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(DATA_BLOCKED_LOUD);
+    expect(findEvent(swing(doctored).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(
+      DATA_BLOCKED_LOUD,
+    );
     expect(new Map(legalAttackCorpus().map(([n, s]) => [s, n])).get(DATA_BLOCKED_LOUD)).toBe(1);
     expect(resolvedByAnyReader(DATA_BLOCKED_LOUD)).toBe(false);
   });

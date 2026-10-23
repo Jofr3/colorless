@@ -13,14 +13,8 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** The two printed sentences, transcribed byte for byte off the committed column. */
 const BARE = "Put 2 damage counters on 1 of your opponent's Pokémon.";
@@ -430,12 +424,12 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
 describe("§4 — the placement is FLAT, and the control on the same body is not", () => {
   it("20 on a ×2 Lightning ACTIVE — and the CONTROL reads 40 on that same body", () => {
     const put = mustApply(fielded(1), { type: "attack", seat: "p1", index: IDX.bare });
-    expect(find(put.events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(put.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       amount: 20,
       source: "attack",
     });
-    expect(find(put.events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(put.events, "DAMAGE_DEALT")).toBeUndefined();
     expect(put.state.players.p2.active?.damage).toBe(20);
 
     expect(deriveAttackEffect(DEALS_CONTROL)).toEqual([
@@ -449,18 +443,18 @@ describe("§4 — the placement is FLAT, and the control on the same body is not
       },
     ]);
     const control = mustApply(fielded(1), { type: "attack", seat: "p1", index: IDX.control });
-    expect(find(control.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(control.events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       weakness: { op: "multiply", amount: 2 },
       dealt: 40,
     });
-    expect(find(control.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(control.events, "COUNTERS_PLACED")).toBeUndefined();
     expect(control.state.players.p2.active?.damage).toBe(40);
   });
 
   it("the EVENT is the reading: COUNTERS_PLACED carries `source`, DAMAGE_DEALT does not", () => {
     const { events } = mustApply(fielded(2), { type: "attack", seat: "p1", index: IDX.bare });
-    const row = find(events, "COUNTERS_PLACED");
+    const row = findEvent(events, "COUNTERS_PLACED");
     expect(row?.source).toBe("attack");
     expect(row?.source).not.toBe("ability");
   });
@@ -560,8 +554,8 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
       seat: "p1",
       index: IDX.bare,
     });
-    expect(find(shielded.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
-    expect(find(shielded.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(shielded.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(shielded.events, "COUNTERS_PLACED")).toBeUndefined();
     expect(shielded.state.players.p2.active?.damage).toBe(0);
     // …and the SAME shield does NOT stop the `deals` control, because that one IS damage
     // and this sentence's own parenthetical says damage is not an effect.
@@ -570,7 +564,7 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
       seat: "p1",
       index: IDX.control,
     });
-    expect(find(shieldedControl.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
+    expect(findEvent(shieldedControl.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
     expect(shieldedControl.state.players.p2.active?.damage).toBe(20);
 
     // `sv03-078` Bellibolt — "Prevent all DAMAGE done to this Pokémon by attacks from
@@ -581,15 +575,15 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
       seat: "p1",
       index: IDX.bare,
     });
-    expect(find(damageShield.events, "COUNTERS_PLACED")).toMatchObject({ amount: 20 });
-    expect(find(damageShield.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
+    expect(findEvent(damageShield.events, "COUNTERS_PLACED")).toMatchObject({ amount: 20 });
+    expect(findEvent(damageShield.events, "ATTACK_EFFECT_PREVENTED")).toBeUndefined();
     expect(damageShield.state.players.p2.active?.damage).toBe(20);
     const damageShieldControl = mustApply(fielded(7, { defender: "sv03-078" }), {
       type: "attack",
       seat: "p1",
       index: IDX.control,
     });
-    expect(find(damageShieldControl.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(damageShieldControl.events, "DAMAGE_DEALT")).toMatchObject({
       prevented: true,
       dealt: 0,
     });
@@ -619,8 +613,8 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
     expect(onBench.state.players.p2.bench[0]?.damage).toBe(0);
-    expect(find(onBench.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
-    expect(find(onBench.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(onBench.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(onBench.events, "COUNTERS_PLACED")).toBeUndefined();
   });
 });
 
@@ -642,8 +636,8 @@ describe("§6 — a lethal placement Knocks Out, pays a Prize, and counts as dam
       "KNOCKED_OUT",
       "PRIZES_OWED",
     ]);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
-    expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
     // …and the flow really stops on the Prize rather than ending the turn through it
     expect(after.phase.kind).toBe("ko:takePrizes");
   });
@@ -657,7 +651,7 @@ describe("§6 — a lethal placement Knocks Out, pays a Prize, and counts as dam
       seat: "p1",
       index: IDX.bare,
     });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     // 4 damage counters = 40 HP, back onto the ATTACKER
     expect(after.players.p1.active?.damage).toBe(40);
     expect(events.filter((e) => e.type === "COUNTERS_PLACED")).toHaveLength(2);
@@ -680,8 +674,8 @@ describe("§6 — a lethal placement Knocks Out, pays a Prize, and counts as dam
         refs: [prompt.candidates[1] as PokemonRef, prompt.candidates[2] as PokemonRef],
       },
     });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
-    expect(find(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
     // the SURVIVING pick keeps its 30, so the KO did not swallow the other placement
     expect(after.players.p2.bench.map((b) => b.damage)).toEqual([30]);
   });

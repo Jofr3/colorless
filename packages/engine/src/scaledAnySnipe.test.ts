@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackCoinFlip, deriveAttackDamageSuppression } from "./effects";
 import { applyAction, deriveAttackEffect } from "./index";
-import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
+import type { EffectOp, GameState, PokemonRef } from "./index";
 import {
   SCALED_SNIPE_DECK,
   attachFromDeck,
@@ -14,14 +14,8 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** The two printed sentences, transcribed byte for byte off the committed column. */
 const SCALED_20 =
@@ -423,13 +417,13 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       index: IDX.scaled20,
     });
-    expect(find(one.events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 40 });
+    expect(findEvent(one.events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 40 });
     const three = mustApply(scaled(2, { energy: 3 }), {
       type: "attack",
       seat: "p1",
       index: IDX.scaled20,
     });
-    expect(find(three.events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 120 });
+    expect(findEvent(three.events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 120 });
     expect(three.state.players.p2.active?.damage).toBe(120);
     // …and the PRINTED 30 on the same board is 30 × 3 = 90, doubled to 180: a second
     // amount so the multiplication is not confusable with a hard-coded 60.
@@ -438,13 +432,13 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       index: IDX.scaled30,
     });
-    expect(find(heavy.events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 180 });
+    expect(findEvent(heavy.events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 180 });
     const mixed = mustApply(scaled(11, { energy: 2, plain: 1 }), {
       type: "attack",
       seat: "p1",
       index: IDX.scaled20,
     });
-    expect(find(mixed.events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 120 });
+    expect(findEvent(mixed.events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 120 });
   });
 
   it("the CONTROL on the same body does NOT scale — index 2 stays at the printed 20", () => {
@@ -453,7 +447,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       index: IDX.plain20,
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 40 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 40 });
   });
 
   it("§8.5 IS RUN ON THE ACTIVE PICK AND NOT ON THE BENCH PICK — one op, one board", () => {
@@ -472,7 +466,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(benchHit.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(benchHit.events, "DAMAGE_DEALT")).toMatchObject({
       base: 60,
       weakness: null,
       resistance: null,
@@ -486,7 +480,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[0] as PokemonRef] },
     });
-    expect(find(activeHit.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(activeHit.events, "DAMAGE_DEALT")).toMatchObject({
       base: 60,
       weakness: { op: "multiply", amount: 2 },
       dealt: 120,
@@ -513,7 +507,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 60 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, dealt: 60 });
   });
 
   it("the ATTACKER's own pre-W/R bonus still lands INSIDE the fold's result", () => {
@@ -524,7 +518,7 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       applyAction(state, { type: "attachTool", seat: "p1", uid: band, target: { spot: "active" } }),
     );
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: IDX.scaled20 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 40,
       bonus: 10,
       weakness: { op: "multiply", amount: 2 },
@@ -541,8 +535,8 @@ describe("§4 — the amount scales, and every step the unscaled snipe honours i
       seat: "p1",
       index: IDX.bothRiders,
     });
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeDefined();
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -566,7 +560,7 @@ describe("§5 — a zero multiplier, and the honest reachability answer", () => 
       seat: "p1",
       index: IDX.scaled20,
     });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20 });
     // …and the guard the doctrine rests on is the one Covetous Ivy already exercises
     // at zero taken Prizes, which is a REACHABLE zero and is pinned in its own suite.
     // The two riders reach the identical `amount <= 0` line; nothing here re-tests it.

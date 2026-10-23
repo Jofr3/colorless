@@ -16,6 +16,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -46,13 +47,6 @@ const REAL_NEAR_MISSES = [
 ] as const;
 
 const NBSP = "\u00a0";
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -312,7 +306,7 @@ describe("end to end — Skeledirge ex 'Vitality Song' (heal 30 each, WITH a pri
     expect(done.players.p2.bench[0]?.damage).toBe(OPPONENT_HURT);
     expect(all(events, "HEALED")).toHaveLength(2);
     for (const healed of all(events, "HEALED")) expect(healed.seat).toBe("p1");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: VITALITY_SONG_DAMAGE });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: VITALITY_SONG_DAMAGE });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("KNOCKED_OUT");
   });

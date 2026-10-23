@@ -17,6 +17,7 @@ import {
   trainerCard,
   must,
   mustApply as run,
+  findEvent,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -189,17 +190,13 @@ function body(p: InPlayPokemon | null | undefined): InPlayPokemon {
   return p;
 }
 
-function find<T extends GameEvent["type"]>(events: GameEvent[], type: T) {
-  return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
-}
-
 /** p1 plays the Gaze and passes; returns p2's turn 3 — the window. */
 function window(board: GameState = table()): GameState {
   return run(gaze(board).state, { type: "endTurn", seat: "p1" }).state;
 }
 
 const strike = (state: GameState) => run(state, { type: "attack", seat: "p2", index: 0 });
-const dealt = (state: GameState) => find(strike(state).events, "DAMAGE_DEALT")?.dealt;
+const dealt = (state: GameState) => findEvent(strike(state).events, "DAMAGE_DEALT")?.dealt;
 
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: NAMES, state, elapsed: formatElapsed(0) };
@@ -231,7 +228,7 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
     const { state, events } = gaze(board);
     expect(state.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: REDUCTION }]);
     expect(state.players.p2.sideDamageReduction).toEqual([]);
-    expect(find(events, "SIDE_DAMAGE_REDUCTION_INSTALLED")).toEqual({
+    expect(findEvent(events, "SIDE_DAMAGE_REDUCTION_INSTALLED")).toEqual({
       type: "SIDE_DAMAGE_REDUCTION_INSTALLED",
       seat: "p1",
       amount: REDUCTION,
@@ -392,7 +389,7 @@ describe('§8 — R-JG1: Feint Attack\'s `"othersOnly"` DROPS it (an effect on t
     };
     // p1's Active is the ONE legal target, so the pick is forced and resolves in place.
     expect(seatDamageReduction(turn3, body(turn3.players.p1.active), "all", "p2")).toBe(REDUCTION);
-    expect(find(strike(turn3).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(strike(turn3).events, "DAMAGE_DEALT")?.dealt).toBe(50);
   });
 });
 

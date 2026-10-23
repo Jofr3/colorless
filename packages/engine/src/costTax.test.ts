@@ -24,6 +24,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const S171 =
@@ -106,13 +107,6 @@ const DECK = deckOf({
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260949;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
   if (pokemon === null || pokemon === undefined) throw new Error("expected a Pokémon");
   return pokemon;
@@ -172,7 +166,7 @@ const pass = (state: GameState, seat: Seat): GameState =>
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, TAX);
-  if (find(events, "COST_TAX_APPLIED") === undefined) throw new Error("Tax installed nothing");
+  if (findEvent(events, "COST_TAX_APPLIED") === undefined) throw new Error("Tax installed nothing");
   return { start, state, events };
 }
 
@@ -278,12 +272,12 @@ describe("§2 — the install stamps `T+1` on the DEFENDER", () => {
     expect(state.turn).toBe(4);
     expect(body(state.players.p2.active).costTaxTurn).toBe(4);
     expect(body(state.players.p1.active).costTaxTurn).toBeNull();
-    expect(find(events, "COST_TAX_APPLIED")).toEqual({
+    expect(findEvent(events, "COST_TAX_APPLIED")).toEqual({
       type: "COST_TAX_APPLIED",
       seat: "p2",
       uid: activeUid(start, "p2"),
     });
-    expect(find(events, "ATTACK_LOCKED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeUndefined();
   });
 
   it("never parks and consumes no rng", () => {
@@ -390,10 +384,10 @@ describe("§5 — both retreat-counting reads see the TAXED Retreat Cost (constr
     const start = ready();
     const taxed = withP2Active(start, { costTaxTurn: start.turn });
     expect(effectiveRetreatCost(taxed, body(taxed.players.p2.active))).toBe(2);
-    expect(find(attack(taxed, COUNT).events, "DAMAGE_DEALT")?.dealt).toBe(100);
-    expect(find(attack(start, COUNT).events, "DAMAGE_DEALT")?.dealt).toBe(50);
-    expect(find(attack(taxed, THRESHOLD).events, "DAMAGE_DEALT")?.dealt).toBe(120);
-    expect(find(attack(start, THRESHOLD).events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(attack(taxed, COUNT).events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(attack(start, COUNT).events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    expect(findEvent(attack(taxed, THRESHOLD).events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(attack(start, THRESHOLD).events, "DAMAGE_DEALT")?.dealt).toBe(10);
   });
 });
 
@@ -490,8 +484,8 @@ describe("§7 — a §11 shield refuses the install, and is asked FIRST", () => 
   it("Mist Energy on the Defending Pokémon: refused, announced, nothing written", () => {
     const start = attachFromDeck(ready(), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, TAX);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
-    expect(find(events, "COST_TAX_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "COST_TAX_APPLIED")).toBeUndefined();
     expect(body(state.players.p2.active).costTaxTurn).toBeNull();
   });
 
@@ -500,7 +494,7 @@ describe("§7 — a §11 shield refuses the install, and is asked FIRST", () => 
     const taxed = withP2Active(start, { costTaxTurn: start.turn + 1 });
     const events: GameEvent[] = [];
     runAs(taxed, "p1", P171, events);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
   });
 });
 

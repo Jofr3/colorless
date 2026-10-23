@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
@@ -14,6 +14,7 @@ import {
   typedEnergy,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -149,13 +150,6 @@ function loadActive(state: GameState): GameState {
   };
 }
 
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 describe("D312 §1 — the print, the population, and the registry row that maps it", () => {
   it("the fixture carries the printed sentence VERBATIM", () => {
@@ -233,7 +227,7 @@ describe("D312 §2 — the removal: the body and everything on it go into the de
         expect(after.players.p1.discard).not.toContain(uid);
       }
 
-      const returned = find(events, "POKEMON_RETURNED");
+      const returned = findEvent(events, "POKEMON_RETURNED");
       expect(returned).toMatchObject({ seat: "p1", actor: "p1", dest: "deck" });
       expect(new Set(returned?.uids ?? [])).toEqual(new Set(stack));
       expect(events.map((e) => e.type)).toContain("SHUFFLE");
@@ -269,7 +263,7 @@ describe("D312 §3 — the §8.1 PROMOTION, which THIS card owes UNCONDITIONALLY
     const { state: after, events } = apply(active(2), USE_ACTIVE);
     expect(after.players.p1.active).toBeNull();
     expect(after.phase).toEqual({ kind: "ko:promote", seat: "p1" });
-    expect(find(events, "PROMOTION_REQUIRED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "PROMOTION_REQUIRED")).toMatchObject({ seat: "p1" });
     const promoted = must(applyAction(after, { type: "promote", seat: "p1", benchIndex: 1 }));
     expect(promoted.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(promoted.players.p1.active).not.toBeNull();
@@ -288,7 +282,7 @@ describe("D312 §3 — the §8.1 PROMOTION, which THIS card owes UNCONDITIONALLY
   it("a Bench of NONE is the §14.2 LOSS — and it costs no code at all", () => {
     const { state: after, events } = apply(active(0), USE_ACTIVE);
     expect(after.phase.kind).toBe("gameOver");
-    const over = find(events, "GAME_OVER");
+    const over = findEvent(events, "GAME_OVER");
     expect(over?.outcome).toMatchObject({ result: "win", winner: "p2" });
   });
 

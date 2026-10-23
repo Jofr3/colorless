@@ -20,6 +20,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -114,13 +115,6 @@ const OPP_HAND = [
   "fix-basic-1",
   "fix-trainerops",
 ] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(seed: number): GameState {
   const state = driveSetup(
@@ -271,8 +265,8 @@ describe("D232 — 'Your opponent reveals their hand.' (7 legal)", () => {
     const state = ready();
     const before = [...state.players.p2.hand];
     const { state: done, events } = attack(deepFreeze(state), SEE_THROUGH);
-    expect(find(events, "HAND_REVEALED")?.seat).toBe("p2");
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual(before);
+    expect(findEvent(events, "HAND_REVEALED")?.seat).toBe("p2");
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual(before);
     expect(done.players.p2.discard).toEqual(state.players.p2.discard);
     expect(done.players.p2.deck).toEqual(state.players.p2.deck.slice(1));
     // …and P2's hand is `before` plus exactly that draw.
@@ -291,7 +285,7 @@ describe("D232 — 'Your opponent reveals their hand.' (7 legal)", () => {
 
   it("reveals an EMPTY hand honestly, as zero uids", () => {
     const { state: done, events } = attack(ready([]), SEE_THROUGH);
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual([]);
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual([]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
@@ -332,7 +326,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
     const state = ready();
     const before = [...state.players.p2.hand];
     const { state: done, events } = attack(deepFreeze(state), KNOCK_OFF);
-    const taken = find(events, "RANDOM_CARD_TAKEN");
+    const taken = findEvent(events, "RANDOM_CARD_TAKEN");
     expect(taken?.seat).toBe("p2"); // whose hand and whose discard
     expect(taken?.actor).toBe("p1"); // who did it
     expect(taken?.to).toBe("discard");
@@ -356,7 +350,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
       const state: GameState = { ...base, rngState: (base.rngState + bump * 7919) | 0 };
       const hand = [...state.players.p2.hand];
       const { events } = attack(state, KNOCK_OFF);
-      const uid = find(events, "RANDOM_CARD_TAKEN")?.uid as string;
+      const uid = findEvent(events, "RANDOM_CARD_TAKEN")?.uid as string;
       picked.add(hand.indexOf(uid));
     }
     expect(picked.size).toBeGreaterThan(1);
@@ -372,7 +366,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
     const [value] = nextU32(state.rngState);
     const expected = hand[Math.floor((value / 4294967296) * hand.length)];
     const { events } = attack(state, KNOCK_OFF);
-    expect(find(events, "RANDOM_CARD_TAKEN")?.uid).toBe(expected);
+    expect(findEvent(events, "RANDOM_CARD_TAKEN")?.uid).toBe(expected);
   });
 
   it("REPLAYS: the same state picks the same card and lands on the same rngState", () => {
@@ -382,7 +376,9 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
     const state = ready();
     const a = attack(deepFreeze(state), KNOCK_OFF);
     const b = attack(deepFreeze(state), KNOCK_OFF);
-    expect(find(a.events, "RANDOM_CARD_TAKEN")?.uid).toBe(find(b.events, "RANDOM_CARD_TAKEN")?.uid);
+    expect(findEvent(a.events, "RANDOM_CARD_TAKEN")?.uid).toBe(
+      findEvent(b.events, "RANDOM_CARD_TAKEN")?.uid,
+    );
     expect(a.state.rngState).toBe(b.state.rngState);
     // …and a DIFFERENT rngState is a different run — otherwise the equality above
     // would hold for a build that ignored the RNG entirely.
@@ -409,7 +405,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
     const state = ready(["fix-stadium"]);
     const held = state.players.p2.hand[0];
     const { state: done, events } = attack(state, KNOCK_OFF);
-    expect(find(events, "RANDOM_CARD_TAKEN")?.uid).toBe(held);
+    expect(findEvent(events, "RANDOM_CARD_TAKEN")?.uid).toBe(held);
     expect(done.players.p2.discard).toContain(held);
   });
 
@@ -422,7 +418,7 @@ describe("D232 — 'Discard a random card from your opponent's hand.' (8 legal)"
 
   it("the discarded card becomes PUBLIC to both seats — §2", () => {
     const { state: done, events } = attack(ready(), KNOCK_OFF);
-    const uid = find(events, "RANDOM_CARD_TAKEN")?.uid as string;
+    const uid = findEvent(events, "RANDOM_CARD_TAKEN")?.uid as string;
     // The controller can now see it, in the opponent's discard, by identity.
     const p1View = redactGame(done, "p1");
     expect(p1View.board.opponent.discard.map((c) => c.id)).toContain(uid);
@@ -438,7 +434,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
     const before = [...state.players.p2.hand];
     const deckBefore = state.players.p2.deck.length;
     const { state: done, events } = attack(deepFreeze(state), ASTONISH);
-    const taken = find(events, "RANDOM_CARD_TAKEN");
+    const taken = findEvent(events, "RANDOM_CARD_TAKEN");
     expect(taken?.to).toBe("deck");
     expect(before).toContain(taken?.uid);
     expect(done.players.p2.deck).toContain(taken?.uid);
@@ -447,7 +443,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
     expect(done.players.p2.deck).toHaveLength(deckBefore + 1 - 1);
     // The SHUFFLE is on the OWNER's seat and is emitted — a build that appended
     // without shuffling would leave a known card the owner is about to draw.
-    expect(find(events, "SHUFFLE")?.seat).toBe("p2");
+    expect(findEvent(events, "SHUFFLE")?.seat).toBe("p2");
   });
 
   it("the position is genuinely LOST — the deck is reordered, not appended to", () => {
@@ -462,7 +458,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
     );
     if (result.kind !== "done") throw new Error("this op never parks");
     const after = result.state.players.p2.deck;
-    const uid = find(events, "RANDOM_CARD_TAKEN")?.uid as string;
+    const uid = findEvent(events, "RANDOM_CARD_TAKEN")?.uid as string;
     // Same multiset, different order — and the card is NOT sitting on either end,
     // which is what "appended and then shuffled" has to mean.
     expect([...after].sort()).toEqual([...before, uid].sort());
@@ -497,8 +493,8 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
     expect(one.state.rngState).toBe(afterPick);
     expect(two.state.rngState).toBe(afterShuffle);
     // Both routes picked the SAME card — the destination cannot change the draw.
-    expect(find(discard, "RANDOM_CARD_TAKEN")?.uid).toBe(uid);
-    expect(find(deck, "RANDOM_CARD_TAKEN")?.uid).toBe(uid);
+    expect(findEvent(discard, "RANDOM_CARD_TAKEN")?.uid).toBe(uid);
+    expect(findEvent(deck, "RANDOM_CARD_TAKEN")?.uid).toBe(uid);
   });
 
   it("an EMPTY hand shuffles NOTHING — no SHUFFLE event, no rng", () => {
@@ -529,7 +525,7 @@ describe("D232 — 'Choose a random card … shuffles it into their deck.' (5 le
 
   it("the card is NOT public afterwards — the deck is count-only", () => {
     const { state: done, events } = attack(ready(), ASTONISH);
-    const uid = find(events, "RANDOM_CARD_TAKEN")?.uid as string;
+    const uid = findEvent(events, "RANDOM_CARD_TAKEN")?.uid as string;
     const p1View = redactGame(done, "p1");
     expect(p1View.board.opponent.discard.map((c) => c.id)).not.toContain(uid);
     // `deckCount` is the whole projection of a deck — no uid can appear.
@@ -544,7 +540,7 @@ describe("D232 — N's Purrloin sv09-096, the UNFILTERED reveal-and-bottom (1 le
     const state = ready();
     const oppHand = [...state.players.p2.hand];
     const { state: parked, events } = attack(deepFreeze(state), THIEVING_SWIPE);
-    expect(find(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
+    expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
     if (parked.phase.kind !== "effect:choose") throw new Error("expected the pick park");
     const prompt = parked.phase.prompt;
     if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -558,7 +554,7 @@ describe("D232 — N's Purrloin sv09-096, the UNFILTERED reveal-and-bottom (1 le
       seat: "p1",
       choice: { kind: "cards", uids: [picked] },
     });
-    expect(find(resolved, "CARD_TO_BOTTOM_OF_DECK")?.uid).toBe(picked);
+    expect(findEvent(resolved, "CARD_TO_BOTTOM_OF_DECK")?.uid).toBe(picked);
     expect(done.players.p2.deck.at(-1)).toBe(picked);
   });
 
@@ -567,8 +563,8 @@ describe("D232 — N's Purrloin sv09-096, the UNFILTERED reveal-and-bottom (1 le
     const oppHand = [...state.players.p2.hand];
     for (const index of [SEE_THROUGH, THIEVING_SWIPE]) {
       const { events } = attack(state, index);
-      expect(find(events, "HAND_REVEALED")?.seat).toBe("p2");
-      expect(find(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
+      expect(findEvent(events, "HAND_REVEALED")?.seat).toBe("p2");
+      expect(findEvent(events, "HAND_REVEALED")?.uids).toEqual(oppHand);
     }
   });
 });

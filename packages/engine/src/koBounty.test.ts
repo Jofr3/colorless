@@ -25,6 +25,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 import type { KoBounty } from "./types";
 
@@ -113,13 +114,6 @@ const DECK = deckOf({
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260950;
 
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function all<T extends GameEvent["type"]>(
   events: GameEvent[],
   type: T,
@@ -185,7 +179,8 @@ const pass = (state: GameState, seat: Seat): GameState =>
 function installed(opts: Parameters<typeof ready>[0] = {}) {
   const start = ready(opts);
   const { state, events } = attack(start, MARK);
-  if (find(events, "KO_BOUNTY_APPLIED") === undefined) throw new Error("Mark installed nothing");
+  if (findEvent(events, "KO_BOUNTY_APPLIED") === undefined)
+    throw new Error("Mark installed nothing");
   return { start, state, events };
 }
 
@@ -325,7 +320,7 @@ describe("§2 — the install writes `{ turn: T+2, amount }` on the DEFENDER", (
     expect(start.turn).toBe(3);
     expect(body(state.players.p2.active).koBounty).toStrictEqual({ turn: 5, amount: BOUNTY });
     expect(body(state.players.p1.active).koBounty).toBeNull();
-    expect(find(events, "KO_BOUNTY_APPLIED")).toEqual({
+    expect(findEvent(events, "KO_BOUNTY_APPLIED")).toEqual({
       type: "KO_BOUNTY_APPLIED",
       seat: "p2",
       uid: activeUid(start, "p2"),
@@ -355,7 +350,7 @@ describe("§3 — a Knock Out on T+2 pays 1 + 2; on T+4 it pays the face value",
       { type: "PRIZE_BONUS", seat: "p2", uid, by: BOUNTY, count: 1 + BOUNTY },
     ]);
     // No Ability announced it: the source was named at install (KO_BOUNTY_APPLIED).
-    expect(find(events, "ABILITY_TRIGGERED")).toBeUndefined();
+    expect(findEvent(events, "ABILITY_TRIGGERED")).toBeUndefined();
   });
 
   it("the same Knock Out on turn 7 (the record is stale) pays the face value", () => {
@@ -364,7 +359,7 @@ describe("§3 — a Knock Out on T+2 pays 1 + 2; on T+4 it pays the face value",
     expect(body(later.players.p2.active).koBounty).toStrictEqual({ turn: 5, amount: BOUNTY });
     const { state, events } = attack(later, STRIKE);
     expect(owed(later, state, events)).toBe(1);
-    expect(find(events, "PRIZE_BONUS")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_BONUS")).toBeUndefined();
   });
 
   it("the unmarked control pays the face value on turn 5", () => {
@@ -410,7 +405,7 @@ describe("§4 — the sweep pays only a LIVE record, on the ACTIVE, outside the 
     });
     // Both bodies went in ONE mid-turn batch: the marked Active and the blaster.
     expect(all(events, "KNOCKED_OUT").map((e) => e.uid)).toContain(uid);
-    expect(find(events, "ATTACK_DECLARED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_DECLARED")).toBeUndefined();
     expect(all(events, "PRIZE_BONUS")).toEqual([
       { type: "PRIZE_BONUS", seat: "p2", uid, by: BOUNTY, count: 1 + BOUNTY },
     ]);
@@ -459,11 +454,11 @@ describe("§5 — a Poison Knock Out in the Checkup that ends turn 5 pays the fa
     const uid = activeUid(window, "p2");
     const { state, events } = attack(window, POISON);
     // The attack did NOT Knock it Out: 10 (Mark) + 80 (Sting) = 90 of 100.
-    const ko = find(events, "KNOCKED_OUT");
+    const ko = findEvent(events, "KNOCKED_OUT");
     expect(ko?.uid).toBe(uid);
     // …the Checkup did, with `state.turn` still 5 — the one board the flag decides.
     expect(owed(window, state, events)).toBe(1);
-    expect(find(events, "PRIZE_BONUS")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_BONUS")).toBeUndefined();
   });
 });
 
@@ -476,8 +471,8 @@ describe("§6 — a Glimmora-DENIED Knock Out pays no bounty", () => {
     const window = withFaces(inWindow(installed({ victim: GLIMMORA }).state), ["heads"]);
     expect(body(window.players.p2.active).koBounty).toStrictEqual({ turn: 5, amount: BOUNTY });
     const { state, events } = attack(window, STRIKE);
-    expect(find(events, "PRIZE_PREVENTED")).toBeDefined();
-    expect(find(events, "PRIZE_BONUS")).toBeUndefined();
+    expect(findEvent(events, "PRIZE_PREVENTED")).toBeDefined();
+    expect(findEvent(events, "PRIZE_BONUS")).toBeUndefined();
     expect(state.phase.kind).not.toBe("ko:takePrizes");
     expect(state.players.p1.prizes).toHaveLength(window.players.p1.prizes.length);
   });
@@ -584,8 +579,8 @@ describe("§8 — a §11 shield refuses the install", () => {
   it("Mist Energy on the Defending Pokémon: refused, announced, nothing written", () => {
     const start = attachFromDeck(ready(), "p2", "fix-mist-energy", 1);
     const { state, events } = attack(start, MARK);
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
-    expect(find(events, "KO_BOUNTY_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")?.seat).toBe("p2");
+    expect(findEvent(events, "KO_BOUNTY_APPLIED")).toBeUndefined();
     expect(body(state.players.p2.active).koBounty).toBeNull();
   });
 });

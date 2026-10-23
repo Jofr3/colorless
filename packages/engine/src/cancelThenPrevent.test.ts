@@ -23,6 +23,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const PRINTED =
@@ -49,13 +50,6 @@ const READERS: Record<string, (text: string) => unknown> = Object.fromEntries(
   }),
 );
 const owners = (s: string) => attackReaderSurface().filter((n) => READERS[n]?.(s) !== null);
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 const count = (events: readonly GameEvent[], type: GameEvent["type"]) =>
   events.filter((e) => e.type === type).length;
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
@@ -313,27 +307,27 @@ describe("§4 — what this anchor claims, measured over all 640 rows", () => {
 describe("§5 — both faces on a real board", () => {
   it("TAILS — no damage, ATTACK_FAILED, and no block installed", () => {
     const { state, events } = swing(board(TAILS_SEEDS[0]));
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "ATTACK_FAILED")?.reason).toBe("coinFlip");
-    expect(find(events, "ATTACK_BLOCK_APPLIED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_FAILED")?.reason).toBe("coinFlip");
+    expect(findEvent(events, "ATTACK_BLOCK_APPLIED")).toBeUndefined();
     expect(state.players.p2.active?.damage).toBe(0);
     expect(state.players.p1.active?.attackBlock).toBeNull();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined(); // the text was READ
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined(); // the text was READ
   });
 
   it("HEADS — the printed 10 lands AND the durated block is installed", () => {
     const { state, events } = swing(board(HEADS_SEEDS[0]));
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
     expect(state.players.p2.active?.damage).toBe(10);
-    expect(find(events, "ATTACK_FAILED")).toBeUndefined();
-    const applied = find(events, "ATTACK_BLOCK_APPLIED");
+    expect(findEvent(events, "ATTACK_FAILED")).toBeUndefined();
+    const applied = findEvent(events, "ATTACK_BLOCK_APPLIED");
     expect(applied?.effects).toBe(true);
     expect(applied?.fromClass).toBeUndefined();
     expect(applied?.maxDamage).toBeUndefined();
     expect(state.players.p1.active?.attackBlock).toEqual({ turn: 3, effects: true });
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     const sibling = swing(board(HEADS_SEEDS[0], BARE_PREVENT));
     expect(sibling.state.players.p1.active?.attackBlock).toEqual(
       state.players.p1.active?.attackBlock,
@@ -350,20 +344,20 @@ describe("§5 — both faces on a real board", () => {
     p2turn = attachFromDeck(p2turn, "p2", "fix-energy", 1);
     const back = swing(p2turn, "p2");
     expect(back.state.players.p1.active?.damage).toBe(0);
-    expect(find(back.events, "DAMAGE_DEALT")?.prevented).toBe(true);
-    expect(find(back.events, "DAMAGE_DEALT")?.dealt).toBe(0);
+    expect(findEvent(back.events, "DAMAGE_DEALT")?.prevented).toBe(true);
+    expect(findEvent(back.events, "DAMAGE_DEALT")?.dealt).toBe(0);
   });
 
   it("both seed lists are REAL — every seed lands the face it is filed under", () => {
     for (const seed of HEADS_SEEDS) {
       expect(
-        find(swing(board(seed)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
+        findEvent(swing(board(seed)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
         `seed ${seed}`,
       ).toBe("heads");
     }
     for (const seed of TAILS_SEEDS) {
       expect(
-        find(swing(board(seed)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
+        findEvent(swing(board(seed)).events, "ATTACK_EFFECT_COIN_FLIP")?.result,
         `seed ${seed}`,
       ).toBe("tails");
     }
@@ -402,8 +396,8 @@ describe("§6 — the coin is drawn ONCE, and the rngState proves it", () => {
     // makes "one flip, two consequences" a statement about the draw rather than about
     // the count of rows.
     for (const seed of [...HEADS_SEEDS, ...TAILS_SEEDS]) {
-      const bare = find(swing(board(seed, BARE_CANCEL)).events, "ATTACK_EFFECT_COIN_FLIP");
-      const compound = find(swing(board(seed)).events, "ATTACK_EFFECT_COIN_FLIP");
+      const bare = findEvent(swing(board(seed, BARE_CANCEL)).events, "ATTACK_EFFECT_COIN_FLIP");
+      const compound = findEvent(swing(board(seed)).events, "ATTACK_EFFECT_COIN_FLIP");
       expect(compound?.result, `seed ${seed}`).toBe(bare?.result);
     }
   });

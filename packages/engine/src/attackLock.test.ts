@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, InPlayPokemon, Seat } from "./index";
 import {
   ATTACK_LOCK_DECK,
   FIXTURE_POOL,
@@ -19,6 +19,7 @@ import {
   setConditions,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const BARE_TEXT = "During your next turn, this Pokémon can't attack.";
@@ -30,13 +31,6 @@ const PUT_HALF_ONLY = "Put 9 damage counters on 1 of your opponent's Pokémon.";
 const NINE_COUNTERS_HP = 90;
 
 const SEED = 7;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function armed(installer: "sv01-048" | "sv03-029"): GameState {
   let state = must(
@@ -72,7 +66,7 @@ function installed(installer: "sv01-048" | "sv03-029"): GameState {
     next = resolved.state;
     rows = [...rows, ...resolved.events];
   }
-  if (find(rows, "ATTACK_LOCKED") === undefined) {
+  if (findEvent(rows, "ATTACK_LOCKED") === undefined) {
     throw new Error(`${installer} installed no lock`);
   }
   if (next.turn !== 3) throw new Error(`expected P2's turn 3, got ${next.turn}`);
@@ -275,7 +269,7 @@ describe("the self-lock — installing it", () => {
     expect(state.turn).toBe(2);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
 
-    expect(find(events, "ATTACK_LOCKED")).toEqual({
+    expect(findEvent(events, "ATTACK_LOCKED")).toEqual({
       type: "ATTACK_LOCKED",
       seat: "p1",
       uid: installer,
@@ -300,7 +294,7 @@ describe("the self-lock — installing it", () => {
     });
     const order = types(events);
     expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ATTACK_LOCKED"));
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120);
     expect(done.players.p2.active?.damage).toBe(120);
   });
 
@@ -324,7 +318,7 @@ describe("the self-lock — installing it", () => {
     const order = types(resolved.events);
     // PRINTED ORDER, across the park: the counters, then the drawback.
     expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("ATTACK_LOCKED"));
-    expect(find(resolved.events, "ATTACK_LOCKED")).toEqual({
+    expect(findEvent(resolved.events, "ATTACK_LOCKED")).toEqual({
       type: "ATTACK_LOCKED",
       seat: "p1",
       uid: installer,
@@ -343,7 +337,7 @@ describe("the self-lock — installing it", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
     });
-    expect(find(resolved.events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(resolved.events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       amount: NINE_COUNTERS_HP,
       source: "attack",
@@ -367,7 +361,7 @@ describe("the self-lock — installing it", () => {
     });
     const order = types(resolved.events);
     expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
-    expect(find(resolved.events, "PRIZES_OWED")).toMatchObject({ seat: "p1" });
+    expect(findEvent(resolved.events, "PRIZES_OWED")).toMatchObject({ seat: "p1" });
     // …and the LOCK still installed, behind the Knock Out it caused. A build that
     // stopped the program at the KO would silently hand the attacker a free turn.
     expect(order.indexOf("ATTACK_LOCKED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
@@ -385,8 +379,8 @@ describe("the self-lock — installing it", () => {
     };
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(NINE_COUNTERS_HP);
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(NINE_COUNTERS_HP);
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
     expect(done.players.p1.active?.attackLockedTurn).toBe(4);
   });
 
@@ -428,7 +422,7 @@ describe("the self-lock — the WINDOW, driven across four turn boundaries", () 
     let opponentTurn = setActiveFromDeck(state, "p2", "fix-attacker");
     opponentTurn = attachFromDeck(opponentTurn, "p2", "fix-energy", 1);
     const { events } = mustApply(opponentTurn, { type: "attack", seat: "p2", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(30);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
@@ -464,7 +458,7 @@ describe("the self-lock — the WINDOW, driven across four turn boundaries", () 
     expect(state.turn).toBe(6);
     expect(state.players.p1.active?.attackLockedTurn).toBe(4);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120);
     // …and the NEW install replaces the stale stamp rather than accumulating on
     // top of it. Two installs, four turns apart, one number.
     expect(done.players.p1.active?.attackLockedTurn).toBe(8);
@@ -603,10 +597,10 @@ describe("the self-lock — the §10 early clears, every one a LINE OF PLAY", ()
     // The retreat discarded 2 of its 3 Energy, so put the cost back and declare.
     back = attachFromDeck(back, "p1", "fix-water-energy", 2);
     const { events } = mustApply(back, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(120);
     // …and the fresh declaration installs a FRESH window — "applied twice", with
     // both applications real rather than surgeried.
-    expect(find(events, "ATTACK_LOCKED")).toBeDefined();
+    expect(findEvent(events, "ATTACK_LOCKED")).toBeDefined();
   });
 
   it("a Boss's Orders from the OPPONENT clears it — the gift they did not mean to give", () => {
@@ -651,7 +645,7 @@ describe("the self-lock — the §10 early clears, every one a LINE OF PLAY", ()
     expect(done.players.p1.active?.attackLockedTurn).toBeNull();
     // §10 carried the Energy through, so the evolution attacks immediately.
     const attacked = mustApply(done, { type: "attack", seat: "p1", index: 0 });
-    expect(find(attacked.events, "DAMAGE_DEALT")?.dealt).toBe(40);
+    expect(findEvent(attacked.events, "DAMAGE_DEALT")?.dealt).toBe(40);
   });
 
   it("a KNOCKED OUT holder takes the lock out of play with the stack", () => {
@@ -694,7 +688,7 @@ describe("the self-lock — two windows on ONE body", () => {
     let attacker = setActiveFromDeck(state, "p2", "fix-attacker");
     attacker = attachFromDeck(attacker, "p2", "fix-energy", 1);
     const blocked = mustApply(attacker, { type: "attack", seat: "p2", index: 0 });
-    expect(find(blocked.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(blocked.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
 
     // TURN 4 — the lock's window, reached by the attack itself ENDING turn 3
     // (§5.3). The block has expired by arithmetic while the lock is live: one

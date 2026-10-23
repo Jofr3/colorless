@@ -11,19 +11,13 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // {C}, 30 — the ACTIVE hit
 const spread = { type: "attack", seat: "p1", index: 1 } as const; // 20 to each Benched
 const yawn = { type: "attack", seat: "p1", index: 4 } as const; // Asleep — an effect op
-const joust = { type: "attack", seat: "p1", index: 0 } as const; // Klefki — {C}, 10
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const joust = { type: "attack", seat: "p1", index: 0 } as const;
 
 function types(events: GameEvent[]): string[] {
   return events.map((e) => e.type);
@@ -203,8 +197,8 @@ describe("Curious Tea Party — the ACTIVE holder prevents NOTHING", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(30);
   });
 
@@ -306,7 +300,7 @@ describe("Curious Tea Party — §9, the lock over the holder", () => {
     // DAMAGE is driven with Klefki's own attack against the Active — which is the
     // dead site, so the assertion that matters is the fold's above.
     const { events } = mustApply(state, joust);
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
   });
 
   it("…but `isOnBench` is NOT §9-gated — a locked body is still on the Bench", () => {

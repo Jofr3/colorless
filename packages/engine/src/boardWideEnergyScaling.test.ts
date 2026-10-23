@@ -7,7 +7,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackEffect,
 } from "./effects";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction, programFor } from "./index";
 import {
   BOARD_ENERGY_DECK,
@@ -20,6 +20,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const BOARD_ENERGY =
@@ -37,13 +38,6 @@ const UNPRINTED_OPPONENT_ADDITIVE =
   "This attack does 30 more damage for each {G} Energy attached to all of your opponent's Pokémon.";
 
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function board(by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
@@ -324,12 +318,12 @@ describe("§4 — the `+` fold on a live board", () => {
 
   it("deals 20 + 30 × the {G} on the ATTACKER's whole board", () => {
     const { events } = swing(canonical());
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 120, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 120, dealt: 140 });
   });
 
   it("the PRINTED BASE IS KEPT: an Energy-free board still deals the printed 20", () => {
     const { events } = swing(board());
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 20, dealt: 20 });
     expect(dealt?.scaled).toBeUndefined();
     expect(events.some((e) => e.type === "ATTACK_EFFECT_SKIPPED")).toBe(false);
@@ -341,7 +335,7 @@ describe("§4 — the `+` fold on a live board", () => {
     // the `zone` field is dropped, ignored, or never emitted by the producer.
     const state = dress(board(), "p1", [], [[G, G], [G]]);
     expect(state.players.p1.active?.energy).toHaveLength(1);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       scaled: 90,
       dealt: 110,
@@ -354,7 +348,7 @@ describe("§4 — the `+` fold on a live board", () => {
     // — deals 260 here; the truth is the bare printed 20.
     const state = dress(board(), "p2", [G, G, G, G, G, G], [[G, G]]);
     expect(countEnergyInPlay(state, "p2", "Grass")).toBe(8);
-    const dealt = find(swing(state).events, "DAMAGE_DEALT");
+    const dealt = findEvent(swing(state).events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 20, dealt: 20 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -364,18 +358,18 @@ describe("§4 — the `+` fold on a live board", () => {
     // untyped read deals 140 here and the truth is the printed 20.
     const state = dress(board(), "p1", [C], [[C], [C]]);
     expect(countEnergyInPlay(state, "p1", null)).toBe(4);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
   });
 
   it("a WILDCARD on the BENCH scores, and its DEMOTION un-scores it", () => {
     const wild = dress(board(), "p1", [], [["sv02-191"]]);
-    expect(find(swing(wild).events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(swing(wild).events, "DAMAGE_DEALT")).toMatchObject({
       base: 20,
       scaled: 30,
       dealt: 50,
     });
     const demoted = attachBenchFromDeck(wild, "p1", 0, "fix-special", 1);
-    const dealt = find(swing(demoted).events, "DAMAGE_DEALT");
+    const dealt = findEvent(swing(demoted).events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 20, dealt: 20 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -392,7 +386,7 @@ describe("§4 — the `+` fold on a live board", () => {
       [[G, G], [[G, G], [G]], 170],
     ] as const) {
       const state = dress(board(), "p1", active, bench);
-      expect(find(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(expected);
+      expect(findEvent(swing(state).events, "DAMAGE_DEALT")?.dealt).toBe(expected);
     }
   });
 
@@ -401,14 +395,14 @@ describe("§4 — the `+` fold on a live board", () => {
     // count reads it as 0 and deals the printed 20.
     const state = dress(board(), "p1", [], [[], [], []]);
     expect(state.players.p1.bench).toHaveLength(3);
-    expect(find(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
+    expect(findEvent(swing(state).events, "DAMAGE_DEALT")).toMatchObject({ base: 20, dealt: 20 });
   });
 
   it("the seats are symmetric — p2 attacking reads p2's board", () => {
     // The evaluator takes `attackerSeat`, so the same board mirrored gives the same
     // number. A hard-coded "p1" would pass every rung above and fail here.
     const { events } = swing(canonical("p2"), "p2");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 120, dealt: 140 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 20, scaled: 120, dealt: 140 });
   });
 });
 

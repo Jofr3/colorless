@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor, programPlayable } from "./index";
-import type { EffectOp, GameEvent, GameState, Seat } from "./index";
+import type { EffectOp, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachBenchFromDeck,
@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const FLASHING_DRAW_IDS = ["svp-182", "sv09-055", "sv09-163"] as const;
@@ -58,13 +59,6 @@ const useFlashingDrawFromBench = {
   target: { spot: "bench", index: 0 },
   abilityName: "Flashing Draw",
 } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** `driveSetup` against the LOCAL pool — `testFixtures.ts`'s own closes over
     `FIXTURE_POOL`, and `createGame` takes its `cardPool` as a PARAMETER. */
@@ -191,7 +185,7 @@ describe("Flashing Draw — driven through the real engine", () => {
     const { state: after, events } = mustApply(state, useFlashingDrawFromBench);
     // Nothing is asked: one matching Energy on the host, so the pick is forced.
     expect(after.phase.kind).toBe("turn:action");
-    expect(find(events, "ENERGY_DISCARDED")).toMatchObject({
+    expect(findEvent(events, "ENERGY_DISCARDED")).toMatchObject({
       seat: "p1",
       actor: "p1",
       uids: hostEnergy,
@@ -250,11 +244,11 @@ describe("Flashing Draw — driven through the real engine", () => {
     const { state: after, events } = mustApply(state, useFlashingDraw);
     // ONE, not both: `count` is absent, and two Basic {L} on one host are
     // interchangeable, so the pick is forced rather than parked.
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toHaveLength(1);
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toHaveLength(1);
     expect(after.players.p1.active?.energy).toHaveLength(1);
     // FOUR drawn to reach six — the number is a consequence of the hand, which is
     // exactly what separates `drawUntilHandSize` from `drawCards`.
-    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
+    expect(findEvent(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
     expect(after.players.p1.hand).toHaveLength(6);
     expect(after.players.p1.deck).toHaveLength(deckBefore - 4);
     // ORDER: the cost is the first op, so it is paid before anything it buys.

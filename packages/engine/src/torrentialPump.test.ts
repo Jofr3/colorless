@@ -32,6 +32,7 @@ import {
   types,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -174,13 +175,6 @@ function board(
 const attack = (state: GameState) => apply(state, { type: "attack", seat: "p1", index: 0 });
 const say = (state: GameState, yes: boolean) =>
   apply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 function findAll<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
   type: T,
@@ -490,14 +484,14 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
     const pileBefore = before.players.p1.discard.length;
 
     const parked = attack(before);
-    expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(parked.events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       base: 100,
       dealt: 100,
     });
     expect(types(parked.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(parked.state.phase.kind).toBe("effect:choose");
-    expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+    expect(findEvent(parked.events, "EFFECT_PENDING")).toEqual({
       type: "EFFECT_PENDING",
       seat: "p1",
       note: TORRENTIAL,
@@ -509,12 +503,12 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
     expect(done.state.players.p1.discard).toHaveLength(pileBefore);
     for (const uid of attacker.energy) expect(done.state.players.p1.deck).toContain(uid);
     // …and the printed VERB, which is its own op: the deck was randomised in the open.
-    expect(find(done.events, "SHUFFLE")?.seat).toBe("p1");
-    const moved = find(done.events, "ENERGY_DISCARDED");
+    expect(findEvent(done.events, "SHUFFLE")?.seat).toBe("p1");
+    const moved = findEvent(done.events, "ENERGY_DISCARDED");
     expect(moved).toMatchObject({ seat: "p1", actor: "p1", to: "deck" });
     expect(moved?.uids).toHaveLength(3);
     expect(types(done.events)).not.toContain("COUNTERS_PLACED");
-    expect(find(done.events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(done.events, "DAMAGE_DEALT")).toMatchObject({
       seat: "p2",
       base: 120,
       weakness: null,

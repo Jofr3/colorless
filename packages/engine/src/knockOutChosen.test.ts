@@ -24,6 +24,7 @@ import {
   setBenchDamage,
   setDamage,
   types,
+  findEvent,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -96,13 +97,6 @@ const ANY_SIX_OP = {
 } as const satisfies Extract<EffectOp, { op: "knockOutChosen" }>;
 
 const BY_ATTACK = { kind: "yourPokemonKoedOnOpponentsLastTurn", byAttack: true } as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({
@@ -286,7 +280,7 @@ const HEADS_SEEDS: readonly number[] = [2, 3, 6, 7, 16, 18, 20, 22, 23];
 function coinFace(seed: number, bench: readonly string[]): "heads" | "tails" {
   const board = armed(seed, "fix-koc-flip", "fix-koc-basic", bench);
   const { events } = mustApply(board, { type: "attack", seat: "p1", index: COIN_CULL });
-  const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+  const flip = findEvent(events, "ATTACK_EFFECT_COIN_FLIP");
   if (flip === undefined) throw new Error(`seed ${seed} flipped no coin`);
   return flip.result;
 }
@@ -313,11 +307,11 @@ describe("§2 the coin and the HEADS arm — the Active, and only if it is Basic
 
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
     // The op is not damage and must not pretend to be.
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     // …and the heads arm asked NOTHING: the target is named by the print.
@@ -332,7 +326,7 @@ describe("§2 the coin and the HEADS arm — the Active, and only if it is Basic
 
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("heads");
     expect(types(events)).not.toContain("KNOCKED_OUT");
     // Not merely un-Knocked-Out — UNTOUCHED. The op marks lethal against
     // `effectiveMaxHp`, so a gate that fired and was undone would leave 120 damage
@@ -350,8 +344,8 @@ describe("§2 the coin and the HEADS arm — the Active, and only if it is Basic
   it("the ORDINARY attack kills the same Stage 1 — the gate is about the OP, not the body", () => {
     const before = armed(6, "fix-koc-flip", "fix-koc-stage1", ["fix-koc-basic2"]);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: PLAIN_BITE });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
   });
 });
@@ -367,7 +361,7 @@ describe("§3 the TAILS arm — nothing / forced / parked, over the opponent's B
 
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual({
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual({
       type: "ATTACK_EFFECT_COIN_FLIP",
       seat: "p1",
       result: "tails",
@@ -389,9 +383,9 @@ describe("§3 the TAILS arm — nothing / forced / parked, over the opponent's B
 
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
     expect(state.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
     expect(state.players.p2.active?.stack).toContain(active);
     expect(state.players.p2.active?.damage).toBe(0);
     expect(state.players.p2.active?.markers).toEqual([]);
@@ -440,7 +434,7 @@ describe("§3 the TAILS arm — nothing / forced / parked, over the opponent's B
 
     // The PICKED body died and the other one did not — a park that resolved the
     // wrong ref, or both, passes a "something was Knocked Out" assertion.
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: second });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: second });
     const settled = settle(done);
     expect(settled.players.p2.discard).toContain(second);
     expect(settled.players.p2.discard).not.toContain(first);
@@ -460,7 +454,7 @@ describe("§3 the TAILS arm — nothing / forced / parked, over the opponent's B
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
     expect(state.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: basic });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: basic });
     const settled = settle(state);
     expect(settled.players.p2.discard).toContain(basic);
     expect(settled.players.p2.bench).toHaveLength(1);
@@ -474,7 +468,7 @@ describe("§3 the TAILS arm — nothing / forced / parked, over the opponent's B
       "fix-koc-stage1",
     ]);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
     expect(types(events)).not.toContain("KNOCKED_OUT");
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(state.players.p2.bench).toHaveLength(2);
@@ -539,7 +533,7 @@ describe("§4 the counter window — EXACTLY six, and the two near-misses", () =
     });
 
     expect(types(events)).not.toContain("DAMAGE_DEALT");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     // One candidate, so no prompt: the M1 rule again, one op over.
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
@@ -573,7 +567,7 @@ describe("§4 the counter window — EXACTLY six, and the two near-misses", () =
     const before = counterBoard(2, 65, [{ id: "fix-koc-basic2", damage: 0 }]);
     const victim = activeUid(before, "p2");
     const { events } = mustApply(before, { type: "attack", seat: "p1", index: COUNTER_CULL });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
   });
 
   it("an UNDAMAGED board is the ZERO arm — nothing is offered and nothing dies", () => {
@@ -622,7 +616,7 @@ describe("§4 the counter window — EXACTLY six, and the two near-misses", () =
       seat: "p1",
       choice: { kind: "pokemon", ref: { seat: "p2", spot: { spot: "bench", index: 0 } } },
     });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
     const settled = settle(done);
     expect(settled.players.p2.discard).toContain(benched);
     expect(settled.players.p2.active?.stack).toContain(active);
@@ -700,7 +694,7 @@ describe("§5 §11 — `unshieldedRefs` filters the CANDIDATES, it does not refu
 
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toEqual({
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toEqual({
       type: "ATTACK_EFFECT_PREVENTED",
       seat: "p2",
       uid: shielded,
@@ -708,7 +702,7 @@ describe("§5 §11 — `unshieldedRefs` filters the CANDIDATES, it does not refu
     // FORCED, not parked: the shielded body left the candidate set before
     // `parkOrForce` counted it.
     expect(state.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: exposed });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: exposed });
     const settled = settle(state);
     expect(settled.players.p2.bench).toHaveLength(1);
     expect(settled.players.p2.bench[0]?.stack).toContain(shielded);
@@ -737,7 +731,10 @@ describe("§5 §11 — `unshieldedRefs` filters the CANDIDATES, it does not refu
 
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
 
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2", uid: shielded });
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({
+      seat: "p2",
+      uid: shielded,
+    });
     expect(types(events)).not.toContain("KNOCKED_OUT");
     expect(state.phase.kind).not.toBe("effect:choose");
     expect(state.players.p2.bench[0]?.damage).toBe(0);
@@ -760,9 +757,9 @@ describe("§5 §11 — `unshieldedRefs` filters the CANDIDATES, it does not refu
       index: COUNTER_CULL,
     });
 
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2", uid: active });
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2", uid: active });
     expect(state.phase.kind).not.toBe("effect:choose");
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
     expect(state.players.p2.active?.stack).toContain(active);
     expect(state.players.p2.active?.damage).toBe(60);
   });
@@ -795,7 +792,7 @@ describe("§6 the BENCHED non-damage Knock Out — `flow.ts` needed nothing, dri
     const active = activeUid(before, "p2");
     const benched = benchTopUid(before, "p2", 0);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: benched });
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     const settled = settle(state);
     expect(settled.players.p1.prizes).toHaveLength(5);
@@ -844,7 +841,7 @@ describe("§6 the BENCHED non-damage Knock Out — `flow.ts` needed nothing, dri
     before = attachToolFromDeck(before, "p2", 0, "sv03-197");
     deepFreeze(before);
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: COIN_CULL });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     // The attacker is untouched: 4 counters would be 40 damage on a 200 HP body.
     expect(state.players.p1.active?.damage).toBe(0);
   });
@@ -859,7 +856,7 @@ describe("§6 the BENCHED non-damage Knock Out — `flow.ts` needed nothing, dri
       seat: "p1",
       index: COUNTER_CULL,
     });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(state.players.p1.active?.damage).toBe(40);
   });
 });

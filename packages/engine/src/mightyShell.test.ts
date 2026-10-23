@@ -11,20 +11,14 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const;
 const spread = { type: "attack", seat: "p1", index: 1 } as const;
 const yawn = { type: "attack", seat: "p1", index: 4 } as const;
 const clutch = { type: "attack", seat: "p1", index: 5 } as const;
-const joust = { type: "attack", seat: "p1", index: 0 } as const; // Klefki — {C}, 10
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
+const joust = { type: "attack", seat: "p1", index: 0 } as const;
 
 function types(events: GameEvent[]): string[] {
   return events.map((e) => e.type);
@@ -147,7 +141,11 @@ describe("Mighty Shell — the main hit (attack.ts, read site 1 of 5)", () => {
 
     const { events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
+      seat: "p2",
+      dealt: 0,
+      prevented: true,
+    });
   });
 
   it("the SAME attacker holding a BASIC Energy deals full damage", () => {
@@ -156,8 +154,8 @@ describe("Mighty Shell — the main hit (attack.ts, read site 1 of 5)", () => {
 
     const { state: done, events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
-    expect(find(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")?.prevented).toBeUndefined();
     expect(done.players.p2.active?.damage).toBe(30);
   });
 
@@ -172,7 +170,7 @@ describe("Mighty Shell — the main hit (attack.ts, read site 1 of 5)", () => {
 
     const { events } = mustApply(state, bite);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 30 });
   });
 });
 
@@ -216,7 +214,7 @@ describe("Mighty Shell — the spread and snipe arms (read sites 2, 3 and 4 of 5
 
     const { state: done, events } = snipeAt(state, 2, "active");
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(done.players.p2.active?.damage).toBe(0);
   });
 
@@ -237,7 +235,7 @@ describe("Mighty Shell — the EFFECTS half (interpreter.ts attackEffectRefused,
 
     const { state: done, events } = mustApply(state, yawn);
 
-    expect(find(events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
     expect(types(events)).not.toContain("STATUS_APPLIED");
     expect(done.players.p2.active?.conditions?.rotation).toBe("none");
   });
@@ -280,7 +278,7 @@ describe("Mighty Shell — the EFFECTS half (interpreter.ts attackEffectRefused,
     const bites = mustApply(state, bite);
     const yawns = mustApply(state, yawn);
 
-    expect(find(bites.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
+    expect(findEvent(bites.events, "DAMAGE_DEALT")).toMatchObject({ dealt: 0, prevented: true });
     expect(types(yawns.events)).toContain("ATTACK_EFFECT_PREVENTED");
   });
 });
@@ -294,7 +292,7 @@ describe("Mighty Shell — §9, and it must switch BOTH halves", () => {
 
     const { state: done, events } = mustApply(state, joust);
 
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 10 });
     expect(done.players.p2.active?.damage).toBe(10);
   });
 

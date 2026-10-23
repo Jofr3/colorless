@@ -10,7 +10,7 @@ import {
   programFor,
   redactGame,
 } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   ENERGY_CLAUSE_DECK,
   FIXTURE_POOL,
@@ -21,6 +21,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const SUPER_SPICY_BREATH =
@@ -45,13 +46,6 @@ function utf8Bytes(text: string): number {
     bytes += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
   }
   return bytes;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
 function board(seed: number): GameState {
@@ -558,7 +552,7 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
     // The condition is FALSE and the "+" is still simulated: `effectSimulated` /
     // `modifierSimulated` ride `scaling !== null`, not on the clause holding.
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     // `scaled` is omitted at 0 — the indicator genuinely added nothing.
     expect(dealt?.scaled).toBeUndefined();
@@ -570,7 +564,7 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
     const state = attachFromDeck(scovillain(board(2), "p1"), "p1", "fix-fire-energy", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
   it("is the ATTACKER's own body — the same Fire on the DEFENDER scores nothing", () => {
@@ -581,7 +575,7 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
     state = attachFromDeck(scovillain(state, "p2"), "p2", "fix-fire-energy", 1);
     expect(state.players.p2.active?.energy.length).toBe(4);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -597,7 +591,7 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
       conditionHolds(state, "p1", { kind: "yourActiveHasEnergyAttached", energy: "Fire" }),
     ).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -606,7 +600,7 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
     // Nothing in this clause is p1-shaped: a hardcoded "p1" would read P1's
     // Fire-less Scovillain here and pay 90.
     const clean = scovillain(boardP2(5), "p2");
-    const cleanDealt = find(
+    const cleanDealt = findEvent(
       mustApply(clean, { type: "attack", seat: "p2", index: 1 }).events,
       "DAMAGE_DEALT",
     );
@@ -615,7 +609,7 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
 
     const armed = attachFromDeck(clean, "p2", "fix-fire-energy", 1);
     expect(
-      find(mustApply(armed, { type: "attack", seat: "p2", index: 1 }).events, "DAMAGE_DEALT"),
+      findEvent(mustApply(armed, { type: "attack", seat: "p2", index: 1 }).events, "DAMAGE_DEALT"),
     ).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
@@ -623,10 +617,10 @@ describe("Scovillain 'Super Spicy Breath' — the {R} clause on a {G} body", () 
     const state = attachFromDeck(scovillain(board(6), "p1"), "p1", "fix-fire-energy", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 20, dealt: 20 });
     expect(dealt?.scaled).toBeUndefined();
-    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
+    expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
   });
 });
 
@@ -635,7 +629,7 @@ describe("Galvantula 'Shocking Web' — the {L} clause, a second token at a seco
     const state = galvantula(board(10), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 50, dealt: 50 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -644,14 +638,14 @@ describe("Galvantula 'Shocking Web' — the {L} clause, a second token at a seco
     const state = attachFromDeck(galvantula(board(11), "p1"), "p1", "fix-lightning-energy", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, scaled: 80, dealt: 130 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 50, scaled: 80, dealt: 130 });
   });
 
   it("reads its OWN token — Scovillain's Fire does not arm Galvantula's {L}", () => {
     const state = attachFromDeck(galvantula(board(12), "p1"), "p1", "fix-fire-energy", 1);
     expect(state.players.p1.active?.energy.length).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 50, dealt: 50 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -659,7 +653,7 @@ describe("Galvantula 'Shocking Web' — the {L} clause, a second token at a seco
   it("runs from the OTHER seat too", () => {
     const armed = attachFromDeck(galvantula(boardP2(13), "p2"), "p2", "fix-lightning-energy", 1);
     expect(
-      find(mustApply(armed, { type: "attack", seat: "p2", index: 0 }).events, "DAMAGE_DEALT"),
+      findEvent(mustApply(armed, { type: "attack", seat: "p2", index: 0 }).events, "DAMAGE_DEALT"),
     ).toMatchObject({ base: 50, scaled: 80, dealt: 130 });
   });
 });
@@ -672,7 +666,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
     expect(state.players.p1.active?.energy.length).toBe(3);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 80, dealt: 80 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -684,7 +678,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
     const state = attachFromDeck(cetitan(board(21), "p1"), "p1", "sv02-190", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 140, dealt: 220 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 140, dealt: 220 });
     // 220 through a 200 HP fix-bigbody: the KO is reported for completeness, not as
     // the proof — the proof is `scaled`.
     expect(types(events)).toContain("KNOCKED_OUT");
@@ -692,7 +686,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
 
   it("Tinkaton: no Special → 90, one Luminous → 180", () => {
     const clean = tinkaton(board(22), "p1");
-    const cleanDealt = find(
+    const cleanDealt = findEvent(
       mustApply(clean, { type: "attack", seat: "p1", index: 0 }).events,
       "DAMAGE_DEALT",
     );
@@ -701,7 +695,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
 
     const armed = attachFromDeck(clean, "p1", "sv02-191", 1);
     expect(
-      find(mustApply(armed, { type: "attack", seat: "p1", index: 0 }).events, "DAMAGE_DEALT"),
+      findEvent(mustApply(armed, { type: "attack", seat: "p1", index: 0 }).events, "DAMAGE_DEALT"),
     ).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
@@ -710,7 +704,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
     // p1 accident.
     let state = cetitan(board(23), "p1");
     state = attachFromDeck(cetitan(state, "p2"), "p2", "sv02-190", 1);
-    const dealt = find(
+    const dealt = findEvent(
       mustApply(state, { type: "attack", seat: "p1", index: 1 }).events,
       "DAMAGE_DEALT",
     );
@@ -718,7 +712,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
     expect(dealt?.scaled).toBeUndefined();
 
     const mirrored = attachFromDeck(cetitan(cetitan(boardP2(24), "p2"), "p1"), "p1", "sv02-190", 1);
-    const mirroredDealt = find(
+    const mirroredDealt = findEvent(
       mustApply(mirrored, { type: "attack", seat: "p2", index: 1 }).events,
       "DAMAGE_DEALT",
     );
@@ -733,7 +727,7 @@ describe("Cetitan 'Special Horn' / Tinkaton 'Special Hammer' — the CLASS arm",
     const state = attachFromDeck(cetitan(board(25), "p1"), "p1", "sv02-190", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 50, dealt: 50 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -754,7 +748,7 @@ describe("PROVISION, not the printed name — the Luminous/Jet pair", () => {
 
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
   });
 
   it("…and a second Special DEMOTES it, so the SAME board scores 90 again", () => {
@@ -765,7 +759,7 @@ describe("PROVISION, not the printed name — the Luminous/Jet pair", () => {
       ["sv02-191", 1],
     ]);
     const before = mustApply(state, { type: "attack", seat: "p1", index: 1 }).events;
-    expect(find(before, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
+    expect(findEvent(before, "DAMAGE_DEALT")).toMatchObject({ base: 90, scaled: 90, dealt: 180 });
 
     const demoted = attachFromDeck(state, "p1", "sv02-190", 1);
     expect(demoted.players.p1.active?.energy.length).toBe(4);
@@ -775,7 +769,7 @@ describe("PROVISION, not the printed name — the Luminous/Jet pair", () => {
 
     const { events } = mustApply(demoted, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, dealt: 90 });
     expect(dealt?.scaled).toBeUndefined();
   });
@@ -816,7 +810,7 @@ describe("PROVISION, not the printed name — the Luminous/Jet pair", () => {
       conditionHolds(state, "p1", { kind: "yourActiveHasEnergyAttached", energy: "Fire" }),
     ).toBe(false);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 140, dealt: 220 });
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 80, scaled: 140, dealt: 220 });
   });
 });
 
@@ -825,7 +819,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
     let state = setActiveFromDeck(board(40), "p2", "fix-psychic-weak");
     state = attachFromDeck(tinkaton(state, "p1"), "p1", "sv02-190", 1);
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(find(events, "DAMAGE_DEALT")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({
       base: 90,
       scaled: 90,
       weakness: { op: "multiply", amount: 2 },
@@ -840,7 +834,7 @@ describe("the fold order — the bonus lands BEFORE §8.5 Weakness", () => {
     // it alive, which the armed half does not.
     const state = tinkaton(setActiveFromDeck(board(41), "p2", "fix-psychic-weak"), "p1");
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = find(events, "DAMAGE_DEALT");
+    const dealt = findEvent(events, "DAMAGE_DEALT");
     expect(dealt).toMatchObject({ base: 90, weakness: { op: "multiply", amount: 2 }, dealt: 180 });
     expect(dealt?.scaled).toBeUndefined();
     expect(types(events)).not.toContain("KNOCKED_OUT");
@@ -880,7 +874,7 @@ describe("ATTACK_EFFECT_SKIPPED never fires — in EITHER direction, on all four
       expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
       // And the two boards really are different boards — `scaled` present exactly
       // when the clause held, which is what makes the shared flag meaningful.
-      expect(find(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
+      expect(findEvent(events, "DAMAGE_DEALT")?.scaled !== undefined).toBe(arm);
     }
   });
 });

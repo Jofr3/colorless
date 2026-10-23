@@ -10,7 +10,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction, createGame } from "./index";
 import {
   FIXTURE_POOL,
@@ -25,6 +25,7 @@ import {
   types,
   must,
   firstBasicInHand,
+  findEvent,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -98,13 +99,6 @@ const DECK = deckOf({
 });
 
 const SEEDS = [4171, 4187, 4201] as const;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function localSetup(seed: number): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -313,13 +307,13 @@ describe("§3 — a REAL BOARD, driven BOTH WAYS off the one printed sentence", 
       // The gate HOLDS, so §8.5 runs: a flat printed 230 on a 340 HP body with no
       // Weakness and no Resistance, which survives so the number can be read.
       expect(types(result.events)).not.toContain("ATTACK_FAILED");
-      expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
+      expect(findEvent(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
       expect(state.players.p2.active?.damage).toBe(230);
       expect(types(result.events)).not.toContain("KNOCKED_OUT");
       expect(state.stadium).toBeNull();
       expect(state.players.p2.discard).toContain(stadium.uid);
       expect(state.players.p1.discard).toHaveLength(p1Discard);
-      expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
+      expect(findEvent(result.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
       const order = types(result.events);
       expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("STADIUM_DISCARDED"));
       // BOTH printed sentences are accounted for, so nothing is reported as skipped.
@@ -338,7 +332,7 @@ describe("§3 — a REAL BOARD, driven BOTH WAYS off the one printed sentence", 
     const result = attack(before);
     const state = result.state;
 
-    expect(find(result.events, "ATTACK_FAILED")).toEqual({
+    expect(findEvent(result.events, "ATTACK_FAILED")).toEqual({
       type: "ATTACK_FAILED",
       seat: "p1",
       uid,
@@ -364,10 +358,10 @@ describe("§3 — a REAL BOARD, driven BOTH WAYS off the one printed sentence", 
     (seed) => {
       const result = attack(board(seed, false, UNMAPPED_CANCEL));
       expect(types(result.events)).not.toContain("ATTACK_FAILED");
-      expect(find(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+      expect(findEvent(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
         effect: UNMAPPED_PRINTING,
       });
-      expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
+      expect(findEvent(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
     },
   );
 });

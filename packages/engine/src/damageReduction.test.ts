@@ -23,6 +23,7 @@ import {
   setDamage,
   setPrizes,
   types,
+  findEvent,
 } from "./testFixtures";
 
 /** The bare sentence at each printed amount — one anchor, one capture. */
@@ -44,13 +45,6 @@ const BEFORE_WR_ABILITY =
   "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).";
 
 const SEED = 11;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function findAll<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -125,7 +119,7 @@ function installed(installer: keyof typeof INSTALLERS): GameState {
     seat: "p1",
     index: spec.index,
   });
-  const row = find(events, "DAMAGE_REDUCTION_APPLIED");
+  const row = findEvent(events, "DAMAGE_REDUCTION_APPLIED");
   if (row === undefined) throw new Error(`${installer} did not install a reduction`);
   if (row.amount !== spec.amount) throw new Error(`${installer} installed ${String(row.amount)}`);
   return state;
@@ -377,7 +371,7 @@ describe("the durated damage reduction — installing it", () => {
     expect(state.turn).toBe(2);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
 
-    expect(find(events, "DAMAGE_REDUCTION_APPLIED")).toEqual({
+    expect(findEvent(events, "DAMAGE_REDUCTION_APPLIED")).toEqual({
       type: "DAMAGE_REDUCTION_APPLIED",
       seat: "p1",
       uid: installer,
@@ -400,7 +394,7 @@ describe("the durated damage reduction — installing it", () => {
         seat: "p1",
         index: spec.index,
       });
-      expect(find(events, "DAMAGE_REDUCTION_APPLIED")?.amount, id).toBe(spec.amount);
+      expect(findEvent(events, "DAMAGE_REDUCTION_APPLIED")?.amount, id).toBe(spec.amount);
       expect(done.players.p1.active?.damageReduction, id).toEqual({ turn: 3, amount: spec.amount });
     }
   });
@@ -417,7 +411,7 @@ describe("the durated damage reduction — installing it", () => {
       // The §8.5 hit lands FIRST and the install rides the tail behind it — free
       // rather than lucky, since the reduction's whole effect is in the future.
       expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("DAMAGE_REDUCTION_APPLIED"));
-      const row = find(events, "DAMAGE_DEALT");
+      const row = findEvent(events, "DAMAGE_DEALT");
       expect(row?.dealt, id).toBe(spec.hit);
       if (row !== undefined) expectAfterWR(row);
     }
@@ -463,11 +457,11 @@ describe("the durated damage reduction — installing it", () => {
     );
     // …and behind the printed 100, which is the §8.5 hit.
     expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ENERGY_DISCARDED"));
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(100);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(100);
     // The cost is real: all three {W} are gone, so the shielded body cannot attack
     // again — the printed trade, driven rather than described.
     expect(done.players.p1.active?.energy).toEqual([]);
-    expect(find(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
+    expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
     expect(done.players.p1.active?.damageReduction).toEqual({ turn: 3, amount: 100 });
   });
 });
@@ -486,7 +480,7 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
       ],
       1,
     );
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.uid).toBe(shielded);
     expect(row?.base).toBe(90);
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
@@ -516,7 +510,7 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
       ],
       1,
     );
-    const tank = find(forretress.events, "DAMAGE_DEALT");
+    const tank = findEvent(forretress.events, "DAMAGE_DEALT");
     expect(tank?.dealt).toBe(70);
     if (tank !== undefined) {
       expect(pipeline(tank).beforeWR).toBe(20);
@@ -533,7 +527,7 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
       ],
       1,
     );
-    const small = find(pineco.events, "DAMAGE_DEALT");
+    const small = findEvent(pineco.events, "DAMAGE_DEALT");
     expect(small?.dealt).toBe(90);
     if (small !== undefined) {
       expect(pipeline(small).beforeWR).toBe(60);
@@ -561,7 +555,7 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
         [{ id: "fix-energy", count: 1 }],
         board.index,
       );
-      const row = find(events, "DAMAGE_DEALT");
+      const row = findEvent(events, "DAMAGE_DEALT");
       expect(row?.dealt, board.installer).toBe(board.dealt);
       if (row !== undefined) {
         expect(pipeline(row).beforeWR, board.installer).toBe(board.reversed);
@@ -596,7 +590,7 @@ describe("the durated damage reduction — the §8.5 ORDERING the parenthetical 
     // `Math.max(0, …)`, inherited by summing into the number it already guarded.
     let state = clearBench(installed("sv02-048"), "p1");
     const { state: done, events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(30);
     expect(row?.reduction).toBe(100);
     expect(row?.dealt).toBe(0);
@@ -617,7 +611,7 @@ describe("the durated damage reduction — the four READ SITES", () => {
     // 30 − 20 = 10.
     const state = clearBench(installed("sv03-169"), "p1");
     const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(10);
     expect(row?.reduction).toBe(20);
     if (row !== undefined) expectAfterWR(row);
@@ -627,7 +621,7 @@ describe("the durated damage reduction — the four READ SITES", () => {
     let state = clearBench(installed("sv03-169"), "p1"); // one candidate → no park
     state = setDamage(state, "p1", 0);
     const { events } = swing(state, "sv01-069", [{ id: "fix-energy", count: 1 }]);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.base).toBe(20);
     expect(row?.weakness).toEqual({ op: "multiply", amount: 2 });
     expect(row?.reduction).toBe(20);
@@ -688,7 +682,7 @@ describe("the durated damage reduction — the LIFETIME", () => {
     // P1 passes back; on turn 5 the same attacker hits for the UNREDUCED number.
     state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
     const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(30);
     expect(row?.reduction).toBeUndefined();
   });
@@ -719,7 +713,7 @@ describe("the durated damage reduction — the LIFETIME", () => {
     expect(types(gusted.events)).not.toContain("DAMAGE_REDUCTION_APPLIED");
     // And it is GONE rather than merely unread — the promoted body takes a full hit.
     const { events } = swing(next, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.reduction).toBeUndefined();
   });
 
@@ -750,7 +744,7 @@ describe("the durated damage reduction — the LIFETIME", () => {
     state = benchFromDeck(state, "p1", "fix-titan");
     state = setDamage(state, "p1", 40); // 50 HP Swablu, 30 Bite − 20 = 10 incoming
     const { state: done, events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
-    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(10);
+    expect(findEvent(events, "DAMAGE_DEALT")?.dealt).toBe(10);
     expect(types(events)).toContain("KNOCKED_OUT");
     let next = done;
     expect(next.phase.kind).toBe("ko:takePrizes");
@@ -773,7 +767,7 @@ describe("the durated damage reduction — the LIFETIME", () => {
     smaller = withReduction(smaller, "p1", "active", 10, smaller.turn + 1);
     const raised = mustApply(smaller, { type: "attack", seat: "p1", index: 0 });
     expect(raised.state.players.p1.active?.damageReduction).toEqual({ turn: 3, amount: 20 });
-    expect(find(raised.events, "DAMAGE_REDUCTION_APPLIED")?.amount).toBe(20);
+    expect(findEvent(raised.events, "DAMAGE_REDUCTION_APPLIED")?.amount).toBe(20);
 
     // A stamp from a DIFFERENT (stale) window is replaced outright rather than
     // merged — there is nothing to preserve in a record that answers nothing.
@@ -800,7 +794,7 @@ describe("the durated damage reduction — beside D142's block", () => {
       },
     };
     const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
-    const row = find(events, "DAMAGE_DEALT");
+    const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.prevented).toBe(true);
     expect(row?.dealt).toBe(0);
     expect(row?.reduction).toBe(100);
@@ -834,8 +828,8 @@ describe("the durated damage reduction — beside D142's block", () => {
       ],
       1,
     );
-    expect(find(basic.events, "DAMAGE_DEALT")?.prevented).toBe(true);
-    expect(find(basic.events, "DAMAGE_DEALT")?.dealt).toBe(0);
+    expect(findEvent(basic.events, "DAMAGE_DEALT")?.prevented).toBe(true);
+    expect(findEvent(basic.events, "DAMAGE_DEALT")?.dealt).toBe(0);
     const evolved = swing(
       state,
       "sv01-139",
@@ -845,7 +839,7 @@ describe("the durated damage reduction — beside D142's block", () => {
       ],
       1,
     );
-    const row = find(evolved.events, "DAMAGE_DEALT");
+    const row = findEvent(evolved.events, "DAMAGE_DEALT");
     expect(row?.prevented).toBeUndefined();
     expect(row?.reduction).toBe(50);
     expect(row?.dealt).toBe(40);
@@ -874,6 +868,6 @@ describe("the durated damage reduction — the VOICE", () => {
     const state = clearBench(installed("sv03-169"), "p1");
     const { events } = swing(state, "fix-attacker", [{ id: "fix-energy", count: 1 }]);
     expect(types(events)).not.toContain("DAMAGE_REDUCTION_APPLIED");
-    expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(20);
+    expect(findEvent(events, "DAMAGE_DEALT")?.reduction).toBe(20);
   });
 });

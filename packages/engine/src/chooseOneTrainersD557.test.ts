@@ -23,6 +23,7 @@ import {
   setDamage,
   trainerCard,
   types,
+  findEvent,
 } from "./testFixtures";
 
 const KIERAN = ["sv06-154", "sv06-206", "sv06-218", "sv08.5-113", "sv08.5-174"] as const;
@@ -148,13 +149,6 @@ const DECK = deckOf({
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 const SEED = 20260926;
-
-function find<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 function all<T extends GameEvent["type"]>(
   events: readonly GameEvent[],
@@ -286,7 +280,7 @@ function kieran(yes: boolean, opts: Parameters<typeof ready>[0] = {}) {
 const attack = (state: GameState, index: number) =>
   mustApply(state, { type: "attack", seat: "p1", index });
 const dealt = (state: GameState, index = STRIKE) =>
-  find(attack(state, index).events, "DAMAGE_DEALT");
+  findEvent(attack(state, index).events, "DAMAGE_DEALT");
 
 function parkedPrompt(state: GameState) {
   if (state.phase.kind !== "effect:choose")
@@ -417,7 +411,7 @@ describe("D557 §3 — the FIRST bullet (yes): the switch, and no bonus", () => 
       "d557-striker",
     ]);
     expect(state.allowances.sideAttackBonuses).toEqual([]);
-    expect(find(events, "SIDE_ATTACKS_BOOSTED")).toBeUndefined();
+    expect(findEvent(events, "SIDE_ATTACKS_BOOSTED")).toBeUndefined();
     expect(start.allowances.sideAttackBonuses).toEqual([]);
   });
 
@@ -458,7 +452,7 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
     const start = ready();
     const { state, events } = kieran(false);
     expect(state.allowances.sideAttackBonuses).toEqual([{ amount: KIERAN_BONUS, target: EX_OR_V }]);
-    expect(find(events, "SIDE_ATTACKS_BOOSTED")).toStrictEqual({
+    expect(findEvent(events, "SIDE_ATTACKS_BOOSTED")).toStrictEqual({
       type: "SIDE_ATTACKS_BOOSTED",
       seat: "p1",
       amount: KIERAN_BONUS,
@@ -495,7 +489,7 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
   it("the snipe site (`snipeActive`): Pick Off onto the Active ex does 30 + 30 = 60", () => {
     const window = kieran(false, { oppBench: ["d557-bench"] }).state;
     const parked = attack(window, PICK_OFF).state;
-    const row = find(
+    const row = findEvent(
       mustApply(parked, {
         type: "resolveEffect",
         seat: "p1",
@@ -595,7 +589,7 @@ describe("D557 §7 — Venture Bomb: the print, and the registry row that maps i
 describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat", () => {
   it("with a Bench it PARKS a one-pick over Active + Bench; a Benched pick takes 20", () => {
     const { state: parked, events } = venture({ oppBench: ["d557-bench"] }, "heads");
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual({
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")).toEqual({
       type: "ATTACK_EFFECT_COIN_FLIP",
       seat: "p1",
       result: "heads",
@@ -614,7 +608,7 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
     });
     expect(body(state.players.p2.bench[0]).damage).toBe(20);
     expect(body(state.players.p2.active).damage).toBe(0);
-    expect(find(after, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(after, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       amount: 20,
       source: "trainer",
@@ -624,8 +618,8 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
   it("an Active WITH A WEAKNESS takes a flat 20 — a placement is not attack damage (no W/R)", () => {
     const { state, events } = venture({ defender: "d557-weak-ex" }, "heads");
     expect(body(state.players.p2.active).damage).toBe(20);
-    expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p2",
       amount: 20,
       source: "trainer",
@@ -645,13 +639,13 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
     expect(withBench.state.phase.kind).toBe("turn:action");
     expect(body(withBench.state.players.p2.active).damage).toBe(0);
     expect(body(withBench.state.players.p2.bench[0]).damage).toBe(20);
-    expect(find(withBench.events, "TRAINER_EFFECT_PREVENTED")).toMatchObject({
+    expect(findEvent(withBench.events, "TRAINER_EFFECT_PREVENTED")).toMatchObject({
       seat: "p2",
       trainerType: "item",
     });
     const alone = venture({ defender: "fix-unnerve" }, "heads");
     expect(body(alone.state.players.p2.active).damage).toBe(0);
-    expect(find(alone.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(findEvent(alone.events, "COUNTERS_PLACED")).toBeUndefined();
     expect(all(alone.events, "TRAINER_EFFECT_PREVENTED")).toHaveLength(1);
   });
 
@@ -664,7 +658,7 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
     });
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     // The KO'd body was P2's Pokémon ex, so P1 — the Item's player — takes TWO Prizes.
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p1", count: 2 });
   });
@@ -673,11 +667,11 @@ describe("D557 §8 — HEADS: 2 counters on 1 of the opponent's Pokémon, flat",
 describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
   it("the player's own Active takes 20; the opponent is untouched; the row is the Item's", () => {
     const { state, events } = venture({ oppBench: ["d557-bench"] }, "tails");
-    expect(find(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
+    expect(findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result).toBe("tails");
     expect(state.phase.kind).toBe("turn:action");
     expect(body(state.players.p1.active).damage).toBe(20);
     expect(body(state.players.p2.active).damage).toBe(0);
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({
       seat: "p1",
       amount: 20,
       source: "trainer",
@@ -691,7 +685,7 @@ describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
     let start = ready({ card: VENTURE });
     start = setDamage(start, "p1", 300 - 20);
     const { state, events } = play(withCoin(start, "tails"), VENTURE);
-    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1" });
+    expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p1" });
     // The KO'd body was P1's OWN Active, so the OPPONENT (P2) is owed the Prize.
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
   });
@@ -706,7 +700,7 @@ describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
       events,
     );
     if (run.kind !== "done") throw new Error("expected done");
-    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ source: "self", amount: 30 });
+    expect(findEvent(events, "COUNTERS_PLACED")).toMatchObject({ source: "self", amount: 30 });
     expect(render(events, run.state).map((r) => r.text)).toContain(
       "D557 Striker did 30 damage to itself",
     );

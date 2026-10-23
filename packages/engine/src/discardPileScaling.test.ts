@@ -22,7 +22,7 @@ import {
 } from "./effects";
 import type { CardFilter } from "./effects";
 import { programFor, redactGame } from "./index";
-import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { applyAction } from "./index";
 import { conditionHolds, countCardsInDiscardPile } from "./interpreter";
 import {
@@ -36,6 +36,8 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  activeOf,
+  findEvent,
 } from "./testFixtures";
 
 const ENERGY_PILE = "This attack does 20 more damage for each Energy card in your discard pile.";
@@ -98,19 +100,6 @@ const FILTERS: readonly CardFilter[] = [ANY_ENERGY, ETHAN_BY_NAME, BASIC_ENERGY,
     one list into the other's slot is a different number rather than a coincidence. */
 const NOUNS: readonly CardFilter[] = [ANY_ENERGY, BASIC_ENERGY, ITEM, ETHAN_BY_NAME];
 
-function activeOf(state: GameState, seat: Seat): InPlayPokemon {
-  const body = state.players[seat].active;
-  if (body === null) throw new Error(`${seat} has no Active`);
-  return body;
-}
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
-
 function bare(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   let state = must(
@@ -152,7 +141,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(state: GameState, index: number, seat: Seat = "p1"): number | undefined {
-  return find(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
+  return findEvent(swing(state, index, seat).events, "DAMAGE_DEALT")?.dealt;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -519,7 +508,7 @@ describe("§4 — the fold: four attacks, four numbers, one board", () => {
 
   it("the MULTIPLY fold DROPS the printed base and the ADDITIVE one KEEPS it", () => {
     const state = canonical();
-    const rows = [0, 1, 2, 3].map((i) => find(swing(state, i).events, "DAMAGE_DEALT"));
+    const rows = [0, 1, 2, 3].map((i) => findEvent(swing(state, i).events, "DAMAGE_DEALT"));
     expect(rows.map((r) => r?.base)).toEqual([20, 60, 0, 0]);
     expect(rows.map((r) => r?.scaled)).toEqual([60, 60, 90, 60]);
   });
@@ -529,8 +518,8 @@ describe("§4 — the fold: four attacks, four numbers, one board", () => {
     expect(state.players.p1.discard).toHaveLength(0);
     expect(state.players.p2.discard).toHaveLength(0);
     expect([0, 1].map((i) => dealt(state, i))).toEqual([20, 60]);
-    expect(find(swing(state, 2).events, "DAMAGE_DEALT")).toBeUndefined();
-    expect(find(swing(state, 3).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state, 2).events, "DAMAGE_DEALT")).toBeUndefined();
+    expect(findEvent(swing(state, 3).events, "DAMAGE_DEALT")).toBeUndefined();
   });
 
   it("THE ZONE: the attached Energy is NOT the pile, and the wrong walk is non-zero", () => {

@@ -18,6 +18,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  findEvent,
 } from "./testFixtures";
 
 const HERD_CHARGE =
@@ -46,13 +47,6 @@ const HERD_STOMP =
   "This attack also does 20 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
 const SEED = 5;
-
-function find<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }> | undefined {
-  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
-}
 
 /** The attack indices, keyed by name so no case addresses a fold by number. */
 const BENCH = { herd: 0, crowd: 1, flank: 2, stomp: 3 } as const;
@@ -84,7 +78,7 @@ function swing(state: GameState, index: number, seat: Seat = "p1") {
 }
 
 function dealt(events: GameEvent[]): number | null {
-  return find(events, "DAMAGE_DEALT")?.dealt ?? null;
+  return findEvent(events, "DAMAGE_DEALT")?.dealt ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -357,7 +351,7 @@ describe("scaledAttackDamage — the body counts, on boards where the two sides 
     state = withBench(state, "p2", 1);
     state = attachFromDeck(state, "p1", "fix-energy", 2);
     const { events } = swing(state, BENCH.herd);
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(80);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(80);
     expect(dealt(events)).toBe(100); // 20 printed + 80
   });
 
@@ -367,7 +361,7 @@ describe("scaledAttackDamage — the body counts, on boards where the two sides 
     state = withBench(state, "p2", 1);
     state = attachFromDeck(state, "p1", "fix-energy", 2);
     const { events } = swing(state, BENCH.crowd);
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(20); // 1 × 20, NOT 4 × 20 and NOT 3 × 20
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(20); // 1 × 20, NOT 4 × 20 and NOT 3 × 20
     expect(dealt(events)).toBe(40);
   });
 
@@ -393,8 +387,8 @@ describe("scaledAttackDamage — the body counts, on boards where the two sides 
         },
       },
     };
-    expect(find(swing(hurt, BENCH.crowd).events, "DAMAGE_DEALT")?.scaled).toBe(40);
-    expect(find(pristine, "DAMAGE_DEALT")?.scaled).toBe(40);
+    expect(findEvent(swing(hurt, BENCH.crowd).events, "DAMAGE_DEALT")?.scaled).toBe(40);
+    expect(findEvent(pristine, "DAMAGE_DEALT")?.scaled).toBe(40);
   });
 
   it("an EMPTY opponent Bench on the `×` fold deals nothing at all — the base is DROPPED", () => {
@@ -402,7 +396,7 @@ describe("scaledAttackDamage — the body counts, on boards where the two sides 
     state = attachFromDeck(state, "p1", "fix-energy", 2);
     const { events } = swing(state, BENCH.flank);
     expect(dealt(events)).toBeNull();
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("…and a populated one is `per × count` WHOLE: 4 × 30 = 120, never 30 + 120", () => {
@@ -429,7 +423,7 @@ describe("scaledAttackDamage — the opponent's Energy, over two zones", () => {
 
   it("the ACTIVE zone reads the DEFENDER's Active, additively: 2 × 30 onto a printed 30", () => {
     const { events } = swing(energyBoard(2, 3), ENERGY.drain);
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(60);
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(60);
     expect(dealt(events)).toBe(90);
   });
 
@@ -473,8 +467,8 @@ describe("the §8.5 fold order", () => {
     state = withBench(state, "p2", 3);
     state = attachFromDeck(state, "p1", "fix-energy", 2);
     const { events } = swing(state, BENCH.crowd);
-    expect(find(events, "DAMAGE_DEALT")?.scaled).toBe(60);
-    expect(find(events, "DAMAGE_DEALT")?.weakness).not.toBeNull();
+    expect(findEvent(events, "DAMAGE_DEALT")?.scaled).toBe(60);
+    expect(findEvent(events, "DAMAGE_DEALT")?.weakness).not.toBeNull();
     expect(dealt(events)).toBe(160);
   });
 
@@ -482,7 +476,7 @@ describe("the §8.5 fold order", () => {
     let state = board("fix-benchcount", "fix-pokemon-v-weak");
     state = withBench(state, "p2", 2);
     state = attachFromDeck(state, "p1", "fix-energy", 2);
-    const row = find(swing(state, BENCH.flank).events, "DAMAGE_DEALT");
+    const row = findEvent(swing(state, BENCH.flank).events, "DAMAGE_DEALT");
     expect(FIXTURE_POOL["fix-benchcount"]?.attacks?.[BENCH.flank]?.damage).toBe("30×");
     expect(row?.base).toBe(0);
     expect(row?.scaled).toBe(60); // 2 × 30, the WHOLE damage
