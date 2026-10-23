@@ -2,8 +2,9 @@
 // owner-scoped and contents come from D1, so a client can neither use another user's deck nor forge
 // the card list.
 
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { ownedBy } from "../db/owned";
 import { deckCards, decks } from "../db/schema";
 
 type Db = DrizzleD1Database;
@@ -39,7 +40,7 @@ export async function loadPlayerDeck(
   const owned = await db
     .select({ id: decks.id })
     .from(decks)
-    .where(and(eq(decks.id, deckId), eq(decks.userId, userId)))
+    .where(ownedBy(decks, deckId, userId))
     .get();
   if (owned === undefined) return { ok: false, reason: "deck not found" };
   const rows = await db

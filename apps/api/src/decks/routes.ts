@@ -21,6 +21,7 @@ import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
 import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
+import { ownedBy } from "../db/owned";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";
@@ -53,7 +54,7 @@ async function guardFolderRef(
   const row = await db
     .select({ id: folders.id })
     .from(folders)
-    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+    .where(ownedBy(folders, folderId, userId))
     .get();
   return row === undefined ? c.json({ error: "unknown folder" }, 400) : null;
 }
@@ -217,7 +218,7 @@ deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
     db
       .select()
       .from(decks)
-      .where(and(eq(decks.id, deckId), eq(decks.userId, c.get("user").id))),
+      .where(ownedBy(decks, deckId, c.get("user").id)),
     selectDeckCards(db, deckId),
   ]);
   const row = deckRows[0];
@@ -264,7 +265,7 @@ deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, 
   const existing = await db
     .select()
     .from(decks)
-    .where(and(eq(decks.id, deckId), eq(decks.userId, user.id)))
+    .where(ownedBy(decks, deckId, user.id))
     .get();
   if (existing === undefined) {
     return c.json({ error: "deck not found" }, 404);
@@ -346,7 +347,7 @@ deckRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser,
 deckRoutes.delete("/:id", requireUser, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(decks)
-    .where(and(eq(decks.id, c.req.param("id")), eq(decks.userId, c.get("user").id)))
+    .where(ownedBy(decks, c.req.param("id"), c.get("user").id))
     .returning({ id: decks.id });
   if (deleted.length === 0) {
     return c.json({ error: "deck not found" }, 404);
@@ -433,7 +434,7 @@ folderRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUse
 folderRoutes.delete("/:id", requireUser, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(folders)
-    .where(and(eq(folders.id, c.req.param("id")), eq(folders.userId, c.get("user").id)))
+    .where(ownedBy(folders, c.req.param("id"), c.get("user").id))
     .returning({ id: folders.id });
   if (deleted.length === 0) {
     return c.json({ error: "folder not found" }, 404);

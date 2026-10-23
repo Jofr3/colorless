@@ -18,6 +18,7 @@ import {
 import { and, eq } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
+import { ownedBy } from "../db/owned";
 import { decks, oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
 import { validate } from "../http/validation";
@@ -227,7 +228,7 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
       const owned = await db
         .select({ id: decks.id })
         .from(decks)
-        .where(and(eq(decks.id, favouriteDeckId), eq(decks.userId, row.id)))
+        .where(ownedBy(decks, favouriteDeckId, row.id))
         .get();
       if (owned === undefined) {
         return c.json({ error: "favourite deck not found" }, 400);

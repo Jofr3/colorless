@@ -21,6 +21,7 @@ import {
 } from "@colorless/schema";
 import { asc, count, eq, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
 import { z } from "zod";
 import { cards, series, sets } from "../db/schema";
@@ -141,6 +142,8 @@ const facetValues = (rows: { value: string | null }[]): string[] =>
 // never from a constant: the suffix filter stays unreachable until rows carry a suffix.
 catalogRoutes.get("/facets", catalogCache, async (c) => {
   const db = drizzle(c.env.DB);
+  const distinctOf = <Column extends SQLiteColumn>(column: Column) =>
+    db.selectDistinct({ value: column }).from(cards).where(isNotNull(column)).orderBy(asc(column));
   const [
     rarityRows,
     typeRows,
@@ -151,42 +154,14 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
     markRows,
     suffixRows,
   ] = await db.batch([
-    db
-      .selectDistinct({ value: cards.rarity })
-      .from(cards)
-      .where(isNotNull(cards.rarity))
-      .orderBy(asc(cards.rarity)),
+    distinctOf(cards.rarity),
     db.selectDistinct({ value: cards.typesJson }).from(cards).where(isNotNull(cards.typesJson)),
-    db
-      .selectDistinct({ value: cards.stage })
-      .from(cards)
-      .where(isNotNull(cards.stage))
-      .orderBy(asc(cards.stage)),
-    db
-      .selectDistinct({ value: cards.trainerType })
-      .from(cards)
-      .where(isNotNull(cards.trainerType))
-      .orderBy(asc(cards.trainerType)),
-    db
-      .selectDistinct({ value: cards.energyType })
-      .from(cards)
-      .where(isNotNull(cards.energyType))
-      .orderBy(asc(cards.energyType)),
-    db
-      .selectDistinct({ value: cards.illustrator })
-      .from(cards)
-      .where(isNotNull(cards.illustrator))
-      .orderBy(asc(cards.illustrator)),
-    db
-      .selectDistinct({ value: cards.regulationMark })
-      .from(cards)
-      .where(isNotNull(cards.regulationMark))
-      .orderBy(asc(cards.regulationMark)),
-    db
-      .selectDistinct({ value: cards.suffix })
-      .from(cards)
-      .where(isNotNull(cards.suffix))
-      .orderBy(asc(cards.suffix)),
+    distinctOf(cards.stage),
+    distinctOf(cards.trainerType),
+    distinctOf(cards.energyType),
+    distinctOf(cards.illustrator),
+    distinctOf(cards.regulationMark),
+    distinctOf(cards.suffix),
   ]);
   const payload: CatalogFacets = {
     rarities: facetValues(rarityRows),
