@@ -1,4 +1,5 @@
 local D=require('ui.card_dimensions')
+local WheelPager=require('ui.wheel_pager')
 -- Shared library elements: text input, collection tray, deck piles/counts and
 -- animated red pagination. Player tabs and the sandbox launch remain outside.
 local T=require('ui.theme')
@@ -74,7 +75,7 @@ function Sandbox:makeCards(entering)
     local index=#self.cards
     card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
     card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
-    if entering and not self.reduced then card:enterCollection(self.width/2) end
+    card:collect(cols,index%cols,self.width/2,entering,self.time,self.reduced,self.width)
     self.cards[#self.cards+1]=card
   end
 end
@@ -197,7 +198,7 @@ function Sandbox:keypressed(key)
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
-function Sandbox:wheelmoved(y) if y~=0 and not self.editing then self:changePage(y>0 and -1 or 1) end end
+function Sandbox:wheelmoved(y) if y~=0 and not self.editing and WheelPager.ready(self) then self:changePage(y>0 and -1 or 1) end end
 function Sandbox:draw()
   local x,y,w,h=self.x,self.y,self.w,self.h
   Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)

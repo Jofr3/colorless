@@ -219,6 +219,43 @@ describe("Lua simulator", () => {
       );
     }
   });
+  it("stages the open card modal's page and its neighbours' artwork first", () => {
+    const images = vi.fn();
+    const publish = vi.fn();
+    const sim = new LuaSimulator(publish, vi.fn(), images);
+    sim.open({
+      state: driveSetup(7),
+      events: [],
+      names: { p1: "Player 1", p2: "Player 2" },
+      startedAt: 100,
+    });
+    const candidates = Array.from({ length: 30 }, (_, i) => ({
+      id: `c${i}`,
+      cardId: `test-${i}`,
+      name: "Nest Ball",
+      category: "Trainer" as const,
+      trainerType: "Item" as const,
+      hasImage: true,
+    }));
+    sim.menu = effectMenu(sim, {
+      kind: "chooseCards",
+      candidates,
+      min: 0,
+      max: 1,
+      dest: "hand",
+      note: "Pick cards",
+    });
+    sim.emit();
+    const menuId = rows(publish).find((r: string[]) => r[0] === "M")?.[5] ?? "";
+    sim.command(`menu-page\t${menuId}\t10\t5`);
+    const ids: string[] = images.mock.lastCall?.[0].map((image: { id: string }) => image.id);
+    const page = (from: number) => Array.from({ length: 5 }, (_, i) => `test-${from + i}`);
+    expect(ids.slice(0, 25)).toEqual([...page(10), ...page(15), ...page(5), ...page(20), ...page(0)]);
+    expect(ids).toContain("test-29");
+    // A window for a menu that has since closed is ignored.
+    sim.command("menu-page\tstale\t25\t5");
+    expect(images.mock.lastCall?.[0][0].id).not.toBe("test-25");
+  });
   it("enforces category caps while leaving other card categories selectable", () => {
     const { sim } = setup();
     const candidates = ["a", "b", "c"].map((id) => ({

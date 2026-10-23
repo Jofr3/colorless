@@ -3,6 +3,7 @@ local D=require('ui.card_dimensions')
 -- Card:hover/draw. Each visible rank has its own Moveable; only rank 1 reacts.
 local Card=require('ui.card')
 local Motion=require('ui.motion')
+local Collection=require('ui.collection_motion')
 local Pile=setmetatable({}, {__index=Card})
 Pile.__index=Pile
 local g=love.graphics
@@ -64,12 +65,34 @@ end
 -- The collection page callback constructs every card at its row's centre
 -- (top-left x = area.x + area.w/2, y = area.y), then emplaces it.
 function Pile:enterCollection(rowCentre)
+  local c=self.collection
+  local y=c and c.y+(math.abs(0.5*c.fan)-(c.count>1 and 0.2 or 0))*self.unit or self.homeY
   for _,layer in ipairs(self.layers) do
     layer.motion.VT.x=(rowCentre+D.HALF_W*self.baseScale)/self.unit
-    layer.motion.VT.y=(self.homeY+0.025*(D.TILE_H)*self.unit)/self.unit
+    layer.motion.VT.y=(y+0.025*(D.TILE_H)*self.unit)/self.unit
     layer.motion.VT.r=0
+    layer.motion.VT.scale=1
   end
-  self.x,self.y=self.motion.VT.x*self.unit,self.motion.VT.y*self.unit
+  self.x,self.y,self.angle=self.motion.VT.x*self.unit,self.motion.VT.y*self.unit,0
+end
+-- Paged deck galleries fan, shrink and bob like the simulator's card modals
+-- (collection_motion), slot `column` of `count`; every rank follows the fan.
+-- Titles and counters fill the slot above and below each pile, so cancel
+-- the fan's vertical arc: piles keep their slot and only tilt, bob and sway.
+function Pile:collect(count,column,rowCentre,entering,time,reduced,roomWidth)
+  time=time or 0
+  local fan=(column-(count-1)/2)/count
+  self.collection={x=self.homeX,y=self.homeY-(math.abs(0.5*fan)-(count>1 and 0.2 or 0))*self.unit,count=count,fan=fan}
+  Collection.target(self,time,reduced,roomWidth or 1280);self.homeX=self.collection.x
+  local r=self.motion.T.r
+  for _,layer in ipairs(self.layers) do
+    local m=layer.motion
+    m.T.x,m.T.y=self:target(layer.rank,roomWidth,Pile.parallax())
+    m.T.x,m.T.y,m.T.r,m.T.scale=m.T.x/self.unit,m.T.y/self.unit,r,0.95
+    m.VT.x,m.VT.y,m.VT.r,m.VT.scale=m.T.x,m.T.y,r,0.95
+  end
+  if entering and not reduced then self:enterCollection(Collection.origin(rowCentre,count,self.baseScale)-D.HALF_W*self.baseScale)
+  else self.x,self.y,self.angle=self.motion.VT.x*self.unit,self.motion.VT.y*self.unit,r end
 end
 function Pile:juiceUp(time,scale,rotation,reduced)
   -- Card:hover calls juice_up(0.05, 0.03), converted by Card:juice_up.
@@ -94,6 +117,9 @@ function Pile:update(dt,time,active,reduced,roomWidth)
   self.hovered=active and not self.dragging
   roomWidth=roomWidth or 1280
   local amt=self:shuffleAmount(time,reduced)
+  local fan=0
+  -- Pile:target keeps G.deck's perspective, so drop the card parallax.
+  if self.collection then Collection.target(self,time,reduced,roomWidth);self.homeX=self.collection.x;fan=self.motion.T.r end
   for _,layer in ipairs(self.layers) do
     local m=layer.motion
     local top=layer.rank==1
@@ -102,7 +128,7 @@ function Pile:update(dt,time,active,reduced,roomWidth)
     local odd=(layer.rank%2==1) and 1 or 0
     m.T.x=(top and self.dragging and self.targetX or tx)/self.unit+0.9*amt*(1-layer.rank*0.01)*odd
     m.T.y=(top and self.dragging and self.targetY or ty)/self.unit
-    m.T.r=0.3*amt*(1+layer.rank*0.05)*odd
+    m.T.r=fan+0.3*amt*(1+layer.rank*0.05)*odd
     m:update(dt,time,top and self.hovered,top and self.dragging,reduced)
   end
   local v=self.motion.VT

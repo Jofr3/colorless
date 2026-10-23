@@ -27,6 +27,7 @@ import { effectMenu } from "./simulatorChoices";
 import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
+import { LUA_ART_SLOTS } from "./artworkCache";
 import { LocalTableSource, type TableSource } from "./tableSource";
 import { LuaOnlineMatch, onlineGate } from "./onlineTable";
 
@@ -97,6 +98,11 @@ export class LuaSimulator {
   message = "";
   revision = 0;
   private menuId = 0;
+  // Artwork for the last emit: the board, and each menu option by index.
+  private boardArt = new Map<string, string>();
+  private menuArt: ([string, string] | null)[] = [];
+  // The page of the open card modal, reported by Lua as option indices.
+  private menuWindow = { menuId: "", first: 0, size: 0 };
   private active = false;
   private handlers = new Map<string, () => void>();
   private pendingRareCandy: string | null = null;
@@ -743,8 +749,31 @@ export class LuaSimulator {
       ];
     return [];
   }
+  /** The open modal's page first, then its neighbours, the board, the rest. */
+  private publishImages() {
+    const ordered = new Map<string, string>();
+    const add = (entry: [string, string] | null | undefined) => {
+      if (entry && !ordered.has(entry[0])) ordered.set(entry[0], entry[1]);
+    };
+    const { menuId, first, size } = this.menuWindow;
+    if (menuId === String(this.menuId) && size > 0)
+      for (const d of [0, 1, -1, 2, -2])
+        for (let i = first + d * size; i < first + (d + 1) * size; i++) add(this.menuArt[i]);
+    for (const entry of this.boardArt) add(entry);
+    for (const entry of this.menuArt) add(entry);
+    this.images([...ordered].slice(0, LUA_ART_SLOTS).map(([id, url]) => ({ id, url })));
+  }
   command(raw: string) {
     const [cmd, ...args] = raw.split("\t").map(decodeURIComponent);
+    if (cmd === "menu-page") {
+      this.menuWindow = {
+        menuId: args[0] ?? "",
+        first: Number(args[1]) || 0,
+        size: Number(args[2]) || 0,
+      };
+      this.publishImages();
+      return;
+    }
     if (cmd === "resume") {
       this.route(loadSimulatorSave() ? "simulator" : "sandbox");
       return;
@@ -1062,6 +1091,7 @@ export class LuaSimulator {
     this.handlers.clear();
     const rows: string[] = [];
     const art = new Map<string, string>();
+    const menuArt: ([string, string] | null)[] = [];
     const infoIds = new Set<string>();
     const row = (...fields: (string | number | boolean)[]) =>
       rows.push(encodeFields(fields.map((f) => pixelText(String(f)))));
@@ -1088,7 +1118,15 @@ export class LuaSimulator {
         o.uid ?? "",
         !!o.dimmed,
       );
-      noteArt(o.card);
+      if (kind === "O") {
+        const c = o.card;
+        menuArt.push(
+          c?.hasImage && c.cardId !== "hidden" && c.cardId !== "empty"
+            ? [c.cardId, cardImageUrl(c.cardId, "high")]
+            : null,
+        );
+        if (c && c.cardId !== "hidden" && c.cardId !== "empty") infoIds.add(c.cardId);
+      } else noteArt(o.card);
     };
     const outcome = v?.outcome
       ? v.outcome.result === "tie"
@@ -1346,7 +1384,9 @@ export class LuaSimulator {
         const card = src.card(id);
         if (card) rows.push(this.infoRow(card));
       }
-    this.images([...art].slice(0, 64).map(([id, url]) => ({ id, url })));
+    this.boardArt = art;
+    this.menuArt = menuArt;
+    this.publishImages();
     this.publish(rows.join("\n"));
   }
 }

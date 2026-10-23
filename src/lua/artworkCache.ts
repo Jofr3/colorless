@@ -11,6 +11,9 @@ interface Shuffle {
   lastId?: string;
 }
 const STORES = ["images", "entries", "state"];
+/** Card scans host.js keeps staged for Lua (its artCache limit). A wanted
+ * list must fit, or loading its tail would evict its head. */
+export const LUA_ART_SLOTS = 96;
 const DEFAULT_BUDGET = 128 * 1024 * 1024;
 
 function request<T>(req: IDBRequest<T>): Promise<T> {

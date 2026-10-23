@@ -1,7 +1,9 @@
 local D=require('ui.card_dimensions')
+local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Card=require('ui.card')
+local Collection=require('ui.collection_motion')
 local CardFrame=require('ui.card_frame')
 local DeckLabels=require('ui.deck_labels')
 local DeckStats=require('ui.deck_stats')
@@ -82,16 +84,23 @@ function Builder:makeDeckCards()
     for i,item in ipairs(items)do
       local cx=left+span*((i-1)%3+0.5)/3
       local cy=(p and 367 or 269)+math.floor((i-1)/3)*(p and 170 or 201)
-      local c=self:newCard(item,i,cx,cy,p and 0.72 or 0.84,false)
-      if not self.reduced then c.motion.VT.x=(left+span/2)/c.unit end
-      self.deckCards[i]=c
+      self.deckCards[i]=self:newCard(item,i,cx,cy,p and 0.72 or 0.84,{count=3,column=(i-1)%3,center=left+span/2,entering=true})
     end
   else
     for i,c in ipairs(self.deckCards)do c.item.quantity=items[i].quantity;c.item.remaining=items[i].remaining;c.item.copyLimit=items[i].copyLimit;c.item.illegal=items[i].illegal end
   end
   local ids={};for _,item in ipairs(items)do ids[#ids+1]=item.id end
-  local preview=table.concat(ids,'\n')
-  if preview~=self.deckPreview then self.deckPreview=preview;self:command('preview-cards',preview)end
+  -- Stage the artwork of the deck pages either side, nearest first.
+  local nearby={}
+  if #items>0 then
+    local visible,pageSize=self:visibleDeck(),self:deckPageSize()
+    for _,d in ipairs({1,-1,2,-2})do
+      local page=self.deckPage+d
+      for i=(page-1)*pageSize+1,page*pageSize do if i>=1 and visible[i] then nearby[#nearby+1]=visible[i].id end end
+    end
+  end
+  local preview=table.concat(ids,'\n')..'\t'..table.concat(nearby,'\n')
+  if preview~=self.deckPreview then self.deckPreview=preview;self:command('preview-cards',table.concat(ids,'\n'),table.concat(nearby,'\n'))end
 end
 function Builder:layout(w,h)
   self.hpDrag=nil
@@ -135,13 +144,14 @@ function Builder.energyFace(item,w,h)
   Energy.pip(w/2,h/2-4,34,kind)
   T.text(item.subtype~='' and item.subtype or 'Basic Energy',14,8,h-28,w-16,text)
 end
-function Builder:newCard(item,index,x,y,scale,entering)
+function Builder:newCard(item,index,x,y,scale,grid)
   item.colour=T.blue;item.edition='dissolve';item.resolution=2;item.drawFace=function(w,h)self:face(item,w,h)end
   local copy={};for k,v in pairs(item)do copy[k]=v end
   local card=Card.new(copy,index);card:place(x,y,scale,false)
-  -- Collection cards begin in the row centre and spread with Moveable's spring.
-  if entering and not self.reduced then card.motion.VT.x=(self.portrait and 240 or 422)/card.unit end
-  card.motion.T.r=((index-1)%4-1.5)*0.025
+  if not grid then card.motion.T.r=((index-1)%4-1.5)*0.025;return card end
+  -- Grid cards fan like the simulator's card modals: each page deals from
+  -- the row centre and spreads with Moveable's spring (collection_motion).
+  Collection.place(card,x,y-0.475*D.H*scale,grid.count,grid.column,grid.center,self.time,self.reduced or not grid.entering,self.width)
   return card
 end
 function Builder:makeCards(entering)
@@ -152,7 +162,7 @@ function Builder:makeCards(entering)
   for i,item in ipairs(self.items)do
     local x=(p and 128 or 146)+((i-1)%cols)*(p and 220 or 174)
     local y=(p and 270 or 224)+math.floor((i-1)/cols)*(p and 260 or 267)
-    self.cards[i]=self:newCard(item,i,x,y,p and 1.04 or 1.08,entering)
+    self.cards[i]=self:newCard(item,i,x,y,p and 1.04 or 1.08,{count=cols,column=(i-1)%cols,center=p and 238 or 407,entering=entering})
   end
 end
 function Builder:sync(raw)
@@ -442,11 +452,13 @@ function Builder:update(dt,time,mx,my,reduced)
   for i,c in ipairs(self.cards)do
     local active=not self.modal and ((self.controls[self.hover] or {}).card==i or (self.controls[self.focus] or {}).card==i)
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.callbacks.feedback('paper1',1)end
+    Collection.target(c,time,reduced,self.width)
     c:update(dt,time,active,reduced)
   end
   for i,c in ipairs(self.deckCards)do
     local active=not self.modal and ((self.controls[self.hover] or {}).deckCard==i or (self.controls[self.focus] or {}).deckCard==i)
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.callbacks.feedback('paper1',1)end
+    Collection.target(c,time,reduced,self.width)
     c:update(dt,time,active,reduced)
   end
   if self.dragCard then
@@ -527,6 +539,7 @@ function Builder:keypressed(key)
 end
 function Builder:wheelmoved(y)
   if self.modal then self.modal.scroll=math.max(0,(self.modal.scroll or 0)-y*36);return end
+  if y==0 or not WheelPager.ready(self) then return end
   if not self.portrait and self.mx>800 or self.portrait and self.tab=='deck'then
     self.deckPage=math.max(1,math.min(math.max(1,math.ceil(#self:visibleDeck()/self:deckPageSize())),self.deckPage+(y>0 and -1 or 1)));self:build()
   elseif not self.busy then self:command('page',y>0 and -1 or 1)end

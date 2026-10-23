@@ -51,4 +51,13 @@ for _,view in ipairs({{1280,800,10},{480,850,4}}) do
   chooser:keypressed('escape');assert(left and calls[#calls][1]=='close')
   chooser.inputRaw=nil
 end
+-- A burst of wheel events turns one page; the next turn waits for the delay.
+local clock=100;love.timer={getTime=function() return clock end}
+chooser:layout(1280,800);chooser.query='';chooser.page=1;chooser:sync(snapshot(9001,60))
+for _=1,5 do chooser:wheelmoved(-1) end;assert(chooser.page==2,'One wheel burst turns one page')
+clock=clock+0.1;chooser:wheelmoved(-1);assert(chooser.page==2,'Wheel paging waits for the delay')
+clock=clock+0.2;chooser:wheelmoved(1);assert(chooser.page==1,'Wheel pages again after the delay')
+chooser:keypressed('pagedown');chooser:keypressed('pagedown');assert(chooser.page==3,'Page keys are not delayed')
+love.timer=nil
+print('PASS: wheel paging turns one page per delay; page keys stay immediate')
 print('PASS: searchable five-column deck grid, independent selection, pagination, responsive bounds, validation, busy controls and modal motion')

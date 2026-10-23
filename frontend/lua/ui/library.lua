@@ -1,4 +1,5 @@
 local D=require('ui.card_dimensions')
+local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
@@ -83,8 +84,7 @@ function Library:makeCards(entering)
     item.drawFace=function(w,h) self:face(item,w,h) end
     local card=Pile.new(item,i)
     card:place(left+span/cols*((i-1)%cols+0.5),(self.portrait and 280 or 240)+math.floor((i-1)/cols)*(self.portrait and 220 or 250),self.portrait and 0.68 or 0.82,false,self.width)
-
-    if entering and not self.reduced then card:enterCollection(self.width/2) end
+    card:collect(cols,(i-1)%cols,self.width/2,entering,self.time,self.reduced,self.width)
     self.cards[#self.cards+1]=card
   end
 end
@@ -294,7 +294,7 @@ function Library:keypressed(key)
   elseif key=='pageup' or key=='pagedown' then if not self.modal then self:command('page',key=='pageup' and -1 or 1) end end
 end
 function Library:wheelmoved(y)
-  if not self.modal and not self.busy and y~=0 then self:command('page',y>0 and -1 or 1) end
+  if not self.modal and not self.busy and y~=0 and WheelPager.ready(self) then self:command('page',y>0 and -1 or 1) end
 end
 function Library:draw(shaders)
   local w,h,p=self.width,self.height,self.portrait

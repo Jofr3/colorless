@@ -12,6 +12,8 @@ for _,view in ipairs({'list','cards'})do
    local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
    b.reduced=reduced;b:layout(1280,800);b.phase='ready';b.deckView=view
    b.deck={{id='test',name='Test card',kind='Pokemon',quantity=3,remaining=1}};b:build()
+   -- Grid cards deal in from the row centre; press once they have landed.
+   for frame=1,60 do b:update(1/60,frame/60-1,0,0,reduced)end
    local control
    for _,c in ipairs(b.controls)do if c.action==(view=='list' and 'detail' or 'deck-card')then control=c;break end end
    local x,y=control.x+control.w/2,control.y+control.h/2

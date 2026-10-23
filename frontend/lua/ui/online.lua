@@ -1,4 +1,5 @@
 local D=require('ui.card_dimensions')
+local WheelPager=require('ui.wheel_pager')
 -- The online lobby is one generic-options modal that changes step in place,
 -- as Settings swaps in its auth form: create_tabs (Create/Join), the seed row's
 -- black pill and Copy buttons, blind-choice seat panels, Sandbox's deck grid
@@ -158,7 +159,7 @@ function Online:makeCards(entering)
     local index=#self.cards
     card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
     card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
-    if entering and not self.reduced then card:enterCollection(self.width/2) end
+    card:collect(cols,index%cols,self.width/2,entering,self.time,self.reduced,self.width)
     self.cards[#self.cards+1]=card
   end
 end
@@ -521,7 +522,7 @@ function Online:keypressed(key)
     end
   end
 end
-function Online:wheelmoved(y) if y~=0 and not self.editing then self:changePage(y>0 and -1 or 1) end end
+function Online:wheelmoved(y) if y~=0 and not self.editing and WheelPager.ready(self) then self:changePage(y>0 and -1 or 1) end end
 -- create_text_input at the PLAY button's scale: centred, letter by letter.
 function Online:drawCode(item,hovered)
   local editing=self.editing=='code'

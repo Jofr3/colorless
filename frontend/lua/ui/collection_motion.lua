@@ -23,13 +23,20 @@ end
 function Collection.target(card,time,reduced,roomWidth)
   local row=card.collection
   local unit=card.unit
-  local left=(row.x-D.HALF_W*card.baseScale)/unit
-  local bob=reduced and 0 or 0.03*math.sin(0.666*time+left)
-  local sway=reduced and 0 or 0.02*math.sin(2*time+left)
+  -- Phase by distance from the row centre and flip the left side's sway, so
+  -- each side mirrors the other (an even row has no centre column).
+  local phase=2.4*math.abs(row.fan*row.count)
+  local bob=reduced and 0 or 0.03*math.sin(0.666*time+phase)
+  local sway=reduced and 0 or (row.fan<0 and -1 or 1)*0.02*math.sin(2*time+phase)
   local parallax=(row.x-roomWidth/2)/(roomWidth/2)*1.5
   card.homeX=row.x+parallax/30*unit
   card.homeY=row.y+(bob+math.abs(0.5*row.fan)-(row.count>1 and 0.2 or 0))*unit
   card.motion.T.r=0.2*row.fan+sway
+end
+-- Balatro's top-left origin (centre + half a card) lands on a card in an
+-- even row, which then barely moves; even rows deal from the true centre.
+function Collection.origin(center,count,scale)
+  return center+(count%2==0 and 0 or D.HALF_W*scale)
 end
 function Collection.place(card,x,top,count,column,center,time,reduced,roomWidth)
   card.collection={x=x,y=top+0.475*D.H*card.baseScale,count=count,fan=(column-(count-1)/2)/count}
@@ -37,7 +44,7 @@ function Collection.place(card,x,top,count,column,center,time,reduced,roomWidth)
   Collection.target(card,time,reduced,roomWidth)
   local motion=card.motion
   motion.T.x=card.homeX/card.unit;motion.T.y=card.homeY/card.unit
-  motion.VT.x=(reduced and card.homeX or center+D.HALF_W*card.baseScale)/card.unit
+  motion.VT.x=(reduced and card.homeX or Collection.origin(center,count,card.baseScale))/card.unit
   motion.VT.y=(reduced and card.homeY or top+D.HALF_H*card.baseScale)/card.unit
   motion.VT.r=reduced and motion.T.r or 0
   motion.VT.scale=reduced and 0.95 or 1

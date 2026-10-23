@@ -61,7 +61,7 @@ choose('Pokémon');tabs.deckPage=2;tabs:build();activate('deck-view')
 assert(tabs.deckView=='cards' and tabs.deckPage==2 and tabs:deckPageSize()==6)
 assert(#tabs.deckCards==6 and tabs.deckCards[3].item.id=='d9','Switching views must retain the first visible entry')
 assert(commands[#commands][1]=='preview-cards' and commands[#commands][2]=='d7\nd8\nd9\nd10\nd11\nd12')
-assert(tabs.deckCards[1].homeY==tabs.deckCards[3].homeY and tabs.deckCards[4].homeY>tabs.deckCards[3].homeY,'Grid must have three cards per row')
+assert(tabs.deckCards[1].collection.y==tabs.deckCards[3].collection.y and tabs.deckCards[4].collection.y>tabs.deckCards[3].collection.y,'Grid must have three cards per row')
 activate('deck-page',-1);assert(tabs.deckCards[1].item.id=='d1' and tabs.deckPageText.value=='Page 1/2')
 for i,c in ipairs(tabs.controls)do if c.action=='deck-card' then tabs:activate(i);break end end
 assert(tabs.modal.mode=='detail' and tabs.modal.id=='d1' and commands[#commands-1][2]=='d1','Card view must inspect the correct entry')

@@ -99,6 +99,16 @@ describe("Lua deck builder", () => {
       "g",
       "h",
     ]);
+    // Neighbouring deck pages queue behind the visible ones; unknown ids drop.
+    await b.command(encodeFields(["preview-cards", "c\nd", "e\nmissing\nf"]));
+    expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+    ]);
     await b.command("preview-cards\t");
     expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual(["a", "b"]);
     await tick();
@@ -294,6 +304,40 @@ describe("Lua deck builder", () => {
     expect(choices[0]).toContain("Water");
     await b.command("option-pick\t");
     expect(b.filters.types).toEqual([]);
+  });
+  it("prefetches neighbouring catalog pages so paging never shows the loading state", async () => {
+    vi.mocked(api.getCards).mockImplementation(async (query) => {
+      const page = query?.page ?? 1;
+      return { items: [card(`p${page}a`), card(`p${page}b`)], total: 40, page, pageSize: 8 };
+    });
+    const images = vi.fn();
+    const { b, publish } = await setup(images);
+    await tick();
+    const pages = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.page);
+    expect(pages()).toEqual([1, 2, 3]);
+    expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual([
+      "p1a",
+      "p1b",
+      "p2a",
+      "p2b",
+      "p3a",
+      "p3b",
+    ]);
+    publish.mockClear();
+    await b.command("page\t1");
+    expect(b.results.map((c) => c.cardId)).toEqual(["p2a", "p2b"]);
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(b.busy).toBe(false);
+    await tick();
+    expect(pages()).toEqual([1, 2, 3, 4]);
+    await b.command("page\t-1");
+    expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
+    await tick();
+    expect(pages()).toEqual([1, 2, 3, 4]);
+    // A new query starts its own cache.
+    await b.command(encodeFields(["filter", "query", "Abra"]));
+    await tick();
+    expect(pages().slice(4)).toEqual([1, 2, 3]);
   });
   it("does not apply an import after its dialog is cancelled", async () => {
     const { b } = await setup();

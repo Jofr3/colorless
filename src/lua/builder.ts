@@ -20,8 +20,14 @@ import {
 import { createDeckSaver, type DeckSaver } from "../decks/deckSaver";
 import { toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
 import { formatDecklist } from "../decks/decklistText";
+import { LUA_ART_SLOTS } from "./artworkCache";
 
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
+type CatalogPage = { items: BuilderCard[]; total: number };
+type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; key: string };
+/** Pages fetched on each side of the visible one, so paging never waits. */
+const PREFETCH_PAGES = 2;
+const MAX_CACHED_PAGES = 40;
 /** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
 export class LuaBuilder {
   id = "";
@@ -36,6 +42,8 @@ export class LuaBuilder {
   filters: Filters = { ...DEFAULT_FILTERS };
   results: BuilderCard[] = [];
   private previewIds: string[] = [];
+  // Deck cards on the pages either side of the visible deck page.
+  private nearbyPreviewIds: string[] = [];
   optionKey = "";
   optionQuery = "";
   optionPage = 1;
@@ -63,6 +71,10 @@ export class LuaBuilder {
   private leaving = false;
   private importing = false;
   private importGeneration = 0;
+  // Catalog pages for the current query, keyed by page; cleared when it changes.
+  private pageKey = "";
+  private pages = new Map<number, CatalogPage>();
+  private pageRequests = new Map<number, Promise<CatalogPage>>();
   constructor(
     private publish: (raw: string) => void,
     private back: () => void,
@@ -274,6 +286,15 @@ export class LuaBuilder {
     }
     for (const k of ["query", "text", "hpMin", "hpMax", "sort"]) rows.push(["F", k, this.value(k)]);
     this.publish(rows.map(encodeFields).join("\n"));
+    this.publishImages();
+  }
+  /** Visible artwork first, then the prefetched pages nearest to this one. */
+  private publishImages() {
+    const selectedCard = this.cards.get(this.selected);
+    const nearby: BuilderCard[] = [];
+    for (let d = 1; d <= PREFETCH_PAGES; d++)
+      for (const page of [this.page + d, this.page - d])
+        nearby.push(...(this.pages.get(page)?.items ?? []));
     const art = [
       ...this.results,
       ...this.previewIds.flatMap((id) => {
@@ -281,14 +302,24 @@ export class LuaBuilder {
         return card && this.entries.has(id) ? [card] : [];
       }),
       ...(selectedCard ? [selectedCard] : []),
+      ...nearby,
+      ...this.nearbyPreviewIds.flatMap((id) => {
+        const card = this.cards.get(id);
+        return card ? [card] : [];
+      }),
     ];
-    this.images([
-      ...new Map(
-        art
-          .filter((c) => c.hasImage !== false)
-          .map((c) => [c.cardId, { id: c.cardId, url: api.cardImageUrl(c.cardId, "high", "png") }]),
-      ).values(),
-    ]);
+    this.images(
+      [
+        ...new Map(
+          art
+            .filter((c) => c.hasImage !== false)
+            .map((c) => [
+              c.cardId,
+              { id: c.cardId, url: api.cardImageUrl(c.cardId, "high", "png") },
+            ]),
+        ).values(),
+      ].slice(0, LUA_ART_SLOTS),
+    );
   }
   async load() {
     if (!this.user || !this.id) {
@@ -413,16 +444,12 @@ export class LuaBuilder {
     this.busy = true;
     this.results = [];
     this.emit();
+    const catalog = this.catalog();
     try {
-      const data = await api.getCards({
-        ...filtersToCardsQuery(this.filters, formatById(this.format)),
-        page: this.page,
-        pageSize: this.size,
-      });
+      const data = await this.fetchPage(catalog, this.page, true);
       if (epoch !== this.epoch || request !== this.searchEpoch) return;
-      this.results = data.items.map(toBuilderCard);
+      this.results = data.items;
       this.total = data.total;
-      for (const c of this.results) this.cards.set(c.cardId, c);
     } catch {
       if (epoch === this.epoch && request === this.searchEpoch)
         this.message = "Card search failed. Try again.";
@@ -430,7 +457,65 @@ export class LuaBuilder {
     if (epoch === this.epoch && request === this.searchEpoch) {
       this.busy = false;
       this.emit();
+      this.prefetch(catalog);
     }
+  }
+  private catalog(): Catalog {
+    const query = filtersToCardsQuery(this.filters, formatById(this.format));
+    return { query, size: this.size, key: JSON.stringify([query, this.size]) };
+  }
+  /** One request per page and query; `fresh` refetches a cached page. */
+  private fetchPage(
+    { query, size, key }: Catalog,
+    page: number,
+    fresh = false,
+  ): Promise<CatalogPage> {
+    if (key !== this.pageKey) {
+      this.pageKey = key;
+      this.pages.clear();
+      this.pageRequests.clear();
+    }
+    const cached = this.pages.get(page);
+    if (cached && !fresh) return Promise.resolve(cached);
+    const pending = this.pageRequests.get(page);
+    if (pending) return pending;
+    const request = api
+      .getCards({ ...query, page, pageSize: size })
+      .then((data) => {
+        const result = { items: data.items.map(toBuilderCard), total: data.total };
+        if (key === this.pageKey) {
+          for (const c of result.items) this.cards.set(c.cardId, c);
+          this.pages.set(page, result);
+          // Keep the pages nearest the visible one.
+          while (this.pages.size > MAX_CACHED_PAGES) {
+            const far = [...this.pages.keys()].reduce((a, b) =>
+              Math.abs(a - this.page) >= Math.abs(b - this.page) ? a : b,
+            );
+            this.pages.delete(far);
+          }
+        }
+        return result;
+      })
+      .finally(() => {
+        if (this.pageRequests.get(page) === request) this.pageRequests.delete(page);
+      });
+    if (key === this.pageKey) this.pageRequests.set(page, request);
+    return request;
+  }
+  /** Warm the neighbouring pages and queue their artwork behind this page's. */
+  private prefetch(catalog: Catalog) {
+    if (catalog.key !== this.pageKey) return;
+    const epoch = this.epoch;
+    const last = Math.max(1, Math.ceil(this.total / this.size));
+    for (let d = 1; d <= PREFETCH_PAGES; d++)
+      for (const page of [this.page + d, this.page - d]) {
+        if (page < 1 || page > last || this.pages.has(page)) continue;
+        this.fetchPage(catalog, page)
+          .then(() => {
+            if (epoch === this.epoch && catalog.key === this.pageKey) this.publishImages();
+          })
+          .catch(() => {});
+      }
   }
   private changed() {
     this.message = "";
@@ -497,6 +582,10 @@ export class LuaBuilder {
         .split("\n")
         .filter((id) => this.entries.has(id))
         .slice(0, 6);
+      this.nearbyPreviewIds = b
+        .split("\n")
+        .filter((id) => this.entries.has(id))
+        .slice(0, 6 * 2 * PREFETCH_PAGES);
       this.emit();
       return;
     }
@@ -567,7 +656,20 @@ export class LuaBuilder {
         1,
         Math.min(Math.max(1, Math.ceil(this.total / this.size)), this.page + Number(a)),
       );
-      await this.search();
+      // A prefetched page shows at once, with no loading state.
+      const catalog = this.catalog();
+      const cached = catalog.key === this.pageKey ? this.pages.get(this.page) : undefined;
+      if (!cached || this.phase !== "ready") {
+        await this.search();
+        return;
+      }
+      clearTimeout(this.searchTimer);
+      this.searchEpoch++;
+      this.busy = false;
+      this.results = cached.items;
+      this.total = cached.total;
+      this.emit();
+      this.prefetch(catalog);
       return;
     }
     if (action === "sort") {

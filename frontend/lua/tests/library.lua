@@ -84,7 +84,8 @@ print('PASS: settings-equivalent modal motion, animated hit testing, Escape, red
 library.reduced=false
 library:sync(snapshot(3001,12,nil,2))
 for _,card in ipairs(library.cards) do
-  assert(math.abs(card.x-(library.width/2+D.HALF_W*card.baseScale))<1e-9,'New page must start at the collection row origin')
+  local cols=library.portrait and 2 or 6
+  assert(math.abs(card.x-require('ui.collection_motion').origin(library.width/2,cols,card.baseScale))<1e-9,'New page must start at the collection row origin')
 end
 library.reduced=true
 library:sync(snapshot(3002,12,nil,1))

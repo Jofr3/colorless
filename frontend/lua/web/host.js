@@ -791,7 +791,7 @@ async function loadArt(card) {
     const path=`__card_art_${++artSerial}.png`;
     runtime.FS_createDataFile("/",path,new Uint8Array(await blob.arrayBuffer()),true,true);
     artCache.set(card.id,path);
-    while(artCache.size>64){const [id,old]=artCache.entries().next().value;runtime.FS_unlink(`/${old}`);artCache.delete(id);}
+    while(artCache.size>96){const [id,old]=artCache.entries().next().value;runtime.FS_unlink(`/${old}`);artCache.delete(id);}
     publishArt();
   } catch {artFailed.set(card.id,Date.now());}
   finally {artPending.delete(card.id);artActive--;pumpArt();}
@@ -802,7 +802,9 @@ function pumpArt(){
     if(!artCache.has(card.id)&&!artPending.has(card.id)&&Date.now()-(artFailed.get(card.id)||0)>30000)void loadArt(card);
   }
 }
-document.addEventListener("colorless:builder-images",e=>{wantedArt=e.detail;for(const c of wantedArt){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});
+// Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
+// them at the 96 kept here); touch them lowest first so eviction spares the head.
+document.addEventListener("colorless:builder-images",e=>{wantedArt=e.detail;for(const c of [...wantedArt].reverse()){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});
 
 // Sandbox API transport. The chooser and its controls are rendered in Lua.
 document.addEventListener("colorless:sandbox-state", event => writeMailbox("__sandbox.txt", event.detail));

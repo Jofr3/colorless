@@ -1,4 +1,5 @@
 local D=require('ui.card_dimensions')
+local WheelPager=require('ui.wheel_pager')
 -- Overlay menus for the table: create_UIBox_generic_options (JOKER_GREY frame,
 -- 0.1 emboss, L_BLACK body, orange Back) holding engine prompts rendered as
 -- button lists or real card rows (the booster-pack picker), the coin flip,
@@ -139,6 +140,9 @@ function Overlay:makeCards(options,scale,top)
   local spacing=D.W*scale+self.cardGap
   local first=(self.page-1)*self.perPage
   local count=math.min(self.perPage,#options-first)
+  -- The host stages this page's artwork first, then its neighbours'.
+  local window=table.concat({self.data.id or '',first,self.perPage},'|')
+  if window~=self.artWindow then self.artWindow=window;sim:command('menu-page',self.data.id or '',first,self.perPage) end
   for i=first+1,math.min(first+self.perPage,#options) do
     local o=options[i]
     local k=i-first-1
@@ -438,7 +442,7 @@ function Overlay:keypressed(key)
     end
     return true
   elseif key=='return' or key=='space' then self:activate(self.focus);return true
-  elseif key=='pageup' or key=='pagedown' then self:wheelmoved(key=='pageup' and 1 or -1);return true end
+  elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1);return true end
   return false
 end
 function Overlay:changePage(delta)
@@ -448,7 +452,7 @@ function Overlay:changePage(delta)
   self:build()
 end
 function Overlay:wheelmoved(y)
-  if y~=0 then self:changePage(y>0 and -1 or 1) end
+  if y~=0 and WheelPager.ready(self) then self:changePage(y>0 and -1 or 1) end
 end
 local function cycle(self,x,y,w,h)
   local hovered=Button.hit({x=x,y=y,w=w,h=h},self.sim.mx or -1,(self.sim.my or -1)-self:offset())
