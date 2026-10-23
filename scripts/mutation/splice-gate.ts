@@ -1,43 +1,33 @@
 /**
- * Splice gate: fails when corpus rows contain `$` sequences a string `replace` would interpret and
- * `run.ts` patches with a string replacement. Both conditions are required; with a function
- * replacement those rows are correct as written. The count is reported even when green.
+ * Splice gate: fails when `applyMutant` would not patch a corpus row literally, which happens if it
+ * ever becomes a string replacement and a row's `replace` holds a `$` sequence. The count of rows
+ * that depend on literal patching is reported even when green.
  *
  *   bun scripts/mutation/splice-gate.ts
  */
 
-import { readFileSync } from "node:fs";
+import { runReport, wiringProblems } from "../lib/cli";
+import { sourceCache } from "../lib/repo";
+import { applyMutant } from "./apply";
 import { MUTANTS } from "./mutants";
 
-/** The file whose patching behaviour this gate is about. */
+/** The runner, which must patch through `applyMutant`. */
 const APPLY_SITE = "scripts/mutation/run.ts";
-/** The exact form that makes `run.ts` patch LITERALLY. A function replacement receives
-    the match and returns bytes; no `$` in its return value is ever interpreted. */
-const FUNCTION_REPLACEMENT = "text.replace(mutant.find, () => mutant.replace)";
+const APPLY_CALL = "applyMutant(";
 
 export type SpliceReport = {
-  /** True when no row can be corrupted, or when the patcher cannot corrupt one. */
+  /** True when every row is patched literally. */
   ok: boolean;
   /** Human-readable lines; `lines[0]` is the one-line summary on the green path. */
   lines: string[];
-  /** How many rows depend on the patcher being literal. Reported, never asserted —
-      it is a population and it moves whenever a row is written. */
+  /** How many rows a string replacement would corrupt. Reported, never asserted. */
   spliceable: number;
 };
 
 export function spliceReport(): SpliceReport {
-  const sources = new Map<string, string>();
-  const sourceOf = (file: string): string => {
-    const cached = sources.get(file);
-    if (cached !== undefined) return cached;
-    const text = readFileSync(file, "utf8");
-    sources.set(file, text);
-    return text;
-  };
-
-  const patchesLiterally = sourceOf(APPLY_SITE).includes(FUNCTION_REPLACEMENT);
-
+  const sourceOf = sourceCache();
   const spliceable: string[] = [];
+  const corrupted: string[] = [];
   for (const mutant of MUTANTS) {
     let text: string;
     try {
@@ -46,16 +36,21 @@ export function spliceReport(): SpliceReport {
       continue; // a missing target is `precheck`'s business, not this gate's
     }
     if (!text.includes(mutant.find)) continue;
-    const applied = text.replace(mutant.find, mutant.replace);
     const literal = text.split(mutant.find).join(mutant.replace);
-    if (applied !== literal) {
+    const viaString = text.replace(mutant.find, mutant.replace);
+    if (viaString !== literal) {
       spliceable.push(
-        `      ${mutant.id}: ${String(applied.length - literal.length)} unintended byte(s) in ${mutant.file}`,
+        `      ${mutant.id}: ${String(viaString.length - literal.length)} unintended byte(s) in ${mutant.file}`,
       );
+    }
+    if (applyMutant(text, mutant.find, mutant.replace) !== literal) {
+      corrupted.push(`      ${mutant.id} in ${mutant.file}`);
     }
   }
 
-  if (patchesLiterally) {
+  const wiring = wiringProblems("splice-gate", APPLY_SITE, APPLY_CALL);
+  if (wiring.length > 0) return { ok: false, lines: wiring, spliceable: spliceable.length };
+  if (corrupted.length === 0) {
     return {
       ok: true,
       lines: [`${APPLY_SITE} patches LITERALLY (${String(spliceable.length)} row(s) depend on it)`],
@@ -63,27 +58,16 @@ export function spliceReport(): SpliceReport {
     };
   }
   return {
-    ok: spliceable.length === 0,
+    ok: false,
     lines: [
-      `\n🛑 splice-gate: ${APPLY_SITE} NO LONGER PATCHES LITERALLY — expected \`${FUNCTION_REPLACEMENT}\`.`,
-      `   ${String(spliceable.length)} row(s) would be SILENTLY CORRUPTED, each reporting KILLED for a`,
-      "   file that does not parse rather than for the defect it declares (D416):",
-      ...spliceable,
+      "\n🛑 splice-gate: applyMutant NO LONGER PATCHES LITERALLY.",
+      `   ${String(corrupted.length)} row(s) would be SILENTLY CORRUPTED, each reporting KILLED for a`,
+      "   file that does not parse rather than for the defect it declares:",
+      ...corrupted,
       "",
     ],
     spliceable: spliceable.length,
   };
 }
 
-function main(): void {
-  const report = spliceReport();
-  if (!report.ok) {
-    for (const line of report.lines) console.error(line);
-    process.exit(1);
-  }
-  console.log(`splice-gate: OK — ${report.lines[0] ?? ""}.`);
-}
-
-// Only when RUN, never when IMPORTED — `precheck.ts` calls `spliceReport()` and must
-// not inherit this file's console output or its exit.
-if (import.meta.main) main();
+if (import.meta.main) runReport("splice-gate", spliceReport);

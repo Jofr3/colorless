@@ -7,6 +7,8 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
+import { fail, isRecord, linesWithOverflow, parseJson } from "./lib/cli";
+import { localBin, REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
 
 /** Extensions `tsc` typechecks that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
@@ -20,30 +22,8 @@ const SELF_PATH = "scripts/typecheck-coverage.ts";
 /** Cap the naming so a wholly-emptied config prints a page, not a book. */
 const MAX_NAMED = 40;
 
-const REPO = process.cwd();
-const TSC = existsSync("node_modules/.bin/tsc") ? "node_modules/.bin/tsc" : "tsc";
-
-function fail(message: string): never {
-  console.error(message);
-  process.exit(1);
-}
-
-/**
- * Every TypeScript file the repo holds: tracked files plus untracked ones
- * `.gitignore` does not cover, so a brand-new module is covered the moment it
- * lands rather than the moment somebody remembers to commit it.
- */
-function sourceFiles(): string[] {
-  const patterns = EXTENSIONS.map((e) => `*.${e}`);
-  const git = spawnSync(
-    "git",
-    ["ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", ...patterns],
-    { encoding: "utf8" },
-  );
-  if (git.status !== 0) fail(`typecheck-coverage: git ls-files failed:\n${git.stderr}`);
-  const seen = new Set(git.stdout.split("\0").filter(Boolean));
-  return [...seen].filter((f) => existsSync(f) && statSync(f).isFile()).sort();
-}
+const REPO = REPO_ROOT;
+const TSC = localBin("tsc");
 
 /**
  * A `references` entry is a path to a tsconfig OR to a directory holding one —
@@ -61,12 +41,25 @@ type ShownConfig = {
   references?: { path: string }[];
 };
 
+const isStringArray = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((x) => typeof x === "string");
+
+function isShownConfig(v: unknown): v is ShownConfig {
+  return (
+    isRecord(v) &&
+    (v.files === undefined || isStringArray(v.files)) &&
+    (v.references === undefined ||
+      (Array.isArray(v.references) &&
+        v.references.every((r) => isRecord(r) && typeof r.path === "string")))
+  );
+}
+
 /**
  * The compiler's own answer for one project: `include`/`files` fully expanded.
  * Nothing is compiled, so this is ~0.1s and safe to run on every `check`.
  */
 function showConfig(project: string): ShownConfig {
-  const r = spawnSync(TSC, ["-p", project, "--showConfig"], { encoding: "utf8" });
+  const r = spawnSync(TSC, ["-p", project, "--showConfig"], { cwd: REPO, encoding: "utf8" });
   if (r.status !== 0 || !r.stdout.trim()) {
     fail(
       [
@@ -76,9 +69,9 @@ function showConfig(project: string): ShownConfig {
     );
   }
   try {
-    return JSON.parse(r.stdout) as ShownConfig;
+    return parseJson(r.stdout, `--showConfig for ${project}`, isShownConfig);
   } catch (e) {
-    fail(`typecheck-coverage: could not parse --showConfig for ${project}:\n${String(e)}`);
+    fail(`typecheck-coverage: ${String(e)}`);
   }
 }
 
@@ -121,12 +114,13 @@ function isFullyCovered(files: readonly string[], covered: ReadonlySet<string>):
 
 /**
  * Self-check that keeps the guard from going vacuous, for example a predicate blanked to `return
- * []`.
+ * []`. Returns the problems found.
  */
-function selfCheck(): void {
+export function selfCheck(): string[] {
+  const problems: string[] = [];
   const miss = uncoveredIn(["a.ts", "b.ts"], new Set(["a.ts"]));
   if (miss.length !== 1 || miss[0] !== "b.ts") {
-    fail(
+    problems.push(
       [
         "typecheck-coverage: SELF-CHECK FAILED — the predicate did not name an ",
         `uncovered file it was handed (got ${JSON.stringify(miss)}, expected ["b.ts"]). `,
@@ -135,7 +129,7 @@ function selfCheck(): void {
     );
   }
   if (isFullyCovered(["a.ts"], new Set())) {
-    fail(
+    problems.push(
       [
         "typecheck-coverage: SELF-CHECK FAILED — a file covered by no project ",
         "was reported as fully covered. The guard is VACUOUS.",
@@ -143,7 +137,7 @@ function selfCheck(): void {
     );
   }
   if (!isFullyCovered(["a.ts"], new Set(["a.ts", "z.ts"]))) {
-    fail(
+    problems.push(
       [
         "typecheck-coverage: SELF-CHECK FAILED — a fully covered file list was ",
         "reported as uncovered. The guard is RED on every repo, which is not a ",
@@ -151,79 +145,90 @@ function selfCheck(): void {
       ].join(""),
     );
   }
+  return problems;
 }
 
 /**
  * Checks that this guard is still wired into `check`, since a guard removed from `check` looks the
  * same as one that passes.
  */
-function checkRunsThisGuard(): void {
-  const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
-    scripts?: Record<string, string>;
-  };
-  const check = pkg.scripts?.check ?? "";
+function checkRunsThisGuard(): string[] {
+  const pkg = parseJson(
+    readFileSync(repoPath("package.json"), "utf8"),
+    "package.json",
+    (v): v is { scripts?: Record<string, unknown> } =>
+      isRecord(v) && (v.scripts === undefined || isRecord(v.scripts)),
+  );
+  const script = pkg.scripts?.check;
+  const check = typeof script === "string" ? script : "";
   if (!check.includes(SELF_PATH)) {
-    fail(
+    return [
       [
         `typecheck-coverage: FAIL — \`${SELF_PATH}\` is not part of the \`check\` `,
         `script in package.json:\n\n  ${check}\n\n`,
         "A coverage guard nothing runs is a coverage guard that always passes.\n",
         "Re-add it (NOT by deleting this rung).",
       ].join(""),
+    ];
+  }
+  return [];
+}
+
+function main(): void {
+  const problems = [...selfCheck(), ...checkRunsThisGuard()];
+  if (problems.length > 0) fail(problems.join("\n"));
+
+  const files = repoSourceFiles(EXTENSIONS);
+  if (files.length === 0) {
+    fail("typecheck-coverage: found no TypeScript files at all — that cannot be right.");
+  }
+
+  const sets = projectFileSets();
+  if (sets.size === 0) {
+    fail(
+      [
+        `typecheck-coverage: FAIL — ${ROOT_TSCONFIG} reaches no project that contains a file.\n`,
+        "Every TypeScript file in this repo is typechecked by NOTHING.",
+      ].join(""),
     );
   }
-}
 
-selfCheck();
-checkRunsThisGuard();
+  // No "project contributes zero files" check is needed: `tsc --showConfig` already fails with
+  // TS18003 when a project's `include` matches nothing.
 
-const files = sourceFiles();
-if (files.length === 0) {
-  fail("typecheck-coverage: found no TypeScript files at all — that cannot be right.");
-}
+  const covered = new Set<string>();
+  for (const [, s] of sets) for (const f of s) covered.add(f);
 
-const sets = projectFileSets();
-if (sets.size === 0) {
+  const uncovered = uncoveredIn(files, covered);
+  if (isFullyCovered(files, covered)) {
+    const projects = [...sets.keys()].sort().join(", ");
+    console.log(
+      [
+        `typecheck-coverage: OK — all ${files.length} TypeScript files are in ${sets.size} `,
+        `project(s) of ${ROOT_TSCONFIG} (${projects}).`,
+      ].join(""),
+    );
+    return;
+  }
+
+  const named = linesWithOverflow(
+    uncovered,
+    MAX_NAMED,
+    (f) => [`  ${f}`],
+    (hidden) => `  … and ${hidden} more.`,
+  ).join("\n");
+
   fail(
     [
-      `typecheck-coverage: FAIL — ${ROOT_TSCONFIG} reaches no project that contains a file.\n`,
-      "Every TypeScript file in this repo is typechecked by NOTHING.",
+      `typecheck-coverage: FAIL — ${uncovered.length} of ${files.length} TypeScript file(s) `,
+      `are in no project reachable from ${ROOT_TSCONFIG}.\n`,
+      "They are typechecked by NOTHING; `tsc -b` exits 0 without ever reading them.\n\n",
+      `Files no project can see:\n${named}\n\n`,
+      "Fix by widening a project's `include`, or by adding a project to\n",
+      `${ROOT_TSCONFIG}'s \`references\` (NOT by deleting this check).\n`,
+      "This is D481: `tsc -b` exiting 0 over an empty file set is not coverage.",
     ].join(""),
   );
 }
 
-// No "project contributes zero files" check is needed: `tsc --showConfig` already fails with
-// TS18003 when a project's `include` matches nothing.
-
-const covered = new Set<string>();
-for (const [, s] of sets) for (const f of s) covered.add(f);
-
-const uncovered = uncoveredIn(files, covered);
-if (isFullyCovered(files, covered)) {
-  const projects = [...sets.keys()].sort().join(", ");
-  console.log(
-    [
-      `typecheck-coverage: OK — all ${files.length} TypeScript files are in ${sets.size} `,
-      `project(s) of ${ROOT_TSCONFIG} (${projects}).`,
-    ].join(""),
-  );
-  process.exit(0);
-}
-
-const named = uncovered
-  .slice(0, MAX_NAMED)
-  .map((f) => `  ${f}`)
-  .join("\n");
-const more = uncovered.length > MAX_NAMED ? `\n  … and ${uncovered.length - MAX_NAMED} more.` : "";
-
-fail(
-  [
-    `typecheck-coverage: FAIL — ${uncovered.length} of ${files.length} TypeScript file(s) `,
-    `are in no project reachable from ${ROOT_TSCONFIG}.\n`,
-    "They are typechecked by NOTHING; `tsc -b` exits 0 without ever reading them.\n\n",
-    `Files no project can see:\n${named}${more}\n\n`,
-    "Fix by widening a project's `include`, or by adding a project to\n",
-    `${ROOT_TSCONFIG}'s \`references\` (NOT by deleting this check).\n`,
-    "This is D481: `tsc -b` exiting 0 over an empty file set is not coverage.",
-  ].join(""),
-);
+if (import.meta.main) main();

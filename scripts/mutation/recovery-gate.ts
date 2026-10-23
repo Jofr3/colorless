@@ -10,10 +10,9 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { REPO_ROOT } from "../lib/repo";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const RUNNER = join(REPO_ROOT, "scripts", "mutation", "run.ts");
 
 /** The private journal this guard drives the CLI against. Assigned in `main`,

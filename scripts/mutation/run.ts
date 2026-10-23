@@ -23,11 +23,11 @@ import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { REPO_ROOT } from "../lib/repo.ts";
+import { applyMutant } from "./apply.ts";
 import { argvProblems, knownFlagsUsage } from "./argv.ts";
 import { MUTANTS, type Mutant } from "./mutants.ts";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 /**
  * Overridable so `recovery-gate.ts` can use a private journal path while a real harness run holds
  * its own.
@@ -361,9 +361,7 @@ async function runMutant(
     };
   }
 
-  // A function replacement, because a string replacement would interpret `$&`, `` $` ``, `$'` and
-  // `$1` in a row's `replace` text.
-  const mutatedText = text.replace(mutant.find, () => mutant.replace);
+  const mutatedText = applyMutant(text, mutant.find, mutant.replace);
   let mutated: SuiteResult;
   let clobberedTo: string | null = null;
   try {

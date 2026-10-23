@@ -7,8 +7,10 @@
  *   bun scripts/mutation/binding-gate.ts
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import ts from "typescript";
+import { type Report, runReport, wiringProblems } from "../lib/cli";
+import { repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS } from "./mutants";
 
 /** The script that must call this gate, so the pre-sweep command reports it. */
@@ -200,10 +202,11 @@ export function fileInfoOf(file: string, text: string): FileInfo | null {
 }
 
 const files = new Map<string, FileInfo | null>();
+const sourceOf = sourceCache();
 function fileInfo(file: string): FileInfo | null {
   const cached = files.get(file);
   if (cached !== undefined) return cached;
-  const fi = fileInfoOf(file, readFileSync(file, "utf8"));
+  const fi = fileInfoOf(file, sourceOf(file));
   files.set(file, fi);
   return fi;
 }
@@ -271,11 +274,6 @@ export function judgeRow(fi: FileInfo, find: string, replace: string): RowVerdic
     flagged: [...fresh, ...orphaned],
     introduces: [...after.refs].some((r) => !before.refs.has(r)),
   };
-}
-
-function fail(message: string): never {
-  console.error(message);
-  process.exit(1);
 }
 
 /** One synthetic case: a file, a patch, and the names it must flag (exactly). */
@@ -384,8 +382,8 @@ const FIXTURES: Fixture[] = [
   },
 ];
 
-export function selfCheck(): void {
-  // Run every fixture and name every failure, not just the first.
+/** Runs every fixture and names every failure; empty means the guard can be trusted. */
+export function selfCheck(): string[] {
   const failed: string[] = [];
   for (const fx of FIXTURES) {
     const fi = fileInfoOf("fixture.ts", fx.text);
@@ -394,43 +392,25 @@ export function selfCheck(): void {
     const want = JSON.stringify([...fx.flags].sort());
     if (got !== want) failed.push(`   - ${fx.name}: flagged ${got}, expected ${want}`);
   }
-  if (failed.length > 0) {
-    fail(
-      [
-        `binding-gate: SELF-CHECK FAILED on ${String(failed.length)} of ${String(FIXTURES.length)} fixture(s):`,
-        ...failed,
-        "The guard cannot be trusted about the real corpus, so its verdict means nothing.",
-      ].join("\n"),
-    );
-  }
+  if (failed.length === 0) return [];
+  return [
+    `binding-gate: SELF-CHECK FAILED on ${String(failed.length)} of ${String(FIXTURES.length)} fixture(s):`,
+    ...failed,
+    "The guard cannot be trusted about the real corpus, so its verdict means nothing.",
+  ];
 }
 
-/**
- * Asserts precheck.ts calls this gate; an uncalled gate is indistinguishable from a passing one.
- */
-export function checkWiring(): void {
-  const text = readFileSync(WIRING_SITE, "utf8");
-  if (!text.includes(WIRING_CALL)) {
-    fail(
-      [
-        `binding-gate: FAIL — \`${WIRING_SITE}\` does not call \`${WIRING_CALL}\`.\n`,
-        "This gate would then run only when someone runs it by hand, which is never.\n",
-        "Re-add the call (NOT by deleting this rung).",
-      ].join(""),
-    );
-  }
+/** Asserts precheck.ts calls this gate. */
+export function checkWiring(): string[] {
+  return wiringProblems("binding-gate", WIRING_SITE, WIRING_CALL);
 }
 
-export type BindingReport = {
-  /** True when no row's patch names an identifier its file does not bind. */
-  ok: boolean;
-  /** Human-readable lines; `lines[0]` is the one-line summary on the green path. */
-  lines: string[];
-};
+/** True when no row's patch names an identifier its file does not bind. */
+export type BindingReport = Report;
 
 export function bindingReport(): BindingReport {
-  selfCheck();
-  checkWiring();
+  const problems = [...selfCheck(), ...checkWiring()];
+  if (problems.length > 0) return { ok: false, lines: problems };
 
   const named: string[] = [];
   let code = 0;
@@ -438,6 +418,7 @@ export function bindingReport(): BindingReport {
   let introducing = 0;
   let flaggedRows = 0;
   for (const m of MUTANTS) {
+    if (!existsSync(repoPath(m.file))) continue; // a missing target is `precheck`'s business
     const fi = fileInfo(m.file);
     if (fi === null) {
       nonCode++;
@@ -484,17 +465,4 @@ export function bindingReport(): BindingReport {
   };
 }
 
-function main(): void {
-  const t0 = performance.now();
-  const report = bindingReport();
-  if (!report.ok) {
-    for (const line of report.lines) console.error(line);
-    process.exit(1);
-  }
-  const ms = (performance.now() - t0).toFixed(0);
-  console.log(`binding-gate: OK — ${report.lines[0] ?? ""} · ${ms}ms.`);
-}
-
-// Only when RUN, never when IMPORTED — `precheck.ts` calls the report and must
-// not inherit this file's console output or its exit.
-if (import.meta.main) main();
+if (import.meta.main) runReport("binding-gate", bindingReport, { timed: true });

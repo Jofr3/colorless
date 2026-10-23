@@ -7,7 +7,9 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
+import { fail, isRecord, parseJson } from "./lib/cli";
+import { localBin, REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
 
 /** Extensions Biome lints that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
@@ -15,7 +17,7 @@ const EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
 /** Cap the per-file drill-down so a wholly-empty `include` prints a page, not a book. */
 const MAX_NAMED = 25;
 
-const BIOME = existsSync("node_modules/.bin/biome") ? "node_modules/.bin/biome" : "biome";
+const BIOME = localBin("biome");
 
 /** Biome's own default for `files.maxSize` when the config does not set one. */
 const BIOME_DEFAULT_MAX_SIZE = 1024 * 1024;
@@ -26,31 +28,16 @@ const BIOME_DEFAULT_MAX_SIZE = 1024 * 1024;
  * edit and the two can never disagree.
  */
 function maxFileSize(): number {
-  const raw = readFileSync("biome.json", "utf8");
-  const cfg = JSON.parse(raw) as { files?: { maxSize?: number } };
-  return cfg.files?.maxSize ?? BIOME_DEFAULT_MAX_SIZE;
-}
-
-function fail(message: string): never {
-  console.error(message);
-  process.exit(1);
-}
-
-/**
- * Every file Biome is expected to see: tracked files plus untracked ones that
- * `.gitignore` does not cover (so `tmp/`, `dist/` and friends stay out), minus
- * anything deleted from the working tree but still in the index.
- */
-function sourceFiles(): string[] {
-  const patterns = EXTENSIONS.map((e) => `*.${e}`);
-  const git = spawnSync(
-    "git",
-    ["ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", ...patterns],
-    { encoding: "utf8" },
+  const cfg = parseJson(
+    readFileSync(repoPath("biome.json"), "utf8"),
+    "biome.json",
+    (v): v is { files?: { maxSize?: number } } =>
+      isRecord(v) &&
+      (v.files === undefined ||
+        (isRecord(v.files) &&
+          (v.files.maxSize === undefined || typeof v.files.maxSize === "number"))),
   );
-  if (git.status !== 0) fail(`lint-coverage: git ls-files failed:\n${git.stderr}`);
-  const seen = new Set(git.stdout.split("\0").filter(Boolean));
-  return [...seen].filter((f) => existsSync(f)).sort();
+  return cfg.files?.maxSize ?? BIOME_DEFAULT_MAX_SIZE;
 }
 
 /**
@@ -60,7 +47,10 @@ function sourceFiles(): string[] {
  */
 function checkedCount(files: string[]): number {
   if (files.length === 0) return 0;
-  const r = spawnSync(BIOME, ["lint", "--max-diagnostics=0", ...files], { encoding: "utf8" });
+  const r = spawnSync(BIOME, ["lint", "--max-diagnostics=0", ...files], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+  });
   const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
   const m = out.match(/Checked (\d+) files? in/);
   if (m) return Number(m[1]);
@@ -73,15 +63,16 @@ function dirOf(file: string): string {
   return i === -1 ? "." : file.slice(0, i);
 }
 
-const files = sourceFiles();
+const files = repoSourceFiles(EXTENSIONS);
 if (files.length === 0) fail("lint-coverage: found no source files at all — that cannot be right.");
 
 // Size first: a refused file is still COUNTED below, so the count can never
 // catch this one.
 const limit = maxFileSize();
-const oversize = files.filter((f) => statSync(f).size > limit).sort();
+const sizeOf = (f: string): number => statSync(repoPath(f)).size;
+const oversize = files.filter((f) => sizeOf(f) > limit).sort();
 if (oversize.length > 0) {
-  const named = oversize.map((f) => `  ${f} — ${statSync(f).size} bytes`).join("\n");
+  const named = oversize.map((f) => `  ${f} — ${sizeOf(f)} bytes`).join("\n");
   fail(
     [
       `lint-coverage: FAIL — ${oversize.length} source file(s) exceed Biome's `,
